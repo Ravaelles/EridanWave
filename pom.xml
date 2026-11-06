@@ -92,7 +92,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>4.5.4</version>
+                <version>4.9.2</version>
                 <executions>
                     <execution>
                         <id>compile-macros</id>
@@ -107,7 +107,9 @@
                             <sendJavaToScalac>false</sendJavaToScalac>
                             <includes>
                                 <include>Utilities/TernaryMacros.scala</include>
+                                <include>Utilities/Ternary.scala</include>
                                 <include>Mathematics/Functions/ReduceMacros.scala</include>
+                                <include>Mathematics/Functions/ReduceMacroForwarders.scala</include>
                             </includes>
                         </configuration>
                     </execution>
@@ -214,53 +216,41 @@
                 </executions>
             </plugin>
 
-            <!-- Build a Windows EXE for the Combat Visualizer using Launch4j -->
-            <plugin>
-                <groupId>com.akathist.maven.plugins.launch4j</groupId>
-                <artifactId>launch4j-maven-plugin</artifactId>
-                <version>1.7.25</version>
-                <executions>
-                    <execution>
-                        <id>make-combat-visualizer-exe</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>launch4j</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Use the shaded jar that includes all dependencies -->
-                            <outfile>${project.basedir}/out/artifacts/PurpleSimViz.exe</outfile>
-                            <jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar>
-                            <headerType>gui</headerType>
-                            <classPath>
-                                <!-- Override the entry point to the visualizer main class -->
-                                <mainClass>Debugging.PurpleSimViz</mainClass>
-                            </classPath>
-                            <jre>
-                                <minVersion>1.8.0</minVersion>
-                                <jdkPreference>preferJre</jdkPreference>
-                                <runtimeBits>64/32</runtimeBits>
-                            </jre>
-                            <!-- Pass through the first argument (path to .pwcs/.pwsim) when double-clicked -->
-                            <cmdLine>%1</cmdLine>
-                            <versionInfo>
-                                <fileVersion>${project.version}.0.0</fileVersion>
-                                <txtFileVersion>${project.version}</txtFileVersion>
-                                <fileDescription>PurpleSimViz</fileDescription>
-                                <productName>PurpleSimViz</productName>
-                                <productVersion>${project.version}.0.0</productVersion>
-                                <txtProductVersion>${project.version}</txtProductVersion>
-                                <copyright>© PurpleWave</copyright>
-                                <internalName>PurpleSimViz</internalName>
-                                <originalFilename>PurpleSimViz.exe</originalFilename>
-                            </versionInfo>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <!-- Fast dev loop (no optimizer passes): mvn -o -Pdev package.
+             Release build (default profile) keeps all -opt flags for the shipped bot.
+             NOTE: switching profiles changes compiler options, so the first build
+             after a switch is a full recompile; subsequent ones are incremental. -->
+        <profile>
+            <id>dev</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <version>4.9.2</version>
+                        <executions>
+                            <execution>
+                                <id>compile-main</id>
+                                <configuration>
+                                    <args combine.self="override">
+                                        <arg>-unchecked</arg>
+                                        <arg>-feature</arg>
+                                        <arg>-deprecation</arg>
+                                        <arg>-language:postfixOps</arg>
+                                        <arg>-Ymacro-classpath</arg>
+                                        <arg>${project.build.directory}/${project.artifactId}-macros.jar</arg>
+                                    </args>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>idea-index-macros</id>
             <activation>
@@ -285,6 +275,86 @@
                                     <sources>
                                         <source>src-macros</source>
                                     </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Windows EXE for the Combat Visualizer. Opt-in: mvn clean package -DbuildExe=true.
+             On JDK 17 the old launch4j/XStream stack also needs MAVEN_OPTS with
+             add-opens for java.base/java.util, java.base/java.lang,
+             java.base/java.lang.reflect, java.base/java.text
+             and java.desktop/java.awt.font (ALL-UNNAMED). -->
+        <profile>
+            <id>visualizer-exe</id>
+            <activation>
+                <property>
+                    <name>buildExe</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>create-exe-output-dir</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <mkdir dir="${project.basedir}/out/artifacts" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Build a Windows EXE for the Combat Visualizer using Launch4j -->
+                    <plugin>
+                        <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                        <artifactId>launch4j-maven-plugin</artifactId>
+                        <version>1.7.25</version>
+                        <executions>
+                            <execution>
+                                <id>make-combat-visualizer-exe</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>launch4j</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- Use the shaded jar that includes all dependencies -->
+                                    <outfile>${project.basedir}/out/artifacts/PurpleSimViz.exe</outfile>
+                                    <jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar>
+                                    <headerType>gui</headerType>
+                                    <classPath>
+                                        <!-- Override the entry point to the visualizer main class -->
+                                        <mainClass>Debugging.PurpleSimViz</mainClass>
+                                    </classPath>
+                                    <jre>
+                                        <minVersion>1.8.0</minVersion>
+                                        <jdkPreference>preferJre</jdkPreference>
+                                        <runtimeBits>64/32</runtimeBits>
+                                    </jre>
+                                    <!-- Pass through the first argument (path to .pwcs/.pwsim) when double-clicked -->
+                                    <cmdLine>%1</cmdLine>
+                                    <versionInfo>
+                                        <fileVersion>${project.version}.0.0</fileVersion>
+                                        <txtFileVersion>${project.version}</txtFileVersion>
+                                        <fileDescription>PurpleSimViz</fileDescription>
+                                        <productName>PurpleSimViz</productName>
+                                        <productVersion>${project.version}.0.0</productVersion>
+                                        <txtProductVersion>${project.version}</txtProductVersion>
+                                        <copyright>© PurpleWave</copyright>
+                                        <internalName>PurpleSimViz</internalName>
+                                        <originalFilename>PurpleSimViz.exe</originalFilename>
+                                    </versionInfo>
                                 </configuration>
                             </execution>
                         </executions>

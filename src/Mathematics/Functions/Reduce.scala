@@ -5,9 +5,8 @@ import Mathematics.Points.{Pixel, Points, Tile}
 import Utilities.?
 
 import scala.collection.mutable
-import scala.language.experimental.macros
 
-trait Reduce {
+trait Reduce extends ReduceMacroForwarders {
 
   @inline final def clamp(value: Int, bound1: Int, bound2: Int): Int = {
     val min = Math.min(bound1, bound2)
@@ -130,8 +129,6 @@ trait Reduce {
     }
   }
 
-  final def minBy[A, B](values: TraversableOnce[A])(feature: A => B)(implicit ordering: Ordering[B]): Option[A] = macro ReduceMacros.minBy[A, B]
-
   @inline final def minByGeneric[A, B](values: TraversableOnce[A])(feature: A => B)(implicit ordering: Ordering[B]): Option[A] = {
     // The Scala-y implementation would be:
     //   values.reduceOption(Ordering.by(feature).min)
@@ -152,8 +149,6 @@ trait Reduce {
     })
     if (first) None else Some(output)
   }
-
-  final def maxBy[A, B](values: TraversableOnce[A])(feature: A => B)(implicit ordering: Ordering[B]): Option[A] = macro ReduceMacros.maxBy[A, B]
 
   @inline final def maxByGeneric[A, B](values: TraversableOnce[A])(feature: A => B)(implicit ordering: Ordering[B]): Option[A] = {
     // The Scala-y implementation would be:

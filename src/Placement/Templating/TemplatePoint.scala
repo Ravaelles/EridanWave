@@ -20,7 +20,7 @@ case class TemplatePoint(point: Point, requirement: TemplatePointRequirement) {
       else Colors.MediumViolet
     DrawMap.box(pixelStart, pixelEnd, color)
     if (requirement.width > 1) {
-      DrawMap.labelBox(requirement.toString.lines, pixelStart.midpoint(pixelEnd))
+      DrawMap.labelBox(scala.Predef.augmentString(requirement.toString).lines, pixelStart.midpoint(pixelEnd))
     }
   }
 }

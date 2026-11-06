@@ -36,7 +36,6 @@ object Fight extends Action {
     Recharge(unit)
     Bust(unit)
     Stealth(unit)
-    Aim(unit)
     unit.agent.combat.perform(unit)
     OccupyBunker(unit)
   }
