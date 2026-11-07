@@ -1,0 +1,85 @@
+@startuml How a combat unit gets its orders
+' One game frame in the life of a fighting unit, with concrete classes.
+' Not a UML spec: no aggregations, no cardinalities - just the order in
+' which the pieces talk to each other, and where each decision lives.
+' Reading order: top to bottom. The left side plans, the right side acts.
+
+skinparam roundCorner 8
+skinparam shadowing false
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBorderThickness 1
+
+title One frame of orders: Dragoon in the attack squad (Observer differs - see notes)
+
+participant "Tactician\n(decides WHO fights)" as Tactician #E2EFDA
+participant "SquadAttack\n(decides WHERE)" as Squad #E2EFDA
+participant "Intention\n(order chit,\none per unit per frame)" as Intent #FFF2CC
+participant "Agent\n(per-unit brain)" as Agent #DAEEF3
+participant "FightOrFlee\n(should we fight?)" as FoF #DAEEF3
+participant "Target\n(which enemy?)" as Target #DAEEF3
+participant "Combat\n(how: Fight/Walk/Flee...)" as Combat #DAEEF3
+participant "Commander\n(ONLY place that\ntouches the game)" as Commander #FCE4D6
+participant "StarCraft\n(BWAPI)" as Game #F2F2F2
+
+== Planning: intentions are written ==
+
+Tactician -> Squad : run()\nassign freelancers
+activate Squad
+Squad -> Squad : chooseMode()\nHuntContact / ClearMap / ...
+note right of Squad
+  HuntContact latches its destination:
+  freshest last-seen enemy first,
+  then unseen tiles >= 16 tiles away.
+  The latch stops followers (e.g. an
+  Observer) flip-flopping every frame.
+end note
+Squad -> Intent : intend(tactic)\nterminus + targets
+activate Intent
+Intent --> Squad : same chit reused\nall frame (last writer wins)
+deactivate Intent
+deactivate Squad
+
+== Micro: intentions become orders ==
+
+Agent -> Agent : execute()\ncopy intent, tryDodge()
+activate Agent
+Agent -> FoF : shouldFight?
+activate FoF
+FoF --> Agent : yes / no (+ reason)
+note right of FoF
+  First matching rule wins.
+  Pacifist: no weapon and no spells
+  (Observer, Overlord...) never fights.
+  It still follows (Walk) and flees.
+end note
+deactivate FoF
+Agent -> Target : choose()\n(via matchups + scoring)
+activate Target
+Target --> Agent : target / none
+deactivate Target
+Agent -> Combat : perform()\npick technique
+activate Combat
+Combat --> Agent : act("Fight"/"Walk"/...)
+note right of Combat
+  Fight needs shouldFight + a target.
+  Walk follows the terminus.
+  Flee runs from threats.
+end note
+deactivate Combat
+
+== Execution: exactly one BWAPI call ==
+
+Combat -> Commander : attack() / move()\n...
+activate Commander
+Commander -> Game : bwapiUnit.attack()\nthe ONLY game call in the chain
+deactivate Commander
+deactivate Agent
+
+note over Tactician, Game
+  Observer example: same flow, but Pacifist forces
+  Walk (never Fight), so it trails the army instead
+  of approaching enemies it cannot harm.
+  Its "Fight Move" tag meant: Fight technique + Move order.
+end note
+
+@enduml

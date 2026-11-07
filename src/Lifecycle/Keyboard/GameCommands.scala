@@ -93,16 +93,22 @@ object GameCommands {
   def isBotPaused: Boolean = botPaused
 
   /**
-   * True engine pause: the game freezes mid-step with the last frame (and all
-   * our drawings) kept on screen. JBWAPI keeps delivering onFrame while the
-   * engine is paused, so the overlay below keeps refreshing and the guards in
-   * PurpleWave.onFrame keep decisions/orders parked until resume.
-   * Silent by design: no chat, no pings.
+   * True engine pause: the game freezes mid-step and JBWAPI keeps delivering
+   * onFrame, so tracking, the overlay and chat commands keep running while
+   * decisions and orders stay parked by the guards in PurpleWave.onFrame.
+   * Silent by design: no chat, no pings. The toggle follows the engine, not
+   * an assumed state, so a pause imposed from outside (stale score screen,
+   * focus loss) always resolves the same way.
    */
   def togglePause(): Unit = {
     if (With.game == null) return
-    botPaused = ! botPaused
-    if (botPaused) With.game.pauseGame() else With.game.resumeGame()
+    if (With.game.isPaused) {
+      botPaused = false
+      With.game.resumeGame()
+    } else {
+      botPaused = true
+      With.game.pauseGame()
+    }
   }
 
   def toggleGui(): Unit = {

@@ -27,7 +27,6 @@ object PurpleEventListener extends BWEventListener {
 
   override def onEnd(b: Boolean):                         Unit = { bot.foreach(_.onEnd(b)) }
   override def onFrame(): Unit = {
-    Lifecycle.Keyboard.Keyboard.drainRelayedKeys()
     bot.foreach(_.onFrame())
   }
   override def onSendText(s: String):                     Unit = { bot.foreach(_.onSendText(s)) }

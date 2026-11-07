@@ -116,6 +116,7 @@ public final class Keyboard implements NativeKeyListener {
     public static void listen(Mode keyboardMode) {
         mode = keyboardMode;
         relayDrainAllowed = (keyboardMode == Mode.BOT);
+        if (keyboardMode == Mode.BOT) startDraining();
         Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
         logger.setLevel(Level.OFF);
         logger.setUseParentHandlers(false);
@@ -132,12 +133,39 @@ public final class Keyboard implements NativeKeyListener {
         System.out.println("[keyboard] Relay file: " + KeyRelay.describe());
     }
 
-    /** Bot side: execute keys the supervisor forwarded. Call every frame; no-op when inactive. */
+    /** Bot side: execute keys the supervisor forwarded. Called every frame and by the drain daemon. */
     public static void drainRelayedKeys() {
         if (mode != Mode.BOT || !relayDrainAllowed) return;
         for (long[] code : KeyRelay.drain()) {
             dispatchRelayed((int) code[0], code.length > 1 ? (int) code[1] : 1, code.length > 2 ? code[2] : 0);
         }
+    }
+
+    private static volatile boolean draining = false;
+
+    /**
+     * Relay consumer independent of the frame loop: the game delivers no
+     * onFrame callbacks while engine-paused, so frame-driven draining would
+     * starve exactly when unpausing is needed most. Polls every 100 ms like
+     * the Atlantis relay thread.
+     */
+    public static void startDraining() {
+        if (draining) return;
+        draining = true;
+        Thread thread = new Thread(() -> {
+            while (true) {
+                try {
+                    drainRelayedKeys();
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    return;
+                } catch (RuntimeException | LinkageError e) {
+                    // Dispatch runs game code off the game thread; never let the drain die.
+                }
+            }
+        }, "key-relay-drain");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /** A press the client's own hook saw: always executes and suppresses its relayed twin. */

@@ -30,7 +30,7 @@ class PurpleWave extends DefaultBWListener {
         UmsMode.detectAndApply()
         With.grids.creep.update()
         With.geography.onStart()
-        unpauseIfPaused("onStart")
+        unpauseIfPaused()
       })})
   }
 
@@ -39,7 +39,7 @@ class PurpleWave extends DefaultBWListener {
       tryCatch(() => {
         With.performance.startFrame()
         With.onFrame()
-        if (With.frame <= 120) unpauseIfPaused("frame " + With.frame)
+        unpauseIfPaused()
         With.latency.onFrame()
         With.units.onFrame()
         // Parked while paused: the engine is frozen by togglePause, but
@@ -84,21 +84,27 @@ class PurpleWave extends DefaultBWListener {
     tryCatch(() => With.units.onUnitRenegade(unit))
   }
 
+  private var enginePauseNoticed = false
+
   /**
-   * Atlantis parity: a fresh game under Wine can sit paused (focus loss at
-   * startup arranges that), with the bot attached but doing nothing. Lift it
-   * on start and through the first seconds; never touch a pause our own
-   * toggle (or the user) put there deliberately.
+   * Atlantis parity, generalized: a paused engine with no onFrame flow looks
+   * exactly like a dead bot, and Wine can pause the game on focus loss at any
+   * time. Lift any pause we did not order ourselves; never fight our own
+   * toggle (botPaused tracks exactly the pauses we issued).
+   * Edge-triggered: one resume per fresh pause, so a game that insists on
+   * staying paused is not spammed every frame.
    */
-  private def unpauseIfPaused(where: String): Unit = {
+  private def unpauseIfPaused(): Unit = {
     try {
-      if (With.game != null && ! Keyboard.GameCommands.isBotPaused && With.game.isPaused) {
+      val foreignPause = With.game != null && With.game.isPaused && ! Keyboard.GameCommands.isBotPaused
+      if (foreignPause && ! enginePauseNoticed) {
         With.game.resumeGame()
-        With.logger.debug(f"Game was paused - sent ResumeGame ($where)")
+        With.logger.debug("Game was paused by something else - sent ResumeGame")
       }
+      enginePauseNoticed = foreignPause
     } catch { case exception: Exception => With.logger.quietlyOnException(exception) }
   }
-  
+
   override def onEnd(isWinner: Boolean): Unit = {
     tryCatch(() => {
       With.logger.debug(f"Game ended in ${?(isWinner, "victory", "defeat")}")

@@ -182,7 +182,10 @@ class SquadAttack extends Squad {
       .flatMap(x => (0 until With.mapTileHeight by 4)
         .map(y => Tile(x, y))
         .filter(t => t.walkable && With.framesSince(t.lastSeen) > Minutes(2)()))
-    Maff.minBy(tiles)(t => attackKeyDistanceTo(t.center)).map(_.center)
+    // March somewhere worth marching to: nearby tiles make followers jitter
+    // around their own feet instead of searching. 1 tile = 32 px.
+    val farEnough = tiles.filter(t => attackKeyDistanceTo(t.center) >= 32 * 16)
+    Maff.minBy(Maff.orElse(farEnough, tiles))(t => attackKeyDistanceTo(t.center)).map(_.center)
   }
 
   val otherTargets = new ArrayBuffer[UnitInfo]
