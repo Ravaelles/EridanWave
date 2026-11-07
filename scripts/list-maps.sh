@@ -3,8 +3,10 @@
 # Prints the exact relative path to pass as --map= to wine-run.sh
 # (or to java -jar PurpleWave.jar --launcher=wine --map=...).
 #
-# Usage: bash scripts/list-maps.sh [filter]
-#   filter  optional case-insensitive substring, e.g. "taucross"
+# Usage: bash scripts/list-maps.sh [--filter=<substring>|<substring>]
+#   --filter protoss   list only maps matching "protoss" (case-insensitive),
+#                      same as: bash scripts/list-maps.sh protoss
+#   Output stays grouped by folder and sorted alphabetically.
 # Env: WINEPREFIX (default ~/.wine), GAME_ROOT (default $WINEPREFIX/drive_c/sc).
 set -u
 
@@ -14,7 +16,19 @@ MAPS_DIR="$GAME_ROOT/maps"
 
 [ -d "$MAPS_DIR" ] || { echo "No maps dir: $MAPS_DIR (set GAME_ROOT?)" >&2; exit 1; }
 
-FILTER="${1:-}"
+FILTER=""
+EXPECT_VALUE=0
+for arg in "$@"; do
+  if [ "$EXPECT_VALUE" = 1 ]; then FILTER="$arg"; EXPECT_VALUE=0; continue; fi
+  case "$arg" in
+    --filter=*) FILTER="${arg#--filter=}" ;;
+    --filter) EXPECT_VALUE=1 ;;
+    -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --*) echo "Unknown option: $arg (try --help)" >&2; exit 2 ;;
+    *) FILTER="$arg" ;;
+  esac
+done
+if [ "$EXPECT_VALUE" = 1 ]; then echo "--filter needs a value" >&2; exit 2; fi
 TOTAL=0
 CURRENT_DIR=""
 
