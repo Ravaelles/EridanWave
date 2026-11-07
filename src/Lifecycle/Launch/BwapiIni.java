@@ -36,19 +36,24 @@ public final class BwapiIni {
         return null;
     }
 
+    /** Live game root with explicit Wine layout overrides (null = default). */
+    public static String defaultGameRoot(String winePrefix, String gameRoot) {
+        if (gameRoot != null && !gameRoot.trim().isEmpty()) {
+            return gameRoot.trim();
+        }
+        if (winePrefix == null || winePrefix.trim().isEmpty()) {
+            winePrefix = defaultWinePrefix();
+        }
+        return winePrefix + "/drive_c/sc";
+    }
+
     /** Live bwapi.ini with explicit Wine layout overrides (null = default). */
     public static File defaultLiveIni(String winePrefix, String gameRoot) {
         String explicit = explicitIniPath();
         if (explicit != null) {
             return new File(explicit);
         }
-        if (winePrefix == null || winePrefix.trim().isEmpty()) {
-            winePrefix = defaultWinePrefix();
-        }
-        if (gameRoot == null || gameRoot.trim().isEmpty()) {
-            gameRoot = winePrefix + "/drive_c/sc";
-        }
-        return new File(gameRoot + "/bwapi-data/bwapi.ini");
+        return new File(defaultGameRoot(winePrefix, gameRoot) + "/bwapi-data/bwapi.ini");
     }
 
     private static String defaultWinePrefix() {

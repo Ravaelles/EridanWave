@@ -46,6 +46,8 @@ object KeyboardCommands {
       case "t"          => With.configuration.trackUnit = ! With.configuration.trackUnit
       case "rewall"     => With.lambdas.add(() => if (With.placement.wall.isDefined) FindWall(With.geography.ourFoyer.zone) else With.placement.fitWall(With.geography.ourFoyer.zone))
       case "perform"    => { With.configuration.enablePerformancePauses = ! With.configuration.enablePerformancePauses; With.manners.chat("Performance stops? " + With.configuration.enablePerformancePauses) }
+      case "pause"      => Lifecycle.Keyboard.GameCommands.togglePause()
+      case s if s.startsWith("speed") => setSpeedChat(s)
 
       case _            => With.grids.parseCommand(text) || With.visualization.parseCommand(text) || With.performance.parseCommand(text)
     }
@@ -63,6 +65,28 @@ object KeyboardCommands {
   private var breakpointFodder = 1
   def breakpoint(): Unit = {
      breakpointFodder = -breakpointFodder
+  }
+
+  /**
+   * In-game speed control through BWAPI chat (no global hook involved):
+   * `speed` shows the current ladder rung, `speed <ms>` sets it,
+   * `speed <ms> <frameskip>` sets both. Same backend as the +/- hotkeys.
+   */
+  private def setSpeedChat(text: String): Unit = {
+    val parts = text.trim.split("\\s+")
+    try {
+      if (parts.length == 1) {
+        With.logger.debug(f"Speed ${Lifecycle.Keyboard.GameCommands.speedMs}ms skip ${Lifecycle.Keyboard.GameCommands.frameSkip}")
+      } else if (parts.length == 2) {
+        Lifecycle.Keyboard.GameCommands.setSpeedOnly(parts(1).toInt)
+        With.logger.debug(f"Speed ${parts(1).toInt}ms")
+      } else {
+        Lifecycle.Keyboard.GameCommands.setSpeed(parts(1).toInt, parts(2).toInt)
+        With.logger.debug(f"Speed ${parts(1).toInt}ms skip ${parts(2).toInt}")
+      }
+    } catch { case _: NumberFormatException =>
+      With.logger.debug("Usage: speed [ms] [frameskip]")
+    }
   }
 
   private def selectedUnit  : Option[FriendlyUnitInfo]  = With.units.ours.find(_.selected)

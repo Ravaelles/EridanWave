@@ -11,8 +11,9 @@ object GameCommands {
   val speedLadder: Vector[(Int, Int)] = Vector(
     (20, 0), (0, 0), (0, 10), (0, 20), (0, 40), (0, 80), (0, 150), (0, 250), (0, 500))
 
-  private var speedIndex  : Int     = 0
+  @volatile private var speedIndex  : Int     = 0
   private var guiEnabled  : Boolean = true
+  @volatile private var botPaused   : Boolean = false
 
   /**
    * Explicit default game speed from --speed= (via PURPLEWAVE_SPEED env).
@@ -26,11 +27,26 @@ object GameCommands {
 
   private def gameAvailable: Boolean = With.game != null
 
-  def setSpeed(speed: Int, frameSkip: Int): Unit = {
+  /**
+   * StarCraft needs a speed change bracketed by a short delay, otherwise the
+   * settings silently don't apply (measured in Atlantis - hence the constant).
+   * The bracket never touches the user-visible pause: it only spaces out the
+   * BWAPI calls on the calling thread.
+   */
+  private val SpeedDelayMs = 25
+  private def applySpeedAndFrameSkip(speedMs: Int, skip: Int): Unit = {
     if ( ! gameAvailable) return
-    With.game.setLocalSpeed(speed)
-    With.game.setFrameSkip(frameSkip)
-    speedIndex = nearestIndex(speed, frameSkip)
+    try { Thread.sleep(SpeedDelayMs) } catch { case _: InterruptedException => }
+    With.game.setLocalSpeed(speedMs)
+    With.game.setFrameSkip(skip)
+    With.game.setFrameSkip(skip) // Twice, like Atlantis: a single call is unreliable
+    With.game.setGUI(skip <= 150) // Huge skips turn the GUI off, like Atlantis
+    try { Thread.sleep(SpeedDelayMs) } catch { case _: InterruptedException => }
+    speedIndex = nearestIndex(speedMs, skip)
+  }
+
+  def setSpeed(speed: Int, frameSkip: Int): Unit = {
+    applySpeedAndFrameSkip(speed, frameSkip)
   }
 
   /** Change speed, keep the current frame skip. */
@@ -46,21 +62,47 @@ object GameCommands {
 
   def frameSkip: Int = speedLadder(speedIndex)._2
 
+  def speedMs: Int = speedLadder(speedIndex)._1
+
   def setPainting(on: Boolean): Unit = {
     With.configuration.visualizeDebug = on
   }
 
+  /**
+   * One step slower/faster in Atlantis units: 15ms of game speed, collapsing
+   * to a stop (0) at the fast end - and bumping the frame skip instead once
+   * already stopped. Same collapse rules as Atlantis changeSpeed/changeSpeedTo.
+   */
   def slower(): Unit = {
-    step(-1)
+    changeSpeedTo(if (speedMs == 0) 1 else speedMs + 15)
   }
 
   def faster(): Unit = {
-    step(1)
+    changeSpeedTo(if (speedMs > 1) 1 else 0)
   }
 
+  private def changeSpeedTo(requestedMs: Int): Unit = {
+    if (requestedMs <= 0) {
+      val skip = if (speedMs == 0) frameSkip + 5 else frameSkip
+      applySpeedAndFrameSkip(0, skip)
+    } else {
+      applySpeedAndFrameSkip(requestedMs, 0)
+    }
+  }
+
+  def isBotPaused: Boolean = botPaused
+
+  /**
+   * True engine pause: the game freezes mid-step with the last frame (and all
+   * our drawings) kept on screen. JBWAPI keeps delivering onFrame while the
+   * engine is paused, so the overlay below keeps refreshing and the guards in
+   * PurpleWave.onFrame keep decisions/orders parked until resume.
+   * Silent by design: no chat, no pings.
+   */
   def togglePause(): Unit = {
-    if ( ! gameAvailable) return
-    if (With.game.isPaused) With.game.resumeGame() else With.game.pauseGame()
+    if (With.game == null) return
+    botPaused = ! botPaused
+    if (botPaused) With.game.pauseGame() else With.game.resumeGame()
   }
 
   def toggleGui(): Unit = {
@@ -79,12 +121,6 @@ object GameCommands {
 
   def toggleVisualization(): Unit = {
     With.visualization.enabled = ! With.visualization.enabled
-  }
-
-  private def step(direction: Int): Unit = {
-    val next = Math.max(0, Math.min(speedLadder.length - 1, speedIndex + direction))
-    val (speed, frameSkip) = speedLadder(next)
-    setSpeed(speed, frameSkip)
   }
 
   private def nearestIndex(speed: Int, frameSkip: Int): Int = {

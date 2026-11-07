@@ -74,8 +74,8 @@ public final class UnixChaosGameLauncher implements GameLauncher {
         if (config.getJavaExe() != null) {
             command.add("--java-exe=" + config.getJavaExe());
         }
-        if (config.isHeadless()) {
-            command.add("--headless");
+        if (config.isHeadlessExplicit()) {
+            command.add(config.isHeadless() ? "--headless" : "--visible");
         }
 
         ProcessBuilder supervisor = new ProcessBuilder(command);

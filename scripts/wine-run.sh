@@ -151,6 +151,11 @@ say "Killing leftovers"
 pkill -9 -x StarCraft.exe 2>/dev/null
 pkill -9 -f "[C]haoslauncher.exe" 2>/dev/null
 pkill -9 -x java.exe 2>/dev/null
+# Stale relay keys from a killed session would all fire at game start
+# (e.g. a Pause or an Escape) - the client drains the file blindly.
+# Drop them; fresh keys arrive live. Both the current rendezvous and the
+# legacy repo-local path (pre-rendezvous builds may have left one behind).
+rm -f "$GAME_ROOT/bwapi-data/write/keys.txt" "$REPO/out/wine/keys.txt"
 for _ in $(seq 1 30); do
   if ! pgrep -x StarCraft.exe >/dev/null 2>&1 \
       && ! pgrep -f "[C]haoslauncher.exe" >/dev/null 2>&1; then break; fi
@@ -193,6 +198,15 @@ fi
 [ -n "$WIN_JAR" ] || WIN_JAR="Z:$(echo "$JAR" | tr '/' '\\')"
 say "  Windows path: $WIN_JAR"
 
+# Key relay file shared by the supervisor (repo CWD) and the client
+# (game-root CWD): the rendezvous is the live game root, valid in both
+# filename namespaces without drive-mapping assumptions (no Z: needed).
+# The client gets the absolute Windows path via -D (mirrors bwapiIni above).
+mkdir -p "$GAME_ROOT/bwapi-data/write"
+KEYS_WIN="$(winepath -w "$GAME_ROOT/bwapi-data/write/keys.txt" 2>/dev/null || true)"
+[ -n "$KEYS_WIN" ] || KEYS_WIN="C:\\sc\\bwapi-data\\write\\keys.txt"
+say "  Key relay: $GAME_ROOT/bwapi-data/write/keys.txt"
+
 CLIENT_CWD="$(pwd)"
 rm -f "$LOG_DIR/WINE_LOG" "$LOG_DIR/WINE_DEBUG" "$LOG_DIR/chaoslauncher.log"
 LIVE_OUTPUT="${LIVE_OUTPUT:-1}"
@@ -212,6 +226,7 @@ if [ "$LIVE_OUTPUT" = "1" ]; then
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
       "-Dpurplewave.bwapiIni=$WIN_INI" \
       "-Dpurplewave.keyRelay=$KEYS_WIN" \
+      "-Dpurplewave.wineClient=true" \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG") 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" >&2) < /dev/null
   CLIENT_PID=$!
@@ -221,6 +236,7 @@ else
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
       "-Dpurplewave.bwapiIni=$WIN_INI" \
       "-Dpurplewave.keyRelay=$KEYS_WIN" \
+      "-Dpurplewave.wineClient=true" \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG" > /dev/null) 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" > /dev/null) < /dev/null
   CLIENT_PID=$!

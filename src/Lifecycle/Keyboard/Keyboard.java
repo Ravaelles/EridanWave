@@ -55,14 +55,36 @@ public final class Keyboard implements NativeKeyListener {
     private static volatile boolean active;
     private static volatile Mode mode = Mode.BOT;
     private static volatile boolean exiting;
+    private static volatile int lastUnknownKeyCode = -1;
+    /**
+     * Draining the relay file needs no native hook - only {@link #listen(Mode)}
+     * having run in BOT mode. Without this the client under Wine (where hook
+     * registration can fail) would silently drop every relayed key.
+     * Never set on ladder: no launcher calls {@code listen} there.
+     */
+    private static volatile boolean relayDrainAllowed;
 
     private static final Map<Integer, KeyAction> actions = new HashMap<>();
+
+    /**
+     * One physical press reaches the client twice when both hooks are alive:
+     * instantly through the client's own hook and ~a frame later through the
+     * supervisor relay. Without dedup every toggle key (pause, camera, GUI)
+     * flips on and straight back off. A relayed press is a duplicate when a
+     * direct press of the same code happened within the window - matching
+     * consumes it, so fast mashing still executes every press.
+     */
+    private static final long DUPLICATE_WINDOW_MS = 2000;
+    private static final int MAX_TRACKED_PER_CODE = 16;
+    private static final Map<Integer, java.util.ArrayDeque<Long>> directPresses = new HashMap<>();
 
     static {
         actions.put(NativeKeyEvent.VC_ESCAPE, new ExitGame());
         actions.put(NativeKeyEvent.VC_MINUS, new SlowerGame());
+        actions.put(3658, new SlowerGame()); // NumPad "-" reports its own raw code (no VC_ exists)
         actions.put(NativeKeyEvent.VC_OPEN_BRACKET, new SlowerGame());
         actions.put(NativeKeyEvent.VC_EQUALS, new FasterGame());
+        actions.put(3662, new FasterGame()); // NumPad "+" reports its own raw code (no VC_ exists)
         actions.put(NativeKeyEvent.VC_CLOSE_BRACKET, new FasterGame());
         actions.put(NativeKeyEvent.VC_C, new ToggleCamera());
         actions.put(NativeKeyEvent.VC_P, new TogglePainting());
@@ -70,9 +92,11 @@ public final class Keyboard implements NativeKeyListener {
         actions.put(NativeKeyEvent.VC_SPACE, new PauseGame());
         actions.put(NativeKeyEvent.VC_BACKQUOTE, new PauseGame());
         actions.put(NativeKeyEvent.VC_PAUSE, new PauseGame());
-        // Both Ctrl keys report VC_CONTROL (left/right told apart only by
-        // getKeyLocation, which the registry ignores on purpose).
+        // Both Ctrl keys report VC_CONTROL (left, 29); right Ctrl reports its
+        // own raw code 3665 instead (measured - which is why a location-based
+        // gate would kill it). Same shapes as Atlantis dispatches on.
         actions.put(NativeKeyEvent.VC_CONTROL, new PauseGame());
+        actions.put(3665, new PauseGame());
         actions.put(NativeKeyEvent.VC_1, new Speed1());
         actions.put(NativeKeyEvent.VC_2, new Speed2());
         actions.put(NativeKeyEvent.VC_3, new Speed3());
@@ -91,6 +115,7 @@ public final class Keyboard implements NativeKeyListener {
     /** Start the global hook. Safe to call when no display exists: shortcuts just stay dead. */
     public static void listen(Mode keyboardMode) {
         mode = keyboardMode;
+        relayDrainAllowed = (keyboardMode == Mode.BOT);
         Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
         logger.setLevel(Level.OFF);
         logger.setUseParentHandlers(false);
@@ -98,19 +123,59 @@ public final class Keyboard implements NativeKeyListener {
             GlobalScreen.registerNativeHook();
         } catch (NativeHookException e) {
             System.err.println("[keyboard] Global hook unavailable (" + e.getMessage() + "); shortcuts disabled.");
+            System.err.println("[keyboard] Relay file: " + KeyRelay.describe());
             return;
         }
         GlobalScreen.addNativeKeyListener(new Keyboard());
         active = true;
         System.out.println("[keyboard] Global shortcuts active (" + keyboardMode + ").");
+        System.out.println("[keyboard] Relay file: " + KeyRelay.describe());
     }
 
     /** Bot side: execute keys the supervisor forwarded. Call every frame; no-op when inactive. */
     public static void drainRelayedKeys() {
-        if (!active || mode != Mode.BOT) return;
-        for (int[] code : KeyRelay.drain()) {
-            dispatch(code[0], code.length > 1 ? code[1] : 1);
+        if (mode != Mode.BOT || !relayDrainAllowed) return;
+        for (long[] code : KeyRelay.drain()) {
+            dispatchRelayed((int) code[0], code.length > 1 ? (int) code[1] : 1, code.length > 2 ? code[2] : 0);
         }
+    }
+
+    /** A press the client's own hook saw: always executes and suppresses its relayed twin. */
+    static void dispatchDirect(int keyCode, int keyLocation) {
+        recordDirectPress(keyCode, System.currentTimeMillis());
+        dispatch(keyCode, keyLocation);
+    }
+
+    /** A press the supervisor relayed: dropped when it duplicates a direct press. */
+    static void dispatchRelayed(int keyCode, int keyLocation, long relayMillis) {
+        if (relayMillis > 0 && consumeDirectTwin(keyCode, relayMillis)) return;
+        dispatch(keyCode, keyLocation);
+    }
+
+    private static void recordDirectPress(int keyCode, long now) {
+        java.util.ArrayDeque<Long> presses = directPresses.get(keyCode);
+        if (presses == null) {
+            presses = new java.util.ArrayDeque<>();
+            directPresses.put(keyCode, presses);
+        }
+        presses.addLast(now);
+        while (presses.size() > MAX_TRACKED_PER_CODE) presses.removeFirst();
+    }
+
+    private static boolean consumeDirectTwin(int keyCode, long relayMillis) {
+        java.util.ArrayDeque<Long> presses = directPresses.get(keyCode);
+        if (presses == null) return false;
+        java.util.Iterator<Long> it = presses.iterator();
+        while (it.hasNext()) {
+            long directMillis = it.next();
+            if (directMillis < relayMillis - DUPLICATE_WINDOW_MS) {
+                it.remove();
+            } else if (Math.abs(directMillis - relayMillis) <= DUPLICATE_WINDOW_MS) {
+                it.remove();
+                return true;
+            }
+        }
+        return false;
     }
 
     static void dispatch(int keyCode, int keyLocation) {
@@ -126,6 +191,9 @@ public final class Keyboard implements NativeKeyListener {
             } catch (LinkageError | RuntimeException e) {
                 if (!exiting) throw e;
             }
+        } else if (keyCode != lastUnknownKeyCode) {
+            lastUnknownKeyCode = keyCode;
+            System.out.println("[keyboard] No action for key code " + keyCode + " (location " + keyLocation + ").");
         }
     }
 
@@ -142,9 +210,16 @@ public final class Keyboard implements NativeKeyListener {
         return active;
     }
 
+    /** One-line launch diagnostic for the bot log: mode, hook, drain, relay path. */
+    public static String status() {
+        return "mode=" + mode + " hook=" + (active ? "up" : "down")
+            + " drain=" + (mode == Mode.BOT && relayDrainAllowed ? "on" : "off")
+            + " relay=" + KeyRelay.describe();
+    }
+
     @Override
     public void nativeKeyPressed(NativeKeyEvent e) {
-        dispatch(e.getKeyCode(), e.getKeyLocation());
+        dispatchDirect(e.getKeyCode(), e.getKeyLocation());
     }
 
     @Override
