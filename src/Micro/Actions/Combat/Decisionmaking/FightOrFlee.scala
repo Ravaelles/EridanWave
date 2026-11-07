@@ -30,6 +30,11 @@ object FightOrFlee extends Action {
 
     val berzerkCutoff = Minutes(6)()
 
+    // A unit with no weapon and no spells can contribute nothing by engaging:
+    // never let it pick the Fight technique (it would approach enemies it
+    // cannot harm and flip-flop with Walk). It still follows the army via
+    // Walk and still runs away via Flee - only the engage path is closed.
+    decide(false, "Pacifist", () => ! u.canAttack && ! u.unitClass.castsSpells)
     decide(false, "CantFight",  () => ! u.intent.canFight)
     decide(true,  "CantFlee",   () => ! u.intent.canFlee)
     decide(true,  "Static",     () => ! u.canMove)
