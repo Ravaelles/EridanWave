@@ -1,0 +1,132 @@
+@startuml PurpleWave - layers and decision flow
+' Illustrative architecture diagram, not an implementation UML model:
+' no aggregations, cardinalities, or exhaustive dependencies - only the main
+' modules and what flows between them during a game frame.
+' Source of truth: docs/Architecture.md + code in src/
+
+skinparam topToBottomDirection true
+skinparam packageStyle rectangle
+skinparam defaultFontSize 13
+skinparam roundCorner 8
+skinparam shadowing false
+skinparam linetype ortho
+
+title PurpleWave (EridanWave) - how the system works
+
+package "Frame loop" as Frame #F2F2F2 {
+  [Main.main] as Main
+  [PurpleBWClient\nJBWAPI, max 30ms/frame] as Client
+  [PurpleWave.onStart / onFrame] as Loop
+  [TaskQueueGlobal\nMicro=55 Battles=35 Planning=6] as Queue
+
+  Main --> Client : startGame
+  Client --> Loop : onStart / onFrame
+  Loop --> Queue : tasks.run()
+}
+
+rectangle "With\ncentral game state\n(self, enemy, strategy, bank,\nscheduler, squads, blackboard...)" as With #FFF2CC
+
+[StarCraft\nBWAPI] as BWAPI
+
+package "Decision layers (top -> bottom)" as Layers {
+  package "Strategery\nWHAT to play?" as Strategery #E2EFDA {
+    [Strategist.update()\n+ StrategyDatabase] as Strategist
+    [Playbook / Policy\nGreedy, Tournament, Dynamic] as Playbook
+    [Strategy / StrategyBranch\nPvPGateCore, PvPDT, PvPRobo...] as Strategy
+    [PvPOpening / PvPLateGame\npicked via ModalGameplan] as PvPNote
+
+    Playbook --> Strategist : chooseBranch()
+    Strategist --> Strategy : strategiesSelected\n+ swapIn/swapOut mid-game
+    Strategy .. PvPNote : PvP branch example
+  }
+
+  package "Planning\nWHICH build order?" as Planning #DDEBF7 {
+    [Plan.update()\n= prioritize + onUpdate] as Plan
+    [StandardGameplan\nProtossVsProtoss (Modal)] as StdPlan
+    [MacroActions\nget / pump / expand\nattack / harass / scout] as MacroActions
+
+    Plan --> StdPlan : first incomplete mode
+    StdPlan --> MacroActions : only declares demand\nno unit orders
+  }
+
+  package "Macro\nWHAT to produce?" as Macro #FCE4D6 {
+    [Scheduler\nRequestBuildable buffer] as Scheduler
+    [Bank\nwho gets minerals/gas] as Bank
+    [MacroSim\nqueue simulation] as MacroSim
+    [Produce*\nCommander.build/train] as Produce
+
+    MacroActions --> Scheduler : RequestBuildable
+    Scheduler --> MacroSim : simulate income/prod.
+    MacroSim --> Bank : feasible queue
+    Bank --> Produce : real production orders
+  }
+
+  package "Tactic\nWHO does it?" as Tactic #E4DFEC {
+    [Tactician.onRun()\nmissions + defense + attack] as Tactician
+    [Squad / Mission\nKillExpansion, Drop, Reaver...] as Squad
+    [Intention\n1 order per unit/frame] as Intention
+
+    Tactician --> Squad : recruit + SquadAttack/Defend
+    Squad --> Intention : unit.intend(tactic)
+  }
+
+  package "Micro\nHOW does one unit fight?" as Micro #DAEEF3 {
+    [Agent.execute()\nintent -> action] as Agent
+    [Combat\nstate machine] as Combat
+    [Target.choose()\n+ FightOrFlee.shouldFight] as Target
+    [Commander\nONLY place with bwapiUnit.*] as Commander
+
+    Intention --> Agent : intent.*
+    Agent --> Combat : Fight/Walk/Flee/Aim...
+    Combat --> Target : threats, sim vs skim
+    Combat --> Commander : move/attack/gather
+  }
+
+  Strategery --> Planning : selected strategy\n+ gameplan
+  Planning --> Macro : demand (MacroActions)
+  Macro --> Tactic : ready units\n(Recruiter / LockUnits)
+  Tactic --> Micro : Intention per frame
+}
+
+package "World model (read by everyone)" as World #E2EFDA {
+  [UnitInfo / UnitClass\nsnapshot + geometry + costs] as UnitInfo
+  [Battles + Simulation\nfight forecast] as Battles
+  [Grids / Geography\nZone, Base, Expansions] as Geo
+  [Fingerprints\nenemy build detectors\ntwoGate, robo, dtRush...] as Fprints
+  [Maff / Points / Physics\nmath + force fields] as Math
+}
+
+package "Support" as Infra #F2F2F2 {
+  [Placement\nTemplate + WallFinder] as Placement
+  [Performance\nTimedTask + ms budgets] as Perf
+  [Debugging\nViz + Storyteller + Camera] as Debug
+}
+
+Commander --> BWAPI : game order
+
+' Frame flow through the layers
+Queue --> Strategery : 1. strategy
+Queue --> Planning : 2. gameplan
+Queue --> Micro : 3. micro last
+
+' World model feeds decisions (dotted = read, not call)
+Fprints ..> Strategery : enemyStrategy()\nwhitelist/blacklist
+Fprints ..> Planning : scout + swapIn/swapOut\ne.g. swapFromDT
+Battles ..> Micro : shouldFight?\nmatchups, threats
+Geo ..> Tactic : our/their bases\nfoyer, natural
+UnitInfo ..> Layers : unit state
+Math ..> Micro : Force + pathing
+
+' With as the glue
+With ..> Layers : everyone reads/writes
+With ..> World : subsystem owner
+Placement ..> Macro : tile reservations\n(LockTiles)
+Perf ..> Queue : ms budget,\nskip up to 6 frames
+
+note bottom of Layers
+  Rule: no layer issues unit orders
+  except Commander. Gameplan only requests (get/pump),
+  Tactician assigns (Intention), Micro executes.
+end note
+
+@enduml
