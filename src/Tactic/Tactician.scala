@@ -163,7 +163,10 @@ final class Tactician extends TimedTask {
 
     // If we want to attack and enough freelancers remain, populate the attack squad
     // TODO: If the attack goal is the enemy army, and we have a defense squad handling it, skip this step
-    if (With.blackboard.wantToAttack() && (With.blackboard.yoloing() || freelancerValue >= freelancerValueInitial * .7)) {
+    // On UMS maps there are no bases to defend and no macro call to attack,
+    // so the squad would starve: units stay squadless with UmsMode termini and
+    // nobody (HuntContact, detectors, formations) owns them. Staff it anyway.
+    if ((With.blackboard.wantToAttack() || With.umsMode) && (With.blackboard.yoloing() || freelancerValue >= freelancerValueInitial * .7)) {
       val attackQualities = attackSquad.qualityCounter.qualitiesEnemy
       // Let's set the attack squad up for success
       if (MacroFacts.enemyHasShown(Terran.MachineShop, Terran.Vulture, Terran.SpiderMine, Terran.SiegeTankUnsieged, Terran.SiegeTankSieged)) {

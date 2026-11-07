@@ -19,6 +19,11 @@ class SquadAttack extends Squad {
 
   var mode: AttackMode = PushMain
 
+  // HuntContact marches to contact: act as if the squad agreed to fight.
+  // Without this, movement (terminus, formations, targets) falls back to
+  // retreat while the mode says advance - and the squad shudders in place.
+  override def fightConsensus: Boolean = super.fightConsensus || mode == HuntContact
+
   // Hunt latch (UMS contact loss): a steady destination instead of a target
   // recomputed every frame. Without it the squad - observers first - darts
   // between places nobody ever reaches.
