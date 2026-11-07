@@ -69,6 +69,7 @@ object ConfigurationLoader {
       val debugging     = getOrDefault(config, "debugging",     false)
       val debugginglive = getOrDefault(config, "debugginglive", false)
       val simviz        = getOrDefault(config, "simviz",        false)
+      val cherryVis       = getOrDefault(config, "cherryvis",       false)
       val logstd        = getOrDefault(config, "logstd",        false)
       val multiCPU      = getOrDefault(config, "multiCPU",      true)
       val randomStrategy = getOrDefault(config, "strategySelectionRandom", false)
@@ -82,6 +83,8 @@ object ConfigurationLoader {
       With.configuration.frameTargetMs = frameMsTarget
       With.configuration.frameLimitMs = frameMsLimit
       With.configuration.simviz = simviz
+      With.configuration.cherryVis = cherryVis
+      With.configuration.cherryVis = cherryVisFlagOverride().getOrElse(With.configuration.cherryVis)
       With.configuration.auditFormationPaths = getOrDefault(config, "auditFormationPaths", false)
       With.configuration.logCombatForecasts = getOrDefault(config, "logCombatForecasts", false)
 
@@ -117,6 +120,7 @@ object ConfigurationLoader {
         ("Debugging",       debugging.toString),
         ("DebuggingLive",   debugginglive.toString),
         ("SimViz",          simviz.toString),
+        ("CherryVis",       With.configuration.cherryVis.toString),
         ("Log stdout",      logstd.toString),
         ("Random strategy", randomStrategy.toString),
         ("Frame MS target", frameMsTarget),
@@ -134,6 +138,26 @@ object ConfigurationLoader {
   private def setLadderMode(): Unit = {
     config.historyHalfLife    = 40
     config.recentFingerprints = 4
+  }
+
+  /**
+   * Explicit --cherryvis control travels outside the config file:
+   * JVM property (same-JVM launch) wins over the environment (Wine/scripts),
+   * which wins over the JSON value. Accepts 1/true/yes and 0/false/no;
+   * garbage warns and keeps the JSON value.
+   */
+  private def cherryVisFlagOverride(): Option[Boolean] = {
+    val fromProperty  = Option(System.getProperty("purplewave.cherryvis"))
+    val fromEnv       = scala.sys.env.get("PURPLEWAVE_CHERRYVIS")
+    fromProperty.orElse(fromEnv).flatMap(raw => {
+      raw.trim.toLowerCase match {
+        case "1" | "true" | "yes" => Some(true)
+        case "0" | "false" | "no" => Some(false)
+        case _ =>
+          With.logger.warn(f"Ignoring invalid CherryVis flag value: $raw (want 1/true/yes or 0/false/no)")
+          None
+      }
+    })
   }
 
   private def setEliminationMode(): Unit = {

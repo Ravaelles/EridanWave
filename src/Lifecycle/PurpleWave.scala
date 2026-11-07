@@ -21,6 +21,7 @@ class PurpleWave extends DefaultBWListener {
     timeFrameZero(() => {
       tryCatch(() => {
         With.onStart()
+        Debugging.CherryVis.CherryVis.initialize()
         Walls.logInfo = With.configuration.logstd
         JBWEBWrapper.onStart()
         With.history.onStart()
@@ -45,6 +46,7 @@ class PurpleWave extends DefaultBWListener {
         With.tasks.run(With.performance.msBeforeTarget)
         With.efficiency.update()
         With.storyteller.onFrame()
+        Debugging.CherryVis.CherryVis.update()
         // Ladder map diagnostics; meaningless (and baseless-crashy) on UMS maps.
         if ( ! With.umsMode) WriteMapCSV()
         With.performance.endFrame()
@@ -83,6 +85,7 @@ class PurpleWave extends DefaultBWListener {
       With.storyteller.onEnd()
       With.simulation.onEnd()
       With.manners.onEnd(isWinner)
+      Debugging.CherryVis.CherryVis.finish(isWinner)
       // Terminate the combat visualizer if we launched it at start
       try { if (With.configuration != null && With.configuration.debugging && With.configuration.simviz) Debugging.CombatVisIO.terminateVisualizer() } catch { case exception: Exception => With.logger.quietlyOnException(exception) }
       With.logger.flush()

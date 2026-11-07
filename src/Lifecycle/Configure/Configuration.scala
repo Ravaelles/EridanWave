@@ -24,6 +24,7 @@ class Configuration {
   var visualizeDebug    = false
   var debugging         = false
   var simviz            = false
+  var cherryVis         = true
   var auditFormationPaths = false
   var logCombatForecasts = false
   var detectBreakpoints = false

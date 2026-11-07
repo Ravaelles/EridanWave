@@ -15,7 +15,14 @@ package Lifecycle.Launch;
  *   <li>{@code --enemy-race=...} enemy race (written to bwapi.ini).</li>
  *   <li>{@code --game-type=MELEE|USE_MAP_SETTINGS} overrides the map-family default.</li>
   *   <li>{@code --speed=&lt;0-1000&gt;} default game speed (20 if absent; keyboard presets still work).</li>
+ *   <li>{@code --cherryvis[=&lt;bool&gt;]} write the CherryVis viewer trace
+ *       (default {@code true}). Accepts {@code 1/true/yes} and
+ *       {@code 0/false/no} (case-insensitive); {@code --no-cherryvis}
+ *       disables it.</li>
  *   <li>{@code --headless} run the Wine session on Xvfb :99 (nothing on :0).</li>
+ *   <li>{@code --visible} run on the current X display instead.
+ *       Explicit visibility is forwarded to {@code wine-run.sh}; without an
+ *       explicit flag the script default (headless) applies.</li>
  *   <li>{@code --jar=&lt;path&gt;} bot jar for the Wine client (default
  *       {@code target/PurpleWave-1.0.jar} under the repo root).</li>
  *   <li>{@code --wine-prefix=&lt;path&gt;} (default {@code ~/.wine}).</li>
@@ -44,6 +51,8 @@ public final class LaunchConfig {
     private String gameType;
     private Integer speed;
     private boolean headless;
+    private boolean headlessExplicit;
+    private Boolean cherryvis;
     private String jar;
     private String winePrefix;
     private String gameRoot;
@@ -79,10 +88,21 @@ public final class LaunchConfig {
                     config.gameType = arg.substring("--game-type=".length()).trim().toUpperCase();
                 } else if (arg.startsWith("--speed=")) {
                     config.speed = parseSpeed(arg.substring("--speed=".length()));
+                } else if (arg.equals("--cherryvis")) {
+                    config.cherryvis = true;
+                } else if (arg.equals("--no-cherryvis")) {
+                    config.cherryvis = false;
+                } else if (arg.startsWith("--cherryvis=")) {
+                    config.cherryvis = parseFlagBoolean(arg.substring("--cherryvis=".length()), "--cherryvis");
                 } else if (arg.equals("--headless")) {
                     config.headless = true;
+                    config.headlessExplicit = true;
+                } else if (arg.startsWith("--headless=")) {
+                    config.headless = parseFlagBoolean(arg.substring("--headless=".length()), "--headless");
+                    config.headlessExplicit = true;
                 } else if (arg.equals("--visible")) {
                     config.headless = false;
+                    config.headlessExplicit = true;
                 } else if (arg.startsWith("--jar=")) {
                     config.jar = arg.substring("--jar=".length()).trim();
                 } else if (arg.startsWith("--wine-prefix=")) {
@@ -116,6 +136,22 @@ public final class LaunchConfig {
         throw new IllegalArgumentException("Unknown race: " + value + " (Protoss|Terran|Zerg|Random)");
     }
 
+    /**
+     * Lenient true/false parsing shared by all boolean flags.
+     * Accepts {@code 1/true/yes} and {@code 0/false/no}, case-insensitive.
+     */
+    public static boolean parseFlagBoolean(String value, String flag) {
+        String normalized = value == null ? "" : value.trim().toLowerCase();
+        if (normalized.equals("1") || normalized.equals("true") || normalized.equals("yes")) {
+            return true;
+        }
+        if (normalized.equals("0") || normalized.equals("false") || normalized.equals("no")) {
+            return false;
+        }
+        throw new IllegalArgumentException(
+            "Not a boolean: " + flag + "=" + value + " (1/true/yes or 0/false/no)");
+    }
+
     private static Integer parseSpeed(String value) {
         try {
             int speed = Integer.parseInt(value.trim());
@@ -133,6 +169,7 @@ public final class LaunchConfig {
         System.out.println("  java -jar PurpleWave.jar [--launcher=none|chaos|wine] [--map=<name>]");
         System.out.println("      [--race=Protoss|Terran|Zerg|Random] [--enemy-race=...]");
         System.out.println("      [--game-type=MELEE|USE_MAP_SETTINGS] [--speed=0-1000] [--headless] [--jar=<path>]");
+        System.out.println("      [--cherryvis[=1|true|yes|0|false|no]] [--no-cherryvis]");
         System.out.println("      [--wine-prefix=<path>] [--game-root=<path>] [--java-exe=<path>]");
         System.out.println("      [--bwapi-ini=<path>] [--chaoslauncher-exe=<path>]");
         System.out.println("No arguments = today's behaviour: attach straight to the running game.");
@@ -168,6 +205,27 @@ public final class LaunchConfig {
 
     public boolean isHeadless() {
         return headless;
+    }
+
+    /**
+     * True when --headless/--headless=/--visible was passed explicitly.
+     * Without it the supervisor forwards nothing and the script default
+     * (headless) applies, so an explicit --visible actually arrives.
+     */
+    public boolean isHeadlessExplicit() {
+        return headlessExplicit;
+    }
+
+    /**
+     * Effective value: true unless explicitly disabled. Null means the flag
+     * was never passed, so the config file / environment still decide.
+     */
+    public boolean isCherryVis() {
+        return cherryvis == null || cherryvis;
+    }
+
+    public boolean isCherryVisExplicit() {
+        return cherryvis != null;
     }
 
     public String getJar() {

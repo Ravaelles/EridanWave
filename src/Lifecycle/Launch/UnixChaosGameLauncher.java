@@ -59,6 +59,9 @@ public final class UnixChaosGameLauncher implements GameLauncher {
         if (config.getSpeed() != null) {
             command.add("--speed=" + config.getSpeed());
         }
+        if (config.isCherryVisExplicit()) {
+            command.add("--cherryvis=" + config.isCherryVis());
+        }
         if (config.getJar() != null) {
             command.add("--jar=" + config.getJar());
         }

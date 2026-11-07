@@ -75,6 +75,7 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
     val newIntent = ?(intent.frameCreated >= With.frame, intent, new Intention)
     _client = intendingClient
     _intent = newIntent
+    Debugging.CherryVis.CherryVis.noteOwner(id, intendingClient)
     _intent
   }
 

@@ -18,6 +18,8 @@
 #   --game-type=<type>  MELEE|USE_MAP_SETTINGS (default: scenario content maps
 #                         get USE_MAP_SETTINGS, everything else MELEE)
 #   --speed=<0-1000>    default game speed (20 if absent; keyboard presets still work)
+#   --cherryvis[=bool] write the CherryVis viewer trace, 1/true/yes or
+#                       0/false/no (default: enabled). --no-cherryvis disables.
 #   --jar=<path>        bot jar (default: <repo>/target/PurpleWave-1.0.jar)
 #   --headless          Xvfb on :99, nothing ever maps on :0 (default)
 #   --visible           run on the current X display instead of Xvfb
@@ -43,7 +45,14 @@ LOG_DIR="${LOG_DIR:-$REPO/out/wine}"
 WINE_RUNS_DIR="$REPO/out/wine_runs"
 REPLAYS_DIR="${REPLAYS_DIR:-/sc-ai/REPLAYS}"
 
-MAP=""; RACE=""; ENEMY_RACE=""; GAME_TYPE=""; SPEED=""; BUILD=1
+MAP=""; RACE=""; ENEMY_RACE=""; GAME_TYPE=""; SPEED=""; BUILD=1; CHERRYVIS="true"
+parse_bool() {
+  case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
+    1|true|yes) echo true ;;
+    0|false|no) echo false ;;
+    *) echo "[wine-run] ignoring invalid boolean for $2: $1 (want 1/true/yes or 0/false/no)" >&2; echo "$3" ;;
+  esac
+}
 for arg in "$@"; do
   case "$arg" in
     --map=*) MAP="${arg#--map=}" ;;
@@ -51,6 +60,9 @@ for arg in "$@"; do
     --enemy-race=*) ENEMY_RACE="${arg#--enemy-race=}" ;;
     --game-type=*) GAME_TYPE="${arg#--game-type=}" ;;
     --speed=*) SPEED="${arg#--speed=}" ;;
+    --cherryvis) CHERRYVIS="true" ;;
+    --no-cherryvis) CHERRYVIS="false" ;;
+    --cherryvis=*) CHERRYVIS="$(parse_bool "${arg#--cherryvis=}" "--cherryvis" "$CHERRYVIS")" ;;
     --jar=*) JAR="${arg#--jar=}" ;;
     --headless) HIDDEN=1 ;;
     --visible) HIDDEN=0 ;;
@@ -189,21 +201,26 @@ LIVE_OUTPUT="${LIVE_OUTPUT:-1}"
 # up, which is its normal idle state. -Dos.name="Windows 10" is what makes
 # JBWAPI pick the W32 shared-memory backend under Wine.
 # An explicit --speed= travels as PURPLEWAVE_SPEED (see GameCommands.initialSpeed).
+# --cherryvis= travels as PURPLEWAVE_CHERRYVIS=1/0 (see ConfigurationLoader).
 SPEED_ENV=()
 [ -n "${SPEED:-}" ] && SPEED_ENV=(PURPLEWAVE_SPEED="$SPEED")
+CVIS_ENV=()
+if [ "$CHERRYVIS" = "true" ]; then CVIS_ENV=(PURPLEWAVE_CHERRYVIS=1); else CVIS_ENV=(PURPLEWAVE_CHERRYVIS=0); fi
 if [ "$LIVE_OUTPUT" = "1" ]; then
-  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" \
+  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
       "-Dpurplewave.bwapiIni=$WIN_INI" \
+      "-Dpurplewave.keyRelay=$KEYS_WIN" \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG") 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" >&2) < /dev/null
   CLIENT_PID=$!
 else
-  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" \
+  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
       "-Dpurplewave.bwapiIni=$WIN_INI" \
+      "-Dpurplewave.keyRelay=$KEYS_WIN" \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG" > /dev/null) 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" > /dev/null) < /dev/null
   CLIENT_PID=$!

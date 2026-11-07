@@ -89,6 +89,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
     toBoard   = unit.intent.toBoard.orElse(toBoard)
     toNuke    = unit.intent.toNuke
     if ( ! combat.tryDodge()) unit.intent.action(unit)
+    Debugging.CherryVis.CherryVis.noteBehavior(unit.id, unit.intent.action)
   }
 
   /////////////

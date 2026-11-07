@@ -70,6 +70,7 @@
                         <configuration>
                             <sources>
                                 <source>3rdparty/jbwapi/src/main/java</source>
+                                <source>3rdparty/cherryvis/src/main/java</source>
                                 <source>3rdparty/javajps/src/main/java</source>
                                 <source>3rdparty/jbweb/src/main/java</source>
                                 <source>3rdparty/mjson/src/java</source>

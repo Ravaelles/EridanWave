@@ -100,6 +100,7 @@ package "Support" as Infra #F2F2F2 {
   [Placement\nTemplate + WallFinder] as Placement
   [Performance\nTimedTask + ms budgets] as Perf
   [Debugging\nViz + Storyteller + Camera] as Debug
+  [CherryVis\ntrace lib + facade\nwrite once at game end] as CherryVis
 }
 
 Commander --> BWAPI : game order
@@ -122,6 +123,8 @@ With ..> Layers : everyone reads/writes
 With ..> World : subsystem owner
 Placement ..> Macro : tile reservations\n(LockTiles)
 Perf ..> Queue : ms budget,\nskip up to 6 frames
+CherryVis ..> Tactic : owner history\n(intend hook)
+CherryVis ..> Micro : behavior history\n(Agent hook)
 
 note bottom of Layers
   Rule: no layer issues unit orders

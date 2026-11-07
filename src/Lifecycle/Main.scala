@@ -34,6 +34,12 @@ object Main {
       LaunchConfig.printHelp()
       return
     }
+    // Explicit --cherryvis/--no-cherryvis wins over the config file and the
+    // environment. A system property is the in-process channel (same JVM);
+    // the Wine path travels separately via wine-run.sh -> PURPLEWAVE_CHERRYVIS.
+    if (launch.isCherryVisExplicit) {
+      System.setProperty("purplewave.cherryvis", launch.isCherryVis.toString)
+    }
     GameLauncherFactory.forConfig(launch).launch(launch)
     try {
       PurpleBWClient.startGame(jbwapiConfiguration)

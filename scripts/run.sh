@@ -14,6 +14,7 @@
 #                       (find names with: bash scripts/list-maps.sh [filter])
 # Optional parameters (sane defaults apply, see --help for the full list):
 #   --race, --enemy-race, --game-type, --speed, --headless, --visible,
+#   --cherryvis / --no-cherryvis,
 #   --jar, --wine-prefix, --game-root, --java-exe, --bwapi-ini, --no-build
 set -u
 
