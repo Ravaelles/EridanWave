@@ -19,6 +19,12 @@ class SquadAttack extends Squad {
 
   var mode: AttackMode = PushMain
 
+  // Hunt latch (UMS contact loss): a steady destination instead of a target
+  // recomputed every frame. Without it the squad - observers first - darts
+  // between places nobody ever reaches.
+  private var huntPixel   : Option[Pixel] = None
+  private var huntSetFrame: Int           = 0
+
   override def launch(): Unit = {} // This squad receives its units from Tactician
   override def toString: String = f"$mode ${vicinity.base.map(_.name).getOrElse(vicinity.zone.name).take(4)}"
 
@@ -111,6 +117,13 @@ class SquadAttack extends Squad {
         Maff.maxBy(With.geography.enemyBases.map(_.heart))(_.groundPixels(With.scouting.enemyMuscleOrigin)).getOrElse(With.scouting.enemyHome).center,
         SquadAutomation.rankedAround(this))
 
+    } else if (huntDestination.isDefined) {
+
+      setMode(
+        HuntContact,
+        huntDestination.get,
+        SquadAutomation.rankedAround(this))
+
     } else {
 
       val target =
@@ -133,6 +146,43 @@ class SquadAttack extends Squad {
     }
 
     mode
+  }
+
+  // Contact-loss hunt (UMS): no visible enemies and nowhere to push.
+  // Heads for the freshest last-seen position first (Atlantis HuntLastContact),
+  // then sweeps unseen tiles, latching the destination until reached, expired,
+  // or superseded by newer contact - so the squad walks somewhere instead of
+  // milling around, and followers stop flip-flopping between termini.
+  private def huntDestination: Option[Pixel] = {
+    if ( ! shouldHuntContact) return None
+    val contact = freshestFoggedContact
+    val stale   = huntPixel.isEmpty || huntReached || huntExpired || contact.exists(_.lastSeen > huntSetFrame)
+    if (stale) {
+      huntPixel     = contact.map(_.pixel).orElse(newUnseenTile)
+      huntSetFrame  = With.frame
+    }
+    huntPixel
+  }
+
+  private def shouldHuntContact: Boolean =
+    With.umsMode &&
+    With.units.enemy.forall(! _.visible)
+
+  private def freshestFoggedContact: Option[UnitInfo] =
+    Maff.maxBy(With.units.enemy.filter(e => ! e.visible && With.framesSince(e.lastSeen) < Minutes(3)()))(_.lastSeen)
+
+  private def huntReached: Boolean =
+    huntPixel.exists(p => units.exists(_.pixelDistanceCenter(p) < 32 * 6))
+
+  private def huntExpired: Boolean =
+    With.framesSince(huntSetFrame) > Minutes(2)()
+
+  private def newUnseenTile: Option[Pixel] = {
+    val tiles = (0 until With.mapTileWidth by 4)
+      .flatMap(x => (0 until With.mapTileHeight by 4)
+        .map(y => Tile(x, y))
+        .filter(t => t.walkable && With.framesSince(t.lastSeen) > Minutes(2)()))
+    Maff.minBy(tiles)(t => attackKeyDistanceTo(t.center)).map(_.center)
   }
 
   val otherTargets = new ArrayBuffer[UnitInfo]

@@ -47,9 +47,10 @@ final class UnitTracker {
       With.scouting.onUnitBirthTimings(newUnit)
     }
   }
-  private def kill(id: Int): Unit = {
+  private def kill(id: Int, countDeath: Boolean = true): Unit = {
     getId(id).foreach(unit => {
       bufferHistoric.add(new HistoricalUnitInfo(unit))
+      if (countDeath) Information.Battles.KillLedger.noteDeath(unit)
       unit.friendly.foreach(bufferFriendly.remove)
       unit.foreign.filter(_.isEnemy).foreach(bufferEnemy.remove)
       unit.foreign.filter(_.isNeutral).foreach(bufferNeutral.remove)
@@ -63,6 +64,7 @@ final class UnitTracker {
     With.game.getAllUnits.asScala.foreach(u => if (units(u.getID).isEmpty) { birth(u) })
   }
   def onStart(): Unit = {
+    Information.Battles.KillLedger.reset()
     birthAll()
   }
   def onFrame(): Unit = {
@@ -102,7 +104,7 @@ final class UnitTracker {
     deadForeignIds.clear()
   }
   def onUnitRenegade(bwapiUnit: bwapi.Unit): Unit = {
-    kill(bwapiUnit.getID)
+    kill(bwapiUnit.getID, countDeath = false)
     birth(bwapiUnit)
   }
   def onUnitDestroy(bwapiUnit: bwapi.Unit): Unit = {

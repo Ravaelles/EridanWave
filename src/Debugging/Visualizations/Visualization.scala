@@ -37,6 +37,7 @@ class Visualization extends TimedTask {
     ShowJudgment,
     ShowProduction,
     ShowEfficiency,
+    ShowKillLedger,
 
     //ShowMutalisks,
     //ShowFlowField,
@@ -74,6 +75,7 @@ class Visualization extends TimedTask {
     ShowIgnorance,
     ShowJudgment,
     ShowKills,
+    ShowKillLedger,
     ShowMacroSim,
     ShowHealthAndCooldown,
     ShowMutalisks,

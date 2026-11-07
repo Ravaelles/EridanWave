@@ -11,4 +11,5 @@ object AttackModes {
   object ContainArmy  extends AttackMode { override val toString = "Contain"  }
   object Backstab     extends AttackMode { override val toString = "Backstab" }
   object ClearMap     extends AttackMode { override val toString = "Clear"    }
+  object HuntContact  extends AttackMode { override val toString = "Hunt"     }
 }
