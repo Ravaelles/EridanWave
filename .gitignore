@@ -19,6 +19,8 @@
 /artifacts/
 /images/
 /out/
+# Runtime BWAPI data (created by scripts/wine-run.sh; never commit local runs)
+/bwapi-data/
 /outputs/
 /target/
 dependency-reduced-pom.xml

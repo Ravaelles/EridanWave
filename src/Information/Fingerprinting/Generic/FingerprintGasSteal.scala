@@ -10,5 +10,8 @@ class FingerprintGasSteal extends Fingerprint {
   override def lockAfter: Int = Minutes(5)()
   override def reason: String = f"Stolen: [${stolenGas.mkString(", ")}]"
   override val sticky = true
-  protected def stolenGas: Vector[UnitInfo] = With.geography.ourMain.gas.filter(_.isEnemy)
+  protected def stolenGas: Vector[UnitInfo] =
+    // No bases, no gas to steal.
+    if (With.geography.bases.isEmpty) Vector.empty
+    else With.geography.ourMain.gas.filter(_.isEnemy)
 }

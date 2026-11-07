@@ -178,7 +178,9 @@ final class Tactician extends TimedTask {
         attackQualities.increaseTo(Qualities.Cloaked, Zerg.Lurker.subjectiveValue.toInt)
       }
       Assignment.unitsPick(freelancers, Seq(attackSquad))
-    } else {
+    } else if (With.geography.ourBases.nonEmpty) {
+      // No own bases on UMS maps: nothing to defend, so freelancers keep the
+      // terminus UmsMode gave them instead of joining phantom defense squads.
       // Assign remaining freelancers to a defense squad.
       // If none are active, activate one to defend our entrance
       Assignment.unitsPick(freelancers, ?(
@@ -193,9 +195,12 @@ final class Tactician extends TimedTask {
     }
 
     // Pull defense workers after army assignment, before gathering claims the remainder.
-    (With.squads.next.collect { case squad: SquadDefendBase => squad } ++
-      With.geography.ourBasesAndSettlements.map(GetDefenseBase(_)).distinct.map(defenseSquads))
-      .distinct.foreach(squad => squad.recruitWorkers(squadsDefending.filter(_._2 == squad).flatMap(_._1.enemiesOuter).distinct))
+    // Skipped without our own bases (ourBasesAndSettlements assumes they exist).
+    if (With.geography.ourBases.nonEmpty) {
+      (With.squads.next.collect { case squad: SquadDefendBase => squad } ++
+        With.geography.ourBasesAndSettlements.map(GetDefenseBase(_)).distinct.map(defenseSquads))
+        .distinct.foreach(squad => squad.recruitWorkers(squadsDefending.filter(_._2 == squad).flatMap(_._1.enemiesOuter).distinct))
+    }
 
     // SCVs for Terran attacks
     if (With.self.isTerran) {

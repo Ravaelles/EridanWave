@@ -11,16 +11,21 @@ class BattleProcessDivisions extends BattleProcessState {
 
     val battles = With.battles.nextBattlesLocal
 
-    val salientBaseGroups = Seq(
-      With.geography.enemyBases,
-      With.geography.ourBasesAndSettlements,
-      With.geography.neutralBases)
-
-    // Associate each group of enemies with the nearest base
+    // No bases on UMS maps: skip base association entirely (ourBasesAndSettlements
+    // would throw inside ourMain) and keep all unbattled enemies in one division.
     val enemiesAll = With.units.enemy.view.filter(BattleFilters.local)
     val enemiesEmbattled = battles.view.map(_.enemy.units)
-    val enemiesUnbattled = (enemiesAll.toSet -- battles.view.flatMap(_.enemy.units.view.flatMap(_.foreign)))
-      .groupBy(e => e.base.getOrElse(With.geography.bases.minBy(distance(e, _)))).values
+    val enemiesUnbattledSet = enemiesAll.toSet -- battles.view.flatMap(_.enemy.units.view.flatMap(_.foreign))
+    val (enemiesUnbattled, salientBaseGroups) =
+      if (With.geography.bases.isEmpty) {
+        (Seq(enemiesUnbattledSet).filter(_.nonEmpty), Seq.empty[Vector[Base]])
+      } else {
+        (enemiesUnbattledSet.groupBy(e => e.base.getOrElse(With.geography.bases.minBy(distance(e, _)))).values,
+          Seq(
+            With.geography.enemyBases,
+            With.geography.ourBasesAndSettlements,
+            With.geography.neutralBases))
+      }
     var nextDivisions = (enemiesEmbattled ++ enemiesUnbattled)
       .map(enemies =>
         Division(

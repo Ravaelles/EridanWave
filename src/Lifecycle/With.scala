@@ -50,6 +50,7 @@ object With {
   var mapFileName       : String              = _
   var mapCleanName      : String              = _
   var mapClock          : String              = _
+  var umsMode           : Boolean             = false
   var startNanoTime     : Long                = 0
   var mapTileWidth      : Int                 = 0
   var mapTileHeight     : Int                 = 0
@@ -236,16 +237,30 @@ object With {
   }
   
   private def analyzeTerrain(): Unit = {
+    // UMS micro maps have no bases by design, so BWTA can never finish on them.
+    // Skip the doomed analysis outright instead of flooding the log with stacks.
+    if (mapFileName != null && Lifecycle.Launch.BwapiIni.isUmsMap(mapFileName)) {
+      With.logger.debug("Skipping terrain analysis (UMS map).")
+      System.out.println("[launcher] Skipping terrain analysis (UMS map).")
+      return
+    }
     try {
       BWTA.readMap(game)
       BWTA.analyze()
     } catch { case exception: Exception =>
       With.logger.quietlyOnException(exception)
       With.logger.debug("Retrying terrain analysis with assertions disabled.")
-      // With the error logged, try again
-      BWTA.readMap(game)
-      BWTA.setFailOnError(false)
-      BWTA.analyze()
+      // A failed retry must not abort the start: play without analyzed
+      // terrain instead of dying on frame zero. Only a one-liner is logged;
+      // the first attempt's stack stays in the log buffer for forensics.
+      try {
+        BWTA.readMap(game)
+        BWTA.setFailOnError(false)
+        BWTA.analyze()
+      } catch { case retryException: Exception =>
+        With.logger.debug("Terrain analysis unavailable on this map; continuing without it.")
+        System.out.println("[launcher] Terrain analysis unavailable on this map; continuing without it.")
+      }
     }
   }
 }

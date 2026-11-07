@@ -1,5 +1,6 @@
 package Lifecycle
 
+import Lifecycle.Launch.{GameLauncherFactory, LaunchConfig}
 import Mathematics.Maff
 import Utilities.?
 import bwapi.BWClientConfiguration
@@ -28,6 +29,20 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     System.out.println(f"PurpleWave Main.main() invoked ${System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean.getStartTime}ms after VM start.")
-    PurpleBWClient.startGame(jbwapiConfiguration)
+    val launch = LaunchConfig.parse(args)
+    if (launch.isHelpRequested) {
+      LaunchConfig.printHelp()
+      return
+    }
+    GameLauncherFactory.forConfig(launch).launch(launch)
+    try {
+      PurpleBWClient.startGame(jbwapiConfiguration)
+    } catch {
+      // Killing the game mid-frame (Esc, supervisor cleanup) drops the BWAPI
+      // server while the client is blocked reading it. That is an operator
+      // shutdown, not a bug: say so instead of dumping an EOF stack trace.
+      case e: java.io.EOFException =>
+        System.out.println("[launcher] Game connection lost (the game was probably killed). Shutting down.")
+    }
   }
 }

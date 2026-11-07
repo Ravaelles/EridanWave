@@ -46,6 +46,17 @@ trait GeographyBuilder {
     val zoneNames   = new LabelGenerator(Labels.countries)
     val metroNames  = new LabelGenerator(Labels.metropolitanAreas)
 
+    // UMS micro maps have no bases and BWTA can never analyze them, so any
+    // BWTA call below would throw and abort the start. Pre-populate a safe
+    // single-zone fallback first: if the BWTA build then succeeds it simply
+    // overwrites this, and if it throws midway the game still has consistent
+    // (if featureless) geography instead of empty lookup arrays.
+    buildFallbackZone()
+    if (With.umsMode) {
+      With.logger.debug("Skipping BWTA zone construction (UMS map).")
+      return
+    }
+
     // Build Zones
     //
     // Associate every tile with a BWEM region
@@ -132,5 +143,21 @@ trait GeographyBuilder {
   private def metroDistance(origin: Metro, other: Metro): Double = {
     val originBases = if (origin.main.isDefined) origin.main ++ origin.natural else origin.bases
     other.bases.view.flatMap(b => originBases.map(o => (o, b))).map(p => p._1.heart.groundPixels(p._2.heart)).min
+  }
+
+  /**
+   * Single-zone fallback for maps BWTA cannot analyze (UMS maps have no bases
+   * by design). Every tile belongs to one zone, so Tile.zone, matchup
+   * distances and all other geography lookups keep working instead of
+   * throwing on empty arrays every frame.
+   */
+  private def buildFallbackZone(): Unit = {
+    val fallback = new Zone("Fallback", null, allTiles.toSet)
+    _zones      = Vector(fallback)
+    _zoneByTile = allTiles.map(_ => fallback).toArray
+    _edges      = Vector.empty
+    _bases      = Vector.empty
+    _metros     = Vector.empty
+    _baseByTile = allTiles.map(_ => None).toArray
   }
 }

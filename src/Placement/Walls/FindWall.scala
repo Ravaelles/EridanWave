@@ -9,6 +9,9 @@ import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 object FindWall {
 
   def apply(zone: Zone): Option[WallFinder] = {
+    // No bases on UMS maps means nothing to wall; skip the search entirely
+    // instead of recomputing (and re-logging) failures every frame.
+    if (With.umsMode) return None
     val wallFinderOption =
       if      (With.self.isProtoss) protoss(zone)
       else if (With.self.isTerran)  terran(zone)

@@ -36,7 +36,13 @@ object ConfigurationLoader {
   }
 
   def load(): Unit = {
-    val configFiles: Array[File] = new File(With.bwapiData.ai).listFiles.filter(f => Seq("Purple", ".config", ".json").forall(f.getName.contains))
+    val aiDir = new File(With.bwapiData.ai)
+    if ( ! aiDir.isDirectory) {
+      With.logger.debug(f"No bwapi-data/AI directory at ${aiDir.getPath}; using default configuration")
+      return
+    }
+    val configFiles: Array[File] = Option(aiDir.listFiles).getOrElse(Array.empty)
+      .filter(f => Seq("Purple", ".config", ".json").forall(f.getName.contains))
     val configFilesMatching = Seq(configFiles.filter(_.getName.contains(With.self.name)), configFiles).find(_.nonEmpty).getOrElse(Array.empty)
     if (configFilesMatching.isEmpty) {
       With.logger.warn("Didn't find any matching configurations")

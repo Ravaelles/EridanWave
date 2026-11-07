@@ -54,5 +54,9 @@ trait Intrigue {
       .sortBy( ! _.unitClass.isTownHall)
       .map(_.tile)
       .headOption
-      .getOrElse(cacheBaseIntrigueInitial().maxBy(_._2)._1.townHallArea.midpoint))
+      .getOrElse(
+        // No known enemy buildings and no bases on the map (UMS): fall back to
+        // the enemy start location instead of maxBy on an empty intrigue map.
+        Maff.maxBy(cacheBaseIntrigueInitial())(_._2).map(_._1.townHallArea.midpoint)
+          .getOrElse(With.enemy.startTile)))
 }

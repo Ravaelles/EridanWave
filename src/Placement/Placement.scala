@@ -82,7 +82,8 @@ class Placement extends Fitter {
         .filter(_.bases.exists(b => b.isNatural || With.geography.ourFoyer == b))
         .sortBy( ! _.metro.exists(_.isOurs))
         .foreach(fitWall)
-    } else if (With.self.isProtoss) {
+    } else if (With.self.isProtoss && With.geography.ourBases.nonEmpty) {
+      // No own bases on UMS maps: ourFoyer does not exist, so there is nothing to wall off.
       fitWall(With.geography.ourFoyer.zone)
     }
     basesSorted.foreach(base => {

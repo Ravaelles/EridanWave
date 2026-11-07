@@ -117,8 +117,11 @@ class Storyteller extends MacroCounting {
     if (firstLog) {
       firstLog = false
       logEnvironment()
-      logStrategyEvaluation()
-      logWinProbability()
+      // Ladder analyses need bases to evaluate; skip them on UMS micro maps.
+      if ( ! With.umsMode) {
+        logStrategyEvaluation()
+        logWinProbability()
+      }
       tell(f"Latency: LF${With.latency.latencyFrames} (Turn size ${With.latency.turnSize})")
     }
     if (With.performance.stopwatchDurationMillis > 60 * 1000) {
@@ -263,9 +266,14 @@ class Storyteller extends MacroCounting {
     tell(f"Map id: ${With.mapCleanName}")
     tell(f"Start: ${With.mapClock} o'clock")
     tell(f"Start tile: [${With.self.startTile.x}, ${With.self.startTile.y}]")
-    tell(f"Main tile: [${With.geography.ourMain.townHallTile.x}, ${With.geography.ourMain.townHallTile.y}]")
-    tell(f"Natural tile: [${With.geography.ourNatural.townHallTile.x}, ${With.geography.ourNatural.townHallTile.y}]")
-    tell(f"Foyer tile: [${With.geography.ourFoyer.townHallTile.x}, ${With.geography.ourFoyer.townHallTile.y}]")
+    // ourMain/ourNatural/ourFoyer don't exist without our own bases.
+    if (With.geography.ourBases.nonEmpty) {
+      tell(f"Main tile: [${With.geography.ourMain.townHallTile.x}, ${With.geography.ourMain.townHallTile.y}]")
+      tell(f"Natural tile: [${With.geography.ourNatural.townHallTile.x}, ${With.geography.ourNatural.townHallTile.y}]")
+      tell(f"Foyer tile: [${With.geography.ourFoyer.townHallTile.x}, ${With.geography.ourFoyer.townHallTile.y}]")
+    } else {
+      tell("Main tile: n/a (no bases on this map)")
+    }
     tell(s"Rush distance: ${With.strategy.rushDistanceMean}")
   }
 

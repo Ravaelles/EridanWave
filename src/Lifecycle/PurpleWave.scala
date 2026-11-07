@@ -25,6 +25,7 @@ class PurpleWave extends DefaultBWListener {
         JBWEBWrapper.onStart()
         With.history.onStart()
         With.units.onStart()
+        UmsMode.detectAndApply()
         With.grids.creep.update()
         With.geography.onStart()
       })})
@@ -37,12 +38,15 @@ class PurpleWave extends DefaultBWListener {
         With.onFrame()
         With.latency.onFrame()
         With.units.onFrame()
+        MapSpecificCommander.onFrame()
+        UmsMode.onFrame()
         With.gathering.updateAccelerantPixels()
         With.lambdas.onFrame()
         With.tasks.run(With.performance.msBeforeTarget)
         With.efficiency.update()
         With.storyteller.onFrame()
-        WriteMapCSV()
+        // Ladder map diagnostics; meaningless (and baseless-crashy) on UMS maps.
+        if ( ! With.umsMode) WriteMapCSV()
         With.performance.endFrame()
         With.camera.onRun(24000)
         With.visualization.onRun(24000)
@@ -97,6 +101,8 @@ class PurpleWave extends DefaultBWListener {
     try {
       lambda()
     } catch { case exception: Exception =>
+      System.err.println("[launcher] Exception on frame " + With.frame + ": " + exception)
+      exception.printStackTrace()
       With.logger.onException(exception)
     }
   }

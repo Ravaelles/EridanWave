@@ -13,6 +13,9 @@ object PurpleEventListener extends BWEventListener {
   override def onStart(): Unit = {
     try {
       gameCount += 1
+      // Attach signal for scripts/wine-run.sh: printed once the BWAPI game
+      // table is live and the first game starts (not just when the JVM is up).
+      System.out.println("HELLO_PURPLEWAVE")
       bot = Some(new PurpleWave)
       bot.foreach(_.onStart())
     }
@@ -23,7 +26,10 @@ object PurpleEventListener extends BWEventListener {
   }
 
   override def onEnd(b: Boolean):                         Unit = { bot.foreach(_.onEnd(b)) }
-  override def onFrame():                                 Unit = { bot.foreach(_.onFrame()) }
+  override def onFrame(): Unit = {
+    Lifecycle.Keyboard.Keyboard.drainRelayedKeys()
+    bot.foreach(_.onFrame())
+  }
   override def onSendText(s: String):                     Unit = { bot.foreach(_.onSendText(s)) }
   override def onReceiveText(player: Player, s: String):  Unit = { bot.foreach(_.onReceiveText(player, s)) }
   override def onPlayerLeft(player: Player):              Unit = { bot.foreach(_.onPlayerLeft(player)) }
