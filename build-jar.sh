@@ -22,6 +22,26 @@ for arg in "$@"; do
 done
 
 # Needed by launch4j/XStream on JDK 17; harmless for plain compile.
-export MAVEN_OPTS="--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"
+# 4 GB heap: a cold scalac over ~700 files GC-thrashes on the Maven default;
+# single-module Scala compilation is single-threaded, so cores don't help,
+# but heap does (measured: ~27 s cold either way, warm zinc stays ~3 s).
+export MAVEN_OPTS="--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED -Xms2g -Xmx4g"
+JAR="target/PurpleWave-1.0.jar"
+FINGERPRINT_FILE="target/.build-fingerprint"
+
+# Skip the build when nothing changed: hash all build inputs and compare with
+# the last successful build (same trick as Atlantis build-bot-jar.sh).
+# wine-run.sh rebuilds in the background on every run; without edits this
+# turns seconds of waiting into a fraction of one.
+if [ -z "$CLEAN" ]; then
+  FINGERPRINT="$(find src src-macros 3rdparty pom.xml build-jar.sh -type f -exec md5sum {} + 2>/dev/null | sort -k2 | md5sum | cut -d' ' -f1)-$PROFILE-${EXE[*]:-}"
+  if [ -f "$JAR" ] && [ -f "$FINGERPRINT_FILE" ] && [ "$(cat "$FINGERPRINT_FILE")" = "$FINGERPRINT" ]; then
+    echo "Sources unchanged since last build; reusing $JAR"
+    exit 0
+  fi
+fi
 # shellcheck disable=SC2086
 mvn -o $PROFILE $CLEAN package "${EXE[@]}"
+if [ -z "$CLEAN" ]; then
+  echo "$FINGERPRINT" > "$FINGERPRINT_FILE"
+fi
