@@ -30,13 +30,22 @@ object KillLedger {
   }
 
   def noteDeath(unit: UnitInfo): Unit = {
-    val cost      = unit.unitClass.mineralPrice + unit.unitClass.gasPrice
-    val building  = unit.unitClass.isBuilding
-    if (unit.isFriendly) {
+    val friendly  = unit.isFriendly
+    val enemy     = unit.isEnemy
+    if ( ! friendly && ! enemy) return
+    record(
+      friendly  = friendly,
+      building  = unit.unitClass.isBuilding,
+      cost      = unit.unitClass.mineralPrice + unit.unitClass.gasPrice)
+  }
+
+  /** Pure counting core (no game access) so the ledger rules are unit-testable. */
+  def record(friendly: Boolean, building: Boolean, cost: Int): Unit = {
+    if (friendly) {
       lost += 1
       if (building) lostBuildings += 1
       lostResources += cost
-    } else if (unit.isEnemy) {
+    } else {
       killed += 1
       if (building) killedBuildings += 1
       killedResources += cost

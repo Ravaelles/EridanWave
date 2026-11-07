@@ -159,14 +159,19 @@ class SquadAttack extends Squad {
   // or superseded by newer contact - so the squad walks somewhere instead of
   // milling around, and followers stop flip-flopping between termini.
   private def huntDestination: Option[Pixel] = {
-    if ( ! shouldHuntContact) return None
-    val contact = freshestFoggedContact
-    val stale   = huntPixel.isEmpty || huntReached || huntExpired || contact.exists(_.lastSeen > huntSetFrame)
-    if (stale) {
-      huntPixel     = contact.map(_.pixel).orElse(newUnseenTile)
-      huntSetFrame  = With.frame
-    }
-    huntPixel
+    if ( ! shouldHuntContact) { huntPixel = None; return None }
+    val contact = freshestFoggedContact.map(c => (c.pixel, c.lastSeen))
+    val (target, setFrame) = HuntLogic.refresh(
+      huntPixel,
+      huntReached,
+      huntExpired,
+      contact,
+      huntSetFrame,
+      newUnseenTiles,
+      With.frame)
+    huntPixel     = target
+    huntSetFrame  = setFrame
+    target
   }
 
   private def shouldHuntContact: Boolean =
@@ -182,7 +187,7 @@ class SquadAttack extends Squad {
   private def huntExpired: Boolean =
     With.framesSince(huntSetFrame) > Minutes(2)()
 
-  private def newUnseenTile: Option[Pixel] = {
+  private def newUnseenTiles: Seq[Pixel] = {
     val tiles = (0 until With.mapTileWidth by 4)
       .flatMap(x => (0 until With.mapTileHeight by 4)
         .map(y => Tile(x, y))
@@ -190,7 +195,8 @@ class SquadAttack extends Squad {
     // March somewhere worth marching to: nearby tiles make followers jitter
     // around their own feet instead of searching. 1 tile = 32 px.
     val farEnough = tiles.filter(t => attackKeyDistanceTo(t.center) >= 32 * 16)
-    Maff.minBy(Maff.orElse(farEnough, tiles))(t => attackKeyDistanceTo(t.center)).map(_.center)
+    val sorted = Maff.orElse(farEnough, tiles).toSeq.sortBy(t => attackKeyDistanceTo(t.center))
+    sorted.map(_.center)
   }
 
   val otherTargets = new ArrayBuffer[UnitInfo]

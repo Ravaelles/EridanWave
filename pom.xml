@@ -128,6 +128,10 @@
                         </goals>
                         <configuration>
                             <analysisCacheFile>${project.build.directory}/analysis/main</analysisCacheFile>
+                            <!-- Unit tests live under src/test and compile in the tests profile only. -->
+                            <excludes>
+                                <exclude>test/**</exclude>
+                            </excludes>
                             <classpath>
                                 <add>${project.build.directory}/${project.artifactId}-macros.jar</add>
                             </classpath>
@@ -247,6 +251,53 @@
     </build>
 
     <profiles>
+        <!-- Unit tests (opt-in so offline dev builds never resolve test tooling):
+             mvn -Ptests test. Suites live in src/test/scala, mirroring the
+             src/ tree, one *Suite per unit (ScalaTest FunSuite).
+             The legacy tests/ folder (standalone Apps run by scripts/test_*.ps1)
+             is grandfathered and untouched by Maven. -->
+        <profile>
+            <id>tests</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.scalatest</groupId>
+                    <artifactId>scalatest_2.12</artifactId>
+                    <version>3.2.17</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <version>4.9.2</version>
+                        <executions>
+                            <execution>
+                                <id>test-compile</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>testCompile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.scalatest</groupId>
+                        <artifactId>scalatest-maven-plugin</artifactId>
+                        <version>2.2.0</version>
+                        <executions>
+                            <execution>
+                                <id>test</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- Fast dev loop (no optimizer passes): mvn -o -Pdev package.
              Release build (default profile) keeps all -opt flags for the shipped bot.
              NOTE: switching profiles changes compiler options, so the first build
