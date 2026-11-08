@@ -16,6 +16,9 @@ object Tuning {
 
   private val strategiesPackage = "Tuning.Strategies."
 
+  private val scoreDirectory  = "tuning"
+  private val scoreLastFile   = scoreDirectory + "/last.csv"
+
   var current: Option[TuningStrategy] = None
 
   private val applied = new mutable.LinkedHashMap[String, String]
@@ -54,6 +57,43 @@ object Tuning {
 
   def formatValue(value: Double, isInt: Boolean): String =
     if (isInt) value.round.toLong.toString else value.toString
+
+  /**
+   * Game-end score row, Atlantis __tweaker.csv parity: header plus one row,
+   * semicolon-delimited, vector columns in registration order. The fixed-name
+   * file is overwritten every game (the batch copies it before the next one);
+   * the dated copy stays as the archive. Only runs while tuning is active.
+   */
+  def finish(isWinner: Boolean): Unit = {
+    if ( ! active) return
+    try {
+      val strategy = current.get
+      val vector = appliedParams
+      val fields = Seq(
+        strategy.mapFile,
+        if (isWinner) "W" else "L",
+        Lifecycle.With.frame.toString,
+        Information.Battles.KillLedger.killed.toString,
+        Information.Battles.KillLedger.lost.toString,
+        Information.Battles.KillLedger.killedResources.toString,
+        Information.Battles.KillLedger.lostResources.toString,
+        vectorDigest(vector))
+      val header = (Seq("map", "result", "frames", "killed", "lost", "killedRes", "lostRes", "digest") ++ vector.keys.toSeq).mkString(";")
+      val row = (fields ++ vector.values.toSeq).mkString(";")
+      val content = header + "\n" + row + "\n"
+      new java.io.File(Lifecycle.With.bwapiData.write + "/" + scoreDirectory).mkdirs()
+      Lifecycle.With.bwapiData.writeToFile(scoreLastFile, content)
+      val date = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date())
+      Lifecycle.With.bwapiData.writeToFile(scoreDirectory + "/" + date + ".csv", content)
+      System.out.println(f"[tuning] score: $row")
+    } catch { case exception: Exception => Lifecycle.With.logger.onException(exception) }
+  }
+
+  def vectorDigest(vector: Map[String, String]): String = {
+    val digest = java.security.MessageDigest.getInstance("MD5")
+    val bytes = digest.digest(vector.toSeq.map(pair => pair._1 + "=" + pair._2).mkString(";").getBytes("UTF-8"))
+    bytes.map(b => f"$b%02x").mkString
+  }
 
   def applyParams(random: java.util.Random = new java.util.Random()): Unit = {
     applied.clear()

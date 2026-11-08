@@ -117,6 +117,8 @@ class PurpleWave extends DefaultBWListener {
       With.simulation.onEnd()
       With.manners.onEnd(isWinner)
       Debugging.CherryVis.CherryVis.finish(isWinner)
+      // Tuning score row (fixed-name + dated copy) when a strategy is active.
+      Tuning.Tuning.finish(isWinner)
       // Terminate the combat visualizer if we launched it at start
       try { if (With.configuration != null && With.configuration.debugging && With.configuration.simviz) Debugging.CombatVisIO.terminateVisualizer() } catch { case exception: Exception => With.logger.quietlyOnException(exception) }
       With.logger.flush()

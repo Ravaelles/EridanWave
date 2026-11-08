@@ -36,6 +36,13 @@ class TuningSuite extends AnyFunSuite {
     assertThrows[IllegalArgumentException] { Tuning.resolve("NopeMissing") }
   }
 
+  test("vector digest is deterministic and content-sensitive") {
+    val a = Tuning.vectorDigest(Map("x" -> "1", "y" -> "2"))
+    assert(a == Tuning.vectorDigest(Map("x" -> "1", "y" -> "2")))
+    assert(a.length == 32)
+    assert(a != Tuning.vectorDigest(Map("x" -> "1", "y" -> "3")))
+  }
+
   test("applyParamsTo assigns overrides and remembers the vector") {
     val strategy = new TestStrategy
     val key = "purplewave.tune.Test.knob"
