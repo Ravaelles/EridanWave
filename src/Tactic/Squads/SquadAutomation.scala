@@ -91,8 +91,12 @@ object SquadAutomation {
     units.foreach(unit => {
       lazy val finalTravel = getTravel(unit, squad, defaultReturn)
       lazy val finalReturn = getReturn(unit, squad, defaultReturn)
+      // Straggler rally (Stardust): a unit lagging behind the marching pack
+      // rejoins the pack centroid first instead of walking alone to its slot.
+      // Returning units keep their own slots - they are meant to disperse.
+      lazy val finalMarch = SquadRally.rallyFor(unit.pixel, ?(unit.flying, squad.centroidAir, squad.centroidGround), finalTravel)
       unit.intend(squad)
-        .setTerminus(?(squad.fightConsensus, finalTravel, finalReturn))
+        .setTerminus(?(squad.fightConsensus, finalMarch, finalReturn))
         .setRedoubt(finalReturn)
     })
   }
