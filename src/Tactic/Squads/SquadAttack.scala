@@ -90,6 +90,17 @@ class SquadAttack extends Squad {
         proxies.map(_.pixel).minBy(attackKeyDistanceTo),
         SquadAutomation.rankedAround(this))
 
+    } else if (With.umsMode && huntDestination.isDefined) {
+
+      // On UMS maps guessed locations (enemy home, muscle origin) do not exist
+      // physically, so a remembered contact outranks all speculation: go where
+      // we last saw the enemy instead of marching at a guess. Off UMS the hunt
+      // is always empty here, so the order below is unchanged.
+      setMode(
+        HuntContact,
+        huntDestination.get,
+        SquadAutomation.rankedAround(this))
+
     } else if (MacroFacts.killPotential) {
 
       setMode(
@@ -126,13 +137,6 @@ class SquadAttack extends Squad {
       setMode(
         Backstab,
         Maff.maxBy(With.geography.enemyBases.map(_.heart))(_.groundPixels(With.scouting.enemyMuscleOrigin)).getOrElse(With.scouting.enemyHome).center,
-        SquadAutomation.rankedAround(this))
-
-    } else if (huntDestination.isDefined) {
-
-      setMode(
-        HuntContact,
-        huntDestination.get,
         SquadAutomation.rankedAround(this))
 
     } else {
