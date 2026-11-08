@@ -2,14 +2,15 @@
 # Tuning batch runner: N sequential Wine games, one override vector per game.
 #
 # Usage:
-#   bash scripts/run-batch.sh "<map>" N OUTDIR [--tuning-strategy=NAME] [KEY=VALUE ...] [--headless|--visible] [--speed=N] [--timeout=SEC]
+#   bash scripts/run-batch.sh "<map>" N OUTDIR [--tuning-strategy=NAME] [KEY=VALUE ...] [--headless|--visible] [--speed=N] [--timeout=SEC] [--no-build]
 #
 # Each game runs scripts/wine-run.sh with --tuning-strategy= plus one
 # --tune-param KEY=VALUE per KEY=VALUE arg (no scattered env files - the
 # bot randomizes any registered param without an override). Default is
 # headless (Xvfb :99, nothing on :0); pass --visible to watch.
-# --speed=0 (fastest) is the default; the bot exits after game end, so one
-# game at a time - never parallelize Wine games.
+# --speed=0 (fastest) is the default; --no-build plays the jar on disk
+# instead of rebuilding it for every game. The bot exits after game end,
+# so one game at a time - never parallelize Wine games.
 #
 # After each game the fixed-name tuning row (bwapi-data/write/tuning/last.csv,
 # overwritten every game) is copied into OUTDIR before the next game wipes it.
@@ -31,6 +32,7 @@ declare -a OVERRIDES=()
 VISIBLE="--headless"
 SPEED="0"
 TIMEOUT=750
+NO_BUILD=""
 for arg in "$@"; do
   case "$arg" in
     --tuning-strategy=*) STRATEGY="${arg#--tuning-strategy=}" ;;
@@ -38,6 +40,7 @@ for arg in "$@"; do
     --visible) VISIBLE="--visible" ;;
     --speed=*) SPEED="${arg#--speed=}" ;;
     --timeout=*) TIMEOUT="${arg#--timeout=}" ;;
+    --no-build) NO_BUILD="--no-build" ;;
     *=*) OVERRIDES+=("${arg}") ;;
     *)
       if [ -z "$MAP" ]; then MAP="$arg";
@@ -46,7 +49,7 @@ for arg in "$@"; do
       else echo "[batch] ignoring extra arg: $arg" >&2; fi ;;
   esac
 done
-[ -n "$MAP" ] && [ "$N" -gt 0 2>/dev/null ] && [ -n "$OUTDIR" ] || { echo "usage: run-batch.sh \"<map>\" N OUTDIR [--tuning-strategy=NAME] [KEY=VALUE ...] [--headless|--visible] [--speed=N] [--timeout=SEC]" >&2; exit 1; }
+[ -n "$MAP" ] && [ "$N" -gt 0 2>/dev/null ] && [ -n "$OUTDIR" ] || { echo "usage: run-batch.sh \"<map>\" N OUTDIR [--tuning-strategy=NAME] [KEY=VALUE ...] [--headless|--visible] [--speed=N] [--timeout=SEC] [--no-build]" >&2; exit 1; }
 
 WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
 GAME_ROOT="${GAME_ROOT:-$WINEPREFIX/drive_c/sc}"
@@ -69,7 +72,7 @@ while [ "$i" -lt "$N" ]; do
   mkdir -p "$GDIR"
   touch "$GDIR/.started"
   # shellcheck disable=SC2086
-  if ! timeout "$TIMEOUT" bash scripts/wine-run.sh --map="$MAP" $VISIBLE --speed="$SPEED" --no-cherryvis "${TUNE_FLAGS[@]+"${TUNE_FLAGS[@]}"}" > "$GDIR/game-$i.log" 2>&1; then
+  if ! timeout "$TIMEOUT" bash scripts/wine-run.sh --map="$MAP" $VISIBLE --speed="$SPEED" --no-cherryvis $NO_BUILD "${TUNE_FLAGS[@]+"${TUNE_FLAGS[@]}"}" > "$GDIR/game-$i.log" 2>&1; then
     echo "[batch] game $i: runner failed (see game-$i.log), continuing"
   fi
   if [ -f "$TUNING_ROW" ] && [ "$TUNING_ROW" -nt "$GDIR/.started" ]; then

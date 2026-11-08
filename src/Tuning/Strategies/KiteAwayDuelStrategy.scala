@@ -22,7 +22,7 @@ class KiteAwayDuelStrategy extends TuningStrategy {
     TuneParam("KiteAway.enemyMarginTiles", () => KiteAway.enemyMarginTiles.toString, text => KiteAway.enemyMarginTiles = text.toDouble, 1.0, 2.5, isInt = false),
     TuneParam("KiteAway.maxOffsetTiles", () => KiteAway.maxOffsetTiles.toString, text => KiteAway.maxOffsetTiles = text.toDouble, 0.5, 2.5, isInt = false))
 
-  override def mapFile: String = "maps/ums/rav/dragoons_v_map.scx"
+  override def mapFile: String = "maps/ums/rav/protoss/15Drag_v_16Drag.scm"
   override def gamesPerRound: Int = 5
   override def gameTimeoutSeconds: Int = 750
 
