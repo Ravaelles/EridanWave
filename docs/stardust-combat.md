@@ -162,3 +162,15 @@ Regrouping`) only changes through a sim verdict.
 Explicitly *not* proposed: copying the cluster/membership machinery.
 Our recruiter + squad + HuntContact latch already answers "who goes where";
 what we lack is how they *move together* once assigned (items 1-6).
+
+## 8. Addendum: holding the line while outranged (implemented)
+
+`Combat.engage` used to break formation up to `128 * confidence` px *before*
+reaching firing range, so each unit chased on its own. `FormationHold`
+(`Micro/Actions/Combat/Decisionmaking`) now vetoes `breakFormationToAttack`
+while a ranged target sits beyond our range: the unit keeps its engage slot
+(`destinationNext` resolves to the station, which outranks the terminus) and
+lets the enemy come. The veto spares melee (it must close), flankers, and an
+explicit yolo. Sliding forward inside the formation additionally requires
+`fractionInSlot == 1.0` - the line steps only once fully formed, with the
+straggler rally feeding laggards back into their slots.

@@ -45,6 +45,11 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
   protected def targetDistanceThere   : Double  = target.map(unit.pixelDistanceEdgeFrom(_, unit.agent.destinationNext())).getOrElse(0d)
   protected def formationHelpsEngage  : Boolean = targetDistanceThere <= Math.min(targetDistanceHere, target.map(unit.pixelRangeAgainst).getOrElse(0d))
   protected def formationHelpsChase   : Boolean = targetDistanceThere <= targetDistanceHere
+  // How much of the engage formation sits in its slots (1.0 = the line is formed).
+  // Supplies FormationHold.shouldAdvanceInFormation; empty/missing formation counts as formed so it never blocks.
+  protected def formationReadiness    : Double  = unit.formationEngage
+    .map(f => FormationHold.fractionInSlot(f.placements.view.map(p => p._1.pixelDistanceCenter(p._2))))
+    .getOrElse(1.0)
   protected def idealDistanceForward  : Double  = target.map(unit.pixelDistanceEdge(_) - idealTargetDistance).getOrElse(0d)
   protected def confidentEnoughToChase: Boolean = unit.confidence11 > confidenceChaseThreshold
   protected def shouldChase           : Boolean = (idealDistanceForward > 0 && confidentEnoughToChase && targetFleeing) || (target.exists(_.isAny(Terran.SiegeTankSieged, Protoss.Reaver) && ! With.fingerprints.bio()) && ! unit.flying && ! Protoss.Reaver(unit))
@@ -305,7 +310,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
   protected def charge(): Boolean = {
     if (unit.ready && ( ! target.exists(unit.inRangeToAttack) || ! attackIfReady())) {
       // If we have an attack formation
-      if (unit.formationEngage.isDefined && ! unit.flying && shouldChase && formationHelpsChase) {
+      if (unit.formationEngage.isDefined && ! unit.flying && shouldChase && formationHelpsChase && FormationHold.shouldAdvanceInFormation(formationReadiness)) {
         unit.agent.act("Slide")
         unit.agent.escalatePriority(TrafficPriorities.Nudge)
         move()
@@ -426,6 +431,19 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
         && ( ! formationHelpsEngage || squadEngagedUpon))
       breakFormationToAttack ||= ! unit.formationEngage.exists(_.flanking) && target.exists(unit.pixelsToGetInRange(_) < Math.max(0, 128 * unit.confidence11))
       breakFormationToAttack ||= With.yolo.active
+
+      // Hold the line while a ranged target is still beyond our firing range:
+      // keep formation slots and let the enemy come to us instead of chasing
+      // piecemeal. Melee must still close, flankers must still circle, and an
+      // explicit yolo overrules the hold.
+      if ( ! With.yolo.active && target.exists(t =>
+        FormationHold.shouldHoldLine(
+          unit.pixelsToGetInRange(t),
+          unit.unitClass.melee,
+          unit.formationEngage.isDefined,
+          unit.formationEngage.exists(_.flanking)))) {
+        breakFormationToAttack = false
+      }
 
       if ( ! breakFormationToAttack) {
         unit.agent.perch.clear()
