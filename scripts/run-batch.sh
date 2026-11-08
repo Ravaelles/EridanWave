@@ -53,7 +53,10 @@ done
 
 WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
 GAME_ROOT="${GAME_ROOT:-$WINEPREFIX/drive_c/sc}"
-TUNING_ROW="$GAME_ROOT/bwapi-data/write/tuning/last.csv"
+# The bot resolves bwapi-data/write from its working directory (the repo when
+# launched by these scripts), not from the game install. Check both homes and
+# take the freshest row: robust across local and Wine launches.
+TUNING_CANDIDATES=("$REPO/bwapi-data/write/tuning/last.csv" "$GAME_ROOT/bwapi-data/write/tuning/last.csv")
 
 mkdir -p "$OUTDIR"
 CSV="$OUTDIR/batch.csv"
@@ -71,18 +74,26 @@ while [ "$i" -lt "$N" ]; do
   GDIR="$OUTDIR/game-$i"
   mkdir -p "$GDIR"
   touch "$GDIR/.started"
+  GAME_START=$(date +%s)
   # shellcheck disable=SC2086
   if ! timeout "$TIMEOUT" bash scripts/wine-run.sh --map="$MAP" $VISIBLE --speed="$SPEED" --no-cherryvis $NO_BUILD "${TUNE_FLAGS[@]+"${TUNE_FLAGS[@]}"}" > "$GDIR/game-$i.log" 2>&1; then
     echo "[batch] game $i: runner failed (see game-$i.log), continuing"
   fi
-  if [ -f "$TUNING_ROW" ] && [ "$TUNING_ROW" -nt "$GDIR/.started" ]; then
+  TUNING_ROW=""
+  for candidate in ${TUNING_CANDIDATES[@]+"${TUNING_CANDIDATES[@]}"}; do
+    if [ -f "$candidate" ] && [ "$candidate" -nt "$GDIR/.started" ] && { [ -z "$TUNING_ROW" ] || [ "$candidate" -nt "$TUNING_ROW" ]; }; then
+      TUNING_ROW="$candidate"
+    fi
+  done
+  if [ -n "$TUNING_ROW" ]; then
     cp -f "$TUNING_ROW" "$GDIR/tuning.csv"
     tail -n +2 "$GDIR/tuning.csv" | head -1 | awk -F';' -v g="$i" '{print g","$2","$3","$4","$5","$6","$7","$8}' >> "$CSV" 2>/dev/null || true
   else
     echo "[batch] game $i: INVALID (no fresh tuning row), skipped" | tee -a "$OUTDIR/batch.log"
     rm -f "$GDIR/tuning.csv"
   fi
-  echo "[batch] game $i done (see $GDIR)"
+  GAME_SECS=$(( $(date +%s) - GAME_START ))
+  echo "[batch] game $i done in $(( GAME_SECS / 60 ))m$(( GAME_SECS % 60 ))s (see $GDIR)"
 done
 
 MANIFEST="$OUTDIR/manifest.txt"

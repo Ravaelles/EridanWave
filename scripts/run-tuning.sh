@@ -64,6 +64,7 @@ export WINEDLLOVERRIDES="winealsa.drv=d;winepulse.drv=d"
 export WINEDEBUG="-all"
 
 cd "$REPO" || exit 1
+TUNE_START=$(date +%s)
 echo "[tune] building the bot jar once (batches reuse it with --no-build)"
 ./build-jar.sh > "$OUTDIR-build.log" 2>&1 || { echo "[tune] build failed (see OUTDIR-build.log)" >&2; exit 1; }
 mkdir -p "$OUTDIR"
@@ -74,6 +75,7 @@ BEST_LAST=""
 round=0
 while [ "$round" -lt "$ROUNDS" ]; do
   round=$(( round + 1 ))
+  ROUND_START=$(date +%s)
   echo "[tune] round $round/$ROUNDS (radius=$RADIUS)"
   ROUND_OUT="$OUTDIR/round-$round"
   if [ -f "$FRAGMENT" ]; then
@@ -96,6 +98,9 @@ while [ "$round" -lt "$ROUNDS" ]; do
     echo "[tune] best stagnant ($BEST), halving radius to $RADIUS"
   fi
   [ -n "$BEST" ] && BEST_LAST="$BEST"
+  ROUND_SECS=$(( $(date +%s) - ROUND_START ))
+  echo "[tune] round $round done in $(( ROUND_SECS / 60 ))m$(( ROUND_SECS % 60 ))s"
 done
 
-echo "[tune] done: $ROUNDS rounds in $OUTDIR (hall of fame: $HOF)"
+TUNE_SECS=$(( $(date +%s) - TUNE_START ))
+echo "[tune] done: $ROUNDS rounds in $(( TUNE_SECS / 60 ))m$(( TUNE_SECS % 60 ))s, out $OUTDIR (hall of fame: $HOF)"
