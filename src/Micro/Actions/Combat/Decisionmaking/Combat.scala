@@ -307,6 +307,47 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     unit.unready
   }
 
+  // Formation approach governor (FormationApproachEnemy): dress the line
+  // before contact instead of trickling in piecemeal. Only while contact is
+  // lost - no live enemy within 1.5 tiles of any squad unit; real contact
+  // fights normally. Melee must still close, flankers still circle, yolo
+  // still overrules, and without a formation there is nothing to dress.
+  protected def approachPosture: FormationApproach.ApproachPosture =
+    ?(With.enemies.exists(_.isTerran), FormationApproach.Decisive, FormationApproach.Cautious)
+
+  protected def approach(): Boolean = {
+    if (With.yolo.active) return false
+    if (unit.unitClass.melee) return false
+    if (unit.formationEngage.isEmpty || unit.formationEngage.exists(_.flanking)) return false
+    val nearest = unit.matchups.targetNearest
+    if (nearest.isEmpty) return false
+    val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
+    if (squadUnits.exists(_.canAnyEnemyAttackUsWithMargin(FightRules.contactMarginTiles))) return false
+    FormationApproach.decide(
+      unit.pixelsToGetInRange(nearest.get) / 32.0,
+      unit.squad.flatMap(_.lineStats),
+      approachPosture) match {
+      case FormationApproach.FreeMarch | FormationApproach.BreakThrough => false
+      case FormationApproach.HoldLine =>
+        unit.agent.act("Dress")
+        Commander.hold(unit)
+        true
+      case FormationApproach.StepForward | FormationApproach.CloseCautious =>
+        unit.agent.act("Dress")
+        move()
+        true
+      case FormationApproach.StepBack =>
+        unit.agent.act("Dress")
+        if (With.frame % FormationApproach.correctionCadence == unit.id % FormationApproach.correctionCadence) {
+          unit.agent.decision.set(unit.pixel.project(nearest.get.pixel, -FormationApproach.correctionStepTiles * 32))
+          move()
+        } else {
+          Commander.hold(unit)
+        }
+        true
+    }
+  }
+
   protected def charge(): Boolean = {
     if (unit.ready && ( ! target.exists(unit.inRangeToAttack) || ! attackIfReady())) {
       // If we have an attack formation
@@ -488,8 +529,10 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
           }
         }
       } else if (readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || shouldChase) {
-        unit.agent.act("Engage")
-        charge()
+        if ( ! approach()) {
+          unit.agent.act("Engage")
+          charge()
+        }
       } else {
         unit.agent.act("Reposition")
         val urgency01 = Math.max(0.0, (unit.cooldownMaxAirGround - unit.cooldownLeft).toDouble / (unit.cooldownMaxAirGround))

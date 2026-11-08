@@ -6,6 +6,7 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.Pixel
+import Micro.Actions.Combat.Decisionmaking.FormationApproach
 import Performance.{Cache, WeakCache}
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.UnitInfo
@@ -51,6 +52,9 @@ trait UnitGroup {
   def centroidKey               : Pixel     = _centroidKey()
   def centroidAir               : Pixel     = _centroidAir()
   def centroidGround            : Pixel     = _centroidGround()
+  // Dress-line shape, computed once per frame: mean/stddev of member distances
+  // beyond their own firing range, in tiles. Feeds FormationApproach.
+  def lineStats                 : Option[FormationApproach.LineStats] = _lineStats()
   def attackCentroidAir         : Pixel     = _attackCentroidAir()
   def attackCentroidGround      : Pixel     = _attackCentroidGround()
   def attackCentroidKey         : Pixel     = _attackCentroidKey()
@@ -121,6 +125,8 @@ trait UnitGroup {
   private val _centroidKey                = new Cache(() => ?(_hasGround(), centroidGround, centroidAir))
   private val _centroidAir                = new Cache(() => GroupCentroid.air   (centroidUnits(Maff.orElse(           groupOrderable, groupUnits)), _.pixel))
   private val _centroidGround             = new Cache(() => GroupCentroid.ground(centroidUnits(Maff.orElse(           groupOrderable, groupUnits)), _.pixel))
+  private val _lineStats                = new Cache(() => FormationApproach.lineStats(
+    groupUnits.view.flatMap(u => u.matchups.targetNearest.map(t => u.pixelsToGetInRange(t) / 32.0))))
   private val _attackCentroidAir          = new Cache(() => GroupCentroid.air   (centroidUnits(Maff.orElse(attackers, groupOrderable, groupUnits)), _.pixel))
   private val _attackCentroidGround       = new Cache(() => GroupCentroid.ground(centroidUnits(Maff.orElse(attackers, groupOrderable, groupUnits)), _.pixel))
   private val _attackCentroidKey          = new Cache(() => ?(_hasGround(), attackCentroidGround, attackCentroidAir))
