@@ -435,14 +435,19 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
       // Hold the line while a ranged target is well beyond our firing range
       // (tiles = pixels / 32, as in Atlantis): keep formation slots and let
       // the enemy come to us instead of chasing piecemeal. Inside ~1 tile of
-      // the range the fight starts - the unit steps in and shoots. Melee must
-      // still close, flankers must still circle, and an explicit yolo overrules.
+      // the range the fight starts - the unit steps in and shoots. The hold
+      // also releases once the fight is on: a cluster mate engaging, or an
+      // enemy in range whose weapon is cooling down (it opened fire). Melee
+      // must still close, flankers must still circle, and an explicit yolo
+      // overrules.
       if ( ! With.yolo.active && target.exists(t =>
         FormationHold.shouldHoldLine(
-          unit.pixelsToGetInRange(t) / 32.0,
-          unit.unitClass.melee,
-          unit.formationEngage.isDefined,
-          unit.formationEngage.exists(_.flanking)))) {
+          tilesBeyondRange  = unit.pixelsToGetInRange(t) / 32.0,
+          melee             = unit.unitClass.melee,
+          hasFormation      = unit.formationEngage.isDefined,
+          flanking          = unit.formationEngage.exists(_.flanking),
+          allyEngaged       = squadEngagingOn,
+          enemyFired        = unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)))) {
         breakFormationToAttack = false
       }
 

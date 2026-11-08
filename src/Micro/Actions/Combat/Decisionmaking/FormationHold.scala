@@ -34,12 +34,20 @@ object FormationHold {
   /**
    * Hold the line while the target is well beyond our range, in tiles.
    * Inside the release band (<= 1.1 tiles beyond range) the fight starts:
-   * the unit steps in and shoots. Melee must still close (it cannot fight
+   * the unit steps in and shoots. The hold also releases when the fight is
+   * already on: a cluster mate engaging, or an enemy in range whose weapon
+   * is cooling down (it opened fire). Melee must still close (it cannot fight
    * from a slot), flankers must still circle, and without a formation there
    * is nothing to hold.
    */
-  def shouldHoldLine(tilesBeyondRange: Double, melee: Boolean, hasFormation: Boolean, flanking: Boolean): Boolean = {
-    hasFormation && ! melee && ! flanking && tilesBeyondRange > holdReleaseTiles
+  def shouldHoldLine(
+    tilesBeyondRange  : Double,
+    melee             : Boolean,
+    hasFormation      : Boolean,
+    flanking          : Boolean,
+    allyEngaged       : Boolean,
+    enemyFired        : Boolean): Boolean = {
+    hasFormation && ! melee && ! flanking && ! allyEngaged && ! enemyFired && tilesBeyondRange > holdReleaseTiles
   }
 
   /** Step the line forward only once every unit sits in its slot. */

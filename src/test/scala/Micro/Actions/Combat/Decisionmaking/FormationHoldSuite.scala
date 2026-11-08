@@ -11,7 +11,9 @@ class FormationHoldSuite extends AnyFunSuite {
       tilesBeyondRange  = 2.0,
       melee             = false,
       hasFormation      = true,
-      flanking          = false))
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false))
   }
 
   test("starts the fight once the enemy is one tile beyond our range") {
@@ -19,7 +21,9 @@ class FormationHoldSuite extends AnyFunSuite {
       tilesBeyondRange  = 1.0,
       melee             = false,
       hasFormation      = true,
-      flanking          = false))
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false))
   }
 
   test("releases the line exactly at the 1.1 tile band edge") {
@@ -27,7 +31,9 @@ class FormationHoldSuite extends AnyFunSuite {
       tilesBeyondRange  = FormationHold.holdReleaseTiles,
       melee             = false,
       hasFormation      = true,
-      flanking          = false))
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false))
   }
 
   test("holds just outside the release band") {
@@ -35,7 +41,9 @@ class FormationHoldSuite extends AnyFunSuite {
       tilesBeyondRange  = FormationHold.holdReleaseTiles + 0.1,
       melee             = false,
       hasFormation      = true,
-      flanking          = false))
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false))
   }
 
   test("releases the line once the enemy is inside our range") {
@@ -43,7 +51,9 @@ class FormationHoldSuite extends AnyFunSuite {
       tilesBeyondRange  = -0.5,
       melee             = false,
       hasFormation      = true,
-      flanking          = false))
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false))
   }
 
   test("melee still closes even when far outranged") {
@@ -51,7 +61,9 @@ class FormationHoldSuite extends AnyFunSuite {
       tilesBeyondRange  = 3.0,
       melee             = true,
       hasFormation      = true,
-      flanking          = false))
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false))
   }
 
   test("nothing to hold without a formation") {
@@ -59,7 +71,9 @@ class FormationHoldSuite extends AnyFunSuite {
       tilesBeyondRange  = 3.0,
       melee             = false,
       hasFormation      = false,
-      flanking          = false))
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false))
   }
 
   test("flankers keep circling instead of holding") {
@@ -67,7 +81,29 @@ class FormationHoldSuite extends AnyFunSuite {
       tilesBeyondRange  = 3.0,
       melee             = false,
       hasFormation      = true,
-      flanking          = true))
+      flanking          = true,
+      allyEngaged       = false,
+      enemyFired        = false))
+  }
+
+  test("joins the fight once a cluster mate engages") {
+    assert( ! FormationHold.shouldHoldLine(
+      tilesBeyondRange  = 3.0,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false,
+      allyEngaged       = true,
+      enemyFired        = false))
+  }
+
+  test("joins the fight once an enemy in range opened fire") {
+    assert( ! FormationHold.shouldHoldLine(
+      tilesBeyondRange  = 3.0,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = true))
   }
 
   test("advances only once every unit sits in its slot") {
