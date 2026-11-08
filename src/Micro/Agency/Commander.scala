@@ -332,7 +332,12 @@ object Commander {
         && unit.canAttack) {
         attackMove(unit, to)
       } else {
-        unit.bwapiUnit.move(to.bwapi)
+        //Like attackMove above, skip re-issuing an identical Move: re-orders
+        // reset acceleration and break weapon cooldown alignment (Stardust: one order per unit per frame).
+        val alreadyMovingThere = unit.order == Orders.Move && unit.orderTargetPixel.exists(_.pixelDistance(to) < 128)
+        if ( ! alreadyMovingThere || unit.seeminglyStuck) {
+          unit.bwapiUnit.move(to.bwapi)
+        }
       }
       if ( ! unit.flying) {
         pushThrough(unit, to, TrafficPriorities.Freedom)
