@@ -36,6 +36,9 @@ class Logger {
   def quietlyOnException(exception: Exception): Unit = {
     error("An exception was thrown on frame " + With.frame)
     error(formatException(exception))
+    // Grouped count next to the full trace: one JSON row per key instead of
+    // a per-frame wall when the same failure repeats all game.
+    ErrorLedger.note(ErrorLedger.exceptionKey(exception), ErrorLedger.Priority.High, formatException(exception))
   }
   
   def onException(exception: Exception): Unit = {

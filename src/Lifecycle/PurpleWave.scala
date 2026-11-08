@@ -25,6 +25,7 @@ class PurpleWave extends DefaultBWListener {
         // override before the first frame, Atlantis OnGameStarted parity.
         Tuning.Tuning.install()
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
+        Debugging.ErrorLedger.reset()
         Debugging.CherryVis.CherryVis.initialize()
         Walls.logInfo = With.configuration.logstd
         JBWEBWrapper.onStart()
@@ -131,6 +132,8 @@ class PurpleWave extends DefaultBWListener {
       Debugging.CherryVis.CherryVis.finish(isWinner)
       // Tuning score row (fixed-name + dated copy) when a strategy is active.
       Tuning.Tuning.finish(isWinner)
+      // Keyed error counts next to the human log (no-op when nothing failed).
+      Debugging.ErrorLedger.finish()
       // Terminate the combat visualizer if we launched it at start
       try { if (With.configuration != null && With.configuration.debugging && With.configuration.simviz) Debugging.CombatVisIO.terminateVisualizer() } catch { case exception: Exception => With.logger.quietlyOnException(exception) }
       With.logger.flush()
