@@ -36,12 +36,32 @@ object Tuning {
   }
 
   def resolve(name: String): TuningStrategy = {
-    val candidates = if (name.contains(".")) Seq(name) else Seq(strategiesPackage + name, name)
-    candidates.view.flatMap(candidate => {
-      try Some(Class.forName(candidate).getDeclaredConstructor().newInstance().asInstanceOf[TuningStrategy])
-      catch { case _: Exception => None }
-    }).headOption.getOrElse(throw new IllegalArgumentException(
-      f"Unknown tuning strategy: $name (tried ${candidates.mkString(", ")})"))
+    // Short names resolve two ways: the literal class name and the strategy
+    // name with a Strategy suffix (CLI-friendly: --tuning-strategy=KiteAwayDuel).
+    val candidates =
+      if (name.contains(".")) Seq(name)
+      else Seq(
+        strategiesPackage + name,
+        name,
+        strategiesPackage + name + "Strategy",
+        name + "Strategy")
+    val errors = new mutable.ArrayBuffer[String]()
+    var found: Option[TuningStrategy] = None
+    var i = 0
+    while (i < candidates.size && found.isEmpty) {
+      instantiate(candidates(i)) match {
+        case scala.util.Success(strategy) => found = Some(strategy)
+        case scala.util.Failure(error) => errors += (candidates(i) + ": " + error)
+      }
+      i += 1
+    }
+    found.getOrElse(throw new IllegalArgumentException(
+      f"Unknown tuning strategy: $name (${errors.mkString("; ")})"))
+  }
+
+  private def instantiate(className: String): scala.util.Try[TuningStrategy] = scala.util.Try {
+    val loaded = getClass.getClassLoader.loadClass(className)
+    loaded.getDeclaredConstructor().newInstance().asInstanceOf[TuningStrategy]
   }
 
   def tuneOverride(name: String): Option[String] =

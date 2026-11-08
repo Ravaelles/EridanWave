@@ -96,7 +96,7 @@ JAR_FP="$(md5sum "target/PurpleWave-1.0.jar" 2>/dev/null | cut -d' ' -f1)"
     PARAMS="$(tail -1 "$TW" | cut -d';' -f9-)"
     [ -z "$PARAMS" ] && continue
     VEC="$(paste -d'|' <(head -1 "$TW" | tr ';' '\n' | tail -n +9) <(printf '%s' "$PARAMS" | tr ';' '\n') | awk -F'|' '{printf "%s=%s,", $1, $2}' | sed 's/,$//')"
-    echo "game-$g|$V|$killed|$frames|$digest|$VEC"
+    echo "game-$g|$V|$killed|$lost|$frames|$digest|$VEC"
   done
 } > "$MANIFEST"
 

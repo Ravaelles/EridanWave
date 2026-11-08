@@ -25,4 +25,8 @@ class KiteAwayDuelStrategy extends TuningStrategy {
   override def mapFile: String = "maps/ums/rav/dragoons_v_map.scx"
   override def gamesPerRound: Int = 5
   override def gameTimeoutSeconds: Int = 750
+
+  /** Wins first, then kill margin (preservation is the point of KiteAway). */
+  override def fitness(win: Boolean, killed: Int, lost: Int, frames: Int): Double =
+    (if (win) 1.0 else 0.0) + 0.02 * (killed - lost)
 }

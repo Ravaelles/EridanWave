@@ -21,4 +21,7 @@ trait TuningStrategy {
 
   /** Wall-clock seconds a single game may take on the tuning engine. */
   def gameTimeoutSeconds: Int
+
+  /** Fitness of one played game for the hall of fame (higher wins). */
+  def fitness(win: Boolean, killed: Int, lost: Int, frames: Int): Double
 }

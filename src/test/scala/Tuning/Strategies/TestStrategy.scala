@@ -13,4 +13,6 @@ class TestStrategy extends TuningStrategy {
   override def mapFile: String = "test.scx"
   override def gamesPerRound: Int = 2
   override def gameTimeoutSeconds: Int = 60
+  override def fitness(win: Boolean, killed: Int, lost: Int, frames: Int): Double =
+    (if (win) 1.0 else 0.0) + killed - lost
 }
