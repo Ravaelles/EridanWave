@@ -4,9 +4,12 @@
 # Usage:
 #   bash scripts/run-tuning.sh --strategy=NAME [--map=PATH] [--rounds=R]
 #       [--games-per-round=K] [--outdir=DIR] [--seed=N] [--radius=D]
+#       [--fragment=FILE]
 #
 # Example:
 #   bash scripts/run-tuning.sh --strategy=KiteAwayDuel --rounds=3 --outdir=/tmp/opencode/tune1
+#   # Continue round 1's proposal in a fresh directory:
+#   bash scripts/run-tuning.sh --strategy=KiteAwayDuel --rounds=3 --outdir=/tmp/opencode/tune2 --fragment=/tmp/opencode/tune-round1/fragment.env
 #
 # With no arguments this prints the help above and exits - nothing runs
 # by accident. One game at a time, never parallelize Wine games.
@@ -41,6 +44,7 @@ GAMES_PER_ROUND=5
 OUTDIR="/tmp/opencode/tune-$(date +%Y%m%d-%H%M%S)"
 SEED="$RANDOM"
 RADIUS="0.10"
+FRAGMENT=""
 for arg in "$@"; do
   case "$arg" in
     --strategy=*) STRATEGY="${arg#--strategy=}" ;;
@@ -50,6 +54,7 @@ for arg in "$@"; do
     --outdir=*) OUTDIR="${arg#--outdir=}" ;;
     --seed=*) SEED="${arg#--seed=}" ;;
     --radius=*) RADIUS="${arg#--radius=}" ;;
+    --fragment=*) FRAGMENT="${arg#--fragment=}" ;;
     -h|--help) sed -n '2,22p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "[tune] ignoring extra arg: $arg" >&2 ;;
   esac
@@ -68,6 +73,11 @@ TUNE_START=$(date +%s)
 echo "[tune] building the bot jar once (batches reuse it with --no-build)"
 ./build-jar.sh > "$OUTDIR-build.log" 2>&1 || { echo "[tune] build failed (see OUTDIR-build.log)" >&2; exit 1; }
 mkdir -p "$OUTDIR"
+if [ -n "$FRAGMENT" ]; then
+  [ -f "$FRAGMENT" ] || { echo "[tune] no such fragment file: $FRAGMENT" >&2; exit 2; }
+  cp -f "$FRAGMENT" "$OUTDIR/fragment.env"
+  echo "[tune] starting from $FRAGMENT ($(grep -c . "$OUTDIR/fragment.env") params)"
+fi
 
 HOF="$OUTDIR/halloffame.txt"
 FRAGMENT="$OUTDIR/fragment.env"
