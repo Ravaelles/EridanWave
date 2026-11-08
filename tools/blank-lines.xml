@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!-- Blank-line rules around `return`, ported from Atlantis tools/checkstyle.xml.
+  Atlantis deliberately enforces ONLY these micro-rules and rejects
+  Indentation / EmptyLineSeparator gates (998 + 1489 hits of blame-burying
+  churn): new code follows its neighbors, these three rules are the gate.
+
+  Deliberate deviation from Atlantis: its guard-style rule (if (...) return)
+  is NOT ported. EridanWave's dense single-line guards are the codebase idiom
+  (~450 existing hits); forcing blanks there would rewrite the tree's voice
+  for zero behavior gain. Reviewers enforce airiness on new code by neighbor
+  matching instead. Revisit if guard density ever drops near zero.
+
+  Patterns are Python `re` with re.MULTILINE, one match = one violation.
+  \n below matches the universal-newline text the checker feeds it. -->
+<blank-lines>
+  <rule name="ReturnFollowedByBlank">
+    <property name="format" value="^[ \t]*return\b[^\n]*\n(?![ \t]*(?:\n|\}|//|/\*|\*))"/>
+    <property name="message" value="Return must be followed by a blank line."/>
+  </rule>
+  <rule name="FinalReturnPrecededByBlank">
+    <property name="format" value="^[ \t]*(?![}/\*]|else\b|case\b)(?:[^\n]*[^=&gt;\s{:}])[ \t]*\n[ \t]*return\b[^\n]*\n[ \t]*\}"/>
+    <property name="message" value="Return must be preceded by a blank line (final return)."/>
+  </rule>
+</blank-lines>
