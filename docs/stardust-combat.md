@@ -172,9 +172,10 @@ what we lack is how they *move together* once assigned (items 1-6).
 `Combat.engage` used to break formation up to `128 * confidence` px *before*
 reaching firing range, so each unit chased on its own. `FormationHold`
 (`Micro/Actions/Combat/Decisionmaking`) now vetoes `breakFormationToAttack`
-while a ranged target sits beyond our range: the unit keeps its engage slot
-(`destinationNext` resolves to the station, which outranks the terminus) and
-lets the enemy come. The veto spares melee (it must close), flankers, and an
+while a ranged target sits more than 1.1 tiles beyond our range: the unit keeps
+its engage slot (`destinationNext` resolves to the station, which outranks the
+terminus) and lets the enemy come. Inside the 1.1-tile band the fight starts -
+the unit steps in and shoots. The veto spares melee (it must close), flankers, and an
 explicit yolo. Sliding forward inside the formation additionally requires
 `fractionInSlot == 1.0` - the line steps only once fully formed, with the
 straggler rally feeding laggards back into their slots.

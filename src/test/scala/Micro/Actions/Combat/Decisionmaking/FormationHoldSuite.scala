@@ -4,14 +4,35 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class FormationHoldSuite extends AnyFunSuite {
 
-  // Range 6 tiles (192px), enemy edge distance 8 tiles (256px): 64px beyond range.
-  private val range6Tiles   = 6 * 32.0
-  private val enemy8Tiles   = 8 * 32.0
-  private val beyondBy2Tiles = enemy8Tiles - range6Tiles
+  // All distances in tiles (1 tile = 32 px, as in Atlantis).
 
   test("holds the line when the enemy sits two tiles beyond our range") {
     assert(FormationHold.shouldHoldLine(
-      pixelsBeyondRange = beyondBy2Tiles,
+      tilesBeyondRange  = 2.0,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false))
+  }
+
+  test("starts the fight once the enemy is one tile beyond our range") {
+    assert( ! FormationHold.shouldHoldLine(
+      tilesBeyondRange  = 1.0,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false))
+  }
+
+  test("releases the line exactly at the 1.1 tile band edge") {
+    assert( ! FormationHold.shouldHoldLine(
+      tilesBeyondRange  = FormationHold.holdReleaseTiles,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false))
+  }
+
+  test("holds just outside the release band") {
+    assert(FormationHold.shouldHoldLine(
+      tilesBeyondRange  = FormationHold.holdReleaseTiles + 0.1,
       melee             = false,
       hasFormation      = true,
       flanking          = false))
@@ -19,23 +40,15 @@ class FormationHoldSuite extends AnyFunSuite {
 
   test("releases the line once the enemy is inside our range") {
     assert( ! FormationHold.shouldHoldLine(
-      pixelsBeyondRange = -10.0,
+      tilesBeyondRange  = -0.5,
       melee             = false,
       hasFormation      = true,
       flanking          = false))
   }
 
-  test("releases the line exactly at max range") {
+  test("melee still closes even when far outranged") {
     assert( ! FormationHold.shouldHoldLine(
-      pixelsBeyondRange = 0.0,
-      melee             = false,
-      hasFormation      = true,
-      flanking          = false))
-  }
-
-  test("melee still closes even when outranged") {
-    assert( ! FormationHold.shouldHoldLine(
-      pixelsBeyondRange = beyondBy2Tiles,
+      tilesBeyondRange  = 3.0,
       melee             = true,
       hasFormation      = true,
       flanking          = false))
@@ -43,7 +56,7 @@ class FormationHoldSuite extends AnyFunSuite {
 
   test("nothing to hold without a formation") {
     assert( ! FormationHold.shouldHoldLine(
-      pixelsBeyondRange = beyondBy2Tiles,
+      tilesBeyondRange  = 3.0,
       melee             = false,
       hasFormation      = false,
       flanking          = false))
@@ -51,7 +64,7 @@ class FormationHoldSuite extends AnyFunSuite {
 
   test("flankers keep circling instead of holding") {
     assert( ! FormationHold.shouldHoldLine(
-      pixelsBeyondRange = beyondBy2Tiles,
+      tilesBeyondRange  = 3.0,
       melee             = false,
       hasFormation      = true,
       flanking          = true))

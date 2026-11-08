@@ -17,6 +17,13 @@ object FormationHold {
   /** A unit counts as "in formation" inside one tile of its slot. */
   val slotTolerancePixels: Double = 32.0
 
+  /**
+   * How far beyond our firing range, in tiles (1 tile = 32 px, as in Atlantis),
+   * we still hold the line. Inside this band the unit steps in and shoots
+   * instead of posing: at dragoon scale one game step covers it.
+   */
+  val holdReleaseTiles: Double = 1.1
+
   /** Fraction of slot distances inside tolerance. Empty means nobody is missing, so fully formed. */
   def fractionInSlot(distancesToSlot: Iterable[Double], tolerancePixels: Double = slotTolerancePixels): Double = {
     val distances = distancesToSlot.toSeq
@@ -25,12 +32,14 @@ object FormationHold {
   }
 
   /**
-   * Hold the line while the target is still beyond our range.
-   * Melee must still close (it cannot fight from a slot), flankers must
-   * still circle, and without a formation there is nothing to hold.
+   * Hold the line while the target is well beyond our range, in tiles.
+   * Inside the release band (<= 1.1 tiles beyond range) the fight starts:
+   * the unit steps in and shoots. Melee must still close (it cannot fight
+   * from a slot), flankers must still circle, and without a formation there
+   * is nothing to hold.
    */
-  def shouldHoldLine(pixelsBeyondRange: Double, melee: Boolean, hasFormation: Boolean, flanking: Boolean): Boolean = {
-    hasFormation && ! melee && ! flanking && pixelsBeyondRange > 0
+  def shouldHoldLine(tilesBeyondRange: Double, melee: Boolean, hasFormation: Boolean, flanking: Boolean): Boolean = {
+    hasFormation && ! melee && ! flanking && tilesBeyondRange > holdReleaseTiles
   }
 
   /** Step the line forward only once every unit sits in its slot. */
