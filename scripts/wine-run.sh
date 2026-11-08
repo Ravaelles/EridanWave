@@ -20,6 +20,9 @@
 #   --speed=<0-1000>    default game speed (20 if absent; keyboard presets still work)
 #   --cherryvis[=bool] write the CherryVis viewer trace, 1/true/yes or
 #                       0/false/no (default: enabled). --no-cherryvis disables.
+#   --tuning-strategy=<name> tuning strategy from Tuning.Strategies
+#                       (absent = default play, no tuning)
+#   --tune-param=NAME=VALUE (repeatable) per-game param override
 #   --jar=<path>        bot jar (default: <repo>/target/PurpleWave-1.0.jar)
 #   --headless          Xvfb on :99, nothing ever maps on :0 (default)
 #   --visible           run on the current X display instead of Xvfb
@@ -46,6 +49,7 @@ WINE_RUNS_DIR="$REPO/out/wine_runs"
 REPLAYS_DIR="${REPLAYS_DIR:-/sc-ai/REPLAYS}"
 
 MAP=""; RACE=""; ENEMY_RACE=""; GAME_TYPE=""; SPEED=""; BUILD=1; CHERRYVIS="true"
+TUNE_STRATEGY=""; TUNE_PARAMS=()
 parse_bool() {
   case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
     1|true|yes) echo true ;;
@@ -63,6 +67,8 @@ for arg in "$@"; do
     --cherryvis) CHERRYVIS="true" ;;
     --no-cherryvis) CHERRYVIS="false" ;;
     --cherryvis=*) CHERRYVIS="$(parse_bool "${arg#--cherryvis=}" "--cherryvis" "$CHERRYVIS")" ;;
+    --tuning-strategy=*) TUNE_STRATEGY="${arg#--tuning-strategy=}" ;;
+    --tune-param=*) TUNE_PARAMS+=("${arg#--tune-param=}") ;;
     --jar=*) JAR="${arg#--jar=}" ;;
     --headless) HIDDEN=1 ;;
     --visible) HIDDEN=0 ;;
@@ -216,6 +222,11 @@ LIVE_OUTPUT="${LIVE_OUTPUT:-1}"
 # JBWAPI pick the W32 shared-memory backend under Wine.
 # An explicit --speed= travels as PURPLEWAVE_SPEED (see GameCommands.initialSpeed).
 # --cherryvis= travels as PURPLEWAVE_CHERRYVIS=1/0 (see ConfigurationLoader).
+# Explicit tuning travels as -D flags on the client JVM (same channel as
+# --speed/--cherryvis; no scattered env files - one flag per override).
+TUNE_DEFS=()
+[ -n "${TUNE_STRATEGY:-}" ] && TUNE_DEFS+=("-Dpurplewave.tuningStrategy=$TUNE_STRATEGY")
+for kv in ${TUNE_PARAMS[@]+"${TUNE_PARAMS[@]}"}; do TUNE_DEFS+=("-Dpurplewave.tune.$kv"); done
 SPEED_ENV=()
 [ -n "${SPEED:-}" ] && SPEED_ENV=(PURPLEWAVE_SPEED="$SPEED")
 CVIS_ENV=()
@@ -227,6 +238,7 @@ if [ "$LIVE_OUTPUT" = "1" ]; then
       "-Dpurplewave.bwapiIni=$WIN_INI" \
       "-Dpurplewave.keyRelay=$KEYS_WIN" \
       "-Dpurplewave.wineClient=true" \
+      ${TUNE_DEFS[@]+"${TUNE_DEFS[@]}"} \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG") 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" >&2) < /dev/null
   CLIENT_PID=$!
@@ -237,6 +249,7 @@ else
       "-Dpurplewave.bwapiIni=$WIN_INI" \
       "-Dpurplewave.keyRelay=$KEYS_WIN" \
       "-Dpurplewave.wineClient=true" \
+      ${TUNE_DEFS[@]+"${TUNE_DEFS[@]}"} \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG" > /dev/null) 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" > /dev/null) < /dev/null
   CLIENT_PID=$!

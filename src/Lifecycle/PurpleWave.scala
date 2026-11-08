@@ -21,6 +21,9 @@ class PurpleWave extends DefaultBWListener {
     timeFrameZero(() => {
       tryCatch(() => {
         With.onStart()
+        // Tuning params (if --tuning-strategy= was passed): randomize or
+        // override before the first frame, Atlantis OnGameStarted parity.
+        Tuning.Tuning.install()
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         Debugging.CherryVis.CherryVis.initialize()
         Walls.logInfo = With.configuration.logstd

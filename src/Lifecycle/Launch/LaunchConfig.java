@@ -33,6 +33,12 @@ package Lifecycle.Launch;
  *   <li>{@code --bwapi-ini=&lt;path&gt;} live bwapi.ini (default
  *       {@code $GAME_ROOT/bwapi-data/bwapi.ini}).</li>
  *   <li>{@code --chaoslauncher-exe=&lt;path&gt;} ChaosLauncher (Windows backend).</li>
+ *   <li>{@code --tuning-strategy=&lt;name&gt;} tuning strategy from
+ *       {@code Tuning.Strategies} (or a fully qualified class name), e.g.
+ *       {@code KiteAwayDuel}. Absent = default play, no tuning.</li>
+ *   <li>{@code --tune-param NAME=VALUE} (repeatable) per-game param override;
+ *       absent keys randomize within bounds. Example:
+ *       {@code --tune-param KiteAway.seriousCooldown=8}.</li>
  *   <li>{@code --help} print this and exit.</li>
  * </ul>
  */
@@ -60,6 +66,8 @@ public final class LaunchConfig {
     private String bwapiIni;
     private String chaosLauncherExe;
     private boolean helpRequested;
+    private String tuningStrategy;
+    private final java.util.Map<String, String> tuneParams = new java.util.LinkedHashMap<>();
 
     private LaunchConfig() {
     }
@@ -115,6 +123,13 @@ public final class LaunchConfig {
                     config.bwapiIni = arg.substring("--bwapi-ini=".length()).trim();
                 } else if (arg.startsWith("--chaoslauncher-exe=")) {
                     config.chaosLauncherExe = arg.substring("--chaoslauncher-exe=".length()).trim();
+                } else if (arg.startsWith("--tuning-strategy=")) {
+                    config.tuningStrategy = arg.substring("--tuning-strategy=".length()).trim();
+                } else if (arg.startsWith("--tune-param=")) {
+                    String kv = arg.substring("--tune-param=".length());
+                    int eq = kv.indexOf('=');
+                    if (eq < 0) throw new IllegalArgumentException("Want --tune-param NAME=VALUE, got: " + arg);
+                    config.tuneParams.put(kv.substring(0, eq).trim(), kv.substring(eq + 1).trim());
                 } else {
                     throw new IllegalArgumentException("Unknown argument: " + arg + " (try --help)");
                 }
@@ -172,6 +187,7 @@ public final class LaunchConfig {
         System.out.println("      [--cherryvis[=1|true|yes|0|false|no]] [--no-cherryvis]");
         System.out.println("      [--wine-prefix=<path>] [--game-root=<path>] [--java-exe=<path>]");
         System.out.println("      [--bwapi-ini=<path>] [--chaoslauncher-exe=<path>]");
+        System.out.println("      [--tuning-strategy=<name>] [--tune-param NAME=VALUE]...");
         System.out.println("No arguments = today's behaviour: attach straight to the running game.");
     }
 
@@ -250,5 +266,13 @@ public final class LaunchConfig {
 
     public String getChaosLauncherExe() {
         return chaosLauncherExe;
+    }
+
+    public String getTuningStrategy() {
+        return tuningStrategy;
+    }
+
+    public java.util.Map<String, String> getTuneParams() {
+        return tuneParams;
     }
 }

@@ -74,6 +74,12 @@ public final class UnixChaosGameLauncher implements GameLauncher {
         if (config.getJavaExe() != null) {
             command.add("--java-exe=" + config.getJavaExe());
         }
+        if (config.getTuningStrategy() != null) {
+            command.add("--tuning-strategy=" + config.getTuningStrategy());
+        }
+        for (java.util.Map.Entry<String, String> tuneParam : config.getTuneParams().entrySet()) {
+            command.add("--tune-param=" + tuneParam.getKey() + "=" + tuneParam.getValue());
+        }
         if (config.isHeadlessExplicit()) {
             command.add(config.isHeadless() ? "--headless" : "--visible");
         }

@@ -40,6 +40,14 @@ object Main {
     if (launch.isCherryVisExplicit) {
       System.setProperty("purplewave.cherryvis", launch.isCherryVis.toString)
     }
+    // Tuning strategy and per-game param overrides travel the same way:
+    // system properties in-process, -D flags on the Wine client JVM.
+    if (launch.getTuningStrategy != null && launch.getTuningStrategy.nonEmpty) {
+      System.setProperty("purplewave.tuningStrategy", launch.getTuningStrategy)
+    }
+    launch.getTuneParams.asScala.foreach { case (key, value) =>
+      System.setProperty("purplewave.tune." + key, value)
+    }
     GameLauncherFactory.forConfig(launch).launch(launch)
     try {
       PurpleBWClient.startGame(jbwapiConfiguration)
