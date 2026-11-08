@@ -116,6 +116,18 @@ class PurpleWave extends DefaultBWListener {
       With.storyteller.onEnd()
       With.simulation.onEnd()
       With.manners.onEnd(isWinner)
+      // Atlantis GameSummary parity: the run ends with a score box on stdout
+      // (the client log tees it to the terminal), not just the launcher line.
+      System.out.println(Lifecycle.GameSummary.box(
+        isWinner,
+        Information.Battles.KillLedger.killed,
+        Information.Battles.KillLedger.lost))
+      System.out.println(Lifecycle.GameSummary.details(
+        With.frame,
+        Information.Battles.KillLedger.killed,
+        Information.Battles.KillLedger.lost,
+        Information.Battles.KillLedger.killedResources,
+        Information.Battles.KillLedger.lostResources))
       Debugging.CherryVis.CherryVis.finish(isWinner)
       // Tuning score row (fixed-name + dated copy) when a strategy is active.
       Tuning.Tuning.finish(isWinner)
