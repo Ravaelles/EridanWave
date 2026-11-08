@@ -90,6 +90,9 @@ object SquadAutomation {
   }
 
   def sendUnits(squad: Squad, units: Iterable[FriendlyUnitInfo], defaultReturn: Option[Pixel] = None): Unit = {
+    // Common march reference: the pack mean distance to the squad goal, in tiles.
+    // Leaders ahead of it wait (MarchDress); laggards march or rally back.
+    lazy val meanDistToGoalTiles = Maff.mean(units.view.map(_.pixelDistanceCenter(squad.vicinity))) / 32.0
     units.foreach(unit => {
       lazy val finalTravel = getTravel(unit, squad, defaultReturn)
       lazy val finalReturn = getReturn(unit, squad, defaultReturn)
@@ -99,10 +102,15 @@ object SquadAutomation {
       lazy val pack     = ?(unit.flying, squad.centroidAir, squad.centroidGround)
       lazy val rallying = squad.fightConsensus && SquadRally.isRallying(unit.pixel, pack)
       lazy val finalMarch = ?(rallying, pack, finalTravel)
+      // March dressing: a leader running ahead of the pack holds position so
+      // the line arrives together instead of trickling in. Waiting zeroes the
+      // stuck counter (tryingToMove is false), so Unstick stays out of it.
+      lazy val waiting = squad.fightConsensus && MarchDress.shouldWait(unit.pixelDistanceCenter(squad.vicinity) / 32.0, meanDistToGoalTiles)
+      lazy val finalTerminus = ?(waiting, unit.pixel, finalMarch)
       Debugging.CherryVis.CherryVis.decision(unit.id,
-        ?(squad.fightConsensus, ?(rallying, "Rallying to pack centroid", "Marching to formation slot"), "Returning to slot"))
+        ?(squad.fightConsensus, ?(waiting, "Waiting for pack", ?(rallying, "Rallying to pack centroid", "Marching to formation slot")), "Returning to slot"))
       unit.intend(squad)
-        .setTerminus(?(squad.fightConsensus, finalMarch, finalReturn))
+        .setTerminus(?(squad.fightConsensus, finalTerminus, finalReturn))
         .setRedoubt(finalReturn)
     })
   }
