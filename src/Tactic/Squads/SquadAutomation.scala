@@ -70,8 +70,10 @@ object SquadAutomation {
 
   def form(squad: Squad, from: Pixel, to: Pixel): ArrayBuffer[Formation] = {
     val output: ArrayBuffer[Formation] = ArrayBuffer.empty
-    // If advancing, give a formation for forward movement
-    if (squad.fightConsensus) {
+    // If advancing, give a formation for forward movement.
+    // March as soon as enemies are known en route (Stardust: form the line
+    // before contact), not only after the squad voted to fight.
+    if (SquadMarch.shouldFormMarch(squad.fightConsensus, squad.battleEnemies.nonEmpty)) {
       output += Formations.march(squad, to)
     }
     // Always include a disengagey formation for units that want to retreat/kite
