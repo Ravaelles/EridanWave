@@ -315,6 +315,27 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
   protected def approachPosture: FormationApproach.ApproachPosture =
     ?(With.enemies.exists(_.isTerran), FormationApproach.Decisive, FormationApproach.Cautious)
 
+  // KiteAway: wounded units yield ground instead of dying in place.
+  // Runs before the dress line (withdrawing beats dressing), only while an
+  // enemy presses within range plus margin and the weapon still needs its
+  // cooldown. The retreat point sits behind the line by injury * max offset,
+  // so the most wounded absorb the least focus fire.
+  protected def kiteAway(): Boolean = {
+    if (With.yolo.active) return false
+    if (unit.unitClass.melee || ! unit.canMove) return false
+    if (unit.formationEngage.isEmpty) return false
+    val nearest = unit.matchups.targetNearest
+    if (nearest.isEmpty) return false
+    val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
+    val enemyInMargin = squadUnits.exists(_.canAnyEnemyAttackUsWithMargin(KiteAway.enemyMarginTiles))
+    if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.woundPercent(), unit.cooldownLeft, enemyInMargin)) return false
+    unit.agent.act("KiteAway")
+    val offsetPixels = KiteAway.woundOffsetTiles(unit.woundPercent()) * 32
+    unit.agent.decision.set(unit.pixel.project(nearest.get.pixel, -offsetPixels).walkablePixel)
+    move()
+    true
+  }
+
   protected def approach(): Boolean = {
     if (With.yolo.active) return false
     if (unit.unitClass.melee) return false
@@ -528,8 +549,8 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
             moveForcefully()
           }
         }
-      } else if (readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || shouldChase) {
-        if ( ! approach()) {
+      } else if (readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || shouldChase) {
+        if ( ! kiteAway() && ! approach()) {
           unit.agent.act("Engage")
           charge()
         }

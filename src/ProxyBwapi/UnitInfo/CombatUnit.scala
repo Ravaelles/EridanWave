@@ -53,6 +53,8 @@ trait CombatUnit {
   def topSpeedPossible          : Double
   def targetValue               : Double
   def injury                    : Double
+  // Atlantis parity: wound fraction over hit points + shields (== injury).
+  def woundPercent()            : Double = injury
 
   def canMove: Boolean
   def canAttack(other: CombatUnit): Boolean
