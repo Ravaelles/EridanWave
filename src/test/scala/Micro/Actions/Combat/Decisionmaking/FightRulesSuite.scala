@@ -23,6 +23,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(yolo = true),        (true,  "YOLO")),
       (off.copy(irradiated = true),  (true,  "Irradiated")),
       (off.copy(safe = true),        (true,  "Safe")),
+      (off.copy(outOfContact = true), (false, "OutOfContact")),
       (off.copy(detonated = true),   (true,  "Detonated")),
       (off.copy(hugTank = true),     (true,  "HugTank")),
       (off.copy(archon = true),      (true,  "Archon")),
@@ -43,7 +44,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(miners = true),      (true,  "Miners")),
       (off.copy(reave = true),       (true,  "Reave")),
       (off.copy(energized = true),   (true,  "Energized")))
-    assert(cases.size == 28)
+    assert(cases.size == 29)
     cases.foreach { case (facts, expected) =>
       assert(FightRules.decide(facts).contains(expected), expected)
     }
@@ -74,6 +75,11 @@ class FightRulesSuite extends AnyFunSuite {
     assert(FightRules.decide(off.copy(raze = true, miners = true)).contains((true, "Raze")))
     assert(FightRules.decide(off.copy(miners = true, reave = true)).contains((true, "Miners")))
     assert(FightRules.decide(off.copy(reave = true, energized = true)).contains((true, "Reave")))
+  }
+
+  test("lost contact outranks combat but not safety: reform, unless nothing can hurt us") {
+    assert(FightRules.decide(off.copy(outOfContact = true, hugTank = true)).contains((false, "OutOfContact")))
+    assert(FightRules.decide(off.copy(safe = true, outOfContact = true)).contains((true, "Safe")))
   }
 
   test("silence means no rule fired and the estimator decides instead") {

@@ -255,6 +255,13 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
   @inline final def combatAllies: Iterable[UnitInfo] = combatForecast.toSeq.flatMap(_.us.units).filterNot(_ == this)
   @inline final def report: Option[ReportCard] = combatForecast.flatMap(_.simulationReport.get(this))
   var matchups: MatchupAnalysis = MatchupAnalysis(this)
+  /**
+   * Atlantis equivalent of ourUnit.canAnyEnemyAttackUsWithMargin.
+   * True when any enemy threatening us sits within its own firing range
+   * plus the margin (in tiles): contact is real, not a distant sighting.
+   */
+  def canAnyEnemyAttackUsWithMargin(marginTiles: Double): Boolean =
+    matchups.threatsInPixels(marginTiles * 32).nonEmpty
   val simulacrum: Simulacrum = new Simulacrum(this)
   var nextInCluster: Option[UnitInfo] = None
 

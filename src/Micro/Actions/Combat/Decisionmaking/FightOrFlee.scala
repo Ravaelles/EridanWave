@@ -30,6 +30,11 @@ object FightOrFlee extends Action {
       yolo        = With.yolo.active && IsWarrior(u),
       irradiated  = u.painfullyIrradiated,
       safe        = u.battle.exists(! _.enemy.canAttackIfVisible(u)),
+      // Cluster-level contact: no enemy within firing range plus margin of ANY
+      // squad unit means the fight is over - disengage unconditionally and
+      // reform instead of milling around scattered. Falls back to the lone
+      // unit when it has no squad.
+      outOfContact = ! u.squad.map(_.units).getOrElse(Seq(u)).exists(_.canAnyEnemyAttackUsWithMargin(FightRules.contactMarginTiles)),
       detonated   = u.unitClass.suicides && u.matchups.targetsInRange.exists(_.canAttack(u)),
       hugTank     = ! u.flying && u.agent.ride.isEmpty && With.enemies.exists(_.isTerran) && u.matchups.targetsInRange.exists(t => Terran.SiegeTankSieged(t) && t.visible && t.canAttack(u)),
       archon      = Protoss.Archon(u) && u.matchups.targetsInRange.exists(_.unitClass.attacksOrCastsOrDetectsOrTransports),

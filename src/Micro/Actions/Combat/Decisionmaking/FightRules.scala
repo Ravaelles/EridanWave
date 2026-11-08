@@ -18,6 +18,7 @@ final case class FightFacts(
   yolo        : Boolean,
   irradiated  : Boolean,
   safe        : Boolean,
+  outOfContact: Boolean = false,
   detonated   : Boolean,
   hugTank     : Boolean,
   archon      : Boolean,
@@ -41,6 +42,10 @@ final case class FightFacts(
 
 object FightRules {
 
+  /** No enemy within this many tiles beyond its firing range of any squad
+    * unit means contact is lost: disengage unconditionally and reform. */
+  val contactMarginTiles: Double = 1.5
+
   /**
    * First matching rule wins, in the historical priority order.
    * None means no rule fired and the battle forecast decides instead.
@@ -54,6 +59,7 @@ object FightRules {
     else if (f.yolo)        Some((true,  "YOLO"))
     else if (f.irradiated)  Some((true,  "Irradiated"))
     else if (f.safe)        Some((true,  "Safe"))
+    else if (f.outOfContact)Some((false, "OutOfContact"))
     else if (f.detonated)   Some((true,  "Detonated"))
     else if (f.hugTank)     Some((true,  "HugTank"))
     else if (f.archon)      Some((true,  "Archon"))
