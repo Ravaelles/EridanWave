@@ -95,7 +95,7 @@ object GameCommands {
   /**
    * True engine pause: the game freezes mid-step and JBWAPI keeps delivering
    * onFrame, so tracking, the overlay and chat commands keep running while
-   * decisions and orders stay parked by the guards in PurpleWave.onFrame.
+   * decisions and orders stay parked by the guards in EridanWave.onFrame.
    * Silent by design: no chat, no pings. The toggle follows the engine, not
    * an assumed state, so a pause imposed from outside (stale score screen,
    * focus loss) always resolves the same way.

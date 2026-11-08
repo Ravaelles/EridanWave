@@ -71,7 +71,7 @@ class ErrorLedgerSuite extends AnyFunSuite {
     exception.setStackTrace(Array(
       new StackTraceElement("java.lang.Thread", "getStackTrace", "Thread.java", 100),
       new StackTraceElement("Tactic.Squads.SquadAttack", "run", "SquadAttack.scala", 42),
-      new StackTraceElement("Lifecycle.PurpleWave", "onFrame", "PurpleWave.scala", 7)))
+      new StackTraceElement("Lifecycle.EridanWave", "onFrame", "EridanWave.scala", 7)))
     assert(ErrorLedger.exceptionKey(exception) == "exception.RuntimeException.at.SquadAttack:42")
   }
 

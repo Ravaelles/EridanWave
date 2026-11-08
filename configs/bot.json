@@ -1,5 +1,5 @@
 {
-  "name": "PurpleWave",
+  "name": "EridanWave",
   "javaOpts": "-XX:MaxGCPauseMillis=15 -Xms512m -Xmx768m",
   "portrait": "https://sscaitournament.com/images/portraits/p9.gif",
   "race": "Protoss",
@@ -13,9 +13,9 @@
   "achievementsNum": 20,
   "division": "Mixed",
   "status": "Enabled",
-  "description": "Built with love. https://github.com/dgant/PurpleWave\r\n\r\nBASIL:PUBLISH-READ",
+  "description": "Built with love. https://github.com/dgant/EridanWave\r\n\r\nBASIL:PUBLISH-READ",
   "update": "2020-01-30 04:51:32",
-  "botBinary": "https://sscaitournament.com/bot_binary.php?bot=PurpleWave",
-  "bwapiDLL": "https://sscaitournament.com/bot_binary.php?bot=PurpleWave&bwapi_dll=true",
+  "botBinary": "https://sscaitournament.com/bot_binary.php?bot=EridanWave",
+  "bwapiDLL": "https://sscaitournament.com/bot_binary.php?bot=EridanWave&bwapi_dll=true",
   "botType": "JAVA_MIRROR",
-  "botProfileURL": "https://sscaitournament.com/index.php?action=botDetails&bot=PurpleWave"}
+  "botProfileURL": "https://sscaitournament.com/index.php?action=botDetails&bot=EridanWave"}

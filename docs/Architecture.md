@@ -1,4 +1,4 @@
-# PurpleWave (EridanWave) — Architecture
+# EridanWave (EridanWave) — Architecture
 
 Tournament StarCraft: Brood War bot in Scala 2.12.18 + JBWAPI. Plays all three
 races; strategy is data-driven (strategy tree + fingerprints), micro is a
@@ -10,15 +10,15 @@ code as it is, with `file:line` pointers.
 ```
 Main.main(args)                                   Lifecycle/Main.scala:29
   → GameLauncherFactory.forConfig(...).launch()   Lifecycle/Launch/
-  → PurpleBWClient.startGame(config)              Lifecycle/PurpleBWClient.scala:5
+  → EridanBWClient.startGame(config)              Lifecycle/EridanBWClient.scala:5
       (JBWAPI BWClient: async, frame buffer sized from free RAM, max 30 ms/frame)
-  → PurpleEventListener.onStart/onFrame           Lifecycle/PurpleEventListener.scala:13
-      → new PurpleWave().onStart/onFrame          Lifecycle/PurpleWave.scala:19,34
+  → EridanEventListener.onStart/onFrame           Lifecycle/EridanEventListener.scala:13
+      → new EridanWave().onStart/onFrame          Lifecycle/EridanWave.scala:19,34
 ```
 
-`PurpleWave.onStart` order matters: `With.onStart()` (builds ~45 subsystems,
+`EridanWave.onStart` order matters: `With.onStart()` (builds ~45 subsystems,
 `With.scala:127-234`) → history → units → `UmsMode.detectAndApply()` →
-geography. `PurpleWave.onFrame` pumps: `performance → With/latency/units →
+geography. `EridanWave.onFrame` pumps: `performance → With/latency/units →
 MapSpecificCommander → UmsMode → gathering → lambdas → tasks.run() →
 efficiency → storyteller → WriteMapCSV → camera/visualization`.
 
@@ -174,7 +174,7 @@ Races add bespoke micro (`Micro/Actions/Protoss|Terran|Zerg/Be*.scala`).
 
 * **Configuration** (`Lifecycle/Configure/*`): `BwapiData` locates
   `bwapi-data/{ai,read,write}` upwards from the CWD; `ConfigurationLoader`
-  picks `bwapi-data/AI/*Purple*.config.json` (bot-name match, else newest) and
+  picks `bwapi-data/AI/*Eridan*.config.json` (bot-name match, else newest) and
   maps flags onto `Configuration` (frame targets, mode switches, playbook
   overrides). `configs/*.json` are ladder/dev presets; `FileFlag` reads
   toggle files (`fixedbuilds-by-opponent.json`).

@@ -518,7 +518,7 @@ object CombatVisIO {
       val path = opponentFile.getAbsolutePath
       // Prefer launching an external Java process to isolate UI from the bot JVM
       val cp = System.getProperty("java.class.path", ".")
-      val pb = new ProcessBuilder("java", "-cp", cp, "Debugging.PurpleSimViz", path)
+      val pb = new ProcessBuilder("java", "-cp", cp, "Debugging.EridanSimViz", path)
       pb.directory(baseDir)
       pb.redirectErrorStream(true)
       visProcess = pb.start()
@@ -533,7 +533,7 @@ object CombatVisIO {
           try { visProcess.destroy() } catch { case _: Throwable => }
           visProcess = null
         } else {
-          try Debugging.PurpleSimViz.requestClose() catch { case exception: Exception => With.logger.quietlyOnException(exception) }
+          try Debugging.EridanSimViz.requestClose() catch { case exception: Exception => With.logger.quietlyOnException(exception) }
         }
       }
     } catch { case exception: Exception => With.logger.quietlyOnException(exception) } finally { launched = false }

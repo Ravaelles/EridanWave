@@ -1,7 +1,7 @@
 param(
     [string]$Java = 'java',
     [string]$ScalaRepository = (Join-Path $env:USERPROFILE '.m2/repository/org/scala-lang'),
-    [string]$BotJar = (Join-Path $PSScriptRoot '../target/PurpleWave-1.0.jar')
+    [string]$BotJar = (Join-Path $PSScriptRoot '../target/EridanWave-1.0.jar')
 )
 
 $ErrorActionPreference = 'Stop'

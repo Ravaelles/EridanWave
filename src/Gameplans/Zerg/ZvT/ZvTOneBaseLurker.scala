@@ -5,7 +5,7 @@ import Lifecycle.With
 import ProxyBwapi.Races.Zerg
 
 // 11 Gas 10 Pool 12 Lair + 6 Lings 15 Drone 16 Overlord Hydra Den Drone 17 Lurker Aspect Metabolic Boost 4 Hydras
-// https://bmnielsen.github.io/openbw-replay-viewer/?rep=https://data.basil-ladder.net/bots/NLPRbot/NLPRbot%20vs%20PurpleSpirit%20Tau%20Cross%20CTR_BDF3EE7.rep
+// https://bmnielsen.github.io/openbw-replay-viewer/?rep=https://data.basil-ladder.net/bots/NLPRbot/NLPRbot%20vs%20EridanSpirit%20Tau%20Cross%20CTR_BDF3EE7.rep
 class ZvTOneBaseLurker extends ZergGameplan {
 
   override def executeBuild(): Unit = {

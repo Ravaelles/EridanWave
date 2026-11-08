@@ -12,7 +12,7 @@ set -u
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 SLOT="${SCBW_BOTS_DIR:-/sc-ai/BOTS}/EridanWave"
-JAR="$REPO/target/PurpleWave-1.0.jar"
+JAR="$REPO/target/EridanWave-1.0.jar"
 REF_DLL="/sc-ai/BOTS/AtlantisP/BWAPI.dll"
 
 cd "$REPO" || exit 1

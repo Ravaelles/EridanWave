@@ -1,4 +1,4 @@
-# Building PurpleWave
+# Building EridanWave
 
 ## Get Started
 
@@ -10,13 +10,13 @@ What you'll need:
 
 ## Extract BWMirror
 
-If you've acquired PurpleWave from GitHub, these files should already be present and you can skip this step.
+If you've acquired EridanWave from GitHub, these files should already be present and you can skip this step.
 
-* Locate Purplewave's /lib directory, wihch contains several bwapi_bridge2_5.dll
+* Locate Eridanwave's /lib directory, wihch contains several bwapi_bridge2_5.dll
 * Get BWMirror 2.5 via https://github.com/vjurenka/BWMirror/blob/master/dist/bwmirror_v2_5.jar
 * Make a copy of bwmirror_v2_5.jar called bwmirror_v2_5.zip
-* From bwmirror_v2_5.zip, extract bwapi_bridge2_5.dll, libgmp-10.dll, and libmpfr-4.dll to PurpleWave's /lib
-* Copy bwmirror_v2_5.jar to PurpleWave's /lib
+* From bwmirror_v2_5.zip, extract bwapi_bridge2_5.dll, libgmp-10.dll, and libmpfr-4.dll to EridanWave's /lib
+* Copy bwmirror_v2_5.jar to EridanWave's /lib
 
 ## Configuring IntelliJ project
 
@@ -26,7 +26,7 @@ Some of these steps may already be complete. If so, great!
 * Open IntelliJ.
 * If a project is open, close it with File -> Close Project
 * File -> Settings -> Plugins -> Install JetBrains Plugin -> Scala -> Install
-* Open -> Select the PurpleWave directory (the one with with ".idea" in it) -> OK
+* Open -> Select the EridanWave directory (the one with with ".idea" in it) -> OK
 
 ### Add global Scala library
 * File -> Project Structure -> Global Libraries
@@ -55,7 +55,7 @@ Some of these steps may already be complete. If so, great!
 
 ### Add Modules
 * File -> Project Structure -> Modules -> Dependencies
-* **Verify:** You should see "PurpleWave"
+* **Verify:** You should see "EridanWave"
 * **Verify:** You should see bwmirror_v2_5, with "Export" checked off
 * **Verify:** You should see scala-sdk-2.12.6, with "Export" checked off
 * If you don't see scala-sdk-212.6: Click "+" -> Scala -> Use Library: scala-sdk-212.6 -> OK
@@ -65,18 +65,18 @@ Some of these steps may already be complete. If so, great!
 ### Configure Artifacts
 
 * File -> Project Structure -> Modules -> Artifacts
-* **Verify:** You should see a listing for PurpleWave.jar
+* **Verify:** You should see a listing for EridanWave.jar
 * **Verify:** You should see "Include in project build" checked
 * **Verify:** You should see, under "Output Layout":
     - META-INF. Expanding it should show MANIFEST.MF
     - bwmirror_v2_5.jar
     - scala-library-2.12.6.jar
     - scala-reflect-2.12.6.jar
-    - PurpleWave compile output
-* Under "Output Layout", select PurpleWave.jar
+    - EridanWave compile output
+* Under "Output Layout", select EridanWave.jar
 * **Verify:** "Manifest File" should point to META-INF\MANIFEST.MF
 * **Verify:** "Main Class" should be "Lifecycle.Main"
-* Next to "Output directory", click "..." and choose a directory for PurpleWave's build output
+* Next to "Output directory", click "..." and choose a directory for EridanWave's build output
 
 ![Screenshot of instructions](instructions5.png)
 
@@ -84,16 +84,16 @@ Some of these steps may already be complete. If so, great!
 
 You should be ready to build!
 * Build -> Build Artifacts -> Build
-* This should produce PurpleWave.jar in the directory you specified earlier
+* This should produce EridanWave.jar in the directory you specified earlier
 
-## Running PurpleWave
+## Running EridanWave
 
 * Find the path of your 32-bit Java.exe (likely in c:\Program Files (x86)\, not c:\Program Files|)
 * Open a command prompt (cmd.exe, not PowerShell). Substitute your Java.exe path.
 `
-C:\Program Files (x86)\Java\jre1.8.0_171\bin\java.exe" -jar C:\Users\d\AppData\Roaming\scbw\bots\PurpleDev\AI\PurpleWave.jar
+C:\Program Files (x86)\Java\jre1.8.0_171\bin\java.exe" -jar C:\Users\d\AppData\Roaming\scbw\bots\EridanDev\AI\EridanWave.jar
 `
 * You'll know it's working if you see "Connecting to Broodwar" likely followed by "No server proc ID"
-* You're now ready to connect to BWAPI 4.1.2! See [BWAPI documentation](https://github.com/bwapi/bwapi) for running it with client bots like PurpleWave.
+* You're now ready to connect to BWAPI 4.1.2! See [BWAPI documentation](https://github.com/bwapi/bwapi) for running it with client bots like EridanWave.
     
-You can also run PurpleWave directly from IntelliJ with Run -> Run 'PurpleWave'
+You can also run EridanWave directly from IntelliJ with Run -> Run 'EridanWave'

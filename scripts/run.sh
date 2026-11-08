@@ -41,7 +41,7 @@ if [ -z "$MAP" ]; then
   exit 2
 fi
 
-JAR="$REPO/target/PurpleWave-1.0.jar"
+JAR="$REPO/target/EridanWave-1.0.jar"
 if [ ! -f "$JAR" ]; then
   echo "[run] No bot jar at $JAR - building it first (once)."
   ./build-jar.sh || exit 1

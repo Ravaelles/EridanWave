@@ -8,7 +8,7 @@ import Lifecycle.Keyboard.GameCommands
  * Only runs on local dev runs (global keyboard hook active - never on ladder),
  * so tournament games are untouched. Branches Atlasitque used only for camera
  * work and advanced painting are kept as commented code, marked
- * TODO(PurpleWave painter), until the AAdvancedPainter equivalent exists.
+ * TODO(EridanWave painter), until the AAdvancedPainter equivalent exists.
  * Speed/frame-skip branches are live through [[GameCommands]].
  */
 object MapSpecificCommander {
@@ -51,14 +51,14 @@ object MapSpecificCommander {
     // if (isMap("minimaps/")) {
     //   if (With.frame <= 1) {
     //     GameCommands.setSpeed(30, 0)
-    //     // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+    //     // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
     //   }
     // }
 
     // =========================================================
 
     if (isMap("Bullet")) {
-      // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+      // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       if (With.frame <= 1) {
         GameCommands.setPainting(true)
       }
@@ -67,7 +67,7 @@ object MapSpecificCommander {
       //   GameCommands.setSpeedOnly(GameSpeed.NORMAL_SPEED)
       // }
 
-      // TODO(PurpleWave painter): needs last-under-attack tracking per unit
+      // TODO(EridanWave painter): needs last-under-attack tracking per unit
       // if (underAttackRecently) {
       //   GameCommands.setSpeedOnly(20)
       // }
@@ -81,7 +81,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setSpeedOnly(20)
         GameCommands.setPainting(true)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -91,7 +91,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setSpeedOnly(20)
         GameCommands.setPainting(true)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -101,7 +101,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setSpeedOnly(20)
         GameCommands.setPainting(true)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -111,7 +111,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setSpeedOnly(20)
         GameCommands.setPainting(true)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -121,7 +121,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setSpeedOnly(20)
         GameCommands.setPainting(true)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -134,7 +134,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setPainting(true)
         GameCommands.setSpeedOnly(20)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -144,7 +144,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setPainting(true)
         GameCommands.setSpeedOnly(20)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -156,7 +156,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setPainting(true)
         GameCommands.setSpeedOnly(20)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -170,7 +170,7 @@ object MapSpecificCommander {
 
     else if (isMap("Wraith_v_Wraith")) {
       if (With.frame <= 1) GameCommands.setSpeedOnly(20)
-      // TODO(PurpleWave painter): camera on first combat unit for the first 3 seconds
+      // TODO(EridanWave painter): camera on first combat unit for the first 3 seconds
       // if (With.frame <= 3 * 24) CameraCommander.centerCameraOn(ourCombatUnits.first)
     }
 
@@ -178,7 +178,7 @@ object MapSpecificCommander {
 
     else if (isMap("Lings_v_Zealots")) {
       if (With.frame <= 1) GameCommands.setSpeed(30, 0)
-      // TODO(PurpleWave painter): camera on our unit nearest to the enemy for the first 3 seconds
+      // TODO(EridanWave painter): camera on our unit nearest to the enemy for the first 3 seconds
     }
 
     // =========================================================
@@ -198,19 +198,19 @@ object MapSpecificCommander {
       isMap("vsGosuComputer", "vsGosuRav", "exp_skilltest", "7th")
     ) {
       if (firstSettings && ourCombatUnits == 1 && enemyCombatUnitsVisible > 0) {
-        // TODO(PurpleWave painter): AAdvancedPainter.enablePainting()
+        // TODO(EridanWave painter): AAdvancedPainter.enablePainting()
         GameCommands.setFrameSkipOnly(0)
         GameCommands.setSpeedOnly(0)
-        // TODO(PurpleWave painter): CenterCamera.onFirstCombatUnit()
+        // TODO(EridanWave painter): CenterCamera.onFirstCombatUnit()
         firstSettings = false
       }
       if (firstSettings && With.frame <= 0) {
         GameCommands.setPainting(false)
-        // TODO(PurpleWave painter): AAdvancedPainter.enablePainting()
+        // TODO(EridanWave painter): AAdvancedPainter.enablePainting()
         GameCommands.setSpeedOnly(0)
         GameCommands.setFrameSkipOnly(1000)
 
-        // TODO(PurpleWave painter): vsGosuRav centers on our main base here
+        // TODO(EridanWave painter): vsGosuRav centers on our main base here
         // if (isMap("vsGosuRav")) {
         //   CameraCommander.centerCameraOn(mainOrAnyBuilding)
         // }
@@ -233,7 +233,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setSpeed(20, 0)
       }
-      // TODO(PurpleWave painter): Atlantis ended the game at 32 kills here
+      // TODO(EridanWave painter): Atlantis ended the game at 32 kills here
       // if (kills >= 32) { With.game.leaveGame() }
     }
 
@@ -243,7 +243,7 @@ object MapSpecificCommander {
     else if (isMap("Jim_v_Lurker")) {
       if (With.frame <= 1) {
         GameCommands.setSpeed(1, 0)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 
@@ -265,7 +265,7 @@ object MapSpecificCommander {
         // GameSpeed.pauseGame()
         GameCommands.setPainting(false)
         GameCommands.setSpeed(30, 0)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
         // GameSpeed.unpauseGame()
       }
     }
@@ -275,14 +275,14 @@ object MapSpecificCommander {
 
     else if (isMap("T_rebasing")) {
       if (With.frame <= 3) {
-        // TODO(PurpleWave painter): CameraCommander.centerCameraOn(ourBases.first)
+        // TODO(EridanWave painter): CameraCommander.centerCameraOn(ourBases.first)
         GameCommands.setSpeed(0, 0)
       }
     }
 
     else if (isMap("TBall_v_HydraLings")) {
       if (With.frame <= 3) {
-        // TODO(PurpleWave painter): CameraCommander.centerCameraOn(ourBases.first)
+        // TODO(EridanWave painter): CameraCommander.centerCameraOn(ourBases.first)
         GameCommands.setSpeed(1, 0)
       }
     }
@@ -294,7 +294,7 @@ object MapSpecificCommander {
       if (With.frame <= 1) {
         GameCommands.setSpeedOnly(20)
         GameCommands.setPainting(true)
-        // TODO(PurpleWave painter): CameraCommander.centerCameraOn(ourBases.first)
+        // TODO(EridanWave painter): CameraCommander.centerCameraOn(ourBases.first)
       }
     }
 
@@ -303,7 +303,7 @@ object MapSpecificCommander {
     else if (isMap("M&M_v_Zealots")) {
       if (With.frame <= 1) {
         GameCommands.setPainting(true)
-        // TODO(PurpleWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
+        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
       }
     }
 

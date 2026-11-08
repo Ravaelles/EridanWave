@@ -10,7 +10,7 @@ $compiler = @('scala-compiler', 'scala-library', 'scala-reflect') | ForEach-Obje
     Join-Path $ScalaRepository "$_/$scalaVersion/$_-$scalaVersion.jar"
 }
 $classes = Join-Path $repo 'target/classes'
-$macros = Join-Path $repo 'target/PurpleWave-macros.jar'
+$macros = Join-Path $repo 'target/EridanWave-macros.jar'
 foreach ($path in @($classes, $macros) + $compiler) {
     if (!(Test-Path -LiteralPath $path)) { throw "Missing dependency: $path. Run Maven compile first." }
 }

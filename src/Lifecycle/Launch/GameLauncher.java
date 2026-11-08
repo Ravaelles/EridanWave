@@ -9,7 +9,7 @@ public interface GameLauncher {
     /**
      * Prepares everything the chosen backend needs (map selection, bwapi.ini,
      * processes) and returns. The bot itself is started afterwards by the
-     * caller via {@code PurpleBWClient.startGame(...)}.
+     * caller via {@code EridanBWClient.startGame(...)}.
      */
     void launch(LaunchConfig config);
 }

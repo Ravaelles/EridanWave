@@ -54,13 +54,13 @@ BWAPI calls through BWMirror have high overhead. ProxyBwapi is a caching layer t
 
 ##### Performance
 
-Starcraft is a fast-paced game and PurpleWave does a ton of real-time calculations. The Performance package contains tools for measuring and optimizing the performance of those calculations to ensure that PurpleWave can run at an acceptable speed.
+Starcraft is a fast-paced game and EridanWave does a ton of real-time calculations. The Performance package contains tools for measuring and optimizing the performance of those calculations to ensure that EridanWave can run at an acceptable speed.
 
 ##### Debugging
 
-Testing and debugging in a real-time game environment is difficult. The Debugging package has a lot of tools for understanding what PurpleWave is doing underneath the hood.
+Testing and debugging in a real-time game environment is difficult. The Debugging package has a lot of tools for understanding what EridanWave is doing underneath the hood.
 
-The biggest piece of this package is the Visualization package, which graphically represents PurpleWave's internal state. 
+The biggest piece of this package is the Visualization package, which graphically represents EridanWave's internal state. 
 
 ##### Mathematics
 ##### Utilities

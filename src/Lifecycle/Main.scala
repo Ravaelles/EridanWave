@@ -28,7 +28,7 @@ object Main {
     .withDebugConnection(true)
 
   def main(args: Array[String]): Unit = {
-    System.out.println(f"PurpleWave Main.main() invoked ${System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean.getStartTime}ms after VM start.")
+    System.out.println(f"EridanWave Main.main() invoked ${System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean.getStartTime}ms after VM start.")
     val launch = LaunchConfig.parse(args)
     if (launch.isHelpRequested) {
       LaunchConfig.printHelp()
@@ -50,7 +50,7 @@ object Main {
     }
     GameLauncherFactory.forConfig(launch).launch(launch)
     try {
-      PurpleBWClient.startGame(jbwapiConfiguration)
+      EridanBWClient.startGame(jbwapiConfiguration)
     } catch {
       // Killing the game mid-frame (Esc, supervisor cleanup) drops the BWAPI
       // server while the client is blocked reading it. That is an operator

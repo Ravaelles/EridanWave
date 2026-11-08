@@ -1,4 +1,4 @@
-@startuml PurpleWave - layers and decision flow
+@startuml EridanWave - layers and decision flow
 ' Illustrative architecture diagram, not an implementation UML model:
 ' no aggregations, cardinalities, or exhaustive dependencies - only the main
 ' modules and what flows between them during a game frame.
@@ -11,12 +11,12 @@ skinparam roundCorner 8
 skinparam shadowing false
 skinparam linetype ortho
 
-title PurpleWave (EridanWave) - how the system works
+title EridanWave (EridanWave) - how the system works
 
 package "Frame loop" as Frame #F2F2F2 {
   [Main.main] as Main
-  [PurpleBWClient\nJBWAPI, max 30ms/frame] as Client
-  [PurpleWave.onStart / onFrame] as Loop
+  [EridanBWClient\nJBWAPI, max 30ms/frame] as Client
+  [EridanWave.onStart / onFrame] as Loop
   [TaskQueueGlobal\nMicro=55 Battles=35 Planning=6] as Queue
 
   Main --> Client : startGame

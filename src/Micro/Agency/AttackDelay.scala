@@ -135,27 +135,27 @@ object AttackDelay {
   /*
   Notes from June 2017
   
-  PurpleWaveJadien: Alright. Let's solve this once and for all so I can die 200 years old and not have once thought about dragoon attack cancelling ever again
-  PurpleWaveJadien: Frame 0: Dragoon isAttackStarting becomes true.
-  PurpleWaveJadien: Frame X: Issue earliest possible move order without Dragoon shot failing or getting stuck
-  PurpleWaveJadien: Goal is to solve for X
+  EridanWaveJadien: Alright. Let's solve this once and for all so I can die 200 years old and not have once thought about dragoon attack cancelling ever again
+  EridanWaveJadien: Frame 0: Dragoon isAttackStarting becomes true.
+  EridanWaveJadien: Frame X: Issue earliest possible move order without Dragoon shot failing or getting stuck
+  EridanWaveJadien: Goal is to solve for X
   jaj22: 7-latency probably
-  PurpleWaveJadien: i... i don't believe you
-  PurpleWaveJadien: or i'm just confused
+  EridanWaveJadien: i... i don't believe you
+  EridanWaveJadien: or i'm just confused
   jaj22: I do need to test this again with order switch times  :P
-  PurpleWaveJadien: why 7?
-  PurpleWaveJadien: i thought we'd be talking 1 + 9 + max(2,3,4) = 14?
+  EridanWaveJadien: why 7?
+  EridanWaveJadien: i thought we'd be talking 1 + 9 + max(2,3,4) = 14?
   jaj22: X is order issue time, not the time that it moves
   jaj22: and isStartingAttack goes true one frame after the attack order hits
   jaj22: hence you skip that 1 for a start
-  PurpleWaveJadien: @jaj22 alright, so the timeline is:
-  PurpleWaveJadien: -1: Attack order arrives from the network
-  PurpleWaveJadien: 0: Attack order starts executing
-  PurpleWaveJadien: isStartingAttack == true
+  EridanWaveJadien: @jaj22 alright, so the timeline is:
+  EridanWaveJadien: -1: Attack order arrives from the network
+  EridanWaveJadien: 0: Attack order starts executing
+  EridanWaveJadien: isStartingAttack == true
   jaj22: and isAttackFrame = true, yes
   jaj22: 8: isAttackFrame is still true
   jaj22: 9: isAttackFrame goes false. Switching to move order at this point is safe.
-  PurpleWaveJadien: @jaj22 ahah. So if latencyFrames is, say, 6, I can issue the order at frame... 4? and be okay?
+  EridanWaveJadien: @jaj22 ahah. So if latencyFrames is, say, 6, I can issue the order at frame... 4? and be okay?
   jaj22: latencyFramesRemaining  :P
   jaj22: but yeah, in theory
   jaj22: I'll check whether it's the move order or the moving that matters.
@@ -163,9 +163,9 @@ object AttackDelay {
   jaj22: 9 minus latency after isStartingAttack looks correct anyway
   jaj22: optimal number of frames to wait before firing your move order.
   jaj22: if the goon is changing direction then you can do 7 minus latency  :P
-  PurpleWaveJadien: @jaj22 i... dear god what?
+  EridanWaveJadien: @jaj22 i... dear god what?
   jaj22: they only stick if you continue moving in the same direction after the shot.
-  PurpleWaveJadien: i'm gonna pretend i never heard that
+  EridanWaveJadien: i'm gonna pretend i never heard that
   jaj22: you can unstick them by giving a move order in the opposite direction too
   jaj22: you may have to wait for the move order to kick in  :P
   jaj22: hmm, unstick angle looks like <45 degrees

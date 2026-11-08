@@ -2,7 +2,7 @@ package Lifecycle
 
 import bwapi.{BWEventListener, Player}
 
-object PurpleEventListener extends BWEventListener {
+object EridanEventListener extends BWEventListener {
 
   var bot: Option[BWEventListener] = None
 
@@ -15,8 +15,8 @@ object PurpleEventListener extends BWEventListener {
       gameCount += 1
       // Attach signal for scripts/wine-run.sh: printed once the BWAPI game
       // table is live and the first game starts (not just when the JVM is up).
-      System.out.println("HELLO_PURPLEWAVE")
-      bot = Some(new PurpleWave)
+      System.out.println("HELLO_ERIDANWAVE")
+      bot = Some(new EridanWave)
       bot.foreach(_.onStart())
     }
     catch { case exception: Exception =>

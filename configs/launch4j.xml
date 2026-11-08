@@ -2,8 +2,8 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>console</headerType>
-  <jar>C:\p\pw\out\staging\PurpleWave.jar</jar>
-  <outfile>C:\p\pw\out\staging\PurpleWave.exe</outfile>
+  <jar>C:\p\pw\out\staging\EridanWave.jar</jar>
+  <outfile>C:\p\pw\out\staging\EridanWave.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir></chdir>
@@ -15,8 +15,8 @@
   <manifest></manifest>
   <icon></icon>
   <singleInstance>
-    <mutexName>PurpleWave StarCraft AI</mutexName>
-    <windowTitle>PurpleWave StarCraft AI</windowTitle>
+    <mutexName>EridanWave StarCraft AI</mutexName>
+    <windowTitle>EridanWave StarCraft AI</windowTitle>
   </singleInstance>
   <classPath>
     <mainClass>Lifecycle.Main</mainClass>
@@ -38,12 +38,12 @@
     <opt>-Dcom.sun.management.jmxremote.authenticate=false</opt>
   </jre>
   <messages>
-    <startupErr>An error occurred while starting PurpleWave.</startupErr>
-    <jreNotFoundErr>Failed to find PurpleWave&apos;s Java Runtime Environment, which should be located in a directory named "jre" next to PurpleWave.exe.</jreNotFoundErr>
-    <jreVersionErr>The version of Java Runtime Environment being used to run PurpleWave is incorrect, or the operating system may be 32-bit.</jreVersionErr>
+    <startupErr>An error occurred while starting EridanWave.</startupErr>
+    <jreNotFoundErr>Failed to find EridanWave&apos;s Java Runtime Environment, which should be located in a directory named "jre" next to EridanWave.exe.</jreNotFoundErr>
+    <jreVersionErr>The version of Java Runtime Environment being used to run EridanWave is incorrect, or the operating system may be 32-bit.</jreVersionErr>
     <launcherErr>The registry refers to a nonexistent Java Runtime Environment installation or the runtime is corrupted.</launcherErr>
-    <instanceAlreadyExistsMsg>An instance  of PurpleWave is already running. Only one copy can run at a time.
+    <instanceAlreadyExistsMsg>An instance  of EridanWave is already running. Only one copy can run at a time.
 
-If PurpleWave is not joining games, consider killing the current instance via Task Manager.</instanceAlreadyExistsMsg>
+If EridanWave is not joining games, consider killing the current instance via Task Manager.</instanceAlreadyExistsMsg>
   </messages>
 </launch4jConfig>

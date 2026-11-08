@@ -8,7 +8,7 @@ package Lifecycle.Launch;
  * {@code scripts/wine-run.sh} (or a previous Linux-side bot start), the
  * JVM here is already a Windows process, and pkill/wmctrl/wine do not exist
  * for it. It only patches bwapi.ini and waits for
- * {@code PurpleBWClient.startGame()} to attach.
+ * {@code EridanBWClient.startGame()} to attach.
  *
  * <p>Selected automatically: {@code --launcher=wine} on a Linux JVM routes to
  * the supervisor; a JVM that itself runs under Wine routes here.</p>

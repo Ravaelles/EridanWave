@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.dangant</groupId>
-    <artifactId>PurpleWave</artifactId>
+    <artifactId>EridanWave</artifactId>
     <version>1.0</version>
 
     <properties>
@@ -33,7 +33,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.8.1</version>
+            <version>3.18.0</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
@@ -408,12 +408,12 @@
                                 </goals>
                                 <configuration>
                                     <!-- Use the shaded jar that includes all dependencies -->
-                                    <outfile>${project.basedir}/out/artifacts/PurpleSimViz.exe</outfile>
+                                    <outfile>${project.basedir}/out/artifacts/EridanSimViz.exe</outfile>
                                     <jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar>
                                     <headerType>gui</headerType>
                                     <classPath>
                                         <!-- Override the entry point to the visualizer main class -->
-                                        <mainClass>Debugging.PurpleSimViz</mainClass>
+                                        <mainClass>Debugging.EridanSimViz</mainClass>
                                     </classPath>
                                     <jre>
                                         <minVersion>1.8.0</minVersion>
@@ -425,13 +425,13 @@
                                     <versionInfo>
                                         <fileVersion>${project.version}.0.0</fileVersion>
                                         <txtFileVersion>${project.version}</txtFileVersion>
-                                        <fileDescription>PurpleSimViz</fileDescription>
-                                        <productName>PurpleSimViz</productName>
+                                        <fileDescription>EridanSimViz</fileDescription>
+                                        <productName>EridanSimViz</productName>
                                         <productVersion>${project.version}.0.0</productVersion>
                                         <txtProductVersion>${project.version}</txtProductVersion>
-                                        <copyright>© PurpleWave</copyright>
-                                        <internalName>PurpleSimViz</internalName>
-                                        <originalFilename>PurpleSimViz.exe</originalFilename>
+                                        <copyright>© EridanWave</copyright>
+                                        <internalName>EridanSimViz</internalName>
+                                        <originalFilename>EridanSimViz.exe</originalFilename>
                                     </versionInfo>
                                 </configuration>
                             </execution>

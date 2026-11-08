@@ -227,7 +227,7 @@ def main():
                 'An expansion may also join when it is enclosed and its join is at least eight tiles wide. '
                 'Keep narrow expansion chokes, shared approaches, junctions and terrain-level boundaries separate. '
                 'Whole BWEM tile sets are united; internal chokes disappear and external chokes retain their geometry.</p>'
-                '<p>Purple is the main zone. Teal and amber identify absorbed BWEM areas in the before view. '
+                '<p>Eridan is the main zone. Teal and amber identify absorbed BWEM areas in the before view. '
                 'The after view colors their complete tile sets purple and removes internal edges. Dark cells show unwalkable terrain.</p>'
                 + ''.join(cards) + '<h2>Map coverage</h2><table><tr><th>Map</th><th>Mains</th><th>Extended</th><th>Zones</th><th>Edges</th></tr>' + rows + '</table>')
     if (args.output / 'validation.json').exists():

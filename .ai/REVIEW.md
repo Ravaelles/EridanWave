@@ -6,7 +6,7 @@ session (UMS micro maps, Wine/JDK 17); file:line pointers are included.
 ## P0 — load-bearing issues (fix first)
 
 ### 1. `With.onStart` is all-or-nothing: one throw kills the whole bot
-`Lifecycle/PurpleWave.scala:34-56` wraps the entire frame in one try/catch, and
+`Lifecycle/EridanWave.scala:34-56` wraps the entire frame in one try/catch, and
 `With.onStart` has no internal compartmentalization. Measured: a single BWTA
 failure on a baseless map left `units`/`geography`/`strategy` unassigned, and
 every subsequent frame died in `With.units.onFrame` — a motionless bot that
@@ -20,7 +20,7 @@ of one 100-line sequential block. The UMS fallback zone
 
 ### 2. A per-frame exception anywhere kills the rest of the frame
 `TaskQueue*` has no per-task exception handling; one throw aborts everything
-after it in `PurpleWave.onFrame` (Micro never runs → units freeze). Measured:
+after it in `EridanWave.onFrame` (Micro never runs → units freeze). Measured:
 a single bad `ourMain` call site froze combat for 300+ frames while the log
 flooded. UMS exposed this because half the codebase assumes bases exist.
 *Fix:* wrap each top-level task body in try/catch that logs once per game
@@ -138,7 +138,7 @@ call-site list in one place (or one test asserting the list). When the second
 special mode arrives (FFA? Archon? tests?), it slots in without archaeology.
 
 ### 13. Config flows through stringly-typed JSON + reflection-by-convention
-`ConfigurationLoader` matches files by substring (`"Purple"`, bot name) and
+`ConfigurationLoader` matches files by substring (`"Eridan"`, bot name) and
 newest-mtime wins; `getOrDefault` silently keeps defaults on type mismatch.
 Measured cost this session: none (it worked), but near-miss: a missing
 `bwapi-data/AI/` dir used to NPE the whole start (`listFiles` null — now
@@ -164,7 +164,7 @@ not just exceptions.
   `.sh` would have failed parsing.)
 * **`--add-opens` is JDK-version-specific:** `run-wine.sh` passes it to a
   Java 8 Wine JVM that rejects unknown flags (measured: instant client death).
-  `PurpleWaveLocalMetal` + docs should pin "Java 8 under Wine, no JPMS flags;
+  `EridanWaveLocalMetal` + docs should pin "Java 8 under Wine, no JPMS flags;
   add-opens only for JDK 16+ hosts".
 * **Tests are outside Maven** (`tests/` as `App` objects + `scripts/test_*.ps1`).
   Good coverage exists (placement reservation round-trips, wall filler power,

@@ -42,7 +42,7 @@ object ConfigurationLoader {
       return
     }
     val configFiles: Array[File] = Option(aiDir.listFiles).getOrElse(Array.empty)
-      .filter(f => Seq("Purple", ".config", ".json").forall(f.getName.contains))
+      .filter(f => Seq("Eridan", ".config", ".json").forall(f.getName.contains))
     val configFilesMatching = Seq(configFiles.filter(_.getName.contains(With.self.name)), configFiles).find(_.nonEmpty).getOrElse(Array.empty)
     if (configFilesMatching.isEmpty) {
       With.logger.warn("Didn't find any matching configurations")

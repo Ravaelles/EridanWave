@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One command: attach PurpleWave to real StarCraft under Wine and play.
+# One command: attach EridanWave to real StarCraft under Wine and play.
 #
 # Verified mechanics (ported from the Atlantis Wine backend):
 #   1. The bot JVM must run UNDER WINE with a WINDOWS JRE and
@@ -23,7 +23,7 @@
 #   --tuning-strategy=<name> tuning strategy from Tuning.Strategies
 #                       (absent = default play, no tuning)
 #   --tune-param=NAME=VALUE (repeatable) per-game param override
-#   --jar=<path>        bot jar (default: <repo>/target/PurpleWave-1.0.jar)
+#   --jar=<path>        bot jar (default: <repo>/target/EridanWave-1.0.jar)
 #   --headless          Xvfb on :99, nothing ever maps on :0 (default)
 #   --visible           run on the current X display instead of Xvfb
 #   --no-build          play the jar already on disk instead of rebuilding it
@@ -43,7 +43,7 @@ REPO="${REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
 WINE_ROOT="${WINEPREFIX:-$HOME/.wine}"
 GAME_ROOT="${GAME_ROOT:-$WINE_ROOT/drive_c/sc}"
 JAVA_EXE="${JAVA_EXE:-$WINE_ROOT/drive_c/Java/bin/java.exe}"
-JAR="${JAR:-$REPO/target/PurpleWave-1.0.jar}"
+JAR="${JAR:-$REPO/target/EridanWave-1.0.jar}"
 LOG_DIR="${LOG_DIR:-$REPO/out/wine}"
 WINE_RUNS_DIR="$REPO/out/wine_runs"
 REPLAYS_DIR="${REPLAYS_DIR:-/sc-ai/REPLAYS}"
@@ -123,9 +123,9 @@ CLIENT_LOG="$LOG_DIR/WINE_LOG"
 # logger flush and write-files fail. Seed a dev config (local metal: debugging
 # + logstd) when AI/ is empty, but never clobber the owner's files.
 mkdir -p "$REPO/bwapi-data/AI" "$REPO/bwapi-data/read" "$REPO/bwapi-data/write"
-if [ -z "$(ls -A "$REPO/bwapi-data/AI" 2>/dev/null)" ] && [ -f "$REPO/configs/PurpleWaveLocalMetal.config.json" ]; then
-  cp -f "$REPO/configs/PurpleWaveLocalMetal.config.json" "$REPO/bwapi-data/AI/"
-  say "  Seeded bwapi-data/AI with PurpleWaveLocalMetal.config.json"
+if [ -z "$(ls -A "$REPO/bwapi-data/AI" 2>/dev/null)" ] && [ -f "$REPO/configs/EridanWaveLocalMetal.config.json" ]; then
+  cp -f "$REPO/configs/EridanWaveLocalMetal.config.json" "$REPO/bwapi-data/AI/"
+  say "  Seeded bwapi-data/AI with EridanWaveLocalMetal.config.json"
 fi
 
 T0=$(date +%s)
@@ -317,7 +317,7 @@ say "Step 3/3: watching for HELLO_PURPLEWAVE (grace 60s)..."
 END=$(( $(date +%s) + 60 )); ATTACHED=0
 while [ "$(date +%s)" -lt "$END" ]; do
   if grep -q "HELLO_PURPLEWAVE" "$CLIENT_LOG" 2>/dev/null; then
-    say "SUCCESS: BWAPI attached, PurpleWave is playing!"; ATTACHED=1; break
+    say "SUCCESS: BWAPI attached, EridanWave is playing!"; ATTACHED=1; break
   fi
   if ! kill -0 "$CLIENT_PID" 2>/dev/null; then
     say "FAILED: client JVM died. Log tail:"; tail -15 "$CLIENT_LOG" | sed 's/^/    /'

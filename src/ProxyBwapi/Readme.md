@@ -9,5 +9,5 @@ BWAPI, as made accessible via BWMirror, has a few limitations:
 * The raw BWAPI type APIs can be confusing and are easily misused (for example, getPixel (unit center) vs getTile (unit corner))
 * The raw BWAPI types aren't extensible
 
-For those reasons, the rest of PurpleWave interacts with ProxyBwapi. ProxyBwapi provides a faster, safer interface for interacting with the game state, and tracks information on units in the fog of war. 
+For those reasons, the rest of EridanWave interacts with ProxyBwapi. ProxyBwapi provides a faster, safer interface for interacting with the game state, and tracks information on units in the fog of war. 
 

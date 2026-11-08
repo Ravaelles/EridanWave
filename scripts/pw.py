@@ -17,30 +17,30 @@ import uuid
 import zipfile
 
 def main():
-  parser = argparse.ArgumentParser(description="Compile, stage, and package PurpleWave and its JREs.")
+  parser = argparse.ArgumentParser(description="Compile, stage, and package EridanWave and its JREs.")
   parser.add_argument('--all',            action='store_true', default=False, help='Perform all steps')
   parser.add_argument('--jre',            action='store_true', default=False, help='Step 1: (Skipped by default) Package lightweight JRE using jdeps+jlink, then stage them for packaging')
-  parser.add_argument('--maven',          action='store_true', default=False, help='Step 2: Compile PurpleWave with Maven')
+  parser.add_argument('--maven',          action='store_true', default=False, help='Step 2: Compile EridanWave with Maven')
   parser.add_argument('--schnail',        action='store_true', default=False, help='Step 3: Compile SCHNAIL launcher')
   parser.add_argument('--stage',          action='store_true', default=False, help='Step 4: Record deployment information, construct EXE via launch4j, then copy bot binaries and deployment information')
   parser.add_argument('--package',        action='store_true', default=False, help='Step 5: Re-zip directories')
-  parser.add_argument('--t',              action='store_true', default=False, help='Deploy Terran (PurpleSpirit) to BASIL')
-  parser.add_argument('--p',              action='store_true', default=False, help='Deploy Protoss (PurpleSpirit) to BASIL')
-  parser.add_argument('--z',              action='store_true', default=False, help='Deploy Zerg (PurpleSpirit) to BASIL')
+  parser.add_argument('--t',              action='store_true', default=False, help='Deploy Terran (EridanSpirit) to BASIL')
+  parser.add_argument('--p',              action='store_true', default=False, help='Deploy Protoss (EridanSpirit) to BASIL')
+  parser.add_argument('--z',              action='store_true', default=False, help='Deploy Zerg (EridanSpirit) to BASIL')
   parser.add_argument('--tp',             action='store_true', default=False, help='Deploy Terran and Protoss to BASIL')
   parser.add_argument('--tz',             action='store_true', default=False, help='Deploy Terran and Zerg to BASIL')
   parser.add_argument('--pz',             action='store_true', default=False, help='Deploy Protoss and Zerg to BASIL')
   parser.add_argument('--tpz',            action='store_true', default=False, help='Deploy all races to BASIL')
-  parser.add_argument('--psscait',        action='store_true', default=False, help='Deploy Protoss (PurpleWave) to SSCAIT')
-  parser.add_argument('--tsscait',        action='store_true', default=False, help='Deploy Terran (PurpleSpirit) to SSCAIT')
-  parser.add_argument('--zsscait',        action='store_true', default=False, help='Deploy Zerg (PurpleSwarm) to SSCAIT')
-  parser.add_argument('--rsscait',        action='store_true', default=False, help='Deploy Random (PurpleDestiny) to SSCAIT')
-  parser.add_argument('--ticklesscait',   action='store_true', default=False, help='Deploy PurpleTickles to SSCAIT')
-  parser.add_argument('--csscait',        action='store_true', default=False, help='Deploy Random cheese (PurpleCheese) to SSCAIT')
-  parser.add_argument('--pschnail',       action='store_true', default=False, help='Deploy Protoss (PurpleWave) to SCHNAIL')
+  parser.add_argument('--psscait',        action='store_true', default=False, help='Deploy Protoss (EridanWave) to SSCAIT')
+  parser.add_argument('--tsscait',        action='store_true', default=False, help='Deploy Terran (EridanSpirit) to SSCAIT')
+  parser.add_argument('--zsscait',        action='store_true', default=False, help='Deploy Zerg (EridanSwarm) to SSCAIT')
+  parser.add_argument('--rsscait',        action='store_true', default=False, help='Deploy Random (EridanDestiny) to SSCAIT')
+  parser.add_argument('--ticklesscait',   action='store_true', default=False, help='Deploy EridanTickles to SSCAIT')
+  parser.add_argument('--csscait',        action='store_true', default=False, help='Deploy Random cheese (EridanCheese) to SSCAIT')
+  parser.add_argument('--pschnail',       action='store_true', default=False, help='Deploy Protoss (EridanWave) to SCHNAIL')
   parser.add_argument('--schnail-caches', action='store_true', default=False, help='Generate and validate all SCHNAIL placement caches without deploying')
   parser.add_argument('--play',           action='store_true', default=False, help='Play ladder games')
-  parser.add_argument('--viz',            action='store_true', default=False, help='Construct PurpleSimViz.exe')
+  parser.add_argument('--viz',            action='store_true', default=False, help='Construct EridanSimViz.exe')
   args = parser.parse_args()
   
   args.t = args.t or args.tp or args.tz or args.tpz
@@ -106,28 +106,28 @@ dir_jre           = "c:/p/graalvm-jdk/"
 dir_bwapidata     = "c:/p/bw/bwapi-data/"
 java_version      = "21"
 dir_pw            = "c:/p/pw/"
-dir_purplebench   = "c:/p/PurpleBench/"
+dir_purplebench   = "c:/p/EridanBench/"
 dir_maven_target  = "c:/p/pw/target/"
 dir_scbwbots      = "c:/Users/d/AppData/Roaming/scbw/bots/"
-dir_localschnail  = "c:/Program Files (x86)/SCHNAIL Client/bots/PurpleWave/"
+dir_localschnail  = "c:/Program Files (x86)/SCHNAIL Client/bots/EridanWave/"
 dir_schnailmaps   = "c:/Program Files (x86)/SCHNAIL Client/maps/"
 dir_basiluploads  = "d:/Dropbox/StarcraftBots/"
 dir_out           = pathjoin(dir_pw,  "out/")
 dir_configs       = pathjoin(dir_pw,  "configs/")
 dir_staging       = pathjoin(dir_out, "staging/")
 dir_schnailcaches = pathjoin(dir_out, "schnail-caches/")
-dir_cacheartifact = pathjoin(dir_staging, "PurpleWaveCacheArtifact/")
-dir_jar           = pathjoin(dir_out, "artifacts", "PurpleWave")
-file_jar          = pathjoin(dir_jar, "PurpleWave.jar")
+dir_cacheartifact = pathjoin(dir_staging, "EridanWaveCacheArtifact/")
+dir_jar           = pathjoin(dir_out, "artifacts", "EridanWave")
+file_jar          = pathjoin(dir_jar, "EridanWave.jar")
 
 sscait_deployments = {
-  "psscait":      ("PurpleWave",    "SSCAIT_PURPLEWAVE_EMAIL",    "SSCAIT_PURPLEWAVE_PASSWORD"),
-  "tsscait":      ("PurpleSpirit",  "SSCAIT_PURPLESPIRIT_EMAIL",  "SSCAIT_PURPLESPIRIT_PASSWORD"),
-  "zsscait":      ("PurpleSwarm",   "SSCAIT_PURPLESWARM_EMAIL",   "SSCAIT_PURPLESWARM_PASSWORD"),
-  "rsscait":      ("PurpleDestiny", "SSCAIT_PURPLEDESTINY_EMAIL", "SSCAIT_PURPLEDESTINY_PASSWORD"),
-  "ticklesscait": ("PurpleTickles", "SSCAIT_PURPLETICKLES_EMAIL", "SSCAIT_PURPLETICKLES_PASSWORD"),
-  "csscait":      ("PurpleCheese",  "SSCAIT_PURPLECHEESE_EMAIL",  "SSCAIT_PURPLECHEESE_PASSWORD")}
-schnail_deployment = ("PurpleWave", "SCHNAIL_PURPLEWAVE_EMAIL", "SCHNAIL_PURPLEWAVE_PASSWORD")
+  "psscait":      ("EridanWave",    "SSCAIT_PURPLEWAVE_EMAIL",    "SSCAIT_PURPLEWAVE_PASSWORD"),
+  "tsscait":      ("EridanSpirit",  "SSCAIT_PURPLESPIRIT_EMAIL",  "SSCAIT_PURPLESPIRIT_PASSWORD"),
+  "zsscait":      ("EridanSwarm",   "SSCAIT_PURPLESWARM_EMAIL",   "SSCAIT_PURPLESWARM_PASSWORD"),
+  "rsscait":      ("EridanDestiny", "SSCAIT_PURPLEDESTINY_EMAIL", "SSCAIT_PURPLEDESTINY_PASSWORD"),
+  "ticklesscait": ("EridanTickles", "SSCAIT_PURPLETICKLES_EMAIL", "SSCAIT_PURPLETICKLES_PASSWORD"),
+  "csscait":      ("EridanCheese",  "SSCAIT_PURPLECHEESE_EMAIL",  "SSCAIT_PURPLECHEESE_PASSWORD")}
+schnail_deployment = ("EridanWave", "SCHNAIL_PURPLEWAVE_EMAIL", "SCHNAIL_PURPLEWAVE_PASSWORD")
 
 def path_pw(path):
   return pathjoin(dir_pw, path)
@@ -167,8 +167,8 @@ def maven_build():
   logf(subprocess.run, [maven, "clean", "install"], cwd=dir_pw, env=environment, check=True)
   dir_jar  = dir_maven_target
   global file_jar
-  file_jar = pathjoin(dir_maven_target, "PurpleWave.jar")  
-  logf(shutil.copy2, pathjoin(dir_maven_target, "PurpleWave-1.0.jar"), file_jar)
+  file_jar = pathjoin(dir_maven_target, "EridanWave.jar")
+  logf(shutil.copy2, pathjoin(dir_maven_target, "EridanWave-1.0.jar"), file_jar)
 
 def makejre():
   log()
@@ -199,13 +199,13 @@ def makejre():
       path_staging("jre") ])
 
 
-schnail_exe_source="PurpleWaveSCHNAILCPP.exe"
+schnail_exe_source="EridanWaveSCHNAILCPP.exe"
 def schnail():
   log()
   log("BUILDING SCHNAIL LAUNCHER")
   subprocess.run(file_launch4j + " "+  path_configs("launch4jSCHNAIL.xml"))
-  subprocess.run(["x86_64-w64-mingw32-g++", "-static", "-o", path_staging("PurpleWaveSCHNAILCPP.exe"), path_pw("/src/PurpleWaveSCHNAIL.exe.cpp")])    
-  logf(shutil.copy2, path_staging(schnail_exe_source), path_staging("PurpleWaveSCHNAIL.exe"))
+  subprocess.run(["x86_64-w64-mingw32-g++", "-static", "-o", path_staging("EridanWaveSCHNAILCPP.exe"), path_pw("/src/EridanWaveSCHNAIL.exe.cpp")])
+  logf(shutil.copy2, path_staging(schnail_exe_source), path_staging("EridanWaveSCHNAIL.exe"))
   
 def stage():
   log()
@@ -217,10 +217,10 @@ def stage():
     subprocess.run(["git", "rev-parse", "HEAD"], stdout=revision_file, text=True, cwd=dir_pw)
   with open(path_staging("timestamp.txt"), 'w') as timestamp_file:
     subprocess.run(["date"], stdout=timestamp_file, text=True)
-  logf(shutil.copy2, file_jar, path_staging("PurpleWave.jar"))
+  logf(shutil.copy2, file_jar, path_staging("EridanWave.jar"))
   logf(rmtree, dir_cacheartifact)
   logf(os.makedirs, dir_cacheartifact)
-  for cache_artifact in ["PurpleWave.jar", "revision.txt", "timestamp.txt"]:
+  for cache_artifact in ["EridanWave.jar", "revision.txt", "timestamp.txt"]:
     logf(shutil.copy2, path_staging(cache_artifact), dir_cacheartifact)
 
   log("Building EXE with Launch4J")
@@ -229,24 +229,24 @@ def stage():
   log()
   log("Populate local testing")
   populate_bwapidata(dir_bwapidata)
-  logf(shutil.copy2, path_configs("PurpleWaveLocalMetal.config.json"), pathjoin(dir_bwapidata, "AI") )
+  logf(shutil.copy2, path_configs("EridanWaveLocalMetal.config.json"), pathjoin(dir_bwapidata, "AI") )
   
   log()
   if os.path.exists(dir_scbwbots):
     log("Populate SC-Docker")  
     for race in ["Protoss", "Terran", "Zerg", "Random"]:    
-      name = f"Purple{race}"
+      name = f"Eridan{race}"
       log(race)
       log(name)
       dir_bot_bwapidata = path_scbwbots(name)
       populate_bwapidata(dir_bot_bwapidata)
       logf(shutil.copy2, path_configs("bot.json"),                          dir_bot_bwapidata)
-      logf(shutil.copy2, path_configs("PurpleWaveLocalDocker.config.json"), pathjoin(dir_bot_bwapidata, "ai"))
+      logf(shutil.copy2, path_configs("EridanWaveLocalDocker.config.json"), pathjoin(dir_bot_bwapidata, "ai"))
       # Customize bot.json
       bot_json = pathjoin(dir_bot_bwapidata, "bot.json")
       content = ""
       with open(bot_json, 'r') as file:
-        content = file.read().replace("Protoss", race).replace("PurpleWave", name)
+        content = file.read().replace("Protoss", race).replace("EridanWave", name)
       with open(bot_json, 'w') as file:
         file.write(content)
   else:
@@ -256,8 +256,8 @@ def stage():
   if (os.path.exists(dir_localschnail)):
     log("Populate SCHNAIL")
     #populate_bwapidata(dir_localschnail, dir_localschnail)
-    #logf(shutil.copy2, path_configs("PurpleWaveSCHNAIL.config.json"), dir_localschnail)
-    #logf(shutil.copy2, path_staging("PurpleWaveSCHNAIL.exe"), dir_localschnail)
+    #logf(shutil.copy2, path_configs("EridanWaveSCHNAIL.config.json"), dir_localschnail)
+    #logf(shutil.copy2, path_staging("EridanWaveSCHNAIL.exe"), dir_localschnail)
   else:
     log("Did not find SCHNAIL")
       
@@ -267,7 +267,7 @@ def populate_bwapidata(dir_bwapidata, dir_ai=None):
   log(dir_ai)
   logf(os.makedirs,                                   dir_ai, exist_ok=True)  
   logf(shutil.copy2, path_configs("bwapi.dll"),       dir_bwapidata)
-  logf(shutil.copy2, path_staging("PurpleWave.jar"),  dir_ai)
+  logf(shutil.copy2, path_staging("EridanWave.jar"),  dir_ai)
   logf(shutil.copy2, path_staging("timestamp.txt"),   dir_ai)
   logf(shutil.copy2, path_staging("revision.txt"),    dir_ai)  
   logf(shutil.copy2, path_configs("run_proxy.bat"),   dir_ai)
@@ -278,7 +278,7 @@ def package(include_schnail_caches=False):
   log()
   log("PACKAGING")
   for package in ["AIIDE", "BASIL", "SSCAIT", "SCHNAIL"]:
-    package_name = f"PurpleWave{package}"
+    package_name = f"EridanWave{package}"
     package_dir  = path_staging(package_name)
     log(package_name)
     log(package_dir)
@@ -288,10 +288,10 @@ def package(include_schnail_caches=False):
     logf(shutil.copy2,  path_configs(f"{package_name}.config.json"),  package_dir)
     if package in ["AIIDE"]:
       #logf(shutil.copytree, path_staging("jre"), pathjoin(package_dir, "jre"))
-      open(pathjoin(package_dir, "PurpleWave.dll"), 'w').close()
+      open(pathjoin(package_dir, "EridanWave.dll"), 'w').close()
     # TODO: AIIDE does not want the bwapi.dll
     if package in ["SCHNAIL"]:
-      logf(shutil.copy2, path_staging(schnail_exe_source), pathjoin(package_dir, "PurpleWaveSCHNAIL.exe"))
+      logf(shutil.copy2, path_staging(schnail_exe_source), pathjoin(package_dir, "EridanWaveSCHNAIL.exe"))
       if include_schnail_caches:
         manifest = validate_schnail_caches()
         for cache_name in schnail_cache_names(manifest):
@@ -301,7 +301,7 @@ def package(include_schnail_caches=False):
   log()
   log("Replacing zips")
   for package in ["AIIDE", "BASIL", "SSCAIT", "SCHNAIL"]:
-    package_name = f"PurpleWave{package}"
+    package_name = f"EridanWave{package}"
     package_dir  = path_staging(package_name)
     log(package_name)
     log(package_dir)
@@ -312,11 +312,11 @@ def package(include_schnail_caches=False):
 
 def copy_basil(t, p, z):
   if t:
-    logf(shutil.copy2, path_staging("PurpleWaveBASIL.zip"), path_basiluploads("PurpleSpiritBASIL.zip"))
+    logf(shutil.copy2, path_staging("EridanWaveBASIL.zip"), path_basiluploads("EridanSpiritBASIL.zip"))
   if p:
-    logf(shutil.copy2, path_staging("PurpleWaveBASIL.zip"), path_basiluploads("PurpleWaveBASIL.zip"))
+    logf(shutil.copy2, path_staging("EridanWaveBASIL.zip"), path_basiluploads("EridanWaveBASIL.zip"))
   if z:
-    logf(shutil.copy2, path_staging("PurpleWaveBASIL.zip"), path_basiluploads("PurpleSwarmBASIL.zip"))
+    logf(shutil.copy2, path_staging("EridanWaveBASIL.zip"), path_basiluploads("EridanSwarmBASIL.zip"))
 
 def load_env():
   env_path = path_pw(".env")
@@ -362,7 +362,7 @@ def request_json(request, opener=None):
     raise RuntimeError(f"Invalid JSON from {request.full_url}: {response[:500]!r}") from error
 
 def multipart_form(fields, files):
-  boundary = f"----PurpleWave{uuid.uuid4().hex}"
+  boundary = f"----EridanWave{uuid.uuid4().hex}"
   body = bytearray()
   for name, value in fields:
     body.extend(f"--{boundary}\r\n".encode())
@@ -405,7 +405,7 @@ def verify_downloaded_zip(package_path, downloaded_zip, excluded_files=()):
 def deploy_sscait(bot_name, email_key, password_key):
   log()
   log(f"DEPLOYING {bot_name} TO SSCAIT")
-  package_path = path_staging("PurpleWaveSSCAIT.zip")
+  package_path = path_staging("EridanWaveSSCAIT.zip")
   email = require_env(email_key)
   password = require_env(password_key)
   cookie_jar = http.cookiejar.CookieJar()
@@ -414,7 +414,7 @@ def deploy_sscait(bot_name, email_key, password_key):
   login_request = urllib.request.Request(
     "https://sscaitournament.com/users/login_submit.php",
     data=urllib.parse.urlencode({"username": email, "password": password}).encode(),
-    headers={"Content-Type": "application/x-www-form-urlencoded", "User-Agent": "PurpleWave deployment tool"})
+    headers={"Content-Type": "application/x-www-form-urlencoded", "User-Agent": "EridanWave deployment tool"})
   login_response = request_json(login_request, opener)
   if login_response.get("status") != 1:
     raise RuntimeError(f"SSCAIT login failed for {bot_name}: {login_response.get('txt', login_response)}")
@@ -423,13 +423,13 @@ def deploy_sscait(bot_name, email_key, password_key):
   upload_request = urllib.request.Request(
     "https://sscaitournament.com/users/users/new_binary_submit.php",
     data=upload_body,
-    headers={"Content-Type": content_type, "User-Agent": "PurpleWave deployment tool"})
+    headers={"Content-Type": content_type, "User-Agent": "EridanWave deployment tool"})
   upload_response = request_json(upload_request, opener)
   if upload_response.get("status") != 1:
     raise RuntimeError(f"SSCAIT upload failed for {bot_name}: {upload_response.get('txt', upload_response)}")
 
   download_url = "https://sscaitournament.com/bot_binary.php?" + urllib.parse.urlencode({"bot": bot_name, "verify": uuid.uuid4().hex})
-  downloaded_zip = request_bytes(urllib.request.Request(download_url, headers={"User-Agent": "PurpleWave deployment tool"}))
+  downloaded_zip = request_bytes(urllib.request.Request(download_url, headers={"User-Agent": "EridanWave deployment tool"}))
   verify_downloaded_zip(package_path, downloaded_zip, {"bwapi.dll"})
 
 def load_schnail_context():
@@ -442,14 +442,14 @@ def load_schnail_context():
   login_request = urllib.request.Request(
     f"{base_url}/user/auth",
     data=login_body,
-    headers={"Content-Type": "application/json", "User-Agent": "PurpleWave deployment tool"})
+    headers={"Content-Type": "application/json", "User-Agent": "EridanWave deployment tool"})
   login_response = request_json(login_request)
   if not login_response.get("success") or not login_response.get("token") or not login_response.get("guid"):
     raise RuntimeError(f"SCHNAIL login failed: {login_response.get('message', login_response)}")
   authorization = f"Bearer {login_response['token']}"
 
   bots_url = f"{base_url}/bots/botInfosForAuthor?" + urllib.parse.urlencode({"guid": login_response["guid"]})
-  bots_request = urllib.request.Request(bots_url, headers={"Authorization": authorization, "User-Agent": "PurpleWave deployment tool"})
+  bots_request = urllib.request.Request(bots_url, headers={"Authorization": authorization, "User-Agent": "EridanWave deployment tool"})
   bots = request_json(bots_request)
   matching_bots = [bot for bot in bots if bot.get("name") == bot_name]
   if len(matching_bots) != 1:
@@ -458,7 +458,7 @@ def load_schnail_context():
 
   maps_request = urllib.request.Request(
     f"{base_url}/maps/mapInfos",
-    headers={"User-Agent": "PurpleWave deployment tool"})
+    headers={"User-Agent": "EridanWave deployment tool"})
   maps = request_json(maps_request)
   maps_by_guid = {map_info.get("guid"): map_info for map_info in maps}
   missing_guids = [guid for guid in bot.get("mapGuids", []) if guid not in maps_by_guid]
@@ -561,11 +561,11 @@ def validate_schnail_caches(context=None):
   completed = subprocess.run(command, cwd=dir_purplebench, capture_output=True, text=True)
   if completed.returncode != 0:
     details = (completed.stderr or completed.stdout).strip()
-    raise RuntimeError(f"PurpleBench rejected the SCHNAIL caches: {details[-4000:]}")
+    raise RuntimeError(f"EridanBench rejected the SCHNAIL caches: {details[-4000:]}")
   try:
     manifest = json.loads(completed.stdout)
   except json.JSONDecodeError as error:
-    raise RuntimeError(f"PurpleBench returned an invalid cache manifest: {completed.stdout[:500]!r}") from error
+    raise RuntimeError(f"EridanBench returned an invalid cache manifest: {completed.stdout[:500]!r}") from error
   os.makedirs(dir_schnailcaches, exist_ok=True)
   with open(pathjoin(dir_schnailcaches, "manifest.json"), 'w', encoding='utf-8') as manifest_file:
     json.dump(manifest, manifest_file, indent=2)
@@ -578,7 +578,7 @@ def schnail_cache_names(manifest):
     for race in ["Zerg", "Terran", "Protoss", "Unknown"]:
       names.extend(map_info.get("caches", {}).get(race, []))
   if not names or len(names) != len(set(names)):
-    raise RuntimeError("PurpleBench returned an empty or duplicate SCHNAIL cache manifest")
+    raise RuntimeError("EridanBench returned an empty or duplicate SCHNAIL cache manifest")
   return names
 
 def validate_schnail_package_caches(package_path, context):
@@ -601,7 +601,7 @@ def deploy_schnail(context=None, *, require_caches=True):
   bot_name, _, _ = schnail_deployment
   log()
   log(f"DEPLOYING {bot_name} TO SCHNAIL")
-  package_path = path_staging("PurpleWaveSCHNAIL.zip")
+  package_path = path_staging("EridanWaveSCHNAIL.zip")
   context = load_schnail_context() if context is None else context
   if require_caches:
     validate_schnail_package_caches(package_path, context)
@@ -621,13 +621,13 @@ def deploy_schnail(context=None, *, require_caches=True):
   upload_request = urllib.request.Request(
     f"{base_url}/bots/updateBot",
     data=upload_body,
-    headers={"Authorization": authorization, "Content-Type": content_type, "User-Agent": "PurpleWave deployment tool"})
+    headers={"Authorization": authorization, "Content-Type": content_type, "User-Agent": "EridanWave deployment tool"})
   upload_response = request_json(upload_request)
   if not upload_response.get("success"):
     raise RuntimeError(f"SCHNAIL upload failed: {upload_response.get('message', upload_response)}")
 
   download_url = f"{base_url}/bots/requestBotFile?" + urllib.parse.urlencode({"guid": bot_guid})
-  downloaded_zip = request_bytes(urllib.request.Request(download_url, headers={"User-Agent": "PurpleWave deployment tool"}))
+  downloaded_zip = request_bytes(urllib.request.Request(download_url, headers={"User-Agent": "EridanWave deployment tool"}))
   verify_downloaded_zip(package_path, downloaded_zip)
 
 def play(threads=3):
@@ -654,7 +654,7 @@ def play(threads=3):
     subprocess.Popen(["dockerstop.sh"])
     
 def package_sim_viz():
-  subprocess.run(file_launch4j + " " +  path_configs("launch4jPurpleSimViz.xml"))
+  subprocess.run(file_launch4j + " " +  path_configs("launch4jEridanSimViz.xml"))
     
 if __name__ == "__main__":  
   main()

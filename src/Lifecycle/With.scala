@@ -127,7 +127,7 @@ object With {
 
   def onStart(): Unit = {
     startNanoTime = System.nanoTime()
-    game = PurpleBWClient.getGame
+    game = EridanBWClient.getGame
     game.enableFlag(Flag.UserInput)
     game.setLatCom(false)
     game.setLocalSpeed(0)

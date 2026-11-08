@@ -97,7 +97,7 @@ while [ "$i" -lt "$N" ]; do
 done
 
 MANIFEST="$OUTDIR/manifest.txt"
-JAR_FP="$(md5sum "target/PurpleWave-1.0.jar" 2>/dev/null | cut -d' ' -f1)"
+JAR_FP="$(md5sum "target/EridanWave-1.0.jar" 2>/dev/null | cut -d' ' -f1)"
 [ -z "$JAR_FP" ] && JAR_FP="unknown"
 {
   echo "map=$MAP"

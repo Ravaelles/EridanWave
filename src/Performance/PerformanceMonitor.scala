@@ -1,6 +1,6 @@
 package Performance
 
-import Lifecycle.{PurpleBWClient, With}
+import Lifecycle.{EridanBWClient, With}
 import Performance.Tasks.TimedTask
 import Utilities.?
 import Utilities.Time.{Forever, Seconds}
@@ -49,7 +49,7 @@ class PerformanceMonitor {
   def frameHitBreakpoint  : Boolean = With.configuration.detectBreakpoints && frameElapsedMs > 24 * 3
   def frameBrokeTarget    : Boolean = With.frame > 0 && msBeforeTarget  < 0
   def frameBrokeLimit     : Boolean = With.frame > 0 && msBeforeLimit   < 0
-  def continueRunning     : Boolean = With.frame == 0 || ! With.configuration.enablePerformancePauses || (msBeforeTarget > 0 && PurpleBWClient.framesBehind() < 1)
+  def continueRunning     : Boolean = With.frame == 0 || ! With.configuration.enablePerformancePauses || (msBeforeTarget > 0 && EridanBWClient.framesBehind() < 1)
 
   def disqualificationDanger: Boolean = (
     With.configuration.enablePerformancePauses && ! With.configuration.debugging && (

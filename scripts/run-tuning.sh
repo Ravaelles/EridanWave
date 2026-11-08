@@ -98,7 +98,7 @@ while [ "$round" -lt "$ROUNDS" ]; do
     --tuning-strategy="$STRATEGY" --headless --no-build \
     ${PROPOSAL[@]+"${PROPOSAL[@]}"} \
     > "$OUTDIR/round-$round-batch.log" 2>&1 || echo "[tune] round $round batch had failures (see round-$round-batch.log)"
-  DRIVER_OUT="$(java -cp target/PurpleWave-1.0.jar Tuning.TuningDriver \
+  DRIVER_OUT="$(java -cp target/EridanWave-1.0.jar Tuning.TuningDriver \
     --strategy="$STRATEGY" --hof="$HOF" --manifest="$ROUND_OUT/manifest.txt" \
     --out="$FRAGMENT" --radius="$RADIUS" --seed="$SEED" 2>&1)"
   echo "$DRIVER_OUT" | sed 's/^/[tune] driver: /'

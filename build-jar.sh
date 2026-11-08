@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Fast dev JAR build for PurpleWave -> target/PurpleWave-1.0.jar
+# Fast dev JAR build for EridanWave -> target/EridanWave-1.0.jar
 # Default is incremental + offline + dev profile (no optimizer passes): seconds.
 # Usage: ./build-jar.sh [--release] [--exe] [--clean]
 #   --release  full optimizer flags (slower build, faster bot; use for the shipped artifact)
-#   --exe      also build out/artifacts/PurpleSimViz.exe (needs a JRE under Wine)
+#   --exe      also build out/artifacts/EridanSimViz.exe (needs a JRE under Wine)
 #   --clean    wipe target/ first (forces a full rebuild; see below when it makes sense)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -26,7 +26,7 @@ done
 # single-module Scala compilation is single-threaded, so cores don't help,
 # but heap does (measured: ~27 s cold either way, warm zinc stays ~3 s).
 export MAVEN_OPTS="--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED -Xms2g -Xmx4g"
-JAR="target/PurpleWave-1.0.jar"
+JAR="target/EridanWave-1.0.jar"
 FINGERPRINT_FILE="target/.build-fingerprint"
 
 # Skip the build when nothing changed: hash all build inputs and compare with

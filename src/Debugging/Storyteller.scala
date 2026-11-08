@@ -2,7 +2,7 @@ package Debugging
 
 import Debugging.Visualizations.Rendering.DrawScreen
 import Debugging.Visualizations.Views.Performance.ShowPerformance
-import Lifecycle.{Main, PurpleBWClient, With}
+import Lifecycle.{Main, EridanBWClient, With}
 import Macro.Facts.MacroCounting
 import Mathematics.Maff
 import ProxyBwapi.Players.PlayerInfo
@@ -184,7 +184,7 @@ class Storyteller extends MacroCounting {
       "The bot believes its performance"
       + (if (Main.jbwapiConfiguration.getAsync) ", if it were running synchronously, would have been " else " was ")
       + (if (With.performance.disqualified) "BAD" else if (With.performance.disqualificationDanger) "DANGEROUS" else "good"))
-    tell(PurpleBWClient.getPerformanceMetrics.toString)
+    tell(EridanBWClient.getPerformanceMetrics.toString)
     tell(
       DrawScreen.tableToString(
         DrawScreen.padTable(
@@ -249,10 +249,10 @@ class Storyteller extends MacroCounting {
     logMemoryUsage()
 
     try {
-      tell(f"This copy of PurpleWave was packaged for distribution on ${Source.fromFile(f"${With.bwapiData.ai}timestamp.txt").getLines.mkString}")
+      tell(f"This copy of EridanWave was packaged for distribution on ${Source.fromFile(f"${With.bwapiData.ai}timestamp.txt").getLines.mkString}")
     } catch { case exception: Exception => tell("No deployment timestamp available") }
     try {
-      tell(f"This copy of PurpleWave came from Git revision ${Source.fromFile(f"${With.bwapiData.ai}revision.txt").getLines.mkString}")
+      tell(f"This copy of EridanWave came from Git revision ${Source.fromFile(f"${With.bwapiData.ai}revision.txt").getLines.mkString}")
     } catch { case exception: Exception => tell("No deployment Git revision available") }
     tell("JBWAPI autocontinue: "            + Main.jbwapiConfiguration.getAutoContinue)
     tell("JBWAPI debugConnection: "         + Main.jbwapiConfiguration.getDebugConnection)

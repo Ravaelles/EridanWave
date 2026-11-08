@@ -24,7 +24,7 @@ package Lifecycle.Launch;
  *       Explicit visibility is forwarded to {@code wine-run.sh}; without an
  *       explicit flag the script default (headless) applies.</li>
  *   <li>{@code --jar=&lt;path&gt;} bot jar for the Wine client (default
- *       {@code target/PurpleWave-1.0.jar} under the repo root).</li>
+ *       {@code target/EridanWave-1.0.jar} under the repo root).</li>
  *   <li>{@code --wine-prefix=&lt;path&gt;} (default {@code ~/.wine}).</li>
  *   <li>{@code --game-root=&lt;path&gt;} StarCraft install (default
  *       {@code $WINEPREFIX/drive_c/sc}).</li>
@@ -180,8 +180,8 @@ public final class LaunchConfig {
     }
 
     public static void printHelp() {
-        System.out.println("PurpleWave game launcher");
-        System.out.println("  java -jar PurpleWave.jar [--launcher=none|chaos|wine] [--map=<name>]");
+        System.out.println("EridanWave game launcher");
+        System.out.println("  java -jar EridanWave.jar [--launcher=none|chaos|wine] [--map=<name>]");
         System.out.println("      [--race=Protoss|Terran|Zerg|Random] [--enemy-race=...]");
         System.out.println("      [--game-type=MELEE|USE_MAP_SETTINGS] [--speed=0-1000] [--headless] [--jar=<path>]");
         System.out.println("      [--cherryvis[=1|true|yes|0|false|no]] [--no-cherryvis]");

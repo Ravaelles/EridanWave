@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # List StarCraft maps available to the Wine game, grouped by folder.
 # Prints the exact relative path to pass as --map= to wine-run.sh
-# (or to java -jar PurpleWave.jar --launcher=wine --map=...).
+# (or to java -jar EridanWave.jar --launcher=wine --map=...).
 #
 # Usage: bash scripts/list-maps.sh [--filter=<substring>|<substring>]
 #   --filter protoss   list only maps matching "protoss" (case-insensitive),

@@ -2,7 +2,7 @@ package Debugging
 
 import Information.Battles.Types.Battle
 import Information.Geography.Types.{Base, Zone}
-import Lifecycle.{PurpleBWClient, With}
+import Lifecycle.{EridanBWClient, With}
 import Mathematics.Maff
 import Placement.Walls.FindWall
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
@@ -42,7 +42,7 @@ object KeyboardCommands {
       case "2"          => With.game.setLocalSpeed(24 * 8)  ; With.configuration.camera = false
       case "3"          => With.game.setLocalSpeed(24)      ; With.configuration.camera = false
       case "4"          => With.game.setLocalSpeed(0)       ; With.configuration.camera = false
-      case "pm"         => With.logger.debug(PurpleBWClient.getPerformanceMetrics.toString)
+      case "pm"         => With.logger.debug(EridanBWClient.getPerformanceMetrics.toString)
       case "t"          => With.configuration.trackUnit = ! With.configuration.trackUnit
       case "rewall"     => With.lambdas.add(() => if (With.placement.wall.isDefined) FindWall(With.geography.ourFoyer.zone) else With.placement.fitWall(With.geography.ourFoyer.zone))
       case "perform"    => { With.configuration.enablePerformancePauses = ! With.configuration.enablePerformancePauses; With.manners.chat("Performance stops? " + With.configuration.enablePerformancePauses) }
