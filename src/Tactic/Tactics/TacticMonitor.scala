@@ -16,7 +16,7 @@ class TacticMonitor extends Tactic {
 
   override def launch(): Unit = {
     var bases = With.geography.enemyBases
-    if (bases.isEmpty)                                      return
+    if (bases.isEmpty) { escortArmy(); return }
     if ( ! With.blackboard.monitorBases())                  return
     if (With.units.existsEnemy(IsMobileDetector))           return
     if (With.units.countEnemy(Terran.Factory) > 7)          return
@@ -31,5 +31,18 @@ class TacticMonitor extends Tactic {
     scouts.units.foreach(_.intend(this)
       .setTerminus(With.geography.home.center)
       .setScout(bases.flatMap(_.zone.tiles.filter(t => t.enemyRangeAir <= 0 && ( ! cloaked || ! t.enemyDetectedUnchecked)))))
+  }
+
+  // Baseless (UMS) maps have no bases to monitor. The observer still needs an
+  // owner, so it escorts the attack squad - staying with the muscle where it
+  // can spot cloaked threats (Stardust ObserverActivity.EscortingArmy).
+  // Falls back to home while the attack squad is still empty.
+  private def escortArmy(): Unit = {
+    scouts.acquire()
+    val army = With.tactics.attackSquad
+    val anchor = if (army.units.nonEmpty) army.centroidKey else With.geography.home.center
+    scouts.units.foreach(_.intend(this)
+      .setTerminus(anchor)
+      .setRedoubt(With.geography.home.center))
   }
 }
