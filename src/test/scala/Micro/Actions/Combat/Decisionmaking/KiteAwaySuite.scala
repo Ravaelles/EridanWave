@@ -4,6 +4,17 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class KiteAwaySuite extends AnyFunSuite {
 
+  test("tuning defaults are pinned: parametrization must not shift behavior silently") {
+    assert(KiteAway.seriousWoundHp == 65)
+    assert(KiteAway.criticalWoundHp == 25)
+    assert(KiteAway.woundScopeFraction == 0.05)
+    assert(KiteAway.seriousCooldown == 10)
+    assert(KiteAway.criticalCooldown == 4)
+    assert(KiteAway.mildCooldown == 15)
+    assert(KiteAway.enemyMarginTiles == 1.8)
+    assert(KiteAway.maxOffsetTiles == 1.4)
+  }
+
   test("wound levels follow total HP boundaries") {
     assert(KiteAway.isCriticallyWounded(25))
     assert( ! KiteAway.isCriticallyWounded(26))

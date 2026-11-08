@@ -5,6 +5,9 @@ import Mathematics.Maff
 /**
  * KiteAway: wounded units yield ground instead of dying in place.
  *
+ * Knobs are public vars (Atlantis style): the tuning strategy assigns them
+ * directly by name, and they stay readable and editable right here.
+ *
  * A dragoon below ~60 total HP dies within a second to focused fire, and our
  * own TargetScoring (+4.0 * injury) proves the enemy thinks the same way
  * about its targets. So: the more wounded the unit, the deeper it sits, and
@@ -24,28 +27,28 @@ import Mathematics.Maff
 object KiteAway {
 
   /** Seriously wounded at or below this total HP (shields + hit points). */
-  val seriousWoundHp: Int = 65
+  var seriousWoundHp: Int = 65
 
   /** Critically wounded at or below this total HP (shields + hit points). */
-  val criticalWoundHp: Int = 25
+  var criticalWoundHp: Int = 25
 
   /** Only units more wounded than this rotate; healthy ones hold the line. */
-  val woundScopeFraction: Double = 0.05
+  var woundScopeFraction: Double = 0.05
 
   /** Seriously wounded withdraw while cooldown exceeds this. */
-  val seriousCooldown: Int = 10
+  var seriousCooldown: Int = 10
 
   /** Critically wounded withdraw while cooldown exceeds this. */
-  val criticalCooldown: Int = 4
+  var criticalCooldown: Int = 4
 
   /** Mildly wounded withdraw while cooldown exceeds this. */
-  val mildCooldown: Int = 15
+  var mildCooldown: Int = 15
 
   /** Retreat only while an enemy presses within firing range plus this margin (tiles). */
-  val enemyMarginTiles: Double = 1.8
+  var enemyMarginTiles: Double = 1.8
 
   /** A fully wounded unit sits this far (tiles) behind its line slot. Applied linearly with injury. */
-  val maxOffsetTiles: Double = 1.4
+  var maxOffsetTiles: Double = 1.4
 
   def isSeriouslyWounded(totalHealth: Int): Boolean = totalHealth <= seriousWoundHp
   def isCriticallyWounded(totalHealth: Int): Boolean = totalHealth <= criticalWoundHp
