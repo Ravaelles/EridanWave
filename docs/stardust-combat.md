@@ -158,6 +158,10 @@ Regrouping`) only changes through a sim verdict.
    line that makes their replays debuggable. Cheap, high value.
 8. **Sim-gated regroup** instead of threshold voting. Larger project;
    do it last, after 1-6 stop the bleeding.
+   (Implemented: `RegroupLatch` - an Engaged|Regrouping stance latched through
+   the per-unit sim verdicts with asymmetric thresholds, 0.35 to break off
+   and 0.65 to re-engage, so a borderline simulation cannot flap the squad.
+   Latched regroup overrules the frame vote and HuntContact; yolo resets it.)
 
 Explicitly *not* proposed: copying the cluster/membership machinery.
 Our recruiter + squad + HuntContact latch already answers "who goes where";

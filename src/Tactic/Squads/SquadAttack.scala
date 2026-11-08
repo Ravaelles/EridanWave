@@ -22,7 +22,13 @@ class SquadAttack extends Squad {
   // HuntContact marches to contact: act as if the squad agreed to fight.
   // Without this, movement (terminus, formations, targets) falls back to
   // retreat while the mode says advance - and the squad shudders in place.
-  override def fightConsensus: Boolean = super.fightConsensus || mode == HuntContact
+  // A latched regroup overrules even this: a clear sim verdict to break off
+  // beats marching blind into contact.
+  var stance: RegroupLatch.Stance = RegroupLatch.Engaged
+  override def fightConsensus: Boolean = {
+    if (stance == RegroupLatch.Regrouping) return false
+    super.fightConsensus || mode == HuntContact
+  }
 
   // Hunt latch (UMS contact loss): a steady destination instead of a target
   // recomputed every frame. Without it the squad - observers first - darts
@@ -202,12 +208,29 @@ class SquadAttack extends Squad {
   val otherTargets = new ArrayBuffer[UnitInfo]
   private val unassigned = new UnorderedBuffer[FriendlyUnitInfo]()
 
+  // Sim-gated regroup stance (Stardust activity): latched through the per-unit
+  // sim verdicts with hysteresis, so a borderline simulation cannot flap the
+  // whole squad between advance and retreat every few frames. Yolo is an
+  // explicit all-in and resets the latch instead of consulting it.
+  private def updateStance(): Unit = {
+    if (With.yolo.active) {
+      stance = RegroupLatch.Engaged
+    } else {
+      val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
+      val coverage = verdicts.size.toDouble / units.size
+      val fighting = if (verdicts.isEmpty) 1.0 else verdicts.count(identity).toDouble / verdicts.size
+      stance = RegroupLatch.nextStance(stance, fighting, coverage)
+    }
+    Debugging.CherryVis.CherryVis.board("AttackStance", stance.toString)
+  }
+
   override def run(): Unit = {
     otherTargets.clear()
 
     if (units.isEmpty) return
 
     chooseMode()
+    updateStance()
 
     if (
       With.frame < Minutes(5)()
