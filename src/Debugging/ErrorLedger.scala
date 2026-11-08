@@ -35,16 +35,21 @@ object ErrorLedger {
 
   val maxSamples: Int = 3
 
-  def note(key: String, priority: String, message: => String): Unit = {
+  def note(key: String, priority: String, message: => String): Int = {
     entries.get(key) match {
       case Some(entry) =>
         entry.count += 1
         entry.lastFrame = Lifecycle.With.frame
         if (entry.samples.size < maxSamples) entry.samples += message
+        entry.count
       case None =>
         entries(key) = Entry(priority, 1, Lifecycle.With.frame, Lifecycle.With.frame, mutable.ArrayBuffer(message))
+        1
     }
   }
+
+  /** Full traces stay readable: log one for the first few hits of a key, count the rest. */
+  def deservesFullTrace(occurrences: Int): Boolean = occurrences <= 2
 
   /** Stable key for an exception: class plus top in-repo stack frame. */
   def exceptionKey(exception: Exception): String = {

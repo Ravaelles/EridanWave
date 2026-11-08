@@ -52,6 +52,20 @@ class ErrorLedgerSuite extends AnyFunSuite {
     ErrorLedger.reset()
   }
 
+  test("note returns the running count for trace throttling") {
+    ErrorLedger.reset()
+    assert(ErrorLedger.note("k", ErrorLedger.Priority.High, "a") == 1)
+    assert(ErrorLedger.note("k", ErrorLedger.Priority.High, "b") == 2)
+    assert(ErrorLedger.note("k", ErrorLedger.Priority.High, "c") == 3)
+    ErrorLedger.reset()
+  }
+
+  test("full traces are for the first hits only") {
+    assert(ErrorLedger.deservesFullTrace(1))
+    assert(ErrorLedger.deservesFullTrace(2))
+    assert( ! ErrorLedger.deservesFullTrace(3))
+  }
+
   test("exception keys name the class and the top in-repo frame") {
     val exception = new RuntimeException("bang")
     exception.setStackTrace(Array(

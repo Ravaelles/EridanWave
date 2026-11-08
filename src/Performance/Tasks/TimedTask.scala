@@ -78,7 +78,19 @@ abstract class TimedTask {
     val millisecondsBefore    = With.performance.systemMillis
     val targetAlreadyViolated = With.performance.frameBrokeTarget
     val limitAlreadyViolated  = With.performance.frameBrokeLimit
-    onRun(budgetMsCapped)
+    // One rogue subsystem must not wedge the rest of the frame: catch, count
+    // by task key, log the full trace only for the first hits, and continue.
+    try {
+      onRun(budgetMsCapped)
+    } catch { case exception: Exception =>
+      val occurrences = Debugging.ErrorLedger.note(
+        "task." + name,
+        Debugging.ErrorLedger.Priority.High,
+        exception.getClass.getSimpleName + ": " + exception.getMessage)
+      if (Debugging.ErrorLedger.deservesFullTrace(occurrences)) {
+        With.logger.onException(exception)
+      }
+    }
     val millisecondsAfter     = With.performance.systemMillis
     var millisecondsDuration  = millisecondsAfter - millisecondsBefore
 
