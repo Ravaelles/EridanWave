@@ -23,4 +23,9 @@ class SquadRallySuite extends AnyFunSuite {
   test("unit sitting on the centroid keeps its terminus") {
     assert(SquadRally.rallyFor(centroid, centroid, terminus) == terminus)
   }
+
+  test("isRallying mirrors the rally decision") {
+    assert(SquadRally.isRallying(Pixel(1000, 1200), centroid))
+    assert( ! SquadRally.isRallying(Pixel(1050, 1050), centroid))
+  }
 }

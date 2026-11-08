@@ -337,6 +337,9 @@ object Commander {
         val alreadyMovingThere = unit.order == Orders.Move && unit.orderTargetPixel.exists(_.pixelDistance(to) < 128)
         if ( ! alreadyMovingThere || unit.seeminglyStuck) {
           unit.bwapiUnit.move(to.bwapi)
+          Debugging.CherryVis.CherryVis.decision(unit.id, f"Moving to ${to.x},${to.y}")
+        } else {
+          Debugging.CherryVis.CherryVis.decision(unit.id, "Holding move order")
         }
       }
       if ( ! unit.flying) {

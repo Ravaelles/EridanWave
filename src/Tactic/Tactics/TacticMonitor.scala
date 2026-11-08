@@ -41,8 +41,11 @@ class TacticMonitor extends Tactic {
     scouts.acquire()
     val army = With.tactics.attackSquad
     val anchor = if (army.units.nonEmpty) army.centroidKey else With.geography.home.center
-    scouts.units.foreach(_.intend(this)
-      .setTerminus(anchor)
-      .setRedoubt(With.geography.home.center))
+    scouts.units.foreach(scout => {
+      Debugging.CherryVis.CherryVis.decision(scout.id, "Escorting attack squad")
+      scout.intend(this)
+        .setTerminus(anchor)
+        .setRedoubt(With.geography.home.center)
+    })
   }
 }

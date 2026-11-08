@@ -96,7 +96,11 @@ object SquadAutomation {
       // Straggler rally (Stardust): a unit lagging behind the marching pack
       // rejoins the pack centroid first instead of walking alone to its slot.
       // Returning units keep their own slots - they are meant to disperse.
-      lazy val finalMarch = SquadRally.rallyFor(unit.pixel, ?(unit.flying, squad.centroidAir, squad.centroidGround), finalTravel)
+      lazy val pack     = ?(unit.flying, squad.centroidAir, squad.centroidGround)
+      lazy val rallying = squad.fightConsensus && SquadRally.isRallying(unit.pixel, pack)
+      lazy val finalMarch = ?(rallying, pack, finalTravel)
+      Debugging.CherryVis.CherryVis.decision(unit.id,
+        ?(squad.fightConsensus, ?(rallying, "Rallying to pack centroid", "Marching to formation slot"), "Returning to slot"))
       unit.intend(squad)
         .setTerminus(?(squad.fightConsensus, finalMarch, finalReturn))
         .setRedoubt(finalReturn)

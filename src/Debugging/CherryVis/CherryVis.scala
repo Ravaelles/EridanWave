@@ -26,6 +26,7 @@ object CherryVis {
   private val lastBehaviorRef = new mutable.HashMap[Int, AnyRef]
   private val lastBoard     = new mutable.HashMap[String, String]
   private val lastOrders    = new mutable.HashMap[Int, String]
+  private val lastDecision  = new mutable.HashMap[Int, String]
   private val knownUnits    = new mutable.HashSet[Int]
   private var lastStrategy  = ""
 
@@ -39,6 +40,7 @@ object CherryVis {
     lastBehaviorRef.clear()
     lastBoard.clear()
     lastOrders.clear()
+    lastDecision.clear()
     knownUnits.clear()
     lastStrategy = ""
   }
@@ -93,6 +95,19 @@ object CherryVis {
     if (lastBoard.getOrElse(key, "") != value) {
       lastBoard(key) = value
       trace.logState(With.frame, key, value)
+    }
+  }
+
+  /**
+   * Why the unit is doing what it is doing (Stardust `CherryVis::log(id)`).
+   * Change-only like owner/behavior above: a steady reason costs one map
+   * lookup, never a row, so per-frame call sites stay free in traced games.
+   */
+  def decision(unitId: Int, reason: String): Unit = {
+    if ( ! enabled) return
+    if (lastDecision.getOrElse(unitId, "") != reason) {
+      lastDecision(unitId) = reason
+      trace.logUnitLine(With.frame, unitId, reason)
     }
   }
 

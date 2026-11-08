@@ -16,6 +16,10 @@ object SquadRally {
   val rallyRadiusPixels: Int = 128
 
   def rallyFor(unitPixel: Pixel, centroid: Pixel, terminus: Pixel): Pixel = {
-    if (unitPixel.pixelDistance(centroid) > rallyRadiusPixels) centroid else terminus
+    if (isRallying(unitPixel, centroid)) centroid else terminus
+  }
+
+  def isRallying(unitPixel: Pixel, centroid: Pixel): Boolean = {
+    unitPixel.pixelDistance(centroid) > rallyRadiusPixels
   }
 }
