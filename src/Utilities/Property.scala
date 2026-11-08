@@ -12,7 +12,7 @@ class Property[T](val default: T) {
     if (_parent.contains(this)) {
       throw new Exception("Cyclical inheritance for " + this.getClass.toString)
     }
-    _parent.map(_.get).getOrElse(_value)
+    if (_set) _value else _parent.map(_.get).getOrElse(_value)
   }
   
   def inherit(parent: Property[T]): Unit = {

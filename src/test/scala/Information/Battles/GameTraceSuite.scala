@@ -61,8 +61,7 @@ class GameTraceSuite extends AnyFunSuite {
     assert(trace.firstSeen.engineIdsJson == "[5,99]")
   }
 
-  test("game summary names both sides and the result") {
-    val summary = new GameSummary
+  test("game summary names both sides and the result") {    val summary = new GameSummary
     summary.map = "Tau Cross"
     summary.gameDurationFrames = 15000
     summary.playerName = "Us"
@@ -76,5 +75,31 @@ class GameTraceSuite extends AnyFunSuite {
     assert(json.contains("\"p0_win\": true"))
     assert(json.contains("\"p1_win\": false"))
     assert(json.contains("\"game_duration_frames\": 15000"))
+  }
+
+  test("a managerless unit still names what it does when tooltips are on") {
+    val trace = new GameTrace
+    trace.logTooltip(10, 9, "ClusterKite")
+    val table = new StringTable
+    val updates = trace.buildUnitsUpdates(table, true)
+    assert(updates == "\"9\":{\"10\":{\"tooltip\":10000}}", updates)
+  }
+
+  test("an empty trace still renders every section") {
+    val json = new GameTrace().toTraceJson(false)
+    assert(json.contains("\"board_updates\": {}"))
+    assert(json.contains("\"units_updates\": {}"))
+    assert(json.contains("\"units_logs\": {}"))
+    assert(json.contains("\"logs\": []"))
+    assert(json.contains("\"unit_ids\": []"))
+  }
+
+  test("units sort by id in every per-unit section") {
+    val trace = new GameTrace
+    trace.logManager(10, 30, "B")
+    trace.logManager(10, 5, "A")
+    val table = new StringTable
+    val updates = trace.buildUnitsUpdates(table, true)
+    assert(updates.indexOf("\"5\"") < updates.indexOf("\"30\""), updates)
   }
 }

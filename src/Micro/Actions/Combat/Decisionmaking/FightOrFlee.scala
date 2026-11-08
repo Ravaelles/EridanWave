@@ -19,63 +19,52 @@ object FightOrFlee extends Action {
   //noinspection NameBooleanParameters
   override def perform(u: FriendlyUnitInfo): Unit = {
 
-    var decision: Option[Boolean] = None
-
-    def decide(shouldEngage: Boolean, description: String, condition: () => Boolean): Unit = {
-      if (decision.isEmpty && condition()) {
-        decision = Some(shouldEngage)
-        u.agent.fightReason = description
-      }
-    }
-
     val berzerkCutoff = Minutes(6)()
 
-    // A unit with no weapon and no spells can contribute nothing by engaging:
-    // never let it pick the Fight technique (it would approach enemies it
-    // cannot harm and flip-flop with Walk). It still follows the army via
-    // Walk and still runs away via Flee - only the engage path is closed.
-    decide(false, "Pacifist", () => ! u.canAttack && ! u.unitClass.castsSpells)
-    decide(false, "CantFight",  () => ! u.intent.canFight)
-    decide(true,  "CantFlee",   () => ! u.intent.canFlee)
-    decide(true,  "Static",     () => ! u.canMove)
-    decide(true,  "Committed",  () => u.agent.commit)
-    decide(true,  "YOLO",       () => With.yolo.active && IsWarrior(u))
-    decide(true,  "Irradiated", () => u.painfullyIrradiated)
-    decide(true,  "Safe",       () => u.battle.exists( ! _.enemy.canAttackIfVisible(u)))
-    decide(true,  "Detonated",  () => u.unitClass.suicides && u.matchups.targetsInRange.exists(_.canAttack(u)))
-    decide(true,  "HugTank",    () => ! u.flying && u.agent.ride.isEmpty && With.enemies.exists(_.isTerran) && u.matchups.targetsInRange.exists(t => Terran.SiegeTankSieged(t) && t.visible && t.canAttack(u)))
-    decide(true,  "Archon",     () => Protoss.Archon(u) && u.matchups.targetsInRange.exists(_.unitClass.attacksOrCastsOrDetectsOrTransports))
-    decide(true,  "CoverFire",  () => u.unitClass.supportsAnchor && u.combatAllies.exists(ally => ! ally.loaded && ally.unitClass.isAnchor && u.matchups.threatDeepest.exists(enemy => u.canAttack(enemy) && ally.canAttack(enemy) && enemy.pixelsToGetInRange(ally) <= Math.min(32 * 8, 16 + u.pixelsToGetInRange(enemy)) && u.pixelDistanceEdge(ally) < 32 * 10)))
-    decide(true,  "Berzerk",    () => With.frame < berzerkCutoff && u.isAny(Protoss.Zealot, IsSlowling) && ! u.team.exists(_.catchesGround) && u.matchups.threatDeepest.exists(td => Terran.Vulture(td) && td.matchups.targetNearest.exists(tn => td.pixelsToGetInRange(tn) < 32 && tn.unitClass == u.unitClass)))
-    decide(true,  "Cloaked",    () => u.effectivelyCloaked && u.isAny(Terran.Wraith, Protoss.DarkTemplar) && ( ! Terran.Wraith(u) || u.energy > 10))
-    decide(true,  "Cloakable",  () => Terran.Wraith(u) && Terran.WraithCloak() && u.energy >= 50  && u.matchups.groupVs.detectors.isEmpty)
-    decide(true,  "Lurking",    () => Zerg.Lurker(u)                                              && u.matchups.groupVs.detectors.isEmpty)
-    decide(true,  "Towers",     () => With.frame < Minutes(8)() && u.matchups.allies.exists(a => a.unitClass.isBuilding && a.unitClass.canAttack && (a.matchups.targetNearest.exists(t => u.canAttack(t) && a.inRangeToAttack(t)) || a.matchups.threatNearest.exists(t => u.canAttack(t) && t.canAttack(a) && t.framesToGetInRange(a) <= u.framesToGetInRange(a) && ((t.pixelDistanceEdge(a) < 6 * 32) || t.inRangeToAttack(a))))))
-    decide(false, "Scourge",    () => u.flying && With.enemies.exists(_.isZerg) && u.matchups.groupVs.has(Zerg.Scourge) && u.matchups.threats.exists(t => Zerg.Scourge(t) && t.pixelDistanceEdge(u) < 128 && t.matchups.threatsInRange.map(_.damageOnNextHitAgainst(t)).sum < t.hitPoints))
-    decide(false, "Scarabless", () => Protoss.Reaver(u) && u.scarabs == 0 && ! u.trainee.exists(_.remainingCompletionFrames < Math.max(u.matchups.framesOfSafety, u.cooldownLeft)))
-    decide(false, "Birdless",   () => Protoss.Carrier(u) && ! u.interceptors.exists(_.complete))
-    decide(false, "NoEnergy",   () => ! u.canAttack && u.energyMax > 0 && u.unitClass.spells.forall(s => s.energyCost > u.energy || ! With.self.hasTech(s)))
-    decide(false, "Disrupted",  () => ! u.flying && u.underDisruptionWeb && u.matchups.groupVs.canAttack(u))
-    decide(false, "BideSiege",  () => Terran.SiegeTankUnsieged(u) && ! With.blackboard.wantToAttack()  && ! With.self.hasTech(Terran.SiegeMode) && u.matchups.groupVs.has(Protoss.Dragoon) && With.units.ours.exists(_.techProducing.contains(Terran.SiegeMode)) && u.alliesBattle.exists(a => Terran.Bunker(a) && a.complete))
-    decide(false, "CarrierVuln",() => Protoss.Carrier(u) && u.matchups.threats.exists(t => ! t.flying && t.pixelsToGetInRange(u) < 32))
-    decide(true,  "Raze",       () => ((IsTank(u) && Terran.SiegeMode()) || u.isAny(Protoss.Reaver, Zerg.Guardian)) && u.matchups.threats.forall(t => t.unitClass.isWorker || t.unitClass.isBuilding))
-    decide(true,  "Miners",     () => ! u.isAny(IsWorker, Protoss.Carrier) && u.canAttack && u.battle.exists(_.us.minersThreatened) && u.presumptiveTarget.exists(t => t.isEnemyOf(u) && t.matchups.threateningMiners))
-    decide(true,  Reave,        () => Protoss.Reaver(u) && u.scarabs > 0 && u.agent.ride.isDefined && u.confidence01 > 0.45 - Maff.or0(0.05, u.loaded) - Maff.or0(0.1, Protoss.ShuttleSpeed()) && u.matchups.threatNearest.exists(t => u.canAttack(t) && t.speedApproaching(u) > Protoss.Reaver.topSpeed) && (u.matchups.framesOfSafety >= ?(u.loaded, 30, 0) && (u.loaded || u.cooldownLeft <= 31)))
+    val facts = FightFacts(
+      pacifist    = ! u.canAttack && ! u.unitClass.castsSpells,
+      cantFight   = ! u.intent.canFight,
+      cantFlee    = ! u.intent.canFlee,
+      static      = ! u.canMove,
+      committed   = u.agent.commit,
+      yolo        = With.yolo.active && IsWarrior(u),
+      irradiated  = u.painfullyIrradiated,
+      safe        = u.battle.exists(! _.enemy.canAttackIfVisible(u)),
+      detonated   = u.unitClass.suicides && u.matchups.targetsInRange.exists(_.canAttack(u)),
+      hugTank     = ! u.flying && u.agent.ride.isEmpty && With.enemies.exists(_.isTerran) && u.matchups.targetsInRange.exists(t => Terran.SiegeTankSieged(t) && t.visible && t.canAttack(u)),
+      archon      = Protoss.Archon(u) && u.matchups.targetsInRange.exists(_.unitClass.attacksOrCastsOrDetectsOrTransports),
+      coverFire   = u.unitClass.supportsAnchor && u.combatAllies.exists(ally => ! ally.loaded && ally.unitClass.isAnchor && u.matchups.threatDeepest.exists(enemy => u.canAttack(enemy) && ally.canAttack(enemy) && enemy.pixelsToGetInRange(ally) <= Math.min(32 * 8, 16 + u.pixelsToGetInRange(enemy)) && u.pixelDistanceEdge(ally) < 32 * 10)),
+      berzerk     = With.frame < berzerkCutoff && u.isAny(Protoss.Zealot, IsSlowling) && ! u.team.exists(_.catchesGround) && u.matchups.threatDeepest.exists(td => Terran.Vulture(td) && td.matchups.targetNearest.exists(tn => td.pixelsToGetInRange(tn) < 32 && tn.unitClass == u.unitClass)),
+      cloaked     = u.effectivelyCloaked && u.isAny(Terran.Wraith, Protoss.DarkTemplar) && ( ! Terran.Wraith(u) || u.energy > 10),
+      cloakable   = Terran.Wraith(u) && Terran.WraithCloak() && u.energy >= 50 && u.matchups.groupVs.detectors.isEmpty,
+      lurking     = Zerg.Lurker(u) && u.matchups.groupVs.detectors.isEmpty,
+      towers      = With.frame < Minutes(8)() && u.matchups.allies.exists(a => a.unitClass.isBuilding && a.unitClass.canAttack && (a.matchups.targetNearest.exists(t => u.canAttack(t) && a.inRangeToAttack(t)) || a.matchups.threatNearest.exists(t => u.canAttack(t) && t.canAttack(a) && t.framesToGetInRange(a) <= u.framesToGetInRange(a) && ((t.pixelDistanceEdge(a) < 6 * 32) || t.inRangeToAttack(a))))),
+      scourge     = u.flying && With.enemies.exists(_.isZerg) && u.matchups.groupVs.has(Zerg.Scourge) && u.matchups.threats.exists(t => Zerg.Scourge(t) && t.pixelDistanceEdge(u) < 128 && t.matchups.threatsInRange.map(_.damageOnNextHitAgainst(t)).sum < t.hitPoints),
+      scarabless  = Protoss.Reaver(u) && u.scarabs == 0 && ! u.trainee.exists(_.remainingCompletionFrames < Math.max(u.matchups.framesOfSafety, u.cooldownLeft)),
+      birdless    = Protoss.Carrier(u) && ! u.interceptors.exists(_.complete),
+      noEnergy    = ! u.canAttack && u.energyMax > 0 && u.unitClass.spells.forall(s => s.energyCost > u.energy || ! With.self.hasTech(s)),
+      disrupted   = ! u.flying && u.underDisruptionWeb && u.matchups.groupVs.canAttack(u),
+      bideSiege   = Terran.SiegeTankUnsieged(u) && ! With.blackboard.wantToAttack() && ! With.self.hasTech(Terran.SiegeMode) && u.matchups.groupVs.has(Protoss.Dragoon) && With.units.ours.exists(_.techProducing.contains(Terran.SiegeMode)) && u.alliesBattle.exists(a => Terran.Bunker(a) && a.complete),
+      carrierVuln = Protoss.Carrier(u) && u.matchups.threats.exists(t => ! t.flying && t.pixelsToGetInRange(u) < 32),
+      raze        = ((IsTank(u) && Terran.SiegeMode()) || u.isAny(Protoss.Reaver, Zerg.Guardian)) && u.matchups.threats.forall(t => t.unitClass.isWorker || t.unitClass.isBuilding),
+      miners      = ! u.isAny(IsWorker, Protoss.Carrier) && u.canAttack && u.battle.exists(_.us.minersThreatened) && u.presumptiveTarget.exists(t => t.isEnemyOf(u) && t.matchups.threateningMiners),
+      reave       = Protoss.Reaver(u) && u.scarabs > 0 && u.agent.ride.isDefined && u.confidence01 > 0.45 - Maff.or0(0.05, u.loaded) - Maff.or0(0.1, Protoss.ShuttleSpeed()) && u.matchups.threatNearest.exists(t => u.canAttack(t) && t.speedApproaching(u) > Protoss.Reaver.topSpeed) && (u.matchups.framesOfSafety >= ?(u.loaded, 30, 0) && (u.loaded || u.cooldownLeft <= 31)),
+      energized   = u.unitClass.maxShields > 20
+        && With.frame < Minutes(10)()
+        && u.alliesBattle.exists(ally =>
+          Protoss.ShieldBattery(ally)
+          && ally.complete
+          && ally.energy > 20
+          && ally.pixelDistanceEdge(u, u.presumptiveTarget.map(u.pixelToFireAtSimple).getOrElse(u.pixel)) < 72))
 
-    decide(true,  "Energized",  () =>
-      u.unitClass.maxShields > 20
-      && With.frame < Minutes(10)()
-      && u.alliesBattle.exists(ally =>
-        Protoss.ShieldBattery(ally)
-        && ally.complete
-        && ally.energy > 20
-        && ally.pixelDistanceEdge(u, u.presumptiveTarget.map(u.pixelToFireAtSimple).getOrElse(u.pixel)) < 72))
-
-    if (decision.isDefined) {
-      u.agent.shouldFight = decision.get
-    } else {
-      applyEstimation(u)
+    FightRules.decide(facts) match {
+      case Some((fight, reason)) =>
+        u.agent.shouldFight = fight
+        u.agent.fightReason = reason
+      case None =>
+        applyEstimation(u)
     }
+
     if (With.configuration.debugging && With.configuration.logCombatForecasts) Debugging.CombatForecastDiagnostics.decision(u)
   }
   
