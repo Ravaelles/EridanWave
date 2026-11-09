@@ -1,8 +1,10 @@
 package Lifecycle
 
 import Debugging._
+import Placement.JBWEBWrapper
 import Utilities.?
 import bwapi.{DefaultBWListener, Player}
+import jbweb.Walls
 
 class EridanWave extends DefaultBWListener {
 
@@ -25,6 +27,8 @@ class EridanWave extends DefaultBWListener {
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         Debugging.ErrorLedger.reset()
         Debugging.CherryVis.CherryVis.initialize()
+        Walls.logInfo = With.configuration.logstd
+        JBWEBWrapper.onStart()
         With.history.onStart()
         With.units.onStart()
         UmsMode.detectAndApply()
@@ -66,15 +70,19 @@ class EridanWave extends DefaultBWListener {
   }
 
   override def onUnitDestroy(unit: bwapi.Unit): Unit = {
+    JBWEBWrapper.onUnitDestroy(unit)
     tryCatch(() => With.units.onUnitDestroy(unit))
   }
 
   override def onUnitComplete(unit: bwapi.Unit): Unit = {}
-  override def onUnitDiscover(unit: bwapi.Unit): Unit = {}
-
+  override def onUnitDiscover(unit: bwapi.Unit): Unit = {
+    JBWEBWrapper.onUnitDiscover(unit)
+  }
   override def onUnitHide(unit: bwapi.Unit): Unit = {}
 
-  override def onUnitMorph(unit: bwapi.Unit): Unit = {}
+  override def onUnitMorph(unit: bwapi.Unit): Unit = {
+    JBWEBWrapper.onUnitMorph(unit)
+  }
 
   override def onUnitRenegade(unit: bwapi.Unit): Unit = {
     tryCatch(() => With.units.onUnitRenegade(unit))

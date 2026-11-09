@@ -206,12 +206,8 @@ Races add bespoke micro (`Micro/Actions/Protoss|Terran|Zerg/Be*.scala`).
   client-first JVM start, `bwapi.ini` patching, ChaosLauncher, HELLO gate,
   watch/cleanup/archive to `out/wine_runs/`) + `list-maps.sh`.
   `tests/` are standalone `App` objects run via `scripts/test_*.ps1|.sh`
-  (not Surefire). `3rdparty/{jbwapi,mjson}` sources plus `3rdparty/cherryvis`
-  and `3rdparty/apache` jars are compiled into the fat jar via
-  `build-helper add-source` (Maven deps) and the IntelliJ artifacts.
-  Third-party code is vendored as plain files (no submodules): jbwapi
-  pinned at upstream `d6003b0`, mjson at `6c6c5c1`. Unused `javajps`/`jbweb`
-  were removed; `commons-lang3` has no users and is not a dependency.
+  (not Surefire). `3rdparty/{jbwapi,javajps,jbweb,mjson,apache}` is compiled
+  into the fat jar via `build-helper add-source`.
 
 ## 6. Concepts map (one-liners)
 
