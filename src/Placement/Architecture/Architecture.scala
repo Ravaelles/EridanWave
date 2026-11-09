@@ -75,8 +75,13 @@ class Architecture {
   /////////////
 
   private def recalculateExclusions(): Unit = {
+    reserveTerranAddonSpace()
+    reserveUnitSpaces()
+    reserveOccupiedGas()
+  }
 
-    // Reserve addon space in bases
+  // Reserve addon space in bases
+  private def reserveTerranAddonSpace(): Unit = {
     if (With.self.isTerran) {
       With.geography.bases.foreach(base => {
         val start = base.townHallTile.add(4, 1)
@@ -85,7 +90,9 @@ class Architecture {
           addonArea.tiles.foreach(unbuildable.set(_, exclusion))
       })
     }
+  }
 
+  private def reserveUnitSpaces(): Unit = {
     With.units.ours.foreach(unit => {
       // Reserve unit's addon space
       if (unit.unitClass.canBuildAddon) {
@@ -112,8 +119,10 @@ class Architecture {
         }
       }
     })
+  }
 
-    // Flag places where we can't build gas
+  // Flag places where we can't build gas
+  private def reserveOccupiedGas(): Unit = {
     With.geography.bases.foreach(_.gas.foreach(gas =>
       if (gas.alive && ! gas.player.isNeutral) {
         val exclusion = Some(Exclusion("Geyser occupied", gas.tileArea))

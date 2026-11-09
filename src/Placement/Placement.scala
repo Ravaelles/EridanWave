@@ -45,11 +45,7 @@ class Placement extends Fitter {
 
     forwardProxyNaturals ++= With.geography.bases.filter(b => ! b.isBackyard && b.naturalOf.exists(n => ! n.isOurs && n.exitOriginal.isDefined))
 
-    // Place walkways under neutral buildings
-    With.units.neutral
-      .filter(_.unitClass.isBuilding)
-      .filterNot(u => u.base.exists(_.townHallArea.intersects(u.tileArea)))
-      .foreach(_.tileArea.tiles.map(Fit(_, TemplatesGeneric.walkway)).foreach(index))
+    indexNeutralWalkways()
 
     // Fit closer zones first, so in case of tiebreaks we prefer closer zones
     val basesSorted = With.geography.bases.sortBy(b => b.heart.groundTiles(With.geography.home))
@@ -65,10 +61,7 @@ class Placement extends Fitter {
         // fitAndIndexProximity(0, 1, TemplatesProtoss.proxyForwardBatteries, b.exitNow, b.zone)
       }
 
-      val townHallFit = Fit(b.townHallTile, TemplatesGeneric.townhall)
-      if (fitsAt(townHallFit.template, townHallFit.origin)) {
-        index(townHallFit)
-      }
+      indexTownHall(b)
     })
     forwardProxyNaturals --= forwardProxyNaturals.filter(fitProxyForwardRobo)
     protoss {
@@ -97,6 +90,21 @@ class Placement extends Fitter {
     zonesSorted.sortBy(_.heart.groundTiles(With.geography.home)).foreach(preplaceZone)
     sort()
     PlacementCache.write(this)
+  }
+
+  // Place walkways under neutral buildings
+  private def indexNeutralWalkways(): Unit = {
+    With.units.neutral
+      .filter(_.unitClass.isBuilding)
+      .filterNot(u => u.base.exists(_.townHallArea.intersects(u.tileArea)))
+      .foreach(_.tileArea.tiles.map(Fit(_, TemplatesGeneric.walkway)).foreach(index))
+  }
+
+  private def indexTownHall(base: Base): Unit = {
+    val townHallFit = Fit(base.townHallTile, TemplatesGeneric.townhall)
+    if (fitsAt(townHallFit.template, townHallFit.origin)) {
+      index(townHallFit)
+    }
   }
 
   private def preplaceZone(zone: Zone): Unit = {
