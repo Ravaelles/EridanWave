@@ -21,7 +21,7 @@ object CorsairHuntKnownOverlords {
     } else {
       With.units.enemy.filter(o => Zerg.Overlord(o) && o.likelyStillThere).toSeq
         .sortBy(_.pixelDistanceSquared(With.geography.ourMain.heart.center))
-        .find(o => ! (o.hitPoints <= 0 && o.visible) && ! covered(o))
+        .find(o => ! covered(o))
     }
   }
 
@@ -33,11 +33,8 @@ object CorsairHuntKnownOverlords {
     if ( ! Protoss.Corsair(unit)) {
       false
     } else {
-      overlord().exists(target => {
-        unit.intend(squad).setTargets(Seq(target)).setTerminus(target.pixel)
-        unit.agent.act("CorsairHuntKnown")
-        true
-      })
+      overlord().exists(target =>
+        CorsairAct.order(squad, unit, "CorsairHuntKnown", target, target.pixel))
     }
   }
 }

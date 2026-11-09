@@ -29,12 +29,10 @@ object CorsairDanceToOverlord {
     } else {
       duelOverlord(squad, unit).exists(overlord => {
         if (shouldDance(unit.cooldownLeft, unit.pixelDistanceCenter(overlord.pixel) / 32.0, unit.woundPercent())) {
-          unit.intend(squad).setTargets(Seq(overlord)).setTerminus(unit.pixel)
+          CorsairAct.move(squad, unit, "CorsairDance", unit.pixel)
         } else {
-          unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
+          CorsairAct.order(squad, unit, "CorsairDance", overlord, overlord.pixel)
         }
-        unit.agent.act("CorsairDance")
-        true
       })
     }
   }

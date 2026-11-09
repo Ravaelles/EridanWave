@@ -10,18 +10,14 @@ import Tactic.Squads.SquadAcePilots
  */
 object CorsairBrain {
 
-  def act(squad: SquadAcePilots): Boolean = {
-    var claimed = false
+  def act(squad: SquadAcePilots): Unit = {
     squad.units.foreach(unit => {
-      if (CorsairRelocateWhenIdle.act(squad, unit)
-        || CorsairHuntMutas.act(squad, unit)
-        || CorsairDanceToOverlord.act(squad, unit)
-        || CorsairHunt.act(squad, unit)
-        || CorsairHuntKnownOverlords.act(squad, unit)
-        || CorsairExploreEnemyMain.act(squad, unit)) {
-        claimed = true
-      }
+      CorsairRelocateWhenIdle.act(squad, unit) ||
+      CorsairHuntMutas.act(squad, unit) ||
+      CorsairDanceToOverlord.act(squad, unit) ||
+      CorsairHunt.act(squad, unit) ||
+      CorsairHuntKnownOverlords.act(squad, unit) ||
+      CorsairExploreEnemyMain.act(squad, unit)
     })
-    claimed
   }
 }

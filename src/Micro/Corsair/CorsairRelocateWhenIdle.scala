@@ -43,10 +43,7 @@ object CorsairRelocateWhenIdle {
     } else {
       val delta = 12 + unit.id % 7
       val offset = relocateOffset(unit.id, With.frame / (24 * 6), delta)
-      val dest = unit.pixel.add(offset._1 * 32, offset._2 * 32).clamp()
-      unit.intend(squad).setTerminus(dest)
-      unit.agent.act("CorsairRelocate")
-      true
+      CorsairAct.move(squad, unit, "CorsairRelocate", unit.pixel.add(offset._1 * 32, offset._2 * 32).clamp())
     }
   }
 }

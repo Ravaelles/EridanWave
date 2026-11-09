@@ -33,9 +33,9 @@ object ArmyPosition {
   def invadersAt(base: Base): Seq[UnitInfo] =
     With.units.enemy.filter(e => IsWarrior(e) && e.zone == base.zone).toSeq
 
-  /** Second town hall standing means the natural is decided, warping or done. */
+  /** Our natural counts as taken once its town hall is ours, warping or done. */
   def naturalTaken: Boolean =
-    With.geography.ourBases.count(_.townHall.isDefined) >= 2
+    With.geography.ourNatural.townHall.exists(_.isOurs)
 
   /** Where the landing is: centroid of the invaders, base heart as fallback. */
   def breachPosition(base: Base): Pixel = {
@@ -62,8 +62,7 @@ object ArmyPosition {
     if (naturalTaken) Some(Chokes.naturalChoke.map(_.pixelCenter).getOrElse(naturalHeart)) else None
 
   private def naturalHeart: Pixel =
-    With.geography.ourBases.filterNot(_.isMain).map(_.heart.center).headOption
-      .getOrElse(With.geography.ourMain.heart.center)
+    With.geography.ourNatural.heart.center
 
   /**
    * Drop-in for disengage routing (e.g. defense travel goals): keeps the
@@ -71,5 +70,5 @@ object ArmyPosition {
    * a taken natural pulls staging forward to its choke.
    */
   def fallback(current: Pixel): Pixel =
-    breachPixel.getOrElse(if (naturalTaken) naturalStaging.getOrElse(current) else current)
+    breachPixel.orElse(if (naturalTaken) naturalStaging else None).getOrElse(current)
 }

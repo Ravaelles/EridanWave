@@ -40,12 +40,9 @@ object ZealotIntoGoon extends MacroActions {
     }
     compositor.produceAndPump()
     status(f"ZealotIntoGoon: want $zealotTarget zealots vs ${enemies(Zerg.Zergling)} lings")
-    directPosture()
-    ensureLurkerDetection()
-    expandWhenAhead()
   }
 
-  private def expandWhenAhead(): Unit = {
+  def expandWhenAhead(): Unit = {
     // Second base at 75 supply, but only from a position of strength
     // (Atlantis-style: 110 = 10% stronger, with a margin against noise).
     // requireMiningBases is a no-op when two mining bases already exist.
@@ -55,7 +52,7 @@ object ZealotIntoGoon extends MacroActions {
     }
   }
 
-  private def produceAdvanced(): Unit = {
+  def produceAdvanced(): Unit = {
     // Late-game mix, mirroring PvZ1BaseReactive.buildArmy: pump whatever
     // advanced tech the composition opened, so production keeps scaling
     // after the Zealot/Dragoon core is up. The tech buildings themselves
@@ -87,7 +84,7 @@ object ZealotIntoGoon extends MacroActions {
     }
   }
 
-  private def directPosture(): Unit = {
+  def directPosture(): Unit = {
     // Constant early pressure; pull back only on evidence we'd lose.
     // attack() only votes yes, so set the blackboard directly: produce()
     // runs after the gameplan's own attack vote and the last write wins.
@@ -97,7 +94,7 @@ object ZealotIntoGoon extends MacroActions {
     status(tooWeakToFight, "ZealotIntoGoonRetreat")
   }
 
-  private def ensureLurkerDetection(): Unit = {
+  def ensureLurkerDetection(): Unit = {
     // Mirrors detectionVsLurker (which also runs): duplicate get()/pump()
     // requests are harmless - they all say "want N total", never "build N more".
     if (enemyHasShown(Zerg.Lurker, Zerg.LurkerEgg)) {

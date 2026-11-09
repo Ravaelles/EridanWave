@@ -23,17 +23,23 @@ object ArmyTargeting {
     val unrankedTargets   = unrankedAround(squad, to)
     lazy val targetCombat = unrankedTargets.filter(t => t.unitClass.isWorker || squad.canBeAttackedBy(t) || (t.unitClass.isStaticDefense && squad.units.exists(t.inRangeToAttack)))
     lazy val targetHall   = unrankedTargets.filter(_.unitClass.isTownHall)
-    squad.setTargets(rankForArmy(squad, Maff.orElse(targetCombat, targetHall, unrankedTargets).toVector).sortBy( ! _.unitClass.isWorker))
+    squad.setTargets(rankForArmy(squad, Maff.orElse(targetCombat, targetHall, unrankedTargets).toVector)
+      // Raid doctrine: workers die first behind lines; the rank above still
+      // orders everything else (static defense before halls).
+      .sortBy( ! _.unitClass.isWorker))
   }
 
   def rankForArmy(squad: Squad, targets: Vector[UnitInfo]): Vector[UnitInfo] = {
-    targets.sortBy(t =>
-        ?(t.visible,                                  0, 32 * 5)
-      + ?(t.pixel == t.pixelObserved,                 0, 32 * 5)
-      + ?(squad.engagedUpon,                          0, targetRank(t))
-      + t.pixelDistanceCenter(squad.centroidKey)
-      + t.pixelDistanceCenter(squad.vicinity))
+    targets.sortBy(t => (
+      rankVisibility(t),
+      ?(squad.engagedUpon, 0, targetRank(t)),
+      t.pixelDistanceCenter(squad.centroidKey) + t.pixelDistanceCenter(squad.vicinity)))
   }
+
+  // Visibility bands outrank everything: chasing remembered ghosts across
+  // the map loses games, so distance only breaks ties inside a band.
+  private def rankVisibility(target: UnitInfo): Int =
+    ?(target.visible, 0, 2) + ?(target.pixel == target.pixelObserved, 0, 1)
 
   // Combat buildings shoot back, so they outrank workers; workers outrank
   // the rest (non-combat buildings sort last with everything else);
@@ -77,7 +83,7 @@ object ArmyTargeting {
   }
 
   def rankedEnRoute(squad: Squad): Seq[UnitInfo] = rankedEnRoute(squad, squad.vicinity)
-  def rankedEnRoute(squad: Squad, goalAir: Pixel): Seq[UnitInfo] = rankForArmy(squad, unrankedEnRouteTo(squad, goalAir).toVector)
+  def rankedEnRoute(squad: Squad, goal: Pixel): Seq[UnitInfo] = rankForArmy(squad, unrankedEnRouteTo(squad, goal).toVector)
   def rankedAround(squad: Squad): Seq[UnitInfo] = rankedAround(squad, squad.vicinity)
-  def rankedAround(squad: Squad, goalAir: Pixel): Seq[UnitInfo] = rankForArmy(squad, unrankedAround(squad, goalAir))
+  def rankedAround(squad: Squad, goal: Pixel): Seq[UnitInfo] = rankForArmy(squad, unrankedAround(squad, goal))
 }

@@ -23,6 +23,9 @@ class PvZEridanStandard extends PvZ1BaseReactive {
   override def buildArmy(): Unit = {
     if (PvZ1BaseZealotIntoGoon()) {
       ZealotIntoGoon.produce()
+      ZealotIntoGoon.directPosture()
+      ZealotIntoGoon.ensureLurkerDetection()
+      ZealotIntoGoon.expandWhenAhead()
 
       return
     }

@@ -17,10 +17,10 @@ object CorsairHuntMutas {
 
   def mutaFor(unit: FriendlyUnitInfo): Option[UnitInfo] = {
     if (Protoss.Corsair(unit) && With.enemies.exists(_.isZerg) && unit.totalHealth > MinHp) {
-      val mutas = With.units.enemy.filter(m => Zerg.Mutalisk(m) && m.likelyStillThere).toSeq
-      val close = mutas.filter(_.pixelDistanceSquared(unit.pixel) <= 6 * 6 * 32 * 32)
+      val mutas = CorsairTargets.liveEnemiesOf(Zerg.Mutalisk)
+      val close = mutas.filter(_.pixelDistanceSquared(unit.pixel) <= CorsairTargets.CloseRadiusSq)
       if (close.nonEmpty) {
-        Maff.minBy(close)(m => (-m.woundPercent(), m.pixelDistanceSquared(unit.pixel)))
+        CorsairTargets.closestWoundedFirst(close, unit.pixel)
       } else {
         Maff.minBy(mutas)(_.pixelDistanceSquared(With.geography.ourMain.heart.center))
           .orElse(Maff.minBy(mutas)(_.pixelDistanceSquared(unit.pixel)))
@@ -31,10 +31,7 @@ object CorsairHuntMutas {
   }
 
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
-    mutaFor(unit).exists(muta => {
-      unit.intend(squad).setTargets(Seq(muta)).setTerminus(muta.pixel)
-      unit.agent.act("CorsairHuntMutas")
-      true
-    })
+    mutaFor(unit).exists(muta =>
+      CorsairAct.order(squad, unit, "CorsairHuntMutas", muta, muta.pixel))
   }
 }

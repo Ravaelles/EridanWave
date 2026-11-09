@@ -17,10 +17,10 @@ object CorsairHunt {
     if ( ! With.enemies.exists(_.isZerg)) {
       None
     } else {
-      val overlords = With.units.enemy.filter(o => Zerg.Overlord(o) && o.likelyStillThere).toSeq
-      val close = overlords.filter(_.pixelDistanceSquared(unit.pixel) <= 6 * 6 * 32 * 32)
+      val overlords = CorsairTargets.liveEnemiesOf(Zerg.Overlord)
+      val close = overlords.filter(_.pixelDistanceSquared(unit.pixel) <= CorsairTargets.CloseRadiusSq)
       if (close.nonEmpty) {
-        Maff.minBy(close)(o => (-o.woundPercent(), o.pixelDistanceSquared(unit.pixel)))
+        CorsairTargets.closestWoundedFirst(close, unit.pixel)
       } else {
         Maff.minBy(overlords)(_.pixelDistanceSquared(unit.pixel))
       }
@@ -32,13 +32,13 @@ object CorsairHunt {
       false
     } else {
       huntTarget(unit).exists(overlord => {
+        // Terminus-only while closing: squad-assigned targets persist on the
+        // intent, so the duel continues without narrowing focus mid-flight.
         if (unit.cooldownLeft >= 10 && unit.pixelDistanceCenter(overlord.pixel) >= 5 * 32) {
-          unit.intend(squad).setTerminus(overlord.pixel)
+          CorsairAct.move(squad, unit, "CorsairHunt", overlord.pixel)
         } else {
-          unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
+          CorsairAct.order(squad, unit, "CorsairHunt", overlord, overlord.pixel)
         }
-        unit.agent.act("CorsairHunt")
-        true
       })
     }
   }

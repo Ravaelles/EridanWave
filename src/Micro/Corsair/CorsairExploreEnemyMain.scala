@@ -12,7 +12,7 @@ import Tactic.Squads.SquadAcePilots
 object CorsairExploreEnemyMain {
 
   def applies(unit: FriendlyUnitInfo): Boolean =
-    With.frame / 24 % 30 <= 9 && With.scouting.enemyMain.exists(main =>
+    (With.frame / 24) % 30 <= 9 && With.scouting.enemyMain.exists(main =>
       With.framesSince(main.lastFrameScoutedByUs) > 20 * 24)
 
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
