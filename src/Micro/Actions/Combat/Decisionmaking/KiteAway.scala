@@ -53,6 +53,9 @@ object KiteAway {
   def isSeriouslyWounded(totalHealth: Int): Boolean = totalHealth <= seriousWoundHp
   def isCriticallyWounded(totalHealth: Int): Boolean = totalHealth <= criticalWoundHp
 
+  def shouldRetreat(totalHealth: Int, woundFraction: Double, cooldownLeft: Int, enemyInMargin: Boolean): Boolean =
+    enemyInMargin && retreatAboveCooldown(totalHealth, woundFraction).exists(cooldownLeft > _)
+
   def woundOffsetTiles(injury01: Double): Double =
     Maff.clamp(injury01, 0.0, 1.0) * maxOffsetTiles
 
@@ -63,9 +66,6 @@ object KiteAway {
     else if (woundFraction > woundScopeFraction) Some(mildCooldown)
     else None
   }
-
-  def shouldRetreat(totalHealth: Int, woundFraction: Double, cooldownLeft: Int, enemyInMargin: Boolean): Boolean =
-    enemyInMargin && retreatAboveCooldown(totalHealth, woundFraction).exists(cooldownLeft > _)
 
   /** Wounded units never hold fire for the volley while exposed. */
   def exemptFromVolley(totalHealth: Int): Boolean = isSeriouslyWounded(totalHealth)
