@@ -56,9 +56,22 @@ Process: one step at a time, green build plus tests plus gate, commit each.
 - `Qualities/` stays as-is; `QualityCounterSuite` skipped (needs unit stubs).
 - `Squads.scala` (scheduler) stays loose.
 
-## Step 3 — Squad* behavior classes (13 files) [RESEARCH PENDING]
+## Step 3 — Squad* behavior classes (13 files) [DONE]
 
-## Step 4 — Production/ (9 files) [RESEARCH PENDING]
+- New `Squads/attack/` (Attack, BackstabProxy, RazeProxies, DarkTemplar,
+  MindControl), `defense/` (DefendBase, CatchDTs, ClearExpansionBlockers),
+  `support/` (AcePilots, ScoutExpansions). Loose: `Squad`, `SquadAutomation`,
+  `Squads` + `Qualities/` + `Decisions/` + `Group/`.
+- Deferred (needs game observation, not safe blind): splitting
+  `SquadAttack.chooseMode` (strategy table) from hunt-latch/stance, and
+  the `SquadDefendBase` formation machine. Moves only.
+
+## Step 4 — Production/ (9 files) [DONE]
+
+- New `Production/core/` (`Production`, `Produce`), `research/` (Tech,
+  Upgrade), `units/` (Morphed, Trained), `construction/` (Building, Addon).
+  `ProduceMicroSlush` stays loose (budget sink, not production).
+- No new suites (all seams need game objects).
 
 ## Step 5 — Tactics/ (done earlier, verify nothing stray)
 
