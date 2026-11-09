@@ -1,4 +1,4 @@
-package Lifecycle.Keyboard.actions;
+package Lifecycle.Keyboard.actions.Speed;
 
 import Lifecycle.Keyboard.GameCommands;
 import Lifecycle.Keyboard.KeyAction;

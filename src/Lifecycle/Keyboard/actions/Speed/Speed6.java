@@ -1,4 +1,4 @@
-package Lifecycle.Keyboard.actions;
+package Lifecycle.Keyboard.actions.Speed;
 
 /** Key "6" : game speed preset (0, frame skip 80). */
 public final class Speed6 extends SetGameSpeed {
