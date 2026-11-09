@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Group
 
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 

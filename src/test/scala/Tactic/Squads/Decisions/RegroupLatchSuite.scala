@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Decisions
 
 import RegroupLatch.{Engaged, Regrouping}
 import org.scalatest.funsuite.AnyFunSuite

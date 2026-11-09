@@ -13,6 +13,7 @@ import Utilities.UnitCounters.CountEverything
 import Utilities.UnitFilters.{IsAny, IsFlyingWarrior, IsTank, IsWorker, UnitFilter}
 
 import scala.util.Random
+import Tactic.Squads.Decisions.AceExploreLogic
 
 class SquadAcePilots extends Squad {
   val acePilots         : Seq[UnitClass]  = Seq(Protoss.Corsair) //Seq(Terran.Wraith, Terran.Valkyrie, Protoss.Corsair, Zerg.Mutalisk, Zerg.Scourge)

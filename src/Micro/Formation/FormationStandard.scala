@@ -13,9 +13,10 @@ import Micro.Coordination.Pushing.TrafficPriorities
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.FriendlyUnitGroup
+
 import Utilities.Time.Minutes
 import Utilities.{?, LightYear}
+import Tactic.Squads.Group.FriendlyUnitGroup
 
 //noinspection ComparingUnrelatedTypes
 //Disabling spurious IntelliJ warnings

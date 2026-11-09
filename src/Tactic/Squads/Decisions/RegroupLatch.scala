@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Decisions
 
 /**
  * Sim-gated regroup (Stardust: Moving | Attacking | Regrouping switched only

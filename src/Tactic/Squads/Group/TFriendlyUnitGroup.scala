@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Group
 
 import Lifecycle.With
 import Mathematics.Maff

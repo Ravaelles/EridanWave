@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Group
 
 import Debugging.EnumerateUnits
 import Information.Battles.Types.{Battle, GroupCentroid}

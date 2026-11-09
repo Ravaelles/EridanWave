@@ -12,7 +12,9 @@ import Micro.Targeting.Target
 import Micro.Actions.Combat.Decisioning.Formation.FormationHold
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.{GenericFriendlyUnitGroup, TFriendlyUnitGroup, UnitGroup}
+import Tactic.Squads.Group.GenericFriendlyUnitGroup
+import Tactic.Squads.Group.TFriendlyUnitGroup
+import Tactic.Squads.Group.UnitGroup
 import Utilities.Time.{Forever, Seconds}
 import Utilities.?
 

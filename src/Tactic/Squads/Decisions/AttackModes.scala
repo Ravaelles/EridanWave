@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Decisions
 
 object AttackModes {
   trait AttackMode

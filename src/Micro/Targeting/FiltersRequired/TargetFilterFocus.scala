@@ -3,7 +3,8 @@ package Micro.Targeting.FiltersRequired
 import Lifecycle.With
 import Micro.Targeting.TargetFilter
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.FriendlyUnitGroup
+
+import Tactic.Squads.Group.FriendlyUnitGroup
 
 object TargetFilterFocus extends TargetFilter {
 

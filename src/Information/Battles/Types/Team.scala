@@ -8,7 +8,8 @@ import Mathematics.Points.Pixel
 import Performance.Cache
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.UnitInfo
-import Tactic.Squads.UnitGroup
+
+import Tactic.Squads.Group.UnitGroup
 
 abstract class Team(val battle: Battle, val units: Seq[UnitInfo]) extends UnitGroup with SkimulationTeam  {
 

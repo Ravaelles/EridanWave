@@ -10,11 +10,12 @@ import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.UnitGroup
+
 import Utilities.?
 import Utilities.UnitFilters.{IsTank, IsWarrior}
 
 import scala.collection.mutable.ArrayBuffer
+import Tactic.Squads.Group.UnitGroup
 
 object Spot extends Action {
   

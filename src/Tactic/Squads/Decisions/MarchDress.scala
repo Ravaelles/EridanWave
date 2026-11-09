@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Decisions
 
 /**
  * March dressing: leaders wait for the pack before first contact.

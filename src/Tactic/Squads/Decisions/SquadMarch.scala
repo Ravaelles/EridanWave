@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Decisions
 
 /**
  * When to build a march formation (Stardust formArc-before-contact): not only

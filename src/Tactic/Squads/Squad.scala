@@ -14,6 +14,7 @@ import Tactic.Tactics.Tactic
 import Utilities.?
 
 import scala.collection.mutable.ArrayBuffer
+import Tactic.Squads.Group.FriendlyUnitGroup
 
 abstract class Squad extends Tactic with FriendlyUnitGroup {
   def fightsIndependently: Boolean = false

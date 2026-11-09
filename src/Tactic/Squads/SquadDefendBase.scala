@@ -21,6 +21,7 @@ import Utilities.?
 import Utilities.Time.Minutes
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters._
+import Tactic.Squads.Group.GenericFriendlyUnitGroup
 
 class SquadDefendBase(base: Base) extends Squad {
 

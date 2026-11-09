@@ -4,9 +4,10 @@ import Information.Geography.Pathfinding.Types.ZonePath
 import Lifecycle.With
 import Mathematics.Points.Pixel
 import Micro.Formation.FormationFlanking
-import Tactic.Squads.FriendlyUnitGroup
+
 
 import scala.collection.mutable
+import Tactic.Squads.Group.FriendlyUnitGroup
 
 object FormationPathAudit {
   private val lastFrame = new mutable.WeakHashMap[FriendlyUnitGroup, Int]

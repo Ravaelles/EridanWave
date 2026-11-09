@@ -7,13 +7,18 @@ import Mathematics.Shapes.Circle
 import Performance.{Cache, TotalUnitCounter}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo._
-import Tactic.Squads.{GenericFriendlyUnitGroup, GenericUnitGroup, UnitGroup}
+import Tactic.Squads.Group.GenericFriendlyUnitGroup
+import Tactic.Squads.Group.GenericUnitGroup
+import Tactic.Squads.Group.UnitGroup
 import Utilities.?
 import Utilities.UnitFilters.{IsAny, UnitFilter}
 
 import java.util.concurrent.locks.ReentrantLock
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
+import Tactic.Squads.Group.UnitGroup
+import Tactic.Squads.Group.GenericUnitGroup
+import Tactic.Squads.Group.GenericFriendlyUnitGroup
 
 final class UnitTracker {
   val maxHypotheticals = 100

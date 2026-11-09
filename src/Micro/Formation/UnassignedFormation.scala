@@ -4,11 +4,12 @@ import Mathematics.Maff
 import Mathematics.Points.Pixel
 import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.FriendlyUnitGroup
+
 import Utilities.UnitFilters.IsTank
 import Utilities.{?, SomeIf}
 
 import scala.collection.mutable.ListBuffer
+import Tactic.Squads.Group.FriendlyUnitGroup
 
 case class UnassignedFormation(style: FormationStyle, slots: Map[UnitClass, Iterable[Pixel]], group: FriendlyUnitGroup) {
 

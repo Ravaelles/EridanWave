@@ -8,12 +8,15 @@ import Mathematics.Shapes.Spiral
 import Performance.Cache
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import ProxyBwapi.UnitTracking.UnorderedBuffer
-import Tactic.Squads.AttackModes._
+import Tactic.Squads.Decisions.AttackModes._
 import Utilities.In
 import Utilities.Time.Minutes
 import Utilities.UnitFilters.{IsBuilding, IsWorker}
 
 import scala.collection.mutable.ArrayBuffer
+import Tactic.Squads.Decisions.HuntLogic
+import Tactic.Squads.Decisions.AttackModes
+import Tactic.Squads.Decisions.RegroupLatch
 
 class SquadAttack extends Squad {
 

@@ -4,7 +4,8 @@ import Macro.Allocation.Prioritized
 import Mathematics.Points.{Pixel, Points}
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.FriendlyUnitGroup
+
+import Tactic.Squads.Group.FriendlyUnitGroup
 
 trait Tactic extends Prioritized with FriendlyUnitGroup {
 

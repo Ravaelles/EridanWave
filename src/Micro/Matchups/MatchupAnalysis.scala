@@ -6,10 +6,13 @@ import Mathematics.Maff
 import Performance.{Cache, KeyedCache}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.UnitInfo
-import Tactic.Squads.{GenericUnitGroup, UnitGroup}
+import Tactic.Squads.Group.GenericUnitGroup
+import Tactic.Squads.Group.UnitGroup
 import Utilities.?
 import Utilities.Time.Seconds
 import Utilities.UnitFilters.IsWorker
+import Tactic.Squads.Group.UnitGroup
+import Tactic.Squads.Group.GenericUnitGroup
 
 case class MatchupAnalysis(me: UnitInfo) {
   // Default units allow identification of targets when destroying an empty base, because no Battle is happening

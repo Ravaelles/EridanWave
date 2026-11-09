@@ -10,6 +10,10 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 
 import scala.collection.mutable.ArrayBuffer
+import Tactic.Squads.Group.FriendlyUnitGroup
+import Tactic.Squads.Decisions.MarchDress
+import Tactic.Squads.Decisions.SquadMarch
+import Tactic.Squads.Decisions.SquadRally
 
 object SquadAutomation {
 

@@ -6,8 +6,9 @@ import Lifecycle.With
 import Mathematics.Maff
 import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.UnitInfo
-import Tactic.Squads.UnitGroup
+
 import Utilities.UnitFilters.IsWorker
+import Tactic.Squads.Group.UnitGroup
 
 class DefenseDivision(val division: Division) extends UnitGroup {
 

@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.Decisions
 
 /**
  * Pure place-changing decision for Ace pilots (no game access).
