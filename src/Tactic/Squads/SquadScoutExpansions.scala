@@ -2,6 +2,7 @@ package Tactic.Squads
 
 import Lifecycle.With
 import Mathematics.Maff
+import Micro.Targeting.ArmyTargeting
 import Performance.Cache
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import Utilities.?
@@ -68,11 +69,15 @@ class SquadScoutExpansions extends Squad {
     && With.enemies.exists(_.isZerg)
     && With.tactics.workerScout.scoutingAbandoned)
 
+  // Enemy holding two bases means a third is coming: start checking
+  // expansion sites early instead of waiting for frameToScout.
+  def enemyExpanding: Boolean = With.geography.enemyBases.size >= 2
+
   def launch(): Unit = {
     if ( ! With.blackboard.scoutExpansions()) return
 
     if ( ! scoutZergThird) {
-      if (With.frame < frameToScout()) return
+      if (With.frame < frameToScout() && ! enemyExpanding) return
       if ( ! With.blackboard.wantToAttack() && ! With.blackboard.wantToHarass()) return
     }
 
@@ -101,7 +106,7 @@ class SquadScoutExpansions extends Squad {
       u.intend(this)
         .setCanSneak(true)
         .setTerminus(vicinity)
-        .setTargets(SquadAutomation.rankForArmy(
+        .setTargets(ArmyTargeting.rankForArmy(
           this,
           (targetsHere ++ targetsThere)
             .filter(_.caughtBy(u))

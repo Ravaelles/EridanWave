@@ -11,11 +11,11 @@ import Micro.Actions.Protoss.ReloadScarabs
 import Micro.Actions.{Action, Idle}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
+import Micro.Targeting.ArmyTargeting
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Orders
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.SquadAutomation
 import Utilities.Time.{Minutes, Seconds}
 import Utilities.UnitCounters.CountOne
 import Utilities.UnitFilters.IsWorker
@@ -378,7 +378,7 @@ abstract class MissionDrop extends Mission {
     passengers.foreach(_.intend(this).setAction(DoNothing))
   }
   private def land(): Unit = {
-    SquadAutomation.targetRaid(this)
+    ArmyTargeting.targetRaid(this)
     passengers.foreach(_.agent.commit = commitWhileRaiding)
     passengers.foreach(_.intend(this).setTerminus(vicinity))
     transports.foreach(t => {
@@ -392,7 +392,7 @@ abstract class MissionDrop extends Mission {
       else if (assignedTransport(p).exists(raidingTransports)) Idle else DoNothing))
   }
   protected def raid(): Unit = {
-    SquadAutomation.targetRaid(this)
+    ArmyTargeting.targetRaid(this)
     transports.foreach(t => {
       if (defaultCombatLanding && !passengersFor(t).exists(requiredPassenger)) intendRoute(t, t.agent.defaultHome.tile)
       else t.intend(this).setTerminus(vicinity).setAction(raidTransportAction)

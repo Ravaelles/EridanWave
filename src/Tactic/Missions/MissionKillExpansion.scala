@@ -3,6 +3,7 @@ package Tactic.Missions
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Mathematics.Maff
+import Micro.Targeting.ArmyTargeting
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import Utilities.UnitCounters.CountExactly
@@ -62,7 +63,7 @@ class MissionKillExpansion extends Mission {
       detectorLock.setPreference(PreferClose(vicinity)).acquire()
     }
 
-    SquadAutomation.targetRaid(this)
+    ArmyTargeting.targetRaid(this)
     SquadAutomation.formAndSend(this)
     units.foreach(_.intent.setCanSneak(true))
   }

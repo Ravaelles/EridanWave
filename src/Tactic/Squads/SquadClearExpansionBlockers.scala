@@ -2,6 +2,7 @@ package Tactic.Squads
 
 import Lifecycle.With
 import Mathematics.Points.Pixel
+import Micro.Targeting.ArmyTargeting
 import Performance.Cache
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -49,7 +50,7 @@ class SquadClearExpansionBlockers extends Squad {
   def run(): Unit = {
     if (units.isEmpty) return
 
-    setTargets(SquadAutomation.rankedAround(this))
+    setTargets(ArmyTargeting.rankedAround(this))
     detectorLock.units.foreach(_.intend(this).setTerminus(vicinity))
     sweeperLock.units.foreach(_.intend(this).setTerminus(vicinity.add(randomPosition())))
   }

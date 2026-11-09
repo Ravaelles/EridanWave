@@ -1,9 +1,9 @@
 package Tactic.Missions
 
 import Lifecycle.With
+import Micro.Targeting.ArmyTargeting
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.Protoss
-import Tactic.Squads.SquadAutomation
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters.{IsAll, IsComplete}
 import Utilities.UnitPreferences.PreferClose
@@ -40,7 +40,7 @@ class MissionStormDrop extends MissionDrop {
   }
 
   override protected def raid(): Unit = {
-    SquadAutomation.targetRaid(this)
+    ArmyTargeting.targetRaid(this)
     targets.foreach(ts => setTargets(ts.filter(t => t.unitClass.isWorker || units.exists(u => t.canAttack(u) && t.inRangeToAttack(u)))))
     transports.foreach(_.intend(this).setAction(ActionRaidTransport))
     passengers.foreach(_.intend(this).setTerminus(vicinity))

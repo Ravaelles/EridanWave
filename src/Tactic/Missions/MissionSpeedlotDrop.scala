@@ -2,12 +2,12 @@ package Tactic.Missions
 
 import Lifecycle.With
 import Macro.Facts.MacroFacts
+import Micro.Targeting.ArmyTargeting
 import Planning.ResourceLocks.LockUnits
 import Utilities.UnitCounters.CountExactly
 import Utilities.UnitFilters.IsAll
 import Utilities.UnitPreferences.PreferClose
 import ProxyBwapi.Races.Protoss
-import Tactic.Squads.SquadAutomation
 import Utilities.Time.Seconds
 
 class MissionSpeedlotDrop extends MissionDrop {
@@ -35,7 +35,7 @@ class MissionSpeedlotDrop extends MissionDrop {
   override def raid(): Unit = {
     transportLock.release()
     transports.clear()
-    SquadAutomation.targetRaid(this)
+    ArmyTargeting.targetRaid(this)
   }
 }
 

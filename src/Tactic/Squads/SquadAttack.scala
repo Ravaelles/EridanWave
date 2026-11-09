@@ -5,6 +5,7 @@ import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.{Pixel, Points, Tile}
 import Mathematics.Shapes.Spiral
+import Micro.Targeting.ArmyTargeting
 import Performance.Cache
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import ProxyBwapi.UnitTracking.UnorderedBuffer
@@ -75,21 +76,21 @@ class SquadAttack extends Squad {
           .orElse(neutralBase.map(_.heart.center))
           .orElse(unseenTile.map(_.center))
           .getOrElse(With.scouting.enemyHome.center),
-        SquadAutomation.rankForArmy(this, legalTargets.filter(e => IsBuilding(e) || e.matchups.pixelsToThreatRange.exists(_ <= 0)).toVector))
+        ArmyTargeting.rankForArmy(this, legalTargets.filter(e => IsBuilding(e) || e.matchups.pixelsToThreatRange.exists(_ <= 0)).toVector))
 
     } else if (enemyBasesOccupied.nonEmpty) {
 
       setMode(
         RazeBase,
         enemyBasesOccupied.map(_.heart.center).minBy(attackKeyDistanceTo),
-        SquadAutomation.rankedAround(this))
+        ArmyTargeting.rankedAround(this))
 
     } else if (proxies.nonEmpty) {
 
       setMode(
         RazeProxy,
         proxies.map(_.pixel).minBy(attackKeyDistanceTo),
-        SquadAutomation.rankedAround(this))
+        ArmyTargeting.rankedAround(this))
 
     } else if (With.umsMode && huntDestination.isDefined) {
 
@@ -100,14 +101,14 @@ class SquadAttack extends Squad {
       setMode(
         HuntContact,
         huntDestination.get,
-        SquadAutomation.rankedAround(this))
+        ArmyTargeting.rankedAround(this))
 
     } else if (MacroFacts.killPotential) {
 
       setMode(
         PushMain,
         nearestEnemyBuilding.getOrElse(With.scouting.enemyHome.center),
-        SquadAutomation.rankedEnRoute(this))
+        ArmyTargeting.rankedEnRoute(this))
 
     } else if (MacroFacts.safePushing) {
 
@@ -116,21 +117,21 @@ class SquadAttack extends Squad {
         setMode(
           CrushArmy,
           With.scouting.enemyMuscleOrigin.center,
-          SquadAutomation.rankedEnRoute(this))
+          ArmyTargeting.rankedEnRoute(this))
 
       } else if (unguardedBases.nonEmpty) {
 
         setMode(
           PushExpo,
           unguardedBases.head.heart.center,
-          SquadAutomation.rankedAround(this))
+          ArmyTargeting.rankedAround(this))
 
       } else {
 
         setMode(
           ContainArmy,
           With.scouting.enemyThreatOrigin.center,
-          SquadAutomation.rankedEnRoute(this))
+          ArmyTargeting.rankedEnRoute(this))
 
       }
     } else if (faster && With.scouting.enemyProximity > 0.4) {
@@ -138,7 +139,7 @@ class SquadAttack extends Squad {
       setMode(
         Backstab,
         Maff.maxBy(With.geography.enemyBases.map(_.heart))(_.groundPixels(With.scouting.enemyMuscleOrigin)).getOrElse(With.scouting.enemyHome).center,
-        SquadAutomation.rankedAround(this))
+        ArmyTargeting.rankedAround(this))
 
     } else {
 
@@ -158,7 +159,7 @@ class SquadAttack extends Squad {
       setMode(
         ClearMap,
         target,
-        SquadAutomation.rankedAround(this))
+        ArmyTargeting.rankedAround(this))
     }
 
     mode

@@ -4,6 +4,7 @@ import Information.Geography.Types.Base
 import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
+import Micro.Targeting.ArmyTargeting
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitClasses.UnitClass
 import Tactic.Missions.MissionDrop
@@ -198,7 +199,7 @@ class SquadAcePilots extends Squad {
     activity = "AceChill"
     val groundToAir = Maff.exemplarOpt(With.units.ours.filter(u => u.canAttackAir && ! u.flying).map(_.pixel))
     vicinity = groundToAir.getOrElse(homeConsensus)
-    SquadAutomation.target(this)
+    ArmyTargeting.target(this)
     units.foreach(_.intend(this).setTerminus(vicinity).setRedoubt(vicinity))
   }
 
@@ -208,7 +209,7 @@ class SquadAcePilots extends Squad {
     val targetsUnsorted = Maff.orElse(
       otherSquad.targets.map(_.filter(_.flying)).getOrElse(Seq.empty),
       base.map(_.enemies.filter(_.flying)).getOrElse(Seq.empty),
-      SquadAutomation.unrankedAround(this, vicinity))
+      ArmyTargeting.unrankedAround(this, vicinity))
     setTargets(targetsUnsorted.toVector.sortBy(_.pixelDistanceSquared(base.map(_.heart.center).getOrElse(vicinity))))
     SquadAutomation.send(this)
   }

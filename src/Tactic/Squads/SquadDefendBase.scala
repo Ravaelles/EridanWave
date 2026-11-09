@@ -12,6 +12,7 @@ import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Formation._
 import Micro.Heuristics.Potential
+import Micro.Targeting.ArmyTargeting
 import Performance.Cache
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -178,7 +179,7 @@ class SquadDefendBase(base: Base) extends Squad {
     val canGuard        = guardChoke.isDefined && (units.size > 5 || blockZerglings || ! With.enemies.exists(_.isZerg) || With.geography.ourBases.length > 1)
     val targetsUnranked =
       if        (canScour)    defense.scourables
-      else if   (canWithdraw) SquadAutomation.unrankedEnRouteTo(this, vicinity).toVector
+      else if   (canWithdraw) ArmyTargeting.unrankedEnRouteTo(this, vicinity).toVector
       else                    enemies.filter(threateningBase)
     setTargets(targetsUnranked.sortBy(_.pixelDistanceTravelling(vicinity)).sortBy(IsWorker).sortBy( ! _.canAttackGround))
 

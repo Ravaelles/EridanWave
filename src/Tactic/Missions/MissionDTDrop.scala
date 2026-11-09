@@ -2,12 +2,12 @@ package Tactic.Missions
 
 import Information.Geography.Types.Base
 import Lifecycle.With
+import Micro.Targeting.ArmyTargeting
 import Planning.ResourceLocks.LockUnits
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters.{IsAll, IsDetector}
 import Utilities.UnitPreferences.PreferClose
 import ProxyBwapi.Races.Protoss
-import Tactic.Squads.SquadAutomation
 
 class MissionDTDrop extends MissionDrop {
   override protected def additionalFormationConditions: Boolean = With.recruiter.available.exists(MatchDroppableDT)
@@ -34,7 +34,7 @@ class MissionDTDrop extends MissionDrop {
   override def raid(): Unit = {
     transportLock.release()
     transports.clear()
-    SquadAutomation.targetRaid(this)
+    ArmyTargeting.targetRaid(this)
   }
 }
 
