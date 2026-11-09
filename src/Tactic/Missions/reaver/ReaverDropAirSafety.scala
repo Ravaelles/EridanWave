@@ -1,4 +1,4 @@
-package Tactic.Missions
+package Tactic.Missions.reaver
 
 /**
  * Pure rule for the independent Shuttle-Reaver cluster (no game access).

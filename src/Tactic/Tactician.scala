@@ -9,7 +9,10 @@ import Performance.Tasks.TimedTask
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Defense.{DefenseDivision, GetDefenseBase}
-import Tactic.Missions._
+import Tactic.Missions.core.Mission
+import Tactic.Missions.drops.{MissionDTDrop, MissionSpeedlotDrop, MissionStormDrop}
+import Tactic.Missions.ground.MissionKillExpansion
+import Tactic.Missions.reaver.MissionReaverDrop
 import Tactic.Production.Produce
 import Tactic.Squads._
 import Tactic.Tactics.Cheese._

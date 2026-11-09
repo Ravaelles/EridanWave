@@ -1,5 +1,6 @@
-package Tactic.Missions
+package Tactic.Missions.drops
 
+import Tactic.Missions.core.MissionDrop
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Planning.ResourceLocks.LockUnits

@@ -3,7 +3,7 @@ package Debugging
 import Information.Battles.Types.Battle
 import Lifecycle.With
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Missions.MissionDrop
+import Tactic.Missions.core.MissionDrop
 
 // Opt-in gameplay diagnostics; per-unit logging is too expensive for normal tournament games.
 object CombatForecastDiagnostics {

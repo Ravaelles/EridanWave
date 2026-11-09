@@ -1,4 +1,4 @@
-package Tactic.Missions
+package Tactic.Missions.routing
 
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo

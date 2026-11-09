@@ -1,4 +1,4 @@
-package Tactic.Missions
+package Tactic.Missions.routing
 
 import Information.Geography.Pathfinding.Types.TilePath
 import Information.Geography.Pathfinding.{PathfindProfile, PathfindRepulsor}

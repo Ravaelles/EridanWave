@@ -1,4 +1,4 @@
-package Tactic.Missions
+package Tactic.Missions.reaver
 
 import org.scalatest.funsuite.AnyFunSuite
 

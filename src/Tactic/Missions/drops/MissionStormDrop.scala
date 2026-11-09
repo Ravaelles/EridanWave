@@ -1,5 +1,6 @@
-package Tactic.Missions
+package Tactic.Missions.drops
 
+import Tactic.Missions.core.MissionDrop
 import Lifecycle.With
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.Protoss

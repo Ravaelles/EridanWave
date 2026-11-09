@@ -1,20 +1,17 @@
-package Tactic.Missions
+package Tactic.Missions.core
 
 import Lifecycle.With
-import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Squad
 
 trait Mission extends Squad {
   protected def shouldForm: Boolean
   protected def recruit(): Unit
   protected def reset(): Unit = {}
-  protected def onRun(): Unit = {}
 
   var launched: Boolean = false
   var launchFrame: Int = 0
   final def duration: Int = if (launched) With.framesSince(launchFrame) else 0
 
-  private def nextUnits: Iterable[FriendlyUnitInfo] = With.recruiter.lockedBy(this)
   final def launch(): Unit = {
     if (launched) {
       With.recruiter.renew(this)

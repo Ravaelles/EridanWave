@@ -6,7 +6,7 @@ import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitClasses.UnitClass
-import Tactic.Missions.MissionDrop
+import Tactic.Missions.core.MissionDrop
 import Utilities.?
 import Utilities.Time.Seconds
 import Utilities.UnitCounters.CountEverything

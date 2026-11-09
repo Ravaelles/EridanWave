@@ -1,5 +1,7 @@
-package Tactic.Missions
+package Tactic.Missions.core
 
+import Tactic.Missions.routing.DropRoute
+import Tactic.Missions.routing.DropManifest
 import Debugging.SimpleString
 import Information.Geography.Types.Base
 import Lifecycle.With

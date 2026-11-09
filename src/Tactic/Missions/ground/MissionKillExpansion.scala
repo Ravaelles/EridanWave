@@ -1,5 +1,6 @@
-package Tactic.Missions
+package Tactic.Missions.ground
 
+import Tactic.Missions.core.Mission
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Mathematics.Maff

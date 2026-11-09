@@ -10,7 +10,7 @@ object Transport extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.isTransport
   
   override protected def perform(transport: FriendlyUnitInfo): Unit = {
-    val drop = transport.squad.collect { case mission: Tactic.Missions.MissionDrop => mission }
+    val drop = transport.squad.collect { case mission: Tactic.Missions.core.MissionDrop => mission }
     drop.foreach(mission => {
       mission.accountForCargo(transport)
       mission.abandonUnsafePickups()

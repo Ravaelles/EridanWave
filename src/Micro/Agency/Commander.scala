@@ -372,7 +372,7 @@ object Commander {
     val pickup = target.friendly.flatMap(other =>
       if (unit.isTransport) Some((unit, other)) else if (other.isTransport) Some((other, unit)) else None)
     if (pickup.exists { case (transport, passenger) => transport.squad.exists {
-      case mission: Tactic.Missions.MissionDrop if !mission.allowsPickup(transport, passenger) =>
+      case mission: Tactic.Missions.core.MissionDrop if !mission.allowsPickup(transport, passenger) =>
         mission.abandonUnsafePickups()
         true
       case _ => false
