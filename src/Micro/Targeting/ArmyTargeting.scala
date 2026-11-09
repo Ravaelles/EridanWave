@@ -35,10 +35,11 @@ object ArmyTargeting {
       + t.pixelDistanceCenter(squad.vicinity))
   }
 
-  // Static defense shoots back, so it outranks workers; workers outrank
-  // the rest; everything ties while we are being attacked.
+  // Combat buildings shoot back, so they outrank workers; workers outrank
+  // the rest (non-combat buildings sort last with everything else);
+  // everything ties while we are being attacked.
   private def targetRank(target: UnitInfo): Int =
-    if (target.unitClass.isStaticDefense) 0
+    if (target.unitClass.isCombatBuilding) 0
     else if (target.unitClass.isWorker) 80
     else 32 * 5
 

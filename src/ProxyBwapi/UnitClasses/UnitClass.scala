@@ -189,6 +189,16 @@ final case class UnitClass(base: UnitType) extends UnitClassProxy(base) with Uni
   lazy val isFarm               : Boolean = this == Terran.SupplyDepot || this == Protoss.Pylon || this == Zerg.Overlord
   lazy val isTownHall           : Boolean = isResourceDepot
   lazy val isStaticDefense      : Boolean = isBuilding && (canAttack || this == Terran.Bunker || this == Protoss.ShieldBattery)
+  // Atlantis isCombatBuilding: buildings that fight (or become a fight).
+  // Unlike isStaticDefense it names Creep Colonies before they morph and
+  // skips support buildings like Shield Batteries that never shoot.
+  lazy val isCombatBuilding     : Boolean = Vector(
+    Terran.Bunker,
+    Terran.MissileTurret,
+    Protoss.PhotonCannon,
+    Zerg.CreepColony,
+    Zerg.SunkenColony,
+    Zerg.SporeColony).contains(this)
   lazy val isTransport          : Boolean = spaceProvided > 0 && isFlyer && this != Protoss.Carrier
   lazy val powers               : Boolean = this == Protoss.Pylon
   lazy val affectedByDarkSwarm  : Boolean = ! Vector(
