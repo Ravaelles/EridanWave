@@ -3,7 +3,7 @@ package Micro.Corsair
 import Mathematics.Maff
 import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.SquadAcePilots
+import Tactic.Squads.support.SquadAcePilots
 
 /**
  * Mid-duel Overlord dance: a cooling Corsair holds at standoff instead of

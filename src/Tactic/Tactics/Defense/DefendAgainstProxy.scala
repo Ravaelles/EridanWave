@@ -9,7 +9,7 @@ import Utilities.UnitCounters.{CountEverything, CountUpTo}
 import Utilities.UnitFilters._
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.SquadRazeProxies
+import Tactic.Squads.attack.SquadRazeProxies
 import Utilities.?
 import Utilities.Time.{Forever, Minutes}
 

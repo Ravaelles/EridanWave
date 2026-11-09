@@ -1,10 +1,12 @@
-package Tactic.Squads
+package Tactic.Squads.attack
 
 import Lifecycle.With
 import Mathematics.Maff
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 import Utilities.UnitFilters.{IsWarrior, IsWorker}
+import Tactic.Squads.Squad
+import Tactic.Squads.Squads
 
 class SquadRazeProxies(assignments: Map[FriendlyUnitInfo, UnitInfo]) extends Squad {
   private val proxyPixels   = assignments.values.toSeq.map(_.pixel).distinct

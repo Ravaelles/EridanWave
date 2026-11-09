@@ -4,7 +4,7 @@ import Information.Grids.Movement.GridGroundDistance
 import Lifecycle.With
 import Mathematics.Points.{Direction, Pixel, Tile}
 import Mathematics.{Maff, Shapes}
-import Tactic.Squads.UnitGroup
+import Tactic.Squads.Group.UnitGroup
 import Utilities.?
 import bwta.Chokepoint
 

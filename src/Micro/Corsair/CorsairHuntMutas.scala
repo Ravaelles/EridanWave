@@ -4,7 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.SquadAcePilots
+import Tactic.Squads.support.SquadAcePilots
 
 /**
  * Healthy Corsairs answer Mutalisk packs: close ones first (most wounded,

@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.defense
 
 import Lifecycle.With
 import Mathematics.Points.Pixel
@@ -11,6 +11,9 @@ import Utilities.UnitFilters.{IsAny, IsMobileDetector}
 import Utilities.UnitPreferences.PreferClose
 
 import scala.util.Random
+import Tactic.Squads.Squad
+import Tactic.Squads.SquadAutomation
+import Tactic.Squads.Squads
 
 class SquadClearExpansionBlockers extends Squad {
   

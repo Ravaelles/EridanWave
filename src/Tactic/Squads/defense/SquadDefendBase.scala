@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.defense
 
 import Debugging.Visualizations.Forces
 import Information.Geography.Types.{Base, Edge, Zone}
@@ -22,6 +22,10 @@ import Utilities.Time.Minutes
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters._
 import Tactic.Squads.Group.GenericFriendlyUnitGroup
+import Tactic.Squads.support.SquadAcePilots
+import Tactic.Squads.Squad
+import Tactic.Squads.SquadAutomation
+import Tactic.Squads.Squads
 
 class SquadDefendBase(base: Base) extends Squad {
 

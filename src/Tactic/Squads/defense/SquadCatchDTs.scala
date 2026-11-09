@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.defense
 
 import Lifecycle.With
 import Macro.Facts.MacroFacts
@@ -9,6 +9,8 @@ import Utilities.Time.Seconds
 import Utilities.UnitCounters.{CountOne, CountUpTo}
 import Utilities.UnitFilters.{IsAll, IsBuilding, IsMobileDetector, IsWarrior}
 import Utilities.UnitPreferences.PreferClose
+import Tactic.Squads.Squad
+import Tactic.Squads.Squads
 
 class SquadCatchDTs extends Squad {
 

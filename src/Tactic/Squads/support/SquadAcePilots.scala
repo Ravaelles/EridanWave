@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.support
 
 import Information.Geography.Types.Base
 import Lifecycle.With
@@ -14,6 +14,10 @@ import Utilities.UnitFilters.{IsAny, IsFlyingWarrior, IsTank, IsWorker, UnitFilt
 
 import scala.util.Random
 import Tactic.Squads.Decisions.AceExploreLogic
+import Tactic.Squads.defense.SquadDefendBase
+import Tactic.Squads.Squad
+import Tactic.Squads.SquadAutomation
+import Tactic.Squads.Squads
 
 class SquadAcePilots extends Squad {
   val acePilots         : Seq[UnitClass]  = Seq(Protoss.Corsair) //Seq(Terran.Wraith, Terran.Valkyrie, Protoss.Corsair, Zerg.Mutalisk, Zerg.Scourge)

@@ -6,7 +6,8 @@ import Mathematics.Maff
 import Micro.Actions.Action
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.{SquadAttack, SquadDefendBase}
+import Tactic.Squads.attack.SquadAttack
+import Tactic.Squads.defense.SquadDefendBase
 
 object ShuttleAdoptPassenger extends Action {
 

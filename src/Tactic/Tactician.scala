@@ -28,6 +28,15 @@ import Utilities.UnitPreferences.PreferClose
 import _root_.Tactic.Squads.Qualities.Qualities
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import Tactic.Squads.attack.SquadAttack
+import Tactic.Squads.attack.SquadBackstabProxy
+import Tactic.Squads.attack.SquadDarkTemplar
+import Tactic.Squads.attack.SquadMindControl
+import Tactic.Squads.defense.SquadDefendBase
+import Tactic.Squads.defense.SquadCatchDTs
+import Tactic.Squads.defense.SquadClearExpansionBlockers
+import Tactic.Squads.support.SquadAcePilots
+import Tactic.Squads.support.SquadScoutExpansions
 
 final class Tactician extends TimedTask {
   private val missions          = new ArrayBuffer[Mission]()

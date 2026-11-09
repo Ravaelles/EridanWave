@@ -1,6 +1,6 @@
 package Micro.Corsair
 
-import Tactic.Squads.SquadAcePilots
+import Tactic.Squads.support.SquadAcePilots
 
 /**
  * Corsair brain, ported from Atlantis CorsairBrain: one ordered chain

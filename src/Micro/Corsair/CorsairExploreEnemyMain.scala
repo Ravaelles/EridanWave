@@ -3,7 +3,7 @@ package Micro.Corsair
 import Lifecycle.With
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.SquadAcePilots
+import Tactic.Squads.support.SquadAcePilots
 
 /**
  * Confirm the enemy main a few seconds per half minute: an unseen main too

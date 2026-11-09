@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.attack
 
 import Information.Battles.Types.Division
 import Information.Geography.Types.Base
@@ -17,6 +17,8 @@ import Utilities.UnitFilters.{IsMobileDetector, IsWorker}
 import Utilities.{?, LightYear}
 
 import scala.collection.mutable.ArrayBuffer
+import Tactic.Squads.Squad
+import Tactic.Squads.Squads
 
 class SquadDarkTemplar extends Squad {
   lock.matcher = Protoss.DarkTemplar

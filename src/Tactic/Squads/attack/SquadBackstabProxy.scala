@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.attack
 
 import Lifecycle.With
 import Macro.Facts.MacroFacts
@@ -6,6 +6,8 @@ import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters.{IsAny, IsWarrior, IsWorker}
 import Utilities.UnitPreferences.PreferClose
+import Tactic.Squads.Squad
+import Tactic.Squads.Squads
 
 class SquadBackstabProxy extends Squad {
 

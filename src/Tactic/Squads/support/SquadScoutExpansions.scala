@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.support
 
 import Lifecycle.With
 import Mathematics.Maff
@@ -9,6 +9,9 @@ import Utilities.Time.{GameTime, Minutes, Seconds}
 import Utilities.UnitCounters.CountOne
 import Utilities.UnitFilters._
 import Utilities.UnitPreferences.PreferClose
+import Tactic.Squads.Squad
+import Tactic.Squads.SquadAutomation
+import Tactic.Squads.Squads
 
 class SquadScoutExpansions extends Squad {
 

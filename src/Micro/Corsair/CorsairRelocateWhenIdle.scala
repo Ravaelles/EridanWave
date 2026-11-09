@@ -3,7 +3,7 @@ package Micro.Corsair
 import Lifecycle.With
 import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.SquadAcePilots
+import Tactic.Squads.support.SquadAcePilots
 
 /**
  * Anti-idle relocation: a Corsair that fired nothing for a while goes

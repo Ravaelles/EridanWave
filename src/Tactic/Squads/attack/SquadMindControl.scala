@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.attack
 
 import Lifecycle.With
 import Mathematics.Maff
@@ -7,6 +7,8 @@ import ProxyBwapi.UnitInfo.{ForeignUnitInfo, FriendlyUnitInfo}
 import ProxyBwapi.UnitTracking.UnorderedBuffer
 import Utilities.UnitCounters.CountEverything
 import Utilities.UnitFilters.IsTank
+import Tactic.Squads.Squad
+import Tactic.Squads.Squads
 
 class SquadMindControl extends Squad {
 

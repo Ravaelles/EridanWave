@@ -1,4 +1,4 @@
-package Tactic.Squads
+package Tactic.Squads.attack
 
 import Lifecycle.With
 import Macro.Facts.MacroFacts
@@ -17,6 +17,9 @@ import scala.collection.mutable.ArrayBuffer
 import Tactic.Squads.Decisions.HuntLogic
 import Tactic.Squads.Decisions.AttackModes
 import Tactic.Squads.Decisions.RegroupLatch
+import Tactic.Squads.Squad
+import Tactic.Squads.SquadAutomation
+import Tactic.Squads.Squads
 
 class SquadAttack extends Squad {
 
