@@ -15,6 +15,23 @@ object BeMutalisk extends Action {
   object MutaliskRecovering
   object MutaliskVolley
 
+  // A recovering Mutalisk with a safety margin fights back instead of fleeing.
+  private def recoverByFighting(unit: FriendlyUnitInfo): Unit = {
+    unit.agent.toAttack = Target.best(unit, With.units.enemy.filter(_.tile.enemyRangeAir <= 0))
+    val target = unit.agent.toAttack
+    if (target.isEmpty) return
+
+    if (unit.framesToGetInRange(target.get) < With.reaction.agencyMax) {
+      unit.agent.shouldFight = true
+    } else {
+      unit.agent.terminus.set(target.get.pixel)
+      val path = MicroPathing.getThreatAwarePath(unit, preferHome = true)
+      if (path.pathExists) {
+        MicroPathing.tryMovingAlongTilePath(unit, path)
+      }
+    }
+  }
+
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.cooldownLeft < 24) {
       unit.agent.remove(MutaliskVolley)
@@ -34,19 +51,7 @@ object BeMutalisk extends Action {
       if (unit.matchups.framesOfSafety <= 0) {
         Retreat.perform(unit)
       } else {
-        unit.agent.toAttack = Target.best(unit, With.units.enemy.filter(_.tile.enemyRangeAir <= 0))
-        val target = unit.agent.toAttack
-        if (target.isDefined) {
-          if (unit.framesToGetInRange(target.get) < With.reaction.agencyMax) {
-            unit.agent.shouldFight = true
-          } else {
-            unit.agent.terminus.set(target.get.pixel)
-            val path = MicroPathing.getThreatAwarePath(unit, preferHome = true)
-            if (path.pathExists) {
-              MicroPathing.tryMovingAlongTilePath(unit, path)
-            }
-          }
-        }
+        recoverByFighting(unit)
       }
     } else if (unit.confidence01 > 0.35 && ! unit.matchups.threatDeepest.exists(_.isAny(Terran.Goliath, Terran.MissileTurret, Protoss.Dragoon, Protoss.PhotonCannon, Zerg.Mutalisk, Zerg.SporeColony))) {
       val mutalisks = unit.tileArea.expand(5).tiles.flatMap(_.units.flatMap(_.friendly).filter(Zerg.Mutalisk))

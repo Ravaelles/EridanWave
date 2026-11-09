@@ -65,8 +65,12 @@ abstract class TargetedSpell extends Action {
     if (caster.airborne) {
       caster.agent.decision.set(target)
     } else {
-      caster.agent.decision.set(Maff.minBy(Ring(castRangeTiles).map(target.tile.add).map(_.center))(caster.pixelDistanceTravelling))
+      caster.agent.decision.set(groundApproachPoint(caster, target))
     }
     Commander.move(caster)
   }
+
+  // Grounded casters walk to the nearest ring point in range, not the target itself.
+  private def groundApproachPoint(caster: FriendlyUnitInfo, target: Pixel) =
+    Maff.minBy(Ring(castRangeTiles).map(target.tile.add).map(_.center))(caster.pixelDistanceTravelling)
 }

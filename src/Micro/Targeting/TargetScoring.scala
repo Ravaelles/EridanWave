@@ -10,6 +10,22 @@ import Utilities.?
 import Utilities.UnitFilters.IsAny
 
 object TargetScoring {
+  /**
+   * Damage multiplier by target size (2 = large, 1 = medium, anything else
+   * small). Split out for unit tests: the size codes are easy to mix up.
+   */
+  def damageForSize(
+    flying        : Boolean,
+    sizeCode      : Int,
+    airLarge      : Double, airMedium   : Double, airSmall      : Double,
+    groundLarge   : Double, groundMedium: Double, groundSmall   : Double): Double = {
+    if (flying) {
+      if (sizeCode == 2) airLarge else if (sizeCode == 1) airMedium else airSmall
+    } else {
+      if (sizeCode == 2) groundLarge else if (sizeCode == 1) groundMedium else groundSmall
+    }
+  }
+
   final class SimulationScoring(attacker: Simulacrum) {
     private[this] val attackerPixel              = attacker.pixel
     private[this] val attackerX                  = attackerPixel.x
@@ -33,11 +49,10 @@ object TargetScoring {
       val targetFlying = target.flying
       val targetSizeCode = target.unitSizeCode
       val damageMultiplier =
-        if (targetFlying) {
-          if (targetSizeCode == 2) damageAirLarge else if (targetSizeCode == 1) damageAirMedium else damageAirSmall
-        } else {
-          if (targetSizeCode == 2) damageGroundLarge else if (targetSizeCode == 1) damageGroundMedium else damageGroundSmall
-        }
+        TargetScoring.damageForSize(
+          targetFlying, targetSizeCode,
+          damageAirLarge, damageAirMedium, damageAirSmall,
+          damageGroundLarge, damageGroundMedium, damageGroundSmall)
       fastScore(
         targetValue = target.targetValue,
         injury      = target.injury,
