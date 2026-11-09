@@ -372,26 +372,24 @@ class SquadDefendBase(base: Base) extends Squad {
 
   private case class Plug(pixel: Pixel) extends Action {
     override def perform(unit: FriendlyUnitInfo): Unit = {
-      if (unit.matchups.threats.exists(IsWarrior) || (unit.unitClass.ranged && unit.matchups.targets.exists(_.base.exists(_.isMain)))) {
-        Idle.perform(unit)
-      } else {
-        var to = pixel
-        Potshot.delegate(unit)
-        unit.agent.forces(Forces.pushing) = Potential.followPushes(unit)
-        if (unit.agent.forces.sum.lengthSquared > 0) {
-          MicroPathing.moveForcefully(unit)
-        } else {
-          if (unit.pixel == pixel) {
-            Commander.hold(unit)
+      if (unit.matchups.threats.exists(IsWarrior) || (unit.unitClass.ranged && unit.matchups.targets.exists(_.base.exists(_.isMain)))) return Idle.perform(unit)
 
-            return
-          } else if (unit.seeminglyStuck) {
-            to = edgeToPlug().map(_._1.centroid.center.walkablePixel).getOrElse(pixel)
-          }
-          unit.agent.redoubt.set(to)
-          unit.agent.decision.set(to)
-          Commander.move(unit)
+      var to = pixel
+      Potshot.delegate(unit)
+      unit.agent.forces(Forces.pushing) = Potential.followPushes(unit)
+      if (unit.agent.forces.sum.lengthSquared > 0) {
+        MicroPathing.moveForcefully(unit)
+      } else {
+        if (unit.pixel == pixel) {
+          Commander.hold(unit)
+
+          return
+        } else if (unit.seeminglyStuck) {
+          to = edgeToPlug().map(_._1.centroid.center.walkablePixel).getOrElse(pixel)
         }
+        unit.agent.redoubt.set(to)
+        unit.agent.decision.set(to)
+        Commander.move(unit)
       }
     }
   }

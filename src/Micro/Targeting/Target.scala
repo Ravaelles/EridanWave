@@ -136,17 +136,15 @@ object Target {
   }
 
   private def legalByFilters(attacker: FriendlyUnitInfo, target: UnitInfo, allFilters: IndexedSeq[TargetFilter]): Boolean = {
-    if (With.yolo.active) {
-      attacker.canAttack(target) && TargetFilterType.legal(attacker, target)
-    } else {
-      var filterIndex = 0
-      while (filterIndex < allFilters.length) {
-        if ( ! allFilters(filterIndex).legal(attacker, target)) return false
+    if (With.yolo.active) return attacker.canAttack(target) && TargetFilterType.legal(attacker, target)
 
-        filterIndex += 1
-      }
-      true
+    var filterIndex = 0
+    while (filterIndex < allFilters.length) {
+      if ( ! allFilters(filterIndex).legal(attacker, target)) return false
+
+      filterIndex += 1
     }
+    true
   }
 
   def best(attacker: FriendlyUnitInfo, whitelist: Iterable[UnitInfo]): Option[UnitInfo] = {

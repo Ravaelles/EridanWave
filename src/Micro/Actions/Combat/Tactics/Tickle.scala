@@ -141,14 +141,12 @@ object Tickle extends Action {
     val out     = MicroPathing.getGroundWaypointToPixel(tickler.pixel, mineral.pixel)
     val awayN   = away.normalize
     val outN    = new Force(out.subtract(tickler.pixel)).normalize
-    if (awayN.dot(outN) > 0.7) {
-      Commander.rightClick(tickler, mineral)
-    } else {
-      tickler.agent.forces.put(Forces.threat, away)
-      tickler.agent.forces.put(Forces.travel, Potential.towards(tickler, tickler.agent.destinationFinal.pixel.get.zone.centroid.center))
-      tickler.agent.forces.put(Forces.spacing, Potential.preferSpacing(tickler))
-      MicroPathing.moveForcefully(tickler)
-    }
+    if (awayN.dot(outN) > 0.7) return Commander.rightClick(tickler, mineral)
+
+    tickler.agent.forces.put(Forces.threat, away)
+    tickler.agent.forces.put(Forces.travel, Potential.towards(tickler, tickler.agent.destinationFinal.pixel.get.zone.centroid.center))
+    tickler.agent.forces.put(Forces.spacing, Potential.preferSpacing(tickler))
+    MicroPathing.moveForcefully(tickler)
   }
 
   def repair(tickler: FriendlyUnitInfo): Unit = {

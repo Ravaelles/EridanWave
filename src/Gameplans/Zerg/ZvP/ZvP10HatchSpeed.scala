@@ -87,10 +87,8 @@ class ZvP10HatchSpeed extends ZergGameplan {
 
     pump(Zerg.Zergling)
 
-    if (enemyProximity < 0.4) {
-      requireMiningBases(7)
-    } else {
-      fillMacroHatches(21)
-    }
+    if (enemyProximity < 0.4) return requireMiningBases(7)
+
+    fillMacroHatches(21)
   }
 }

@@ -79,21 +79,19 @@ class Recruiter {
   def satisfy(lock: LockUnits): Unit = {
     activate(lock)
     val requiredUnits = inquire(lock, isDryRun = false)
-    if (requiredUnits.isEmpty) {
-      deactivate(lock)
-    } else {
-      // 1. Unassign all the current units
-      // 2. Unassign all the required units
-      // 3. Assign all the required unit
-      val unitsBefore   = lockedBy(lock)
-      val unitsAfter    = requiredUnits.get.toSet
-      val unitsObsolete = unitsBefore.diff(unitsAfter)
-      val unitsNew      = unitsAfter.diff(unitsBefore)
+    if (requiredUnits.isEmpty) return deactivate(lock)
 
-      unitsObsolete.foreach(unlock)
-      unitsNew.foreach(unlock)
-      unitsNew.foreach(lockTo(_, lock))
-    }
+    // 1. Unassign all the current units
+    // 2. Unassign all the required units
+    // 3. Assign all the required unit
+    val unitsBefore   = lockedBy(lock)
+    val unitsAfter    = requiredUnits.get.toSet
+    val unitsObsolete = unitsBefore.diff(unitsAfter)
+    val unitsNew      = unitsAfter.diff(unitsBefore)
+
+    unitsObsolete.foreach(unlock)
+    unitsNew.foreach(unlock)
+    unitsNew.foreach(lockTo(_, lock))
   }
 
   private def activate(lock: LockUnits): Unit = {

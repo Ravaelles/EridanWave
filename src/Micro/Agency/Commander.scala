@@ -50,11 +50,9 @@ object Commander {
     if (unit.velocity.lengthSquared > 0 && unit.order != Orders.HoldPosition) {
       unit.bwapiUnit.holdPosition()
     }
-    if (unit.matchups.targetsInRange.nonEmpty) {
-      sleepAttack(unit)
-    } else {
-      sleep(unit)
-    }
+    if (unit.matchups.targetsInRange.nonEmpty) return sleepAttack(unit)
+
+    sleep(unit)
   }
 
   // We used to refuse to issue commands to Photon Cannons due to inadvertent attack cancelling.
@@ -425,11 +423,9 @@ object Commander {
     if (autoUnload(unit))   return
 
     unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapiUnit)
-    if (tech == Protoss.ArchonMeld || tech == Protoss.DarkArchonMeld) {
-      sleep(unit, 48)
-    } else {
-      sleep(unit)
-    }
+    if (tech == Protoss.ArchonMeld || tech == Protoss.DarkArchonMeld) return sleep(unit, 48)
+
+    sleep(unit)
   }
 
   def useTechOnPixel(unit: FriendlyUnitInfo, tech: Tech, target: Pixel): Unit = {
@@ -439,11 +435,9 @@ object Commander {
     if (autoUnload(unit))   return
 
     unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapi)
-    if (tech == Terran.SpiderMinePlant) {
-      sleep(unit, 12)
-    } else {
-      sleepAttack(unit)
-    }
+    if (tech == Terran.SpiderMinePlant) return sleep(unit, 12)
+
+    sleepAttack(unit)
   }
 
   def repair(unit: FriendlyUnitInfo, target: UnitInfo): Unit = {

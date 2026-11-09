@@ -128,34 +128,34 @@ trait Fitter extends Fits {
   }
 
   private def accept(requirement: TemplatePointRequirement, relative: Point, tile: Tile, reusesBuilding: Boolean): Boolean = {
-    if ( ! tile.valid) {
-      return false
-    } else {
-      val previous = at(tile)
-      lazy val reusesReservation = previous.point == relative && requirement.sameOccupancyAs(previous.requirement)
-      if (requirement.walkableBefore) {
-        if ( ! tile.walkableUnchecked && ! (reusesBuilding && tile.walkableTerrainUnchecked)) {
-          return false
-        } else if ( ! previous.requirement.walkableAfter && ! reusesReservation) {
-          return false
-        }
-      }
+    if ( ! tile.valid) return false
 
-      if (requirement.buildableBefore) {
-        if (tile.creep && ! reusesBuilding && ! requirement.buildings.exists(_.isZerg)
-          && (requirement.buildings.nonEmpty || ! With.self.isZerg)) {
-          return false
-        }
-
-        if ( ! With.grids.buildable.get(tile) && ! (reusesBuilding && With.grids.buildableTerrain.get(tile))) {
-          return false
-        }
-
-        if ( ! previous.requirement.buildableAfter && ! reusesReservation) {
-          return false
-        }
+    val previous = at(tile)
+    lazy val reusesReservation = previous.point == relative && requirement.sameOccupancyAs(previous.requirement)
+    if (requirement.walkableBefore) {
+      if ( ! tile.walkableUnchecked && ! (reusesBuilding && tile.walkableTerrainUnchecked)) {
+        return false
+      } else if ( ! previous.requirement.walkableAfter && ! reusesReservation) {
+        return false
       }
     }
+
+    if (requirement.buildableBefore) {
+      if (tile.creep && ! reusesBuilding && ! requirement.buildings.exists(_.isZerg)
+        && (requirement.buildings.nonEmpty || ! With.self.isZerg)) {
+        return false
+      }
+
+      if ( ! With.grids.buildable.get(tile) && ! (reusesBuilding && With.grids.buildableTerrain.get(tile))) {
+        return false
+      }
+
+      if ( ! previous.requirement.buildableAfter && ! reusesReservation) {
+        return false
+      }
+
+    }
+
     true
   }
 }

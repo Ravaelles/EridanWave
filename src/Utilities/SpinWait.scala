@@ -9,10 +9,8 @@ object SpinWait {
 
   private lazy val onSpinWait: Option[Method] = classOf[Thread].getDeclaredMethods.find(_.getName == "onSpinWait")
   def apply():  Unit = {
-    if (onSpinWait.isDefined) {
-      onSpinWait.get.invoke(Thread.currentThread())
-    } else {
-      Thread.sleep(0, 100000)
-    }
+    if (onSpinWait.isDefined) return onSpinWait.get.invoke(Thread.currentThread())
+
+    Thread.sleep(0, 100000)
   }
 }

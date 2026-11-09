@@ -8,10 +8,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 object Travel extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canMove
   override def perform(unit: FriendlyUnitInfo): Unit = {
-    if (unit.intent.canSneak) {
-      MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getSneakyPath(unit))
-    } else {
-      Commander.move(unit)
-    }
+    if (unit.intent.canSneak) return MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getSneakyPath(unit))
+
+    Commander.move(unit)
   }
 }

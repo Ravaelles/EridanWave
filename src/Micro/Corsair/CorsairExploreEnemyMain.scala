@@ -16,14 +16,12 @@ object CorsairExploreEnemyMain {
       With.framesSince(main.lastFrameScoutedByUs) > 20 * 24)
 
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
-    if ( ! Protoss.Corsair(unit) || ! applies(unit)) {
-      false
-    } else {
-      With.scouting.enemyMain.exists(main => {
-        unit.intend(squad).setTargets(Iterable.empty).setTerminus(main.heart.center)
-        unit.agent.act("CorsairExploreMain")
-        true
-      })
-    }
+    if ( ! Protoss.Corsair(unit) || ! applies(unit)) return false
+
+    With.scouting.enemyMain.exists(main => {
+      unit.intend(squad).setTargets(Iterable.empty).setTerminus(main.heart.center)
+      unit.agent.act("CorsairExploreMain")
+      true
+    })
   }
 }

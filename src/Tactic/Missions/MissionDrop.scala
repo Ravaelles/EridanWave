@@ -470,16 +470,14 @@ abstract class MissionDrop extends Mission {
       }
 
       val pickup = pickupTarget(transport, assembling = true)
-      if (pickup.isEmpty) {
-        Commander.hold(transport)
+      if (pickup.isEmpty) return Commander.hold(transport)
+
+      if (transport.matchups.withinSafetyMargin) {
+        val toPickup = pickup.get
+        transport.agent.decision.set(toPickup.pixel)
+        Commander.rightClick(transport, toPickup)
       } else {
-        if (transport.matchups.withinSafetyMargin) {
-          val toPickup = pickup.get
-          transport.agent.decision.set(toPickup.pixel)
-          Commander.rightClick(transport, toPickup)
-        } else {
-          Retreat.delegate(transport)
-        }
+        Retreat.delegate(transport)
       }
     }
   }

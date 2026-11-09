@@ -47,11 +47,9 @@ object UmsMode {
 
     // Persist the correction for the next game; no-op when already correct.
     val ini = BwapiIni.defaultLiveIni()
-    if (ini.isFile) {
-      BwapiIni.patch(ini, null, null, null, "USE_MAP_SETTINGS", false)
-    } else {
-      With.logger.debug(f"Skipping bwapi.ini game_type patch; not found at ${ini.getPath}")
-    }
+    if (ini.isFile) return BwapiIni.patch(ini, null, null, null, "USE_MAP_SETTINGS", false)
+
+    With.logger.debug(f"Skipping bwapi.ini game_type patch; not found at ${ini.getPath}")
   }
 
   /**
@@ -77,11 +75,9 @@ object UmsMode {
   }
 
   private def destinationFor(unit: FriendlyUnitInfo, enemies: Vector[ForeignUnitInfo]): Option[Pixel] = {
-    if (enemies.nonEmpty) {
-      Maff.minBy(enemies)((e: ForeignUnitInfo) => unit.pixelDistanceCenter(e.pixel)).map(_.pixel)
-    } else {
-      lazyEnemyStart().orElse(Some(Pixel(With.mapPixelWidth / 2, With.mapPixelHeight / 2)))
-    }
+    if (enemies.nonEmpty) return Maff.minBy(enemies)((e: ForeignUnitInfo) => unit.pixelDistanceCenter(e.pixel)).map(_.pixel)
+
+    lazyEnemyStart().orElse(Some(Pixel(With.mapPixelWidth / 2, With.mapPixelHeight / 2)))
   }
 
   private var cachedEnemyStart: Option[Pixel] = None

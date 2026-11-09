@@ -18,13 +18,11 @@ object CorsairHuntKnownOverlords {
   val AaCoverTiles = 7.1
 
   def overlord(unit: FriendlyUnitInfo): Option[UnitInfo] = {
-    if ( ! With.enemies.exists(_.isZerg)) {
-      None
-    } else {
-      With.units.enemy.filter(o => Zerg.Overlord(o) && o.likelyStillThere).toSeq
-        .sortBy(_.pixelDistanceSquared(unit.pixel))
-        .find(o => ! (o.hitPoints <= 0 && o.visible) && ! covered(o))
-    }
+    if ( ! With.enemies.exists(_.isZerg)) return None
+
+    With.units.enemy.filter(o => Zerg.Overlord(o) && o.likelyStillThere).toSeq
+      .sortBy(_.pixelDistanceSquared(unit.pixel))
+      .find(o => ! (o.hitPoints <= 0 && o.visible) && ! covered(o))
   }
 
   private def covered(overlord: UnitInfo): Boolean =
@@ -32,14 +30,12 @@ object CorsairHuntKnownOverlords {
       && e.pixelDistanceCenter(overlord.pixel) < AaCoverTiles * 32)
 
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
-    if ( ! Protoss.Corsair(unit)) {
-      false
-    } else {
-      overlord(unit).exists(target => {
-        unit.intend(squad).setTargets(Seq(target)).setTerminus(target.pixel)
-        unit.agent.act("CorsairHuntKnown")
-        true
-      })
-    }
+    if ( ! Protoss.Corsair(unit)) return false
+
+    overlord(unit).exists(target => {
+      unit.intend(squad).setTargets(Seq(target)).setTerminus(target.pixel)
+      unit.agent.act("CorsairHuntKnown")
+      true
+    })
   }
 }

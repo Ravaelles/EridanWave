@@ -97,11 +97,9 @@ class PvEProxy2Gate extends GameplanImperative {
       return
     }
 
-    if (With.tactics.workerScout.scouts.exists(_.base.exists(_.isEnemy))) {
-      microSlush(100)
-    } else {
-      autosupply()
-    }
+    if (With.tactics.workerScout.scouts.exists(_.base.exists(_.isEnemy))) return microSlush(100)
+
+    autosupply()
   }
 }
 

@@ -24,18 +24,16 @@ object CorsairDanceToOverlord {
   }
 
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
-    if ( ! Protoss.Corsair(unit)) {
-      false
-    } else {
-      duelOverlord(squad, unit).exists(overlord => {
-        if (shouldDance(unit.cooldownLeft, unit.pixelDistanceCenter(overlord.pixel) / 32.0, unit.woundPercent())) {
-          unit.intend(squad).setTargets(Seq(overlord)).setTerminus(unit.pixel)
-        } else {
-          unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
-        }
-        unit.agent.act("CorsairDance")
-        true
-      })
-    }
+    if ( ! Protoss.Corsair(unit)) return false
+
+    duelOverlord(squad, unit).exists(overlord => {
+      if (shouldDance(unit.cooldownLeft, unit.pixelDistanceCenter(overlord.pixel) / 32.0, unit.woundPercent())) {
+        unit.intend(squad).setTargets(Seq(overlord)).setTerminus(unit.pixel)
+      } else {
+        unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
+      }
+      unit.agent.act("CorsairDance")
+      true
+    })
   }
 }

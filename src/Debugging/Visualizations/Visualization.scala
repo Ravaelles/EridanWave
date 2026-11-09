@@ -166,13 +166,11 @@ class Visualization extends TimedTask {
     map     = With.configuration.visualizeMap
     var random = Random.nextDouble()
     random -= With.configuration.visualizationProbabilityHappyVision
+    if (random < 0) return happy = true
+
+    random -= With.configuration.visualizationProbabilityTextOnly
     if (random < 0) {
-      happy = true
-    } else {
-      random -= With.configuration.visualizationProbabilityTextOnly
-      if (random < 0) {
-        textOnly = true
-      }
+      textOnly = true
     }
   }
 }
