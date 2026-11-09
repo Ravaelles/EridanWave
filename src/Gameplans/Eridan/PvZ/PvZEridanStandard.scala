@@ -12,4 +12,20 @@ import Strategery.Strategies.Protoss.PvZ1BaseZealotIntoGoon
  */
 class PvZEridanStandard extends PvZ1BaseReactive {
   override def activated: Boolean = employing(PvZ1BaseZealotIntoGoon)
+
+  override def chooseOpening(): Unit = {
+    // Zealot-into-Goon always opens Gates1012: two Gates into Core-first
+    // pressure, with the 4-pool/speedling reactions in base executeBuild
+    // still active.
+    opening = Gates1012
+  }
+
+  override def buildArmy(): Unit = {
+    if (PvZ1BaseZealotIntoGoon()) {
+      ZealotIntoGoon.produce()
+
+      return
+    }
+    super.buildArmy()
+  }
 }

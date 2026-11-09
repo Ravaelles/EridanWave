@@ -5,7 +5,7 @@ import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Micro.Formation.{Formation, FormationStyleDisengage, FormationStyleGuard, Formations}
 import Micro.Targeting.FiltersRequired.TargetFilterFocus
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 
@@ -45,6 +45,8 @@ object SquadAutomation {
       && (
         TargetFilterFocus.canTargetAsRoadblock(group, e)
         || e.matchups.engagingOn
+        || e.unitClass.isStaticDefense
+        || Zerg.CreepColony(e)
         || (group.canBeAttackedBy(e)
           && ! e.unitClass.isBuilding
           && group.meanAttackerSpeed > 1.2 * e.topSpeed)))

@@ -32,7 +32,7 @@ object ZealotIntoGoon extends MacroActions {
     compositor.setGoal(Protoss.Zealot, zealotTarget)
     if (units(Protoss.Zealot) >= zealotTarget && have(Protoss.CyberneticsCore)) {
       compositor.setNeed(Protoss.Dragoon, 2.0)
-      compositor.setGoal(Protoss.Dragoon, 400)
+      compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
     }
     if (supplyUsed200 >= 85) {
       produceAdvanced()
