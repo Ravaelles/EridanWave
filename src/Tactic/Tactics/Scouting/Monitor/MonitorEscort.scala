@@ -12,19 +12,19 @@ object MonitorEscort {
   def applies(armyOut: Boolean, lurkersKnown: Boolean): Boolean =
     armyOut && lurkersKnown
 
-  def anchor(): Pixel = {
+  def pick(eyes: Seq[FriendlyUnitInfo]): Option[FriendlyUnitInfo] =
+    Maff.minBy(eyes)(_.pixelDistanceSquared(anchor()))
+
+  def act(monitor: TacticMonitor, eye: FriendlyUnitInfo): Unit = {
+    Debugging.CherryVis.CherryVis.decision(eye.id, "Escorting attack squad")
+    eye.intend(monitor)
+      .setTerminus(anchor())
+      .setRedoubt(With.geography.home.center)
+  }
+
+  private def anchor(): Pixel = {
     val army = With.tactics.attackSquad
 
     if (army.units.nonEmpty) army.centroidKey else With.geography.home.center
-  }
-
-  def pick(eyes: Seq[FriendlyUnitInfo], anchor: Pixel): Option[FriendlyUnitInfo] =
-    Maff.minBy(eyes)(_.pixelDistanceSquared(anchor))
-
-  def act(monitor: TacticMonitor, eye: FriendlyUnitInfo, anchor: Pixel): Unit = {
-    Debugging.CherryVis.CherryVis.decision(eye.id, "Escorting attack squad")
-    eye.intend(monitor)
-      .setTerminus(anchor)
-      .setRedoubt(With.geography.home.center)
   }
 }
