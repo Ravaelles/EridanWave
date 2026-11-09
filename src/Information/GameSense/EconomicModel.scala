@@ -11,6 +11,7 @@ import ProxyBwapi.Upgrades.Upgrades
 import Utilities.CountMap
 import Utilities.Time.{GameTime, Minutes}
 import Utilities.UnitFilters.{IsHatchlike, IsWorker}
+import Tactic.Production.core.Production
 
 trait EconomicModel {
 

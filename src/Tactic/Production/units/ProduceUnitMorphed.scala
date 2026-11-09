@@ -1,4 +1,4 @@
-package Tactic.Production
+package Tactic.Production.units
 
 import Information.Counting.MacroCounter
 import Lifecycle.With
@@ -10,6 +10,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.UnitCounters.CountOne
 import Utilities.UnitFilters.IsAny
 import Utilities.UnitPreferences._
+import Tactic.Production.core.Production
 
 class ProduceUnitMorphed(requestArg: RequestBuildable, expectedFramesArg: Int) extends Production {
   setRequest(requestArg, expectedFramesArg)

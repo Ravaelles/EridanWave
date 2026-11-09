@@ -4,6 +4,7 @@ import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Tactic.Production.core.Produce
 
 object Produce extends Action {
   

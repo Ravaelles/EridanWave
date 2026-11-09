@@ -3,6 +3,7 @@ package Tactic.Production
 import Lifecycle.With
 import Macro.Requests.RequestBuildable
 import Planning.ResourceLocks.LockCurrency
+import Tactic.Production.core.Production
 
 class ProduceMicroSlush(requestArg: RequestBuildable, expectedFramesArg: Int) extends Production {
   setRequest(requestArg, expectedFramesArg)

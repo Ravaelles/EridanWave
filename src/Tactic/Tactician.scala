@@ -13,7 +13,7 @@ import Tactic.Missions.core.Mission
 import Tactic.Missions.drops.{MissionDTDrop, MissionSpeedlotDrop, MissionStormDrop}
 import Tactic.Missions.ground.MissionKillExpansion
 import Tactic.Missions.reaver.MissionReaverDrop
-import Tactic.Production.Produce
+import Tactic.Production.core.Produce
 import Tactic.Squads._
 import Tactic.Tactics.Cheese._
 import Tactic.Tactics.Defense._

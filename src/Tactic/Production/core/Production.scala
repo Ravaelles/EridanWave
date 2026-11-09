@@ -1,4 +1,4 @@
-package Tactic.Production
+package Tactic.Production.core
 
 import Lifecycle.With
 import Macro.Allocation.Prioritized

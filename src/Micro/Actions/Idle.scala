@@ -10,6 +10,7 @@ import Micro.Actions.Scouting.Scout
 import Micro.Actions.Terran.{FinishConstruction, GetRepairedBuilding, GetRepairedMobile, Land, Liftoff, Repair, Scan}
 import Micro.Actions.Transportation.Transport
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Tactic.Production.core.Produce
 
 object Idle extends Action {
 

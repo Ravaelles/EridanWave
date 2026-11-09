@@ -1,4 +1,4 @@
-package Tactic.Production
+package Tactic.Production.construction
 
 import Information.Counting.MacroCounter
 import Lifecycle.With
@@ -17,6 +17,7 @@ import Utilities.?
 import Utilities.Time.Forever
 import Utilities.UnitCounters.CountOne
 import Utilities.UnitPreferences.{PreferAll, PreferClose, PreferIf}
+import Tactic.Production.core.Production
 
 class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) extends Production {
   setRequest(requestArg, expectedFramesArg)

@@ -1,4 +1,4 @@
-package Tactic.Production
+package Tactic.Production.units
 
 import Information.Counting.MacroCounter
 import Macro.Requests.{RequestBuildable, RequestUnit}
@@ -9,6 +9,7 @@ import Utilities.UnitCounters.CountOne
 import Utilities.UnitPreferences.{PreferTiers, PreferTrainerFor}
 
 import scala.util.Try
+import Tactic.Production.core.Production
 
 class ProduceUnitTrained(requestArg: RequestBuildable, expectedFramesArg: Int) extends Production {
   setRequest(requestArg, expectedFramesArg)

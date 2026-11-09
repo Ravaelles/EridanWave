@@ -6,7 +6,14 @@ import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses._
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import ProxyBwapi.Upgrades.Upgrade
-import Tactic.Production._
+import Tactic.Production.core.Production
+import Tactic.Production.research.ProduceTech
+import Tactic.Production.research.ProduceUpgrade
+import Tactic.Production.units.ProduceUnitMorphed
+import Tactic.Production.units.ProduceUnitTrained
+import Tactic.Production.construction.ProduceBuilding
+import Tactic.Production.construction.ProduceAddon
+import Tactic.Production.ProduceMicroSlush
 import Utilities.Time.Frames
 import bwapi.Race
 

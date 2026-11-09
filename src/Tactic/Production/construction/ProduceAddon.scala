@@ -1,4 +1,4 @@
-package Tactic.Production
+package Tactic.Production.construction
 
 import Macro.Requests.RequestBuildable
 import Micro.Agency.BuildIntent
@@ -8,6 +8,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.UnitCounters.CountOne
 import Utilities.UnitFilters.IsAll
 import Utilities.UnitPreferences.PreferIdle
+import Tactic.Production.core.Production
 
 class ProduceAddon(buildableAddon: RequestBuildable, expectedFramesArg: Int) extends Production {
   setRequest(buildableAddon, expectedFramesArg)

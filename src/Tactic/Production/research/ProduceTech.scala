@@ -1,4 +1,4 @@
-package Tactic.Production
+package Tactic.Production.research
 
 import Lifecycle.With
 import Macro.Requests.RequestBuildable
@@ -8,6 +8,7 @@ import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.UnitInfo
 import Utilities.UnitCounters.CountOne
 import Utilities.UnitPreferences.PreferIdle
+import Tactic.Production.core.Production
 
 class ProduceTech(requestArg: RequestBuildable, expectedFramesArg: Int) extends Production {
   setRequest(requestArg, expectedFramesArg)

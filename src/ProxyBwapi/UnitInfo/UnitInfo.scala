@@ -20,7 +20,7 @@ import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitTracking.{UnorderedBuffer, Visibility}
 import ProxyBwapi.Upgrades.Upgrade
-import Tactic.Production.Production
+import Tactic.Production.core.Production
 import Utilities.?
 import Utilities.Time.{Forever, Frames, Seconds}
 import Utilities.UnitFilters.UnitFilter

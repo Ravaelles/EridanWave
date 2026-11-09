@@ -14,6 +14,7 @@ import Utilities.UnitFilters.UnitFilter
 import bwapi.{Race, UnitType}
 
 import scala.collection.mutable.ListBuffer
+import Tactic.Production.core.Production
 
 final case class UnitClass(base: UnitType) extends UnitClassProxy(base) with UnitFilter with Buildable {
 

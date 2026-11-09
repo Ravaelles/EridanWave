@@ -5,7 +5,7 @@ import Debugging.Visualizations.Rendering.DrawMap
 import Debugging.Visualizations.Views.DebugView
 import Lifecycle.With
 import Mathematics.Points.{Pixel, TileRectangle}
-import Tactic.Production.ProduceBuilding
+import Tactic.Production.construction.ProduceBuilding
 
 object ShowFoundations extends DebugView {
 
