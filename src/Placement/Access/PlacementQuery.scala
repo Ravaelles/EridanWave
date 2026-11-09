@@ -67,6 +67,13 @@ class PlacementQuery {
     if (Seq(Terran.SupplyDepot, Protoss.Pylon).contains(building)) {
       preferences.labelYes = preferences.labelYes :+ PlaceLabels.Supply
     }
+    if (building == Protoss.Pylon && ! With.units.ours.exists(Protoss.Pylon)) {
+      // First Pylon hugs the main Nexus (Stardust parity): safe from early
+      // lings while the wall goes up; later Pylons follow template order.
+      // Explicit queries (cannons, proxy) overwrite both lines below.
+      requirements.base = Seq(With.geography.ourMain)
+      preferTile(With.geography.ourMain.townHallTile)
+    }
     if (building.isGas) {
       foundationSource = FoundationSources.Gas
       lazy val basesOpening       = preferences.base.filter(_.townHall.exists(th => th.openForBusiness || th.remainingCompletionFrames < building.buildFrames))

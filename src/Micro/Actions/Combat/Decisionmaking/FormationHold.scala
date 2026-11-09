@@ -55,9 +55,15 @@ object FormationHold {
     hasFormation && ! melee && ! flanking && ! allyEngaged && ! enemyFired && targetHoldable && tilesBeyondRange > holdReleaseTiles
   }
 
-  /** Step the line forward only once every unit sits in its slot. */
+  /**
+   * Advance once this fraction sits in its slots. Below 1.0 on purpose:
+   * waiting for every last straggler stalls the march, so a fifth may lag.
+   */
+  var advanceFormationFraction: Double = 0.8
+
+  /** Step the line forward once enough units sit in their slots. */
   def shouldAdvanceInFormation(fractionUnitsInSlot: Double): Boolean = {
-    fractionUnitsInSlot >= 1.0
+    fractionUnitsInSlot >= advanceFormationFraction
   }
 }
 

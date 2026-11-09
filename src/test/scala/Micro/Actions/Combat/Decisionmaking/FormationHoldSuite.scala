@@ -128,9 +128,10 @@ class FormationHoldSuite extends AnyFunSuite {
       targetHoldable    = true))
   }
 
-  test("advances only once every unit sits in its slot") {
+  test("advances once four fifths sit in their slots") {
     assert(FormationHold.shouldAdvanceInFormation(1.0))
-    assert( ! FormationHold.shouldAdvanceInFormation(0.99))
+    assert(FormationHold.shouldAdvanceInFormation(0.8))
+    assert( ! FormationHold.shouldAdvanceInFormation(0.79))
     assert( ! FormationHold.shouldAdvanceInFormation(0.0))
   }
 

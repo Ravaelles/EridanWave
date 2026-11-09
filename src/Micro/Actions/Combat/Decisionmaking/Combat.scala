@@ -6,7 +6,7 @@ import Mathematics.Maff
 import Mathematics.Physics.Force
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisionmaking.Techniques._
-import Micro.Actions.Combat.Maneuvering.Retreat
+import Micro.Actions.Combat.Maneuvering.{DodgeLurkers, DodgeStorm, Retreat}
 import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Actions.Protoss.BeReaver
 import Micro.Agency.Commander
@@ -123,6 +123,8 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     if (technique == Aim        && aim())         return
     if (technique == Dodge      && dodge())       return
     if (technique == Fallback   && potshot())     return
+    if (DodgeStorm(unit)) return
+    if (DodgeLurkers(unit)) return
     if (shouldRetreat           && Retreat(unit)) return
     if (shouldEngage            && Brawl(unit))   return
     if (technique == Abuse      && abuse())       return
