@@ -13,7 +13,11 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 object DodgeLurkers extends Action {
 
   override def allowed(unit: FriendlyUnitInfo): Boolean =
-    unit.canMove && ! unit.flying && ! unit.unitClass.isBuilding
+    ! unit.flying && unit.canMove && ! unit.unitClass.isBuilding && exposedToLurkers(unit)
+
+  /** Undetected Dark Templar hold position; the wounded never trust it (a hidden detector may cover them). */
+  private def exposedToLurkers(unit: FriendlyUnitInfo): Boolean =
+    ! unit.effectivelyCloaked || unit.totalHealth <= 60
 
   override def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.ready) {
@@ -21,6 +25,7 @@ object DodgeLurkers extends Action {
       val threat = (LurkerSafety.burrowingNear(unit, radius) ++ LurkerSafety.lurkersToAvoid(unit, radius))
         .sortBy(_.pixelDistanceSquared(unit.pixel))
         .headOption
+
       if (LurkerSafety.shouldAvoid(unit) && threat.isDefined) {
         unit.agent.decision.set(unit.pixel.project(threat.get.pixel, -2.5 * 32).clamp())
         unit.agent.act("DodgeLurker")

@@ -52,7 +52,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     .getOrElse(1.0)
   protected def idealDistanceForward  : Double  = target.map(unit.pixelDistanceEdge(_) - idealTargetDistance).getOrElse(0d)
   protected def confidentEnoughToChase: Boolean = unit.confidence11 > confidenceChaseThreshold
-  protected def shouldChase           : Boolean = (idealDistanceForward > 0 && confidentEnoughToChase && targetFleeing) || (target.exists(_.isAny(Terran.SiegeTankSieged, Protoss.Reaver) && ! With.fingerprints.bio()) && ! unit.flying && ! Protoss.Reaver(unit))
+  protected def shouldChase           : Boolean = (idealDistanceForward > 0 && confidentEnoughToChase && targetFleeing && ! abandonWorkerChase) || (target.exists(_.isAny(Terran.SiegeTankSieged, Protoss.Reaver) && ! With.fingerprints.bio()) && ! unit.flying && ! Protoss.Reaver(unit))
+
+  /** Workers are worth catching, not marathon-hunting: beyond this leash
+    * (tiles past our range) we break off and re-target static defense. */
+  protected val workerChaseLeashTiles: Double = 4.0
+  private def abandonWorkerChase: Boolean =
+    target.exists(t => t.unitClass.isWorker && unit.pixelsToGetInRange(t) > workerChaseLeashTiles * 32)
   protected def allThreatsAbusable    : Boolean = unit.matchups.threats.forall(t => canAbuse(t) || t.pixelsToGetInRange(unit) > 24 * 5)
   protected def nudged                : Boolean = unit.agent.receivedPushPriority() > TrafficPriorities.Nudge
   protected def nudgedTowards         : Boolean = nudged && Maff.isTowards(unit.pixel, unit.agent.destinationNext(), unit.agent.receivedPushForce().radians)

@@ -32,27 +32,43 @@ object SquadAutomation {
     targets.sortBy(t =>
         ?(t.visible,                                  0, 32 * 5)
       + ?(t.pixel == t.pixelObserved,                 0, 32 * 5)
-      + ?(t.unitClass.isWorker || squad.engagedUpon,  0, 32 * 5)
+      + ?(squad.engagedUpon,                          0, targetRank(t))
       + t.pixelDistanceCenter(squad.centroidKey)
       + t.pixelDistanceCenter(squad.vicinity))
   }
 
+  // Static defense shoots back, so it outranks workers; workers outrank
+  // the rest; everything ties while we are being attacked.
+  private def targetRank(target: UnitInfo): Int =
+    if (target.unitClass.isStaticDefense) 0
+    else if (target.unitClass.isWorker) 80
+    else 32 * 5
+
   def unrankedEnRouteTo(group: FriendlyUnitGroup, to: Pixel): Set[UnitInfo] = {
-    val combatEnemiesInRoute = group.battleEnemies.filter(e =>
-      ! Protoss.Interceptor(e)
-      && e.likelyStillThere
-      && group.canAttack(e)
-      && (
-        TargetFilterFocus.canTargetAsRoadblock(group, e)
-        || e.matchups.engagingOn
-        || e.unitClass.isStaticDefense
-        || Zerg.CreepColony(e)
-        || (group.canBeAttackedBy(e)
-          && ! e.unitClass.isBuilding
-          && group.meanAttackerSpeed > 1.2 * e.topSpeed)))
+    val combatEnemiesInRoute = group.battleEnemies.filter(e => targetableInRoute(group, e))
     val around = unrankedAround(group, to)
     combatEnemiesInRoute ++ around
   }
+
+  // An enemy is worth engaging en route when we can hit it and it either
+  // blocks us, already fights us, is siegeable defense, or cannot catch us.
+  private def targetableInRoute(group: FriendlyUnitGroup, enemy: UnitInfo): Boolean =
+    ! Protoss.Interceptor(enemy) &&
+    enemy.likelyStillThere &&
+    group.canAttack(enemy) &&
+    worthEngaging(group, enemy)
+
+  private def worthEngaging(group: FriendlyUnitGroup, enemy: UnitInfo): Boolean =
+    TargetFilterFocus.canTargetAsRoadblock(group, enemy) ||
+    enemy.matchups.engagingOn ||
+    enemy.unitClass.isStaticDefense ||
+    Zerg.CreepColony(enemy) ||
+    outrunnableThreat(group, enemy)
+
+  private def outrunnableThreat(group: FriendlyUnitGroup, enemy: UnitInfo): Boolean =
+    group.canBeAttackedBy(enemy) &&
+    ! enemy.unitClass.isBuilding &&
+    group.meanAttackerSpeed > 1.2 * enemy.topSpeed
 
   def unrankedAround(group: FriendlyUnitGroup, to: Pixel): Vector[UnitInfo] = {
     to.base.getOrElse(to.zone).enemies

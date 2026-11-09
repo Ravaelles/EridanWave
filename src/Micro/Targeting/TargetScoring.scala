@@ -174,13 +174,18 @@ object TargetScoring {
 
     val catchBonus = add(12.0, target.caught || target.caughtBy(attacker))
 
+    // Static defense aims back: clearing it outranks worker kills, almost on
+    // par with trading combat units. Decided here (not in rankForArmy, which
+    // only orders) so in-range Sunkens win ties against workers.
+    val staticDefenseBonus = add(12.0, target.unitClass.isStaticDefense)
+
     val threatCost = ?(Protoss.Carrier(attacker), target.tile, attacker.pixelToFireAtSimple(target).tile).enemiesAttacking(attacker).length match {
       case 0 => 0.0
       case 1 => 1.0
       case _ => 3.0
     }
 
-    (attackValue + combatValue + meleeSpreadBonus + catchBonus) * splashEfficacy - threatCost
+    (attackValue + combatValue + meleeSpreadBonus + catchBonus + staticDefenseBonus) * splashEfficacy - threatCost
   }
 
   /**
