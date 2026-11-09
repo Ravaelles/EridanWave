@@ -6,7 +6,7 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.Pixel
-import Micro.Actions.Combat.Decisionmaking.FormationApproach
+import Micro.Actions.Combat.Decisioning.FormationApproach
 import Performance.{Cache, WeakCache}
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.UnitInfo

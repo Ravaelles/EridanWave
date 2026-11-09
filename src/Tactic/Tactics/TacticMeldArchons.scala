@@ -7,6 +7,10 @@ import ProxyBwapi.Races.Protoss
 class TacticMeldArchons extends Tactic {
 
   def launch(): Unit = {
+    // Archon production temporarily disabled entirely: delete this return
+    // to re-enable melding (High Templars also arrive only at 150 supply).
+    return
+
     lock.release() // Ditch units that are already Archons
     val threshold = With.blackboard.maximumArchonEnergy()
     if (threshold > 0) {

@@ -1,6 +1,6 @@
 package Tuning.Strategies
 
-import Micro.Actions.Combat.Decisionmaking.KiteAway
+import Micro.Actions.Combat.Decisioning.KiteAway
 import Tuning.{TuneParam, TuningStrategy}
 
 /**

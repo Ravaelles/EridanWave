@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Decisionmaking
+package Micro.Actions.Combat.Decisioning
 
 /**
  * Flat snapshot of everything the fight-or-flee table looks at.

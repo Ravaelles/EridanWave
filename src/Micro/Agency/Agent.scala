@@ -5,7 +5,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Physics.{ForceMap, ForceMath}
 import Mathematics.Points.Pixel
-import Micro.Actions.Combat.Decisionmaking.Combat
+import Micro.Actions.Combat.Decisioning.Combat
 import Micro.Coordination.Pushing.{TrafficPriorities, TrafficPriority}
 import Performance.{Cache, KeyedCache}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}

@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Decisionmaking
+package Micro.Actions.Combat.Decisioning
 
 import FormationApproach._
 import org.scalatest.funsuite.AnyFunSuite

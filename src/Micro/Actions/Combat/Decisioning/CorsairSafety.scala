@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Decisionmaking
+package Micro.Actions.Combat.Decisioning
 
 import Mathematics.Maff
 import ProxyBwapi.Races.Protoss

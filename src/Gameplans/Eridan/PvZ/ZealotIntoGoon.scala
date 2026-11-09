@@ -2,6 +2,7 @@ package Gameplans.Eridan.PvZ
 
 import Lifecycle.With
 import Macro.Actions.{Compositor, MacroActions}
+import Macro.Facts.UnitArchive
 import ProxyBwapi.Races.{Protoss, Zerg}
 import Utilities.?
 import Utilities.UnitFilters.IsWarrior
@@ -67,10 +68,14 @@ object ZealotIntoGoon extends MacroActions {
       compositor.capGoal(Protoss.Shuttle, units(Protoss.Reaver) / 2)
     }
     if (have(Protoss.TemplarArchives)) {
-      compositor.setNeed(Protoss.HighTemplar, 2.0)
-      compositor.setGoal(Protoss.HighTemplar, 4)
-      pump(Protoss.HighTemplar)
-      pump(Protoss.DarkTemplar, 2)
+      // High Templars only at 150+ supply, and four Dark Templars before
+      // them (lifetime count), unless Mutalisks force faster Archons.
+      if (supplyUsed200 >= 150 && (UnitArchive.producedTotal(Protoss.DarkTemplar) >= 4 || enemies(Zerg.Mutalisk) >= 5)) {
+        compositor.setNeed(Protoss.HighTemplar, 2.0)
+        compositor.setGoal(Protoss.HighTemplar, 4)
+        pump(Protoss.HighTemplar)
+      }
+      pump(Protoss.DarkTemplar, 4)
     }
     val airThreat = enemies(Zerg.Mutalisk, Zerg.Scourge)
     if (have(Protoss.Stargate) && airThreat > 0) {

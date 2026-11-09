@@ -1,7 +1,7 @@
 package Micro.Actions.Combat
 
 import Micro.Actions.Action
-import Micro.Actions.Combat.Decisionmaking.{Cast, Follow, Root}
+import Micro.Actions.Combat.Decisioning.{Cast, Follow, Root}
 import Micro.Actions.Combat.Maneuvering.Stealth
 import Micro.Actions.Combat.Spells.Stim
 import Micro.Actions.Combat.Tactics._

@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Decisionmaking
+package Micro.Actions.Combat.Decisioning
 
 /**
  * When to hold the engagement formation instead of breaking it to chase.

@@ -2,6 +2,7 @@ package Gameplans.Protoss.PvZ
 
 import Lifecycle.With
 import Macro.Actions.Compositor
+import Macro.Facts.UnitArchive
 import Performance.Cache
 import Placement.Access.PlaceLabels
 import ProxyBwapi.Buildable
@@ -249,7 +250,12 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
         if (have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)) {
           get(Protoss.DarkTemplar)
         }
-        get(2, Protoss.HighTemplar)
+        // Four Dark Templars before High Templars (lifetime count), and High
+        // Templars only at 150+ supply, unless Mutalisks force faster Archons
+        // (mirror of ZealotIntoGoon).
+        if (supplyUsed200 >= 150 && (UnitArchive.producedTotal(Protoss.DarkTemplar) >= 4 || enemies(Zerg.Mutalisk) >= 5)) {
+          get(2, Protoss.HighTemplar)
+        }
       case Reaver =>
         cancelAlternative(Protoss.Stargate, Protoss.CitadelOfAdun, Protoss.Forge)
         cancelRangeUnlessGoons()
@@ -342,7 +348,7 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
       compositor.capGoal(Protoss.Shuttle,  units(Protoss.Reaver) / 2)
     }
 
-    if (have(Protoss.TemplarArchives)) {
+    if (have(Protoss.TemplarArchives) && supplyUsed200 >= 150) {
       compositor.setNeed(Protoss.HighTemplar, weighArchons)
       compositor.setGoal(Protoss.HighTemplar, 4)
     }
@@ -354,7 +360,9 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
 
     compositor.produceAndPump()
 
-    pump(Protoss.HighTemplar)
+    if (supplyUsed200 >= 150) {
+      pump(Protoss.HighTemplar)
+    }
     if ( ! enemyHydralisksLikely) {
       pump(Protoss.Scout)
     }

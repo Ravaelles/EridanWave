@@ -11,7 +11,7 @@ package Micro {
   import Lifecycle.With
   import Lifecycle.Configure.Configuration
   import Mathematics.Points.Pixel
-  import Micro.Actions.Combat.Decisionmaking.Combat
+  import Micro.Actions.Combat.Decisioning.Combat
   import Micro.Agency.AttackDelay
   import Performance.{Cache, KeyedCache, Latency, ReactionTimes}
   import ProxyBwapi.Players.PlayerInfo

@@ -2,13 +2,14 @@ package Tactic.Missions
 
 import Information.Geography.Types.Base
 import Lifecycle.With
+import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.{Pixel, Points, Tile}
 import Mathematics.Shapes.{Circle, Ray}
 import Micro.Actions.{Action, Idle}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Planning.ResourceLocks.LockUnits
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import Utilities.Time.Seconds
 import Utilities.UnitCounters.{CountOne, CountUpTo}
 import Utilities.UnitFilters._
@@ -261,7 +262,7 @@ class MissionReaverDrop extends MissionDrop {
   override protected def additionalItineraryConditions(base: Base): Boolean = base.isEnemy || isScoutingTarget(base)
 
   override protected def additionalFormationConditions: Boolean =
-    With.blackboard.reaverDrop() && reaverManifest.nonEmpty
+    With.blackboard.reaverDrop() && ! shuttleMustJoinArmy && reaverManifest.nonEmpty
 
   override protected def populateItinerary(): Unit = {
     itinerary.clear()
@@ -293,8 +294,9 @@ class MissionReaverDrop extends MissionDrop {
     val stalled = combatStalled
     val unableToLand = state == Landing && raidingTransports.isEmpty && approachStalled
     val defended = transports.exists(rejectApproach)
-    if (doomed || stalled || unableToLand || defended) {
-      With.logger.debug(s"$this recovering crew: doomed=$doomed combatStalled=$stalled landingTimedOut=$unableToLand defended=$defended")
+    val forcedToArmy = shuttleMustJoinArmy
+    if (doomed || stalled || unableToLand || defended || forcedToArmy) {
+      With.logger.debug(s"$this recovering crew: doomed=$doomed combatStalled=$stalled landingTimedOut=$unableToLand defended=$defended forcedToArmy=$forcedToArmy")
       true
     } else false
   }
@@ -305,6 +307,14 @@ class MissionReaverDrop extends MissionDrop {
   val reaverLock  : LockUnits = new LockUnits(this, u => Protoss.Reaver(u) && recruitablePassenger(u))
   val smallLock   : LockUnits = new LockUnits(this, u => u.isAny(Protoss.Zealot, Protoss.DarkTemplar) && recruitablePassenger(u)).setCounter(CountUpTo(2))
   val bigLock     : LockUnits = new LockUnits(this, u => u.isAny(Protoss.Archon, Protoss.Dragoon)     && recruitablePassenger(u)).setCounter(CountOne)
+
+  // A lone Shuttle-Reaver cluster operates on its own until enemy air forces
+  // it into the main army (mission stands down and releases the crew).
+  private def shuttleMustJoinArmy: Boolean = ReaverDropAirSafety.mustJoinArmy(
+    MacroFacts.enemies(Zerg.Scourge),
+    MacroFacts.enemies(Zerg.Mutalisk),
+    MacroFacts.enemies(Terran.Wraith),
+    MacroFacts.enemies(Protoss.Corsair))
 
   override protected def recruit(): Unit = {
     populateItinerary()

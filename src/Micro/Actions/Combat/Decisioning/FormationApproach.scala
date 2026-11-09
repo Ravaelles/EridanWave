@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Decisionmaking
+package Micro.Actions.Combat.Decisioning
 
 /**
  * FormationApproachEnemy: governor for closing the distance as a dressed line
