@@ -466,7 +466,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
         kite = true
       }
       if (kite) {
-        unit.agent.forces(Forces.threat)      = Potential.hardAvoidThreatRange(unit)
+        unit.agent.forces(Forces.threat)      = Potential.hardAvoidThreatRange(unit, CorsairSafety.avoidanceMarginPixels(unit))
         unit.agent.forces(Forces.regrouping)  = Potential.regroup(unit)
         MicroPathing.moveForcefully(unit)
       } else if (chase) {
@@ -494,14 +494,16 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
       breakFormationToAttack ||= ! unit.formationEngage.exists(_.flanking) && target.exists(unit.pixelsToGetInRange(_) < Math.max(0, 128 * unit.confidence11))
       breakFormationToAttack ||= With.yolo.active
 
-      // Hold the line while a ranged target is well beyond our firing range
-      // (tiles = pixels / 32, as in Atlantis): keep formation slots and let
-      // the enemy come to us instead of chasing piecemeal. Inside ~1 tile of
-      // the range the fight starts - the unit steps in and shoots. The hold
-      // also releases once the fight is on: a cluster mate engaging, or an
-      // enemy in range whose weapon is cooling down (it opened fire). Melee
-      // must still close, flankers must still circle, and an explicit yolo
-      // overrules.
+      // Hold the line while a ranged armed combat target is well beyond our
+      // firing range (tiles = pixels / 32, as in Atlantis): keep formation
+      // slots and let the enemy come to us instead of chasing piecemeal.
+      // Buildings - even shooting ones - and unarmed units are always
+      // attacked normally: there is no line to hold against them.
+      // Inside ~1 tile of the range the fight starts - the unit steps in and
+      // shoots. The hold also releases once the fight is on: a cluster mate
+      // engaging, or an enemy in range whose weapon is cooling down (it opened
+      // fire). Melee must still close, flankers must still circle, and an
+      // explicit yolo overrules.
       if ( ! With.yolo.active && target.exists(t =>
         FormationHold.shouldHoldLine(
           tilesBeyondRange  = unit.pixelsToGetInRange(t) / 32.0,
@@ -509,7 +511,8 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
           hasFormation      = unit.formationEngage.isDefined,
           flanking          = unit.formationEngage.exists(_.flanking),
           allyEngaged       = squadEngagingOn,
-          enemyFired        = unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)))) {
+          enemyFired        = unit.matchups.threatsInRange.exists(_.cooldownLeft > 0),
+          targetHoldable    = t.unitClass.isWarrior && t.unitClass.canAttack && ! t.unitClass.isBuilding))) {
         breakFormationToAttack = false
       }
 

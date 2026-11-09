@@ -39,6 +39,9 @@ object FormationHold {
    * is cooling down (it opened fire). Melee must still close (it cannot fight
    * from a slot), flankers must still circle, and without a formation there
    * is nothing to hold.
+   * The hold applies only to armed enemy combat units (targetHoldable):
+   * buildings - even shooting ones like Sunkens - and unarmed units are
+   * always attacked normally instead of being posed against.
    */
   def shouldHoldLine(
     tilesBeyondRange  : Double,
@@ -46,8 +49,9 @@ object FormationHold {
     hasFormation      : Boolean,
     flanking          : Boolean,
     allyEngaged       : Boolean,
-    enemyFired        : Boolean): Boolean = {
-    hasFormation && ! melee && ! flanking && ! allyEngaged && ! enemyFired && tilesBeyondRange > holdReleaseTiles
+    enemyFired        : Boolean,
+    targetHoldable    : Boolean = true): Boolean = {
+    hasFormation && ! melee && ! flanking && ! allyEngaged && ! enemyFired && targetHoldable && tilesBeyondRange > holdReleaseTiles
   }
 
   /** Step the line forward only once every unit sits in its slot. */

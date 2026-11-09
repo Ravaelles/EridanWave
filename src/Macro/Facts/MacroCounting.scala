@@ -176,6 +176,13 @@ trait MacroCounting {
   def confidenceSlugging01    : Double = With.battles.globalSlug    .judgement.map(_.confidence01Total).getOrElse(0.0)
   def confidenceSkirmishing01 : Double = With.battles.globalSkirmish.judgement.map(_.confidence01Total).getOrElse(0.0)
 
+  /** Atlantis-style army strength: 100 = even, 110 = 10% stronger. No scouted enemy counts as even. */
+  def armyStrength: Double = {
+    val ours = With.battles.globalAttack.us.skimStrengthTotal
+    val foe  = With.battles.globalAttack.enemy.skimStrengthTotal
+    if (foe <= 0.0) 100.0 else 100.0 * ours / foe
+  }
+
   def attacking: Boolean = {
     With.tactics.attackSquad.units.nonEmpty
   }

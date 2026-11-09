@@ -106,6 +106,28 @@ class FormationHoldSuite extends AnyFunSuite {
       enemyFired        = true))
   }
 
+  test("breaks formation to attack buildings normally") {
+    assert( ! FormationHold.shouldHoldLine(
+      tilesBeyondRange  = 3.0,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false,
+      targetHoldable    = false))
+  }
+
+  test("holds against armed combat units outside the release band") {
+    assert(FormationHold.shouldHoldLine(
+      tilesBeyondRange  = 3.0,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false,
+      allyEngaged       = false,
+      enemyFired        = false,
+      targetHoldable    = true))
+  }
+
   test("advances only once every unit sits in its slot") {
     assert(FormationHold.shouldAdvanceInFormation(1.0))
     assert( ! FormationHold.shouldAdvanceInFormation(0.99))

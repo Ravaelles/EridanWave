@@ -22,6 +22,7 @@ object PvZ1GateCoreExpand extends PvZStrategy {
 object PvZ1BaseReactive extends PvZStrategy {
   addChoice(PvZGoon,    PvZReaver,  PvZSpeedlot)
   addChoice(PvZMuscle,  PvZExpand,  PvZTech)
+  addChoice(PvZ1BaseZealotIntoGoon)
   banPersonality(PersonalityCheese)
 }
 object PvZMuscle extends PvZStrategy {
@@ -43,6 +44,7 @@ object PvZReaver extends PvZStrategy {
 object PvZSpeedlot extends PvZStrategy {
   addActivationRequirement(() => have(Protoss.Forge))
 }
+object PvZ1BaseZealotIntoGoon extends PvZStrategy
 abstract class PvZFEOpening extends PvZStrategy {
   setRushTilesMinimum(160)
   addSelectionRequirement(() => With.placement.wall.exists(_.buildings.count(_._2 == Protoss.PhotonCannon) >= 6))

@@ -5,6 +5,7 @@ import Lifecycle.With
 import Mathematics.Points.Pixel
 import Mathematics.{Maff, Shapes}
 import Micro.Actions.Action
+import Micro.Actions.Combat.Decisionmaking.KiteAway
 import Micro.Actions.Protoss.Shuttle.Shuttling
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
@@ -79,6 +80,24 @@ object Retreat extends Action {
     val leadPassenger = unit.agent.ride.flatMap(_.agent.passengersPrioritized.headOption)
     if (leadPassenger.isDefined && ! leadPassenger.contains(unit)) {
       return RetreatPlan(unit, leadPassenger.get.pixel.add(forceVector.normalize(32).toPoint.asPixel.walkablePixel), "Shotgun")
+    }
+
+    // Corsairs outrun ground fire locally instead of running home: scatter
+    // away from the deepest threat by 10 tiles, randomized by +-4 (per-frame
+    // re-rolls stay smooth: the point stays many frames of travel away along
+    // the threat ray). Near-death Corsairs keep the safety waypoints below,
+    // and so does any retreat with air threats: Mutalisks and Scourge run
+    // a scattering Corsair down anywhere, so those always run for base.
+    if (Protoss.Corsair(unit)
+      && ! KiteAway.isCriticallyWounded(unit.totalHealth)
+      && unit.matchups.threats.nonEmpty
+      && unit.matchups.threats.forall(! _.flying)) {
+      val distancePixels = (10.0 + 8.0 * scala.util.Random.nextDouble() - 4.0) * 32.0
+      val away = unit.matchups.threatDeepest
+        .map(threat => unit.pixel.project(threat.pixel, -distancePixels).clamp())
+        .getOrElse(unit.agent.safety)
+
+      return RetreatPlan(unit, away, "Scatter")
     }
 
     lazy val waypointSimple   = MicroPathing.getWaypointInDirection(unit, force, ?(goalOrigin, Some(unit.agent.safety), None), requireSafety = goalSafety && safetyIsSafe).map((_, "Simple"))

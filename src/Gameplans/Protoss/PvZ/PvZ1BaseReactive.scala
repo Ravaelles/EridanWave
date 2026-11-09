@@ -1,5 +1,6 @@
 package Gameplans.Protoss.PvZ
 
+import Gameplans.Eridan.PvZ.ZealotIntoGoon
 import Lifecycle.With
 import Macro.Actions.Compositor
 import Performance.Cache
@@ -23,6 +24,13 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
   protected var composition   : Seq[Composition]  = Seq.empty
 
   protected def chooseOpening(): Unit = {
+    // Zealot-into-Goon always opens Gates1012: two Gates into Core-first
+    // pressure, with the 4-pool/speedling reactions below still active.
+    if (PvZ1BaseZealotIntoGoon()) {
+      opening = Gates1012
+
+      return
+    }
     if (frame > GameTime(3, 30)())      return
     if (units(Protoss.Gateway)    > 1)  return
     if (units(Protoss.Nexus)      > 1)  return
@@ -301,6 +309,14 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
   }
 
   def buildArmy(): Unit = {
+    // Zealot-into-Goon mix, selected by default in every 1BaseReactive
+    // branch (see PvZ1BaseReactive.addChoice). Replaces the legacy unit
+    // mix below while active.
+    if (PvZ1BaseZealotIntoGoon()) {
+      ZealotIntoGoon.produce()
+
+      return
+    }
     val countZerglings  =   Math.max(enemies(Zerg.Zergling),  ?(enemyHydralisksLikely, 0, Math.max(8, 4 + enemies(Zerg.Zergling))))
     val countHydralisks =   Math.max(enemies(Zerg.Hydralisk), ?(enemyHydralisksLikely, 4, 0))
     val countMutalisks  =   Math.max(enemies(Zerg.Mutalisk),  ?(enemyMutalisksLikely && ! enemyHydralisksLikely,  8, 0))

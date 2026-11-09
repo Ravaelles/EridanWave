@@ -37,6 +37,7 @@ object JudgmentModifiers {
     //add("TankLock",     Colors.MediumRed,     tankLock(battle))
     add("Caught",       Colors.BrightGreen,   caught(battle))
     add("Hysteresis",   Colors.MediumViolet,  hysteresis(battle))
+    add("StaticDefense", Colors.DeepOrange,   staticDefense(battle))
     output
   }
 
@@ -154,6 +155,16 @@ object JudgmentModifiers {
   //
   def hysteresis(battle: Battle): Option[JudgmentModifier] = {
     modifyTarget(Maff.weightedMean(battle.us.warriorsCasters.flatMap(_.friendly.map(hysteresis))))
+  }
+
+  // Static defense (Photon Cannons, Sunken Colonies, Missile Turrets) must be
+  // sieged, not traded against: count the enemy up to 20% stronger, scaled by
+  // the defense's share of enemy value, so local fights engage only when
+  // sure of winning them.
+  def staticDefense(battle: Battle): Option[JudgmentModifier] = {
+    val defenseShare = valueRatio(battle.enemy.units, _.unitClass.isStaticDefense)
+    if (defenseShare <= 0) return None
+    modifyTarget(0.2 * defenseShare)
   }
   private case class Motivation(var amount: Double = 0, var weight: Double = 0)
   def hysteresis(unit: FriendlyUnitInfo): (Double, Double) = {

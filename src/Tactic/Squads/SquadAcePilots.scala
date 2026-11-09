@@ -36,6 +36,18 @@ class SquadAcePilots extends Squad {
     if (activity != lastActivity) {
       With.logger.debug(f"Pilots switch from $lastActivity to $activity")
     }
+    holdFreshAttackers()
+  }
+
+  /**
+   * Fresh shields while attacking: hold position instead of fleeing ground
+   * fire (FightOrFlee CantFlee forces the fight). Past 16 shield damage the
+   * normal flee logic resumes next frame - canFlee is set both ways here,
+   * so no stale intent survives.
+   */
+  private def holdFreshAttackers(): Unit = {
+    val attacking = targets.exists(_.nonEmpty)
+    units.foreach(u => u.intend(this).setCanFlee( ! (attacking && u.unitClass.maxShields - u.shieldPoints <= 16)))
   }
 
   private def chooseActivity(): Unit = {
@@ -115,9 +127,12 @@ class SquadAcePilots extends Squad {
       }
     }
 
-    // Monitor their bases
+    // Monitor their bases. Only the three nearest are considered: a Corsair
+    // crossing the whole map wastes flight time better spent scouting nearby.
     // Don't look to target anything; just get scouting information first
     val unscoutedEnemy = getStaleBase(With.geography.enemyBases, 120)
+      .sortBy(_.townHallArea.center.pixelDistanceSquared(centroidAir))
+      .take(3)
     if (unscoutedEnemy.nonEmpty) {
       activity  = "AceMonitor"
       val base  = unscoutedEnemy.minBy(_.enemies.count(_.canAttackAir))
@@ -136,15 +151,23 @@ class SquadAcePilots extends Squad {
       return
     }
 
-    // Explore, and snipe
+    // Explore, and snipe. Prefer bases without static anti-air: a Corsair
+    // circling a Spore Colony is a dead Corsair, so those bases are only
+    // visited when nothing else is stale. Among the candidates keep preferring
+    // the least-defended ones, then scout the next stale base instead.
     val staleBases = Maff.orElse(
       getStaleBase(With.geography.enemyBases,   30),
       getStaleBase(With.geography.neutralBases, 30),
       getStaleBase(With.geography.enemyBases,   10)).toVector
-    if (staleBases.nonEmpty) {
+    val basesWithoutStaticAA = staleBases.filterNot(b =>
+      b.enemies.exists(e => e.unitClass.isStaticDefense && e.canAttackAir))
+    val exploreBases = if (basesWithoutStaticAA.nonEmpty) basesWithoutStaticAA else staleBases
+    if (exploreBases.nonEmpty) {
       activity = "AceExplore"
-      val base = staleBases
+      // Closest three only: no map-wide commuting, then least-defended first.
+      val base = exploreBases
         .sortBy(_.townHallArea.center.pixelDistanceSquared(centroidAir))
+        .take(3)
         .minBy(_.enemies.count(_.canAttackAir))
       vicinity = base.townHallArea.center
       SquadAutomation.targetAndSend(this)
