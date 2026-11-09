@@ -27,4 +27,11 @@
   <rule name="IfWithReturnFollowedByBlank" type="structural">
     <property name="message" value="If block with return must be followed by a blank line."/>
   </rule>
+  <rule name="CaseClassSeparatedByBlank">
+    <property name="format" value="^[ \t]*\}[ \t]*\n[ \t]*case[ \t]+(?:class|object)\b"/>
+    <property name="message" value="Case class definitions must be separated by a blank line."/>
+  </rule>
+  <rule name="CaseClassPrecededByBlank" type="structural">
+    <property name="message" value="Case class definitions must be preceded by a blank line."/>
+  </rule>
 </blank-lines>

@@ -90,6 +90,7 @@ object WallGaps {
     def touches(b: Box): Boolean = left <= b.right && b.left <= right && top <= b.bottom && b.top <= bottom
     def contains(p: Pixel): Boolean = p.x >= left && p.x < right && p.y >= top && p.y < bottom
   }
+
   case class Body(left: Int, up: Int, right: Int, down: Int) {
     def at(p: Pixel): Box = Box(p.x - left, p.y - up, p.x + right, p.y + down)
     // Integer centers at which this body would collide with the obstacle.
@@ -97,7 +98,9 @@ object WallGaps {
     def extent(x: Double, y: Double): Double = Math.abs(x) * (if (x < 0) left else right) + Math.abs(y) * (if (y < 0) up else down)
   }
   private def body(kind: UnitClass): Body = Body(kind.dimensionLeft, kind.dimensionUp, kind.dimensionRightExclusive, kind.dimensionDownExclusive)
+
   case class Defender(id: Int, body: Body, probe: Boolean, pixel: Pixel)
+
   case class Gap(first: Box, second: Box, a: Pixel, b: Pixel, nx: Double, ny: Double, outer: Double, inner: Double, doorway: Boolean) {
     val center: Pixel = a.midpoint(b)
     private val length = Math.hypot(b.x - a.x, b.y - a.y)
@@ -348,6 +351,7 @@ object WallGaps {
     }
     private val navigation = new HashMap[Body, Navigation]
     private def navigationFor(body: Body): Navigation = navigation.getOrElseUpdate(body, new Navigation(body))
+
     private case class Slot(pixel: Pixel, box: Box, blocked: Box, exposure: Int, depth: Double, across: Double, front: Boolean)
     private val slots = new HashMap[(Gap, Body), Vector[Slot]]
     private def candidates(g: Gap, body: Body): Vector[Slot] = slots.getOrElseUpdate((g, body), {
@@ -635,4 +639,6 @@ object WallGaps {
     }
   }
 }
+
+
 

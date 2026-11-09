@@ -427,6 +427,7 @@ object CombatVisIO {
           .append(if (m.friendly) '1' else '0').append('|')
           .append(Math.max(0, m.typeId)).append('\n')
       }
+
       case class St(var x: Int, var y: Int, var alive: Boolean, var hp: Int, var sh: Int, var tgt: Int, var cd: Int)
       val last = new java.util.HashMap[Int, St]()
       var fl = 0
@@ -543,4 +544,5 @@ object CombatVisIO {
     } catch { case exception: Exception => With.logger.quietlyOnException(exception) } finally { launched = false }
   }
 }
+
 

@@ -10,8 +10,11 @@ import Utilities.Time.FrameCount
 class FingerprintGasCompleteBy(frameCount: FrameCount) extends Fingerprint {
 
   trait Proof
+
   case class PumpProof(child: Fingerprint) extends Proof
+
   case class UnitProof(unit: UnitInfo) extends Proof
+
   case class UpgradeProof(upgrade: Upgrade) extends Proof
   object NoProof extends Proof with SimpleString
 
@@ -49,4 +52,5 @@ class FingerprintGasCompleteBy(frameCount: FrameCount) extends Fingerprint {
     NoProof
   }
 }
+
 

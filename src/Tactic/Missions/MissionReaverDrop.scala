@@ -22,6 +22,7 @@ class MissionReaverDrop extends MissionDrop {
   private var reversed = false
   private var lastUnloadFrame = -1
   private val knownEnemyTargets = mutable.Set.empty[Base]
+
   private case class RaidProgress(var frame: Int, var distance: Double, var landed: Set[Int], var shot: Int)
   private val combatProgress = mutable.Map.empty[FriendlyUnitInfo, RaidProgress]
   override def reset(): Unit = {
@@ -371,4 +372,5 @@ private[Missions] object MissionReaverDrop {
     candidates.toVector
   }
 }
+
 

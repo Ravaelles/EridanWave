@@ -51,7 +51,9 @@ object EridanSimViz {
   }
 
   case class UnitMeta(id: Int, friendly: Boolean, width: Int, height: Int, unitType: String, fly: Boolean = false)
+
   case class UnitFrame(id: Int, friendly: Boolean, x: Int, y: Int, alive: Boolean, width: Int, height: Int, hp: Int = -1, sh: Int = -1, hpMax: Int = -1, shMax: Int = -1, tgt: Option[Int] = None, fly: Boolean = false, cd: Int = -1)
+
   case class FrameData(f: Int, units: Vector[UnitFrame], attacks: Vector[(Int, Int)] = Vector.empty, deaths: Vector[Int] = Vector.empty)
 
   final class MapData(val tileW: Int, val tileH: Int, val walkW: Int, val walkH: Int,
@@ -1602,4 +1604,5 @@ object EridanSimViz {
     }})
   }
 }
+
 

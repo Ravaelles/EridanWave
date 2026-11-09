@@ -19,7 +19,9 @@ object FormationApproach {
 
   /** How the even line closes: fast and decisive vs Terran, cautious vs Zerg/Protoss. */
   sealed trait ApproachPosture
+
   case object Cautious extends ApproachPosture
+
   case object Decisive extends ApproachPosture
 
   /** Line shape: mean/stddev of member distances beyond their own firing range, in tiles. */
@@ -39,11 +41,17 @@ object FormationApproach {
   val evenLineStddevTiles: Double = 0.5
 
   sealed trait ApproachOrder
+
   case object FreeMarch extends ApproachOrder
+
   case object HoldLine extends ApproachOrder
+
   case object StepBack extends ApproachOrder
+
   case object StepForward extends ApproachOrder
+
   case object CloseCautious extends ApproachOrder
+
   case object BreakThrough extends ApproachOrder
 
   def lineStats(beyondTiles: Iterable[Double]): Option[LineStats] = {
@@ -73,3 +81,4 @@ object FormationApproach {
     }
   }
 }
+

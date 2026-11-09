@@ -252,6 +252,7 @@ object With {
     } catch { case exception: Exception =>
       With.logger.quietlyOnException(exception)
       With.logger.debug("Retrying terrain analysis with assertions disabled.")
+
       // A failed retry must not abort the start: play without analyzed
       // terrain instead of dying on frame zero. Only a one-liner is logged;
       // the first attempt's stack stays in the log buffer for forensics.

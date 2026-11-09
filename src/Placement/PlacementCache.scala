@@ -63,12 +63,17 @@ object PlacementCache {
   }
 
   private case class RequirementData(width: Int, height: Int, flags: Int, buildings: Vector[Int], labels: Vector[Int])
+
   private case class CannonData(base: Tile, cannon: Tile, pylons: Vector[Tile], fitIndex: Int)
+
   private case class PlacementData(fits: Vector[Fit], forwardProxyNaturals: Vector[Tile], cannonRushes: Vector[CannonData], wall: Option[Wall])
 
   private sealed trait ReadResult
+
   private case class Hit(data: PlacementData) extends ReadResult
+
   private case object Stale extends ReadResult
+
   private case class Invalid(reason: String) extends ReadResult
 
   private class CachedRequirement(data: RequirementData, unitClasses: Vector[UnitClass])
@@ -467,5 +472,6 @@ object PlacementCache {
     value
   }
 }
+
 
 

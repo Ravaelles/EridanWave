@@ -45,11 +45,60 @@ def check_file(path, rules):
         if pattern is None:
             if name == "IfWithReturnFollowedByBlank":
                 hits.extend(structural_if_hits(text))
+            elif name == "CaseClassPrecededByBlank":
+                hits.extend(structural_case_hits(text))
             continue
         for match in pattern.finditer(text):
             line = text.count("\n", 0, match.start()) + 1
             hits.append((line, name, message))
     return sorted(hits)
+
+
+CASE_DEF_RE = re.compile(r"^[ \t]*(?:(?:sealed|final|private|protected|implicit|abstract|override)(?:\[[^\]]*\])?[ \t]+)*case[ \t]+(?:class|object)\b")
+
+
+def has_code_word(text, spans, lineno, word):
+    for start, end in spans.get(lineno, []):
+        if re.search(r"\b" + word + r"\b", text[start:end]):
+            return True
+    return False
+
+
+def structural_case_hits(text):
+    """A `case class/object` definition must be preceded by a blank line,
+    unless it opens the block (previous line ends with `{`), follows a
+    closing brace (covered by CaseClassSeparatedByBlank), a comment or an
+    annotation. Covers def/val -> case and glued one-liner case classes,
+    which the brace rule cannot see."""
+    body = text.replace("\r\n", "\n")
+    rows = body.split("\n")
+    try:
+        spans = code_spans(body)
+    except Exception:
+        return []
+    hits = []
+    for lineno, row in enumerate(rows, start=1):
+        if lineno <= 1:
+            continue
+        stripped = row.strip()
+        if not CASE_DEF_RE.match(row):
+            continue
+        if stripped.startswith(("//", "/*", "*")):
+            continue
+        if not has_code_word(body, spans, lineno, "case"):
+            continue
+        prev = rows[lineno - 2].strip()
+        if prev == "":
+            continue
+        if prev.endswith("{"):
+            continue
+        if prev == "}":
+            continue
+        if prev.startswith(("//", "/*", "*", "@")):
+            continue
+        hits.append((lineno, "CaseClassPrecededByBlank",
+                     "Case class definitions must be preceded by a blank line."))
+    return hits
 
 
 def structural_if_hits(text):
@@ -268,6 +317,8 @@ def apply_fixes(files, rules):
             if pattern is None:
                 if _name == "IfWithReturnFollowedByBlank":
                     hits.extend(structural_if_hits(text))
+                elif _name == "CaseClassPrecededByBlank":
+                    hits.extend(structural_case_hits(text))
                 continue
             for match in pattern.finditer(body):
                 hits.append((body.count("\n", 0, match.start()) + 1, _name))
@@ -275,11 +326,11 @@ def apply_fixes(files, rules):
         for hit in hits:
             lineno, name = hit[0], hit[1]
             if name in ("ReturnFollowedByBlank", "ReturnFollowedByBlankGuard",
-                        "IfWithReturnFollowedByBlank"):
+                        "IfWithReturnFollowedByBlank", "CaseClassSeparatedByBlank"):
                 # IfWithReturnFollowedByBlank hits are brace-verified by the
                 # structural scan itself; the return rules need a real
                 # `return` keyword outside strings/comments.
-                if name != "IfWithReturnFollowedByBlank" and not has_real_return(body, spans, lineno):
+                if name in ("ReturnFollowedByBlank", "ReturnFollowedByBlankGuard") and not has_real_return(body, spans, lineno):
                     print("  [apply] SKIP %s:%d: no real return outside strings/comments" % (path, lineno))
                     skipped += 1
                     continue
@@ -312,6 +363,11 @@ def apply_fixes(files, rules):
                     skipped += 1
                     continue
                 inserts.add(lineno)
+            elif name == "CaseClassPrecededByBlank":
+                # Reported on the case line itself; insert before it. A case
+                # definition can never continue the previous line, so no
+                # continuation guard is needed here.
+                inserts.add(lineno - 1)
         changed = 0
         for idx in sorted(inserts, reverse=True):
             rows.insert(idx, "")

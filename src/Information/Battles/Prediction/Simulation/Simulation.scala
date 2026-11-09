@@ -24,6 +24,7 @@ final class Simulation(val collisionEnabled: Boolean = true) {
   // Frames log for visualizer (only when SimViz is enabled)
   private lazy val framesLog: ArrayBuffer[String]  = new ArrayBuffer(4096)
   private var simulationStartGameFrame: Int = 0
+
   private case class PendingDamage(frame: Int, target: Simulacrum, volley: DamageVolley,
     sourceIsFriendly: Boolean, source: UnitInfo, origin: Pixel)
   private var pendingDamage = Vector.empty[PendingDamage]
@@ -245,4 +246,5 @@ final class Simulation(val collisionEnabled: Boolean = true) {
     wakeup.notifyAll()
   }
 }
+
 

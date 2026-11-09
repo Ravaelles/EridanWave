@@ -37,9 +37,12 @@ trait MatchingRatio { def quantity: Double }
 case class Flat(value: Double) extends MatchingRatio {
   def quantity: Double = value
 }
+
 case class Enemy(enemyMatcher: UnitFilter, ratio: Double) extends MatchingRatio {
   def quantity: Double = With.units.countEnemy(enemyMatcher) * ratio
 }
+
 case class Friendly(unitMatcher: UnitFilter, ratio: Double) extends MatchingRatio {
   def quantity: Double = With.units.countOurs(unitMatcher) * ratio
 }
+

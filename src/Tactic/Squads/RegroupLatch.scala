@@ -15,7 +15,9 @@ package Tactic.Squads
 object RegroupLatch {
 
   sealed trait Stance
+
   case object Engaged    extends Stance
+
   case object Regrouping extends Stance
 
   /** Regroup once fewer than this fraction of sim-judged units wants to fight. */
@@ -36,4 +38,5 @@ object RegroupLatch {
     }
   }
 }
+
 
