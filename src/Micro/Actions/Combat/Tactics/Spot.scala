@@ -73,20 +73,28 @@ object Spot extends Action {
     Commander.move(unit)
   }
 
+  // An eye keeps this margin inside its detection range when sent to reveal:
+  // at OBSERVER_DETECTION_RANGE minus standoff it still sees the enemy
+  // without standing in admitted fire.
+  val detectionStandoffTiles: Double = 0.6
+
   private[Micro] def shouldRetreatFrom(unit: FriendlyUnitInfo, threat: UnitInfo): Boolean = {
+    // Wounded eyes keep a wider berth: +4 tiles per wound fraction on top of
+    // the base margins (an Observer has almost no hit points to trade).
+    val woundBonus = ?(unit.unitClass.isDetector, 4 * 32 * unit.woundPercent(), 0.0)
     // Only detection justifies closing inside the normal safety buffer.
     if (unit.unitClass.isDetector && threat.cloakedOrBurrowed) {
-      unit.pixelDistanceCenter(threat) < Math.min(unit.detectionRangePixels - 32, threat.pixelRangeAgainst(unit) + 96)
+      unit.pixelDistanceCenter(threat) < Math.min(unit.detectionRangePixels - 32, threat.pixelRangeAgainst(unit) + 96) + woundBonus
     } else {
-      unit.pixelDistanceEdge(threat) < threat.pixelRangeAgainst(unit) + 96
+      unit.pixelDistanceEdge(threat) < threat.pixelRangeAgainst(unit) + 96 + woundBonus
     }
   }
 
   private[Micro] def spottingPosition(unit: FriendlyUnitInfo, spooky: Option[UnitInfo], goals: Seq[Pixel]): Pixel = {
     val preferred = MicroPathing.pullTowards(unit.sightPixels, goals: _*)
     // Keep current detection even when prediction or secondary goals pull us away.
-    // Leave 16px between the desired coverage boundary and the capped retreat trigger.
-    spooky.filter(_.cloakedOrBurrowed).map(t => t.pixel.projectUpTo(preferred, Math.max(0, unit.detectionRangePixels - 16))).getOrElse(preferred)
+    // Leave the standoff margin between the desired coverage boundary and the capped retreat trigger.
+    spooky.filter(_.cloakedOrBurrowed).map(t => t.pixel.projectUpTo(preferred, Math.max(0, unit.detectionRangePixels - detectionStandoffTiles * 32))).getOrElse(preferred)
   }
 
   def enemiesToConsider(unit: FriendlyUnitInfo): Seq[Iterable[UnitInfo]] = Seq(
