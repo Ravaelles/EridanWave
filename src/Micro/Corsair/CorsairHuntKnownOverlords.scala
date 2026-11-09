@@ -7,20 +7,22 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Tactic.Squads.SquadAcePilots
 
 /**
- * Visit remembered Overlords across the whole known board (not just the
- * neighbourhood): the nearest to our main that no anti-air weapon covers.
- * Covered Overlords are left alone - visiting means dying.
+ * Visit remembered Overlords near the Corsair (not just the neighbourhood,
+ * but never across the map): the nearest to the unit that no anti-air
+ * weapon covers. Covered Overlords are left alone - visiting means dying.
+ * Per-unit nearest keeps the squad distributed instead of converging every
+ * Corsair onto one Overlord by our main (override contract: never widen).
  */
 object CorsairHuntKnownOverlords {
 
   val AaCoverTiles = 7.1
 
-  def overlord(): Option[UnitInfo] = {
+  def overlord(unit: FriendlyUnitInfo): Option[UnitInfo] = {
     if ( ! With.enemies.exists(_.isZerg)) {
       None
     } else {
       With.units.enemy.filter(o => Zerg.Overlord(o) && o.likelyStillThere).toSeq
-        .sortBy(_.pixelDistanceSquared(With.geography.ourMain.heart.center))
+        .sortBy(_.pixelDistanceSquared(unit.pixel))
         .find(o => ! (o.hitPoints <= 0 && o.visible) && ! covered(o))
     }
   }
@@ -33,7 +35,7 @@ object CorsairHuntKnownOverlords {
     if ( ! Protoss.Corsair(unit)) {
       false
     } else {
-      overlord().exists(target => {
+      overlord(unit).exists(target => {
         unit.intend(squad).setTargets(Seq(target)).setTerminus(target.pixel)
         unit.agent.act("CorsairHuntKnown")
         true
