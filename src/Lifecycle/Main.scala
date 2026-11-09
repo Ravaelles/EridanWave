@@ -19,13 +19,14 @@ object Main {
   val useFrameBuffer      : Boolean         = ! liveDebugging
   val framesToBuffer      : Int             = ?(useFrameBuffer, Maff.clamp(framesBufferable, 1, 10), 0)
 
-  val jbwapiConfiguration: BWClientConfiguration = new BWClientConfiguration()
+  val jbwapiConfiguration: BWClientConfiguration = new BWClientConfiguration.Builder()
     .withAutoContinue(false)
     .withMaxFrameDurationMs(30)
-    .withAsyncFrameBufferCapacity(framesToBuffer)
+    .withAsyncFrameBufferCapacity(Math.max(framesToBuffer, 1))
     .withAsync(useFrameBuffer)
     .withAsyncUnsafe(useFrameBuffer)
     .withDebugConnection(true)
+    .build()
 
   def main(args: Array[String]): Unit = {
     System.out.println(f"EridanWave Main.main() invoked ${System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean.getStartTime}ms after VM start.")

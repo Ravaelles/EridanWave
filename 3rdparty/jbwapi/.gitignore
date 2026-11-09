@@ -1,0 +1,12 @@
+#pom/java
+target/
+
+#intellij
+.idea/
+*.iml
+.settings
+.classpath
+.project
+
+# logging
+*.log
