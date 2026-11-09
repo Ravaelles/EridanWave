@@ -43,7 +43,11 @@ case class ReaverSituation(
   holdTarget      : Boolean = false,
   targetPath      : Boolean = false,
   toAttackPath    : Boolean = false,
-  unloadSpotSafe  : Boolean = true)
+  unloadSpotSafe  : Boolean = true) {
+
+  /** A threat in range or close enough to hit us (derived, never stale). */
+  def pressured: Boolean = threatened || pressuredClose
+}
 
 object ReaverSituation {
 
@@ -54,6 +58,8 @@ object ReaverSituation {
     val threats       = unit.matchups.threats
     val targetNearest = unit.matchups.targetNearest
     val wound         = unit.woundPercent()
+    val threatenedNow = threatsInRange.nonEmpty
+    val pressuredCloseNow = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.pixelDistanceEdge(t) < 4 * 32)
 
     ReaverSituation(
       rideNearby      = unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= ?(unit.agent.isPrimaryPassenger, 64, 32)),
@@ -78,11 +84,11 @@ object ReaverSituation {
       traineeSoon     = unit.trainee.exists(_.remainingCompletionFrames < cooldownReset + latency),
       leadLanding     = unit.agent.ride.exists(_.agent.passengersPrioritized.headOption.exists(r =>
         Protoss.Reaver(r) && r != unit && r.agent.shouldFight && ! r.loaded && r.pixelDistanceEdge(unit) < 32)),
-      threatened      = threatsInRange.nonEmpty,
+      threatened      = threatenedNow,
       cooling         = unit.cooldownLeft > cooldownReset + 2 * latency,
       outranged       = threatsInRange.exists(t => ! t.flying && t.pixelRangeAgainst(unit) < unit.pixelRangeAgainst(t)),
       shotless        = ! (unit.scarabs > 0 && ! unit.hasActiveScarab && unit.matchups.targetsInRange.exists(unit.hasScarabPathTo(_, unit.pixel))),
-      pressuredClose  = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.pixelDistanceEdge(t) < 4 * 32),
+      pressuredClose  = pressuredCloseNow,
       tankAiming      = threats.exists(t => Terran.SiegeTankSieged(t) && unit.pixelDistanceEdge(t) < 10 * 32),
       holdTarget      = targetNearest.exists(t => ! t.flying && unit.canAttack(t) && unit.pixelDistanceEdge(t) < 7.25 * 32),
       targetPath      = targetNearest.exists(unit.hasScarabPathTo(_, unit.pixel)),

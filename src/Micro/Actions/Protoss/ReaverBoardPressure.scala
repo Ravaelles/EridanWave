@@ -20,7 +20,7 @@ object ReaverBoardPressure {
           && situation.pressuredClose) ||
         (situation.framesSinceHit < 50 && situation.shieldsDown >= 18) ||
         situation.hikingFar ||
-        ReaverBoardLogic.shouldBoardCooling(situation.cooling, situation.outranged, situation.shotless))
+        ReaverBoardLogic.shouldBoardCooling(situation.cooling, situation.outranged, situation.shotless, situation.pressured))
 
   def act(unit: FriendlyUnitInfo): Unit = {
     unit.agent.act("Hop")
