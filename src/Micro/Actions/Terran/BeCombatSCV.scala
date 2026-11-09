@@ -6,7 +6,7 @@ import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Mathematics.Shapes.Spiral
 import Micro.Actions.Action
-import Micro.Actions.Combat.Tactics.Potshot
+import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Heuristics.Potential

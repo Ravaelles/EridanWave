@@ -5,6 +5,8 @@ import Micro.Actions.Combat.Decisioning.Actions.{Cast, Follow, Root}
 import Micro.Actions.Combat.Maneuvering.Stealth
 import Micro.Actions.Combat.Spells.Terran.Stim
 import Micro.Actions.Combat.Tactics._
+import Micro.Actions.Combat.Tactics.Bunker._
+import Micro.Actions.Combat.Tactics.Potshots._
 import Micro.Actions.Protoss._
 import Micro.Actions.Protoss.Reaver.BeReaver
 import Micro.Actions.Terran.{BeCombatSCV, BeVulture}

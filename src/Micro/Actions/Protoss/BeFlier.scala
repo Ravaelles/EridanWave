@@ -4,7 +4,7 @@ import Debugging.Visualizations.Forces
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
-import Micro.Actions.Combat.Tactics.FewShot
+import Micro.Actions.Combat.Tactics.Potshots.FewShot
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Heuristics.Potential

@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Tactics
+package Micro.Actions.Combat.Tactics.Potshots
 
 import Lifecycle.With
 import Mathematics.Maff

@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Tactics
+package Micro.Actions.Combat.Tactics.Potshots
 
 import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo

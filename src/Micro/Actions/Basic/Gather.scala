@@ -4,7 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
-import Micro.Actions.Combat.Tactics.Potshot
+import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import Micro.Targeting.Target
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing

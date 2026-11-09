@@ -6,7 +6,7 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.Pixel
-import Micro.Actions.Combat.Tactics.Potshot
+import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import Micro.Actions.{Action, Idle}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing

@@ -2,6 +2,7 @@ package Micro.Actions.Combat.Tactics
 
 import Lifecycle.With
 import Micro.Actions.Action
+import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}

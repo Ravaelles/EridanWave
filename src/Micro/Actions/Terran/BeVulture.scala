@@ -5,7 +5,7 @@ import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Mathematics.Shapes.Spiral
 import Micro.Actions.Action
-import Micro.Actions.Combat.Tactics.Potshot
+import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import Micro.Agency.Commander
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo

@@ -5,7 +5,7 @@ import Tactic.Tactics.Tactic
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Mathematics.Points.{Pixel, Tile}
-import Micro.Actions.Combat.Tactics.Tickle
+import Micro.Actions.Combat.Tactics.Potshots.Tickle
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters.IsWorker

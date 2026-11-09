@@ -2,7 +2,7 @@ package Micro.Actions.Combat.Maneuvering
 
 import Lifecycle.With
 import Micro.Actions.Action
-import Micro.Actions.Combat.Tactics.Potshot
+import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.Time.Seconds
