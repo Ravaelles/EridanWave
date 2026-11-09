@@ -1,0 +1,134 @@
+package bwapi;
+
+import java.util.Objects;
+
+/**
+ * Client class to connect to the game with.
+ */
+public class BWClient {
+    private BWClientConfiguration configuration;
+    private final BWEventListener eventListener;
+    private BotWrapper botWrapper;
+    private Client client;
+    private PerformanceMetrics performanceMetrics;
+
+    public BWClient(final BWEventListener eventListener) {
+        Objects.requireNonNull(eventListener);
+        this.eventListener = eventListener;
+    }
+
+    /**
+     * Get the {@link Game} instance of the currently running game.
+     * When running in asynchronous mode, this is the game from the bot's perspective, e.g. potentially a previous frame.
+     */
+    public Game getGame() {
+        return botWrapper == null ? null : botWrapper.getGame();
+    }
+
+    /**
+     * @return JBWAPI performance metrics.
+     */
+    public PerformanceMetrics getPerformanceMetrics() {
+        return performanceMetrics;
+    }
+
+    /**
+     * @return The current configuration
+     */
+    public BWClientConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    /**
+     * @return Whether the current frame should be subject to timing.
+     */
+    boolean doTime() {
+        return ! configuration.getUnlimitedFrameZero() || (client.isConnected() && client.liveClientData().gameData().getFrameCount() > 0);
+    }
+
+    /**
+     * @return The number of frames between the one exposed to the bot and the most recent received by JBWAPI.
+     * This tracks the size of the frame buffer except when the game is paused (which results in multiple frames arriving with the same count).
+     */
+    public int framesBehind() {
+        return botWrapper == null ? 0 : Math.max(0, client.liveClientData().gameData().getFrameCount() - getGame().getFrameCount());
+    }
+
+    /**
+     * For internal test use.
+     */
+    Client getClient() {
+        return client;
+    }
+
+    /**
+     * Start the game with default settings.
+     */
+    public void startGame() {
+        startGame(BWClientConfiguration.DEFAULT);
+    }
+
+    /**
+     * Start the game.
+     *
+     * @param autoContinue automatically continue playing the next game(s). false by default
+     */
+    @Deprecated
+    public void startGame(boolean autoContinue) {
+        startGame(new BWClientConfiguration.Builder()
+                .withAutoContinue(autoContinue)
+                .build());
+    }
+
+    /**
+     * Start the game.
+     *
+     * @param gameConfiguration Settings for playing games with this client.
+     */
+    public void startGame(BWClientConfiguration gameConfiguration) {
+        this.configuration = gameConfiguration;
+
+        if (client == null) {
+            client = new Client(this);
+        }
+        client.reconnect();
+
+        this.performanceMetrics = new PerformanceMetrics(configuration);
+        botWrapper = configuration.getAsync()
+                ? new BotWrapperAsync(configuration, eventListener)
+                : new BotWrapper(configuration, eventListener);
+
+        do {
+            ClientData.GameData liveGameData = client.liveClientData().gameData();
+            while (!liveGameData.isInGame()) {
+                if (!client.isConnected()) {
+                    return;
+                }
+                client.sendFrameReceiveFrame();
+                if (liveGameData.isInGame()) {
+                    performanceMetrics = new PerformanceMetrics(configuration);
+                    botWrapper.startNewGame(client.mapFile(), performanceMetrics);
+                }
+            }
+            while (liveGameData.isInGame()) {
+                botWrapper.onFrame();
+                performanceMetrics.getFlushSideEffects().time(() -> getGame().sideEffects.flushTo(liveGameData));
+                performanceMetrics.getFrameDurationReceiveToSend().stopTiming();
+
+                client.sendFrameReceiveFrame();
+                if (!client.isConnected()) {
+                    System.out.println("Reconnecting...");
+                    client.reconnect();
+                }
+            }
+            botWrapper.endGame();
+        } while (configuration.getAutoContinue());
+    }
+
+    /**
+     * Provides a Client. Intended for test consumers only.
+     */
+    void setClient(Client client) {
+        this.client = client;
+    }
+}

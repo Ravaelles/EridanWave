@@ -59,7 +59,7 @@ The community around BWAPI and StarCraft AI is amazing and EridanWave could not 
 ## How to build EridanWave
 EridanWave requires a 32-bit JDK 8 at runtime because it connects to 32-bit BWAPI. Maven is the source of truth for source directories, dependencies, Scala 2.12.18, compiler options, and build order.
 
-* Clone the repository and run `git submodule sync; git submodule update --init --recursive`.
+* Clone the repository (third-party code under `3rdparty/` is vendored as plain files, no submodules).
 * From a command prompt, run `mvn clean package`. The runnable fat JAR is `target/EridanWave-1.0.jar`.
 * In IntelliJ IDEA, install the Scala plugin and open the repository as a Maven project. Select the 32-bit JDK 8 as the Project SDK and reload the Maven project. Do not add modules, source folders, dependencies, or a Scala SDK by hand.
 
