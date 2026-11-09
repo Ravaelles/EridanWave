@@ -1,0 +1,29 @@
+package Micro.Actions.Protoss
+
+import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+
+/**
+ * Board under pressure - but never interrupt a healthy committed attack
+ * (Atlantis dontInterruptAttack). Covers doom, Scarab targeting, evac
+ * after firing hurt, failing shields, fresh hits, long hikes and the
+ * cooling-with-nothing-to-answer rule.
+ */
+object ReaverBoardPressure {
+
+  def applies(situation: ReaverSituation): Boolean =
+    ! situation.loaded && ! situation.committed && (
+      situation.doomed ||
+        situation.targetedByScarab ||
+        (situation.cooldownLeft >= 10 && situation.shieldsDown >= 45
+          && situation.framesSinceFired < 30 && situation.pressuredClose) ||
+        (situation.shieldsDown >= 20 && (situation.shieldsDown >= 38 || situation.scarabs == 0)
+          && situation.pressuredClose) ||
+        (situation.framesSinceHit < 50 && situation.shieldsDown >= 18) ||
+        situation.hikingFar ||
+        ReaverBoardLogic.shouldBoardCooling(situation.cooling, situation.outranged, situation.shotless))
+
+  def act(unit: FriendlyUnitInfo): Unit = {
+    unit.agent.act("Hop")
+    BeReaver.clickShuttle(unit)
+  }
+}
