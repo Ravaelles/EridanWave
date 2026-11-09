@@ -12,6 +12,8 @@ import Utilities.Time.Seconds
 import Utilities.UnitCounters.CountEverything
 import Utilities.UnitFilters.{IsAny, IsFlyingWarrior, IsTank, IsWorker, UnitFilter}
 
+import scala.util.Random
+
 class SquadAcePilots extends Squad {
   val acePilots         : Seq[UnitClass]  = Seq(Protoss.Corsair) //Seq(Terran.Wraith, Terran.Valkyrie, Protoss.Corsair, Zerg.Mutalisk, Zerg.Scourge)
   val acePilotMatcher   : UnitFilter      = IsAny(acePilots: _*)
@@ -135,15 +137,24 @@ class SquadAcePilots extends Squad {
       }
     }
 
-    // Monitor their bases. Only the three nearest are considered: a Corsair
-    // crossing the whole map wastes flight time better spent scouting nearby.
+    // Where to look when a visited base shows nothing: known enemy bases
+    // holding enemies, most enemies first, nearest to break ties.
+    val likelyBases = likeliestEnemyBases
+
+    // Monitor their bases. A random stale base first; an emptied visit falls
+    // back to the likeliest known enemy base instead of wandering the map.
     // Don't look to target anything; just get scouting information first
     val unscoutedEnemy = getStaleBase(With.geography.enemyBases, 120)
-      .sortBy(_.townHallArea.center.pixelDistanceSquared(centroidAir))
-      .take(3)
-    if (unscoutedEnemy.nonEmpty) {
+    val monitorPick = AceExploreLogic.pick(
+      current            = vicinity.base.map(_.name),
+      currentScouted     = vicinity.base.exists(b => With.framesSince(b.lastFrameScoutedByUs) < Seconds(15)()),
+      currentHasEnemies  = vicinity.base.exists(_.enemies.nonEmpty),
+      stale              = unscoutedEnemy.map(_.name),
+      fallback           = likelyBases.map(_.name),
+      roll               = Random.nextInt())
+    if (monitorPick.isDefined) {
       activity  = "AceMonitor"
-      val base  = unscoutedEnemy.minBy(_.enemies.count(_.canAttackAir))
+      val base  = (unscoutedEnemy ++ likelyBases).find(_.name == monitorPick.get).get
       vicinity  = base.townHallArea.center
       setTargets(Iterable.empty)
       SquadAutomation.send(this)
@@ -163,22 +174,25 @@ class SquadAcePilots extends Squad {
 
     // Explore, and snipe. Prefer bases without static anti-air: a Corsair
     // circling a Spore Colony is a dead Corsair, so those bases are only
-    // visited when nothing else is stale. Among the candidates keep preferring
-    // the least-defended ones, then scout the next stale base instead.
+    // visited when nothing else is stale. A random stale base first; an
+    // emptied visit falls back to the likeliest known enemy base.
     val staleBases = Maff.orElse(
       getStaleBase(With.geography.enemyBases,   30),
       getStaleBase(With.geography.neutralBases, 30),
       getStaleBase(With.geography.enemyBases,   10)).toVector
     val basesWithoutStaticAA = staleBases.filterNot(b =>
       b.enemies.exists(e => e.unitClass.isStaticDefense && e.canAttackAir))
-    val exploreBases = if (basesWithoutStaticAA.nonEmpty) basesWithoutStaticAA else staleBases
-    if (exploreBases.nonEmpty) {
+    val explorePool = if (basesWithoutStaticAA.nonEmpty) basesWithoutStaticAA else staleBases
+    val explorePick = AceExploreLogic.pick(
+      current            = vicinity.base.map(_.name),
+      currentScouted     = vicinity.base.exists(b => With.framesSince(b.lastFrameScoutedByUs) < Seconds(15)()),
+      currentHasEnemies  = vicinity.base.exists(_.enemies.nonEmpty),
+      stale              = explorePool.map(_.name),
+      fallback           = likelyBases.map(_.name),
+      roll               = Random.nextInt())
+    if (explorePick.isDefined) {
       activity = "AceExplore"
-      // Closest three only: no map-wide commuting, then least-defended first.
-      val base = exploreBases
-        .sortBy(_.townHallArea.center.pixelDistanceSquared(centroidAir))
-        .take(3)
-        .minBy(_.enemies.count(_.canAttackAir))
+      val base = (explorePool ++ likelyBases).find(_.name == explorePick.get).get
       vicinity = base.townHallArea.center
       SquadAutomation.targetAndSend(this)
 
@@ -192,6 +206,21 @@ class SquadAcePilots extends Squad {
     bases.filter(b =>
       With.framesSince(b.lastFrameScoutedByUs) > Seconds(thresholdSeconds)()
       && ! b.enemies.exists(_.canAttackAir))
+  }
+
+  // Likeliest known enemy bases, best first: most enemies holding, nearest
+  // to break ties. No static anti-air first, anything second, the known
+  // main last - a Corsair circling a Spore Colony is a dead Corsair.
+  private def likeliestEnemyBases: Seq[Base] = {
+    val holding = With.geography.enemyBases.filter(_.enemies.nonEmpty)
+    def ordered(bases: Seq[Base]): Seq[Base] = bases.sortBy(b =>
+      (-b.enemies.size, b.townHallArea.center.pixelDistanceSquared(centroidAir)))
+
+    Maff.orElse(
+      ordered(holding.filterNot(b =>
+        b.enemies.exists(e => e.unitClass.isStaticDefense && e.canAttackAir))),
+      ordered(holding),
+      With.scouting.enemyMain.toSeq).toVector
   }
 
   private def chill(): Unit = {
