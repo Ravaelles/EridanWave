@@ -136,6 +136,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
 
   def addPassenger(passenger: FriendlyUnitInfo): Unit = {
     if (passengerSize + passenger.unitClass.spaceRequired > 8 && ! passenger.transport.contains(unit)) return
+
     passenger.agent.ride.foreach(_.agent.removePassenger(passenger))
     passenger.agent._ride = Some(unit)
     _passengers.synchronized {
@@ -189,3 +190,4 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
 
   override def toString: String = f"${lastAction.mkString} ${toAttack.map(t => f"$t ").mkString}${super.toString}"
 }
+

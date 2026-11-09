@@ -21,10 +21,12 @@ trait ZonePathfinder {
   // The shortest path from other points of the zone may be different.
   private def zonePathfind(from: Zone, goal: Zone, through: Seq[Edge], pathHere: Vector[ZonePathNode] = Vector.empty): Option[ZonePath] = {
     if (from == goal) {
-      return ?(
+      val directPath = ?(
         through.forall(throughEdge => pathHere.exists(_.edge == throughEdge)),
         Some(ZonePath(pathHere.headOption.map(_.from).getOrElse(goal), goal, pathHere)),
         None)
+
+      return directPath
     }
 
     val tileFrom  = from.centroid.walkableTile

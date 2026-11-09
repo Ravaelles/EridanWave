@@ -22,6 +22,7 @@ abstract class GameplanImperative extends Plan with Modal with MacroActions  {
   override def onUpdate(): Unit = {
     if ( ! activated) return
     if (isComplete) return
+
     status(toString)
     if (doBasics) {
       RequireEssentials()

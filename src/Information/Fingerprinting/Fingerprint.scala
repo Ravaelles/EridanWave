@@ -18,12 +18,15 @@ abstract class Fingerprint {
   @inline final def recently: Boolean = matched || With.strategy.enemyRecentFingerprints.contains(this)
   @inline final def update(): Unit = {
     if (_lastUpdateFrame == With.frame) return
+
     _lastUpdateFrame = With.frame
     // Enemy build-order fingerprinting is meaningless on UMS micro maps
     // (no macro game, no bases to inspect); skip all of it there.
     if (With.umsMode) return
+
     children.foreach(_.update())
     if (sticky && matched) return
+
     if (With.frame < lockAfter) {
       val matchedBefore = matched
       matched = investigate
@@ -41,3 +44,4 @@ abstract class Fingerprint {
 
   override val toString: String = Tags.tagFingerprint(this)
 }
+

@@ -62,6 +62,7 @@ trait TilePathfinder {
     val toState                   = tiles(i)
     var fromState                 = hypotheticalFrom.map(t => tiles(t.i)).orElse(toState.cameFrom.map(t => tiles(t.i)))
     if (fromState.isEmpty) return 0
+
     val fromTile                  = fromState.get
     val costSoFar       : Double  = fromState.get.costFromStart
     val costDistance    : Double  = if (fromTile.tile.x == toTile.x || fromTile.tile.y == toTile.y) 1.0 else Maff.sqrt2
@@ -285,3 +286,4 @@ trait TilePathfinder {
     path.reverse
   }
 }
+

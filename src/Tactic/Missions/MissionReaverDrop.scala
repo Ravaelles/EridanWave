@@ -52,6 +52,7 @@ class MissionReaverDrop extends MissionDrop {
       !targetCleared(b) && transports.exists(t => t.pixelDistanceCenter(b.townHallArea.center) <= t.sightPixels)))(
       _.townHallArea.center.pixelDistanceSquared(origin))
     if (discovered.isEmpty && nearby.forall(itinerary.headOption.contains)) return
+
     var ordered = itinerary.toVector
     if (clockwise.isEmpty) {
       clockwise = Some(Vector(true, false).minBy(direction => {
@@ -91,6 +92,7 @@ class MissionReaverDrop extends MissionDrop {
     val known = (plannedTargets.toVector ++ MissionReaverDrop.targets(enemyBases)).distinct
     val next = MissionReaverDrop.reverseTargets(known, from).filter(b => b.isEnemy && !targetCleared(b))
     if (next.isEmpty) return false
+
     itinerary.clear()
     itinerary ++= next
     clockwise = clockwise.map(!_)
@@ -128,6 +130,7 @@ class MissionReaverDrop extends MissionDrop {
       r.inRangeToAttackFrom(m, point) && r.hasScarabPathTo(m, point)))
     if (minerals.isEmpty) return Some(destinationBase.map(_.heart.center).getOrElse(vicinity).walkablePixel)
     if (usable(transport.pixel)) return Some(transport.pixel)
+
     val radius = Math.ceil((Protoss.Reaver.pixelRangeGround + Protoss.Reaver.dimensionMax +
       minerals.map(_.unitClass.dimensionMax).max) / 32.0).toInt
     minerals.flatMap(m => Circle(radius).map(m.tile.add)).distinct.filter(_.walkable)
@@ -155,10 +158,12 @@ class MissionReaverDrop extends MissionDrop {
     val crew = passengersFor(transport).filter(_.alive)
     val reavers = crew.filter(Protoss.Reaver).filterNot(_.doomed)
     if (reavers.isEmpty) return false
+
     val optimistic = reavers.exists(_.combatForecast.exists(_.judgement.exists(_.shouldFightGround)))
 
     val landing = closestLandingPoint(transport)
     if (landing.isEmpty) return false
+
     val goal = landing.get
     val path = Ray(transport.pixel, goal).toVector
     val nearby = destinationBase.toVector.flatMap(_.enemies) ++ crew.flatMap(_.matchups.threats) ++ transport.matchups.threats
@@ -202,6 +207,7 @@ class MissionReaverDrop extends MissionDrop {
 
   override protected def routeFollowing(transport: FriendlyUnitInfo): Vector[(Tile, Double)] = {
     if (!destinationBase.exists(b => !b.isEnemy)) return Vector.empty
+
     val remaining = itinerary.drop(1).toVector
     val scouts = remaining.takeWhile(b => !b.isEnemy)
     scouts.map(b => (b.townHallArea.center.tile, Math.max(0, transport.sightPixels - 112) / 32.0)) ++
@@ -281,6 +287,7 @@ class MissionReaverDrop extends MissionDrop {
 
   override protected def shouldStopRaiding: Boolean = {
     if (state != Travelling && state != Landing && state != Raiding) return false
+
     val doomed = passengers.filter(Protoss.Reaver).forall(_.doomed)
     val stalled = combatStalled
     val unableToLand = state == Landing && raidingTransports.isEmpty && approachStalled
@@ -304,6 +311,7 @@ class MissionReaverDrop extends MissionDrop {
     val available = With.recruiter.available.toVector
     val reavers = reaverManifest
     if (reavers.isEmpty) { terminate("Waiting for a transportable Reaver"); return }
+
     val selectedTransports = reavers.values.toVector.distinct.sortBy(_.id)
     // The cap limits recruitment; Reavers already aboard a selected Shuttle stay with it.
     val aboard = selectedTransports.flatMap(_.loadedUnits).filter(p => p.alive && Protoss.Reaver(p))
@@ -363,3 +371,4 @@ private[Missions] object MissionReaverDrop {
     candidates.toVector
   }
 }
+

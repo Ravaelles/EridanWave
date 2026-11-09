@@ -82,6 +82,7 @@ object Build extends Action {
       && With.self.minerals >= building.mineralPrice - 8
       && With.self.gas      >= building.gasPrice - 8) {
       Commander.build(unit, building, ?(building.isAddon, tile.add(4, 1), tile))
+
       return
     }
 
@@ -107,3 +108,4 @@ object Build extends Action {
     Commander.move(unit)
   }
 }
+

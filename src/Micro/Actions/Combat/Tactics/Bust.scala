@@ -75,6 +75,7 @@ object Bust extends Action {
         // Hold Position should result in an attack faster than Stop:
         // https://docs.google.com/spreadsheets/d/1LhC8rdqHTrhze6Gh7HitemGs-g2Xq-hVRDaA6X4bBnM/edit#gid=1092732143
         if (unit.moving) Commander.hold(unit) else Commander.attack(unit)
+
         return
       }
 
@@ -95,6 +96,9 @@ object Bust extends Action {
         Commander.move(unit)
       }
     }
+
     Commander.attack(unit)
   }
 }
+
+

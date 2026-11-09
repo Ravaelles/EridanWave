@@ -10,6 +10,7 @@ class BattleProcessJudge extends BattleProcessState {
 
     if (unjudged.isDefined) {
       unjudged.get.judgement = Some(new BattleJudgment(unjudged.get))
+
       return
     }
 
@@ -18,3 +19,4 @@ class BattleProcessJudge extends BattleProcessState {
     transitionTo(new BattleProcessSwap)
   }
 }
+

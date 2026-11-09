@@ -33,6 +33,7 @@ object KillLedger {
     val friendly  = unit.isFriendly
     val enemy     = unit.isEnemy
     if ( ! friendly && ! enemy) return
+
     record(
       friendly  = friendly,
       building  = unit.unitClass.isBuilding,
@@ -52,3 +53,4 @@ object KillLedger {
     }
   }
 }
+

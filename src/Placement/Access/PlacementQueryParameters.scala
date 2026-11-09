@@ -24,6 +24,7 @@ class PlacementQueryParameters {
   // Required for Produce to match requests against existing production
   override def equals(other: Any): Boolean = {
     if ( ! other.isInstanceOf[PlacementQueryParameters]) return false
+
     val otherParameters = other.asInstanceOf[PlacementQueryParameters]
     if (width     != otherParameters.width)                     return false
     if (height    != otherParameters.height)                    return false
@@ -38,6 +39,7 @@ class PlacementQueryParameters {
     if ( ! otherParameters.base.forall(base.contains))          return false
     if ( ! tile.forall(otherParameters.tile.contains))          return false
     if ( ! otherParameters.tile.forall(tile.contains))          return false
+
     true
   }
 
@@ -51,6 +53,7 @@ class PlacementQueryParameters {
       } else if (foundation.point.requirement.labels(i) == Unimportant) {
         return 1.0
       }
+
       i += 1
     }
     1.0
@@ -60,6 +63,7 @@ class PlacementQueryParameters {
     if (width.isEmpty) return 1.0
     if (foundation.point.requirement.width == width.get) return 1.25
     if (foundation.point.requirement.width >  width.get) return 1.0
+
     0.0
   }
 
@@ -67,6 +71,7 @@ class PlacementQueryParameters {
     if (height.isEmpty) return 1.0
     if (foundation.point.requirement.height == height.get) return 1.25
     if (foundation.point.requirement.height >  height.get) return 1.0
+
     0.0
   }
 
@@ -86,6 +91,7 @@ class PlacementQueryParameters {
 
   protected def scoreLabelYes(foundation: Foundation): Double = {
     if (labelYes.isEmpty) return 1.0
+
     val length = labelYes.length
     var count = 0
     var i = 0
@@ -104,6 +110,7 @@ class PlacementQueryParameters {
 
   protected def scoreLabelNo(foundation: Foundation): Double = {
     if (labelNo.isEmpty) return 1.0
+
     val length = labelNo.length
     var count = 0
     var i = 0
@@ -124,6 +131,7 @@ class PlacementQueryParameters {
   protected def scoreZone(foundation: Foundation): Double = {
     if (zone.isEmpty) return 1.0
     if (zone.contains(foundation.tile.zone)) return 1.0
+
     lazy val foundationTileZone = foundation.tile.zone
     val distancePixels = zone.view.map(_.groundPixelsToZones(foundationTileZone)).max
     0.25 * Maff.clamp(1 - distancePixels * inv256x32, 0.0, 1.0)
@@ -132,6 +140,7 @@ class PlacementQueryParameters {
   protected def scoreBase(foundation: Foundation): Double = {
     if (base.isEmpty) return 1.0
     if (base.exists(foundation.tile.base.contains)) return 1.0
+
     lazy val foundationTileZone = foundation.tile.zone
     val distancePixels = foundation.tile.base
       .map(fb => base.view.map(_.groundPixelsToBases(fb)))
@@ -143,6 +152,7 @@ class PlacementQueryParameters {
   protected def scoreTile(foundation: Foundation): Double = {
     if (tile.isEmpty) return 1.0
     if (tile.contains(foundation.tile)) return 1.0
+
     Maff.clamp(0.25 * Maff.nanToOne(With.mapTileWidth.toDouble / tile.map(_.groundTiles(foundation.tile)).min), 0.0, 0.25)
   }
 
@@ -190,3 +200,5 @@ class PlacementQueryParameters {
     scoreBuilding(foundation),
     scoreTile(foundation))
 }
+
+

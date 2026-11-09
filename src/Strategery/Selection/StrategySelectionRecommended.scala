@@ -15,6 +15,7 @@ class StrategySelectionRecommended(fallback: StrategySelectionPolicy, val durati
 
     if (legalMatchedBranches.isEmpty) {
       With.logger.warn(f"$this failed to find any branches, filtered by legality, matching ${recommendedBranch.mkString(" + ")}")
+
       return fallback.chooseBranch
     }
 
@@ -32,3 +33,4 @@ class StrategySelectionRecommended(fallback: StrategySelectionPolicy, val durati
   override def toString = f"StrategySelectionRecommended: $branchString, falling back to $fallback"
   protected def branchString: String = recommendedBranch.map(_.toString).mkString(" + ")
 }
+

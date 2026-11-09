@@ -20,6 +20,7 @@ case class TilePath(
 
   def renderMap(color: Color, from: Option[Pixel] = None, customOffset: Point = Point(0, 0)): Unit = {
     if (tiles.isEmpty) return
+
     val offset = from.map(_.offsetFromTileCenter).getOrElse(Pixel(0, 0)).add(customOffset)
     for (i <- 0 until tiles.get.size - 1) {
       DrawMap.arrow(

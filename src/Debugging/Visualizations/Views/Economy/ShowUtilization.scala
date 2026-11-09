@@ -37,6 +37,7 @@ object ShowUtilization extends DebugView {
 
   def renderUnit(unit: UnitInfo, ratio: Double): Unit = {
     if (ratio <= 0) return
+
     DrawMap.box(
       unit.topLeft,
       unit.bottomRightInclusive,
@@ -52,3 +53,4 @@ object ShowUtilization extends DebugView {
       solid = true)
   }
 }
+

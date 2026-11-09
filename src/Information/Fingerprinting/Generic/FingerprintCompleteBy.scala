@@ -21,6 +21,7 @@ class FingerprintCompleteBy(
       })
       if (proof.isDefined) return true
     }
+
     if (With.frame > endFrame) return false
 
     observed >= quantity
@@ -38,3 +39,4 @@ class FingerprintCompleteBy(
 
   override def sticky: Boolean = true
 }
+

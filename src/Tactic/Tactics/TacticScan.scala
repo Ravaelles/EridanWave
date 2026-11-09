@@ -29,6 +29,7 @@ class TacticScan extends Tactic {
     if (cloakedTargets.nonEmpty) {
       val biggestThreat = cloakedTargets.maxBy(t => t.subjectiveValue * (1 + t.matchups.dpfReceiving) * (1 + t.presumptiveTarget.map(_.subjectiveValue).getOrElse(0.0)))
       scan(biggestThreat.pixel)
+
       return
     }
     
@@ -44,6 +45,7 @@ class TacticScan extends Tactic {
   
     if (tankTarget.isDefined && scans > 1) {
       scan(tankTarget.get.pixel)
+
       return
     }
     
@@ -53,6 +55,7 @@ class TacticScan extends Tactic {
     
     if (blockedBuilders.nonEmpty) {
       scan(blockedBuilders.head.pixel)
+
       return
     }
   }
@@ -64,3 +67,4 @@ class TacticScan extends Tactic {
     })
   }
 }
+

@@ -29,6 +29,7 @@ abstract class ZergGameplan extends GameplanImperative {
 
   def reactTo4Pool(): Unit = {
     if (With.frame > Minutes(7)()) return
+
     once(9, Zerg.Drone)
     get(Zerg.SpawningPool)
     once(10, Zerg.Drone)
@@ -47,6 +48,7 @@ abstract class ZergGameplan extends GameplanImperative {
 
   def reactToWorkerRush(): Unit = {
     if (With.frame > Minutes(5)()) return
+
     reactTo4Pool()
   }
 
@@ -64,6 +66,7 @@ abstract class ZergGameplan extends GameplanImperative {
 
   def reactToCannonRush(): Unit = {
     if (With.frame > Minutes(7)()) return
+
     once(9, Zerg.Drone)
     get(Zerg.SpawningPool)
     once(10, Zerg.Drone)
@@ -92,3 +95,4 @@ abstract class ZergGameplan extends GameplanImperative {
   def reactToArbiters(): Unit = {
   }
 }
+

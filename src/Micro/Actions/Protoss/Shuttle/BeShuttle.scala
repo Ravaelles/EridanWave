@@ -47,6 +47,7 @@ object BeShuttle extends Action {
     emergencyHailer.foreach(u => {
       pickup(shuttle, u)
       shuttle.agent.act("EmergencyPickup")
+
       return
     })
 
@@ -79,6 +80,7 @@ object BeShuttle extends Action {
     quest.foreach(q => {
       q.perform()
       shuttle.agent.act(q.quest.toString)
+
       return
     })
 
@@ -106,3 +108,4 @@ object BeShuttle extends Action {
     Commander.move(shuttle)
   }
 }
+

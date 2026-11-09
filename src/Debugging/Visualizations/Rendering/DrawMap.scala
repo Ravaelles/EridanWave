@@ -13,6 +13,7 @@ object DrawMap {
     origin  : Pixel,
     text    : => String): Unit = {
     if (irrelevant(origin)) return
+
     With.game.drawTextMap(origin.bwapi, Asciify(text))
   }
   
@@ -21,6 +22,7 @@ object DrawMap {
     end   : Pixel,
     color : Color = Colors.DefaultGray): Unit = {
     if (irrelevant(start, end)) return
+
     With.game.drawLineMap(start.bwapi, end.bwapi, color)
   }
 
@@ -84,6 +86,7 @@ object DrawMap {
     color   : Color = Colors.DefaultGray,
     solid   : Boolean = false): Unit = {
     if (radius <= 0) return
+
     if (irrelevant(
       center.add(-radius, -radius),
       center.add(radius, radius))) return
@@ -97,6 +100,7 @@ object DrawMap {
     color     : Color = Colors.DefaultGray,
     solid: Boolean = false): Unit = {
     if (irrelevant(position1, position2, position3)) return
+
     With.game.drawTriangleMap(position1.bwapi, position2.bwapi, position3.bwapi, color, solid)
   }
   
@@ -108,6 +112,7 @@ object DrawMap {
     drawBorder      : Boolean = false,
     borderColor     : Color = Colors.DefaultGray): Unit = {
     if (irrelevant(position)) return
+
     labelBox(Vector(text), position, drawBackground, backgroundColor, drawBorder, borderColor)
   }
 
@@ -116,6 +121,7 @@ object DrawMap {
     position        : Pixel,
     backgroundColor : Color = Colors.DefaultGray): Unit = {
     if (irrelevant(position)) return
+
     val width = 9 * text.length / 2
     val height = 11
     val radius = 1 + Math.max(width, height) / 2
@@ -168,11 +174,13 @@ object DrawMap {
   
   def tileRectangle(rectangle: TileRectangle, color: Color, margin: Int = 0): Unit = {
     if (irrelevant(rectangle.startPixel, rectangle.endPixelInclusive)) return
+
     With.game.drawBoxMap(rectangle.startPixel.subtract(margin, margin).bwapi, rectangle.endPixelInclusive.add(margin, margin).bwapi, color)
   }
   
   def polygon(pixels: Iterable[Pixel], color: Color = Colors.DefaultGray): Unit = {
     if (pixels.size < 2) return
+
     pixels.reduce((p1, p2) => { line(p1, p2, color); p2 })
     line(pixels.head, pixels.last, color)
   }
@@ -218,6 +226,7 @@ object DrawMap {
 
   def hatchTile(tile: Tile, color: Color): Unit = {
     if (irrelevant(tile.center)) return
+
     val s   = tile.topLeftPixel
     val e   = tile.bottomRightPixel
     val sx  = s.x
@@ -239,3 +248,4 @@ object DrawMap {
     // ! new PixelRectangle(points).expand(64, 64).intersects(With.viewport.area)
   }
 }
+

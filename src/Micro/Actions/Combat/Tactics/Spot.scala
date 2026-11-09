@@ -103,6 +103,7 @@ object Spot extends Action {
 
   def detectionTarget(unit: FriendlyUnitInfo): Option[UnitInfo] = {
     if ( ! unit.unitClass.isDetector) return None
+
     val mobileDetectors = groupSupported(unit).map(_.mobileDetectors).getOrElse(Seq.empty).filter(_.friendly.exists(_.squad == unit.squad))
     val spookies = Maff.orElseFiltered(enemiesToConsider(unit): _*)(e =>
         (e.cloakedOrBurrowed || canEventuallyCloak(e))
@@ -117,8 +118,10 @@ object Spot extends Action {
 
   def tankTarget(unit: FriendlyUnitInfo): Option[UnitInfo] = {
     if ( ! unit.squad.filter(groupSupported(unit).contains).exists(_.attacksGround)) return None
+
     val tanks = Maff.orElseFiltered(enemiesToConsider(unit): _*)(IsTank)
     val tank  = Maff.minBy(Maff.orElse(tanks.filter(_.matchups.pixelsEntangled >= 0), tanks))(_.pixelDistanceSquared(groupSupported(unit).get.attackCentroidKey))
     tank
   }
 }
+

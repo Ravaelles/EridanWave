@@ -40,6 +40,7 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
     // No strategy selection on UMS micro maps: no bases, no macro game,
     // and legality evaluation assumes bases exist. The gameplan is NoPlan anyway.
     if (With.umsMode) return
+
     val enemyRaceNow = With.enemy.raceCurrent
     if (strategiesSelected.isEmpty) {
       if (With.configuration.fixedBuilds.nonEmpty) {
@@ -121,6 +122,7 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
     // UMS micro maps: no macro play. The standard gameplan would issue build
     // orders with no workers and no bases, so it stays parked.
     if (With.umsMode) return NoPlan()
+
     val selectedStrategyWithCustomGameplan = strategiesSelected.find(_.gameplan.isDefined)
     if (selectedStrategyWithCustomGameplan.isDefined) {
       selectedStrategyWithCustomGameplan.get.activate()
@@ -167,4 +169,5 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
     }
   }
 }
+
 

@@ -22,6 +22,7 @@ object Stasis extends TargetedSpell {
     if (target.underStorm) return 0.0
     if (target.stasised)   return 0.0
     if (target.invincible) return 0.0
+
     if (target.isAny(
       Protoss.Interceptor,
       Zerg.Larva,
@@ -47,3 +48,4 @@ object Stasis extends TargetedSpell {
     output
   }
 }
+

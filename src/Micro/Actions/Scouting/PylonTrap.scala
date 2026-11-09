@@ -42,6 +42,7 @@ object PylonTrap extends Action {
     if ( ! needSupply) {
       if (base.exists(b => b.isEnemy && b.isMain && b.gas.length == 1 && b.gas.forall(_.isNeutral))) {
         buildWhenReady(probe, Protoss.Assimilator, base.get.gas.head.tileTopLeft)
+
         return
       }
     }
@@ -76,6 +77,7 @@ object PylonTrap extends Action {
         val loc       = location.head
         val building  = ?(loc.canBeBattery && ( ! loc.canBePylon || ! wantPylon), Protoss.ShieldBattery, Protoss.Pylon)
         buildWhenReady(probe, building, loc.tile)
+
        return
       }
     }
@@ -97,6 +99,7 @@ object PylonTrap extends Action {
 
     if (tiles.isEmpty) {
       anyPylon(probe)
+
       return
     }
 
@@ -110,6 +113,7 @@ object PylonTrap extends Action {
 
     if (tile.isEmpty) {
       With.logger.warn(f"${probe} needs to build a Pylon but found no location.")
+
       return
     }
 
@@ -140,3 +144,4 @@ object PylonTrap extends Action {
     }
   }
 }
+

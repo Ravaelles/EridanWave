@@ -41,6 +41,7 @@ abstract class PvZ1BaseReactiveUtilities extends PvZ1BaseBuildOrders {
     if (With.fingerprints.overpool())         return Some(timingOp)
     if (With.fingerprints.ninePool())         return Some(timing9p)
     if (With.fingerprints.fourPool())         return Some(timing4p)
+
     None
   }
   protected def poolMinHistory: Option[Int] = {
@@ -51,6 +52,7 @@ abstract class PvZ1BaseReactiveUtilities extends PvZ1BaseBuildOrders {
     if (With.fingerprints.hatchFirst      .recently) return Some(timing10h)
     if (With.fingerprints.twelveHatch     .recently) return Some(timing12h)
     if (With.fingerprints.twelveHatchHatch.recently) return Some(timing12hh)
+
     None
   }
   protected def poolMaxHistory: Option[Int] = {
@@ -61,6 +63,7 @@ abstract class PvZ1BaseReactiveUtilities extends PvZ1BaseBuildOrders {
     if (With.fingerprints.overpool        .recently) return Some(timingOp)
     if (With.fingerprints.ninePool        .recently) return Some(timing9p)
     if (With.fingerprints.fourPool        .recently) return Some(timing4p)
+
     None
   }
   protected def poolMin: Int = pool.getOrElse(
@@ -77,3 +80,4 @@ abstract class PvZ1BaseReactiveUtilities extends PvZ1BaseBuildOrders {
 
   val allOpenings: Seq[Opening] = Seq(Gates910, Gates1012, CoreZ, ZCoreZ, ZZCoreZ, GateNexus, NexusFirst)
 }
+

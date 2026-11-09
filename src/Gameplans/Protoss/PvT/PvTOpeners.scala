@@ -23,6 +23,7 @@ abstract class PvTOpeners extends GameplanImperative {
 
   def open(): Unit = {
     if (openingComplete) return
+
     doOpeningShortCircuits()
           if (PvT13Nexus())       open12NexusGateScout()
     else  if (PvTZealotExpand())  openZealotExpand()
@@ -464,6 +465,7 @@ abstract class PvTOpeners extends GameplanImperative {
       }
       return
     }
+
     if (frame < Minutes(10)() && barracksCheese) {
       status("ReactToRaxCheese")
       gasLimitCeiling(200)
@@ -504,3 +506,5 @@ abstract class PvTOpeners extends GameplanImperative {
     }
   }
 }
+
+

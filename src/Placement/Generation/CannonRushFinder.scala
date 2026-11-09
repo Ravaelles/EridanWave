@@ -95,6 +95,7 @@ object CannonRushFinder {
       var blockerIndex = 0
       while (blockerIndex < staticBlockers.length) {
         if (intersects(box, staticBlockers(blockerIndex))) return true
+
         blockerIndex += 1
       }
       false
@@ -162,10 +163,12 @@ object CannonRushFinder {
         val i = attackIndices(attackIndex)
         if (visited(i) != stamp && passable(i)) {
           if (border(i)) return false
+
           visited(i) = stamp
           queue(write) = i
           write += 1
         }
+
         attackIndex += 1
       }
       while (read < write) {
@@ -188,12 +191,14 @@ object CannonRushFinder {
                 passable(index(currentX, currentY + deltaY))
               if (canTurnCorner) {
                 if (border(next)) return false
+
                 visited(next) = stamp
                 queue(write) = next
                 write += 1
               }
             }
           }
+
           directionIndex += 1
         }
       }
@@ -219,6 +224,7 @@ object CannonRushFinder {
 
   private def behindMinerals(base: Base, cannon: Tile): Boolean = {
     if (base.minerals.isEmpty) return false
+
     val hall = base.townHallArea.midPixel
     val box = buildingBox(cannon, Protoss.PhotonCannon)
     val mineral = base.minerals.minBy(m => m.pixel.pixelDistanceSquared(box.center))
@@ -289,8 +295,10 @@ object CannonRushFinder {
     val started = System.nanoTime()
     if (base.minerals.isEmpty) {
       With.logger.debug(f"CANNON_RUSH_FAILURE base=${base.name} description=${base.description} heart=${base.heart} reason=no-minerals")
+
       return None
     }
+
     val staticBlockers = With.units.neutral
       .filter(unit => (unit.unitClass.isBuilding || unit.unitClass.isResource) && ! unit.flying)
       .map(unit => Box(unit.pixelStart.x, unit.pixelStart.y, unit.pixelEndExclusive.x, unit.pixelEndExclusive.y))
@@ -313,6 +321,7 @@ object CannonRushFinder {
           val orderedFit = makeFit(cannon, orderedPylons)
           val elapsedMs = (System.nanoTime() - started) / 1000000L
           With.logger.debug(f"CANNON_RUSH_SUCCESS base=${base.name} description=${base.description} heart=${base.heart} cannon=$cannon pylons=${orderedPylons.mkString(",")} candidates=${cannons.length} configurations=$configurations milliseconds=$elapsedMs")
+
           return Some(CannonRushPlacement(base, cannon, orderedPylons, orderedFit))
         }
       }
@@ -323,3 +332,5 @@ object CannonRushFinder {
     None
   }
 }
+
+

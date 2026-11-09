@@ -13,6 +13,7 @@ public final class ProcessHelper {
 
     public static boolean isWindows() {
         String os = System.getProperty("os.name", "");
+
         return os.toLowerCase(java.util.Locale.ROOT).contains("win");
     }
 
@@ -52,8 +53,10 @@ public final class ProcessHelper {
             int exit = check.waitFor();
             if (isWindows()) {
                 byte[] out = readAll(check);
+
                 return new String(out).contains(exactName);
             }
+
             return exit == 0;
         } catch (Exception e) {
             return false;
@@ -101,6 +104,7 @@ public final class ProcessHelper {
         if (override != null && !override.trim().isEmpty()) {
             return override.trim();
         }
+
         return fallback;
     }
 
@@ -109,6 +113,9 @@ public final class ProcessHelper {
         if (home.endsWith("/") || home.endsWith(File.separator)) {
             return home;
         }
+
         return home + File.separator;
     }
 }
+
+

@@ -105,6 +105,7 @@ object EridanSimViz {
   private def loadMap(mapDir: File, mapHash: String): Option[MapData] = {
     val f = new File(mapDir, s"$mapHash.mapbin")
     if (!f.exists()) return None
+
     Try {
       val dis = new DataInputStream(new FileInputStream(f))
       try {
@@ -160,6 +161,7 @@ object EridanSimViz {
 
   private def parseSimulation(jsonFile: File): Option[SimPack] = {
     if (!jsonFile.exists()) return None
+
     Try {
       def readAll(f: File): String = {
         var fis: java.io.FileInputStream = null
@@ -508,9 +510,11 @@ object EridanSimViz {
   // to blue (friendly) or red (enemy), preserving brightness. Cached per (name, team).
   private def getRecoloredUnitImage(name: String, friendly: Boolean): Option[java.awt.Image] = {
     if (name == null || name.isEmpty) return None
+
     val cacheKey = name + (if (friendly) "|F" else "|E")
     val cached = recolorCache.get(cacheKey)
     if (cached != null) return Some(cached)
+
     val baseOpt = getUnitImage(name)
     baseOpt.flatMap { base =>
       try {
@@ -1226,6 +1230,7 @@ object EridanSimViz {
         i += 1
       }
       if (ids.isEmpty) return None
+
       var minX = Int.MaxValue
       var minY = Int.MaxValue
       var maxX = Int.MinValue
@@ -1453,6 +1458,7 @@ object EridanSimViz {
         val lenNow = try simFile.length() catch { case _: Throwable => 0L }
         if (!(force || (autoReloadRef.get() && (lm > lastModifiedRef.get() || lenNow > fileLenRef.get())))) return
         if (!reloadInProgress.compareAndSet(false, true)) return
+
         bgExecutor.submit(new Runnable { override def run(): Unit = {
           val t0 = System.nanoTime()
           try {
@@ -1596,3 +1602,4 @@ object EridanSimViz {
     }})
   }
 }
+

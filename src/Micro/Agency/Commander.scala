@@ -27,6 +27,7 @@ object Commander {
   
   def doNothing(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
+
     sleep(unit)
   }
   
@@ -34,6 +35,7 @@ object Commander {
     unit.agent.setRideGoal(unit.pixel)
     leadFollower(unit, stop)
     if (unit.unready) return
+
     unit.bwapiUnit.stop()
     sleep(unit)
     unit.resetSticking()
@@ -44,6 +46,7 @@ object Commander {
     leadFollower(unit, hold)
     if (unit.unready) return
     if ( ! Zerg.Lurker(unit) && autoUnburrow(unit)) return
+
     if (unit.velocity.lengthSquared > 0 && unit.order != Orders.HoldPosition) {
       unit.bwapiUnit.holdPosition()
     }
@@ -107,8 +110,10 @@ object Commander {
     if (unit.airlifted && (unit.pixelDistanceCenter(attackFrom) < ?(unit.agent.isPrimaryPassenger, 32, 64) || unit.pixelsToGetInRange(target) <= ?(unit.agent.isPrimaryPassenger, 16, 48))) {
       if ( ! Protoss.Reaver(unit) || unit.hasScarabPathTo(target, unit.pixel)) requestUnload(unit)
       sleep(unit) //  Although we're not doing anything, it's important to sleep here so we don't keep executing and change our ride goal
+
       return
     }
+
     if ( ! Zerg.Lurker(unit) && autoUnburrow(unit)) return
 
     // We shouldn't target interceptors anymore, but in case we do:
@@ -157,6 +162,7 @@ object Commander {
       }
       return
     }
+
     move(unit, attackFrom)
   }
 
@@ -170,6 +176,7 @@ object Commander {
       val from = topLeft.subtract(1, 1).tile
       val to = bottomRight.add(1, 1).tile
       if ( ! from.valid || ! to.valid) return false
+
       val innerFrom = topLeft.tile
       val innerTo = bottomRight.tile
       var y = from.y
@@ -178,6 +185,7 @@ object Commander {
         while (x <= to.x) {
           val i = x + y * With.mapTileWidth
           if (With.grids.unwalkableUnits.isSetUnchecked(i) || (x >= innerFrom.x && x <= innerTo.x && y >= innerFrom.y && y <= innerTo.y && ! With.grids.walkableTerrain.getUnchecked(i))) return false
+
           x += 1
         }
         y += 1
@@ -185,14 +193,17 @@ object Commander {
       true
     }
     if (hasClearance(waypoint)) return Some(waypoint)
+
     val center = waypoint.walkableTile.center
     if (hasClearance(center)) return Some(center)
+
     var dy = -1
     while (dy <= 1) {
       var dx = -1
       while (dx <= 1) {
         val candidate = center.add(dx, dy)
         if (hasClearance(candidate)) return Some(candidate)
+
         dx += 1
       }
       dy += 1
@@ -208,6 +219,7 @@ object Commander {
 
   private[Micro] def adjustDestination(unit: FriendlyUnitInfo, argTo: Pixel, remember: Boolean): Pixel = {
     if ( ! unit.intent.shouldAdjustXY) return argTo
+
     var to: Pixel = argTo
 
     // Send some units past their destination to maximize acceleration
@@ -285,6 +297,7 @@ object Commander {
     leadFollower(unit, attackMove(_, destination))
     unit.agent.tryingToMove = unit.pixelDistanceCenter(destination) > tryingToMoveThreshold
     if (unit.unready) return
+
     val to = adjustDestination(unit, destination, remember = true)
     if (autoUnburrowUnlessLurkerInRangeOf(unit, to)) return
     // Auto-acquiring a target changes AttackMove to AttackUnit; retain the original movement goal.
@@ -303,8 +316,10 @@ object Commander {
     leadFollower(unit, patrol(_, destination))
     unit.agent.tryingToMove = unit.pixelDistanceCenter(destination) > tryingToMoveThreshold
     if (unit.unready) return
+
     val to = adjustDestination(unit, destination, remember = true)
     if (autoUnburrowUnlessLurkerInRangeOf(unit, to)) return
+
     unit.bwapiUnit.patrol(to.bwapi)
     sleepAttack(unit)
   }
@@ -318,6 +333,7 @@ object Commander {
     unit.agent.tryingToMove = unit.pixelDistanceCenter(to) > tryingToMoveThreshold
     if (unit.unready) return
     if (autoUnburrow(unit)) return
+
     if (unit.pixelDistanceCenter(to) <= 8) {
       requestUnload(unit)
     }
@@ -361,8 +377,10 @@ object Commander {
       case _ => false
     }}) {
       stop(unit)
+
       return
     }
+
     leadFollower(unit, rightClick(_, target))
     unit.agent.tryingToMove = unit.pixelDistanceEdge(target) > tryingToMoveThreshold
     if (unit.agent.ride.contains(target)) {
@@ -375,9 +393,12 @@ object Commander {
     // approaches routed, while allowing nearby rescues to interrupt a retreat.
     if (target.friendly.exists(t => Protoss.Shuttle(t) && unit.isOurs && !unit.flying && unit.pixelDistanceCenter(t) > 384)) {
       if (unit.order == Orders.EnterTransport) stop(unit) else doNothing(unit)
+
       return
     }
+
     if ( ! Zerg.Lurker(unit) && autoUnburrow(unit)) return
+
     unit.bwapiUnit.rightClick(target.bwapiUnit)
     sleepAttack(unit)
   }
@@ -385,11 +406,14 @@ object Commander {
   def useTech(unit: FriendlyUnitInfo, tech: Tech): Unit = {
     if (tech == Terran.Stim) {
       if (With.framesSince(unit.agent.lastStim) < 24) return
+
       unit.agent.lastStim = With.frame
     }
+
     if (unit.unready)       return
     if (autoUnburrow(unit)) return
     if (autoUnload(unit))   return
+
     unit.bwapiUnit.useTech(tech.bwapiTech)
     sleep(unit)
   }
@@ -399,6 +423,7 @@ object Commander {
     if (unit.unready)       return
     if (autoUnburrow(unit)) return
     if (autoUnload(unit))   return
+
     unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapiUnit)
     if (tech == Protoss.ArchonMeld || tech == Protoss.DarkArchonMeld) {
       sleep(unit, 48)
@@ -412,6 +437,7 @@ object Commander {
     if (unit.unready)       return
     if (autoUnburrow(unit)) return
     if (autoUnload(unit))   return
+
     unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapi)
     if (tech == Terran.SpiderMinePlant) {
       sleep(unit, 12)
@@ -426,6 +452,7 @@ object Commander {
     if (unit.unready)       return
     if (autoUnburrow(unit)) return
     if (autoUnload(unit))   return
+
     unit.bwapiUnit.repair(target.bwapiUnit)
     sleep(unit, 24)
   }
@@ -434,6 +461,7 @@ object Commander {
     if (unit.unready)       return
     if (autoUnburrow(unit)) return
     if (autoUnload(unit))   return
+
     if (unit.carrying) {
       unit.bwapiUnit.returnCargo()
       sleepReturnCargo(unit)
@@ -446,6 +474,7 @@ object Commander {
     if (unit.unready)       return
     if (autoUnburrow(unit)) return
     if (autoUnload(unit))   return
+
     if (unit.carrying) {
       // Spamming return cargo can cause path wobbling
       if ( ! Vector(Orders.ResetCollision, Orders.ReturnMinerals, Orders.ReturnGas).contains(unit.order)) {
@@ -525,8 +554,10 @@ object Commander {
     if (unit.unready)       return
     if (autoUnburrow(unit)) return
     if (autoUnload(unit))   return
+
     if (unit.pixelDistanceSquared(tile.center) > Math.pow(32.0 * 5.0, 2)) {
       move(unit, tile.center)
+
       return
     }
 
@@ -540,18 +571,21 @@ object Commander {
 
   def tech(unit: FriendlyUnitInfo, tech: Tech): Unit = {
     if (unit.unready) return
+
     unit.bwapiUnit.research(tech.bwapiTech)
     sleep(unit)
   }
 
   def upgrade(unit: FriendlyUnitInfo, upgrade: Upgrade): Unit = {
     if (unit.unready) return
+
     unit.bwapiUnit.upgrade(upgrade.bwapiType)
     sleep(unit)
   }
 
   def cancel(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
+
     if (unit.teching) {
       unit.bwapiUnit.cancelResearch()
     } else if (unit.upgrading) {
@@ -566,6 +600,7 @@ object Commander {
 
   def rally(unit: FriendlyUnitInfo, pixel: Pixel): Unit = {
     if (unit.unready) return
+
     unit.bwapiUnit.setRallyPoint(pixel.bwapi)
     unit.lastSetRally = With.frame
     sleep(unit)
@@ -582,12 +617,14 @@ object Commander {
 
   def addon(unit: FriendlyUnitInfo, unitClass: UnitClass): Unit = {
     if (unit.unready) return
+
     unit.bwapiUnit.buildAddon(unitClass.bwapiType)
     sleep(unit)
   }
 
   def buildScarab(unit: FriendlyUnitInfo, count: Int = 1): Unit = {
     if (unit.unready) return
+
     var queued = 0
     while (queued < count && unit.bwapiUnit.build(Protoss.Scarab.bwapiType)) queued += 1
     if (queued > 0) sleep(unit)
@@ -595,6 +632,7 @@ object Commander {
 
   def buildInterceptor(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
+
     unit.bwapiUnit.build(Protoss.Interceptor.bwapiType)
     sleep(unit)
   }
@@ -602,6 +640,7 @@ object Commander {
   def cloak(unit: FriendlyUnitInfo, tech: Tech): Unit = {
     leadFollower(unit, cloak(_, tech))
     if (unit.unready) return
+
     unit.agent.lastCloak = With.frame
     unit.bwapiUnit.cloak()
     sleep(unit)
@@ -610,30 +649,35 @@ object Commander {
   def decloak(unit: FriendlyUnitInfo, tech: Tech): Unit = {
     leadFollower(unit, decloak(_, tech))
     if (unit.unready) return
+
     unit.bwapiUnit.decloak()
     sleep(unit)
   }
 
   def burrow(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
+
     unit.bwapiUnit.burrow()
     sleep(unit)
   }
 
   def unburrow(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
+
     unit.bwapiUnit.unburrow()
     sleep(unit)
   }
 
   def lift(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
+
     unit.bwapiUnit.lift()
     sleep(unit)
   }
 
   def land(unit: FriendlyUnitInfo, tile: Tile): Unit = {
     if (unit.unready) return
+
     val destination = unit.unitClass.tileArea.add(tile).center
     if (unit.pixelDistanceCenter(destination) > 2) {
       unit.bwapiUnit.move(destination.bwapi)
@@ -646,6 +690,7 @@ object Commander {
   def defaultEscalation(unit: FriendlyUnitInfo): Unit = {
     lazy val buildDistance = unit.pixelDistanceCenter(unit.intent.toBuildActive.map(b => b.unitClass.tileArea.add(b.tile).center).get)
     if (unit.flying) return
+
     if (unit.intent.toScoutTiles.nonEmpty)                      unit.agent.escalatePriority(TrafficPriorities.Pardon)
     if (unit.intent.toFinish.isDefined)                         unit.agent.escalatePriority(TrafficPriorities.Bump)
     if (unit.intent.toHeal.isDefined)                           unit.agent.escalatePriority(TrafficPriorities.Bump)
@@ -660,6 +705,7 @@ object Commander {
 
   private def push(unit: FriendlyUnitInfo,  minimumPriority: TrafficPriority, makePush: => Push): Unit = {
     if (unit.flying) return
+
     unit.agent.escalatePriority(minimumPriority)
     defaultEscalation(unit)
     if (unit.agent.priority > TrafficPriorities.Freedom) {
@@ -678,6 +724,7 @@ object Commander {
   private def autoUnburrow(unit: FriendlyUnitInfo): Boolean = {
     if (unit.unready) return false
     if ( ! unit.burrowed) return false
+
     unburrow(unit)
     true
   }
@@ -685,6 +732,7 @@ object Commander {
   private def autoUnload(unit: FriendlyUnitInfo): Boolean = {
     if (unit.unready) return false
     if (unit.transport.isEmpty) return false
+
     requestUnload(unit)
     true
   }
@@ -733,3 +781,5 @@ object Commander {
     }
   }
 }
+
+

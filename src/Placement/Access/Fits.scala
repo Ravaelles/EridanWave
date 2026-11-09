@@ -40,6 +40,7 @@ trait Fits {
   }
   protected def index(incoming: Foundation): Unit = {
     if ( ! incoming.tile.valid) return
+
     val foundation: Foundation = get(incoming.tile)
       .filter(_.point.requirement.sameOccupancyAs(incoming.point.requirement))
       .map(previous => incoming.copy(point = incoming.point.copy(
@@ -55,6 +56,7 @@ trait Fits {
     byTile(foundation.tile.i) = Some(foundation)
     if ( ! requirement.buildableBefore) return
     if (   requirement.buildableAfter)  return
+
     _foundations += foundation
     put(byDimensions, foundation.point.requirement.dimensions,  foundation)
     put(byZone,       foundation.tile.zone,                     foundation)
@@ -80,3 +82,4 @@ trait Fits {
     byLabelYes    .foreach(b => Maff.sortStablyInPlaceBy(b._2)(_.order))
   }
 }
+

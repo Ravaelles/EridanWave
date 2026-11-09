@@ -75,6 +75,7 @@ object FindBases {
         .filter(isLegalTownHallTile(_, exclusions, altitude))
     
     if (candidates.isEmpty) return None
+
     Some(candidates.minBy(cost(_, resources)))
   }
   
@@ -94,6 +95,7 @@ object FindBases {
       : Boolean = {
     
     if ( ! candidate.valid) return false
+
     val buildingArea = Protoss.Nexus.tileArea.add(candidate)
  
     buildingArea.tiles
@@ -122,3 +124,4 @@ object FindBases {
     output
   }
 }
+

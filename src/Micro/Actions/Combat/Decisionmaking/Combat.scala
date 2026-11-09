@@ -127,6 +127,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     if (shouldEngage            && Brawl(unit))   return
     if (technique == Abuse      && abuse())       return
     if (technique == SuperKite  && superkite())   return
+
     if (shouldEngage            && engage())      {}
   }
 
@@ -171,12 +172,14 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     if (target.isEmpty) return false
     if (unit.unitClass.melee) return true
     if (?(unit.airlifted, 0, unit.framesToBeReadyForAttackOrder(target.get)) > unit.framesToGetInRange(target.get) + 4) return false
+
     true
   }
 
   protected val confidenceChaseThreshold = 0.25
   protected def getIdealTargetDistance: Double = {
     if (target.isEmpty) return 0.0
+
     val t = target.get
     lazy val distance           = unit.pixelDistanceEdge(t)
     lazy val range              = unit.pixelRangeAgainst(t)
@@ -260,6 +263,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
 
   def tryDodge(): Boolean = {
     if ( ! unit.ready || ! unit.canMove || unit.loaded || unit.agent.receivedPushPriority() < TrafficPriorities.Dodge) return false
+
     technique = Dodge
     unit.agent.act(technique.toString)
     dodge()
@@ -324,11 +328,14 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     if (With.yolo.active) return false
     if (unit.unitClass.melee || ! unit.canMove) return false
     if (unit.formationEngage.isEmpty) return false
+
     val nearest = unit.matchups.targetNearest
     if (nearest.isEmpty) return false
+
     val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
     val enemyInMargin = squadUnits.exists(_.canAnyEnemyAttackUsWithMargin(KiteAway.enemyMarginTiles))
     if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.woundPercent(), unit.cooldownLeft, enemyInMargin)) return false
+
     unit.agent.act("KiteAway")
     val offsetPixels = KiteAway.woundOffsetTiles(unit.woundPercent()) * 32
     unit.agent.decision.set(unit.pixel.project(nearest.get.pixel, -offsetPixels).walkablePixel)
@@ -340,10 +347,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     if (With.yolo.active) return false
     if (unit.unitClass.melee) return false
     if (unit.formationEngage.isEmpty || unit.formationEngage.exists(_.flanking)) return false
+
     val nearest = unit.matchups.targetNearest
     if (nearest.isEmpty) return false
+
     val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
     if (squadUnits.exists(_.canAnyEnemyAttackUsWithMargin(FightRules.contactMarginTiles))) return false
+
     FormationApproach.decide(
       unit.pixelsToGetInRange(nearest.get) / 32.0,
       unit.squad.flatMap(_.lineStats),
@@ -571,3 +581,4 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     unit.unready
   }
 }
+

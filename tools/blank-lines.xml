@@ -24,4 +24,7 @@
     <property name="format" value="^[ \t]*(?![}/\*]|else\b|case\b)(?:[^\n]*[^=&gt;\s{:}])[ \t]*\n[ \t]*return\b[^\n]*\n[ \t]*\}"/>
     <property name="message" value="Return must be preceded by a blank line (final return)."/>
   </rule>
+  <rule name="IfWithReturnFollowedByBlank" type="structural">
+    <property name="message" value="If block with return must be followed by a blank line."/>
+  </rule>
 </blank-lines>

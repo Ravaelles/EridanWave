@@ -23,6 +23,7 @@ class SquadAcePilots extends Squad {
   override def launch(): Unit = {
     if ( ! With.blackboard.acePilots()) return
     if (With.yolo.active) return
+
     lock.acquire()
   }
 
@@ -66,6 +67,7 @@ class SquadAcePilots extends Squad {
         .maxBy(_.targets.get.count(IsFlyingWarrior))
       activity = "AceHelpSquad"
       followSquad(squad)
+
       return
     }
 
@@ -76,6 +78,7 @@ class SquadAcePilots extends Squad {
     if (requireFleet && ! hasFleet) {
       activity = "AceChill"
       chill()
+
       return
     }
 
@@ -92,6 +95,7 @@ class SquadAcePilots extends Squad {
       activity = "AceAir2Air"
       vicinity = airDivision.get.centroidAir
       SquadAutomation.targetAndSend(this)
+
       return
     }
 
@@ -100,6 +104,7 @@ class SquadAcePilots extends Squad {
     if (squadsFacingDetection.nonEmpty) {
       activity = "AceCloakDT"
       followSquad(squadsFacingDetection.minBy(_.centroidAir.pixelDistanceSquared(centroidAir)))
+
       return
     }
 
@@ -108,6 +113,7 @@ class SquadAcePilots extends Squad {
     if (dropMissions.nonEmpty) {
       activity = "AceEscortDrop"
       followSquad(dropMissions.maxBy(_.duration))
+
       return
     }
 
@@ -124,6 +130,7 @@ class SquadAcePilots extends Squad {
         activity = "Bombing"
         vicinity = bombingTarget.get._1.heart.center
         SquadAutomation.targetAndSend(this)
+
         return
       }
     }
@@ -140,6 +147,7 @@ class SquadAcePilots extends Squad {
       vicinity  = base.townHallArea.center
       setTargets(Iterable.empty)
       SquadAutomation.send(this)
+
       return
     }
 
@@ -149,6 +157,7 @@ class SquadAcePilots extends Squad {
       activity = "AceHunt"
       vicinity = nearestFlier.get.pixel
       SquadAutomation.targetAndSend(this)
+
       return
     }
 
@@ -172,6 +181,7 @@ class SquadAcePilots extends Squad {
         .minBy(_.enemies.count(_.canAttackAir))
       vicinity = base.townHallArea.center
       SquadAutomation.targetAndSend(this)
+
       return
     }
 
@@ -203,3 +213,4 @@ class SquadAcePilots extends Squad {
     SquadAutomation.send(this)
   }
 }
+

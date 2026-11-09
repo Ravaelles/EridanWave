@@ -25,8 +25,10 @@ class PvRReaver extends GameplanImperative {
     }
     if (transition.isDefined) {
       transition.get.executeBuild()
+
       return
     }
+
     once(8, Protoss.Probe)
     once(Protoss.Pylon)
     once(10, Protoss.Probe)
@@ -105,8 +107,10 @@ class PvRReaver extends GameplanImperative {
   override def executeMain(): Unit = {
     if (transition.isDefined) {
       transition.get.executeMain()
+
       return
     }
+
     if (enemyIsTerran)  terranMain()
     if (enemyIsProtoss) protossMain()
     if (enemyIsZerg)    zergMain()
@@ -190,3 +194,5 @@ class PvRReaver extends GameplanImperative {
     pumpGasPumps()
   }
 }
+
+

@@ -244,6 +244,7 @@ final class Simulacrum(val realUnit: UnitInfo) extends CombatUnit {
 
   @inline def move(goal: => Pixel, reason: => Option[String], goalDistance: Double = 0): Unit = {
     if (cooldownMoving > 0) return
+
     val ableToMove = canMove && topSpeed > 0
     val destination = if (ableToMove || simulation.battle.logSimulation) goal else null
     if (ableToMove) {
@@ -318,3 +319,4 @@ final class Simulacrum(val realUnit: UnitInfo) extends CombatUnit {
 
   override def toString: String = f"$describe $hitPoints/${unitClass.maxHitPoints} ${if (shieldPoints > 0) f"($shieldPoints/${unitClass.maxShields})" else  ""} $pixel"
 }
+

@@ -15,6 +15,7 @@ final class SimulationGridTile(val i: Int) {
 
   @inline def requestEntry(unit: Simulacrum, frame: Int): Unit = {
     if (unit.flying || unit.gridTile.contains(this) || ! tile.walkable) return
+
     val side = if (unit.isFriendlyCached) 1 else 2
     if ((frame & 1) == 0) {
       if (demandFrameEven != frame) demandSidesEven = 0
@@ -51,9 +52,11 @@ final class SimulationGridTile(val i: Int) {
     if (unit.flying) {
       return true
     }
+
     if (unit.gridTile.contains(this)) {
       return true
     }
+
     if ( ! tile.walkable) {
       return false
     }
@@ -66,3 +69,5 @@ final class SimulationGridTile(val i: Int) {
     true
   }
 }
+
+

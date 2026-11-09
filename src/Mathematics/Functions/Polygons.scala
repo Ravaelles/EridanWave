@@ -88,6 +88,7 @@ trait Polygons {
   @inline final def convexPolygonContains(points: Seq[AbstractPoint], point: AbstractPoint): Boolean = {
     // A point is inside a convex polygon if it is on the same side of each segment
     if (points.length < 3) return false
+
     var consensusSide: Option[Boolean] = None
     var i = 0
     while(i < points.length) {
@@ -99,6 +100,7 @@ trait Polygons {
         consensusSide = consensusSide.orElse(Some(binarySide))
         if ( ! consensusSide.contains(binarySide)) return false
       }
+
       i += 1
     }
     true
@@ -122,6 +124,7 @@ trait Polygons {
     val b1y = b.view.map(_.y).max
     // Fast bounds check
     if ( ! Maff.rectanglesIntersect(a0x, a0y, a1x, a1y, b0x, b0y, b1x, b1y)) return false
+
     var i0 = 0
     while (i0 < a.length) {
       val i1 = (i0 + 1) % a.length
@@ -139,8 +142,10 @@ trait Polygons {
         j += 1
       }
       if (j == b.length) { // Hitting sentinel value means all points from b are on the same side of a0-a1, meaning that the polygons don't intersect
+
         return false
       }
+
       i0 += 1
     }
     true
@@ -217,3 +222,5 @@ trait Polygons {
     sortedStart.view.take(sortedEnd.length).zipWithIndex.map(p => (p._1._1, sortedEnd(p._2)._1))
   }
 }
+
+

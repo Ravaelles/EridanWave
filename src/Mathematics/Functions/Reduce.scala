@@ -48,6 +48,7 @@ trait Reduce extends ReduceMacroForwarders {
     var i = 0
     while (i < x.length - 1) {
       if (x(i).nonEmpty) return x(i)
+
       i += 1
     }
     x.last
@@ -186,6 +187,7 @@ trait Reduce extends ReduceMacroForwarders {
 
   @inline final def centroid(values: TraversableOnce[Pixel]): Pixel = {
     if (values.isEmpty) return Points.middle
+
     var x, y, size: Int = 0
     values.foreach(v => { x += v.x; y += v.y; size += 1 })
     Pixel(x / size, y / size)
@@ -193,6 +195,7 @@ trait Reduce extends ReduceMacroForwarders {
 
   @inline final def centroidTiles(values: TraversableOnce[Tile]): Tile = {
     if (values.isEmpty) return Points.tileMiddle
+
     var x, y, size: Int = 0
     values.foreach(v => { x += v.x; y += v.y; size += 1 })
     Tile(x / size, y / size)
@@ -200,12 +203,14 @@ trait Reduce extends ReduceMacroForwarders {
 
   @inline final def exemplar(values: Traversable[Pixel]): Pixel = {
     if (values.isEmpty) return Points.middle
+
     val valuesCentroid = centroid(values)
     values.minBy(_.pixelDistanceSquared(valuesCentroid))
   }
 
   @inline final def exemplarTiles(values: Traversable[Tile]): Tile = {
     if (values.isEmpty) return Points.tileMiddle
+
     val valuesCentroid = centroidTiles(values)
     values.minBy(_.pixelDistance(valuesCentroid))
   }
@@ -226,6 +231,7 @@ trait Reduce extends ReduceMacroForwarders {
 
   @inline final def weightedCentroid(values: Traversable[(Pixel, Double)]): Pixel = {
     if (values.isEmpty) return Points.middle
+
     var x, y, d: Double = 0
     values.foreach(v => { x += v._1.x * v._2;  y += v._1.y * v._2;  d += v._2 })
     Pixel((x / d).toInt, (y / d).toInt)
@@ -242,3 +248,4 @@ trait Reduce extends ReduceMacroForwarders {
     minBy(closestValues)(_._1.pixelDistanceSquared(centroidAll)).map(_._1).getOrElse(Points.middle)
   }
 }
+

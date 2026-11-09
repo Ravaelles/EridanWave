@@ -58,6 +58,7 @@ trait Approximate {
   @inline final def fastTanh11(x: Double): Double = {
     if (x.isPosInfinity) return 1.0
     if (x.isNegInfinity) return -1.0
+
     x / (1.0 + Math.abs(x))
   }
 
@@ -77,3 +78,4 @@ trait Approximate {
     }
   }
 }
+

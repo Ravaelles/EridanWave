@@ -208,6 +208,7 @@ final class Simulation(val collisionEnabled: Boolean = true) {
   @volatile var simulatingAsynchronously = false
   def runAsynchronously(): Unit = wakeup.synchronized {
     if (terminateThread) return
+
     if (thread == null) {
       thread = new Thread(() => {
         while ( ! terminateThread) {
@@ -244,3 +245,4 @@ final class Simulation(val collisionEnabled: Boolean = true) {
     wakeup.notifyAll()
   }
 }
+

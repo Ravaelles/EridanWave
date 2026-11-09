@@ -33,7 +33,8 @@ def load_rules(path):
     rules = []
     for rule in root.findall("rule"):
         props = {p.get("name"): p.get("value") for p in rule.findall("property")}
-        rules.append((rule.get("name"), re.compile(props["format"], re.M), props["message"]))
+        pattern = re.compile(props["format"], re.M) if "format" in props else None
+        rules.append((rule.get("name"), pattern, props["message"]))
     return rules
 
 
@@ -41,10 +42,68 @@ def check_file(path, rules):
     text = open(path, encoding="utf-8", errors="replace").read()
     hits = []
     for name, pattern, message in rules:
+        if pattern is None:
+            if name == "IfWithReturnFollowedByBlank":
+                hits.extend(structural_if_hits(text))
+            continue
         for match in pattern.finditer(text):
             line = text.count("\n", 0, match.start()) + 1
             hits.append((line, name, message))
     return sorted(hits)
+
+
+def structural_if_hits(text):
+    """Brace-aware scan (regex cannot match nesting): a closing brace that
+    ends an `if` block containing a `return`, followed by real code.
+    Exempt: blank, closing brace, else/catch/finally/while continuations
+    and comment-only lines - same noise class as the regex rules."""
+    body = text.replace("\r\n", "\n")
+    rows = body.split("\n")
+    try:
+        spans = code_spans(body)
+    except Exception:
+        return []
+    hits = []
+    token_re = re.compile(r"\(|\)|\[|\]|\{|\}|\bif\b|\breturn\b")
+    stack = []  # [is_if_block, has_return]
+    pending_if = False
+    paren_depth = 0
+    offset = 0
+    for lineno, row in enumerate(rows, start=1):
+        for seg_start, seg_end in spans.get(lineno, []):
+            seg = row[seg_start - offset:seg_end - offset]
+            for match in token_re.finditer(seg):
+                tok = match.group(0)
+                if tok == "if":
+                    pending_if = True
+                elif tok in ("(", "["):
+                    paren_depth += 1
+                elif tok in (")", "]"):
+                    paren_depth = max(0, paren_depth - 1)
+                elif tok == "{":
+                    stack.append([pending_if, False])
+                    pending_if = False
+                elif tok == "}":
+                    if stack:
+                        is_if, has_return = stack.pop()
+                        rest = stripped_code(row[seg_start - offset + match.end():])
+                        if is_if and has_return and not rest:
+                            nxt = rows[lineno].strip() if lineno < len(rows) else ""
+                            if (nxt
+                                    and not nxt.startswith("}")
+                                    and not re.match(r"(else|catch|finally|while)\b", nxt)
+                                    and not nxt.startswith("//")
+                                    and not nxt.startswith("/*")
+                                    and not nxt.startswith("*")):
+                                hits.append((lineno, "IfWithReturnFollowedByBlank",
+                                             "If block with return must be followed by a blank line."))
+                elif tok == "return":
+                    for frame in stack:
+                        frame[1] = True
+        if paren_depth == 0:
+            pending_if = False
+        offset += len(row) + 1
+    return hits
 
 
 def collect_files(targets):
@@ -206,12 +265,21 @@ def apply_fixes(files, rules):
             endings = endings[:len(rows)]
         hits = []
         for _name, pattern, _message in rules:
+            if pattern is None:
+                if _name == "IfWithReturnFollowedByBlank":
+                    hits.extend(structural_if_hits(text))
+                continue
             for match in pattern.finditer(body):
                 hits.append((body.count("\n", 0, match.start()) + 1, _name))
         inserts = set()
-        for lineno, name in hits:
-            if name in ("ReturnFollowedByBlank", "ReturnFollowedByBlankGuard"):
-                if not has_real_return(body, spans, lineno):
+        for hit in hits:
+            lineno, name = hit[0], hit[1]
+            if name in ("ReturnFollowedByBlank", "ReturnFollowedByBlankGuard",
+                        "IfWithReturnFollowedByBlank"):
+                # IfWithReturnFollowedByBlank hits are brace-verified by the
+                # structural scan itself; the return rules need a real
+                # `return` keyword outside strings/comments.
+                if name != "IfWithReturnFollowedByBlank" and not has_real_return(body, spans, lineno):
                     print("  [apply] SKIP %s:%d: no real return outside strings/comments" % (path, lineno))
                     skipped += 1
                     continue

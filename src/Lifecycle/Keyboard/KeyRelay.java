@@ -48,16 +48,20 @@ public final class KeyRelay {
         if (override != null && !override.trim().isEmpty()) {
             return new File(override.trim());
         }
+
         File shared = new File(gameRootDir() + "/bwapi-data/write/keys.txt");
         if (shared.getParentFile().isDirectory()) {
             return shared;
         }
+
         File direct = new File("out/wine/keys.txt");
         if (direct.getParentFile().isDirectory()) {
             return direct;
         }
+
         File fallback = new File(System.getProperty("user.dir", ".") + "/out/wine/keys.txt");
         fallback.getParentFile().mkdirs();
+
         return fallback;
     }
 
@@ -75,10 +79,12 @@ public final class KeyRelay {
         if (gameRoot != null && !gameRoot.trim().isEmpty()) {
             return gameRoot.trim();
         }
+
         gameRoot = System.getenv("PURPLEWAVE_GAME_ROOT");
         if (gameRoot != null && !gameRoot.trim().isEmpty()) {
             return gameRoot.trim();
         }
+
         if (winePrefix == null || winePrefix.trim().isEmpty()) {
             winePrefix = System.getProperty("user.home", ".") + "/.wine";
         } else {
@@ -120,6 +126,7 @@ public final class KeyRelay {
         List<long[]> codes = new ArrayList<>();
         File file = file();
         if (!file.isFile()) return codes;
+
         try {
             for (String line : Files.readAllLines(file.toPath(), StandardCharsets.UTF_8)) {
                 try {
@@ -140,3 +147,5 @@ public final class KeyRelay {
         return codes;
     }
 }
+
+

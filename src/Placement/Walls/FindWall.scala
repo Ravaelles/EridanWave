@@ -12,6 +12,7 @@ object FindWall {
     // No bases on UMS maps means nothing to wall; skip the search entirely
     // instead of recomputing (and re-logging) failures every frame.
     if (With.umsMode) return None
+
     val wallFinderOption =
       if      (With.self.isProtoss) protoss(zone)
       else if (With.self.isTerran)  terran(zone)
@@ -84,3 +85,4 @@ object FindWall {
     Some(wallFinder)
   }
 }
+

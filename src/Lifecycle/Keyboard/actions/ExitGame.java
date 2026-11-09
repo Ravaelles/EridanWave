@@ -24,10 +24,14 @@ public final class ExitGame implements KeyAction {
             ProcessHelper.sleep(500);
             ProcessHelper.killStarcraft();
             ProcessHelper.killChaosLauncher();
+
             return;
         }
+
         ProcessHelper.killStarcraft();
         ProcessHelper.killChaosLauncher();
         System.exit(0);
     }
 }
+
+

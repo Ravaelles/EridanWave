@@ -16,6 +16,7 @@ object TuningProposer {
     random: java.util.Random): Map[String, Double] = {
     val ranked = TuningHallOfFame.rank(hallOfFame)
     if (ranked.isEmpty) return Map.empty
+
     val champion = ranked.head.vector
     strategy.params.map(param => {
       val span = param.max - param.min
@@ -34,3 +35,4 @@ object TuningProposer {
     }).mkString("\n") + "\n"
   }
 }
+

@@ -27,6 +27,7 @@ class SquadAttack extends Squad {
   var stance: RegroupLatch.Stance = RegroupLatch.Engaged
   override def fightConsensus: Boolean = {
     if (stance == RegroupLatch.Regrouping) return false
+
     super.fightConsensus || mode == HuntContact
   }
 
@@ -170,6 +171,7 @@ class SquadAttack extends Squad {
   // milling around, and followers stop flip-flopping between termini.
   private def huntDestination: Option[Pixel] = {
     if ( ! shouldHuntContact) { huntPixel = None; return None }
+
     val contact = freshestFoggedContact.map(c => (c.pixel, c.lastSeen))
     val (target, setFrame) = HuntLogic.refresh(
       huntPixel,
@@ -259,3 +261,4 @@ class SquadAttack extends Squad {
     }
   }
 }
+

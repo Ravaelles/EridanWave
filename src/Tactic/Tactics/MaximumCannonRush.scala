@@ -61,6 +61,7 @@ class MaximumCannonRush extends Tactic {
   def cannonProtectionTiles(cannon: Tile, attacker: UnitClass): Set[Tile] = {
     val cannonRange = Protoss.PhotonCannon.pixelRangeGround
     if (! attacker.attacksGround || attacker.pixelRangeGround > cannonRange) return Set.empty
+
     val cannonBox = unitBox(cannon, Protoss.PhotonCannon)
     val radius = Math.ceil(cannonRange / 32.0).toInt + 1
     (cannon.x - radius to cannon.x + radius).flatMap(x =>
@@ -105,6 +106,7 @@ class MaximumCannonRush extends Tactic {
           .takeN(lock.units.size, With.scouting.baseIntrigue)(Ordering.by(_._2))
           .map(_._1),
         lock.units.toVector)
+
       return
     }
 
@@ -222,3 +224,4 @@ class MaximumCannonRush extends Tactic {
     })
   }
 }
+

@@ -25,9 +25,11 @@ class MissionStormDrop extends MissionDrop {
     vicinity = itinerary.headOption.map(_.heart).getOrElse(With.scouting.enemyHome).center
     transportLock.setPreference(PreferClose(vicinity)).acquire()
     if (transportLock.units.isEmpty) { terminate("No transports available"); return }
+
     val transportPixel = transportLock.units.head.pixel
     stormLock.setPreference(PreferClose(transportPixel)).acquire()
     if (stormLock.units.isEmpty) { terminate("No storms available"); return }
+
     zealotLock
       .setCounter(CountUpTo(4 - stormLock.units.size))
       .setPreference(PreferClose(transportPixel))
@@ -45,3 +47,4 @@ class MissionStormDrop extends MissionDrop {
     passengers.foreach(_.agent.commit = true)
   }
 }
+

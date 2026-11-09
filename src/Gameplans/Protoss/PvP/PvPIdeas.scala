@@ -76,6 +76,7 @@ object PvPIdeas extends MacroActions {
       if ( ! auditing) { makeObservers() }
       return true
     }
+
     var expectEarliestArrival = enemyDarkTemplarLikely || With.fingerprints.rampBlock()
     if (have(Protoss.Forge)) {
       expectEarliestArrival ||= enemyRecentStrategy(With.fingerprints.dtRush)
@@ -106,6 +107,7 @@ object PvPIdeas extends MacroActions {
         || (cannonsAreReady && enemyHasShown(Protoss.DarkTemplar) && ! With.geography.ourFoyer.ourUnits.exists(Protoss.PhotonCannon))) // We need to leave our base sooner rather than later
 
     if (auditing) return goObserver
+
     status(enemyContained,          "Containing")
     status(enemyDarkTemplarLikely, f"ExpectDT@${Frames(expectedArrival)}")
 
@@ -196,3 +198,5 @@ object PvPIdeas extends MacroActions {
         .preferLabelYes(Wall, DefendGround, label))))
   }
 }
+
+

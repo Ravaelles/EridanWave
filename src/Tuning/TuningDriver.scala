@@ -40,6 +40,7 @@ object TuningDriver {
 
       return
     }
+
     if (outPath.getParent != null) Files.createDirectories(outPath.getParent)
     Files.write(outPath, TuningProposer.formatFragment(proposal, strategy).getBytes(StandardCharsets.UTF_8),
       StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
@@ -58,3 +59,4 @@ object TuningDriver {
     }).toMap
   }
 }
+

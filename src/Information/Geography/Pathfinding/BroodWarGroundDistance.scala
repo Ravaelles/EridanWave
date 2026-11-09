@@ -45,6 +45,7 @@ final class BroodWarGroundDistance(graph: Array[BroodWarGroundDistance.Region], 
   // Cache exact endpoints: BW uses them to select a route, so a region-pair cache is unsound.
   def pixels(from: Pixel, to: Pixel): Int = synchronized {
     if (from.x < 0 || from.y < 0 || to.x < 0 || to.y < 0 || (from.x | from.y | to.x | to.y) > 65535) return unreachable
+
     val key = (from.x.toLong << 48) | (from.y.toLong << 32) | (to.x.toLong << 16) | to.y.toLong
     if (cache.size >= 4096) cache.clear()
     cache.getOrElseUpdate(key, search(from, to, regionAt(from), regionAt(to)))
@@ -54,6 +55,7 @@ final class BroodWarGroundDistance(graph: Array[BroodWarGroundDistance.Region], 
     def valid(id: Int): Boolean = id >= 0 && id < graph.length && graph(id) != null
     if (!valid(source) || !valid(target) || graph(source).group != graph(target).group) return unreachable
     if (source == target) return length(to.x - from.x, to.y - from.y)
+
     generation += 1
     if (generation == 0) { java.util.Arrays.fill(seen, 0); generation = 1 }
     var count = 0
@@ -137,6 +139,7 @@ final class BroodWarGroundDistance(graph: Array[BroodWarGroundDistance.Region], 
     // BW retains at most the first 50 regions of a long path.
     while (nodes > 50) { goal = parent(goal); nodes -= 1 }
     if (nodes <= 2) return length(to.x - from.x, to.y - from.y)
+
     var distance = 0
     cursor = goal
     while (parent(cursor) >= 0) {
@@ -148,3 +151,4 @@ final class BroodWarGroundDistance(graph: Array[BroodWarGroundDistance.Region], 
     distance
   }
 }
+

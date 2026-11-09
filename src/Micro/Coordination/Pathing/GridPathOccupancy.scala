@@ -19,6 +19,7 @@ class GridPathOccupancy extends AbstractGridVersionedValue[Int] {
   val neighborRatio = 0.25
   def addUnit(unit: UnitInfo, destination: Tile): Unit = {
     if (unit.airborne) return
+
     val neighborArea = (neighborRatio * unit.unitClass.sqrtArea).toInt
     add(destination, unit.unitClass.sqrtArea)
     add(destination.add(1, 0),  neighborArea)

@@ -48,8 +48,10 @@ final case class Pixel(argX: Int, argY: Int) extends AbstractPoint(argX, argY) {
   }
   @inline def project(destination: Pixel, pixels: Double): Pixel = {
     if (pixels == 0) return this
+
     val distance = pixelDistance(destination)
     if (distance == 0) return this
+
     val delta = destination.subtract(this)
     delta.multiply(pixels/distance).add(this)
   }
@@ -203,8 +205,11 @@ final case class Pixel(argX: Int, argY: Int) extends AbstractPoint(argX, argY) {
     if (zone == to.zone) {
       return new Force(to.subtract(this)).normalize
     }
+
     tile.flowTo(to.tile)
   }
 
   override def toString: String = f"[$x, $y](${Maff.signum101(x) * Math.abs(x / 32)}, ${Maff.signum101(y) * Math.abs(y / 32)})"
 }
+
+

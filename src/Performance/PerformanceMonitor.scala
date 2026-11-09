@@ -74,8 +74,10 @@ class PerformanceMonitor {
 
   def parseCommand(value: String): Boolean = {
     if ( ! value.startsWith("f")) return false
+
     val duration  = """\d+""".r.findFirstIn(value).map(_.toInt)
     duration.foreach(With.configuration.frameLimitMs = _)
     duration.nonEmpty
   }
 }
+

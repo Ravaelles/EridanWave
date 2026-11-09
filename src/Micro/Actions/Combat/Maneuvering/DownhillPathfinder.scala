@@ -24,6 +24,7 @@ object DownhillPathfinder {
 
     while (path.length < MicroPathing.waypointDistanceTiles) {
       if (here == to) return Some(path)
+
       var bestDistance = distance(here)
       var bestTile = here
       var iDirection = 0
@@ -39,6 +40,7 @@ object DownhillPathfinder {
         iDirection += 1
       }
       if (bestTile == here) return None
+
       path += bestTile
       firstDirection = iDirection + 1
     }

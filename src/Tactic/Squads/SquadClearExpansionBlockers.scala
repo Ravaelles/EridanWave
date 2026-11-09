@@ -30,6 +30,7 @@ class SquadClearExpansionBlockers extends Squad {
     if (target.isEmpty) {
       detectorLock.release()
       sweeperLock.release()
+
       return
     }
 
@@ -47,8 +48,10 @@ class SquadClearExpansionBlockers extends Squad {
 
   def run(): Unit = {
     if (units.isEmpty) return
+
     setTargets(SquadAutomation.rankedAround(this))
     detectorLock.units.foreach(_.intend(this).setTerminus(vicinity))
     sweeperLock.units.foreach(_.intend(this).setTerminus(vicinity.add(randomPosition())))
   }
 }
+

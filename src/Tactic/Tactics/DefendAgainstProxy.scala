@@ -102,6 +102,7 @@ class DefendAgainstProxy extends Tactic {
     defenders.matcher = _.friendly.exists(defendersAssigned.contains)
     defenders.acquire()
     if (defenders.units.isEmpty) return
+
     val squad = new SquadRazeProxies(defendersAssigned.toMap)
     squad.addUnits(defenders.units)
   }
@@ -121,3 +122,4 @@ class DefendAgainstProxy extends Tactic {
     Zerg.Hatchery
   )
 }
+

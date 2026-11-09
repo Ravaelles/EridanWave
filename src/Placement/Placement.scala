@@ -32,12 +32,14 @@ class Placement extends Fitter {
 
   def initialize(): Unit = {
     if (_initialized) return
+
     _initialized = true
 
     PlacementCache.load(this) match {
       case Some(rewrite) =>
         if (rewrite) PlacementCache.write(this)
         return
+
       case None =>
     }
 
@@ -100,6 +102,7 @@ class Placement extends Fitter {
   private def preplaceZone(zone: Zone): Unit = {
     val bounds = zone.boundary
     if (bounds.cornerTilesInclusive.distinct.length < 4) return // Alchemist has a degenerate 1xN zone
+
     val exitTile          = zone.exitOriginal.map(_.pixelCenter.tile).getOrElse(zone.centroid)
     val tilesFront        = bounds.cornerTilesInclusive.sortBy(t => Math.min(Math.abs(t.x - exitTile.x), Math.abs(t.y - exitTile.y))).take(2)
     val tilesBack         = bounds.cornerTilesInclusive.filterNot(tilesFront.contains)
@@ -140,6 +143,7 @@ class Placement extends Fitter {
   private def fitProxyForwardRobo(natural: Base): Boolean = {
     if ( ! With.self.isProtoss) return false
     if ( ! With.enemies.exists(_.isProtoss)) return false
+
     val mainHeart     = natural.naturalOf.get.heart
     val naturalHeart  = natural.heart
     val exit          = natural.exitOriginal.get.pixelCenter.walkableTile
@@ -190,3 +194,4 @@ class Placement extends Fitter {
     matching.foreach(w => With.logger.debug(w.toString))
   }
 }
+

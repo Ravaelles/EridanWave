@@ -20,11 +20,13 @@ trait Sample {
 
   final def sampleWeighted[T](seq: Seq[T], extract: (T) => Double): Option[T] = {
     if (seq.isEmpty) return None
+
     val denominator = seq.map(extract).map(v => Math.max(v, 0)).sum
     val numerator   = Random.nextDouble() * denominator
     var passed      = 0.0
     var index       = 0
     if (denominator <= 0) return Some(sample(seq))
+
     for (value <- seq) {
       passed += Math.max(0, extract(value))
       if (passed > numerator) {
@@ -45,3 +47,4 @@ trait Sample {
     sampleWeighted[(T, Double)](softmaxed, v => v._2).map(_._1)
   }
 }
+

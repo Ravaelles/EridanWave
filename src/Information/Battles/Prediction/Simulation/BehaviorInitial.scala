@@ -7,43 +7,55 @@ object BehaviorInitial extends SimulacrumBehavior {
   @inline override def act(simulacrum: Simulacrum): Unit = {
     if (simulacrum.canMove && simulacrum.realUnit.friendly.exists( ! _.intent.canFight)) {
       simulacrum.doBehavior(BehaviorFlee)
+
       return
     }
+
     if (simulacrum.unitClass == Terran.Medic) {
       addOrganicAllies(simulacrum)
       if (simulacrum.targets.nonEmpty) {
         simulacrum.doBehavior(BehaviorHeal)
+
         return
       }
     }
+
     if (simulacrum.unitClass == Terran.SCV) {
       // TODO: Add repair targets
       if (simulacrum.targets.nonEmpty) {
         simulacrum.doBehavior(BehaviorRepair)
+
         return
       }
     }
+
     if (simulacrum.unitClass.isWorker) {
       if ( ! simulacrum.visible || simulacrum.realUnit.gathering || simulacrum.pixel.base.exists(b => b.owner == simulacrum.player && (b.harvestingArea.contains(simulacrum.pixel)))) {
         simulacrum.doBehavior(BehaviorGather)
         simulacrum.shouldScoreIfOurs = false
+
         return
       }
     }
+
     if (simulacrum.unitClass == Protoss.HighTemplar) {
       addStormTargets(simulacrum)
       if (simulacrum.targets.nonEmpty) {
         simulacrum.doBehavior(BehaviorStorm)
+
         return
       }
     }
+
     if (simulacrum.unitClass.isDetector && simulacrum.canMove) {
       addCloakedEnemies(simulacrum)
       if (simulacrum.targets.nonEmpty) {
         simulacrum.doBehavior(BehaviorDetect)
+
         return
       }
     }
+
     if (simulacrum.attacksAgainstAir > 0 || simulacrum.attacksAgainstGround > 0) {
       addAttackableEnemies(simulacrum)
     }
@@ -107,3 +119,5 @@ object BehaviorInitial extends SimulacrumBehavior {
     }
   }
 }
+
+

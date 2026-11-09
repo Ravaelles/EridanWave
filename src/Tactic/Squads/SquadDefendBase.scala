@@ -35,6 +35,7 @@ class SquadDefendBase(base: Base) extends Squad {
   def recruitWorkers(invaders: Seq[UnitInfo]): Unit = {
     if (With.frame >= Minutes(8)()) {
       workerLock.release()
+
       return
     }
     // Recruitment precedes prepareToRun; inspect this cycle's incoming assignments.
@@ -382,6 +383,7 @@ class SquadDefendBase(base: Base) extends Squad {
         } else {
           if (unit.pixel == pixel) {
             Commander.hold(unit)
+
             return
           } else if (unit.seeminglyStuck) {
             to = edgeToPlug().map(_._1.centroid.center.walkablePixel).getOrElse(pixel)
@@ -394,3 +396,4 @@ class SquadDefendBase(base: Base) extends Squad {
     }
   }
 }
+

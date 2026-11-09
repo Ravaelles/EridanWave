@@ -31,6 +31,7 @@ abstract class AbstractSearch extends Action {
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.matchups.threats.isEmpty && ! unit.intent.toScoutTiles.exists(_.explored)) {
       Commander.move(unit)
+
       return
     }
 
@@ -68,6 +69,7 @@ abstract class AbstractSearch extends Action {
           || tile.tileDistanceFast(base.townHallArea.midpoint) < 9.0))
   
     if (tilesToScout.isEmpty) return
+
     val force = tilesToScout.view.map(tile => Gravity(tile.center, With.grids.lastSeen.framesSince(tile))).map(_(unit.pixel)).reduce(_ + _)
 
     val target = unit.pixel.add(force.normalize(64.0).toPoint)
@@ -95,3 +97,4 @@ abstract class AbstractSearch extends Action {
     Commander.move(unit)
   }
 }
+

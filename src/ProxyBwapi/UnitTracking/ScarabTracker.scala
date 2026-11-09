@@ -13,6 +13,7 @@ final class ScarabTracker {
 
   def onUnitCreate(scarab: FriendlyUnitInfo, units: Iterable[FriendlyUnitInfo]): Unit = {
     if (!Protoss.Scarab(scarab)) return
+
     byReaver.retain((_, existing) => existing.alive)
 
     // BWAPI exposes launched Scarabs, but not their parent. Match only an unambiguous
@@ -24,3 +25,4 @@ final class ScarabTracker {
     if (candidates.size == 1) byReaver(candidates.head.id) = scarab
   }
 }
+

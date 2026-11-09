@@ -28,6 +28,7 @@ object BehaviorFight extends SimulacrumBehavior {
     // If no valid target, flee
     if (simulacrum.target.isEmpty) {
       simulacrum.doBehavior(BehaviorFlee)
+
       return
     }
 
@@ -58,6 +59,7 @@ object BehaviorFight extends SimulacrumBehavior {
             simulacrum.pixel,
             threat.get.pixelDistanceCenter(simulacrum) + freeDistance * 0.5),
           Some("Kiting"))
+
         return
       }
     }
@@ -109,3 +111,4 @@ object BehaviorFight extends SimulacrumBehavior {
     if (found) Some(output) else None
   }
 }
+

@@ -55,6 +55,7 @@ object Gather extends Action {
       // Help initial scout get home
       if (With.frame < Minutes(8)() && unit.metro.exists(_.bases.exists(_.isEnemy)) && unit.matchups.threats.exists( ! _.unitClass.melee) && unit.visibleToOpponents) {
         Commander.gather(unit)
+
         return
       }
 
@@ -140,3 +141,4 @@ object Gather extends Action {
     Commander.gather(unit)
   }
 }
+

@@ -8,6 +8,7 @@ import Utilities.Time.GameTime
 class FingerprintNFactories(thresholdFactories: Double) extends Fingerprint {
   override protected def investigate: Boolean = {
     if (With.frame < GameTime(5, 20)()) return false
+
     val discoveryRatio      = 1.0
     val factoryTimeObserved = With.units.everEnemy.filter(_.unitClass.whatBuilds._1 == Terran.Factory).map(_.unitClass.buildFrames).sum
     val machineShopExists   = With.enemies.exists(_.hasUpgrade(Terran.VultureSpeed)) || With.unitsShown.any(Terran.MachineShop, Terran.SpiderMine, Terran.SiegeTankUnsieged, Terran.SiegeTankSieged)
@@ -20,3 +21,4 @@ class FingerprintNFactories(thresholdFactories: Double) extends Fingerprint {
 
   override protected def lockAfter: Int = GameTime(8, 0)()
 }
+

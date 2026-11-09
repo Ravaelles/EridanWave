@@ -26,6 +26,8 @@ class PvZEridanStandard extends PvZ1BaseReactive {
 
       return
     }
+
     super.buildArmy()
   }
 }
+

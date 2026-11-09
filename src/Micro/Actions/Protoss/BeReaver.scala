@@ -24,6 +24,7 @@ object BeReaver extends Action {
     if ( ! unit.loaded && ! unit.agent.commit && unit.hasActiveScarab && unit.cooldownLeft <= With.latency.remainingFrames && unit.matchups.threatsInRange.nonEmpty) {
       unit.agent.act("Hop")
       clickShuttle(unit)
+
       return
     }
 
@@ -70,3 +71,4 @@ object BeReaver extends Action {
     Commander.rightClick(unit, unit.agent.ride.get)
   }
 }
+

@@ -22,6 +22,7 @@ object Imagination {
     // though this may just be a symptom of ghost unit data.
     if (unit.bwapiUnit.exists && unit.bwapiUnit.isVisible) {
       unit.changeVisibility(Visibility.Visible)
+
       return
     }
 
@@ -62,12 +63,14 @@ object Imagination {
 
     if (With.framesSince(unit.lastSeen) > expectedSurvivalFrames) {
       unit.changeVisibility(Visibility.Dead)
+
       return
     }
 
     // If a Spider Mine should've been tripped, but hasn't, it's dead
     if (shouldBeVisible && likelyBurrowed && shouldUnburrow) {
       unit.changeVisibility(Visibility.Dead)
+
       return
     }
 
@@ -87,6 +90,7 @@ object Imagination {
     // Buildings that can't move are either in the same place or dead
     if (unit.unitClass.isBuilding && ! unit.unitClass.isFlyingBuilding) {
       unit.changeVisibility(?(shouldBeVisible, Visibility.Dead, Visibility.InvisibleNearby))
+
       return
     }
 
@@ -95,6 +99,7 @@ object Imagination {
     lazy val hasCompany = unit.matchups.allies.exists(ally => With.framesSince(ally.lastSeen) < 24 * 10 && ally.pixelDistanceEdge(unit) < 32 * 15)
     if (With.framesSince(unit.lastSeen) > 24 * 20 && ! atHome && ! hasCompany) {
       unit.changeVisibility(Visibility.InvisibleMissing)
+
       return
     }
 
@@ -103,8 +108,10 @@ object Imagination {
       if (unit.visibility == Visibility.InvisibleMissing) {
         return
       }
+
       if ( ! shouldBeVisible) {
         unit.changeVisibility(Visibility.InvisibleNearby)
+
         return
       }
     }
@@ -167,3 +174,5 @@ object Imagination {
     output
   }
 }
+
+

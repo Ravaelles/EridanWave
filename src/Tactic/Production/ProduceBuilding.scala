@@ -83,6 +83,7 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
 
     if (trainee.isEmpty) {
       if (expectedFrames > With.blackboard.maxBuilderTravelFrames()) return
+
       if (request.placement.isEmpty) {
         placementQuery.resetDefaults(buildingClass) // Reset placement preferences, in case eg. we no longer control some base
       }
@@ -91,26 +92,32 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
       do {
         if (foundation.isEmpty || builder.isEmpty) {
           if (candidateIndex >= candidateFoundations.length) return
+
           foundation = Some(candidateFoundations(candidateIndex))
           candidateIndex += 1
         }
+
         foundation = foundation.filter(f => With.architecture.assess(f.tile, buildingClass, expectedFrames) == ArchitecturalAssessment.Accepted)
         foundation = foundation.filter(f => With.groundskeeper.isFree(f.tile, buildingClass.tileWidthPlusAddon, buildingClass.tileHeight))
         foundation = foundation.filter(placementQuery.accept)
       } while (foundation.isEmpty)
       if (foundation.isEmpty) return
+
       With.architecture.assumePlacement(foundation.get.tile, buildingClass, expectedFrames) // Mainly needed so we know what will be powered in the future
       if ( ! tileLock.acquireTiles(new TileRectangle(foundation.get.tile, buildingClass.tileWidthPlusAddon, buildingClass.tileHeight).tiles)) {
         With.logger.warn(f"Failed to acquire tiles for $this at ${foundation.get.tile}")
+
         return
       }
     }
 
     if (desiredTile.isEmpty) return
     if (request.minStartFrame > 0 && request.minStartFrame > With.frame + Math.max(builderTravelFrames, incomeFrames)) return
+
     if ( ! hasSpent) { currencyLock.acquire() }
     if ( ! needBuilder) {
       builderLock.release()
+
       return
     }
 
@@ -135,6 +142,7 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
 
     if (intendAfter.isDefined) {
       if (With.frame < intendAfter.get) return
+
       orderedTile = None
       intendAfter = None
     }
@@ -186,6 +194,9 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
     if (desiredTile.isEmpty)                                  return false
     if (currencyLock.expectedFrames > builderTravelFramesMax) return false
     if (proposedBuilder().isEmpty)                            return false
+
     builderAdvanceFrames >= currencyLock.expectedFrames
   }
 }
+
+

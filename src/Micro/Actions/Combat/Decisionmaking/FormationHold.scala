@@ -28,6 +28,7 @@ object FormationHold {
   def fractionInSlot(distancesToSlot: Iterable[Double], tolerancePixels: Double = slotTolerancePixels): Double = {
     val distances = distancesToSlot.toSeq
     if (distances.isEmpty) return 1.0
+
     distances.count(_ <= tolerancePixels).toDouble / distances.size
   }
 
@@ -59,3 +60,4 @@ object FormationHold {
     fractionUnitsInSlot >= 1.0
   }
 }
+

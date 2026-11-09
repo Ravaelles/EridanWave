@@ -70,10 +70,12 @@ class SquadScoutExpansions extends Squad {
 
   def launch(): Unit = {
     if ( ! With.blackboard.scoutExpansions()) return
+
     if ( ! scoutZergThird) {
       if (With.frame < frameToScout()) return
       if ( ! With.blackboard.wantToAttack() && ! With.blackboard.wantToHarass()) return
     }
+
     if (scoutableBases().isEmpty) return
 
     val toScoutBases = Maff.orElse(
@@ -108,3 +110,4 @@ class SquadScoutExpansions extends Squad {
     })
   }
 }
+

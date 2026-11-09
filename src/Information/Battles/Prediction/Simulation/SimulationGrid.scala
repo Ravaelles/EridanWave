@@ -46,11 +46,14 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
   def applySplash(primary: Simulacrum, volley: DamageVolley, sourceIsFriendly: Boolean,
     source: UnitInfo, origin: Pixel, attacker: Simulacrum = null): Unit = {
     if ( ! collisionEnabled) return
+
     val weapon = volley.weapon
     if (weapon == WeaponType.Glave_Wurm || weapon == WeaponType.Glave_Wurm_Kukulza) {
       applyGlaveBounces(primary, volley, sourceIsFriendly, source, attacker)
+
       return
     }
+
     val explosion = weapon.explosionType
     if (weapon.outerSplashRadius <= 0
       || (explosion != ExplosionType.Radial_Splash && explosion != ExplosionType.Enemy_Splash && explosion != ExplosionType.Air_Splash)) return
@@ -123,6 +126,7 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
     while (divisor <= 9) {
       val chosen = sampleGlaveTarget(previous, primary, sourceIsFriendly, source)
       if (chosen == null) return
+
       val damage = volley(chosen.shieldPoints, volley.damagePerHit / divisor, chosen.armorHealth, chosen.armorShield, 1.0)
       if (attacker == null) {
         if (chosen.receiveDamage(damage) > 0) {
@@ -155,6 +159,7 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
       y += 1
     }
     if (total == 0) return null
+
     val random = ThreadLocalRandom.current()
     var attempt = 0
     // Sample storage slots first: dense enemy stacks usually need no per-unit scan.
@@ -174,6 +179,7 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
       }
       if (eligibleGlaveTarget(victim, previous, primary, sourceIsFriendly, source)) return victim
       if (total == 1) return null
+
       attempt += 1
     }
     var chosen: Simulacrum = null
@@ -226,16 +232,21 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
       val destination = tileAt(step)
       if ( ! collisionEnabled || destination.fits(unit)) {
         relocateUnit(unit, step, destination)
+
         return
       }
+
       destination.requestEntry(unit, frame)
     }
+
     if (tryForceV2(unit, unit.pixel.flowTo(toClamped))){
       return
     }
+
     if (moveGrid(unit, toClamped)) {
       return
     }
+
     val fail = "Fail!"
   }
 
@@ -272,6 +283,7 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
     while (index < count) {
       val tile = fallbackTiles(index).tile
       if (tryForceStep(unit, 32 * (tile.x - fromTile.x), 32 * (tile.y - fromTile.y), requestSpace = false)) return true
+
       index += 1
     }
     false
@@ -279,15 +291,19 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
 
   @inline def tryYield(unit: Simulacrum): Boolean = {
     if ( ! collisionEnabled || unit.flying || ! unit.canMove || unit.topSpeed <= 0 || ! unit.behavior.fighting || unit.target.isEmpty || unit.gridTile.isEmpty) return false
+
     val current = unit.gridTile.get
     if ( ! current.requestedLastFrame(unit, frame)) return false
+
     val target = unit.target.get
     if ( ! target.alive) return false
+
     val from = unit.pixel
     val goal = unit.moveGoal.getOrElse(target.pixel)
     val forwardX = goal.x - from.x
     val forwardY = goal.y - from.y
     if (forwardX == 0 && forwardY == 0) return false
+
     val horizontal = Math.abs(forwardX) >= Math.abs(forwardY)
     val preserveRange = unit.inRangeToAttackSimulation(target)
     val range = unit.pixelRangeAgainst(target)
@@ -322,6 +338,7 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
       direction += 1
     }
     if (bestDirection < 0) return false
+
     val dx = if (bestDirection == 2) -1 else if (bestDirection == 3) 1 else 0
     val dy = if (bestDirection == 0) -1 else if (bestDirection == 1) 1 else 0
     tryForceStep(unit, dx, dy, requestSpace = false)
@@ -396,10 +413,12 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
   @inline private def tryForceStep(unit: Simulacrum, forceX: Double, forceY: Double, requestSpace: Boolean): Boolean = {
     val length = Math.sqrt(forceX * forceX + forceY * forceY)
     if (length == 0) return false
+
     val from = unit.pixel
     val x = Maff.clamp(from.x + (unit.topSpeed * forceX / length).toInt, 0, With.mapPixelWidth - 1)
     val y = Maff.clamp(from.y + (unit.topSpeed * forceY / length).toInt, 0, With.mapPixelHeight - 1)
     if (x == from.x && y == from.y) return false
+
     val tileStep = tiles(Maff.div32(x) + With.mapTileWidth * Maff.div32(y))
     if ( ! collisionEnabled || tileStep.fits(unit)) {
       relocateUnit(unit, Pixel(x, y), tileStep)
@@ -422,3 +441,5 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
     accept
   }
 }
+
+

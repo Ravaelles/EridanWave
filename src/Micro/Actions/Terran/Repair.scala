@@ -12,6 +12,7 @@ object Repair extends Action {
   override def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.loaded) {
       unit.transport.foreach(Commander.unload(_, unit))
+
       return
     }
 
@@ -24,3 +25,4 @@ object Repair extends Action {
       })
   }
 }
+

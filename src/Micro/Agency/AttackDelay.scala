@@ -56,6 +56,7 @@ object AttackDelay {
   def framesToWaitAfterIssuingAttackOrder(unit: FriendlyUnitInfo): Int = {
     if (Protoss.Carrier(unit)) {
       // Need a better answer than this
+
       return 24
     }
     // Sleep through command delivery so the next frame can observe and protect an attack that started.
@@ -185,3 +186,4 @@ object AttackDelay {
   // Reaching the earliest safe frame requires micro to run on *every frame*.
   //
 }
+

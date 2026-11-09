@@ -64,6 +64,7 @@ class TacticOverlords extends Tactic {
 
   def assign(pixel: Pixel): Unit = {
     if (available.isEmpty) return
+
     val overlord = available.minBy(_.pixelDistanceCenter(pixel))
     available -= overlord
     overlord.intend(this).setTerminus(pixel)
@@ -75,3 +76,4 @@ class TacticOverlords extends Tactic {
     overlord.intend(this).setTerminus(tile.center)
   }
 }
+

@@ -77,6 +77,7 @@ trait Fitter extends Fits {
     if ( ! template.accept(origin)) {
       return false
     }
+
     val violation = template.points.find( ! accept(_, origin))
     violation.isEmpty
   }
@@ -91,19 +92,23 @@ trait Fitter extends Fits {
         (requirement.buildings.isEmpty || requirement.buildings.contains(u.unitClass)) &&
         (! requirement.isTownHall || u.unitClass.isTownHall))
     if (requirement.isTownHall) {
-      return pointTile.base.exists(_.townHallTile == pointTile) &&
+      val townHallFits = pointTile.base.exists(_.townHallTile == pointTile) &&
         (0 until requirement.width).forall(dx =>
           (0 until requirement.height).forall(dy =>
             accept(requirement, Point(dx, dy), pointTile.add(dx, dy), reusesBuilding)))
+
+      return townHallFits
     } else if (requirement.isGas) {
       return pointTile.base.exists(_.gas.exists(_.tileTopLeft == pointTile))
     } else {
       if (requirement.isMacroHatch && ! With.grids.buildableTownHall.get(pointTile)) {
         return false
       }
+
       if (requirement.buildableBefore && ! reusesBuilding && ! With.grids.buildableW(requirement.width).get(pointTile)) {
         return false
       }
+
       var dx = 0
       while (dx < requirement.width) {
         var dy = 0
@@ -113,6 +118,7 @@ trait Fitter extends Fits {
           if ( ! accept(requirement, relative, tile, reusesBuilding)) {
             return false
           }
+
           dy += 1
         }
         dx += 1
@@ -134,14 +140,17 @@ trait Fitter extends Fits {
           return false
         }
       }
+
       if (requirement.buildableBefore) {
         if (tile.creep && ! reusesBuilding && ! requirement.buildings.exists(_.isZerg)
           && (requirement.buildings.nonEmpty || ! With.self.isZerg)) {
           return false
         }
+
         if ( ! With.grids.buildable.get(tile) && ! (reusesBuilding && With.grids.buildableTerrain.get(tile))) {
           return false
         }
+
         if ( ! previous.requirement.buildableAfter && ! reusesReservation) {
           return false
         }
@@ -150,3 +159,4 @@ trait Fitter extends Fits {
     true
   }
 }
+

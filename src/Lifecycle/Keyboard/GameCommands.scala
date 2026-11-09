@@ -37,6 +37,7 @@ object GameCommands {
   private val SpeedDelayMs = 25
   private def applySpeedAndFrameSkip(speedMs: Int, skip: Int): Unit = {
     if ( ! gameAvailable) return
+
     try { Thread.sleep(SpeedDelayMs) } catch { case _: InterruptedException => }
     With.game.setLocalSpeed(speedMs)
     With.game.setFrameSkip(skip)
@@ -103,6 +104,7 @@ object GameCommands {
    */
   def togglePause(): Unit = {
     if (With.game == null) return
+
     if (With.game.isPaused) {
       botPaused = false
       With.game.resumeGame()
@@ -114,6 +116,7 @@ object GameCommands {
 
   def toggleGui(): Unit = {
     if ( ! gameAvailable) return
+
     guiEnabled = ! guiEnabled
     With.game.setGUI(guiEnabled)
   }
@@ -137,3 +140,4 @@ object GameCommands {
     })
   }
 }
+

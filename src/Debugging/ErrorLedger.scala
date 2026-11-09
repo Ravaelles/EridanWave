@@ -87,6 +87,7 @@ object ErrorLedger {
 
   def finish(): Unit = {
     if (entries.isEmpty) return
+
     try {
       Lifecycle.With.bwapiData.writeToFile("errors.json", toJson)
       System.out.println(f"[errors] ${entries.size} distinct keys, ${entries.values.map(_.count).sum} total notes -> errors.json")
@@ -111,3 +112,4 @@ object ErrorLedger {
     }.mkString + "\""
   }
 }
+

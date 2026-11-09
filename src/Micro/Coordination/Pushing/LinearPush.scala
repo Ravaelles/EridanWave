@@ -19,6 +19,7 @@ abstract class LinearPush extends Push {
     val magnitude = Maff.nanToZero((length - distance) / length)
     val magnitudeClamped = Maff.clamp(magnitude, 0d, 1d)
     if (magnitudeClamped <= 0) return None
+
     Some(ForceMath.fromPixels(projection, recipient.pixel, magnitudeClamped))
   }
 
@@ -35,3 +36,4 @@ abstract class LinearPush extends Push {
     DrawMap.polygon(corners,  priority.color)
   }
 }
+

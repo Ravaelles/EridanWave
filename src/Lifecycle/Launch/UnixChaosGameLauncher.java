@@ -32,6 +32,7 @@ public final class UnixChaosGameLauncher implements GameLauncher {
             BwapiIni.patch(ini, config.getMap(), config.getRace(), config.getEnemyRace(),
                 config.getGameType(), true);
             // Do NOT start ChaosLauncher, do NOT pkill: the game is already up.
+
             return;
         }
 
@@ -101,6 +102,7 @@ public final class UnixChaosGameLauncher implements GameLauncher {
         if (new File("scripts/wine-run.sh").isFile()) {
             return "scripts/wine-run.sh";
         }
+
         throw new IllegalStateException(
             "scripts/wine-run.sh not found; run the bot from the repo root.");
     }
@@ -109,6 +111,9 @@ public final class UnixChaosGameLauncher implements GameLauncher {
         if (config.getBwapiIni() != null) {
             return new File(config.getBwapiIni());
         }
+
         return BwapiIni.defaultLiveIni(config.getWinePrefix(), config.getGameRoot());
     }
 }
+
+

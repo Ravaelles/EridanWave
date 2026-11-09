@@ -43,6 +43,7 @@ object CannonRush extends Action {
     } else {
       unit.agent.decision.set(cannonPixel)
       Commander.move(unit)
+
       return
     }
 
@@ -102,6 +103,7 @@ object CannonRush extends Action {
       Maff.minBy(With.units.enemy.filter(_.orderTarget.contains(unit)))(_.totalHealth).foreach(target => {
         unit.agent.toAttack = Some(target)
         Commander.attack(unit)
+
         return
       })
     }
@@ -112,8 +114,10 @@ object CannonRush extends Action {
         .find(u => Protoss.Pylon(u) && u.proxied && u.totalHealth < 60)
         .foreach(p => {
           Commander.build(unit, Protoss.Pylon, p.tileTopLeft)
+
           return
         })
     }
   }
 }
+

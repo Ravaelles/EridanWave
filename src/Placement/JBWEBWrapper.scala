@@ -10,6 +10,7 @@ object JBWEBWrapper {
 
   def onStart(): Unit = {
     if ( ! enabled) return
+
     JBWEB.onStart(game, BWTA.getBWEM)
     jbweb.Walls.createFFE(2)
     Stations.findStations()
@@ -22,16 +23,20 @@ object JBWEBWrapper {
 
   def onUnitDiscover(unit: bwapi.Unit): Unit = {
     if ( ! enabled) return
+
     JBWEB.onUnitDiscover(unit)
   }
 
   def onUnitMorph(unit: bwapi.Unit): Unit = {
     if ( ! enabled) return
+
     JBWEB.onUnitMorph(unit)
   }
 
   def draw(): Unit = {
     if ( ! enabled) return
+
     JBWEB.draw()
   }
 }
+

@@ -13,6 +13,7 @@ class BattleProcessMatchupAnalysis extends BattleProcessState {
   override def step(): Unit = {
     if (units.isEmpty) {
       transitionTo(new BattleProcessComplete)
+
       return
     }
 
@@ -21,3 +22,4 @@ class BattleProcessMatchupAnalysis extends BattleProcessState {
     // TODO: Create matchup analyses here so it doesn't clog up expectations of agency duration
   }
 }
+

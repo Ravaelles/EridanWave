@@ -133,6 +133,7 @@ object PlacementCache {
 
   def load(placement: Placement): Option[Boolean] = {
     if (revision.isEmpty) return None
+
     val expectedRevision = revision.get
     val expectedKey = key
     val directories = Vector(With.bwapiData.read, With.bwapiData.write, With.bwapiData.ai)
@@ -147,6 +148,7 @@ object PlacementCache {
               restore(placement, data)
               placement.finishCachedRestore()
               With.logger.debug(f"Loaded ${data.fits.length} building-placement fits from ${file.getAbsolutePath}")
+
               return Some(rejected && directoryIndex != 1)
             } catch { case exception: Exception =>
               rejected = true
@@ -160,6 +162,7 @@ object PlacementCache {
             With.logger.warn(f"Ignoring invalid building-placement cache ${file.getAbsolutePath}: $reason")
         }
       }
+
       directoryIndex += 1
     }
     None
@@ -167,6 +170,7 @@ object PlacementCache {
 
   def write(placement: Placement): Unit = {
     if (revision.isEmpty) return
+
     val cacheKey = key
     val directory = Paths.get(With.bwapiData.write)
     val target = directory.resolve(cacheKey.filename)
@@ -211,6 +215,7 @@ object PlacementCache {
 
   private def read(file: File, expectedRevision: String, expectedKey: CacheKey): ReadResult = {
     if (file.length() > MaximumCompressedBytes) return Invalid(f"compressed size ${file.length()} exceeds $MaximumCompressedBytes")
+
     var input: DataInputStream = null
     var fileInput: InputStream = null
     try {
@@ -219,6 +224,7 @@ object PlacementCache {
       if (input.readInt() != Magic) return Invalid("incorrect magic")
       if (input.readUnsignedByte() != FormatVersion) return Invalid("unsupported format version")
       if (input.readUTF() != expectedRevision) return Stale
+
       val actualKey = CacheKey(input.readUTF(), input.readUnsignedByte(), input.readUnsignedByte(), input.readShort(), input.readShort())
       if (actualKey != expectedKey) return Invalid("cache key does not match its filename")
 
@@ -461,3 +467,5 @@ object PlacementCache {
     value
   }
 }
+
+

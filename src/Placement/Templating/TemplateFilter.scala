@@ -23,6 +23,8 @@ trait TemplateFilter {
     if (exitDirection.nonEmpty    && ! tile.zone.exitDirection            .exists(d => exitDirection    .exists(d==))) return false
     if (races.nonEmpty            && ! races.exists(_ == With.self.raceCurrent)) return false
     if (enemyRaces.nonEmpty       && ! enemyRaces.exists(With.enemies.map(_.raceInitial).contains)) return false
+
     true
   }
 }
+

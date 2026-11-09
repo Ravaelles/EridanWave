@@ -67,6 +67,7 @@ object Potential {
 
   def avoidDetection(unit: FriendlyUnitInfo): Force = {
     if ( ! unit.cloaked) return Forces.None
+
     val detectors   = unit.matchups.enemies.filter(e => e.aliveAndComplete && e.unitClass.isDetector)
     val forces      = detectors.map(detector => towardsUnit(unit, detector, -1.0 / detector.pixelDistanceCenter(unit)))
     val output      = ForceMath.sum(forces).normalize
@@ -90,6 +91,7 @@ object Potential {
     if (other.flying) return 0.0
     if (other.velocity.lengthSquared < 0.01) return 0.0 // BW will automatically path us around stationary units
     if (other.topSpeed >= unit.topSpeed && other.speedApproaching(unit) < 0) return 0.0
+
     val output = 1.0 - Maff.clamp(other.pixelDistanceEdge(unit) / margin, 0.0, 1.0)
     output
   }
@@ -100,6 +102,7 @@ object Potential {
   
   def avoidCollision(unit: FriendlyUnitInfo): Force = {
     if (unit.flying) return Forces.None
+
     val repulsions = unit.inTileRadius(3).filter(o => unit != o && o.canMove).map(collisionRepulsion(unit, _))
     ForceMath.mean(repulsions).clipAtMost(1.0)
   }
@@ -107,6 +110,7 @@ object Potential {
   def avoidSplash(unit: FriendlyUnitInfo): Force = {
     val margin = 96
     if (unit.matchups.threatDeepest.forall(_.pixelsToGetInRange(unit) > margin)) return Forces.None
+
     val splashThreats = unit.matchups.threats
       .filter(_.unitClass.dealsRadialSplashDamage)
       .filter(_.pixelsToGetInRange(unit) < margin)
@@ -118,6 +122,7 @@ object Potential {
     if (splashThreats.isEmpty)  return Forces.None
     if (splashRadius25 <= 0)    return Forces.None
     if (splashAllies.isEmpty)   return Forces.None
+
     val forces  = splashAllies.map(_.pixel).map(hardAvoid(unit, _, splashRadius50, splashRadius25))
     val output  = ForceMath.sum(forces).normalize(forces.map(_.lengthFast).max)
     output
@@ -132,4 +137,5 @@ object Potential {
     unit.agent.receivedPushForce().clipAtMost(1.0)
   }
 }
+
 

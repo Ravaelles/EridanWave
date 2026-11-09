@@ -54,6 +54,7 @@ trait GeographyBuilder {
     buildFallbackZone()
     if (With.umsMode) {
       With.logger.debug("Skipping BWTA zone construction (UMS map).")
+
       return
     }
 
@@ -161,3 +162,4 @@ trait GeographyBuilder {
     _baseByTile = allTiles.map(_ => None).toArray
   }
 }
+

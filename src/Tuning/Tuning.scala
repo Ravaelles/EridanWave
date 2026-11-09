@@ -31,6 +31,7 @@ object Tuning {
   def install(): Unit = {
     val strategyName = Option(System.getProperty("eridanwave.tuningStrategy")).orElse(Option(System.getProperty("purplewave.tuningStrategy"))).map(_.trim).filter(_.nonEmpty)
     if (strategyName.isEmpty) return
+
     current = Some(resolve(strategyName.get))
     applyParams()
   }
@@ -86,6 +87,7 @@ object Tuning {
    */
   def finish(isWinner: Boolean): Unit = {
     if ( ! active) return
+
     try {
       val strategy = current.get
       val vector = appliedParams
@@ -130,3 +132,4 @@ object Tuning {
     })
   }
 }
+

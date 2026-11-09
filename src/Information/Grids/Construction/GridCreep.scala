@@ -59,11 +59,14 @@ object GridCreep {
 
     def grow(x: Int, y: Int): Unit = {
       if (x < left || x > right || y < top || y > bottom) return
+
       val i = x + y * width
       if (creep(i) || occupied(i)) return
+
       val dx = x * 32 + 16 - source.pixelX
       val dy = y * 32 + 16 - source.pixelY
       if (25 * dx * dx + 64 * dy * dy > 25 * 320 * 320 || ! canHaveCreep(i)) return
+
       creep(i) = true
       queue(tail) = i
       tail += 1
@@ -143,6 +146,7 @@ class GridCreep extends AbstractGridArrayBoolean {
 
     val sources = buildings.filter(_.seeds)
     if (sources.isEmpty) return
+
     val occupied = new Array[Boolean](length)
     buildings.foreach(b => {
       var y = Math.max(0, b.top)
@@ -182,6 +186,7 @@ class GridCreep extends AbstractGridArrayBoolean {
   override def update(): Unit = {
     initialize()
     if ( ! creepPossible || With.frame < nextObservationFrame) return
+
     nextObservationFrame = With.frame + ObservationPeriod
     var x = 0
     while (x < width) {
@@ -195,3 +200,4 @@ class GridCreep extends AbstractGridArrayBoolean {
     }
   }
 }
+

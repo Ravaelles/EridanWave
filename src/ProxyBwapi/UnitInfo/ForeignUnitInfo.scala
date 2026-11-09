@@ -15,8 +15,10 @@ final class ForeignUnitInfo(bwapiUnit: bwapi.Unit, id: Int) extends BWAPICachedU
   override def update(): Unit = {
     if (GhostUnit(this)) {
       With.units.onUnitDestroy(bwapiUnit)
+
       return
     }
+
     if (frameDiscovered < With.frame) {
       readProxy()
     }
@@ -37,11 +39,13 @@ final class ForeignUnitInfo(bwapiUnit: bwapi.Unit, id: Int) extends BWAPICachedU
   }
   def remainingCompletionFrames: Int = {
     if (complete) return 0
+
     if (morphing && isAny(Zerg.Lair, Zerg.Hive, Zerg.SunkenColony, Zerg.SporeColony, Zerg.GreaterSpire, Zerg.LurkerEgg, Zerg.Cocoon)) {
       val buildFrames = (
               if (Zerg.LurkerEgg(this)) Zerg.Lurker
         else  if (Zerg.Cocoon(this))    Zerg.Guardian
         else                            unitClass).buildFrames
+
       return Math.max(Maff.fromBoolean(visible), buildFrames + lastClassChange - With.frame)
     }
     // Use both the initial projection and the up-to-date projection
@@ -55,3 +59,5 @@ final class ForeignUnitInfo(bwapiUnit: bwapi.Unit, id: Int) extends BWAPICachedU
   // This check uses BWAPI unit type comparison because this unit's UnitClass isn't yet populated
   override val loadedUnitCount: Int = if (bwapiUnit.getType == UnitType.Protoss_Carrier) 8 else if (bwapiUnit.getType == UnitType.Terran_Bunker) 4 else 0
 }
+
+

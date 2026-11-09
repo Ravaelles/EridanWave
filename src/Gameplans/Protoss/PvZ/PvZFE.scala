@@ -57,8 +57,10 @@ class PvZFE extends GameplanImperative {
         get(1, Protoss.Pylon,         new PlacementQuery(Protoss.Pylon)       .requireBase(With.geography.ourMain).preferTile(With.geography.home).preferLabelYes(PlaceLabels.GroundProduction))
         oneBase.executeBuild()
         oneBase.executeMain()
+
         return
       }
+
       buildInWall(1, Protoss.Pylon)
       if (With.fingerprints.hatchFirst()) {
         once(12, Protoss.Probe)
@@ -291,3 +293,5 @@ class PvZFE extends GameplanImperative {
     get(Protoss.ShuttleSpeed)
   }
 }
+
+

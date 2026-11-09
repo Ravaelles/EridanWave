@@ -25,6 +25,7 @@ class FingerprintGasCompleteBy(frameCount: FrameCount) extends Fingerprint {
 
   protected def proof: Proof = {
     if (pumpCompleteBy()) return PumpProof(pumpCompleteBy)
+
     val gasUnitProof =
       With.units.enemy
         .filter(_.unitClass.gasPrice >= 25) // Amazingly, larva "cost" 1 gas
@@ -35,6 +36,7 @@ class FingerprintGasCompleteBy(frameCount: FrameCount) extends Fingerprint {
           - u.remainingCompletionFrames
           + u.unitClass.gasPrice / With.accounting.workerIncomePerFrameGas / 3)
     if (gasUnitProof.isDefined) return UnitProof(gasUnitProof.get)
+
     val gasUpgradeProof = Upgrades.all
       .filter(u => With.enemies.exists(_.hasUpgrade(u)))
       .find(u =>
@@ -43,6 +45,8 @@ class FingerprintGasCompleteBy(frameCount: FrameCount) extends Fingerprint {
         + u.upgradeFrames.head._2
         + u.gasPrice.head._2 / With.accounting.workerIncomePerFrameGas / 3)
     if (gasUpgradeProof.isDefined) return UpgradeProof(gasUpgradeProof.get)
+
     NoProof
   }
 }
+

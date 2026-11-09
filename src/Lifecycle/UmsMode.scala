@@ -64,6 +64,7 @@ object UmsMode {
    */
   def onFrame(): Unit = {
     if ( ! With.umsMode || With.game == null || With.units == null) return
+
     val enemies = With.units.enemy.toVector
     With.units.ours.foreach(unit => {
       if (unit.canAttack
@@ -98,3 +99,4 @@ object UmsMode {
     cachedEnemyStart
   }
 }
+

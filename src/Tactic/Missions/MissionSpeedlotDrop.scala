@@ -24,8 +24,10 @@ class MissionSpeedlotDrop extends MissionDrop {
     vicinity = itinerary.headOption.map(_.heart).getOrElse(With.scouting.enemyHome).center
     transportLock.setPreference(PreferClose(With.geography.home.center)).acquire()
     if (transportLock.units.isEmpty) { terminate("No transports available"); return }
+
     zealotLock.setPreference(PreferClose(transportLock.units.head.pixel)).acquire()
     if (zealotLock.units.isEmpty) { terminate("No speedlots available"); return }
+
     transports ++= transportLock.units
     passengers ++= zealotLock.units
   }
@@ -36,3 +38,4 @@ class MissionSpeedlotDrop extends MissionDrop {
     SquadAutomation.targetRaid(this)
   }
 }
+

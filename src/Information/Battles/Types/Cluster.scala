@@ -19,6 +19,7 @@ final class Cluster(val units: UnorderedBuffer[UnitInfo] = new UnorderedBuffer[U
     if (other == this) {
       return
     }
+
     invalidateMetrics()
     units.addAll(other.units)
     other.units.clear()

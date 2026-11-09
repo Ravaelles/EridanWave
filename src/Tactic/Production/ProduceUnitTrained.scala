@@ -40,16 +40,20 @@ class ProduceUnitTrained(requestArg: RequestBuildable, expectedFramesArg: Int) e
       finalTrainer = trainer
       finalTrainee = trainee
       trainerLock.release()
+
       return
     }
+
     finalTrainer = None
     finalTrainee = None
     trainerLock.acquire()
     trainee.foreach(_.setProducer(this))
     if (hasSpent) {
       trainer.foreach(_.intend(this)) // Do nothing, mainly; possibly cancel if needed
+
       return
     }
+
     if (currencyLock.acquire()) {
       if (trainer.exists(_.remainingOccupationFrames > 0)) {
         trainerLock.reacquire()
@@ -58,3 +62,5 @@ class ProduceUnitTrained(requestArg: RequestBuildable, expectedFramesArg: Int) e
     }
   }
 }
+
+

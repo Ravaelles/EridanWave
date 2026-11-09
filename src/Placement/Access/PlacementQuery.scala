@@ -21,6 +21,7 @@ class PlacementQuery {
   // Required for Produce to match requests against existing production
   override def equals(other: Any): Boolean = {
     if ( ! other.isInstanceOf[PlacementQuery]) return false
+
     val otherQuery = other.asInstanceOf[PlacementQuery]
     requirements == otherQuery.requirements && preferences == otherQuery.preferences
   }
@@ -110,6 +111,7 @@ class PlacementQuery {
     if (requirements.tile.nonEmpty    && ! requirements.tile.contains(tile)) return false
     if ( ! requirements.labelYes.forall(With.placement.at(tile).requirement.labels.contains)) return false
     if (    requirements.labelNo.exists(With.placement.at(tile).requirement.labels.contains)) return false
+
     true
   }
 
@@ -194,3 +196,4 @@ class PlacementQuery {
 
   override def toString: String = f"PlacementQuery Req$requirements) Pref$preferences)".replace("PQP", "")
 }
+

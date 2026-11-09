@@ -69,6 +69,7 @@ object BeCombatSCV extends Action {
     if (vulture.spiderMines < 2) return
     if (vulture.matchups.pixelsToThreatRange.exists(_ < 256)) return
     if (vulture.id % 4 != Maff.div128(With.frame) % 4) return
+
     val target = Spiral.apply(5).map(vulture.tile.add).find(tile =>
       tile.walkable
       && ( ! tile.buildable || ! tile.base.exists(_.isOurs) || tile.zone.edges.exists(_.contains(tile)))
@@ -101,3 +102,4 @@ object BeCombatSCV extends Action {
     placeMine(vulture, t.get.pixel.project(vulture.pixel, 48))
   }
 }
+

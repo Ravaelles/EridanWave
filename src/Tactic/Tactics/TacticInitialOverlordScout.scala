@@ -59,14 +59,17 @@ class TacticInitialOverlordScout extends Tactic {
     endScouting ||= With.units.existsEnemy(Zerg.Spire)
     if (endScouting) {
       lock.release()
+
       return
     }
+
     if (bases().isEmpty) return
 
     val vicinity = bases().head.townHallArea.center
     lock.setMatcher(Zerg.Overlord).setPreference(PreferClose(vicinity)).acquire()
 
     if (bases().isEmpty) return
+
     lock.units.zipWithIndex.foreach(s => {
       val overlord = s._1
       val i = s._2
@@ -78,3 +81,5 @@ class TacticInitialOverlordScout extends Tactic {
     })
   }
 }
+
+

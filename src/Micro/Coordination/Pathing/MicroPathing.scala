@@ -69,6 +69,7 @@ object MicroPathing {
 
   def tryGetGroundWaypointToPixel(from: Pixel, rawGoal: Pixel): Option[Pixel] = {
     if (from.pixelDistance(rawGoal) < 32) return Some(rawGoal)
+
     val goal              = rawGoal.walkablePixel
     val lineWaypoint      = SomeIf(Ray(from, goal).forall(_.walkable), from.project(goal, Math.min(from.pixelDistance(goal), waypointDistancePixels)))
     lazy val hillPath     = DownhillPathfinder.decend(from.tile, goal.tile)
@@ -214,3 +215,4 @@ object MicroPathing {
     output
   }
 }
+

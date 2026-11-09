@@ -192,8 +192,10 @@ final class MacroSim {
         minInsert.clear()
       }
       _autosupply = true
+
       return
     }
+
     tryInsertRequest(request)
   }
 
@@ -225,6 +227,7 @@ final class MacroSim {
     val diff        = Maff.vmax(unitDiff, upgradeDiff, techDiff)
     if (diff <= 0) {
       redundant += request
+
       return
     }
 
@@ -247,8 +250,10 @@ final class MacroSim {
       }
       if ( ! succeeded) {
         denied += ((request, insertionResult))
+
         return
       }
+
       val framesAfter = Math.ceil(Seq(
         request.minStartFrame - With.frame,
         stepBefore.event.dFrames,
@@ -341,6 +346,7 @@ final class MacroSim {
       } else if (request.addonRequired.exists(addon => step.state.producers(AddonSubstitution.fromReal(addon)) <= 0)) {
         return StealsAddon
       }
+
       j += 1
     }
 
@@ -354,6 +360,7 @@ final class MacroSim {
         if (request.supplyRequired > Math.max(0, state.supplyAvailable - state.supplyUsed)) {
           return StealsSupply
         }
+
         j += 1
       }
     }
@@ -370,6 +377,7 @@ final class MacroSim {
     if ( ! _autosupply && request.supplyRequired > Math.max(0, step.state.supplyAvailable - step.state.supplyUsed) && step.state.supplyUsed < 380) {
       return MissingSupply
     }
+
     Success
   }
 
@@ -504,3 +512,5 @@ final class MacroSim {
     }
   }
 }
+
+

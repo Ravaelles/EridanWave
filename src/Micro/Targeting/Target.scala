@@ -73,27 +73,36 @@ object Target {
     if (targetInRange) {
       output = bestInStratum(attacker, assigned, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = true,  requireAcceleratesDemise = true)
       if (output.isDefined) return output
+
       output = bestInStratum(attacker, matchups, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = true,  requireAcceleratesDemise = true)
       if (output.isDefined) return output
+
       output = bestInStratum(attacker, assigned, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = true,  requireAcceleratesDemise = false)
       if (output.isDefined) return output
+
       output = bestInStratum(attacker, matchups, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = true,  requireAcceleratesDemise = false)
       if (output.isDefined) return output
     }
+
     if (engaged) {
       output = bestInStratum(attacker, assigned, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = false, requireAcceleratesDemise = true)
       if (output.isDefined) return output
+
       output = bestInStratum(attacker, assigned, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = false, requireAcceleratesDemise = false)
       if (output.isDefined) return output
     }
+
     output = bestInStratum(attacker, assigned, allFilters, rankByScore = false, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
     if (output.isDefined) return output
+
     if (engaged) {
       output = bestInStratum(attacker, matchups, allFilters, rankByScore = true, requireCombatPriority = true, requireInRange = false, requireAcceleratesDemise = true)
       if (output.isDefined) return output
+
       output = bestInStratum(attacker, matchups, allFilters, rankByScore = true, requireCombatPriority = true, requireInRange = false, requireAcceleratesDemise = false)
       if (output.isDefined) return output
     }
+
     bestInStratum(attacker, matchups, allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
   }
 
@@ -114,6 +123,7 @@ object Target {
       val legal = ( ! requireCombatPriority || hasCombatPriority(target)) && ( ! requireInRange || attacker.inRangeToAttack(target)) && ( ! requireAcceleratesDemise || acceleratesDemise(attacker, target)) && legalByFilters(attacker, target, allFilters)
       if (legal) {
         if ( ! rankByScore) return Some(target)
+
         val score = attacker.targetScore(target)
         if ( ! found || score > bestScore) {
           found = true
@@ -132,6 +142,7 @@ object Target {
       var filterIndex = 0
       while (filterIndex < allFilters.length) {
         if ( ! allFilters(filterIndex).legal(attacker, target)) return false
+
         filterIndex += 1
       }
       true
@@ -188,3 +199,5 @@ object Target {
           s._4.toInt.toString))
   }
 }
+
+

@@ -91,8 +91,10 @@ object JudgmentModifiers {
   //     and thus systematically bleed units
   def hiddenTanks(battle: Battle): Option[JudgmentModifier] = {
     if (With.enemies.forall(e => ! e.isTerran || ! e.hasTech(Terran.SiegeMode))) return None
+
     val tanks           = battle.enemy.units.count(u => IsTank(u) && u.base.exists(_.owner.isEnemy) && ! u.visible)
     if (tanks == 0) return None
+
     val valueUs         = value(battle.us.attackers)
     val valueUsGround   = value(battle.us.attackers, ! _.flying)
     val ratioUsGround   = Maff.nanToZero(valueUsGround / valueUs)
@@ -103,6 +105,7 @@ object JudgmentModifiers {
   // Avoid fighting across chokes/bridges
   def choke(battle: Battle): Option[JudgmentModifier] = {
     if (With.simulation.collisionEnabled) return None
+
     val pixelUs   = battle.us.attackCentroidGround
     val pixelFoe  = battle.enemy.vanguardGround()
     val edge      = battle.choke
@@ -135,6 +138,7 @@ object JudgmentModifiers {
   private val catcher = IsAny(Zerg.Zergling, Terran.Vulture, Zerg.Mutalisk)
   def caught(battle: Battle): Option[JudgmentModifier] = {
     if ( ! battle.us.attackers.exists(_.matchups.engagedUpon)) return None
+
     val catcherRatio  = valueRatio(battle.enemy.attackers, catcher)
     val caughtRatio   = valueRatio(battle.us.attackers, u => ! u.flying && u.matchups.threatDeepest.exists(t => catcher(t) && t.pixelsToGetInRange(u) < 160 && t.topSpeed > 1.05 * u.topSpeed))
     val score         = -0.5 * Math.max(0, (1 - battle.us.vanguardGround().proximity) * Math.sqrt(Maff.nanToZero(catcherRatio * caughtRatio)))
@@ -164,6 +168,7 @@ object JudgmentModifiers {
   def staticDefense(battle: Battle): Option[JudgmentModifier] = {
     val defenseShare = valueRatio(battle.enemy.units, _.unitClass.isStaticDefense)
     if (defenseShare <= 0) return None
+
     modifyTarget(0.2 * defenseShare)
   }
   private case class Motivation(var amount: Double = 0, var weight: Double = 0)
@@ -213,3 +218,4 @@ object JudgmentModifiers {
   - COMMIT when enemies are disabled
    */
 }
+

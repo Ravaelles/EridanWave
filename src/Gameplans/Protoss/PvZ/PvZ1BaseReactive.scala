@@ -54,6 +54,7 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     if (With.fingerprints.gasSteal())       ban(ZZCoreZ,    ZCoreZ,     CoreZ)
 
     if (allowed.isEmpty) return
+
     opening = allowed.head
 
     consider(GateNexus, poolMax         >= timingOp && economy == Expand)
@@ -100,6 +101,7 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
 
   protected def capGas(): Unit = {
     if (have(Protoss.TemplarArchives)) return
+
     if (anticipateSpeedlings && units(IsWarrior) < 9 && units(Protoss.Gateway) < 3) {
       gasWorkerCeiling(0)
     } else if (composition.length == 1 && ! on(Speedlot)) {
@@ -359,3 +361,4 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     pump(Protoss.Zealot)
   }
 }
+

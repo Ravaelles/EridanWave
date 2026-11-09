@@ -125,6 +125,7 @@ public final class Keyboard implements NativeKeyListener {
         } catch (NativeHookException e) {
             System.err.println("[keyboard] Global hook unavailable (" + e.getMessage() + "); shortcuts disabled.");
             System.err.println("[keyboard] Relay file: " + KeyRelay.describe());
+
             return;
         }
         GlobalScreen.addNativeKeyListener(new Keyboard());
@@ -136,6 +137,7 @@ public final class Keyboard implements NativeKeyListener {
     /** Bot side: execute keys the supervisor forwarded. Called every frame and by the drain daemon. */
     public static void drainRelayedKeys() {
         if (mode != Mode.BOT || !relayDrainAllowed) return;
+
         for (long[] code : KeyRelay.drain()) {
             dispatchRelayed((int) code[0], code.length > 1 ? (int) code[1] : 1, code.length > 2 ? code[2] : 0);
         }
@@ -151,6 +153,7 @@ public final class Keyboard implements NativeKeyListener {
      */
     public static void startDraining() {
         if (draining) return;
+
         draining = true;
         Thread thread = new Thread(() -> {
             while (true) {
@@ -177,6 +180,7 @@ public final class Keyboard implements NativeKeyListener {
     /** A press the supervisor relayed: dropped when it duplicates a direct press. */
     static void dispatchRelayed(int keyCode, int keyLocation, long relayMillis) {
         if (relayMillis > 0 && consumeDirectTwin(keyCode, relayMillis)) return;
+
         dispatch(keyCode, keyLocation);
     }
 
@@ -193,6 +197,7 @@ public final class Keyboard implements NativeKeyListener {
     private static boolean consumeDirectTwin(int keyCode, long relayMillis) {
         java.util.ArrayDeque<Long> presses = directPresses.get(keyCode);
         if (presses == null) return false;
+
         java.util.Iterator<Long> it = presses.iterator();
         while (it.hasNext()) {
             long directMillis = it.next();
@@ -200,6 +205,7 @@ public final class Keyboard implements NativeKeyListener {
                 it.remove();
             } else if (Math.abs(directMillis - relayMillis) <= DUPLICATE_WINDOW_MS) {
                 it.remove();
+
                 return true;
             }
         }
@@ -208,10 +214,13 @@ public final class Keyboard implements NativeKeyListener {
 
     static void dispatch(int keyCode, int keyLocation) {
         if (exiting) return;
+
         if (mode == Mode.SUPERVISOR && keyCode != NativeKeyEvent.VC_ESCAPE) {
             KeyRelay.send(keyCode, keyLocation);
+
             return;
         }
+
         KeyAction action = actions.get(keyCode);
         if (action != null) {
             try {
@@ -241,6 +250,7 @@ public final class Keyboard implements NativeKeyListener {
     /** One-line launch diagnostic for the bot log: mode, hook, drain, relay path. */
     public static String status() {
         return "mode=" + mode + " hook=" + (active ? "up" : "down")
+
             + " drain=" + (mode == Mode.BOT && relayDrainAllowed ? "on" : "off")
             + " relay=" + KeyRelay.describe();
     }
@@ -258,3 +268,5 @@ public final class Keyboard implements NativeKeyListener {
     public void nativeKeyTyped(NativeKeyEvent e) {
     }
 }
+
+

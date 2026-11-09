@@ -152,11 +152,13 @@ class Architecture {
     if ( ! topLeft.valid) {
       return ArchitecturalAssessment.Invalid
     }
+
     if (building.requiresPsi) {
       // We can allow use of forthcoming Pylon power by using a value higher than With.frame
       if (height == 3 && ! With.grids.psi3Height.isSet(topLeft) && powerFrame3Height.get(topLeft) > With.frame + futureFrames) {
         return ArchitecturalAssessment.Unpowered
       }
+
       if (height == 2 && ! With.grids.psi2Height.isSet(topLeft) && powerFrame2Height.get(topLeft) > With.frame + futureFrames) {
         return ArchitecturalAssessment.Unpowered
       }
@@ -176,9 +178,11 @@ class Architecture {
       if ( ! zone.bases.exists(_.gas.exists(_.tileTopLeft == topLeft))) {
         return ArchitecturalAssessment.IsntGas
       }
+
       if ( ! gassable(topLeft, Some(request))) {
         return ArchitecturalAssessment.BlockedGas
       }
+
       return ArchitecturalAssessment.Accepted
     }
 
@@ -208,15 +212,19 @@ class Architecture {
         if ( ! buildable(nextTile, Some(request))) {
           return ArchitecturalAssessment.IsntBuildable
         }
+
         if ((building.requiresCreep && ! nextTile.creep) || (! building.isZerg && nextTile.creep)) {
           return ArchitecturalAssessment.CreepMismatch
         }
+
         if (building.isTownHall && ! With.grids.buildableTownHall.get(nextTile)) {
           return ArchitecturalAssessment.ViolatesResourceGap
         }
+
         if ( ! building.isTownHall && nextTile.units.exists(u => ! u.flying && u.isEnemy || ! u.canMove)) {
           return ArchitecturalAssessment.BlockedByUnit
         }
+
         y += 1
       }
       x += 1
@@ -224,3 +232,4 @@ class Architecture {
     ArchitecturalAssessment.Accepted
   }
 }
+

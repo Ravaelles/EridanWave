@@ -45,6 +45,7 @@ class TemplatePointRequirement(val buildings: UnitClass*) {
 
   def mergeLabelsFrom(other: TemplatePointRequirement): TemplatePointRequirement = {
     if (other.labels.forall(labels.contains)) return this
+
     val source = this
     val merged = new TemplatePointRequirement(buildings: _*) {
       override val buildableBefore: Boolean = source.buildableBefore
@@ -64,6 +65,7 @@ class TemplatePointRequirement(val buildings: UnitClass*) {
     if (isGas)          return "Gas"
     if (isTownHall)     return "Town Hall"
     if (buildings.isEmpty && labels.isEmpty) return f"$width x $height"
+
     val buildingList        = buildings.take(3).map(_.toString.take(4)).mkString(", ")
     val buildingTerminator  = if (buildings.size > 3) "..." else ""
     val optionalSeparator   = if (buildings.nonEmpty && labels.nonEmpty) "\n---\n" else ""
@@ -72,3 +74,4 @@ class TemplatePointRequirement(val buildings: UnitClass*) {
     f"$buildingList$buildingTerminator$optionalSeparator$labelList$labelTerminator"
   }
 }
+

@@ -32,6 +32,7 @@ class MissionKillExpansion extends Mission {
   override def recruit(): Unit = {
     val targetBase = best
     if (targetBase.isEmpty) { terminate("No target base available"); return }
+
     vicinity = targetBase.get.heart.center
     lock
       .setCounter(CountExactly(unitsRequired(targetBase.get)))
@@ -50,8 +51,11 @@ class MissionKillExpansion extends Mission {
       lastFrameInBase = With.frame
     }
     if (duration > Minutes(3)()) { terminate("Exceeded duration"); return }
+
     if (With.framesSince(Math.max(launchFrame, lastFrameInBase)) > Minutes(1)()) { terminate("Left base or never made it in"); return }
+
     if ( ! vicinity.base.exists(_.isEnemy)) { terminate("Vicinity not an eligible base"); return }
+
     if ( ! enoughKillers) { terminate(f"Not enough fighters: ${units.size} vs ${unitsRequired()} "); return }
 
     if (With.unitsShown.any(Terran.Wraith, Terran.Ghost, Terran.SpiderMine, Terran.Vulture, Protoss.Arbiter, Protoss.DarkTemplar, Zerg.Lurker, Zerg.LurkerEgg) || With.enemies.exists(_.hasTech(Zerg.Burrow))) {
@@ -63,3 +67,5 @@ class MissionKillExpansion extends Mission {
     units.foreach(_.intent.setCanSneak(true))
   }
 }
+
+

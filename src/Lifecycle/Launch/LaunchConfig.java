@@ -144,10 +144,12 @@ public final class LaunchConfig {
         if (race.equalsIgnoreCase("protoss")) return "Protoss";
         if (race.equalsIgnoreCase("terran")) return "Terran";
         if (race.equalsIgnoreCase("zerg")) return "Zerg";
+
         if (race.equalsIgnoreCase("P") || race.equalsIgnoreCase("T")
                 || race.equalsIgnoreCase("Z") || race.equalsIgnoreCase("R")) {
             return race.toUpperCase();
         }
+
         throw new IllegalArgumentException("Unknown race: " + value + " (Protoss|Terran|Zerg|Random)");
     }
 
@@ -160,9 +162,11 @@ public final class LaunchConfig {
         if (normalized.equals("1") || normalized.equals("true") || normalized.equals("yes")) {
             return true;
         }
+
         if (normalized.equals("0") || normalized.equals("false") || normalized.equals("no")) {
             return false;
         }
+
         throw new IllegalArgumentException(
             "Not a boolean: " + flag + "=" + value + " (1/true/yes or 0/false/no)");
     }
@@ -276,3 +280,5 @@ public final class LaunchConfig {
         return tuneParams;
     }
 }
+
+

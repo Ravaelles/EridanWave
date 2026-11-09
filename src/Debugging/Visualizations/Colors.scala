@@ -7,6 +7,7 @@ object Colors {
   // Via http://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
   def hsv(h: Int, s: Int, v: Int): Color = {
     if (s == 0) return new Color(v, v, v)
+
     val region = h / 43
     val remainder = 6 * (h - 43 * region)
     val p = (v * (255 - s)) >> 8
@@ -108,3 +109,4 @@ object Colors {
   val NeonViolet      : Color = hv(Hues.Violet,   neon)
   val White           : Color = hsv(0, 0,         neon)
 }
+

@@ -36,6 +36,7 @@ final class SimulationInteractionGraph(simulation: Simulation) {
 
   def observeProximity(): Unit = {
     if (componentCount <= 1 || simulation.battle.simulationFrames > proximityFrames) return
+
     var i = 0
     while (i < units.length && componentCount > 1) {
       val simulacrum = units(i).simulacrum
@@ -126,6 +127,7 @@ final class SimulationInteractionGraph(simulation: Simulation) {
     val a = indices.get(unitA)
     val b = indices.get(unitB)
     if (a.isEmpty || b.isEmpty) return
+
     union(a.get, b.get)
   }
 
@@ -158,3 +160,4 @@ final class SimulationInteractionGraph(simulation: Simulation) {
     root
   }
 }
+

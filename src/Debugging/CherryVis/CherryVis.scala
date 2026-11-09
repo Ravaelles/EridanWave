@@ -47,6 +47,7 @@ object CherryVis {
 
   def update(): Unit = {
     if ( ! enabled) return
+
     noteFirstSeen(With.units.ours)
     noteFirstSeen(With.units.neutral)
     noteOrders(With.units.ours)
@@ -64,8 +65,10 @@ object CherryVis {
    */
   def noteOwner(unitId: Int, owner: Any): Unit = {
     if ( ! enabled) return
+
     val ref = owner.asInstanceOf[AnyRef]
     if (lastOwnerRef.getOrElse(unitId, null) eq ref) return
+
     lastOwnerRef(unitId) = ref
     val name = shortName(owner)
     if (lastOwner.getOrElse(unitId, "") != name) {
@@ -80,8 +83,10 @@ object CherryVis {
    */
   def noteBehavior(unitId: Int, behavior: Any): Unit = {
     if ( ! enabled) return
+
     val ref = behavior.asInstanceOf[AnyRef]
     if (lastBehaviorRef.getOrElse(unitId, null) eq ref) return
+
     lastBehaviorRef(unitId) = ref
     val name = shortName(behavior)
     if (lastBehavior.getOrElse(unitId, "") != name) {
@@ -92,6 +97,7 @@ object CherryVis {
 
   def board(key: String, value: String): Unit = {
     if ( ! enabled) return
+
     if (lastBoard.getOrElse(key, "") != value) {
       lastBoard(key) = value
       trace.logState(With.frame, key, value)
@@ -105,6 +111,7 @@ object CherryVis {
    */
   def decision(unitId: Int, reason: String): Unit = {
     if ( ! enabled) return
+
     if (lastDecision.getOrElse(unitId, "") != reason) {
       lastDecision(unitId) = reason
       trace.logUnitLine(With.frame, unitId, reason)
@@ -113,6 +120,7 @@ object CherryVis {
 
   def log(message: String): Unit = {
     if ( ! enabled) return
+
     trace.logGlobal(With.frame, message, "Unknown")
   }
 
@@ -123,6 +131,7 @@ object CherryVis {
 
   def finish(isWinner: Boolean): Unit = {
     if ( ! enabled) return
+
     try {
       val summary = new GameSummary
       summary.gameDurationFrames  = With.frame
@@ -177,6 +186,8 @@ object CherryVis {
 
   private def shortName(value: Any): String = {
     if (value == null) return ""
+
     value.getClass.getSimpleName.stripSuffix("$")
   }
 }
+

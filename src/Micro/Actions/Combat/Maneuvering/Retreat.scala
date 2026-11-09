@@ -67,12 +67,14 @@ object Retreat extends Action {
 
     if ( ! unit.agent.shouldFight && unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= Shuttling.pickupRadiusEdge + 32) && unit.matchups.targetsInRange.isEmpty) {
       Commander.rightClick(unit, unit.agent.ride.get)
+
       return RetreatPlan(unit, unit.agent.ride.map(_.pixel).getOrElse(unit.pixel), "Hail")
     }
 
     // Against melee rush: Retreat directly to heart so workers can help
     if (With.frame < Minutes(6)() && unit.isAny(Terran.Marine, Protoss.Zealot) && unit.squad.forall(_.units.size < 5) && unit.metro.contains(With.geography.ourMetro) && unit.matchups.threats.forall(_.pixelRangeAgainst(unit) < 64)) {
       val baseToRunTo = Maff.orElse(With.geography.ourBases, Seq(With.geography.ourMain)).minBy(_.heart.groundTiles(With.scouting.enemyThreatOrigin))
+
       return RetreatPlan(unit, baseToRunTo.heart.center, "Run")
     }
 
@@ -109,3 +111,4 @@ object Retreat extends Action {
     RetreatPlan(unit, waypoint._1, waypoint._2)
   }
 }
+

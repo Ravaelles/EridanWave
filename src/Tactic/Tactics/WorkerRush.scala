@@ -80,6 +80,7 @@ class WorkerRush extends Tactic {
     val unassignedScouts = new mutable.HashSet[FriendlyUnitInfo] ++ lock.units
     if (unscoutedBases.isEmpty) {
       unassignedScouts.foreach(tickle(_, With.scouting.enemyHome.center))
+
       return
     }
     while (unassignedScouts.nonEmpty) {
@@ -109,3 +110,4 @@ class WorkerRush extends Tactic {
       .setAction(Tickle)
   }
 }
+

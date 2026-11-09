@@ -128,6 +128,7 @@ private object AbstractGridFloody {
   private def pattern(max: Int): Array[FloodOffset] = {
     val current = cache
     if (max < current.length) return current(max)
+
     this.synchronized {
       if (max >= cache.length) {
         val updated = cache.toBuffer
@@ -148,3 +149,4 @@ private object AbstractGridFloody {
     output.result()
   }
 }
+

@@ -26,8 +26,10 @@ object BeArbiter extends Action {
   override protected def perform(arbiter: FriendlyUnitInfo): Unit = {
     if (arbiter.matchups.pixelsEntangled > -16) {
       Retreat.delegate(arbiter)
+
       return
     }
+
     val goal                              = arbiter.team.map(_.vanguardAll()).getOrElse(arbiter.agent.destinationNext())
     val goalDistanceSquared               = arbiter.pixelDistanceSquared(goal)
     val seniorArbiters                    = arbiter.alliesSquad.filter(u => Protoss.Arbiter(u) && u.squadAge > arbiter.squadAge)
@@ -49,3 +51,5 @@ object BeArbiter extends Action {
     Commander.move(arbiter)
   }
 }
+
+

@@ -15,8 +15,10 @@ object CombatForecastDiagnostics {
   def cycle(): Unit = {
     if ( ! With.configuration.debugging || ! With.configuration.logCombatForecasts) return
     if (With.frame - lastCycle < 24) return
+
     val mixed = With.battles.local.filter(_.combatForecasts.size > 1)
     if (mixed.isEmpty) return
+
     lastCycle = With.frame
     mixed.foreach { parent =>
       parent.combatForecasts.foreach { b =>
@@ -33,6 +35,7 @@ object CombatForecastDiagnostics {
   def decision(u: FriendlyUnitInfo): Unit = synchronized {
     if ( ! With.configuration.debugging || ! With.configuration.logCombatForecasts) return
     if (With.frame - lastUnit.getOrElse(u.id, -1000) < 24) return
+
     u.battle.filter(_.combatForecasts.size > 1).foreach { parent =>
       lastUnit(u.id) = With.frame
       val j = u.combatJudgment
@@ -40,3 +43,4 @@ object CombatForecastDiagnostics {
     }
   }
 }
+

@@ -23,6 +23,7 @@ class FingerprintWorkerRush extends Fingerprint {
     if (With.units.existsEnemy(IsWarrior)) return false
     if (With.frame < GameTime(4, 0)() && attackingWorkerCount > 2) return true
     if (With.frame < GameTime(6, 0)() && attackingWorkerCount > 4) return true
+
     false
   }
 
@@ -32,3 +33,4 @@ class FingerprintWorkerRush extends Fingerprint {
 
   protected def attackingWorkers: Iterable[ForeignUnitInfo] = With.units.enemy.filter(MatchAttackingWorker)
 }
+

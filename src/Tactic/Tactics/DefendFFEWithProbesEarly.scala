@@ -39,6 +39,7 @@ class DefendFFEWithProbesEarly extends Tactic {
     if ( ! With.geography.ourMain.units.exists(Zerg.Zergling)) return
     if (With.units.countOurs(Protoss.PhotonCannon) == 0) return
     if (With.units.countOurs(IsAll(Protoss.PhotonCannon, IsComplete)) > 3) return
+
     haveMinedEnoughForTwoCannons ||= With.units.countOurs(Protoss.PhotonCannon) + (With.self.minerals + 24) / 150 >= 2
     if ( ! haveMinedEnoughForTwoCannons) return
     if ( ! With.enemies.exists(_.isUnknownOrZerg)) return
@@ -119,3 +120,4 @@ class DefendFFEWithProbesEarly extends Tactic {
     })
   }
 }
+

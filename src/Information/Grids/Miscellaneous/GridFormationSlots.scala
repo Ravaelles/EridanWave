@@ -42,6 +42,7 @@ final class GridFormationSlots extends AbstractGridArray[UnorderedBuffer[(UnitCl
         p.y + u.dimensionDownExclusive)) {
         return true
       }
+
       k += 1
     }
     false
@@ -50,6 +51,7 @@ final class GridFormationSlots extends AbstractGridArray[UnorderedBuffer[(UnitCl
     val i = this.i(Maff.div32(pixel.x), Maff.div32(pixel.y))
     if (i < 0 || i > length) return false
     if (unitClass.isFlyer) return true
+
     val x0 = pixel.x - unitClass.dimensionLeft            - 2
     val x1 = pixel.x + unitClass.dimensionRightExclusive  + 2
     val y0 = pixel.y - unitClass.dimensionUp              - 2
@@ -77,3 +79,5 @@ final class GridFormationSlots extends AbstractGridArray[UnorderedBuffer[(UnitCl
     get(tile).add((unitClass, pixel))
   }
 }
+
+

@@ -29,6 +29,7 @@ private[Simulation] object SimulationSplash {
     def pointToBox(x: Double, y: Double): Double = Math.hypot(
       Math.max(0, Math.max(left - x, x - right)), Math.max(0, Math.max(top - y, y - bottom)))
     if (lengthSquared == 0) return pointToBox(ax, ay)
+
     val tx1 = if (dx == 0) Double.NegativeInfinity else (left - ax) / dx
     val tx2 = if (dx == 0) Double.PositiveInfinity else (right - ax) / dx
     val ty1 = if (dy == 0) Double.NegativeInfinity else (top - ay) / dy
@@ -36,6 +37,7 @@ private[Simulation] object SimulationSplash {
     val entry = Math.max(0, Math.max(Math.min(tx1, tx2), Math.min(ty1, ty2)))
     val exit = Math.min(1, Math.min(Math.max(tx1, tx2), Math.max(ty1, ty2)))
     if (entry <= exit && (dx != 0 || (ax >= left && ax <= right)) && (dy != 0 || (ay >= top && ay <= bottom))) return 0
+
     def cornerDistance(x: Double, y: Double): Double = {
       val t = Maff.clamp(((x - ax) * dx + (y - ay) * dy) / lengthSquared, 0.0, 1.0)
       Math.hypot(x - ax - t * dx, y - ay - t * dy)
@@ -45,3 +47,4 @@ private[Simulation] object SimulationSplash {
         Math.min(cornerDistance(left, bottom), cornerDistance(right, bottom))))
   }
 }
+

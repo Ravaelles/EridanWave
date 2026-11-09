@@ -128,6 +128,7 @@ final class FormationStandard(val group: FriendlyUnitGroup, var style: Formation
   }
   private def findTargetPath: TilePath = {
     if (goal == threatOrigin) return goalPath
+
     new PathfindProfile(
       vanguardCentroid.walkableTile,
       Some(threatOrigin.walkableTile),
@@ -332,3 +333,4 @@ final class FormationStandard(val group: FriendlyUnitGroup, var style: Formation
 
   override def toString: String = f"$group $style from $vanguardCentroid to $goal"
 }
+

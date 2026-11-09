@@ -43,8 +43,10 @@ trait GroundDistance {
   @inline final protected def groundTiles(origin: Tile, destination: Tile): Int = {
     if ( ! origin.valid)      return impossiblyLargeDistanceTiles
     if ( ! destination.valid) return impossiblyLargeDistanceTiles
+
     val edges = destination.zone.edges
     if (edges.isEmpty) return impossiblyLargeDistanceTiles
+
     var best = Int.MaxValue
     var i = 0
     while (i < edges.length) {
@@ -57,3 +59,4 @@ trait GroundDistance {
     if (best == Int.MaxValue) impossiblyLargeDistanceTiles else best
   }
 }
+

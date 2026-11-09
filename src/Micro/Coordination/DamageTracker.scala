@@ -48,12 +48,15 @@ final class DamageTracker {
       Option(bullet.bwapi.getSource).flatMap(source => With.units.dead.find(_.id == source.getID))
     }
     if (sourceOption.isEmpty || bullet.targetUnit.isEmpty || ! bullet.exists) return
+
     val source = sourceOption.get
     val target = bullet.targetUnit.get
     if ( ! target.isEnemyOf(source)) return
+
     bulletSources += bullet.id -> source
     sourcesWithBullets += source
     if ( ! bullet.moving) return
+
     val bulletType = bullet.bulletType
     // Parasite or Spawn Broodling (Ensnare has its own type)
     // Queen_Spell_Carrier is shared by Parasite and Broodlings; it cannot justify a guaranteed kill.
@@ -62,6 +65,7 @@ final class DamageTracker {
     // Ank: Bullets update after units. If a moving bullet is not a miss, then it updates its target position every frame. Not all bullets move, so you would likely need to compare on the first frame of the bullet's life. Note, Valkyrie don't aim at their targets and that is not technically a miss.
     // Apply this test only to the tracking bullets above.
     if (bullet.targetPixel.exists(_ != target.pixel)) return
+
     val inFrames = if (bullet.speed > 0.0) {
       Math.max(1, Math.ceil(bullet.distanceToTarget / bullet.speed).toInt)
     } else Math.max(1, source.expectedProjectileFrames(target))
@@ -94,3 +98,4 @@ final class DamageTracker {
     attacker.orderTarget.filter(attacker.isEnemyOf).filter(attacker.inRangeToAttack).foreach(_.addFutureAttack(attacker))
   }
 }
+

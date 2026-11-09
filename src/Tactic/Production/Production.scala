@@ -13,6 +13,7 @@ trait Production extends Prioritized {
   def trainee: Option[FriendlyUnitInfo] = None
   final def update(): Unit = {
     if (With.blackboard.toCancel().contains(request.buildable)) return
+
     prioritize()
     onUpdate()
   }
@@ -37,8 +38,10 @@ trait Production extends Prioritized {
     if ( ! requirement.specificTrainee.forall(trainee.contains)) return false
     if (request.upgrade.isDefined && request.quantity < requirement.quantity) return false
     if (request.minStartFrame > Math.max(requirement.minStartFrame, With.frame)) return false
+
     true
   }
 
   final override def toString: String = f"Produce ${request.toString.replaceAll("Buildable ", "")}${if (isComplete) " (Complete)" else if (hasSpent) " (Spent)" else ""}"
 }
+

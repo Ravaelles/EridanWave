@@ -41,6 +41,7 @@ class Battle(unitsUs: Seq[UnitInfo] = Vector.empty, unitsEnemy: Seq[UnitInfo] = 
   // Called on the game thread after prediction, before judgment and publication. Physical membership stays intact.
   def partitionCombatForecasts(): Boolean = {
     if (componentForecasts.isDefined) return false
+
     val forecasts = squadForecasts.flatMap(_.partitionSimulation())
     componentForecastByUnit = forecastByUnit(forecasts)
     componentForecasts = Some(forecasts)
@@ -49,6 +50,7 @@ class Battle(unitsUs: Seq[UnitInfo] = Vector.empty, unitsEnemy: Seq[UnitInfo] = 
 
   private def partitionSimulation(): Vector[Battle] = {
     if ( ! simulated || simulationComponents.size <= 1) return Vector(this)
+
     val simulatedUnits = simulationComponents.flatten.toSet
     // Stasis, invincibility and other exclusions must not remove units from the forecast lookup.
     val components = simulationComponents ++ units.filterNot(simulatedUnits).map(Vector(_))
@@ -154,3 +156,4 @@ class Battle(unitsUs: Seq[UnitInfo] = Vector.empty, unitsEnemy: Seq[UnitInfo] = 
       || e.isInstanceOf[SimulationEventDeath]
       || e.isInstanceOf[SimulationEventMove])).toVector
 }
+

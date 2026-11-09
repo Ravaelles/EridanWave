@@ -37,6 +37,7 @@ public final class BwapiIni {
         if (path != null && !path.trim().isEmpty()) {
             return path.trim();
         }
+
         return null;
     }
 
@@ -45,6 +46,7 @@ public final class BwapiIni {
         if (gameRoot != null && !gameRoot.trim().isEmpty()) {
             return gameRoot.trim();
         }
+
         if (winePrefix == null || winePrefix.trim().isEmpty()) {
             winePrefix = defaultWinePrefix();
         }
@@ -57,6 +59,7 @@ public final class BwapiIni {
         if (explicit != null) {
             return new File(explicit);
         }
+
         return new File(defaultGameRoot(winePrefix, gameRoot) + "/bwapi-data/bwapi.ini");
     }
 
@@ -65,6 +68,7 @@ public final class BwapiIni {
         if (prefix != null && !prefix.trim().isEmpty()) {
             return prefix.trim();
         }
+
         return ProcessHelper.userHome() + ".wine";
     }
 
@@ -91,6 +95,7 @@ public final class BwapiIni {
         if (resolvedMapPath == null) {
             return false;
         }
+
         String lower = resolvedMapPath.toLowerCase(java.util.Locale.ROOT);
         for (String marker : UMS_MARKERS) {
             if (lower.contains(marker)) {
@@ -120,13 +125,16 @@ public final class BwapiIni {
             String gameType, boolean enforceWindowlessOnWine) {
         if (ini == null || !ini.isFile()) {
             System.out.println("[launcher] bwapi.ini not found at " + ini + "; leaving it unchanged");
+
             return false;
         }
+
         List<String> lines;
         try {
             lines = new ArrayList<>(Files.readAllLines(ini.toPath(), StandardCharsets.UTF_8));
         } catch (Exception e) {
             System.out.println("[launcher] Could not read " + ini + ": " + e.getMessage());
+
             return false;
         }
 
@@ -146,6 +154,7 @@ public final class BwapiIni {
         if (!changed) {
             return false;
         }
+
         try {
             StringBuilder out = new StringBuilder();
             for (String line : lines) {
@@ -154,9 +163,11 @@ public final class BwapiIni {
             Files.write(ini.toPath(), out.toString().getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             System.out.println("[launcher] Could not write " + ini + ": " + e.getMessage());
+
             return false;
         }
         System.out.println("[launcher] Patched " + ini);
+
         return true;
     }
 
@@ -164,6 +175,7 @@ public final class BwapiIni {
         if (value == null) {
             return false;
         }
+
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
             if (line.startsWith(key + "=") || line.startsWith(key + " =")) {
@@ -171,13 +183,18 @@ public final class BwapiIni {
                 if (!lines.get(i).equals(replacement)) {
                     lines.set(i, replacement);
                     System.out.println("[launcher]   " + key + " -> " + value);
+
                     return true;
                 }
+
                 return false;
             }
         }
         lines.add(key + "=" + value);
         System.out.println("[launcher]   " + key + " -> " + value + " (appended)");
+
         return true;
     }
 }
+
+

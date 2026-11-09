@@ -93,8 +93,10 @@ class PvEProxy2Gate extends GameplanImperative {
   def slushOrPylons(): Unit = {
     if (With.tactics.workerScout.scoutingAbandoned || ! enemyIsProtoss) {
       autosupply()
+
       return
     }
+
     if (With.tactics.workerScout.scouts.exists(_.base.exists(_.isEnemy))) {
       microSlush(100)
     } else {
@@ -102,3 +104,5 @@ class PvEProxy2Gate extends GameplanImperative {
     }
   }
 }
+
+

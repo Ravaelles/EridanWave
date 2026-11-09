@@ -71,8 +71,10 @@ class Bank {
   
   private def expectedFrames(request: LockCurrency): Int = {
     if (request.satisfied) return 0
+
     Math.max(
       if (request.minerals == 0) 0 else framesToEarnMinerals(-mineralsLeft),
       if (request.gas == 0) 0 else framesToEarnGas(-gasLeft))
   }
 }
+

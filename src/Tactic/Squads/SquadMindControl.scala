@@ -16,6 +16,7 @@ class SquadMindControl extends Squad {
   def launch(): Unit = {
     if ( ! With.self.hasTech(Protoss.MindControl)) return
     if (stealables.isEmpty) return
+
     lock.acquire()
   }
 
@@ -31,6 +32,7 @@ class SquadMindControl extends Squad {
 
   override def run(): Unit = {
     if (units.isEmpty) return
+
     setTargets(stealables.toVector.sortBy(_.pixelDistanceTravelling(centroidGround)))
     val targetCenter = Maff.centroid(targets.get.view.map(_.pixel) :+ centroidGround)
     def isReady(unit: FriendlyUnitInfo): Boolean = targets.exists(_.nonEmpty) && unit.energy >= 150
@@ -53,3 +55,4 @@ class SquadMindControl extends Squad {
     unready.foreach(_.intend(this).setTerminus(safety))
   }
 }
+

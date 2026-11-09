@@ -77,6 +77,7 @@ object CombatVisIO {
       val hash = With.game.mapHash()
       val outFile = new File(baseDir, hash + ".mapbin")
       if (outFile.exists()) return
+
       val dos = new DataOutputStream(new FileOutputStream(outFile))
       try {
         val tileW = With.mapTileWidth
@@ -319,6 +320,7 @@ object CombatVisIO {
       val nextAllowed = nextDumpAllowedMs.get()
       if (now < nextAllowed) return
       if (!dumpScheduled.compareAndSet(false, true)) return
+
       nextDumpAllowedMs.set(now + 10000L)
 
       // Capture needed values on main thread
@@ -347,9 +349,11 @@ object CombatVisIO {
     try {
       // Enforce 10-second cooldown in game time (24 fps => 240 frames)
       if (currentFrame - lastDumpGameFrame < 240) return
+
       val now = System.currentTimeMillis()
       // Keep wall-clock throttle as a secondary guard
       if (now - lastDumpMs < 10000L) return
+
       val t0 = System.nanoTime()
 
       // Build unit metas with type IDs for worker filtering
@@ -539,3 +543,4 @@ object CombatVisIO {
     } catch { case exception: Exception => With.logger.quietlyOnException(exception) } finally { launched = false }
   }
 }
+

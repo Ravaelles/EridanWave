@@ -25,6 +25,7 @@ public final class GameLauncherFactory {
         if (isWineClientJvm() || runningUnderWine()) {
             return new WineClientGameLauncher();
         }
+
         switch (config.getLauncher()) {
             case WINE:
                 // Reached only by a Linux JVM (a Wine JVM returns early
@@ -33,8 +34,10 @@ public final class GameLauncherFactory {
                 // the POSIX connection backend and loop on "Game table mapping
                 // not found" forever, never seeing the Wine-side shared memory.
                 return new UnixChaosGameLauncher();
+
             case CHAOS:
                 return new ChaosGameLauncher();
+
             case NONE:
             default:
                 return new NoOpGameLauncher();
@@ -74,8 +77,12 @@ public final class GameLauncherFactory {
      * detected via the env markers Wine sets for its child processes.
      */
     static boolean runningUnderWine() {
-        return System.getenv("WINEDEBUG") != null
+        boolean wineMarkers = System.getenv("WINEDEBUG") != null
             || System.getenv("WINEDLLOVERRIDES") != null
             || System.getenv("WINEPREFIX") != null;
+
+        return wineMarkers;
     }
 }
+
+

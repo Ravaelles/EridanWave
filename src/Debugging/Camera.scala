@@ -80,6 +80,7 @@ class Camera extends TimedTask {
   
   def focusOn(unit: UnitInfo): Unit = {
     if (With.framesSince(focusFrame) < refocusLimit) return
+
     focusUnit = unit
     focusFrame = With.frame
     tweenFrom = focus
@@ -101,3 +102,4 @@ class Camera extends TimedTask {
     }
   }
 }
+

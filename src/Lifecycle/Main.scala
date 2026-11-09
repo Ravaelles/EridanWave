@@ -32,6 +32,7 @@ object Main {
     val launch = LaunchConfig.parse(args)
     if (launch.isHelpRequested) {
       LaunchConfig.printHelp()
+
       return
     }
     // Explicit --cherryvis/--no-cherryvis wins over the config file and the
@@ -60,3 +61,4 @@ object Main {
     }
   }
 }
+

@@ -242,8 +242,10 @@ object With {
     if (mapFileName != null && Lifecycle.Launch.BwapiIni.isUmsMap(mapFileName)) {
       With.logger.debug("Skipping terrain analysis (UMS map).")
       System.out.println("[launcher] Skipping terrain analysis (UMS map).")
+
       return
     }
+
     try {
       BWTA.readMap(game)
       BWTA.analyze()
@@ -264,3 +266,5 @@ object With {
     }
   }
 }
+
+

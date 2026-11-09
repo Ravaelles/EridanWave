@@ -22,6 +22,7 @@ object ShowMacroSim extends DebugView {
   override def renderScreen(): Unit = {
     val steps = With.macroSim.steps
     if (steps.isEmpty) return
+
     var pass = 0
     while (pass < 2) {
       var i = 0
@@ -59,3 +60,4 @@ object ShowMacroSim extends DebugView {
   }
 
 }
+

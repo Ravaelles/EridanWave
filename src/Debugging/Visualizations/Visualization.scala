@@ -132,6 +132,7 @@ class Visualization extends TimedTask {
     initialize()
     if ( ! enabled) return
     if (With.tasks.tasks.exists(_.runsTotal == 0)) return
+
     With.game.setTextSize(Text.Size.Small)
     
     if (happy) {
@@ -158,6 +159,7 @@ class Visualization extends TimedTask {
   private var initialized = false
   private def initialize(): Unit = {
     if (initialized) return
+
     initialized = true
     enabled = With.configuration.visualizeDebug
     screen  = With.configuration.visualizeScreen
@@ -174,3 +176,4 @@ class Visualization extends TimedTask {
     }
   }
 }
+

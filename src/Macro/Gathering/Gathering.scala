@@ -83,6 +83,7 @@ class Gathering extends TimedTask with AccelerantMinerals with Zippers {
     if (bases.isEmpty) { // Yikes. Wait for a base to finish or just go attack
       val goal = Maff.minBy(With.units.ours.filter(_.unitClass.isTownHall))(u => 10000 * u.remainingCompletionFrames + u.id).map(_.pixel).getOrElse(With.scouting.enemyHome.center)
       workers.foreach(_.intend(this).setTerminus(goal))
+
       return
     }
 
@@ -211,8 +212,10 @@ class Gathering extends TimedTask with AccelerantMinerals with Zippers {
 
   private def doInitialSplit(): Boolean = {
     if (With.frame > 0 || workers.size != 4) return false
+
     val minerals = bases.flatMap(mineralSlots(_))
     if (minerals.size < workers.size) return false
+
     val splittees = workers.toVector.sortBy(worker => minerals.map(_.resource.pixelDistanceEdge(worker)).min)
     // Most builds are bottlenecked on when we can produce the 6th worker, whose cost you can afford after 56 / 8 = 7 mineral trips
     // Thus, you want to optimize for the return of the 7th mineral trip, which will ordinarily be done by the third-furthest initial worker
@@ -301,3 +304,4 @@ class Gathering extends TimedTask with AccelerantMinerals with Zippers {
     slot.isDefined
   }
 }
+

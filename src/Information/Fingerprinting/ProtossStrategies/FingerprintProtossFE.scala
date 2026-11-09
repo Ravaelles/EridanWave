@@ -31,6 +31,7 @@ abstract class FingerprintProtossFE extends FingerprintAnd(
   override def investigate: Boolean = {
     if ( ! super.investigate) return false
     if ( With.frame > Minutes(5)()) return false
+
     conclusion = getConclusion
     conclusion == requiredConclusion
   }
@@ -73,6 +74,7 @@ abstract class FingerprintProtossFE extends FingerprintAnd(
       if (predictFFE) return ConcludeFFE
       if (predictGFE) return ConcludeGFE
     }
+
     Undecided
   }
   
@@ -88,3 +90,4 @@ class FingerprintForgeFE extends FingerprintProtossFE {
 class FingerprintGatewayFE extends FingerprintProtossFE {
   override val requiredConclusion: Conclusion = ConcludeGFE
 }
+

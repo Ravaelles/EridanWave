@@ -57,6 +57,7 @@ object HistoryLoader {
         files = Array.empty
       }
       val historyFiles = files.filter(_.getName.contains(filenameHistoryPrefix))
+
       return historyFiles.flatMap(loadGamesFromFile)
     } catch { case exception: Exception =>
       With.logger.warn("Failed to read games directory " + directory)
@@ -100,3 +101,4 @@ object HistoryLoader {
     WriteFile(filename, lines, "save game history")
   }
 }
+

@@ -24,6 +24,7 @@ class SquadDarkTemplar extends Squad {
 
   override def launch(): Unit = {
     if ( ! With.blackboard.darkTemplarSquad()) return
+
     bases.clear()
     bases ++= With.geography.bases
       .filterNot(_.zone.island)
@@ -35,6 +36,7 @@ class SquadDarkTemplar extends Squad {
       .sortBy( ! _.owner.isEnemy)
       .sortBy(waitForBackstab && With.scouting.enemyProximity > 0.5 && ! _.naturalOf.exists(_.isEnemy))
     if (bases.isEmpty && vulnerableDivisions.isEmpty) return
+
     lock.acquire()
   }
 
@@ -110,10 +112,13 @@ class SquadDarkTemplar extends Squad {
     val divisions = vulnerableDivisions
     if (bases.isEmpty) {
       if (divisions.isEmpty) { lock.release(); return }
+
       units.foreach(intendDTToDivision(_, divisions))
       units.headOption.flatMap(_.intent.terminus).foreach(vicinity = _)
+
       return
     }
+
     val dts = new UnorderedBuffer[FriendlyUnitInfo]
     dts.addAll(units)
     val firstBase = bases.head
@@ -149,3 +154,5 @@ class SquadDarkTemplar extends Squad {
     }
   }
 }
+
+

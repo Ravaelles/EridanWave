@@ -64,6 +64,7 @@ class Battles extends TimedTask {
         task.run(timer.remaining)
       } else {
         task.skip()
+
         return
       }
       if (_processingState.isFinalStep) {
@@ -78,3 +79,4 @@ class Battles extends TimedTask {
     lastEstimationCompletion = With.frame
   }
 }
+

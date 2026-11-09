@@ -199,6 +199,7 @@ object PylonTrapSearch {
         if (depth == 0) {
           return 0L
         }
+
         var a = selectedIndices(0)
         var b = if (depth > 1) selectedIndices(1) else -1
         var c = if (depth > 2) selectedIndices(2) else -1
@@ -216,9 +217,11 @@ object PylonTrapSearch {
         if ( ! statesSeen.add(stateKey(depth))) {
           return None
         }
+
         if ( ! findEscapePath()) {
           return Some(selected.take(depth).toVector)
         }
+
         if (depth == count) {
           return None
         }
@@ -261,6 +264,7 @@ object PylonTrapSearch {
               return output
             }
           }
+
           pathCandidateI += 1
         }
         None
@@ -302,3 +306,4 @@ object PylonTrapSearch {
   }
 
 }
+

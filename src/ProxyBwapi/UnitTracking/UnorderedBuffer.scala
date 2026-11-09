@@ -45,8 +45,10 @@ final class UnorderedBuffer[T >: Null](capacity: Int = 8) extends IndexedSeq[T] 
         values(i) = values(_size - 1)
         values(_size - 1) = null
         _size -= 1
+
         return
       }
+
       i += 1
     }
   }
@@ -137,6 +139,7 @@ final class UnorderedBuffer[T >: Null](capacity: Int = 8) extends IndexedSeq[T] 
     var i = 0
     while (i < _size) {
       if (p(values(i))) return true
+
       i += 1
     }
     false
@@ -145,6 +148,7 @@ final class UnorderedBuffer[T >: Null](capacity: Int = 8) extends IndexedSeq[T] 
     var i = 0
     while (i < _size) {
       if ( ! p(values(i))) return false
+
       i += 1
     }
     true
@@ -153,8 +157,11 @@ final class UnorderedBuffer[T >: Null](capacity: Int = 8) extends IndexedSeq[T] 
     var i = 0
     while (i < _size) {
       if (p(values(i))) return Some(values(i))
+
       i += 1
     }
     None
   }
 }
+
+

@@ -9,7 +9,9 @@ object BehaviorRepair extends SimulacrumBehavior {
     if (simulacrum.targets.isEmpty) {
       simulacrum.behavior = BehaviorFlee
       simulacrum.act()
+
       return
     }
   }
 }
+

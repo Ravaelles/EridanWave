@@ -109,6 +109,7 @@ object Root extends Action {
       if (weAreRooted) {
         return
       }
+
       if (weAreALurker) {
         Commander.burrow(unit)
       }
@@ -121,6 +122,7 @@ object Root extends Action {
       if ( ! weAreRooted) {
         return
       }
+
       if (weAreALurker) {
         Commander.unburrow(unit)
       }
@@ -137,3 +139,4 @@ object Root extends Action {
     rootAction.delegate(unit)
   }
 }
+

@@ -29,9 +29,11 @@ object RegroupLatch {
 
   def nextStance(current: Stance, fightingFraction: Double, coverageFraction: Double): Stance = {
     if (coverageFraction < minimumCoverage) return current
+
     current match {
       case Engaged    => if (fightingFraction < startRegroupBelow) Regrouping else Engaged
       case Regrouping => if (fightingFraction > stopRegroupAbove) Engaged else Regrouping
     }
   }
 }
+

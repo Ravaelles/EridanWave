@@ -273,6 +273,7 @@ trait CombatUnit {
         frame = next.onFrame
         if (damageRequired <= 0) return frame
       }
+
       i += 1
     }
     Forever()
@@ -293,6 +294,7 @@ trait CombatUnit {
       damageRequired -= damage.health
       frame = next.onFrame
       if (damageRequired <= 0) return frame
+
       i += 1
     }
     Forever()
@@ -300,3 +302,5 @@ trait CombatUnit {
 
   protected def _calculateInjury: Double = Maff.nanToZero((unitClass.maxTotalHealth - totalHealth).toDouble / unitClass.maxTotalHealth)
 }
+
+

@@ -45,6 +45,7 @@ final case class Force(x: Double, y: Double) {
 
   @inline def rotate(degrees: Double): Force = {
     if (lengthSquared == 0) return this
+
     val r = degrees * Maff.x2PiInv360
     val c = Math.cos(r)
     val s = Math.sin(r)
@@ -59,5 +60,6 @@ final case class Force(x: Double, y: Double) {
     else
       "Force[Zero]"
 }
+
 
 

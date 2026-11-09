@@ -10,6 +10,7 @@ object ConfigurationLoader {
 
   def opponentFixedBuild(text: String, enemyName: String, fallback: String): String = {
     if (text.trim.isEmpty) return fallback
+
     val entries = Json.read(text).asJsonMap().entrySet().iterator()
     while (entries.hasNext) {
       val entry = entries.next()
@@ -23,6 +24,7 @@ object ConfigurationLoader {
     if (value == null) {
       return default
     }
+
     val attemptedOutput: T = default match {
       case _: Boolean =>  if (value.isBoolean)  value.asBoolean().asInstanceOf[T] else default
       case _: Int =>      if (value.isNumber)   value.asInteger().asInstanceOf[T] else default
@@ -32,6 +34,7 @@ object ConfigurationLoader {
     if (attemptedOutput == null) {
       return default
     }
+
     attemptedOutput
   }
 
@@ -39,15 +42,19 @@ object ConfigurationLoader {
     val aiDir = new File(With.bwapiData.ai)
     if ( ! aiDir.isDirectory) {
       With.logger.debug(f"No bwapi-data/AI directory at ${aiDir.getPath}; using default configuration")
+
       return
     }
+
     val configFiles: Array[File] = Option(aiDir.listFiles).getOrElse(Array.empty)
       .filter(f => Seq("Eridan", ".config", ".json").forall(f.getName.contains))
     val configFilesMatching = Seq(configFiles.filter(_.getName.contains(With.self.name)), configFiles).find(_.nonEmpty).getOrElse(Array.empty)
     if (configFilesMatching.isEmpty) {
       With.logger.warn("Didn't find any matching configurations")
+
       return
     }
+
     if (configFilesMatching.length > 1) {
       With.logger.warn("Found multiple matching configurations; using newest: " + configFilesMatching.map(f => f"${f.getName} (${f.lastModified()})").mkString(", "))
     }
@@ -203,3 +210,5 @@ object ConfigurationLoader {
 
   private def config: Configuration = With.configuration
 }
+
+

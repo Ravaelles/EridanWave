@@ -20,6 +20,7 @@ object ReloadScarabs extends Action {
     val queued = Math.max(unit.trainingQueue.size, unit.bwapiUnit.getTrainingQueueCount)
     val needed = maxScarabCount - unit.scarabs - queued
     if (needed <= 0) return
+
     if (unit.airlifted) {
       if (unit.matchups.framesOfSafety > 24 + With.reaction.agencyMax) {
         RequestSafeLanding(unit)
@@ -29,3 +30,4 @@ object ReloadScarabs extends Action {
     }
   }
 }
+

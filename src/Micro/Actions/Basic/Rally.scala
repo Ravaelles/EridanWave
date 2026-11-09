@@ -35,9 +35,11 @@ object Rally extends Action {
     
     if (shouldRallyToMinerals) {
       unit.base.map(_.heart.center).foreach(Commander.rally(unit, _))
+
       return
     }
 
     Commander.rally(unit, With.scouting.enemyHome.center)
   }
 }
+

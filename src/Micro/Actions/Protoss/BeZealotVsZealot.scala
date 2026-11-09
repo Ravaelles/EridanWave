@@ -25,11 +25,14 @@ object BeZealotVsZealot extends Action {
     if (unit.matchups.threatsInPixels(24).filter(Protoss.Zealot).count(_.presumptiveTarget.contains(unit)) > 1) {
       unit.agent.fightReason = "Outnumbered"
       unit.agent.shouldFight = false
+
       return
     }
+
     if (unit.totalHealth < 14 && unit.matchups.threatsInPixels(64).exists(t => t.totalHealth > 14 || t.cooldownLeft < unit.cooldownLeft)) {
       unit.agent.fightReason = "Dying"
       unit.agent.shouldFight = false
+
       return
     }
 
@@ -41,6 +44,7 @@ object BeZealotVsZealot extends Action {
       unit.agent.fightReason  = "Duelling"
       unit.agent.shouldFight  = true
       unit.agent.toAttack     = target
+
       return
     }
 
@@ -55,3 +59,5 @@ object BeZealotVsZealot extends Action {
     }
   }
 }
+
+

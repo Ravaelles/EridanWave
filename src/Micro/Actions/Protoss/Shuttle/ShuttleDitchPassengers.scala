@@ -10,6 +10,7 @@ object ShuttleDitchPassengers extends Action {
   override def allowed(shuttle: FriendlyUnitInfo): Boolean = Protoss.Shuttle(shuttle)
   override protected def perform(shuttle: FriendlyUnitInfo): Unit = {
     if (shuttle.base.exists(_.owner.isEnemy) && ! shuttle.agent.destinationFinal().base.exists(_.owner.isEnemy)) return
+
     val hitchhikers = (shuttle.agent.passengers ++ shuttle.loadedUnits)
       .distinct
       .filter(p => p.isNone(Protoss.Reaver, Protoss.HighTemplar) && ! p.squad.exists(shuttle.squad.contains))
@@ -20,3 +21,4 @@ object ShuttleDitchPassengers extends Action {
     }
   }
 }
+

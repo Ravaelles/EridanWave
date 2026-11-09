@@ -25,6 +25,7 @@ object Tickle extends Action {
     // Return resources now so we can mine again later
     if (tickler.carrying && tickler.base.exists(_.owner.isUs)) {
       Commander.returnCargo(tickler)
+
       return
     }
 
@@ -178,3 +179,4 @@ object Tickle extends Action {
     }
   }
 }
+

@@ -57,6 +57,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
   def placeRequiredBuildings(): Option[Wall] = {
     if (constraints.isEmpty)        return None
     if (zone.exitOriginal.isEmpty)  return None
+
     var constraintIndex : Int   = 0
     var gapsLeft        : Int   = 0
     var candidatesThisConstraint  = 0
@@ -116,6 +117,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
         // Use Chebyshev distance to check gap size because cater-corner diagonals are not acceptable
         if (horizon.exists(t => boundaryEnd.exists(_.tileDistanceChebyshev(t) <= gapsLeft))) {
           metrics.gapTooNarrow += 1
+
           return false
         }
         */
@@ -141,9 +143,11 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
         candidatesThisConstraint += 1
         candidatesThisPermutation += 1
         metrics.candidatesGenerated += 1
-        return searchExpired ||
+        val searchedEnough = searchExpired ||
           candidatesThisConstraint >= maxCandidatesPerConstraint ||
           candidatesThisPermutation >= maxCandidatesPerPermutation
+
+        return searchedEnough
       }
 
       // For each tile in the boundary,
@@ -285,6 +289,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
   private lazy val townHallTiles = zone.bases.flatMap(_.townHallArea.tiles)
   def scoreWall(wall: Wall): Double = {
     if (wall.buildings.isEmpty) return 0.0
+
     val rectangles = wall.buildings.map(b => new TileRectangle(b._1, b._2.tileWidthPlusAddon, b._2.tileHeight))
     val compactRectangles = rectangles ++ wall.gap.map(new TileRectangle(_, 1, 1))
     val expanded  = compactRectangles.map(_.expand(1, 1))
@@ -337,6 +342,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
   private def scoreFillerGeometry(wall: Wall, tiles: Seq[Tile]): Double = {
     val required = requiredBuildings(wall)
     if (required.isEmpty) return 0.0
+
     val centersX2 = required.map(b => 2 * b._1.x + b._2.tileWidthPlusAddon)
     val centersY2 = required.map(b => 2 * b._1.y + b._2.tileHeight)
     val horizontal = centersX2.max - centersX2.min >= centersY2.max - centersY2.min
@@ -393,6 +399,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
 
   def scoreWallByArea(wall: Wall): Double = {
     if (wall.buildings.isEmpty) return 0.0
+
     val endTiles  = wall.buildings.map(p => p._1.add(p._2.tileWidthPlusAddon, p._2.tileHeight))
     val xMin      = wall.buildings.map(_._1.x).min
     val yMin      = wall.buildings.map(_._1.y).min
@@ -411,6 +418,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
       // We can't safely fill without preserving a path
       if (wall.get.hallway.isEmpty) {
         fail(wall.get, NoHallway)
+
         return
       }
     }
@@ -463,8 +471,10 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
       }))
       if (configurations.isEmpty) {
         fail(wall.get, InsufficientFiller)
+
         return
       }
+
       val best = configurations.minBy(c => (c._1.length, scoreFillerGeometry(wall.get, c._2)))
       wall.get.buildings ++= best._2.map(t => (t, Protoss.PhotonCannon))
       wall.get.buildings ++= best._1.map(t => (t, Protoss.Pylon))
@@ -505,6 +515,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
           }
           return Some(output.reverse)
         }
+
         hallwayDirections.indices.foreach(direction => {
           val offset = hallwayDirections(direction)
           val next = current.tile.add(offset.x, offset.y)
@@ -531,6 +542,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
       ++ zone.bases.flatMap(_.townHallArea.tiles)).toSet
     val available = zone.tiles.filter(tile => tile.walkableUnchecked && ! blockers.contains(tile)).toSet
     if (available.isEmpty) return Set.empty
+
     val seed = available.minBy(_.groundPixels(entrance))
     val output = new mutable.HashSet[Tile]
     val horizon = mutable.Queue(seed)
@@ -591,3 +603,5 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
 
   override def toString: String = f"WallFinder ${zone.name} ${zone.heart} $wall"
 }
+
+

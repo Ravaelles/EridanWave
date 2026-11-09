@@ -28,8 +28,10 @@ class WallGaps(base: Base) {
   def apply(units: Iterable[FriendlyUnitInfo]): Map[FriendlyUnitInfo, Pixel] = {
     val defenders = units.filter(u => u.alive && u.complete && ! u.loaded && u.isAny(Protoss.Zealot, Protoss.Probe)).toVector
     if (defenders.isEmpty) return Map.empty
+
     val currentGeometry = updateGeometry()
     if (currentGeometry.isEmpty) return Map.empty
+
     val byId = defenders.map(u => u.id -> u).toMap
     currentGeometry.get.assign(defenders.map(u => Defender(u.id, WallGaps.body(u.unitClass), Protoss.Probe(u), u.pixel)))
       .map { case (id, pixel) => byId(id) -> pixel }
@@ -38,6 +40,7 @@ class WallGaps(base: Base) {
   private def updateGeometry(): Option[Geometry] = {
     if ( ! base.isNatural || ! With.enemies.exists(_.isZerg)) {
       geometry = None
+
       return None
     }
     // A wall may stand beyond the natural's zone; its hallway connects it to the base.
@@ -54,6 +57,7 @@ class WallGaps(base: Base) {
     if ( ! wall.exists(u => u.unitClass.tileWidth == 4 && u.unitClass.tileHeight == 3)
       || ! wall.exists(u => u.unitClass.tileWidth == 3 && u.unitClass.tileHeight == 2)) {
       geometry = None
+
       return None
     }
 
@@ -134,6 +138,7 @@ object WallGaps {
       // Movement flush against buildings or terrain can stop short; leave one pixel.
       val b = body.at(p).expand(clearance)
       if (boxes.exists(_.intersects(b))) return false
+
       val x0 = Math.floorDiv(b.left, 8) - minX
       val y0 = Math.floorDiv(b.top, 8) - minY
       val x1 = Math.floorDiv(b.right - 1, 8) - minX + 1
@@ -180,6 +185,7 @@ object WallGaps {
       val (ay, by) = closest(a.top, a.bottom, b.top, b.bottom)
       val width = Math.hypot(bx - ax, by - ay)
       if (width == 0 || width > 96 || ling.forbidden(a).touches(ling.forbidden(b))) return None
+
       val center = Pixel((ax + bx) / 2, (ay + by) / 2)
       val delta = inside.subtract(center)
       val sign = if ((ay - by) * delta.x + (bx - ax) * delta.y >= 0) 1 else -1
@@ -187,6 +193,7 @@ object WallGaps {
       val ny = sign * (bx - ax) / width
       // Ignore alleys along the back of the wall, such as those between cannon rows.
       if (nx * delta.x + ny * delta.y < 0.45 * Math.hypot(delta.x, delta.y)) return None
+
       val diagonal = ax != bx && ay != by
       val depths = if (diagonal) Vector(0.0) else if (ax != bx)
         Vector(ny * (Math.max(a.top, b.top) - center.y), ny * (Math.min(a.bottom, b.bottom) - center.y))
@@ -292,6 +299,7 @@ object WallGaps {
         val start = node(from)
         val end = node(to)
         if (start.isEmpty || end.isEmpty) return Vector.empty
+
         val parent = Array.fill(count)(-1)
         var head = 0
         var tail = 1
@@ -309,6 +317,7 @@ object WallGaps {
           })
         }
         if (parent(end.get) < 0) return Vector.empty
+
         val reverse = ArrayBuffer(pixel(end.get))
         var i = end.get
         while (i != start.get) {
@@ -322,6 +331,7 @@ object WallGaps {
       }
       def waypoint(id: Int, from: Pixel, to: Pixel): Pixel = {
         if ( ! reachable(from)) return to
+
         def visible(path: Vector[Pixel]): Option[Pixel] = path.reverseIterator
           .find(p => p.pixelDistanceSquared(from) > 4 && clear(from, p))
         val next = if (clear(from, to)) to else {
@@ -441,6 +451,7 @@ object WallGaps {
           .exists(_.touches(ling.forbidden(g.second))))
         if (sealedWall) return Some(count)
         if (placements.size < count) return None
+
         val front = placements.filter(_.slot.front).map(p => (p.gap, p.slot.box)).toSet
         // Allocation visits every gap once per pass. If a whole pass adds only
         // reserves, additional Zealots cannot fill the remaining front openings.
@@ -608,6 +619,7 @@ object WallGaps {
       val center = gap.at(across, slot.depth)
       val box = body.at(center)
       if ( ! fits(body, center) || ! navigationFor(body).reachable(center) || others.exists(_.slot.box.intersects(box))) return placement
+
       val pair = (Math.ceil(left).toInt to Math.floor(right).toInt).map(c => gap.at(c, slot.depth))
         .filter(p => fits(zealot, p) && navigationFor(zealot).reachable(p))
       if (pair.isEmpty || zealot.at(pair.head).intersects(zealot.at(pair.last))) return placement
@@ -617,8 +629,10 @@ object WallGaps {
       def sealedWith(blocker: Box): Boolean = connectedTo(ling.forbidden(gap.first), blockers :+ blocker)
         .exists(_.touches(ling.forbidden(gap.second)))
       if (sealedWith(slot.blocked) && ! sealedWith(ling.forbidden(box))) return placement
+
       placement.copy(slot = slot.copy(pixel = center, box = box, blocked = ling.forbidden(box),
         depth = gap.depth(center), across = Math.abs(gap.across(center))))
     }
   }
 }
+

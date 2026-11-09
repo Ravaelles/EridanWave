@@ -27,6 +27,7 @@ abstract class TerranGameplan extends GameplanImperative {
 
   def reactTo4PoolScout(): Unit = {
     if (With.frame > Minutes(5)()) return
+
     once(8, Terran.SCV)
     once(Terran.Barracks)
     once(9, Terran.SCV)
@@ -38,6 +39,7 @@ abstract class TerranGameplan extends GameplanImperative {
 
   def reactTo4Pool(): Unit = {
     if (With.frame > Minutes(5)()) return
+
     once(8, Terran.SCV)
     once(Terran.Barracks)
     once(9, Terran.SCV)
@@ -58,6 +60,7 @@ abstract class TerranGameplan extends GameplanImperative {
 
   def reactToWorkerRush(): Unit = {
     if (With.frame > Minutes(5)()) return
+
     once(8, Terran.SCV)
     get(Terran.Barracks)
     once(9, Terran.SCV)
@@ -78,6 +81,7 @@ abstract class TerranGameplan extends GameplanImperative {
 
   def reactToBunkerRush(): Unit = {
     if (With.frame > Minutes(5)()) return
+
     once(9, Terran.SCV)
     get(Terran.SupplyDepot)
     once(11, Terran.SCV)
@@ -104,6 +108,7 @@ abstract class TerranGameplan extends GameplanImperative {
 
   def reactToBarracksCheese(): Unit = {
     if (With.frame > Minutes(5)()) return
+
     once(9, Terran.SCV)
     get(Terran.SupplyDepot)
     once(10, Terran.SCV)
@@ -125,6 +130,7 @@ abstract class TerranGameplan extends GameplanImperative {
 
   def reactToGatewayCheese(): Unit = {
     if (With.frame > Minutes(5)()) return
+
     once(9, Terran.SCV)
     get(Terran.SupplyDepot)
     once(10, Terran.SCV)
@@ -146,6 +152,7 @@ abstract class TerranGameplan extends GameplanImperative {
 
   def reactToCannonRush(): Unit = {
     if (With.frame > Minutes(7)()) return
+
     once(9, Terran.SCV)
     get(Terran.SupplyDepot)
     once(11, Terran.SCV)
@@ -217,3 +224,4 @@ abstract class TerranGameplan extends GameplanImperative {
     }
   }
 }
+

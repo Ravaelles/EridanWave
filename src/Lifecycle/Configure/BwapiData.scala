@@ -30,6 +30,7 @@ class BwapiData {
         if (isCorrect(path.toString())) {
           return path.toString()
         }
+
         path = path.parent
       }
       while (path != path.parent)
@@ -54,6 +55,7 @@ class BwapiData {
         val output = Paths.get(directory, filename).toFile
         if (output.exists()) {
           With.logger.debug(f"Found ${output.getAbsoluteFile}")
+
           return Some(output)
         }
       } catch { case exception: Exception => With.logger.onException(exception) }
@@ -71,3 +73,5 @@ class BwapiData {
       })
   }
 }
+
+

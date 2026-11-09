@@ -34,6 +34,8 @@ case class UnassignedFormation(style: FormationStyle, slots: Map[UnitClass, Iter
 
   def outwardFromCentroid: Map[FriendlyUnitInfo, Pixel] = {
     if (slots.isEmpty) return Map.empty
+
     slots.keys.map(unitClass => assignOutwardFromCentroid(unitClass)).reduce(_ ++ _)
   }
 }
+
