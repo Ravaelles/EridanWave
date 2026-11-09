@@ -1,6 +1,7 @@
-package Micro.Actions.Combat.Spells
+package Micro.Actions.Combat.Spells.Protoss
 
 import Mathematics.Maff
+import Micro.Actions.Combat.Spells.TargetedSpell
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass

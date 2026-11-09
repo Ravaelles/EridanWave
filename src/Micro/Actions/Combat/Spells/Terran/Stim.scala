@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Spells
+package Micro.Actions.Combat.Spells.Terran
 
 import Micro.Actions.Action
 import Micro.Agency.Commander

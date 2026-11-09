@@ -1,6 +1,7 @@
-package Micro.Actions.Combat.Spells
+package Micro.Actions.Combat.Spells.Terran
 
 import Lifecycle.With
+import Micro.Actions.Combat.Spells.TargetedSpell
 import Utilities.UnitFilters.{IsAll, IsComplete}
 import ProxyBwapi.Races.{Terran, Zerg}
 import ProxyBwapi.Techs.Tech

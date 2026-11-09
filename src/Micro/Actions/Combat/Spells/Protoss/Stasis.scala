@@ -1,6 +1,7 @@
-package Micro.Actions.Combat.Spells
+package Micro.Actions.Combat.Spells.Protoss
 
 import Lifecycle.With
+import Micro.Actions.Combat.Spells.TargetedSpell
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass

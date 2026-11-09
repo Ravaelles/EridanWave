@@ -1,6 +1,7 @@
-package Micro.Actions.Combat.Spells
+package Micro.Actions.Combat.Spells.Terran
 
 import Lifecycle.With
+import Micro.Actions.Combat.Spells.TargetedSpell
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass

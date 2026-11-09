@@ -2,7 +2,8 @@ package Micro.Actions.Combat.Decisioning.Actions
 
 import Lifecycle.With
 import Micro.Actions.Action
-import Micro.Actions.Combat.Spells._
+import Micro.Actions.Combat.Spells.Protoss._
+import Micro.Actions.Combat.Spells.Terran._
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
