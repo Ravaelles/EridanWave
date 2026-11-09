@@ -1,4 +1,4 @@
-package Tactic
+package Tactic.Defense
 
 import Information.Geography.Types.Base
 

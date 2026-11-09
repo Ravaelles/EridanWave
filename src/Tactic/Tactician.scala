@@ -8,6 +8,7 @@ import Mathematics.Maff
 import Performance.Tasks.TimedTask
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Tactic.Defense.{DefenseDivision, GetDefenseBase}
 import Tactic.Missions._
 import Tactic.Production.Produce
 import Tactic.Squads._
@@ -100,7 +101,25 @@ final class Tactician extends TimedTask {
   }
 
   private def runCoreTactics(): Unit = {
+    val squadsDefending = defendDivisions()
 
+    // Proactive DT defense
+    catchDTs.launch()
+
+    // Get freelancers
+    val freelancers = (new ListBuffer[FriendlyUnitInfo] ++ With.recruiter.available.view.filter(u => IsRecruitableForCombat(u) && ! Zerg.Overlord(u)))
+      .sortBy(u => (u.unitClass.isTransport, - u.frameDiscovered)) // New units first, with transports after other candidates so squads that need them can still claim them
+    val freelancerCountInitial  = freelancers.size
+
+    fillDefenseSquads(squadsDefending, freelancers)
+    defendVsMutas(freelancers)
+    defendVsDrops(freelancers, freelancerCountInitial)
+    fillAttackSquad(freelancers, squadsDefending)
+    pullDefenseWorkers(squadsDefending)
+    attachSCVs()
+  }
+
+  private def defendDivisions(): Seq[(DefenseDivision, SquadDefendBase)] = {
     /////////////
     // DEFENSE //
     /////////////
@@ -118,22 +137,17 @@ final class Tactician extends TimedTask {
       p._2.setEnemies(p._1.enemiesOuter)
       p._2.vicinity = p._1.attackCentroidKey
     })
+    squadsDefending
+  }
 
-    // Proactive DT defense
-    catchDTs.launch()
-
-    // Get freelancers
-    val freelancers = (new ListBuffer[FriendlyUnitInfo] ++ With.recruiter.available.view.filter(u => IsRecruitableForCombat(u) && ! Zerg.Overlord(u)))
-      .sortBy(u => (u.unitClass.isTransport, - u.frameDiscovered)) // New units first, with transports after other candidates so squads that need them can still claim them
-    val freelancerCountInitial  = freelancers.size
-    def freelancerValue         = freelancers.view.map(_.subjectiveValue).sum
-    val freelancerValueInitial  = freelancerValue
-
+  private def fillDefenseSquads(squadsDefending: Seq[(DefenseDivision, SquadDefendBase)], freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
     // First satisfy each defense squad
     // First pass gets essential defenders
     // Second pass gets additional defenders to be sure
     Seq(1.0, 0.75).foreach(ratio => squadsDefending.foreach(squad => Assignment.squadsPick(freelancers, Seq(squad._2), ratio)))
+  }
 
+  private def defendVsMutas(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
     // Proactive Muta defense with Archon
     if (With.scouting.enemyProximity < 0.5 && MacroFacts.enemyHasShown(Zerg.Mutalisk) && ( ! With.blackboard.wantToAttack() || ! acePilots.hasFleet)) {
       Assignment.unitsPick(
@@ -141,12 +155,18 @@ final class Tactician extends TimedTask {
         With.geography.ourBases.filter(MacroFacts.isMiningBase).map(defenseSquads(_)),
         filter = (f, s) => Protoss.Archon(f) && s.unitsNext.isEmpty)
     }
+  }
 
+  private def defendVsDrops(freelancers: ListBuffer[FriendlyUnitInfo], freelancerCountInitial: Int): Unit = {
     // Proactive drop/harassment defense
     if (With.scouting.enemyProximity < 0.5 && (
       (With.geography.ourBases.map(_.metro).distinct.size > 1 && With.frame > Minutes(10)())
       || With.unitsShown.any(Terran.Vulture, Terran.Dropship))) {
 
+      val defenseDivisions = With.battles.divisions
+        .filter(d => d.bases.exists(b => (b.isOurs || b.plannedExpoRecently) && ! b.isEnemy))
+        .map(new DefenseDivision(_))
+        .filter(_.needsDefense)
       val dropVulnerableBases = With.geography.ourBases.filter(b =>
         b.workerCount >= 3
         && ! defenseDivisions.exists(_.division.bases.contains(b)) // If it was in a defense division, it should have received some defenders already
@@ -162,10 +182,15 @@ final class Tactician extends TimedTask {
         dropVulnerableBases.map(defenseSquads(_)),
         filter = (f, s) => qualifiedClasses.exists(_(f)) && s.unitsNext.size < Math.min(3, freelancerCountInitial / 12))
     }
+  }
 
+  private def fillAttackSquad(freelancers: ListBuffer[FriendlyUnitInfo], squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Unit = {
     //////////
     // FILL //
     //////////
+
+    def freelancerValue         = freelancers.view.map(_.subjectiveValue).sum
+    val freelancerValueInitial  = freelancerValue
 
     // If we want to attack and enough freelancers remain, populate the attack squad
     // TODO: If the attack goal is the enemy army, and we have a defense squad handling it, skip this step
@@ -202,7 +227,9 @@ final class Tactician extends TimedTask {
           .map(defenseSquads)
           .toSeq))
     }
+  }
 
+  private def pullDefenseWorkers(squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Unit = {
     // Pull defense workers after army assignment, before gathering claims the remainder.
     // Skipped without our own bases (ourBasesAndSettlements assumes they exist).
     if (With.geography.ourBases.nonEmpty) {
@@ -210,7 +237,9 @@ final class Tactician extends TimedTask {
         With.geography.ourBasesAndSettlements.map(GetDefenseBase(_)).distinct.map(defenseSquads))
         .distinct.foreach(squad => squad.recruitWorkers(squadsDefending.filter(_._2 == squad).flatMap(_._1.enemiesOuter).distinct))
     }
+  }
 
+  private def attachSCVs(): Unit = {
     // SCVs for Terran attacks
     if (With.self.isTerran) {
       val workers = MacroCounter.countOursComplete(Terran.SCV)
