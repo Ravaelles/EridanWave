@@ -156,6 +156,27 @@ def has_real_return(text, spans, lineno):
     return False
 
 
+# A blank line inside a continued expression breaks Scala compilation
+# (semicolon inference), so the fixer never splits one: neither after a
+# line ending in an operator, nor before a line starting with one.
+# Conservative on purpose - a skipped site stays reported for hand fixing.
+CONTINUATION_END = ("&&", "||", ",", "(", "=", "=>", "+", "-", "*", "/",
+                    "%", "<", ">", "!", "&", "|", "^", "?", ":", ".")
+CONTINUATION_START = (".", "&&", "||", ",", ")")
+
+
+def stripped_code(line):
+    return re.sub(r"//.*$", "", line).strip()
+
+
+def ends_continuation(line):
+    return stripped_code(line).endswith(CONTINUATION_END)
+
+
+def starts_continuation(line):
+    return stripped_code(line).startswith(CONTINUATION_START)
+
+
 def apply_fixes(files, rules):
     fixed_files, fixed_sites, skipped = 0, 0, 0
     for path in sorted(files):
@@ -170,7 +191,6 @@ def apply_fixes(files, rules):
         except UnicodeDecodeError:
             print("  [apply] SKIP %s: not UTF-8" % path)
             continue
-        crlf = "\r\n" in text
         body = text.replace("\r\n", "\n")
         try:
             spans = code_spans(body)
@@ -178,15 +198,26 @@ def apply_fixes(files, rules):
             print("  [apply] SKIP %s: cannot scan" % path)
             continue
         rows = body.split("\n")
+        # Per-line endings: mixed-ending files keep every original line
+        # byte-identical; an inserted blank copies its predecessor's ending.
+        raw_rows = text.split("\n")
+        endings = ["\r\n" if r.endswith("\r") else "\n" for r in raw_rows]
+        if len(endings) > len(rows):
+            endings = endings[:len(rows)]
         hits = []
         for _name, pattern, _message in rules:
             for match in pattern.finditer(body):
                 hits.append((body.count("\n", 0, match.start()) + 1, _name))
         inserts = set()
         for lineno, name in hits:
-            if name == "ReturnFollowedByBlank":
+            if name in ("ReturnFollowedByBlank", "ReturnFollowedByBlankGuard"):
                 if not has_real_return(body, spans, lineno):
                     print("  [apply] SKIP %s:%d: no real return outside strings/comments" % (path, lineno))
+                    skipped += 1
+                    continue
+                if ends_continuation(rows[lineno - 1]) or (
+                        lineno < len(rows) and starts_continuation(rows[lineno])):
+                    print("  [apply] SKIP %s:%d: splits a continued expression" % (path, lineno))
                     skipped += 1
                     continue
                 if lineno < len(rows) and rows[lineno].strip() == "":
@@ -198,6 +229,10 @@ def apply_fixes(files, rules):
                 setup, ret = lineno, lineno + 1
                 if ret > len(rows) or rows[setup - 1].strip() == "":
                     print("  [apply] SKIP %s:%d: setup line not code" % (path, lineno))
+                    skipped += 1
+                    continue
+                if ends_continuation(rows[setup - 1]):
+                    print("  [apply] SKIP %s:%d: splits a continued expression" % (path, lineno))
                     skipped += 1
                     continue
                 if not has_real_return(body, spans, ret):
@@ -212,9 +247,10 @@ def apply_fixes(files, rules):
         changed = 0
         for idx in sorted(inserts, reverse=True):
             rows.insert(idx, "")
+            endings.insert(idx, endings[idx - 1] if idx > 0 else endings[0] if endings else "\n")
             changed += 1
         if changed:
-            out = ("\r\n" if crlf else "\n").join(rows)
+            out = "".join(row + ending for row, ending in zip(rows, endings))
             with open(path, "wb") as handle:
                 handle.write(out.encode("utf-8"))
             print("  [apply] %s: %d blank line(s) inserted" % (path, changed))
@@ -224,7 +260,7 @@ def apply_fixes(files, rules):
     violations = 0
     for path in sorted(files):
         for line, name, message in check_file(path, load_rules(CONFIG)):
-            print("%s:%d: [%s] %s" % (path, line, message))
+            print("%s:%d: [%s] %s" % (path, line, name, message))
             violations += 1
     print("  [apply] done: %d insertion(s) in %d file(s), %d skipped; %d violation(s) remain"
           % (fixed_sites, fixed_files, skipped, violations))
