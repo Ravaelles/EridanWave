@@ -18,7 +18,7 @@ object CorsairRelocateWhenIdle {
       e.flying && e.likelyStillThere && e.pixelDistanceSquared(unit.pixel) <= 14 * 14 * 32 * 32).toSeq
     if (airNear.nonEmpty) {
       false
-    } else if (unit.totalHealth <= 95 && With.framesSince(unit.lastFrameTakingDamage) < 6 * 24) {
+    } else if (unit.totalHealth <= 95 && unit.lastUnderAttackLessThanAgo(6 * 24)) {
       true
     } else if (With.units.enemy.exists(e =>
       ! e.unitClass.isBuilding && unit.canAttack(e) && e.pixelDistanceSquared(unit.pixel) <= 14 * 14 * 32 * 32)) {

@@ -132,6 +132,9 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
     remainingCompletionFrames,
     With.framesUntil(lastFrameStartingAttack + unitClass.stopFrames))
 
+  @inline final def lastUnderAttackLessThanAgo(frames: Int): Boolean = With.framesSince(lastFrameTakingDamage) < frames
+  @inline final def lastUnderAttackMoreThanAgo(frames: Int): Boolean = With.framesSince(lastFrameTakingDamage) > frames
+
   private var _producer: Option[Production] = None
   def setProducer(plan: Production): Unit = {
     _producer = Some(plan)

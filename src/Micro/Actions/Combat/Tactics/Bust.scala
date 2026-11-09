@@ -58,7 +58,7 @@ object Bust extends Action {
       Commander.attack(unit)
     }
 
-    if (unit.matchups.engagedUpon || With.framesSince(unit.lastFrameTakingDamage) < 12) {
+    if (unit.matchups.engagedUpon || unit.lastUnderAttackLessThanAgo(12)) {
       Retreat.delegate(unit)
     }
 

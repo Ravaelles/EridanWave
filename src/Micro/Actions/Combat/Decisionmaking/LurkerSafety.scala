@@ -127,5 +127,5 @@ object LurkerSafety extends MacroActions {
   }
 
   def recentlyDamaged(unit: FriendlyUnitInfo): Boolean =
-    With.framesSince(unit.lastFrameTakingDamage) < Seconds(6)()
+    unit.lastUnderAttackLessThanAgo(Seconds(6)())
 }

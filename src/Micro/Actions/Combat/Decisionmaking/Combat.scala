@@ -338,7 +338,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
   // hit, when kiting resumes (Atlantis lastUnderAttackLessThanAgo(90)).
   protected def spareTargetFromKite(target: UnitInfo): Boolean = {
     val harmless = target.unitClass.isBuilding || target.unitClass.isWorker || ! target.canAttack(unit)
-    val bleeding = unit.unitClass.maxShields - unit.shieldPoints >= 15 && With.framesSince(unit.lastFrameTakingDamage) < 90
+    val bleeding = unit.unitClass.maxShields - unit.shieldPoints >= 15 && unit.lastUnderAttackLessThanAgo(90)
 
     harmless && ! bleeding
   }

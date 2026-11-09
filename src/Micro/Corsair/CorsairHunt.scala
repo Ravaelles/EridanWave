@@ -28,7 +28,7 @@ object CorsairHunt {
   }
 
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
-    if ( ! Protoss.Corsair(unit) || With.framesSince(unit.lastFrameTakingDamage) <= 3 * 24) {
+    if ( ! Protoss.Corsair(unit) || ! unit.lastUnderAttackMoreThanAgo(3 * 24)) {
       false
     } else {
       huntTarget(unit).exists(overlord => {
