@@ -332,6 +332,17 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
   // enemy presses within range plus margin and the weapon still needs its
   // cooldown. The retreat point sits behind the line by injury * max offset,
   // so the most wounded absorb the least focus fire.
+  //
+  // Ranged units hold against buildings, victims that cannot shoot back and
+  // workers - unless notably wounded (shieldDamage >= 15) while recently
+  // hit, when kiting resumes (Atlantis lastUnderAttackLessThanAgo(90)).
+  protected def spareTargetFromKite(target: UnitInfo): Boolean = {
+    val harmless = target.unitClass.isBuilding || target.unitClass.isWorker || ! target.canAttack(unit)
+    val bleeding = unit.unitClass.maxShields - unit.shieldPoints >= 15 && With.framesSince(unit.lastFrameTakingDamage) < 90
+
+    harmless && ! bleeding
+  }
+
   protected def kiteAway(): Boolean = {
     if (With.yolo.active) return false
     if (unit.unitClass.melee || ! unit.canMove) return false
