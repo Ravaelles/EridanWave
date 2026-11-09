@@ -1,4 +1,4 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.Reaver
 
 import Micro.Actions.Action
 import ProxyBwapi.Races.Protoss

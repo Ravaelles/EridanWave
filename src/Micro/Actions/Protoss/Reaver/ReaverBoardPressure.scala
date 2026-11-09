@@ -1,4 +1,4 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.Reaver
 
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 

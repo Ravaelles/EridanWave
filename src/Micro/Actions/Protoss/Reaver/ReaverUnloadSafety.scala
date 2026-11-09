@@ -1,4 +1,4 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.Reaver
 
 /**
  * Pure unload-spot sizing (no game access): a wounded Reaver needs more

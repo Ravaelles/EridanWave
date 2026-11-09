@@ -1,4 +1,4 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.Reaver
 
 /**
  * Pure boarding decision for a cooling Reaver (no game access).

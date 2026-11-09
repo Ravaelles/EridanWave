@@ -1,8 +1,9 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.ReaverLegacy
 
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
+import Micro.Actions.Protoss.Reaver.BeReaver
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
