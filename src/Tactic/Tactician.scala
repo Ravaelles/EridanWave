@@ -11,7 +11,11 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Missions._
 import Tactic.Production.Produce
 import Tactic.Squads._
-import Tactic.Tactics._
+import Tactic.Tactics.Cheese._
+import Tactic.Tactics.Defense._
+import Tactic.Tactics.Economy._
+import Tactic.Tactics.Scouting._
+import Tactic.Tactics.{Tactic, TacticMeldArchons, TacticMeldDarchons}
 import Utilities.?
 import Utilities.Time.Minutes
 import Utilities.UnitCounters.CountUpTo

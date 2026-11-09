@@ -1,4 +1,6 @@
-package Tactic.Tactics
+package Tactic.Tactics.Economy
+
+import Tactic.Tactics.Tactic
 
 import Lifecycle.With
 import Planning.ResourceLocks.LockUnits

@@ -1,4 +1,6 @@
-package Tactic.Tactics
+package Tactic.Tactics.Economy
+
+import Tactic.Tactics.Tactic
 
 import Debugging.SimpleString
 import Lifecycle.With

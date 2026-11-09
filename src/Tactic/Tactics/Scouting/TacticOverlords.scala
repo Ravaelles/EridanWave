@@ -1,4 +1,6 @@
-package Tactic.Tactics
+package Tactic.Tactics.Scouting
+
+import Tactic.Tactics.Tactic
 
 import Information.Geography.Types.Zone
 import Lifecycle.With

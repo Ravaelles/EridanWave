@@ -1,4 +1,6 @@
-package Tactic.Tactics
+package Tactic.Tactics.Cheese
+
+import Tactic.Tactics.Tactic
 
 import Information.Geography.Types.Base
 import Lifecycle.With

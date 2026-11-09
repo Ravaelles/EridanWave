@@ -1,4 +1,6 @@
-package Tactic.Tactics
+package Tactic.Tactics.Cheese
+
+import Tactic.Tactics.Tactic
 
 import Debugging.Visualizations.Colors
 import Debugging.Visualizations.Rendering.DrawMap
