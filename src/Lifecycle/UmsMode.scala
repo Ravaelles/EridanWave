@@ -37,7 +37,6 @@ object UmsMode {
 
     val workers = With.units.ours.count(_.unitClass.isWorker)
     val bases   = With.units.ours.count(_.unitClass.isTownHall)
-    System.out.println(f"[launcher] UMS check: $workers workers, $bases bases on ${With.mapFileName}")
     if (workers > 3 && bases > 0) return
 
     With.umsMode = true
