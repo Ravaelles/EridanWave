@@ -20,6 +20,13 @@ object TargetFilterFocus extends TargetFilter {
     output ||= (actor.inRangeToAttack(target)
       && actor.readyForAttackOrder(target)
       && ( ! target.unitClass.isBuilding || target.unitClass.isStaticDefense))
+    // Buildings within reach are always siegeable: approach them instead of
+    // idling or chasing ghosts - but only when no worker is already in range.
+    // Covers static defense as well as lone base buildings (Hatchery and its
+    // Extractor at game end): in-range combat still wins earlier strata.
+    output ||= target.unitClass.isBuilding &&
+      actor.pixelDistanceEdge(target) < 32 * 10 &&
+      ! actor.matchups.targetsInRange.exists(_.unitClass.isWorker)
     output
   }
 
