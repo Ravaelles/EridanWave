@@ -31,11 +31,6 @@
 
         <!-- Java dependencies -->
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.8.1</version>
-        </dependency>
-        <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
             <version>5.1.0</version>
@@ -71,8 +66,6 @@
                             <sources>
                                 <source>3rdparty/jbwapi/src/main/java</source>
                                 <source>3rdparty/cherryvis/src/main/java</source>
-                                <source>3rdparty/javajps/src/main/java</source>
-                                <source>3rdparty/jbweb/src/main/java</source>
                                 <source>3rdparty/mjson/src/java</source>
                             </sources>
                         </configuration>
@@ -237,6 +230,39 @@
                                     <include>*:*</include>
                                 </includes>
                             </artifactSet>
+                            <!-- Natives and classes for platforms we never run.
+                                 Game runs on Wine win32-x86, Windows x86/x86-64
+                                 and Docker linux-x86-64; foreign .dll/.so plus
+                                 the multi-release duplicates (our runtimes use
+                                 the base classes) are ~3 MB of dead weight. -->
+                            <filters>
+                                <filter>
+                                    <artifact>net.java.dev.jna:jna</artifact>
+                                    <excludes>
+                                        <exclude>com/sun/jna/darwin*/**</exclude>
+                                        <exclude>com/sun/jna/freebsd*/**</exclude>
+                                        <exclude>com/sun/jna/linux-aarch64/**</exclude>
+                                        <exclude>com/sun/jna/linux-arm*/**</exclude>
+                                        <exclude>com/sun/jna/linux-mips*/**</exclude>
+                                        <exclude>com/sun/jna/linux-ppc*/**</exclude>
+                                        <exclude>com/sun/jna/linux-s390x/**</exclude>
+                                        <exclude>com/sun/jna/linux-x86/**</exclude>
+                                        <exclude>com/sun/jna/openbsd*/**</exclude>
+                                        <exclude>com/sun/jna/sunos*/**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.github.kwhat:jnativehook</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/versions/**</exclude>
+                                        <exclude>**/example/**</exclude>
+                                        <exclude>com/github/kwhat/jnativehook/lib/darwin*/**</exclude>
+                                        <exclude>com/github/kwhat/jnativehook/lib/linux/arm*/**</exclude>
+                                        <exclude>com/github/kwhat/jnativehook/lib/linux/x86/**</exclude>
+                                        <exclude>com/github/kwhat/jnativehook/lib/windows/arm/**</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>Lifecycle.Main</mainClass>
