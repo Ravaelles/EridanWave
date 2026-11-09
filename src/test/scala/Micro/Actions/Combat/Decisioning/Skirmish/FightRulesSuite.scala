@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Micro.Actions.Combat.Decisioning.Skirmish.{FightFacts, FightRules}
 import org.scalatest.funsuite.AnyFunSuite
 
 class FightRulesSuite extends AnyFunSuite {

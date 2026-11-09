@@ -1,7 +1,7 @@
 package Micro.Actions
 
 import Micro.Actions.Basic._
-import Micro.Actions.Combat.Decisioning.FightOrFlee
+import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import Micro.Actions.Combat.Fight
 import Micro.Actions.Combat.Tactics.Unbunk
 import Micro.Actions.Commands.{Attack, Travel}

@@ -1,7 +1,7 @@
 package Micro.Actions.Protoss
 
 import Lifecycle.With
-import Micro.Actions.Combat.Decisioning.FightOrFlee
+import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.?

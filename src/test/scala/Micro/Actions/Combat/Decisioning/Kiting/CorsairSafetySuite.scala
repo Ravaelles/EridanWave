@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Micro.Actions.Combat.Decisioning.Kiting.CorsairSafety
 import org.scalatest.funsuite.AnyFunSuite
 
 class CorsairSafetySuite extends AnyFunSuite {

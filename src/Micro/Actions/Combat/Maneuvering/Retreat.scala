@@ -5,7 +5,7 @@ import Lifecycle.With
 import Mathematics.Points.Pixel
 import Mathematics.{Maff, Shapes}
 import Micro.Actions.Action
-import Micro.Actions.Combat.Decisioning.KiteAway
+import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Actions.Protoss.Shuttle.Shuttling
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing

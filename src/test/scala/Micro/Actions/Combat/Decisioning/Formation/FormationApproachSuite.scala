@@ -1,6 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
-import FormationApproach._
+import Micro.Actions.Combat.Decisioning.Formation.FormationApproach._
 import org.scalatest.funsuite.AnyFunSuite
 
 class FormationApproachSuite extends AnyFunSuite {

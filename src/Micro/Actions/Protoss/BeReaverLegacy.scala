@@ -2,7 +2,7 @@ package Micro.Actions.Protoss
 
 import Lifecycle.With
 import Micro.Actions.Action
-import Micro.Actions.Combat.Decisioning.FightOrFlee
+import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo

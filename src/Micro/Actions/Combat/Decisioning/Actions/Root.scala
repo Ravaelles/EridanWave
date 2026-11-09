@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Decisioning
+package Micro.Actions.Combat.Decisioning.Actions
 
 import Lifecycle.With
 import Micro.Actions.Action

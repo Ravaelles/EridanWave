@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Micro.Actions.Combat.Decisioning.Formation.FormationHold
 import org.scalatest.funsuite.AnyFunSuite
 
 class FormationHoldSuite extends AnyFunSuite {

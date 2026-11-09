@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import org.scalatest.funsuite.AnyFunSuite
 
 class KiteAwaySuite extends AnyFunSuite {

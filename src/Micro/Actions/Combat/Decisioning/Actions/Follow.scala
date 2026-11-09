@@ -1,4 +1,4 @@
-package Micro.Actions.Combat.Decisioning
+package Micro.Actions.Combat.Decisioning.Actions
 
 import Mathematics.Maff
 import Micro.Actions.Action
