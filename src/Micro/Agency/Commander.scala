@@ -323,7 +323,8 @@ object Commander {
   }
 
   def move(unit: FriendlyUnitInfo): Unit = move(unit, unit.agent.destinationNext())
-  private def move(unit: FriendlyUnitInfo, destination: Pixel): Unit = {
+  def move(unit: FriendlyUnitInfo, tolerancePixels: Double): Unit = move(unit, unit.agent.destinationNext(), tolerancePixels)
+  def move(unit: FriendlyUnitInfo, destination: Pixel, tolerancePixels: Double = 128): Unit = {
     // Adjust even while unready: transport coordination below still needs the destination.
     val to = adjustDestination(unit, destination, remember = unit.ready)
     unit.agent.setRideGoal(to)
@@ -348,7 +349,9 @@ object Commander {
       } else {
         //Like attackMove above, skip re-issuing an identical Move: re-orders
         // reset acceleration and break weapon cooldown alignment (Stardust: one order per unit per frame).
-        val alreadyMovingThere = unit.order == Orders.Move && unit.orderTargetPixel.exists(_.pixelDistance(to) < 128)
+        // Path followers pass a tight tolerance: waypoints advance in small
+        // hops, and a wide deadband lets the unit arrive and idle between hops.
+        val alreadyMovingThere = unit.order == Orders.Move && unit.orderTargetPixel.exists(_.pixelDistance(to) < tolerancePixels)
         if ( ! alreadyMovingThere || unit.seeminglyStuck) {
           unit.bwapiUnit.move(to.bwapi)
           Debugging.CherryVis.CherryVis.decision(unit.id, f"Moving to ${to.x},${to.y}")

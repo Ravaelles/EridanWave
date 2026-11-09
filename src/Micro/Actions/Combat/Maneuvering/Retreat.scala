@@ -27,7 +27,7 @@ object Retreat extends Action {
         if (With.configuration.debugging) {
           unit.agent.act(f"Retreat$name")
         }
-        Commander.move(unit)
+        Commander.move(unit, 32.0)
       }
       unit.unready
     }

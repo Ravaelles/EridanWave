@@ -119,9 +119,12 @@ object Gather extends Action {
       lazy val zoneTo         = resource.zone
       lazy val transferring   = ! unit.base.exists(_.owner.isUs) && zoneNow != zoneTo && ! With.geography.ourMetro.zones.contains(zoneNow) && With.geography.ourMetro.zones.contains(zoneTo)
       lazy val threatened     = unit.battle.isDefined && unit.matchups.framesOfSafety < combatWindow && ! unit.matchups.threats.forall(IsWorker)
+      // Wounded miners give threats a wider berth: anybody able to hit us
+      // within range plus 2.5 tiles plus 4 tiles per wound fraction.
+      lazy val threatenedWounded = unit.woundPercent() > 0 && ! unit.matchups.enemiesCanAttackUs(2.5 + 4 * unit.woundPercent()).forall(IsWorker)
       lazy val threatCloser   = unit.matchups.threats.exists(_.pixelDistanceCenter(resource.pixel) < unit.pixelDistanceCenter(resource.pixel))
       if (transferring
-        && threatened
+        && (threatened || threatenedWounded)
         && threatCloser
         && (unit.visibleToOpponents || ! unit.matchups.withinSafetyMargin || unit.zone.edges.exists(_.contains(unit.pixel)))) {
         Retreat(unit)

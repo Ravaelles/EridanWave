@@ -148,7 +148,7 @@ object MicroPathing {
       .map(_.add(unit.pixel.offsetFromTileCenter))
       .foreach(waypoint => {
         unit.agent.decision.set(waypoint)
-        Commander.move(unit)
+        Commander.move(unit, 32.0)
       })
   }
 

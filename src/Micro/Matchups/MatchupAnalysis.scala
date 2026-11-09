@@ -42,6 +42,12 @@ case class MatchupAnalysis(me: UnitInfo) {
   def targets                     : Seq[UnitInfo]     = ?(me.unitClass.canAttack || me.unitClass.isTransport, enemies.filter(threatens(me, _)), Seq.empty)
   def threatsInRange              : Seq[UnitInfo]     = threats.filter(threat => threat.pixelRangeAgainst(me) >= threat.pixelDistanceEdge(me))
   def threatsInPixels(p: Double)  : Seq[UnitInfo]     = threats.filter(_.pixelsToGetInRange(me) <= p)
+  /**
+   * Enemies able to attack us within their range plus a tile bonus
+   * (Atlantis enemiesCanAttackUs parity: bonus 2.5 on a range-4 enemy
+   * takes everybody within 6.5). Widen the bonus as we get wounded.
+   */
+  def enemiesCanAttackUs(marginTiles: Double): Seq[UnitInfo] = threatsInPixels(marginTiles * 32)
   def threatsInFrames(f: Int)     : Seq[UnitInfo]     = threats.filter(_.framesToGetInRange(me) <= f)
   def threatDeepest               : Option[UnitInfo]  = _threatDeepest()
   def threatDeepestInRange        : Option[UnitInfo]  = _threatDeepestInRange()
