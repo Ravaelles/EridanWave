@@ -6,7 +6,7 @@ import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Skirmish.FightRules
 import Micro.Actions.Combat.Decisioning.Formation.{FormationApproach, FormationHold}
-import Micro.Actions.Combat.Decisioning.Kiting.{CorsairSafety, KiteAway}
+import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, CorsairSafety, KiteAway}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -68,7 +68,9 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   // so the most wounded absorb the least focus fire.
   private[Decisioning] def kiteAway(): Boolean = {
     if (With.yolo.active) return false
-    if (unit.unitClass.melee || ! unit.canMove) return false
+    if ( ! unit.canMove) return false
+    if (staticStandoff()) return true
+    if (unit.unitClass.melee) return false
     if (unit.formationEngage.isEmpty) return false
 
     val nearest = unit.matchups.targetNearest
@@ -81,6 +83,34 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     unit.agent.act("KiteAway")
     val offsetPixels = KiteAway.woundOffsetTiles(unit.woundPercent()) * 32
     unit.agent.decision.set(unit.pixel.project(nearest.get.pixel, -offsetPixels).walkablePixel)
+    combat.maneuvers.move()
+    true
+  }
+
+  // Static standoff: an idle unit standing inside a defensive building's
+  // reach while the cluster takes fire steps out to range + margin + bonus
+  // instead of absorbing hits. Fighting units (targets in range) and
+  // committed pushes (shouldFight) are untouched; the attack window lapses
+  // once fire stops, so the squad resumes on its own (hysteresis).
+  private def staticStandoff(): Boolean = {
+    if (unit.agent.shouldFight) return false
+
+    if (unit.matchups.targetsInRange.nonEmpty) return false
+
+    val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
+    val clusterHot = squadUnits.exists(u => ClusterSafety.recentlyAttacked(With.framesSince(u.lastFrameTakingDamage)))
+    if ( ! clusterHot) return false
+
+    val threat = Maff.minBy(unit.matchups.threats.filter(_.unitClass.isStaticDefense))(_.pixelDistanceEdge(unit))
+    val gap = threat.map(t => ClusterSafety.standoffGapPixels(
+      unit.pixelDistanceEdge(t),
+      t.pixelRangeAgainst(unit),
+      KiteAway.enemyMarginTiles,
+      clusterAttacked = true)).getOrElse(0.0)
+    if (gap <= 0) return false
+
+    unit.agent.act("StaticStandoff")
+    unit.agent.decision.set(unit.pixel.project(threat.get.pixel, -gap).walkablePixel)
     combat.maneuvers.move()
     true
   }
