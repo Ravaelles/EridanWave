@@ -36,8 +36,10 @@ final class Tactician extends TimedTask {
   private val missionKillExpansion      = addMission(new MissionKillExpansion)
   private val missionDTDrop             = addMission(new MissionDTDrop)
   private val missionStormDrop          = addMission(new MissionStormDrop)
-  private val missionSpeedlotDrop       = addMission(new MissionSpeedlotDrop)
+  // The independent Shuttle-Reaver cluster picks transports first while
+  // skies are safe; SpeedlotDrop takes leftovers or a second Shuttle.
   private val missionReaverDrop         = addMission(new MissionReaverDrop)
+  private val missionSpeedlotDrop       = addMission(new MissionSpeedlotDrop)
 
   //////////////////////
   // Priority tactics //

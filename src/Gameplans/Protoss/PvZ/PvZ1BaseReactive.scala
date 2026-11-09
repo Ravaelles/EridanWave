@@ -140,6 +140,9 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
 
   override def executeBuild(): Unit = {
     With.blackboard.acePilots.set( ! enemyHasShown(Zerg.Mutalisk))
+    // Field the independent Shuttle-Reaver cluster once the crew exists;
+    // the AA thresholds in the mission stand it down into the main army.
+    harass(haveComplete(Protoss.Shuttle) && haveComplete(Protoss.Reaver))
     makeArchons()
     reactVs4Pool()
     chooseOpening()

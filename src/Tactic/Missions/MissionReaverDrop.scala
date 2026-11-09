@@ -278,7 +278,10 @@ class MissionReaverDrop extends MissionDrop {
 
   private def reaverManifest: DropManifest.Manifest = {
     val available = With.recruiter.available.toVector
-    val shuttles = available.filter(u => Protoss.Shuttle(u) && transportLock.matcher(u) && u.shieldPoints >= u.unitClass.maxShields)
+    // Full shields preferred, but a chipped Shuttle above half health rejoins:
+    // otherwise the cluster could never re-form after first contact.
+    val shuttles = available.filter(u => Protoss.Shuttle(u) && transportLock.matcher(u)
+      && (u.shieldPoints >= u.unitClass.maxShields || 2 * u.totalHealth > u.unitClass.maxTotalHealth))
       .sortBy(u => (u.pixelDistanceSquared(vicinity), u.id))
     val reavers = available.filter(reaverLock.matcher)
     val maximum = With.blackboard.reaverDropMaxReavers()
