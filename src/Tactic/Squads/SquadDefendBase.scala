@@ -6,6 +6,7 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.Pixel
+import Tactic.ArmyPosition
 import Micro.Actions.Combat.Tactics.Potshot
 import Micro.Actions.{Action, Idle}
 import Micro.Agency.Commander
@@ -138,7 +139,7 @@ class SquadDefendBase(base: Base) extends Squad {
     lazy val scourables       = invaders.filter(isScourable(_, defenders, enemyCanAttackGround))
     lazy val canScour         = scourables.nonEmpty && (
       With.geography.ourBases.size > 2 || ! With.enemies.exists(_.isZerg) || With.blackboard.wantToAttack() || scourables.exists(breaching.contains))
-    lazy val travelGoal       = ?(canScour, defensePoint, choke.map(_.pixelCenter).getOrElse(bastionFor(choke)))
+    lazy val travelGoal       = ?(canScour, defensePoint, ArmyPosition.fallback(choke.map(_.pixelCenter).getOrElse(bastionFor(choke))))
     lazy val withdrawingUnits = defenders.count(u =>
       ! u.metro.contains(base.metro)
       && u.pixelDistanceTravelling(defensePoint) + 32 * 15 > travelGoal.travelPixelsFor(defensePoint, u)
