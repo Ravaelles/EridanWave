@@ -2,7 +2,6 @@ package Placement
 
 import Lifecycle.With
 import java.nio.file.{AtomicMoveNotSupportedException, Files, Paths, StandardCopyOption}
-import java.nio.file.{AtomicMoveNotSupportedException, Files, Paths, StandardCopyOption}
 
 object PlacementCache {
 

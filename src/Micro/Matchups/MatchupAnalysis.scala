@@ -11,8 +11,6 @@ import Tactic.Squads.Group.UnitGroup
 import Utilities.?
 import Utilities.Time.Seconds
 import Utilities.UnitFilters.IsWorker
-import Tactic.Squads.Group.UnitGroup
-import Tactic.Squads.Group.GenericUnitGroup
 
 case class MatchupAnalysis(me: UnitInfo) {
   // Default units allow identification of targets when destroying an empty base, because no Battle is happening
