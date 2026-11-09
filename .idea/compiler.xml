@@ -12,8 +12,8 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="PurpleWave.main" target="1.8" />
-      <module name="PurpleWave.test" target="1.8" />
+      <module name="EridanWave.main" target="1.8" />
+      <module name="EridanWave.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

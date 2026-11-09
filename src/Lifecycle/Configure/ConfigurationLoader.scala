@@ -147,8 +147,8 @@ object ConfigurationLoader {
    * garbage warns and keeps the JSON value.
    */
   private def cherryVisFlagOverride(): Option[Boolean] = {
-    val fromProperty  = Option(System.getProperty("purplewave.cherryvis"))
-    val fromEnv       = scala.sys.env.get("PURPLEWAVE_CHERRYVIS")
+    val fromProperty  = Option(System.getProperty("eridanwave.cherryvis")).orElse(Option(System.getProperty("purplewave.cherryvis")))
+    val fromEnv       = scala.sys.env.get("ERIDANWAVE_CHERRYVIS").orElse(scala.sys.env.get("PURPLEWAVE_CHERRYVIS"))
     fromProperty.orElse(fromEnv).flatMap(raw => {
       raw.trim.toLowerCase match {
         case "1" | "true" | "yes" => Some(true)

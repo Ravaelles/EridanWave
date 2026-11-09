@@ -31,7 +31,7 @@
 # Env overrides: WINEPREFIX (default ~/.wine), GAME_ROOT, JAVA_EXE, JAR,
 # REPO (default: script dir/..), LOG_DIR (default: $REPO/out/wine).
 #
-# Exit code 0 = HELLO_PURPLEWAVE seen (bot attached and playing).
+# Exit code 0 = HELLO_ERIDANWAVE seen (bot attached and playing).
 set -u
 
 say() { echo "[wine-run] $*"; }
@@ -79,7 +79,7 @@ for arg in "$@"; do
 done
 
 # The live bwapi.ini path (Unix side). Known before the client starts so the
-# bot JVM gets it verbatim via -Dpurplewave.bwapiIni (see client launch below)
+# bot JVM gets it verbatim via -Deridanwave.bwapiIni (see client launch below)
 # instead of guessing Wine home layouts at runtime.
 INI="$GAME_ROOT/bwapi-data/bwapi.ini"
 WIN_INI="$(winepath -w "$INI" 2>/dev/null || true)"
@@ -107,7 +107,7 @@ fi
 
 # One Wine game per box: cleanup kills by process name, so a second game
 # alongside a running one murders the first mid-play (and vice versa).
-WINE_GAME_LOCK="/tmp/purplewave-wine-game.lock"
+WINE_GAME_LOCK="/tmp/eridanwave-wine-game.lock"
 exec {WINE_GAME_LOCK_FD}>"$WINE_GAME_LOCK" || { echo "[wine-run] cannot open lock $WINE_GAME_LOCK" >&2; exit 2; }
 if ! flock -n "$WINE_GAME_LOCK_FD" 2>/dev/null; then
   echo "[wine-run] REFUSED: another Wine game holds the box lock; one game at a time" >&2
@@ -143,12 +143,12 @@ trap cleanup EXIT
 # come up anyway, so the compile hides inside that instead of adding to it.
 if [ "$BUILD" = "1" ]; then
   say "Building the bot jar from source in the background (BUILD=0 to skip)"
-  rm -f /tmp/purplewave-build-jar.done /tmp/purplewave-build-jar.failed
+  rm -f /tmp/eridanwave-build-jar.done /tmp/eridanwave-build-jar.failed
   (
-    if timeout 600 bash "$REPO/build-jar.sh" >/tmp/purplewave-build-jar.log 2>&1; then
-      : > /tmp/purplewave-build-jar.done
+    if timeout 600 bash "$REPO/build-jar.sh" >/tmp/eridanwave-build-jar.log 2>&1; then
+      : > /tmp/eridanwave-build-jar.done
     else
-      echo "failed" > /tmp/purplewave-build-jar.failed
+      echo "failed" > /tmp/eridanwave-build-jar.failed
     fi
   ) &
 fi
@@ -177,12 +177,12 @@ fi
 
 if [ "$BUILD" = "1" ]; then
   waited=0
-  while [ ! -f /tmp/purplewave-build-jar.done ] && [ ! -f /tmp/purplewave-build-jar.failed ]; do
+  while [ ! -f /tmp/eridanwave-build-jar.done ] && [ ! -f /tmp/eridanwave-build-jar.failed ]; do
     sleep 0.2; waited=$((waited + 1)); [ "$waited" -gt 1500 ] && break
   done
-  if [ -f /tmp/purplewave-build-jar.failed ]; then
-    say "  FAILED to build the jar - see /tmp/purplewave-build-jar.log"
-    tail -20 /tmp/purplewave-build-jar.log | sed 's/^/    /'
+  if [ -f /tmp/eridanwave-build-jar.failed ]; then
+    say "  FAILED to build the jar - see /tmp/eridanwave-build-jar.log"
+    tail -20 /tmp/eridanwave-build-jar.log | sed 's/^/    /'
     exit 1
   fi
   since "jar rebuilt (parallel with game start)"
@@ -192,7 +192,7 @@ say "Step 1/3: jar: $JAR"
 
 # The unix->windows jar translation is cached: winepath spawns a whole Wine
 # process to print it (~0.4 s each run).
-WINEPATH_CACHE="/tmp/purplewave-winepath-cache"
+WINEPATH_CACHE="/tmp/eridanwave-winepath-cache"
 WIN_JAR=""
 if [ -f "$WINEPATH_CACHE" ] && [ "$(head -1 "$WINEPATH_CACHE" 2>/dev/null)" = "$JAR" ]; then
   WIN_JAR="$(tail -1 "$WINEPATH_CACHE" 2>/dev/null)"
@@ -220,24 +220,24 @@ LIVE_OUTPUT="${LIVE_OUTPUT:-1}"
 # Client first: it loops on "Game table mapping not found" until the game is
 # up, which is its normal idle state. -Dos.name="Windows 10" is what makes
 # JBWAPI pick the W32 shared-memory backend under Wine.
-# An explicit --speed= travels as PURPLEWAVE_SPEED (see GameCommands.initialSpeed).
-# --cherryvis= travels as PURPLEWAVE_CHERRYVIS=1/0 (see ConfigurationLoader).
+# An explicit --speed= travels as ERIDANWAVE_SPEED (see GameCommands.initialSpeed).
+# --cherryvis= travels as ERIDANWAVE_CHERRYVIS=1/0 (see ConfigurationLoader).
 # Explicit tuning travels as -D flags on the client JVM (same channel as
 # --speed/--cherryvis; no scattered env files - one flag per override).
 TUNE_DEFS=()
-[ -n "${TUNE_STRATEGY:-}" ] && TUNE_DEFS+=("-Dpurplewave.tuningStrategy=$TUNE_STRATEGY")
-for kv in ${TUNE_PARAMS[@]+"${TUNE_PARAMS[@]}"}; do TUNE_DEFS+=("-Dpurplewave.tune.$kv"); done
+[ -n "${TUNE_STRATEGY:-}" ] && TUNE_DEFS+=("-Deridanwave.tuningStrategy=$TUNE_STRATEGY")
+for kv in ${TUNE_PARAMS[@]+"${TUNE_PARAMS[@]}"}; do TUNE_DEFS+=("-Deridanwave.tune.$kv"); done
 SPEED_ENV=()
-[ -n "${SPEED:-}" ] && SPEED_ENV=(PURPLEWAVE_SPEED="$SPEED")
+[ -n "${SPEED:-}" ] && SPEED_ENV=(ERIDANWAVE_SPEED="$SPEED")
 CVIS_ENV=()
-if [ "$CHERRYVIS" = "true" ]; then CVIS_ENV=(PURPLEWAVE_CHERRYVIS=1); else CVIS_ENV=(PURPLEWAVE_CHERRYVIS=0); fi
+if [ "$CHERRYVIS" = "true" ]; then CVIS_ENV=(ERIDANWAVE_CHERRYVIS=1); else CVIS_ENV=(ERIDANWAVE_CHERRYVIS=0); fi
 if [ "$LIVE_OUTPUT" = "1" ]; then
   bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
-      "-Dpurplewave.bwapiIni=$WIN_INI" \
-      "-Dpurplewave.keyRelay=$KEYS_WIN" \
-      "-Dpurplewave.wineClient=true" \
+      "-Deridanwave.bwapiIni=$WIN_INI" \
+      "-Deridanwave.keyRelay=$KEYS_WIN" \
+      "-Deridanwave.wineClient=true" \
       ${TUNE_DEFS[@]+"${TUNE_DEFS[@]}"} \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG") 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" >&2) < /dev/null
@@ -246,9 +246,9 @@ else
   bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
-      "-Dpurplewave.bwapiIni=$WIN_INI" \
-      "-Dpurplewave.keyRelay=$KEYS_WIN" \
-      "-Dpurplewave.wineClient=true" \
+      "-Deridanwave.bwapiIni=$WIN_INI" \
+      "-Deridanwave.keyRelay=$KEYS_WIN" \
+      "-Deridanwave.wineClient=true" \
       ${TUNE_DEFS[@]+"${TUNE_DEFS[@]}"} \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG" > /dev/null) 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" > /dev/null) < /dev/null
@@ -313,10 +313,10 @@ done
 if [ "$SC_UP" -eq 1 ]; then say "  StarCraft is running"; since "StarCraft is up";
 else say "  WARNING: StarCraft not running within 45 s (see $LOG_DIR/chaoslauncher.log)"; fi
 
-say "Step 3/3: watching for HELLO_PURPLEWAVE (grace 60s)..."
+say "Step 3/3: watching for HELLO_ERIDANWAVE (grace 60s)..."
 END=$(( $(date +%s) + 60 )); ATTACHED=0
 while [ "$(date +%s)" -lt "$END" ]; do
-  if grep -q "HELLO_PURPLEWAVE" "$CLIENT_LOG" 2>/dev/null; then
+  if grep -qE "HELLO_(ERIDAN|PURPLE)WAVE" "$CLIENT_LOG" 2>/dev/null; then
     say "SUCCESS: BWAPI attached, EridanWave is playing!"; ATTACHED=1; break
   fi
   if ! kill -0 "$CLIENT_PID" 2>/dev/null; then
@@ -326,7 +326,7 @@ while [ "$(date +%s)" -lt "$END" ]; do
   sleep 1
 done
 if [ "$ATTACHED" -eq 0 ]; then
-  say "FAILED: no HELLO_PURPLEWAVE within the grace period. Client log tail:"
+  say "FAILED: no HELLO_ERIDANWAVE within the grace period. Client log tail:"
   tail -15 "$CLIENT_LOG" | sed 's/^/    /'
   cleanup; exit 1
 fi

@@ -16,12 +16,13 @@ object GameCommands {
   @volatile private var botPaused   : Boolean = false
 
   /**
-   * Explicit default game speed from --speed= (via PURPLEWAVE_SPEED env).
+   * Explicit default game speed from --speed= (via ERIDANWAVE_SPEED env;
+   * legacy PURPLEWAVE_SPEED is still accepted).
    * Applied once at game start by MapSpecificCommander, so an explicit
    * choice wins over per-map defaults but later keyboard presets still work.
    */
   lazy val initialSpeed: Option[Int] =
-    scala.sys.env.get("PURPLEWAVE_SPEED").flatMap(s =>
+    scala.sys.env.get("ERIDANWAVE_SPEED").orElse(scala.sys.env.get("PURPLEWAVE_SPEED")).flatMap(s =>
       try { Some(s.trim.toInt) } catch { case _: NumberFormatException => None })
       .filter(n => n >= 0 && n <= 1000)
 

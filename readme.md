@@ -68,7 +68,7 @@ EridanWave requires a 32-bit JDK 8 at runtime because it connects to 32-bit BWAP
 * As a JAR:
   - `cd` to the StarCraft directory
   - `mkdir -p bwapi-data/AI; mkdir -p bwapi-data/read; mkdir -p bwapi-data/write` to create the standard directories for BWAPI bot data
-  - Run `java.exe -Xms1024m -Xmx1024m -Dpurpledebug=true -jar C:\path\to\EridanWave\target\EridanWave-1.0.jar`
+  - Run `java.exe -Xms1024m -Xmx1024m -Deridandebug=true -jar C:\path\to\EridanWave\target\EridanWave-1.0.jar`
 
 ## Local development under Wine (Linux)
 One command attaches the bot to real StarCraft under Wine and plays. Run it from the repo root; bare `java -jar` without flags keeps today's behaviour (attach straight to the running game, used by ladders).
@@ -77,7 +77,7 @@ One command attaches the bot to real StarCraft under Wine and plays. Run it from
 * List maps: `bash scripts/list-maps.sh [filter]` (exact paths for `--map=`).
 * Play: `./scripts/run.sh --map="maps/sscai/(3)TauCross.scx" --race=Protoss [--enemy-race=Zerg] [--headless]`
   (or `bash scripts/wine-run.sh --map=... --race=...` directly; bare `java -jar ... --launcher=wine ...` also works). Visible on your X display by default; `--headless` runs on Xvfb :99 instead.
-* The supervisor rebuilds the jar, launches the client first (Windows JRE, `-Dos.name=Windows 10` so JBWAPI picks the W32 shared-memory backend), patches the live `bwapi.ini` (map/race/game-type, `windowed=OFF`), starts ChaosLauncher, waits for `HELLO_PURPLEWAVE`, then watches the game and archives logs to `out/wine_runs/`.
+* The supervisor rebuilds the jar, launches the client first (Windows JRE, `-Dos.name=Windows 10` so JBWAPI picks the W32 shared-memory backend), patches the live `bwapi.ini` (map/race/game-type, `windowed=OFF`), starts ChaosLauncher, waits for `HELLO_ERIDANWAVE`, then watches the game and archives logs to `out/wine_runs/`.
 * Global shortcuts (local launcher modes only, never on ladder): `Esc` kill game, `-`/`+` slower/faster, `1`-`9` speed presets, `0` GUI on/off, `Space` pause, `P` debug painting, `C` camera, `V` visualization overlay. Shortcuts are global while a Wine run is up.
 * Notes: one Wine game per box (a lock refuses the second); the supervisor JVM only forwards keys, the bot executes them via `out/wine/keys.txt`.
 * UMS maps (micro/scenario starts with almost no workers or no base) are detected at game start: `With.umsMode` is set, macro gameplans are parked (`NoPlan`), combat units march toward the enemy instead of standing still, and the live `bwapi.ini` is corrected to `game_type=USE_MAP_SETTINGS` for the next game.

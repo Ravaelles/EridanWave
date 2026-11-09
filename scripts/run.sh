@@ -53,7 +53,7 @@ fi
 # jar and dies with NoClassDefFoundError (measured with JNativeHook's mouse
 # listener). A cheap copy keeps it stable; the game client always starts
 # from the freshly built jar instead.
-SUPERVISOR_JAR="$REPO/out/purplewave-supervisor.jar"
+SUPERVISOR_JAR="$REPO/out/eridanwave-supervisor.jar"
 mkdir -p "$(dirname "$SUPERVISOR_JAR")"
 cp -f "$JAR" "$SUPERVISOR_JAR"
 

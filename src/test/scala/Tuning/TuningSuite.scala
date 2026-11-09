@@ -45,7 +45,7 @@ class TuningSuite extends AnyFunSuite {
 
   test("applyParamsTo assigns overrides and remembers the vector") {
     val strategy = new TestStrategy
-    val key = "purplewave.tune.Test.knob"
+    val key = "eridanwave.tune.Test.knob"
     System.setProperty(key, "1.25")
     try {
       Tuning.applyParamsTo(strategy, random)

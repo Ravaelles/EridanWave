@@ -30,6 +30,7 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
         setFixedBuild(With.configuration.fixedBuilds)
       }
       strategiesSelected ++= selectedInitially
+      logOpening("initial")
     } else if (_lastEnemyRace != enemyRaceNow) {
       strategiesSelected
         .filter(_.enemyRaces.forall(r => r != Race.Unknown && r != enemyRaceNow))
@@ -67,6 +68,7 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
   def swapIn(strategy: Strategy): Unit = {
     if ( ! strategiesSelected.contains(strategy)) {
       With.logger.debug(f"Swapping in strategy $strategy")
+      System.out.println(f"OPENING (swap in): $strategy")
       strategiesSelected += strategy
       strategiesDeselected -= strategy
     }
@@ -74,6 +76,7 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
   def swapOut(strategy: Strategy): Unit = {
     if (strategiesSelected.contains(strategy)) {
       With.logger.debug(f"Swapping out strategy $strategy")
+      System.out.println(f"OPENING (swap out): $strategy")
       strategiesSelected -= strategy
       strategiesDeselected += strategy
     }
@@ -116,8 +119,14 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
     _lastCustomGameplan.getOrElse(_standardGameplan)
   }
 
-  private def setFixedBuild(strategyNamesText: String): Unit = {
-    // The implementation of this is a little tricky because we have to call this before the Strategist has been instantiated
+  private def logOpening(context: String): Unit = {
+    val names = strategiesSelected.toVector.map(_.toString).sorted.mkString(" + ")
+    val line = f"OPENING ($context, vs ${With.enemy.raceCurrent}): $names"
+    System.out.println(line)
+    With.logger.debug(line)
+  }
+
+  private def setFixedBuild(strategyNamesText: String): Unit = {    // The implementation of this is a little tricky because we have to call this before the Strategist has been instantiated
 
     // Get all the strategy names
     val strategyNamesLines  = strategyNamesText.replaceAll(",", " ").replaceAll("  ", " ").split("[\r\n]+").filter(_.nonEmpty).toVector

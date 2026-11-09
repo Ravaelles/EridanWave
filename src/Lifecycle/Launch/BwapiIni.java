@@ -25,11 +25,15 @@ public final class BwapiIni {
 
     /**
      * Explicit path wins (the Wine supervisor passes it as
-     * {@code -Dpurplewave.bwapiIni=...} because user.home guesses are
-     * unreliable under Wine).
+     * {@code -Deridanwave.bwapiIni=...} because user.home guesses are
+     * unreliable under Wine; the legacy {@code -Dpurplewave.bwapiIni=...}
+     * is still accepted).
      */
     private static String explicitIniPath() {
-        String path = System.getProperty("purplewave.bwapiIni");
+        String path = System.getProperty("eridanwave.bwapiIni");
+        if (path == null || path.trim().isEmpty()) {
+            path = System.getProperty("purplewave.bwapiIni");
+        }
         if (path != null && !path.trim().isEmpty()) {
             return path.trim();
         }

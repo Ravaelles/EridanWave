@@ -106,7 +106,7 @@ dir_jre           = "c:/p/graalvm-jdk/"
 dir_bwapidata     = "c:/p/bw/bwapi-data/"
 java_version      = "21"
 dir_pw            = "c:/p/pw/"
-dir_purplebench   = "c:/p/EridanBench/"
+dir_eridanbench   = "c:/p/EridanBench/"
 dir_maven_target  = "c:/p/pw/target/"
 dir_scbwbots      = "c:/Users/d/AppData/Roaming/scbw/bots/"
 dir_localschnail  = "c:/Program Files (x86)/SCHNAIL Client/bots/EridanWave/"
@@ -121,13 +121,13 @@ dir_jar           = pathjoin(dir_out, "artifacts", "EridanWave")
 file_jar          = pathjoin(dir_jar, "EridanWave.jar")
 
 sscait_deployments = {
-  "psscait":      ("EridanWave",    "SSCAIT_PURPLEWAVE_EMAIL",    "SSCAIT_PURPLEWAVE_PASSWORD"),
-  "tsscait":      ("EridanSpirit",  "SSCAIT_PURPLESPIRIT_EMAIL",  "SSCAIT_PURPLESPIRIT_PASSWORD"),
-  "zsscait":      ("EridanSwarm",   "SSCAIT_PURPLESWARM_EMAIL",   "SSCAIT_PURPLESWARM_PASSWORD"),
-  "rsscait":      ("EridanDestiny", "SSCAIT_PURPLEDESTINY_EMAIL", "SSCAIT_PURPLEDESTINY_PASSWORD"),
-  "ticklesscait": ("EridanTickles", "SSCAIT_PURPLETICKLES_EMAIL", "SSCAIT_PURPLETICKLES_PASSWORD"),
-  "csscait":      ("EridanCheese",  "SSCAIT_PURPLECHEESE_EMAIL",  "SSCAIT_PURPLECHEESE_PASSWORD")}
-schnail_deployment = ("EridanWave", "SCHNAIL_PURPLEWAVE_EMAIL", "SCHNAIL_PURPLEWAVE_PASSWORD")
+  "psscait":      ("EridanWave",    "SSCAIT_ERIDANWAVE_EMAIL",    "SSCAIT_ERIDANWAVE_PASSWORD"),
+  "tsscait":      ("EridanSpirit",  "SSCAIT_ERIDANSPIRIT_EMAIL",  "SSCAIT_ERIDANSPIRIT_PASSWORD"),
+  "zsscait":      ("EridanSwarm",   "SSCAIT_ERIDANSWARM_EMAIL",   "SSCAIT_ERIDANSWARM_PASSWORD"),
+  "rsscait":      ("EridanDestiny", "SSCAIT_ERIDANDESTINY_EMAIL", "SSCAIT_ERIDANDESTINY_PASSWORD"),
+  "ticklesscait": ("EridanTickles", "SSCAIT_ERIDANTICKLES_EMAIL", "SSCAIT_ERIDANTICKLES_PASSWORD"),
+  "csscait":      ("EridanCheese",  "SSCAIT_ERIDANCHEESE_EMAIL",  "SSCAIT_ERIDANCHEESE_PASSWORD")}
+schnail_deployment = ("EridanWave", "SCHNAIL_ERIDANWAVE_EMAIL", "SCHNAIL_ERIDANWAVE_PASSWORD")
 
 def path_pw(path):
   return pathjoin(dir_pw, path)
@@ -339,8 +339,10 @@ def load_env():
 def require_env(key):
   load_env()
   value = os.environ.get(key, '')
+  if not value and 'ERIDAN' in key:
+    value = os.environ.get(key.replace('ERIDAN', 'PURPLE'), '')
   if not value:
-    raise RuntimeError(f"Populate {key} in {path_pw('.env')}")
+    raise RuntimeError(f"Populate {key} in {path_pw('.env')} (legacy {key.replace('ERIDAN', 'PURPLE')} also accepted)")
   return value
 
 def request_bytes(request, opener=None):
@@ -511,12 +513,12 @@ def scbw_root():
     candidates = ["e:/scbw", os.path.dirname(dir_scbwbots.rstrip('/'))]
     return next((candidate for candidate in candidates if os.path.isdir(candidate)), candidates[0])
 
-def purplebench_cache_command(validate_only=False):
+def eridanbench_cache_command(validate_only=False):
   root = scbw_root()
   command = [
     sys.executable,
     "-m",
-    "purplebench",
+    "eridanbench",
     "placement-caches",
     "--plan",
     schnail_cache_plan_path(),
@@ -542,9 +544,9 @@ def generate_schnail_caches(context):
   log()
   log("GENERATING SCHNAIL PLACEMENT CACHES")
   write_schnail_cache_plan(context)
-  command = purplebench_cache_command()
+  command = eridanbench_cache_command()
   log(subprocess.list2cmdline(command))
-  subprocess.run(command, cwd=dir_purplebench, check=True)
+  subprocess.run(command, cwd=dir_eridanbench, check=True)
   validate_schnail_caches(context)
 
 def validate_schnail_caches(context=None):
@@ -557,8 +559,8 @@ def validate_schnail_caches(context=None):
     expected_guids = context["bot"].get("mapGuids", [])
     if plan.get("botGuid") != context["bot"].get("guid") or plan.get("mapGuids") != expected_guids:
       raise RuntimeError("SCHNAIL cache plan does not match the bot's current map selection")
-  command = purplebench_cache_command(validate_only=True)
-  completed = subprocess.run(command, cwd=dir_purplebench, capture_output=True, text=True)
+  command = eridanbench_cache_command(validate_only=True)
+  completed = subprocess.run(command, cwd=dir_eridanbench, capture_output=True, text=True)
   if completed.returncode != 0:
     details = (completed.stderr or completed.stdout).strip()
     raise RuntimeError(f"EridanBench rejected the SCHNAIL caches: {details[-4000:]}")

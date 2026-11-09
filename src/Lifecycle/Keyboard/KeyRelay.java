@@ -24,8 +24,8 @@ import java.util.List;
  * drive mappings like {@code Z:} are not guaranteed to exist). The rendezvous
  * is therefore the live game root, derivable on both sides without any path
  * translation: the script passes the absolute Windows path down
- * ({@code -Dpurplewave.keyRelay}, e.g. {@code C:\sc\...}, mirroring
- * {@code purplewave.bwapiIni}), while the supervisor derives the Unix side
+ * ({@code -Deridanwave.keyRelay}, e.g. {@code C:\sc\...}, mirroring
+ * {@code eridanwave.bwapiIni}), while the supervisor derives the Unix side
  * from the Wine prefix layout. The historical CWD-relative file stays as the
  * last resort for hand-started runs.</p>
  */
@@ -35,7 +35,13 @@ public final class KeyRelay {
     }
 
     static File file() {
-        String override = System.getProperty("purplewave.keyRelay");
+        String override = System.getProperty("eridanwave.keyRelay");
+        if (override == null || override.trim().isEmpty()) {
+            override = System.getProperty("purplewave.keyRelay");
+        }
+        if (override == null || override.trim().isEmpty()) {
+            override = System.getenv("ERIDANWAVE_KEYRELAY");
+        }
         if (override == null || override.trim().isEmpty()) {
             override = System.getenv("PURPLEWAVE_KEYRELAY");
         }
@@ -58,14 +64,18 @@ public final class KeyRelay {
     /**
      * Unix side of the live game root ({@code null}/blank {@code gameRoot} =
      * default layout). Custom roots reach the supervisor through
-     * {@code PURPLEWAVE_GAME_ROOT}; the client always gets its absolute
-     * Windows path via {@code -Dpurplewave.keyRelay}, so it never needs this.
+     * {@code ERIDANWAVE_GAME_ROOT}; the client always gets its absolute
+     * Windows path via {@code -Deridanwave.keyRelay}, so it never needs this.
      */
     static String gameRootDir() {
-        return gameRootDir(System.getenv("PURPLEWAVE_GAME_ROOT"), System.getenv("WINEPREFIX"));
+        return gameRootDir(System.getenv("ERIDANWAVE_GAME_ROOT"), System.getenv("WINEPREFIX"));
     }
 
     static String gameRootDir(String gameRoot, String winePrefix) {
+        if (gameRoot != null && !gameRoot.trim().isEmpty()) {
+            return gameRoot.trim();
+        }
+        gameRoot = System.getenv("PURPLEWAVE_GAME_ROOT");
         if (gameRoot != null && !gameRoot.trim().isEmpty()) {
             return gameRoot.trim();
         }

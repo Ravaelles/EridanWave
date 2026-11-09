@@ -29,7 +29,7 @@ object Tuning {
   def appliedParams: Map[String, String] = applied.toMap
 
   def install(): Unit = {
-    val strategyName = Option(System.getProperty("purplewave.tuningStrategy")).map(_.trim).filter(_.nonEmpty)
+    val strategyName = Option(System.getProperty("eridanwave.tuningStrategy")).orElse(Option(System.getProperty("purplewave.tuningStrategy"))).map(_.trim).filter(_.nonEmpty)
     if (strategyName.isEmpty) return
     current = Some(resolve(strategyName.get))
     applyParams()
@@ -65,7 +65,7 @@ object Tuning {
   }
 
   def tuneOverride(name: String): Option[String] =
-    Option(System.getProperty("purplewave.tune." + name)).map(_.trim).filter(_.nonEmpty)
+    Option(System.getProperty("eridanwave.tune." + name)).orElse(Option(System.getProperty("purplewave.tune." + name))).map(_.trim).filter(_.nonEmpty)
 
   /** Explicit override verbatim; otherwise uniform in bounds. Returns (value, fromOverride). */
   def resolveValue(raw: Option[String], min: Double, max: Double, random: java.util.Random): (Double, Boolean) = {

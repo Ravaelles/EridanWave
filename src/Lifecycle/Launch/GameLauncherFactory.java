@@ -43,13 +43,30 @@ public final class GameLauncherFactory {
 
     /**
      * True when this JVM was started as the Wine game client by
-     * {@code scripts/wine-run.sh} (explicit {@code -Dpurplewave.wineClient},
+     * {@code scripts/wine-run.sh} (explicit {@code -Deridanwave.wineClient},
      * immune to Wine stripping its own env vars before the Windows process
      * sees them). The client gets no CLI args, so the flag alone can never
      * route it - this marker is the routing signal.
      */
     public static boolean isWineClientJvm() {
-        return "true".equals(System.getProperty("purplewave.wineClient"));
+        String marker = System.getProperty("eridanwave.wineClient");
+        if (marker == null) marker = System.getProperty("purplewave.wineClient");
+
+        return "true".equals(marker);
+    }
+
+    /**
+     * True inside a one-shot scbw Docker match container: scbw names every
+     * game GAME_* and tears the container down afterwards, so the bot JVM
+     * must exit when the match ends instead of idling for the next game
+     * (which never comes - scbw reports the linger as a crash after 70 s).
+     * Ladder/tournament harnesses never set GAME_NAME, so their process
+     * reuse across games is unaffected.
+     */
+    public static boolean isScbwMatchContainer() {
+        String gameName = System.getenv("GAME_NAME");
+
+        return gameName != null && gameName.startsWith("GAME_");
     }
 
     /**

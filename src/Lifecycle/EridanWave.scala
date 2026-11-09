@@ -138,14 +138,16 @@ class EridanWave extends DefaultBWListener {
       try { if (With.configuration != null && With.configuration.debugging && With.configuration.simviz) Debugging.CombatVisIO.terminateVisualizer() } catch { case exception: Exception => With.logger.quietlyOnException(exception) }
       With.logger.flush()
     })
-    // Single-session Wine runs: the end of the match is the end of the
-    // process tree (Atlantis parity). The supervisor waits for this JVM to
-    // die and then tears the session down; without it the script sits in
-    // `while kill -0 CLIENT_PID` until Escape. Ladder/tournaments keep
-    // running: the next match reuses this process.
+    // Single-match runs: the end of the match is the end of the process.
+    // Wine dev sessions (Atlantis parity: the supervisor waits for this JVM
+    // to die and then tears the session down; without it the script sits in
+    // `while kill -0 CLIENT_PID` until Escape) and one-shot scbw Docker
+    // containers (which scbw tears down after the game; an idling JVM is
+    // reported as a crash after its 70 s container timeout).
+    // Ladder/tournaments keep running: the next match reuses this process.
     // Guarded by frame count: an onEnd delivered without a game ever running
     // (stale score screen on attach) must not kill a fresh session.
-    if (Lifecycle.Launch.GameLauncherFactory.isWineClientJvm() && With.frame > 120) {
+    if ((Lifecycle.Launch.GameLauncherFactory.isWineClientJvm() || Lifecycle.Launch.GameLauncherFactory.isScbwMatchContainer()) && With.frame > 120) {
       With.logger.debug(f"Exiting after game end at frame ${With.frame}")
       With.logger.flush()
       System.exit(0)
