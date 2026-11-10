@@ -19,6 +19,7 @@ abstract class PvTOpeners extends GameplanImperative {
 
   override def executeBuild(): Unit = {
     open()
+    PvTFerry.ensureFerry()
   }
 
   def open(): Unit = {

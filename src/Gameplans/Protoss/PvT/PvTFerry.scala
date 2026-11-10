@@ -16,7 +16,7 @@ object PvTFerry extends MacroActions {
     if ( ! have(Protoss.RoboticsFacility) || units(Protoss.Gateway) < 2) return
 
     pump(Protoss.Shuttle, 2)
-    val ready = have(Protoss.Shuttle) && units(Protoss.Dragoon) >= 6
+    val ready = have(Protoss.Shuttle) && units(Protoss.Dragoon) >= 4
     if (ready) {
       harass()
     }
