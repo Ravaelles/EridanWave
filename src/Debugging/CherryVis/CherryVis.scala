@@ -159,16 +159,18 @@ object CherryVis {
    * the recorded frame, no retry). A mobile unit at completion still
    * reports its producer position - a crowd the viewer matches nothing
    * in, so every late unit reads "i???" while frame-0 seeds match.
-   * Statics and completed units record at once; the rest defer seven
-   * frames (FirstSeen.DEFER_FRAMES) until walked out with a position of
-   * their own. Dead or gone by then drop silently. Atlantis NEXT #68.
+   * Statics record at once (position never changes); mobiles defer seven
+   * frames past completion until walked out with a position of their own.
+   * Dead or gone by then drop silently. Capability is read off the class,
+   * never the state: canMove needs aliveAndComplete, so a training unit
+   * would take the immediate branch at its producer. Atlantis NEXT #68.
    */
   private def noteFirstSeen(units: Iterable[UnitInfo]): Unit = {
     units.foreach(unit => {
       if (knownUnits.add(unit.id)) {
-        if ( ! unit.canMove) recordFirstSeen(unit)
+        if ( ! unit.unitClass.canMove) recordFirstSeen(unit)
         else trace.firstSeen.defer(unit.id, With.frame)
-      } else if (unit.complete && unit.canMove && rearmedUnits.add(unit.id)) {
+      } else if (unit.complete && unit.unitClass.canMove && rearmedUnits.add(unit.id)) {
         // Completion re-arms the deferral: a unit training past the first
         // window would otherwise drop out of pending and never record.
         trace.firstSeen.defer(unit.id, With.frame)
