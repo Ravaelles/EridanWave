@@ -23,7 +23,11 @@ public final class WineClientGameLauncher implements GameLauncher {
         System.out.println("[launcher] run under Wine. Waiting for the BWAPI game table...");
         System.out.println("===============================================");
 
-        Lifecycle.Keyboard.Keyboard.listen(Lifecycle.Keyboard.Keyboard.Mode.BOT);
+        if (GameLauncherFactory.isHeadlessRun()) {
+            System.out.println("[keyboard] Headless run: global shortcuts disabled.");
+        } else {
+            Lifecycle.Keyboard.Keyboard.listen(Lifecycle.Keyboard.Keyboard.Mode.BOT);
+        }
 
         BwapiIni.patch(UnixChaosGameLauncher.defaultWineIni(config),
             config.getMap(), config.getRace(), config.getEnemyRace(),

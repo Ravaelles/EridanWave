@@ -26,7 +26,9 @@ public final class UnixChaosGameLauncher implements GameLauncher {
             System.out.println("[launcher] Wine client (JVM under Wine, attaching to the game).");
             System.out.println("===============================================");
 
-            Lifecycle.Keyboard.Keyboard.listen(Lifecycle.Keyboard.Keyboard.Mode.BOT);
+            if ( ! GameLauncherFactory.isHeadlessRun()) {
+                Lifecycle.Keyboard.Keyboard.listen(Lifecycle.Keyboard.Keyboard.Mode.BOT);
+            }
 
             File ini = defaultWineIni(config);
             BwapiIni.patch(ini, config.getMap(), config.getRace(), config.getEnemyRace(),
@@ -40,7 +42,11 @@ public final class UnixChaosGameLauncher implements GameLauncher {
         System.out.println("[launcher] Backend: Wine + StarCraft + ChaosLauncher (Linux).");
         System.out.println("===============================================");
 
-        Lifecycle.Keyboard.Keyboard.listen(Lifecycle.Keyboard.Keyboard.Mode.SUPERVISOR);
+        if (config.isHeadless()) {
+            System.out.println("[keyboard] Headless run: supervisor shortcuts disabled.");
+        } else {
+            Lifecycle.Keyboard.Keyboard.listen(Lifecycle.Keyboard.Keyboard.Mode.SUPERVISOR);
+        }
 
         List<String> command = new ArrayList<>();
         command.add("bash");

@@ -231,8 +231,11 @@ SPEED_ENV=()
 [ -n "${SPEED:-}" ] && SPEED_ENV=(ERIDANWAVE_SPEED="$SPEED")
 CVIS_ENV=()
 if [ "$CHERRYVIS" = "true" ]; then CVIS_ENV=(ERIDANWAVE_CHERRYVIS=1); else CVIS_ENV=(ERIDANWAVE_CHERRYVIS=0); fi
+# Headless runs ignore the keyboard entirely (see GameLauncherFactory):
+# no hook, no relay drain, so typing space anywhere never pauses the bot.
+HEADLESS_ENV=(ERIDANWAVE_HEADLESS="$HIDDEN")
 if [ "$LIVE_OUTPUT" = "1" ]; then
-  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" \
+  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" "${HEADLESS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
       "-Deridanwave.bwapiIni=$WIN_INI" \
@@ -243,7 +246,7 @@ if [ "$LIVE_OUTPUT" = "1" ]; then
       > >(close_lock_fd; exec tee "$CLIENT_LOG") 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" >&2) < /dev/null
   CLIENT_PID=$!
 else
-  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" \
+  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" "${HEADLESS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
       "-Deridanwave.bwapiIni=$WIN_INI" \
@@ -300,8 +303,15 @@ fi
 sed -i -E "s|^windowed *=.*|windowed=OFF|" "$INI"
 PRE_REP="$(ls -t "$REPLAYS_DIR"/*.rep 2>/dev/null | head -1 || true)"
 
+# Headless runs stay silent: the Xvfb desktop is invisible but the sound
+# card is real, so mute Wine's audio drivers for the game process only.
+# Visible runs keep sound; the client JVM never needs this (Java is mute).
+AUDIO_ENV=()
+if [ "$HIDDEN" = "1" ]; then
+  AUDIO_ENV=(WINEDLLOVERRIDES="winealsa.drv=d;wineoss.drv=d;winepulse.drv=d;winecoreaudio.drv=d;winemm.drv=d")
+fi
 cd "$GAME_ROOT"
-bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" \
+bgs env WINEDEBUG=-all "${AUDIO_ENV[@]}" DISPLAY="${DISPLAY:-:0}" \
   wine chaoslauncher/Chaoslauncher.exe \
   > "$LOG_DIR/chaoslauncher.log" 2>&1 < /dev/null
 

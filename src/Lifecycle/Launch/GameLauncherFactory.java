@@ -59,6 +59,19 @@ public final class GameLauncherFactory {
     }
 
     /**
+     * True on headless Wine runs: scripts/wine-run.sh exports
+     * ERIDANWAVE_HEADLESS=1 with --headless (the default), 0 with
+     * --visible. Absent anywhere else, so ladder and IDE runs keep
+     * today's keyboard behavior.
+     */
+    public static boolean isHeadlessRun() {
+        String v = System.getenv("ERIDANWAVE_HEADLESS");
+        if (v == null) v = System.getenv("PURPLEWAVE_HEADLESS");
+
+        return "1".equals(v) || "true".equalsIgnoreCase(v) || "yes".equalsIgnoreCase(v);
+    }
+
+    /**
      * True inside a one-shot scbw Docker match container: scbw names every
      * game GAME_* and tears the container down afterwards, so the bot JVM
      * must exit when the match ends instead of idling for the next game
