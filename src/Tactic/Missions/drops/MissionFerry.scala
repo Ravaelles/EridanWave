@@ -35,6 +35,11 @@ class MissionFerry extends MissionDrop {
 
   private val delivered = new mutable.HashSet[Int]
 
+  override def reset(): Unit = {
+    super.reset()
+    delivered.clear()
+  }
+
   override protected def requiredPassenger(passenger: FriendlyUnitInfo): Boolean =
     passenger.isAny(Protoss.Dragoon, Protoss.Zealot) && ! delivered(passenger.id)
 
