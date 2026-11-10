@@ -12,7 +12,8 @@ import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import ProxyBwapi.UnitTracking.UnorderedBuffer
 import Utilities.Time.Minutes
-import Utilities.UnitCounters.CountEverything
+import Utilities.UnitCounters.{CountEverything, CountUpTo}
+import Utilities.UnitPreferences.PreferClose
 import Utilities.UnitFilters.{IsMobileDetector, IsWorker}
 import Utilities.{?, LightYear}
 
@@ -23,6 +24,8 @@ import Tactic.Squads.Squads
 class SquadDarkTemplar extends Squad {
   lock.matcher = Protoss.DarkTemplar
   lock.counter = CountEverything
+  // Raiders assemble nearest the enemy; the leftover stays home with the army.
+  lock.setPreference(PreferClose(With.scouting.enemyHome.center))
 
   override def launch(): Unit = {
     if ( ! With.blackboard.darkTemplarSquad()) return
@@ -37,8 +40,17 @@ class SquadDarkTemplar extends Squad {
       .sortBy(base => - With.scouting.baseIntrigue.getOrElse(base, 0.0))
       .sortBy( ! _.owner.isEnemy)
       .sortBy(waitForBackstab && With.scouting.enemyProximity > 0.5 && ! _.naturalOf.exists(_.isEnemy))
-    if (bases.isEmpty && vulnerableDivisions.isEmpty) return
+    if (bases.isEmpty && vulnerableDivisions.isEmpty) {
+      // Nowhere clean, but idle Templars help nobody: throw the raiders at
+      // plain enemy bases one per base and let detector-flee split the foe.
+      bases ++= With.geography.bases.filter(_.owner.isEnemy)
+      if (bases.isEmpty) return
+    }
 
+    // One Templar always stays with the main army; the rest raid.
+    lock.setCounter(CountEverything)
+    val raiders = DarkTemplarSplit.raidersToTake(lock.inquire().map(_.size).getOrElse(0))
+    lock.setCounter(CountUpTo(raiders))
     lock.acquire()
   }
 
@@ -133,7 +145,6 @@ class SquadDarkTemplar extends Squad {
       if (base.isEnemy && ! base.owner.isZerg) {
         intendDTToBase(dt, base)
       } else {
-        bases -= base
 
         if (divisions.isEmpty) {
           if (waitForBackstab) {
@@ -148,6 +159,8 @@ class SquadDarkTemplar extends Squad {
         }
       }
 
+      // One base per Templar: independent clusters, never a pile.
+      bases -= base
       if (iDt == 0) {
         vicinity = dt.intent.terminus.get
       }
