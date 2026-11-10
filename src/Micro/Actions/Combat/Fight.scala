@@ -26,6 +26,7 @@ object Fight extends Action {
     Stim(unit)
     EmergencyBunk(unit)
     Root(unit)
+    BeObserver(unit)
     BeFlier(unit)
     BeCombatSCV(unit)
     BeVulture(unit)
