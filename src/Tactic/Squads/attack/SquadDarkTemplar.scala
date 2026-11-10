@@ -40,10 +40,14 @@ class SquadDarkTemplar extends Squad {
       .sortBy(base => - With.scouting.baseIntrigue.getOrElse(base, 0.0))
       .sortBy( ! _.owner.isEnemy)
       .sortBy(waitForBackstab && With.scouting.enemyProximity > 0.5 && ! _.naturalOf.exists(_.isEnemy))
+      // Raiders hit the enemy main and natural first - except the Protoss
+      // backstab, which punishes expansions instead (key stays true for all).
+      .sortBy(base => waitForBackstab || ! (With.scouting.enemyMain.contains(base) || With.scouting.enemyNatural.contains(base)))
     if (bases.isEmpty && vulnerableDivisions.isEmpty) {
       // Nowhere clean, but idle Templars help nobody: throw the raiders at
       // plain enemy bases one per base and let detector-flee split the foe.
       bases ++= With.geography.bases.filter(_.owner.isEnemy)
+        .sortBy(base => ! (With.scouting.enemyMain.contains(base) || With.scouting.enemyNatural.contains(base)))
       if (bases.isEmpty) return
     }
 
