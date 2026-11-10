@@ -127,6 +127,7 @@ final class Tactician extends TimedTask {
     fillDefenseSquads(squadsDefending, freelancers)
     defendVsMutas(freelancers)
     defendVsDrops(freelancers, freelancerCountInitial)
+    guardHomeVsHarass(freelancers)
     fillAttackSquad(freelancers, squadsDefending)
     pullDefenseWorkers(squadsDefending)
     attachSCVs()
@@ -195,6 +196,28 @@ final class Tactician extends TimedTask {
         dropVulnerableBases.map(defenseSquads(_)),
         filter = (f, s) => qualifiedClasses.exists(_(f)) && s.unitsNext.size < Math.min(3, freelancerCountInitial / 12))
     }
+  }
+
+  // Home guard: a big army spares exactly one body per harassed home base
+  // (air-and-ground hitters first) so Alpha never walks home mid-contain.
+  // Created on demand only; the squad persists, membership refreshes.
+  private def guardHomeVsHarass(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
+    val armyWarriors = With.units.ours.count(_.unitClass.isWarrior)
+    if (armyWarriors < HomeGuard.armySize) return
+
+    val harassed = With.geography.ourBases.filterNot(_.isMain).filter(h =>
+      h.metro.units.exists(u => u.isEnemy && u.unitClass.isWarrior))
+    if (harassed.isEmpty) return
+
+    val squads = harassed.map(h => defenseSquads(h))
+    Assignment.unitsPick(
+      freelancers,
+      squads,
+      filter = (f, s) => f.unitClass.attacksAir && f.unitClass.attacksGround && s.unitsNext.size < 1)
+    Assignment.unitsPick(
+      freelancers,
+      squads,
+      filter = (f, s) => f.unitClass.isWarrior && s.unitsNext.size < 1)
   }
 
   private def fillAttackSquad(freelancers: ListBuffer[FriendlyUnitInfo], squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Unit = {

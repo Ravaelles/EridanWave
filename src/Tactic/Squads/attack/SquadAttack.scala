@@ -60,6 +60,17 @@ class SquadAttack extends Squad {
   }
 
   def chooseMode(): AttackMode = {
+    // Never abandon contain: while the definition holds the cluster keeps
+    // the contain spot and roster. Self-releasing as members fall.
+    if (Micro.Actions.Protoss.Reaver.ContainStatus.now()) {
+      setMode(
+        ContainArmy,
+        With.scouting.enemyThreatOrigin.center,
+        SquadAutomation.rankedEnRoute(this))
+
+      return mode
+    }
+
     val legalTargets = With.units.enemy
       .filter(u => attacksAir     || ! u.unitClass.canFly || ( u.visible && ! u.flying) || u.tile.walkable)
       .filter(u => attacksGround  || u.flying)
@@ -241,6 +252,7 @@ class SquadAttack extends Squad {
 
     if (units.isEmpty) return
 
+    lock.setInterruptible( ! Micro.Actions.Protoss.Reaver.ContainStatus.now())
     chooseMode()
     updateStance()
 
