@@ -7,6 +7,7 @@ import Micro.Actions.{Action, Idle}
 import Micro.Agency.Commander
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.UnitTracking.AliveEnemies
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.SquadAutomation
 import Utilities.UnitCounters.CountUpTo
@@ -88,7 +89,7 @@ class MissionAssaultFerry extends MissionDrop {
     With.scouting.ourMuscleOrigin.center
 
   private def frontGoal(transport: FriendlyUnitInfo): Pixel = {
-    val tanks = With.units.enemy.filter(u =>
+    val tanks = AliveEnemies.get().filter(u =>
       u.isAny(Terran.SiegeTankSieged, Terran.SiegeTankUnsieged) && u.likelyStillThere)
     val scored = tanks.flatMap(tank => {
       val dist = transport.pixelDistanceCenter(tank.pixel)
@@ -103,7 +104,7 @@ class MissionAssaultFerry extends MissionDrop {
   }
 
   private def fallbackGoal(transport: FriendlyUnitInfo): Pixel = {
-    val warriors = With.units.enemy.filter(u =>
+    val warriors = AliveEnemies.get().filter(u =>
       u.likelyStillThere && ! u.flying && u.canAttackGround &&
       u.pixelDistanceCenter(transport) < 32 * 40)
     warriors.toVector.sortBy(transport.pixelDistanceCenter).headOption.map(_.pixel).getOrElse(vicinity)
