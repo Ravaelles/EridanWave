@@ -14,6 +14,8 @@ import Utilities.UnitFilters.{IsAny, IsFlyingWarrior, IsTank, IsWorker, UnitFilt
 
 import scala.util.Random
 import Tactic.Squads.Decisions.AceExploreLogic
+import Tactic.Squads.Decisions.AceFleetLogic
+import Tactic.Squads.Decisions.BombingScore
 import Tactic.Squads.defense.SquadDefendBase
 import Tactic.Squads.Squad
 import Tactic.Squads.SquadAutomation
@@ -64,7 +66,7 @@ class SquadAcePilots extends Squad {
     val weSplash      = units.exists(splashPilotMatcher)
     val enemySplashes = With.units.enemy.exists(splashPilotMatcher)
     val requireFleet  = MacroFacts.enemyHasShown(acePilots: _*) || MacroFacts.enemiesCompleteFor(Zerg.Scourge.buildFrames, Zerg.Spire) > 0
-    hasFleet = units.size >= Math.max(6, if (weSplash && ! enemySplashes) 0 else MacroFacts.enemies(acePilots: _*))
+    hasFleet = AceFleetLogic.hasFleet(units.size, weSplash, enemySplashes, MacroFacts.enemies(acePilots: _*))
 
     // Help other squads with anti-air
     val squadsToCover = otherSquads.filter(_.targets.exists(_.exists(IsFlyingWarrior))).toVector
@@ -131,7 +133,7 @@ class SquadAcePilots extends Squad {
         b.enemies.view.filter(_.isAny(IsWorker, IsTank, Terran.ScienceVessel, Protoss.HighTemplar, Protoss.Shuttle, Protoss.Reaver)).map(_.subjectiveValue).sum,
         b.enemies.view.filter(_.canAttackAir).map(u => u.subjectiveValue * Maff.or1(4, u.isAny(Terran.MissileTurret, Protoss.Archon, Zerg.SporeColony))).sum,
         b.heart.center.pixelDistance(centroidAir)))
-      val bombingBaseScores = bombingBases.map(b => (b._1, b._2 / (1 + b._3) / (640 + b._4)))
+      val bombingBaseScores = bombingBases.map(b => (b._1, BombingScore.score(b._2, b._3, b._4)))
       val bombingTarget     = Maff.maxBy(bombingBaseScores)(_._2)
       if (bombingTarget.isDefined) {
         activity = "Bombing"
