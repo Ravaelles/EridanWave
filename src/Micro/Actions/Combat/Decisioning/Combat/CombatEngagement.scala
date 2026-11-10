@@ -6,7 +6,7 @@ import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Skirmish.FightRules
 import Micro.Actions.Combat.Decisioning.Formation.{FormationApproach, FormationHold, OverwhelminglyStronger}
-import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, CorsairSafety, KiteAway}
+import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, CorsairSafety, FacingAway, KiteAway}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -77,7 +77,12 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     if (nearest.isEmpty) return false
 
     val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
-    val enemyInMargin = squadUnits.exists(_.canAnyEnemyAttackUsWithMargin(KiteAway.enemyMarginTiles))
+    // Turned-away melee neither chases nor hits: it never counts as the
+    // enemy in margin that triggers the retreat.
+    val enemyInMargin = squadUnits.exists(u =>
+      u.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32).exists(t =>
+        ! FacingAway.dismissMelee(t.unitClass.melee,
+          FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel)))))
     if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.woundPercent(), unit.cooldownLeft, enemyInMargin)) return false
 
     unit.agent.act("KiteAway")
