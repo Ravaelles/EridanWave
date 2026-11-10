@@ -303,13 +303,11 @@ fi
 sed -i -E "s|^windowed *=.*|windowed=OFF|" "$INI"
 PRE_REP="$(ls -t "$REPLAYS_DIR"/*.rep 2>/dev/null | head -1 || true)"
 
-# Headless runs stay silent: the Xvfb desktop is invisible but the sound
-# card is real, so mute Wine's audio drivers for the game process only.
-# Visible runs keep sound; the client JVM never needs this (Java is mute).
-AUDIO_ENV=()
-if [ "$HIDDEN" = "1" ]; then
-  AUDIO_ENV=(WINEDLLOVERRIDES="winealsa.drv=d;wineoss.drv=d;winepulse.drv=d;winecoreaudio.drv=d;winemm.drv=d")
-fi
+# StarCraft always runs silent: the Xvfb desktop is invisible but the sound
+# card is real, and scbw containers have no audio either. Muting Wine's
+# audio drivers for the game process only; the client JVM never needs
+# this (Java is mute).
+AUDIO_ENV=(WINEDLLOVERRIDES="winealsa.drv=d;wineoss.drv=d;winepulse.drv=d;winecoreaudio.drv=d;winemm.drv=d")
 cd "$GAME_ROOT"
 bgs env WINEDEBUG=-all "${AUDIO_ENV[@]}" DISPLAY="${DISPLAY:-:0}" \
   wine chaoslauncher/Chaoslauncher.exe \
