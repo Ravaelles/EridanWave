@@ -12,16 +12,17 @@ object GameSummary {
     val result = if (isWinner) "VICTORY!" else "Defeat..."
     "#####################################\n" +
     "############ " + result + " ###############\n" +
-    "############ Lost: " + lost + " ################\n" +
-    "########## Killed: " + killed + " ################\n" +
+    "############ Lost: " + lost + " ###############\n" +
+    "########## Killed: " + killed + " ###############\n" +
     "#####################################"
   }
 
   def details(frames: Int, killed: Int, lost: Int, killedResources: Int, lostResources: Int): String = {
     val seconds = frames / 24
     val balance = killedResources - lostResources
-    "### Total time: " + seconds + " seconds. ###\n" +
-    "### Units killed/lost: " + killed + "/" + lost + " ###\n" +
-    "### Resource killed/lost: " + (if (balance > 0) "+" + balance else balance.toString) + " ###"
+    "### Total time: " + seconds + " seconds. ########\n" +
+    "### Units killed/lost: " + killed + "/" + lost + " ########\n" +
+    "### Resource killed/lost: " + (if (balance > 0) "+" + balance else balance.toString) + " #####" +
+    "##########################################"
   }
 }
