@@ -1,6 +1,8 @@
 package Micro.Actions.Scouting
 
 import Micro.Actions.Action
+import Micro.Actions.Scouting.Defense._
+import Micro.Actions.Scouting.Harass._
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 

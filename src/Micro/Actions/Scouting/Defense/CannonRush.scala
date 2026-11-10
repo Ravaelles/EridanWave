@@ -1,4 +1,4 @@
-package Micro.Actions.Scouting
+package Micro.Actions.Scouting.Defense
 
 import Lifecycle.With
 import Macro.Facts.MacroFacts

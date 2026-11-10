@@ -1,4 +1,4 @@
-package Micro.Actions.Scouting
+package Micro.Actions.Scouting.Harass
 
 import Micro.Actions.Action
 import Micro.Agency.Commander
