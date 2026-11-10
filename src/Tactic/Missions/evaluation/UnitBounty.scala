@@ -26,8 +26,8 @@ object UnitBounty {
   }
 
   def weightedOf(unitClass: UnitClass): Double = {
-    if (unitClass == Zerg.Zergling) split(unitClass.mineralPrice) + unitClass.gasPrice
-    else if (unitClass == Zerg.Scourge) split(unitClass.mineralPrice) + split(unitClass.gasPrice)
+    if (unitClass == Zerg.Zergling) split(unitClass.mineralPrice) + 1.5 * unitClass.gasPrice
+    else if (unitClass == Zerg.Scourge) split(unitClass.mineralPrice) + 1.5 * split(unitClass.gasPrice)
     else weighted(unitClass.mineralPrice, unitClass.gasPrice)
   }
 }

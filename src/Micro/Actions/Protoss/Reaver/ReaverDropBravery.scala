@@ -27,15 +27,23 @@ object ReaverDropBravery {
   val minShields: Int = 50
 
   /**
+   * Tank theater, in tiles: only Siege Tanks this close to the Shuttle
+   * vote. A battery across the map cannot hit the drop; stale intel that
+   * lingers on the registry cannot veto it either (seam filters).
+   */
+  val tankTheaterTiles: Double = 20.0
+
+  /**
    * Vs Terran the Scarab must beat Siege Tanks: more than a pair on the
    * field vetoes the brave drop. Other matchups ignore the tank count.
    */
   val maxTerranTanks: Int = 2
 
   /**
-   * A Reaver unfired this long that still holds most of its health gets
-   * the drop even when the rings refuse it: sitting aboard forever helps
-   * nobody. Frames and wound fraction over hit points plus shields.
+   * A Reaver unfired for more than this long that still holds most of its
+   * health gets the drop even when the rings refuse it: sitting aboard
+   * forever helps nobody. Frames and wound fraction over hit points plus
+   * shields; never-fired hulls do not count (seam passes hasFired).
    */
   val staleFrames: Int = 10 * 24
   val maxStaleWound: Double = 0.5
@@ -50,13 +58,14 @@ object ReaverDropBravery {
   val safetyMargin: Double = 2.0
 
   /**
-   * Ranged-threat classification on primitives: guns with range, flying
-   * anti-air, and the Scourge, which carries no weapon in the data yet
-   * kills Shuttles. Unarmed spotters and ground melee are not threats
-   * to the Shuttle in the air.
+   * Ranged-threat classification on primitives, from the Shuttle's seat:
+   * only guns that bear on it count, plus the Scourge, which carries no
+   * weapon in the data yet kills Shuttles. Ground-only guns (tanks,
+   * sunkens) and unarmed spotters do not threaten the hull in the air;
+   * the landed Reaver below is covered by the close ring instead.
    */
   def isRangedThreat(canAttack: Boolean, melee: Boolean, flying: Boolean, canHitShuttle: Boolean, isScourge: Boolean): Boolean =
-    (canAttack && ( ! melee || (flying && canHitShuttle))) || (flying && isScourge)
+    (canAttack && canHitShuttle && ( ! melee || flying)) || (flying && isScourge)
 
   def shouldDrop(
     foesClose        : Int,
@@ -71,8 +80,8 @@ object ReaverDropBravery {
       shuttleShields >= minShields && reaverShields >= minShields &&
       ( ! isTerran || enemyTanks <= maxTerranTanks)
 
-  def mayDropStale(framesSinceFired: Int, woundFraction: Double): Boolean =
-    framesSinceFired > staleFrames && woundFraction < maxStaleWound
+  def mayDropStale(framesSinceFired: Int, woundFraction: Double, hasFired: Boolean = true): Boolean =
+    hasFired && framesSinceFired > staleFrames && woundFraction < maxStaleWound
 
   /**
    * @param ourHitPoints shields plus hull of the Shuttle taking the fire

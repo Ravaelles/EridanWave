@@ -56,10 +56,11 @@ object BeFlier extends Action {
 
     if (unit.loadedUnits.forall(u => ! Protoss.Reaver(u))) return false
 
-    val scourgeNear = unit.matchups.threats
-      .filter(Zerg.Scourge)
-      // Engine edge distance is pixels; the threshold is tiles (rule 10).
-      .exists(_.pixelDistanceEdge(unit) / 32.0 < Micro.Actions.Protoss.Shuttle.ShuttleFleeGeometry.scourgeFleeDist)
+    // Typed scan, not threats: Scourge carries no weapon in the data and
+    // never lands in matchups. Engine pixels, threshold in tiles (rule 10).
+    val scourgeNear = ProxyBwapi.UnitTracking.AliveEnemies.get().exists(u =>
+      Zerg.Scourge(u) && u.likelyStillThere &&
+        u.pixelDistanceEdge(unit) / 32.0 < Micro.Actions.Protoss.Shuttle.ShuttleFleeGeometry.scourgeFleeDist)
     if ( ! scourgeNear) return false
 
     val members = unit.squad.map(_.units.map(_.pixel))

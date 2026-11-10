@@ -4,11 +4,15 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class ReaverDropBraverySuite extends AnyFunSuite {
 
-  test("ranged-threat classification spares spotters and ground melee") {
-    // Gunequipped ranged (Dragoon-like)
+  test("ranged-threat classification counts only guns bearing on the Shuttle") {
+    // Gun ranged bearing (Dragoon-like)
     assert(ReaverDropBravery.isRangedThreat(canAttack = true, melee = false, flying = false, canHitShuttle = true, isScourge = false))
     // Gun melee (Zealot-like): chews the landed Reaver, not the Shuttle
     assert( ! ReaverDropBravery.isRangedThreat(canAttack = true, melee = true, flying = false, canHitShuttle = false, isScourge = false))
+    // Ground-only guns (Tank/Sunken-like): deadly below, harmless above
+    assert( ! ReaverDropBravery.isRangedThreat(canAttack = true, melee = false, flying = false, canHitShuttle = false, isScourge = false))
+    // Ground-only fliers (Guardian-like)
+    assert( ! ReaverDropBravery.isRangedThreat(canAttack = true, melee = false, flying = true, canHitShuttle = false, isScourge = false))
     // Unarmed spotter (Overlord-like)
     assert( ! ReaverDropBravery.isRangedThreat(canAttack = false, melee = false, flying = true, canHitShuttle = false, isScourge = false))
     // Flying anti-air (Mutalisk-like)
@@ -63,6 +67,10 @@ class ReaverDropBraverySuite extends AnyFunSuite {
     assert(ReaverDropBravery.mayDropStale(framesSinceFired = 999999, woundFraction = 0.0))
   }
 
+  test("a never-fired hull is not stale") {
+    assert( ! ReaverDropBravery.mayDropStale(framesSinceFired = 999999, woundFraction = 0.0, hasFired = false))
+  }
+
   test("a recently fired or hurt Reaver is not stale") {
     assert( ! ReaverDropBravery.mayDropStale(framesSinceFired = 240, woundFraction = 0.1))
     assert( ! ReaverDropBravery.mayDropStale(framesSinceFired = 500, woundFraction = 0.5))
@@ -83,5 +91,12 @@ class ReaverDropBraverySuite extends AnyFunSuite {
     // 2 dps over 72 frames doubled is 288: 289 fits, 288 does not
     assert(ReaverDropBravery.canAffordShot(ourHitPoints = 289.0, enemyDps = 2.0))
     assert( ! ReaverDropBravery.canAffordShot(ourHitPoints = 288.0, enemyDps = 2.0))
+  }
+
+  test("ring and theater thresholds are stored in tiles") {
+    assert(ReaverDropBravery.closeDist == 6.0)
+    assert(ReaverDropBravery.rangedDist == 8.0)
+    assert(ReaverDropBravery.staticDefenseDist == 8.0)
+    assert(ReaverDropBravery.tankTheaterTiles == 20.0)
   }
 }

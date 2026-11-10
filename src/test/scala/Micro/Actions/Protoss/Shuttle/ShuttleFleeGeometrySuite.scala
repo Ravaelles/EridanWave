@@ -16,6 +16,11 @@ class ShuttleFleeGeometrySuite extends AnyFunSuite {
     assert(ShuttleFleeGeometry.rearOfCluster(Seq(Pixel(1000, 500)), base) == Pixel(1000, 500))
   }
 
+  test("co-tile members tie on tile distance, input order decides") {
+    val members = Seq(Pixel(320, 0), Pixel(321, 0), Pixel(960, 0))
+    assert(ShuttleFleeGeometry.rearOfCluster(members, base) == Pixel(320, 0))
+  }
+
   test("no cluster means the base itself") {
     assert(ShuttleFleeGeometry.rearOfCluster(Seq.empty, base) == base)
   }
