@@ -27,7 +27,9 @@ object Retreat extends Action {
         if (With.configuration.debugging) {
           unit.agent.act(f"Retreat$name")
         }
-        Commander.move(unit, 32.0)
+        // Fleeing scouts reorder on a wide deadband: their waypoints hop
+        // with the threat, and tight refresh restarts movement every frame.
+        Commander.move(unit, ?(unit.agent.isScout, 160.0, 32.0))
       }
       unit.unready
     }

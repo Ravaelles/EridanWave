@@ -104,7 +104,10 @@ class TacticWorkerScout extends Tactic {
       val bases     = Seq(base) ++ base.natural.filter(natural => ! enemyHasCombatUnits && ! base.tiles.exists(t => t.buildable && ! t.explored))
       val explored  = base.townHallArea.tiles.exists(_.explored)
       bases.foreach(basesToScoutQueue.remove)
+      // Smooth travel: the far terminus goes out as one order instead of
+      // waypoint hops (Search and Retreat already threat-path their own goals).
       scout.intend(this)
+        .setShouldCorrectXY(false)
         .setTerminus(base.townHallArea.cornerPixels.minBy(scout.pixelDistanceTravelling))
         .setScout(
           if (explored) bases.flatMap(_.tiles.view.filter(t => t.buildable && With.grids.enemyRangeGround(t) <= With.grids.enemyRangeGround.margin))

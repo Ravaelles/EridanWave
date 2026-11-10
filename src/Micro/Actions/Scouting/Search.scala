@@ -29,7 +29,10 @@ abstract class AbstractSearch extends Action {
   protected val boredomFrames: Int
   
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
-    if (unit.matchups.threats.isEmpty && ! unit.intent.toScoutTiles.exists(_.explored)) {
+    // Workers never pop smooth travel: a scout runs through them toward the
+    // far terminus instead of stuttering on gravity retargets. Real threats
+    // (and PreserveScout below) still take the machinery path.
+    if (unit.matchups.threats.filterNot(_.unitClass.isWorker).isEmpty && ! unit.intent.toScoutTiles.exists(_.explored)) {
       Commander.move(unit)
 
       return
