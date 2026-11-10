@@ -16,4 +16,10 @@ class UnitBountySuite extends AnyFunSuite {
     assert(UnitBounty.split(75) == 37)
     assert(UnitBounty.split(0) == 0)
   }
+
+  test("weighted bounty counts gas at 1.5") {
+    assert(UnitBounty.weighted(100, 0) == 100.0)
+    assert(UnitBounty.weighted(125, 50) == 200.0)
+    assert(UnitBounty.weighted(0, 100) == 150.0)
+  }
 }

@@ -16,9 +16,18 @@ object UnitBounty {
 
   def total(minerals: Int, gas: Int): Int = minerals + gas
 
+  /** Weighted bounty: minerals count single, gas counts 1.5 (harass math). */
+  def weighted(minerals: Int, gas: Int): Double = minerals + 1.5 * gas
+
   def of(unitClass: UnitClass): Int = {
     if (unitClass == Zerg.Zergling) split(unitClass.mineralPrice) + unitClass.gasPrice
     else if (unitClass == Zerg.Scourge) split(unitClass.mineralPrice) + split(unitClass.gasPrice)
     else unitClass.mineralPrice + unitClass.gasPrice
+  }
+
+  def weightedOf(unitClass: UnitClass): Double = {
+    if (unitClass == Zerg.Zergling) split(unitClass.mineralPrice) + unitClass.gasPrice
+    else if (unitClass == Zerg.Scourge) split(unitClass.mineralPrice) + split(unitClass.gasPrice)
+    else weighted(unitClass.mineralPrice, unitClass.gasPrice)
   }
 }

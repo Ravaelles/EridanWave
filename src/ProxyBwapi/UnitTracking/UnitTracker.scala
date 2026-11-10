@@ -44,6 +44,7 @@ final class UnitTracker {
         else if (With.enemies.exists(_.id == bwapiUnit.getPlayer.getID))  bufferEnemy     .add(new ForeignUnitInfo(bwapiUnit, id))
         else                                                              bufferNeutral   .add(new ForeignUnitInfo(bwapiUnit, id))
       units(id) = Some(newUnit)
+      newUnit.friendly.foreach(Tactic.Missions.evaluation.KillCredits.noteBirth)
       newUnit.readProxy()
       newUnit.friendly.filter(Protoss.Scarab).foreach(newScarabs += _)
       With.scouting.onUnitBirthTimings(newUnit)
@@ -53,6 +54,8 @@ final class UnitTracker {
     getId(id).foreach(unit => {
       bufferHistoric.add(new HistoricalUnitInfo(unit))
       if (countDeath) Information.Battles.KillLedger.noteDeath(unit)
+      if (unit.isEnemy) creditKiller(unit)
+      if (unit.isOurs) noteDeathBalance(unit)
       unit.friendly.foreach(bufferFriendly.remove)
       unit.foreign.filter(_.isEnemy).foreach(bufferEnemy.remove)
       unit.foreign.filter(_.isNeutral).foreach(bufferNeutral.remove)
@@ -65,8 +68,25 @@ final class UnitTracker {
   private def birthAll(): Unit = {
     With.game.getAllUnits.asScala.foreach(u => if (units(u.getID).isEmpty) { birth(u) })
   }
+  private def creditKiller(victim: ProxyBwapi.UnitInfo.UnitInfo): Unit = {
+    // Damage sources are the live unit objects: resolve the latest ours.
+    val killer = victim.damageQueueSnapshot.filter(_.source.isOurs).sortBy(-_.onFrame)
+      .flatMap(d => With.units.ours.find(_ == d.source)).headOption
+    killer.foreach(k => {
+      val total = Tactic.Missions.evaluation.KillCredits.noteKill(k.id, victim.unitClass)
+      Debugging.CherryVis.CherryVis.decision(k.id,
+        f"Killed ${Tactic.Missions.evaluation.KillCredits.shortName(victim.unitClass)} (${Math.round(total)} resources)")
+    })
+  }
+
+  private def noteDeathBalance(unit: ProxyBwapi.UnitInfo.UnitInfo): Unit = {
+    Debugging.CherryVis.CherryVis.decision(unit.id,
+      f"Died (${Math.round(Tactic.Missions.evaluation.KillCredits.balanceOf(unit.id))} resources)")
+  }
+
   def onStart(): Unit = {
     Information.Battles.KillLedger.reset()
+    Tactic.Missions.evaluation.KillCredits.reset()
     birthAll()
   }
   def onFrame(): Unit = {
