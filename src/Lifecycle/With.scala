@@ -15,7 +15,8 @@ import Information.Scouting.{Scouting, UnitsShown}
 import Lifecycle.Configure.{BwapiData, Configuration, ConfigurationLoader}
 import Macro.Allocation._
 import Macro.Gathering.Gathering
-import Macro.Scheduling.{MacroSim, Scheduler}
+import Macro.Scheduling.Scheduler
+import Macro.Scheduling.Simulation.MacroSim
 import Mathematics.Points.Tile
 import Micro.Agency.Agency
 import Micro.Coordination.Coordinator
