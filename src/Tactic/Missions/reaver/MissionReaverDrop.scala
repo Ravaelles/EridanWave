@@ -10,6 +10,7 @@ import Mathematics.Maff
 import Mathematics.Points.{Pixel, Points, Tile}
 import Mathematics.Shapes.{Circle, Ray}
 import Micro.Actions.{Action, Idle}
+import Micro.Actions.Protoss.Reaver.ContainStatus
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -25,6 +26,7 @@ class MissionReaverDrop extends MissionDrop {
   private var clockwise: Option[Boolean] = None
   private var reversed = false
   private var lastUnloadFrame = -1
+  private var hadContain = false
   private val knownEnemyTargets = mutable.Set.empty[Base]
 
   private case class RaidProgress(var frame: Int, var distance: Double, var landed: Set[Int], var shot: Int)
@@ -36,6 +38,7 @@ class MissionReaverDrop extends MissionDrop {
     clockwise = None
     reversed = false
     lastUnloadFrame = -1
+    hadContain = false
     onDestinationChanged()
   }
   override protected def onDestinationChanged(): Unit = combatProgress.clear()
@@ -306,7 +309,14 @@ class MissionReaverDrop extends MissionDrop {
       true
     } else false
   }
-  override protected def shouldGoHome: Boolean = !passengers.exists(Protoss.Reaver) || missionExpired
+  // Lost-contain latch: a drop supports the contain, so once the army held
+  // one and let it go the crew comes home instead of raiding stranded.
+  // Launches are unconditioned; only a held-then-lost contain aborts.
+  override protected def shouldGoHome: Boolean = {
+    if (ContainStatus.now()) hadContain = true
+
+    ! passengers.exists(Protoss.Reaver) || missionExpired || (hadContain && ! ContainStatus.now())
+  }
   override protected def canContinueAfterLeaving: Boolean =
     transports.forall(t => 2 * t.totalHealth > t.unitClass.maxTotalHealth)
 
