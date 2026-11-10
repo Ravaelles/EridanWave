@@ -31,7 +31,7 @@ object MissionVerdict {
   val harassSuccessFrames: Int = 60 * 24
 
   def evaluate(profitResources: Int, lifetimeFrames: Int, wonGame: Boolean, workerHarassFrames: Int = 0): Verdict = {
-    val harassCredit = Math.min(1.0, workerHarassFrames.toDouble / harassSuccessFrames)
+    val harassCredit = Math.max(0.0, Math.min(1.0, workerHarassFrames.toDouble / harassSuccessFrames))
     var level =
       if (profitResources > 0) 2.0
       else if (lifetimeFrames >= harassLifetimeFrames) 2.0

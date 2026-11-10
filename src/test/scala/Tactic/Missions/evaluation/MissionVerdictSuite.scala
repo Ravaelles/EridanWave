@@ -33,6 +33,13 @@ class MissionVerdictSuite extends AnyFunSuite {
     assert(MissionVerdict.evaluate(-50, 100, wonGame = false, workerHarassFrames = 1440) == MissionVerdict.Success)
   }
 
+  test("harass edges on the mid branch: 719 unclear, 720 success, over cap clamps") {
+    assert(MissionVerdict.evaluate(-50, 300, wonGame = false, workerHarassFrames = 719) == MissionVerdict.Unclear)
+    assert(MissionVerdict.evaluate(-50, 300, wonGame = false, workerHarassFrames = 720) == MissionVerdict.Success)
+    assert(MissionVerdict.evaluate(-50, 300, wonGame = false, workerHarassFrames = 1441) == MissionVerdict.Success)
+    assert(MissionVerdict.evaluate(-50, 100, wonGame = false, workerHarassFrames = -500) == MissionVerdict.Failure)
+  }
+
   test("partial pressure moves the needle linearly") {
     assert(MissionVerdict.evaluate(-50, 100, wonGame = false, workerHarassFrames = 720) == MissionVerdict.Unclear)
     assert(MissionVerdict.evaluate(0, 300, wonGame = false, workerHarassFrames = 1440) == MissionVerdict.Success)

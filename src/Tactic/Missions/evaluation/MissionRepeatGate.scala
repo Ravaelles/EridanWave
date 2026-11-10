@@ -16,7 +16,12 @@ object MissionRepeatGate {
   /** Average level at three-plus runs below which the mission stands down. */
   val minAverageLevel: Double = 1.0
 
-  case class PastRun(level: Int, profit: Int)
+  case class PastRun(level: Int)
+
+  private val knownVerdicts: Set[String] = Set(
+    MissionVerdict.name(MissionVerdict.Success),
+    MissionVerdict.name(MissionVerdict.Unclear),
+    MissionVerdict.name(MissionVerdict.Failure))
 
   def levelOf(verdict: String): Int =
     if (verdict == MissionVerdict.name(MissionVerdict.Success)) 2
@@ -29,12 +34,14 @@ object MissionRepeatGate {
    */
   def parseRow(line: String): Option[(String, PastRun)] = {
     val cols = line.split(",").map(_.trim)
-    if (cols.length < 9) return None
+    if (cols.length < 9 || ! knownVerdicts.contains(cols(4))) return None
 
-    try {
-      Some((cols(3), PastRun(levelOf(cols(4)), cols(5).toInt)))
-    } catch { case _: NumberFormatException => None }
+    Some((cols(3), PastRun(levelOf(cols(4)))))
   }
+
+  /** Past launches per mission, in file order. Pure for the suite. */
+  def groupRows(lines: Seq[String]): Map[String, Vector[PastRun]] =
+    lines.flatMap(parseRow).groupBy(_._1).mapValues(_.map(_._2).toVector).toMap
 
   def averageLevel(runs: Seq[PastRun]): Double =
     if (runs.isEmpty) 0.0 else runs.map(_.level).sum.toDouble / runs.size
