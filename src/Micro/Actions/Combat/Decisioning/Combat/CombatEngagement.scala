@@ -5,7 +5,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Skirmish.FightRules
-import Micro.Actions.Combat.Decisioning.Formation.{FormationApproach, FormationHold}
+import Micro.Actions.Combat.Decisioning.Formation.{FormationApproach, FormationHold, OverwhelmLogic}
 import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, CorsairSafety, KiteAway}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
@@ -115,6 +115,12 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     true
   }
 
+  // Four times the local skim strength means no formations: dress, hold
+  // and slide all cost time the overwhelming force should spend attacking.
+  private[Decisioning] def overwhelm: Boolean =
+    unit.combatForecast.exists(battle =>
+      OverwhelmLogic.overwhelm(battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
+
   private[Decisioning] def approach(): Boolean = {
     if (With.yolo.active) return false
     if (unit.unitClass.melee) return false
@@ -125,6 +131,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
     val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
     if (squadUnits.exists(_.canAnyEnemyAttackUsWithMargin(FightRules.contactMarginTiles))) return false
+    if (overwhelm) return false
 
     FormationApproach.decide(
       unit.pixelsToGetInRange(nearest.get) / 32.0,
@@ -241,7 +248,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       // engaging, or an enemy in range whose weapon is cooling down (it opened
       // fire). Melee must still close, flankers must still circle, and an
       // explicit yolo overrules.
-      if ( ! With.yolo.active && combat.target.exists(t =>
+      if ( ! overwhelm && ! With.yolo.active && combat.target.exists(t =>
         FormationHold.shouldHoldLine(
           tilesBeyondRange  = unit.pixelsToGetInRange(t) / 32.0,
           melee             = unit.unitClass.melee,
@@ -249,7 +256,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           flanking          = unit.formationEngage.exists(_.flanking),
           allyEngaged       = combat.squadEngagingOn,
           enemyFired        = unit.matchups.threatsInRange.exists(_.cooldownLeft > 0),
-          targetHoldable    = t.unitClass.isWarrior && t.unitClass.canAttack && ! t.unitClass.isBuilding))) {
+          targetHoldable    = t.unitClass.isWarrior && t.unitClass.canAttack && (! t.unitClass.isBuilding || t.unitClass.isCombatBuilding)))) {
         combat.breakFormationToAttack = false
       }
 

@@ -190,6 +190,7 @@ final case class UnitClass(base: UnitType) extends UnitClassProxy(base) with Uni
   lazy val isFarm               : Boolean = this == Terran.SupplyDepot || this == Protoss.Pylon || this == Zerg.Overlord
   lazy val isTownHall           : Boolean = isResourceDepot
   lazy val isStaticDefense      : Boolean = isBuilding && (canAttack || this == Terran.Bunker || this == Protoss.ShieldBattery)
+  lazy val isCombatBuilding     : Boolean = isBuilding && canAttack
   lazy val isTransport          : Boolean = spaceProvided > 0 && isFlyer && this != Protoss.Carrier
   lazy val powers               : Boolean = this == Protoss.Pylon
   lazy val affectedByDarkSwarm  : Boolean = ! Vector(
