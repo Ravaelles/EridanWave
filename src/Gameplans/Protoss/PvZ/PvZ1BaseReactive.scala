@@ -235,11 +235,19 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     if (units(Protoss.Gateway) >= 5 || units(IsWorker) > 35) {
       pumpGasPumps()
     }
-    if ( ! on(Speedlot)) return
-
-    get(Protoss.Forge)
-    get(Protoss.CitadelOfAdun)
-    get(Protoss.ZealotSpeed)
+    if (on(Speedlot)) {
+      get(Protoss.Forge)
+      get(Protoss.CitadelOfAdun)
+      get(Protoss.ZealotSpeed)
+    }
+    if (on(Goon)) {
+      get(Protoss.CyberneticsCore)
+      get(Protoss.DragoonRange)
+    }
+    if (on(Reaver)) {
+      get(Protoss.RoboticsFacility)
+      get(Protoss.RoboticsSupportBay)
+    }
   }
 
   def buildTech(): Unit = {
