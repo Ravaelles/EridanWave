@@ -139,8 +139,18 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
   }
 
   private def logOpening(context: String): Unit = {
-    val names = strategiesSelected.toVector.map(_.toString).sorted.mkString(" + ")
-    val line = f"OPENING ($context, vs ${With.enemy.raceCurrent}): $names"
+    val selected  = strategiesSelected.toVector.sortBy(_.toString)
+    val openings  = selected.filter(_.choices.nonEmpty)
+    val techs     = selected.filter(s => s.choices.isEmpty && s.gameplan.isEmpty)
+    val plans     = selected.flatMap(_.gameplan).map(_.getClass.getSimpleName).distinct.sorted
+    val gameplanName = if (plans.nonEmpty) plans.mkString(" + ") else _standardGameplan.getClass.getSimpleName
+    def names(strategies: Seq[Strategy]): String =
+      if (strategies.isEmpty) "-" else strategies.map(_.toString).mkString(" + ")
+    val line =
+      f"OPENING ($context, vs ${With.enemy.raceCurrent})" +
+      f"\n\tOpening  : ${names(openings)}" +
+      f"\n\tGameplan : $gameplanName" +
+      f"\n\tTech     : ${names(techs)}"
     System.out.println(line)
     With.logger.debug(line)
   }
