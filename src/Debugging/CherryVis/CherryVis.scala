@@ -28,6 +28,7 @@ object CherryVis {
   private val lastOrders    = new mutable.HashMap[Int, String]
   private val lastDecision  = new mutable.HashMap[Int, String]
   private val knownUnits    = new mutable.HashSet[Int]
+  private val rearmedUnits  = new mutable.HashSet[Int]
   private var lastStrategy  = ""
 
   def enabled: Boolean = With.configuration != null && With.configuration.cherryVis && ! With.umsMode
@@ -42,6 +43,7 @@ object CherryVis {
     lastOrders.clear()
     lastDecision.clear()
     knownUnits.clear()
+    rearmedUnits.clear()
     lastStrategy = ""
   }
 
@@ -152,13 +154,35 @@ object CherryVis {
     } catch { case exception: Exception => With.logger.onException(exception) }
   }
 
+  /**
+   * First-seen records feed the viewer match (same type within 25px at
+   * the recorded frame, no retry). A mobile unit at completion still
+   * reports its producer position - a crowd the viewer matches nothing
+   * in, so every late unit reads "i???" while frame-0 seeds match.
+   * Statics and completed units record at once; the rest defer seven
+   * frames (FirstSeen.DEFER_FRAMES) until walked out with a position of
+   * their own. Dead or gone by then drop silently. Atlantis NEXT #68.
+   */
   private def noteFirstSeen(units: Iterable[UnitInfo]): Unit = {
     units.foreach(unit => {
       if (knownUnits.add(unit.id)) {
-        trace.firstSeen.record(With.frame, unit.id, unit.unitClass.id, unit.pixel.x, unit.pixel.y)
-        trace.firstSeen.noteEngineId(unit.id, unit.id)
+        if ( ! unit.canMove) recordFirstSeen(unit)
+        else trace.firstSeen.defer(unit.id, With.frame)
+      } else if (unit.complete && unit.canMove && rearmedUnits.add(unit.id)) {
+        // Completion re-arms the deferral: a unit training past the first
+        // window would otherwise drop out of pending and never record.
+        trace.firstSeen.defer(unit.id, With.frame)
       }
     })
+    import scala.collection.JavaConverters._
+    trace.firstSeen.pollDue(With.frame).asScala.foreach(id => {
+      With.units.getId(id).filter(u => u.alive && u.complete).foreach(recordFirstSeen)
+    })
+  }
+
+  private def recordFirstSeen(unit: UnitInfo): Unit = {
+    trace.firstSeen.record(With.frame, unit.id, unit.unitClass.id, unit.pixel.x, unit.pixel.y)
+    trace.firstSeen.noteEngineId(unit.id, unit.id)
   }
 
   /**
