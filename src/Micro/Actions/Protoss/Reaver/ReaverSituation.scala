@@ -2,6 +2,7 @@ package Micro.Actions.Protoss.Reaver
 
 import Lifecycle.With
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
+import ProxyBwapi.UnitTracking.AliveEnemies
 import Micro.Actions.Protoss.ReaverLegacy.BeReaverLegacy
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -64,6 +65,7 @@ object ReaverSituation {
     val pressuredCloseNow = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.pixelDistanceEdge(t) < 4 * 32)
 
     val unloadRadiusTiles = ReaverDropBravery.radiusTiles
+    val isTerranNow = With.enemies.exists(_.isTerran)
 
     ReaverSituation(
       rideNearby      = unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= ?(unit.agent.isPrimaryPassenger, 64, 32)),
@@ -81,7 +83,7 @@ object ReaverSituation {
       framesSinceHit  = With.framesSince(unit.lastFrameTakingDamage),
       hikingFar       = unit.moving && unit.pixelDistanceTravelling(unit.agent.destinationNext()) > 15 * 32,
       woundFraction   = wound,
-      isTerran        = With.enemies.exists(_.isTerran),
+      isTerran        = isTerranNow,
       reaveOrdered    = unit.agent.fightReason == FightOrFlee.Reave,
       shouldFight     = unit.agent.shouldFight,
       walkableTile    = unit.tile.walkable,
@@ -100,7 +102,8 @@ object ReaverSituation {
       braveDrop       = unit.transport.exists(shuttle => {
         // Engine edge distance is pixels; the threshold is tiles (rule 10).
         val foes = shuttle.matchups.targets.filter(_.pixelDistanceEdge(shuttle) / 32.0 < unloadRadiusTiles)
-        ReaverDropBravery.shouldDrop(foes.size, shuttle.shieldPoints, unit.shieldPoints) &&
+        val tanks = AliveEnemies.get().count(_.isAny(Terran.SiegeTankUnsieged, Terran.SiegeTankSieged))
+        ReaverDropBravery.shouldDrop(foes.size, shuttle.shieldPoints, unit.shieldPoints, isTerran = isTerranNow, enemyTanks = tanks) &&
           ReaverDropBravery.canAffordShot(
             shuttle.shieldPoints + shuttle.hitPoints,
             foes.map(foe => Math.max(foe.dpfAir, foe.dpfGround)).sum)

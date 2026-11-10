@@ -19,6 +19,12 @@ object ReaverDropBravery {
   val minShields: Int = 50
 
   /**
+   * Vs Terran the Scarab must beat Siege Tanks: more than a pair on the
+   * field vetoes the brave drop. Other matchups ignore the tank count.
+   */
+  val maxTerranTanks: Int = 2
+
+  /**
    * Frames of exposure for one drop cycle: unload, Scarab flight,
    * reboard. The pair must stomach that long under the nearby guns.
    */
@@ -27,8 +33,14 @@ object ReaverDropBravery {
   /** Keep this multiple of the expected damage as a safety margin. */
   val safetyMargin: Double = 2.0
 
-  def shouldDrop(enemyCount: Int, shuttleShields: Int, reaverShields: Int): Boolean =
-    enemyCount <= maxEnemiesNear && shuttleShields >= minShields && reaverShields >= minShields
+  def shouldDrop(
+    enemyCount    : Int,
+    shuttleShields: Int,
+    reaverShields : Int,
+    isTerran      : Boolean = false,
+    enemyTanks    : Int = 0): Boolean =
+    enemyCount <= maxEnemiesNear && shuttleShields >= minShields && reaverShields >= minShields &&
+      ( ! isTerran || enemyTanks <= maxTerranTanks)
 
   /**
    * @param ourHitPoints shields plus hull of the Shuttle taking the fire
