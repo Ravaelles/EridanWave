@@ -55,6 +55,10 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   def act(value: String): Unit = {
     actions += value
     lastAction = Some(value)
+    // Micro decisions ride the change-only decision channel into the
+    // trace: one row per change, so combat reasoning (Hop, HoldToFire,
+    // FleeScourge, ...) is readable post-game without log spam.
+    Debugging.CherryVis.CherryVis.decision(unit.id, value)
   }
 
   ///////////////
