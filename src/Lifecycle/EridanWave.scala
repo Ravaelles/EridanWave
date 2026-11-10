@@ -105,6 +105,7 @@ class EridanWave extends DefaultBWListener {
     tryCatch(() => {
       With.logger.debug(f"Game ended in ${?(isWinner, "victory", "defeat")}")
       With.history.onEnd(isWinner)
+      With.missionHistory.onEnd(isWinner)
       With.gathering.onEnd()
       With.storyteller.onEnd()
       With.simulation.onEnd()

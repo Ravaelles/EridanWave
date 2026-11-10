@@ -1,0 +1,31 @@
+package Tactic.Missions.evaluation
+
+import org.scalatest.funsuite.AnyFunSuite
+
+class MissionVerdictSuite extends AnyFunSuite {
+
+  test("profit over cost is success and repeats") {
+    assert(MissionVerdict.evaluate(1, 0, wonGame = false) == MissionVerdict.Success)
+    assert(MissionVerdict.evaluate(500, 100, wonGame = false) == MissionVerdict.Success)
+  }
+
+  test("a twenty-second harass succeeds by worker delay alone") {
+    assert(MissionVerdict.evaluate(0, 480, wonGame = false) == MissionVerdict.Success)
+    assert(MissionVerdict.evaluate(-200, 960, wonGame = false) == MissionVerdict.Success)
+  }
+
+  test("dead inside ten seconds is failure") {
+    assert(MissionVerdict.evaluate(0, 240, wonGame = false) == MissionVerdict.Failure)
+    assert(MissionVerdict.evaluate(-50, 0, wonGame = false) == MissionVerdict.Failure)
+  }
+
+  test("between ten and twenty seconds is unclear") {
+    assert(MissionVerdict.evaluate(0, 300, wonGame = false) == MissionVerdict.Unclear)
+  }
+
+  test("a won game upgrades one level") {
+    assert(MissionVerdict.evaluate(-50, 0, wonGame = true) == MissionVerdict.Unclear)
+    assert(MissionVerdict.evaluate(0, 300, wonGame = true) == MissionVerdict.Success)
+    assert(MissionVerdict.evaluate(1, 0, wonGame = true) == MissionVerdict.Success)
+  }
+}

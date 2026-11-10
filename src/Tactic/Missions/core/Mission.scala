@@ -20,6 +20,7 @@ trait Mission extends Squad {
       launched = true
       launchFrame = With.frame
       recruit()
+      With.missionHistory.recordLaunch(this)
       With.logger.debug(f"Launching $this to ${vicinity.base.getOrElse(vicinity.tile)} with ${With.recruiter.lockedBy(this).view.map(_.toString).mkString(", ")}")
     }
     if (launched) {
@@ -30,6 +31,7 @@ trait Mission extends Squad {
 
   final def terminate(reason: String = ""): Unit = {
     if (launched) {
+      With.missionHistory.recordEnd(this)
       With.logger.debug(f"Terminating $this: $reason")
     }
     launched = false

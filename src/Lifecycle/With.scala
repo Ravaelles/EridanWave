@@ -30,6 +30,7 @@ import ProxyBwapi.Players.{PlayerInfo, Players}
 import ProxyBwapi.ProxyBWAPI
 import ProxyBwapi.UnitTracking.UnitTracker
 import Strategery.History.History
+import Tactic.Missions.evaluation.MissionHistory
 import Strategery.Strategist
 import Tactic.Squads.Squads
 import Tactic.Tactician
@@ -90,6 +91,7 @@ object With {
   var macroCounts       : MacroCounts         = _
   var macroSim          : MacroSim            = _
   var manners           : Manners             = _
+  var missionHistory      : MissionHistory      = _
   var matchups          : MatchupGraph        = _
   var microSlush        : MicroSlush          = _
   var paths             : Paths               = _
@@ -207,6 +209,7 @@ object With {
     macroCounts       = new MacroCounts
     macroSim          = new MacroSim
     manners           = new Manners
+    missionHistory      = new MissionHistory
     matchups          = new MatchupGraph
     microSlush        = new MicroSlush
     paths             = new Paths
