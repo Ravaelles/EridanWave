@@ -39,7 +39,6 @@ class SquadScoutExpansions extends Squad {
     Terran.Wraith,
     Protoss.Zealot,
     Protoss.Dragoon,
-    Protoss.DarkTemplar,
     Protoss.Observer,
     Protoss.Corsair,
     Zerg.Zergling,
@@ -101,8 +100,10 @@ class SquadScoutExpansions extends Squad {
     units.foreach(u => {
       val targetsHere   = u.base.toSeq.filter(_.isEnemy).flatMap(_.enemies)
       val targetsThere  = vicinity.base.toSeq.flatMap(_.enemies)
+      // Smooth travel like worker scouts: one far order, no waypoint hops.
       u.intend(this)
         .setCanSneak(true)
+        .setShouldCorrectXY(false)
         .setTerminus(vicinity)
         .setTargets(SquadAutomation.rankForArmy(
           this,

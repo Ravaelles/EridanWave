@@ -1,6 +1,7 @@
 package Debugging.CherryVis
 
 import Lifecycle.With
+import Information.Battles.ArmyStrength
 import ProxyBwapi.UnitInfo.UnitInfo
 import cherryvis.{GameSummary, GameTrace}
 
@@ -58,6 +59,11 @@ object CherryVis {
       lastStrategy = strategy
       trace.logState(With.frame, "Strategy", strategy)
     }
+    // Global strength next to the AttackStance row: display only, the
+    // withdraw decision itself runs on per-unit sim verdicts.
+    board("ArmyStrength", ArmyStrength.score(
+      With.battles.globalAttack.us.skimStrengthTotal,
+      With.battles.globalAttack.enemy.skimStrengthTotal).toInt.toString)
   }
 
   /**
