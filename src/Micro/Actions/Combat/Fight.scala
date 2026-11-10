@@ -8,6 +8,7 @@ import Micro.Actions.Combat.Tactics._
 import Micro.Actions.Combat.Tactics.Bunker._
 import Micro.Actions.Combat.Tactics.Potshots._
 import Micro.Actions.Protoss._
+import Micro.Actions.Protoss.Carrier.BeCarrier
 import Micro.Actions.Protoss.Reaver.BeReaver
 import Micro.Actions.Terran.{BeCombatSCV, BeVulture}
 import Micro.Actions.Zerg.BeMutalisk
