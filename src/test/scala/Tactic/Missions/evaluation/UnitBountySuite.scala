@@ -1,6 +1,7 @@
 package Tactic.Missions.evaluation
 
 import org.scalatest.funsuite.AnyFunSuite
+import ProxyBwapi.Races.{Protoss, Zerg}
 
 class UnitBountySuite extends AnyFunSuite {
 
@@ -15,6 +16,12 @@ class UnitBountySuite extends AnyFunSuite {
     assert(UnitBounty.split(25) == 12)
     assert(UnitBounty.split(75) == 37)
     assert(UnitBounty.split(0) == 0)
+  }
+
+  test("weighted class bounties weight gas at 1.5") {
+    assert(UnitBounty.weightedOf(Protoss.Dragoon) == 200.0)
+    assert(UnitBounty.weightedOf(Zerg.Zergling) == 25.0)
+    assert(UnitBounty.weightedOf(Zerg.Scourge) == 12.0 + 1.5 * 37.0)
   }
 
   test("weighted bounty counts gas at 1.5") {
