@@ -58,7 +58,8 @@ object BeFlier extends Action {
 
     val scourgeNear = unit.matchups.threats
       .filter(Zerg.Scourge)
-      .exists(_.pixelDistanceEdge(unit) < Micro.Actions.Protoss.Shuttle.ShuttleFleeGeometry.scourgeFleePixels)
+      // Engine edge distance is pixels; the threshold is tiles (rule 10).
+      .exists(_.pixelDistanceEdge(unit) / 32.0 < Micro.Actions.Protoss.Shuttle.ShuttleFleeGeometry.scourgeFleeDist)
     if ( ! scourgeNear) return false
 
     val members = unit.squad.map(_.units.map(_.pixel))

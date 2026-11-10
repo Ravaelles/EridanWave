@@ -9,9 +9,8 @@ package Micro.Actions.Protoss.Reaver
  */
 object ReaverDropBravery {
 
-  /** Enemies this close to the Shuttle count against the drop. */
+  /** Enemies this close, in tiles, to the Shuttle count against the drop. */
   val radiusTiles: Double = 12.0
-  def radiusPixels: Double = radiusTiles * 32.0
 
   /** More than this many nearby enemies keeps the Shuttle flying. */
   val maxEnemiesNear: Int = 2

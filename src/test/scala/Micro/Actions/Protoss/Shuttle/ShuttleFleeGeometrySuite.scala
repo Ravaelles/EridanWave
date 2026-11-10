@@ -20,6 +20,10 @@ class ShuttleFleeGeometrySuite extends AnyFunSuite {
     assert(ShuttleFleeGeometry.rearOfCluster(Seq.empty, base) == base)
   }
 
+  test("the flee threshold is stored in tiles") {
+    assert(ShuttleFleeGeometry.scourgeFleeDist == 12.0)
+  }
+
   test("the far fighter never drags the rear forward") {
     val members = Seq(Pixel(320, 0), Pixel(640, 0), Pixel(960, 0), Pixel(9600, 0))
     val rear = ShuttleFleeGeometry.rearOfCluster(members, base)
