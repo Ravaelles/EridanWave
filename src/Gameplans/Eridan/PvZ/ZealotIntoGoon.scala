@@ -63,7 +63,7 @@ object ZealotIntoGoon extends MacroActions {
     // after the Zealot/Dragoon core is up. The tech buildings themselves
     // still follow composition (scouting decides Robo vs Archives vs
     // Stargate); without the tech these needs stay unfulfilled.
-    if (have(Protoss.RoboticsSupportBay)) {
+    if (have(Protoss.RoboticsSupportBay) && Gameplans.Protoss.PvZ.ReaverGas.allowsReaver(units(Protoss.Reaver), gas)) {
       compositor.setNeed(Protoss.Reaver, 3.0)
       compositor.setGoal(Protoss.Reaver, 6)
       compositor.setNeed(Protoss.Shuttle, 3.0)

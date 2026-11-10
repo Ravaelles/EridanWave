@@ -415,7 +415,7 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
       }
     }
 
-    if (composition.contains(Reaver)) {
+    if (composition.contains(Reaver) && ReaverGas.allowsReaver(units(Protoss.Reaver), gas)) {
       compositor.setNeed(Protoss.Reaver,  weighReavers)
       compositor.setNeed(Protoss.Shuttle, weighReavers * 4)
       compositor.setGoal(Protoss.Reaver,  6)
