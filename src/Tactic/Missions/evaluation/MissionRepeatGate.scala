@@ -5,8 +5,8 @@ package Tactic.Missions.evaluation
  * nothing must not keep forming. Levels mirror MissionVerdict
  * (Success 2, Unclear 1, Failure 0); below three past runs anything goes
  * (too little data), at three-plus the average must reach Unclear.
- * Rows parse tolerantly: the harass column arrived later, legacy nine
- * column rows default it to zero.
+ * Rows parse tolerantly: unknown verdicts drop out, extra columns
+ * (profit, harass) are ignored - only the level feeds the gate.
  */
 object MissionRepeatGate {
 

@@ -71,7 +71,10 @@ final class UnitTracker {
   }
   private def creditKiller(victim: ProxyBwapi.UnitInfo.UnitInfo): Unit = {
     // Damage sources are the live unit objects: resolve the latest ours.
-    val killer = victim.damageQueueSnapshot.filter(_.source.isOurs).sortBy(-_.onFrame)
+    // Committed blows first - the queue also holds uncommitted sim predictions
+    // with future frames, which would shadow the killing blow.
+    val ours = victim.damageQueueSnapshot.filter(_.source.isOurs)
+    val killer = Maff.orElse(ours.filter(_.committed), ours).toVector.sortBy(-_.onFrame)
       .flatMap(d => With.units.ours.find(_ == d.source)).headOption
     killer.foreach(k => {
       val total = Tactic.Missions.evaluation.KillCredits.noteKill(k.id, victim.unitClass)
