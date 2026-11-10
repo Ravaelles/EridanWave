@@ -6,8 +6,10 @@ import ProxyBwapi.Races.Protoss
 
 /**
  * Pylon placement by case, one class per case. Wired once in
- * PlacementQuery.resetDefaults, so every Pylon request flows through here
- * instead of sharing one generic Supply label. Covered elsewhere, not here:
+ * PlacementQuery.resetDefaults, so every default Pylon request flows
+ * through here instead of sharing one generic Supply label. First is
+ * Stardust-style (main edge toward the exit), second is central main
+ * supply, the rest are generic supply. Covered elsewhere, not here:
  * cannon-rush Pylons (CannonRushFinder places them directly) and defense
  * Pylons (the defense query already scopes base and zone). Proxy Pylons are
  * the next case to add once a caller scopes them.

@@ -5,7 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class PylonPlacementSuite extends AnyFunSuite {
 
-  test("no Pylons means the wall-first opening Pylon") {
+  test("no Pylons means the Stardust-style edge Pylon") {
     assert(PylonPlacement.caseFor(0) == FirstPylon)
     assert(PylonPlacement.caseFor(-1) == FirstPylon)
   }
