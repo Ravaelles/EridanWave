@@ -52,13 +52,35 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   var lastAction  : Option[String]   = None
   val actions     : ArrayBuffer[String] = new ArrayBuffer[String]()
 
+  /**
+   * Chain containers credit themselves every frame via Action.apply, so
+   * their names would drown the trace (half a million Idle rows a game).
+   * Only leaf behaviors report; extend this when adding a chain container.
+   */
+  private val chainActions: Set[String] = Set(
+    "Cancel", "Liftoff", "Land", "Unbunk", "Meld", "Build",
+    "FinishConstruction", "FightOrFlee", "Repair", "GetRepairedMobile",
+    "GetRepairedBuilding", "Gather", "Addon", "Scan", "Unstick", "Produce",
+    "Rally", "ReloadInterceptors", "ReloadScarabs", "Transport", "Scout",
+    "Bunk", "Crack", "Fight", "Attack", "Travel", "Follow", "StrategicNuke",
+    "Cast", "Spot", "Stim", "EmergencyBunk", "Root", "BeFlier",
+    "BeCombatSCV", "BeVulture", "BeRushingZealot", "BeZealotVsZealot",
+    "BeDragoonVsSlowlot", "BeDarkTemplar", "BeCarrier", "BeArbiter",
+    "BeReaver", "BeMutalisk", "Recharge", "Bust", "Stealth", "OccupyBunker",
+    "BeDetector", "Evacuate", "BeShuttle", "CannonRush", "PylonTrap",
+    "FightWithZealot", "DroneWarfare", "Harass4PoolWorkers", "SabotageProxy",
+    "KnockKnock", "PreserveScout", "AttackBuilder", "BlockConstruction",
+    "Search", "SearchWhenBored")
+
   def act(value: String): Unit = {
     actions += value
     lastAction = Some(value)
     // Micro decisions ride the change-only decision channel into the
     // trace: one row per change, so combat reasoning (Hop, HoldToFire,
     // FleeScourge, ...) is readable post-game without log spam.
-    Debugging.CherryVis.CherryVis.decision(unit.id, value)
+    if ( ! chainActions.contains(value)) {
+      Debugging.CherryVis.CherryVis.decision(unit.id, value)
+    }
   }
 
   ///////////////
