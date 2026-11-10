@@ -7,6 +7,7 @@ import Mathematics.Points.Tile
 import Placement.Access.PlaceLabels.PlaceLabel
 import Placement.FoundationSources
 import Placement.FoundationSources.FoundationSource
+import Placement.Pylons.PylonPlacement
 import Placement.Templating.PointGas
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitClasses.UnitClass
@@ -64,7 +65,9 @@ class PlacementQuery {
     if (Seq(Terran.MissileTurret, Terran.Bunker, Protoss.PhotonCannon, Protoss.ShieldBattery, Zerg.CreepColony).contains(building)) {
       preferences.labelYes = preferences.labelYes :+ PlaceLabels.Defensive
     }
-    if (Seq(Terran.SupplyDepot, Protoss.Pylon).contains(building)) {
+    if (building == Protoss.Pylon) {
+      PylonPlacement.applyCase(this)
+    } else if (building == Terran.SupplyDepot) {
       preferences.labelYes = preferences.labelYes :+ PlaceLabels.Supply
     }
     if (building.isGas) {
