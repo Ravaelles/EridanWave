@@ -3,7 +3,7 @@ package Strategery.Strategies
 import Lifecycle.With
 import Mathematics.Maff
 import Performance.GameCache
-import Strategery.Selection.{WeightedGame, WinProbability}
+import Strategery.Selection.Modeling.{WeightedGame, WinProbability}
 
 case class StrategyBranch(strategies: Seq[Strategy]) {
 

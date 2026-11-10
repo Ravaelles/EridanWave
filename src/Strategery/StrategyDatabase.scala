@@ -3,7 +3,7 @@ package Strategery
 import Lifecycle.With
 import Mathematics.Maff
 import Strategery.History.HistoricalGame
-import Strategery.Selection.ExpandStrategy
+import Strategery.Selection.Modeling.ExpandStrategy
 import Strategery.Strategies.{AllChoices, Strategy, StrategyBranch}
 import bwapi.Race
 

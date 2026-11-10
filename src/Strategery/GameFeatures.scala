@@ -3,7 +3,7 @@ package Strategery
 import Lifecycle.With
 import Mathematics.Maff
 import ProxyBwapi.Players.Players
-import Strategery.Selection.StrategySelectionFixed
+import Strategery.Selection.Policies.StrategySelectionFixed
 import bwapi.GameType
 
 trait GameFeatures {

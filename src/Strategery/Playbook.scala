@@ -2,7 +2,8 @@ package Strategery
 
 import Debugging.SimpleString
 import Lifecycle.With
-import Strategery.Selection._
+import Strategery.Selection.Policies._
+import Strategery.Selection.Modeling._
 import Strategery.Strategies.AllRaces.Sandbox
 import Strategery.Strategies.Protoss.PvZGFE
 import Strategery.Strategies.Strategy

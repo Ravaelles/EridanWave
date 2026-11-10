@@ -4,7 +4,8 @@ import Gameplans.All.StandardGameplan
 import Lifecycle.With
 import Mathematics.Maff
 import Planning.Plans.{NoPlan, Plan}
-import Strategery.Selection._
+import Strategery.Selection.Policies._
+import Strategery.Selection.Modeling._
 import Strategery.Strategies.{AllChoices, Strategy}
 import bwapi.Race
 
