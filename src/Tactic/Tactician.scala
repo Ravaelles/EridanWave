@@ -128,6 +128,7 @@ final class Tactician extends TimedTask {
     defendVsMutas(freelancers)
     defendVsDrops(freelancers, freelancerCountInitial)
     guardHomeVsHarass(freelancers)
+    enforceClusterSplit()
     fillAttackSquad(freelancers, squadsDefending)
     pullDefenseWorkers(squadsDefending)
     attachSCVs()
@@ -159,6 +160,13 @@ final class Tactician extends TimedTask {
     // First pass gets essential defenders
     // Second pass gets additional defenders to be sure
     Seq(1.0, 0.75).foreach(ratio => squadsDefending.foreach(squad => Assignment.squadsPick(freelancers, Seq(squad._2), ratio)))
+    // Detachments answer real attacks at fighting strength, never piecemeal.
+    squadsDefending.foreach { case (_, squad) =>
+      Assignment.unitsPick(
+        freelancers,
+        Seq(squad),
+        filter = (f, s) => f.unitClass.isWarrior && s.unitsNext.count(_.unitClass.isWarrior) < ClusterSplit.minDetachment)
+    }
   }
 
   private def defendVsMutas(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
@@ -218,6 +226,30 @@ final class Tactician extends TimedTask {
       freelancers,
       squads,
       filter = (f, s) => f.unitClass.isWarrior && s.unitsNext.size < 1)
+  }
+
+  // Cluster split: most of the army always stays main, or contains break
+  // the moment home needs bodies. Trims defense squads (never their last
+  // guard, never missions) back under forty-five percent delegated.
+  private def enforceClusterSplit(): Unit = {
+    val totalWarriors = With.units.ours.count(_.unitClass.isWarrior)
+    val inAttack = attackSquad.units.count(_.unitClass.isWarrior)
+    var delegated = totalWarriors - inAttack
+    if ( ! ClusterSplit.overDelegated(totalWarriors, delegated)) return
+
+    var trimmed = true
+    while (trimmed && ClusterSplit.overDelegated(totalWarriors, delegated)) {
+      trimmed = false
+      val donor = defenseSquads.values.toVector.filter(_.unitsNext.size > 1)
+        .sortBy(-_.unitsNext.size).headOption
+        .flatMap(squad => Maff.minBy(squad.unitsNext.filter(_.unitClass.isWarrior))(squad.candidateValue).map((squad, _)))
+      donor.foreach { case (squad, victim) =>
+        attackSquad.addUnit(victim)
+        With.recruiter.lockTo(attackSquad.lock, victim)
+        delegated -= 1
+        trimmed = true
+      }
+    }
   }
 
   private def fillAttackSquad(freelancers: ListBuffer[FriendlyUnitInfo], squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Unit = {
