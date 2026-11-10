@@ -16,7 +16,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Fight extends Action {
 
-  override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canAttack || unit.canMove) && ! unit.agent.isScout
+  // Detectors cannot shoot: BeDetector drives them instead of a combat chain.
+  override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canAttack || unit.canMove) && ! unit.agent.isScout && ! unit.unitClass.isDetector
 
   override def perform(unit: FriendlyUnitInfo): Unit = {
     Follow(unit)
@@ -27,7 +28,6 @@ object Fight extends Action {
     EmergencyBunk(unit)
     Root(unit)
     BeFlier(unit)
-    BeObserver(unit)
     BeCombatSCV(unit)
     BeVulture(unit)
     BeRushingZealot(unit)

@@ -8,7 +8,7 @@ import Mathematics.Points.Pixel
  * older holds its watch. Tiles in, tiles out; pixels only convert to call
  * the engine project (rule 10).
  */
-object ObserverSpread {
+object DetectorSpread {
 
   /** Same-type eyes keep at least this apart, in tiles. */
   val minDistTiles: Double = 9.0
