@@ -33,6 +33,7 @@ abstract class GameplanImperative extends Plan with Modal with MacroActions  {
     if (doAutosupply) {
       autosupply()
     }
+    GlobalTech.run()
     if (doBasics) {
       doWorkers()
     }

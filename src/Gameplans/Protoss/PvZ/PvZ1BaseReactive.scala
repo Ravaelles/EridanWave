@@ -246,13 +246,6 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
       get(Protoss.CitadelOfAdun)
       get(Protoss.ZealotSpeed)
       get(Protoss.TemplarArchives)
-      if (StormResearch.shouldResearch(
-        UnitArchive.producedTotal(Protoss.HighTemplar),
-        unitsComplete(Protoss.HighTemplar),
-        units(Protoss.HighTemplar),
-        gas)) {
-        get(Protoss.PsionicStorm)
-      }
       if ( ! anticipateSpeedlings && ! enemyHydralisksLikely) {
         get(Protoss.Stargate)
         get(Protoss.Corsair)
@@ -321,13 +314,6 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
           buildCannonsAtMain(2, PlaceLabels.DefendAir)
         }
         get(Protoss.TemplarArchives)
-        if (StormResearch.shouldResearch(
-          UnitArchive.producedTotal(Protoss.HighTemplar),
-          unitsComplete(Protoss.HighTemplar),
-          units(Protoss.HighTemplar),
-          gas)) {
-          get(Protoss.PsionicStorm)
-        }
         if (have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)) {
           if (DarkTemplarEffectiveness.allows(
             UnitArchive.producedTotal(Protoss.DarkTemplar),
