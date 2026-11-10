@@ -32,7 +32,8 @@ object ZealotIntoGoon extends MacroActions {
     compositor.reset()
     compositor.setNeed(Protoss.Zealot, 4.0)
     compositor.setGoal(Protoss.Zealot, zealotTarget)
-    if (units(Protoss.Zealot) >= zealotTarget && have(Protoss.CyberneticsCore)) {
+    if (units(Protoss.Zealot) >= zealotTarget && have(Protoss.CyberneticsCore) &&
+      Gameplans.Protoss.PvZ.GasBank.allowsDragoon(units(Protoss.Dragoon), gas)) {
       compositor.setNeed(Protoss.Dragoon, 2.0)
       compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
     }
