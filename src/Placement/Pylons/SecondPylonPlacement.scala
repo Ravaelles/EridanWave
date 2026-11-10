@@ -5,14 +5,17 @@ import Placement.Access.PlaceLabels
 import Placement.Access.PlacementQuery
 
 /**
- * Second Pylon: power the main base tech cluster. Scoped to our main so
- * production and tech stay under one power grid; anywhere else still
- * wins when the main has no free Supply fit.
+ * Second Pylon: safe inside the main, never forward on the choke where
+ * Zerglings eat it. The main-zone requirement excludes choke fits (chokes
+ * separate zones by design); the hall tile preference keeps it central.
  */
 object SecondPylonPlacement {
 
   def applyTo(query: PlacementQuery): Unit = {
     query.preferences.labelYes = Seq(PlaceLabels.Supply)
-    query.preferences.base = With.geography.ourBases.filter(_.isOurMain)
+    if (With.geography.ourBases.nonEmpty) {
+      query.requirements.zone = Seq(With.geography.ourMain.zone)
+      query.preferences.tile = Seq(With.geography.ourMain.townHallTile)
+    }
   }
 }
