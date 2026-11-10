@@ -4,7 +4,7 @@ import Debugging.Visualizations.Colors
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Basic.Gather
-import ProxyBwapi.Races.{Terran, Zerg}
+import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 import Utilities.Time.{Minutes, Seconds}
@@ -38,6 +38,7 @@ object JudgmentModifiers {
     add("Caught",       Colors.BrightGreen,   caught(battle))
     add("Hysteresis",   Colors.MediumViolet,  hysteresis(battle))
     add("StaticDefense", Colors.DeepOrange,   staticDefense(battle))
+    add("FewZealots",    Colors.MediumTeal,    fewZealotsVsLings(battle))
     output
   }
 
@@ -170,6 +171,18 @@ object JudgmentModifiers {
     if (defenseShare <= 0) return None
 
     modifyTarget(0.2 * defenseShare)
+  }
+  // A handful of Zealots must not brawl Zerglings: few melee bodies get
+  // surrounded and trade horribly, so count our strength a quarter lower
+  // until the sixth Zealot stands. Skipped once ranged warriors carry it.
+  val fewZealotsCount: Int = 6
+  val fewZealotsPenalty: Double = 0.25
+  def fewZealotsVsLings(battle: Battle): Option[JudgmentModifier] = {
+    if ( ! battle.enemy.units.exists(Zerg.Zergling)) return None
+    if (battle.us.units.count(Protoss.Zealot) >= fewZealotsCount) return None
+    if (battle.us.units.count(_.unitClass.isWarrior) > fewZealotsCount) return None
+
+    modifyTarget(fewZealotsPenalty)
   }
   private case class Motivation(var amount: Double = 0, var weight: Double = 0)
   def hysteresis(unit: FriendlyUnitInfo): (Double, Double) = {
