@@ -212,12 +212,34 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
       buildArmy(),
       buildTech())
 
+    ensureCompositionTech()
+
     if (PvZExpand(committedExpand)) {
       get(Math.max(2, 3 - units(Protoss.RoboticsFacility, Protoss.Stargate)), Protoss.Gateway)
       requireMiningBases(2)
     }
     get(5 * miningBases - units(Protoss.RoboticsFacility, Protoss.Stargate), Protoss.Gateway)
     requireMiningBases(2) // Unlikely to happen but maybe useful if we run out of building room at home
+  }
+
+  /**
+   * Tech floor: past the SwapIf supply threshold only buildArmy runs, so
+   * without this the composition tech starves - fifty Zealots with no
+   * Assimilator and no Citadel lose to anything with legs. Idempotent
+   * gets, all no-ops once satisfied; early game stays on the openings.
+   */
+  private def ensureCompositionTech(): Unit = {
+    if (composition.isEmpty) return
+
+    get(Protoss.Assimilator)
+    if (units(Protoss.Gateway) >= 5 || units(IsWorker) > 35) {
+      pumpGasPumps()
+    }
+    if ( ! on(Speedlot)) return
+
+    get(Protoss.Forge)
+    get(Protoss.CitadelOfAdun)
+    get(Protoss.ZealotSpeed)
   }
 
   def buildTech(): Unit = {
