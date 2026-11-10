@@ -20,6 +20,7 @@ class PvTFastCarrier extends PvTOpeners {
     get(Protoss.Pylon, Protoss.Gateway, Protoss.Assimilator, Protoss.CyberneticsCore)
 
     PvTArmy.highPriority()
+    PvTFerry.ensureFerry()
     if (armySupply200 < 24) {
       armyNormalPriority()
     }
