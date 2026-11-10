@@ -76,7 +76,7 @@ object ConfigurationLoader {
       val debugging     = getOrDefault(config, "debugging",     false)
       val debugginglive = getOrDefault(config, "debugginglive", false)
       val simviz        = getOrDefault(config, "simviz",        false)
-      val cherryVis       = getOrDefault(config, "cherryvis",       false)
+      val cherryVis       = getOrDefault(config, "cherryvis",       true)
       val logstd        = getOrDefault(config, "logstd",        false)
       val multiCPU      = getOrDefault(config, "multiCPU",      true)
       val randomStrategy = getOrDefault(config, "strategySelectionRandom", false)
