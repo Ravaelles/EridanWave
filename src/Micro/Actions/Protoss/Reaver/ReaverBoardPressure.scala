@@ -11,7 +11,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 object ReaverBoardPressure {
 
   def applies(situation: ReaverSituation): Boolean =
-    ! situation.loaded && ! situation.committed && ! mustShootFirst(situation) && (
+    ! situation.loaded && ! situation.committed && ! mustShootFirst(situation) &&
+      ! (situation.containing && ! situation.pressured) && (
       situation.doomed ||
         situation.targetedByScarab ||
         (situation.cooldownLeft >= 10 && situation.shieldsDown >= 45

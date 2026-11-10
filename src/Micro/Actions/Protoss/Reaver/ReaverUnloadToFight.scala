@@ -10,7 +10,8 @@ object ReaverUnloadToFight {
     situation.reaveOrdered &&
       situation.hasTransport &&
       situation.targetPath &&
-      (situation.unloadSpotSafe || situation.braveDrop)
+      (situation.unloadSpotSafe || situation.braveDrop ||
+        (situation.containing && situation.combatNear))
 
   def act(unit: FriendlyUnitInfo): Unit = {
     Commander.requestUnload(unit)

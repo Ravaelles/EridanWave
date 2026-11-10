@@ -39,6 +39,14 @@ class ReaverBoardPressureSuite extends AnyFunSuite {
     assert(ReaverBoardPressure.applies(idle.copy(doomed = true, scarabs = 5)))
   }
 
+  test("in contain an unpressured Reaver holds even when doomed") {
+    assert( ! ReaverBoardPressure.applies(idle.copy(doomed = true, scarabs = 0, cooling = true, containing = true)))
+  }
+
+  test("in contain an attacked Reaver still boards") {
+    assert(ReaverBoardPressure.applies(idle.copy(doomed = true, cooling = true, containing = true, threatened = true)))
+  }
+
   test("a spent Reaver still boards under pressure") {
     assert(ReaverBoardPressure.applies(idle.copy(doomed = true, cooling = true, threatened = true)))
   }
