@@ -7,6 +7,7 @@ import Mathematics.Points.Tile
 import Placement.Access.PlaceLabels.PlaceLabel
 import Placement.FoundationSources
 import Placement.FoundationSources.FoundationSource
+import Placement.Gateways.GatewayPlacement
 import Placement.Pylons.PylonPlacement
 import Placement.Templating.PointGas
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -53,7 +54,9 @@ class PlacementQuery {
     preferences.base      = With.geography.ourBases
     preferences.tile      = Seq.empty
 
-    if (Seq(Terran.Barracks, Terran.Factory, Protoss.Gateway, Protoss.RoboticsFacility).contains(building)) {
+    if (building == Protoss.Gateway) {
+      GatewayPlacement.applyDefaults(this)
+    } else if (Seq(Terran.Barracks, Terran.Factory, Protoss.RoboticsFacility).contains(building)) {
       preferences.labelYes = preferences.labelYes :+ PlaceLabels.GroundProduction
     }
     if (Seq(
