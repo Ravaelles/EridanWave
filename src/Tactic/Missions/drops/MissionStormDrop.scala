@@ -14,9 +14,9 @@ class MissionStormDrop extends MissionDrop {
   override protected def additionalFormationConditions: Boolean = Protoss.PsionicStorm(With.self) && With.recruiter.available.exists(MatchStormDroppable)
   override protected def requireWorkers = true
   override protected def shouldStopRaiding: Boolean = shouldGoHome
-  override protected def shouldGoHome: Boolean = passengers.forall(_.energy < 75)
+  override protected def shouldGoHome: Boolean = StormDropEnergy.drained(passengers.map(_.energy))
 
-  object MatchStormDroppable extends IsAll(IsComplete, Protoss.HighTemplar, _.energy >= 75, recruitablePassenger)
+  object MatchStormDroppable extends IsAll(IsComplete, Protoss.HighTemplar, _.energy >= StormDropEnergy.stormEnergy, recruitablePassenger)
 
   val stormLock = new LockUnits(this, MatchStormDroppable, CountUpTo(2))
   val zealotLock = new LockUnits(this, u => Protoss.Zealot(u) && recruitablePassenger(u))

@@ -83,3 +83,22 @@ plus meld pair); Cheese/Defense/Economy/Scouting/Monitor/ done.
 `python3 scripts/check-blank-lines.py` on touched trees, `mvn -o -Ptests
 test` (MAVEN_OPTS add-opens from build-jar.sh:30), `./build-jar.sh`,
 commit. Never push.
+
+## Test roadmap (complex classes)
+
+No `FriendlyUnitInfo`/`Tile`/`Base` stubs exist (concrete BWAPI classes,
+game state in constructors), so suites only cover game-free kernels.
+Pattern for new code: pure kernel on primitives plus suite (done:
+`AceFleetLogic`, `BombingScore`, `ClusterSafety`, `StormDropEnergy`,
+`AceExploreLogic`, `HuntLogic`, `KiteAway`, `Reaver*`, `Monitor*`).
+Blocked until a stub harness or data-view refactor, hardest first:
+
+- `DropManifest.reavers`/`fill` (matching subtlety; data-view on ids and
+  pixels would unblock).
+- `DropRoute.flybys` (needs game-free `Tile`; `clip` reads map dims).
+- `MissionReaverDrop` companion targeting (needs `Base`; ctor hits
+  geography), `flightDamage`/`closestLandingPoint`/`confidentToRaid`
+  (need grids).
+- `MissionKillExpansion` eligibility/sizing (needs `Base`/enemies).
+- `QualityCounter.utility` (needs `subjectiveValue`).
+- `SquadAttack` hunt/stance, `SquadDefendBase` predicates (need units).
