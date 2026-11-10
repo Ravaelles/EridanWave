@@ -53,6 +53,7 @@ class EridanWave extends DefaultBWListener {
         if ( ! Keyboard.GameCommands.isBotPaused) With.tasks.run(With.performance.msBeforeTarget)
         With.efficiency.update()
         With.storyteller.onFrame()
+        With.missionHistory.onFrame()
         Debugging.CherryVis.CherryVis.update()
         // Ladder map diagnostics; meaningless (and baseless-crashy) on UMS maps.
         if ( ! With.umsMode) WriteMapCSV()

@@ -25,7 +25,8 @@ class MissionHistory extends MacroCounting {
     lossBase    : Int,
     supplyBase  : Int,
     costBase    : Int,
-    var endFrame: Int)
+    var endFrame: Int,
+    var harassFrames: Int = 0)
 
   private val spans = new mutable.HashMap[Mission, Span]
 
@@ -58,13 +59,28 @@ class MissionHistory extends MacroCounting {
     spans.get(mission).foreach(span => span.endFrame = With.frame)
   }
 
+  /** One denial frame per launched mission parked on enemy workers. */
+  def onFrame(): Unit = {
+    if (spans.isEmpty) return
+
+    val workers = ProxyBwapi.UnitTracking.AliveEnemies.get().filter(_.unitClass.isWorker)
+    if (workers.isEmpty) return
+
+    spans.foreach { case (mission, span) =>
+      if (mission.launched && mission.units.exists(u =>
+        workers.exists(w => MissionHarass.denying(u.pixelDistanceEdge(w) / 32.0)))) {
+        span.harassFrames += 1
+      }
+    }
+  }
+
   def onEnd(wonGame: Boolean): Unit = {
     try {
       val rows = spans.toVector.map { case (_, span) =>
         val profit = (KillLedger.killedResources - span.killBase) - (KillLedger.lostResources - span.lossBase)
         val lifetime = Math.max(0, span.endFrame - span.launchFrame)
-        val verdict = evaluateMission(span.mission, profit, lifetime, wonGame)
-        f"${System.currentTimeMillis},${With.history.currentMapName},${With.history.currentEnemyName},${span.mission},${MissionVerdict.name(verdict)},$profit,$lifetime,${span.supplyBase},$wonGame"
+        val verdict = evaluateMission(span.mission, profit, lifetime, wonGame, span.harassFrames)
+        f"${System.currentTimeMillis},${With.history.currentMapName},${With.history.currentEnemyName},${span.mission},${MissionVerdict.name(verdict)},$profit,$lifetime,${span.supplyBase},$wonGame,${span.harassFrames}"
       }
       if (rows.nonEmpty) {
         val file = With.bwapiData.write + "/mission-history.csv"
