@@ -40,3 +40,6 @@ ordinary buildings. Ours lifts them in `TargetScoring.apply` via
 - A morphing colony (future Sunken) is picked over an idle one.
 - Fighters still outrank colonies; Reavers still skip non-combat
   buildings entirely (see `TargetFilterReaver`).
+- Check both combat states: out of combat the colony bonus dominates,
+  in combat fighters outrank it (slow scoring flips +-12 with action
+  match) - both are intended, neither may idle past a standing colony.

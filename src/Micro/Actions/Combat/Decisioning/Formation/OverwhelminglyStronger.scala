@@ -17,6 +17,10 @@ object OverwhelminglyStronger {
   def locally(usSkim: Double, foeSkim: Double): Boolean =
     foeSkim <= 0 || usSkim / foeSkim >= overwhelmRatio
 
+  /**
+   * No forecast means dress: unknown strength never skips, only a known
+   * four-to-one does (unlike locally(0, 0), which is true in isolation).
+   */
   def skipFormation(unit: FriendlyUnitInfo): Boolean =
     unit.combatForecast.exists(battle =>
       locally(battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))

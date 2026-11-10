@@ -24,8 +24,6 @@ import Tactic.Squads.Squads
 class SquadDarkTemplar extends Squad {
   lock.matcher = Protoss.DarkTemplar
   lock.counter = CountEverything
-  // Raiders assemble nearest the enemy; the leftover stays home with the army.
-  lock.setPreference(PreferClose(With.scouting.enemyHome.center))
 
   override def launch(): Unit = {
     if ( ! With.blackboard.darkTemplarSquad()) return
@@ -47,11 +45,14 @@ class SquadDarkTemplar extends Squad {
       // Nowhere clean, but idle Templars help nobody: throw the raiders at
       // plain enemy bases one per base and let detector-flee split the foe.
       bases ++= With.geography.bases.filter(_.owner.isEnemy)
-        .sortBy(base => ! (With.scouting.enemyMain.contains(base) || With.scouting.enemyNatural.contains(base)))
+        .sortBy(base => waitForBackstab || ! (With.scouting.enemyMain.contains(base) || With.scouting.enemyNatural.contains(base)))
       if (bases.isEmpty) return
     }
 
     // One Templar always stays with the main army; the rest raid.
+    // Sized from our own lock view: a second DT lock would leave its own.
+    // Preference refreshes here, not at construction: enemyHome moves.
+    lock.setPreference(PreferClose(With.scouting.enemyHome.center))
     lock.setCounter(CountEverything)
     val raiders = DarkTemplarSplit.raidersToTake(lock.inquire().map(_.size).getOrElse(0))
     lock.setCounter(CountUpTo(raiders))
@@ -146,6 +147,7 @@ class SquadDarkTemplar extends Squad {
       var base  = bases.headOption.getOrElse(firstBase)
       val dt    = dts.minBy(dt => dt.pixelDistanceTravelling(base.heart) * ?(dt.orderTargetPixel.orElse(dt.orderTarget.map(_.pixel)).exists(_.base.contains(base)), 0.75, 1.0))
       val dtTargets = Some(base.enemies.toVector)
+      var baseTaken = true
       if (base.isEnemy && ! base.owner.isZerg) {
         intendDTToBase(dt, base)
       } else {
@@ -159,12 +161,14 @@ class SquadDarkTemplar extends Squad {
           }
           intendDTToBase(dt, base)
         } else {
+          baseTaken = false
           intendDTToDivision(dt, divisions)
         }
       }
 
       // One base per Templar: independent clusters, never a pile.
-      bases -= base
+      // Division-bound Templars burn nothing; backstab picks may miss.
+      if (baseTaken && bases.contains(base)) bases -= base
       if (iDt == 0) {
         vicinity = dt.intent.terminus.get
       }

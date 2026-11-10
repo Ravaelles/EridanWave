@@ -4,16 +4,18 @@ import ProxyBwapi.Races.Protoss
 
 /**
  * Dark Templar production policy, the reference adapter for
- * EffectivenessGate: at least two Templars always (the army guard plus
- * the distractor), never more than seven alive, last-two profitability
- * otherwise, gas flood at four hundred unless lifetime runs negative.
- * Thin seam over the KillCredits ledger; the next unit class copies
- * this shape with its own params.
+ * EffectivenessGate: at least four Templars always - the army guard plus
+ * the distractor, and the High Templar unlocks on both production sites
+ * count four lifetime DarkTemplar, so economics gates only the fifth.
+ * Never more than seven alive, last-two profitability otherwise, gas
+ * flood at four hundred unless lifetime runs negative. Thin seam over
+ * the KillCredits ledger; the next unit class copies this shape with
+ * its own params.
  */
 object DarkTemplarEffectiveness {
 
   val params = EffectivenessGate.EffectivenessParams(
-    minAlways    = 2,
+    minAlways    = 4,
     maxAlive     = 7,
     recentWindow = 2,
     gasFlood     = 400)

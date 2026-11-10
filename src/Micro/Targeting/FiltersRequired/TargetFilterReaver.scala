@@ -9,7 +9,7 @@ object TargetFilterReaver extends TargetFilter {
   override def appliesTo(actor: FriendlyUnitInfo): Boolean = Protoss.Reaver(actor)
   override def legal(actor: FriendlyUnitInfo, target: UnitInfo): Boolean = {
 
-    if ( ! ReaverTargetRules.allowsBuilding(target.unitClass.isBuilding, target.unitClass.isStaticDefense)) return false
+    if ( ! ReaverTargetRules.allowsBuilding(target.unitClass.isBuilding, target.unitClass.isCombatBuilding)) return false
 
     if (actor.agent.ride.isDefined) {
       val worthAttacking = (

@@ -214,8 +214,11 @@ object TargetScoring {
     output += add(4.0, target.constructing)
     output += add(6.0, target.gathering)
 
-    // Creep Colony urgency: a morphing colony is seconds from a Sunken
-    output += creepColonyBonus(Zerg.CreepColony(target), target.constructing || target.morphing)
+    // Creep Colony urgency: a morphing colony reports its destination type
+    // (Sunken/Spore), so match those too; constructing is worker-only.
+    val colonyLike = Zerg.CreepColony(target) ||
+      (target.morphing && (Zerg.SunkenColony(target) || Zerg.SporeColony(target)))
+    output += creepColonyBonus(colonyLike, target.morphing)
 
     if (target.unitClass.attacksOrCastsOrDetectsOrTransports && ! Zerg.Overlord(target)) {
       // Combat bonus; granted by default to aid simulation, but removed selectively

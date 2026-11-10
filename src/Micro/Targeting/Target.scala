@@ -156,7 +156,7 @@ object Target {
   }
 
   def bestUnfiltered(attacker: FriendlyUnitInfo, targets: Iterable[UnitInfo]): Option[UnitInfo] = {
-    Maff.maxBy(targets)(attacker.targetScore)
+    Maff.maxBy(targets.filter(_.alive))(attacker.targetScore)
   }
 
   def legal(attacker: FriendlyUnitInfo, targets: Seq[UnitInfo], filters: TargetFilter*): Seq[UnitInfo] = {

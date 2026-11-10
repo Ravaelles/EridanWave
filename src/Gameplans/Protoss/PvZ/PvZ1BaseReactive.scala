@@ -238,8 +238,22 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     }
     if (on(Speedlot)) {
       get(Protoss.Forge)
+      get(Protoss.GroundDamage)
       get(Protoss.CitadelOfAdun)
       get(Protoss.ZealotSpeed)
+      get(Protoss.TemplarArchives)
+      if ( ! anticipateSpeedlings && ! enemyHydralisksLikely) {
+        get(Protoss.Stargate)
+        get(Protoss.Corsair)
+      }
+      if (have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)) {
+        if (DarkTemplarEffectiveness.allows(
+          UnitArchive.producedTotal(Protoss.DarkTemplar),
+          units(Protoss.DarkTemplar),
+          gas)) {
+          get(Protoss.DarkTemplar)
+        }
+      }
     }
     if (on(Goon)) {
       get(Protoss.CyberneticsCore)
@@ -248,6 +262,19 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     if (on(Reaver)) {
       get(Protoss.RoboticsFacility)
       get(Protoss.RoboticsSupportBay)
+    }
+    if (on(Stargate)) {
+      get(Protoss.Stargate)
+      if (enemyMutalisksLikely || ! enemyHydralisksLikely) {
+        get(Protoss.Corsair)
+      }
+      if (enemyMutalisksLikely) {
+        get(Protoss.CyberneticsCore)
+        get(Protoss.DragoonRange)
+      } else {
+        get(Protoss.CitadelOfAdun)
+        get(Protoss.ZealotSpeed)
+      }
     }
   }
 
