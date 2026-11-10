@@ -117,14 +117,20 @@ object ReaverSituation {
         val nearStatics = AliveEnemies.get().exists(e =>
           e.unitClass.isStaticDefense && ! e.flying && e.likelyStillThere &&
             e.pixelDistanceEdge(shuttle) / 32.0 < ReaverDropBravery.staticDefenseDist)
+        // Melee inside three tiles chews a dropped Reaver on the spot.
+        val meleeNear = distTiles.count({ case (foe, dist) => dist < ReaverDropBravery.closeMeleeDist &&
+          (foe.unitClass.melee || Zerg.Scourge(foe)) })
         val shieldsUp = shuttle.shieldPoints >= ReaverDropBravery.minShields && unit.shieldPoints >= ReaverDropBravery.minShields
         val affordable = ReaverDropBravery.canAffordShot(shuttle.shieldPoints + shuttle.hitPoints, rangedDps)
         val tankGate = ! isTerranNow || tanks <= ReaverDropBravery.maxTerranTanks
         val ringsOk = ReaverDropBravery.shouldDrop(
           foesClose, ranged.size, shuttle.shieldPoints, unit.shieldPoints,
           isTerran = isTerranNow, enemyTanks = tanks, nearStaticDefense = nearStatics) && affordable
-        val staleOk = ReaverDropBravery.mayDropStale(firedAgo, wound, hasFired = hasFiredShot) &&
-          shieldsUp && affordable && ! nearStatics && tankGate
+        // Stale rule: no melee at the landing, ten seconds dry, shields up.
+        // Decisive on purpose - no firepower pricing here; a ranged crowd
+        // past the rings still takes the drop while the gates stand.
+        val staleOk = ReaverDropBravery.mayDropStale(firedAgo, wound, hasFired = hasFiredShot, meleeNear = meleeNear) &&
+          shieldsUp && ! nearStatics && tankGate
         ringsOk || staleOk
       }),
       unloadSpotSafe  = ! threats.exists(t => ! t.flying && unit.pixelDistanceEdge(t) < ReaverUnloadSafety.radiusTiles(wound) * 32))

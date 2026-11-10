@@ -20,6 +20,13 @@ object ReaverDropBravery {
   val rangedDist: Double = 8.0
   val maxRangedNear: Int = 2
 
+  /**
+   * Stale-drop veto ring, in tiles: no melee enemy this close to the
+   * landing. Melee chews a dropped Reaver on the spot; everything else
+   * at this range eats a Scarab first.
+   */
+  val closeMeleeDist: Double = 3.0
+
   /** No drop this close, in tiles, to enemy ground statics. Overrides all. */
   val staticDefenseDist: Double = 8.0
 
@@ -80,8 +87,8 @@ object ReaverDropBravery {
       shuttleShields >= minShields && reaverShields >= minShields &&
       ( ! isTerran || enemyTanks <= maxTerranTanks)
 
-  def mayDropStale(framesSinceFired: Int, woundFraction: Double, hasFired: Boolean = true): Boolean =
-    hasFired && framesSinceFired > staleFrames && woundFraction < maxStaleWound
+  def mayDropStale(framesSinceFired: Int, woundFraction: Double, hasFired: Boolean = true, meleeNear: Int = 0): Boolean =
+    hasFired && meleeNear <= 0 && framesSinceFired > staleFrames && woundFraction < maxStaleWound
 
   /**
    * @param ourHitPoints shields plus hull of the Shuttle taking the fire

@@ -71,6 +71,11 @@ class ReaverDropBraverySuite extends AnyFunSuite {
     assert( ! ReaverDropBravery.mayDropStale(framesSinceFired = 999999, woundFraction = 0.0, hasFired = false))
   }
 
+  test("melee inside three tiles vetoes the stale drop") {
+    assert(ReaverDropBravery.mayDropStale(framesSinceFired = 500, woundFraction = 0.1, meleeNear = 0))
+    assert( ! ReaverDropBravery.mayDropStale(framesSinceFired = 500, woundFraction = 0.1, meleeNear = 1))
+  }
+
   test("a recently fired or hurt Reaver is not stale") {
     assert( ! ReaverDropBravery.mayDropStale(framesSinceFired = 240, woundFraction = 0.1))
     assert( ! ReaverDropBravery.mayDropStale(framesSinceFired = 500, woundFraction = 0.5))
