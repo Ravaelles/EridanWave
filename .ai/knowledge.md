@@ -22,8 +22,8 @@ sites. Vendor policy: `src/main` (+`src/java`) + LICENSE/README only
 - `no.fiken.oss:junixsocket-common:1.0.2`, scope `provided` (compile-only for
   Posix; old coords = what the offline repo has; never loads at runtime —
   Windows/Wine picks W32). Shade filters drop dead natives.
-- IntelliJ artifact path still references `3rdparty/apache/jna-5.1.0.jar`;
-  Maven is source of truth.
+- IntelliJ artifact path uses `$MAVEN_REPOSITORY$` JNA 5.18.1 plus
+  junixsocket (matches `pom.xml`); Maven stays source of truth.
 
 ## Checks
 

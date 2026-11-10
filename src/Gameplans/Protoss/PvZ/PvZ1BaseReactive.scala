@@ -182,7 +182,9 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
 
     timingAttack ||= unitsComplete(IsWarrior) >= 24 // Safety valve in case build gets disrupted somehow
     timingAttack ||= unitsComplete(Protoss.Reaver) >= 2     && haveComplete(Protoss.Shuttle)
-    timingAttack ||= upgradeComplete(Protoss.ZealotSpeed)   && upgradeComplete(Protoss.GroundDamage) && haveComplete(Protoss.Archon)
+    // Archon production is disabled, so the old haveComplete(Archon) conjunct
+    // is gone: speed plus damage done is the timing by itself.
+    timingAttack ||= upgradeComplete(Protoss.ZealotSpeed)   && upgradeComplete(Protoss.GroundDamage)
     timingAttack ||= upgradeComplete(Protoss.DragoonRange)  && unitsComplete(Protoss.Dragoon) >= 10
     timingAttack ||= haveComplete(Protoss.Scout)
     timingAttack ||= enemyMutalisksLikely
