@@ -10,6 +10,7 @@ object ReaverUnloadToFight {
     situation.reaveOrdered &&
       situation.hasTransport &&
       situation.targetPath &&
+      ! situation.unloadVetoed &&
       (situation.unloadSpotSafe || situation.braveDrop ||
         (situation.containing && situation.combatNear))
 

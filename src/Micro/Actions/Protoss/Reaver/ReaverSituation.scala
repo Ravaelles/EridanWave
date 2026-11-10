@@ -48,6 +48,7 @@ case class ReaverSituation(
   braveDrop       : Boolean = false,
   containing      : Boolean = false,
   combatNear      : Boolean = false,
+  unloadVetoed    : Boolean = false,
   unloadSpotSafe  : Boolean = true) {
 
   /** A threat in range or close enough to hit us (derived, never stale). */
@@ -71,6 +72,13 @@ object ReaverSituation {
     val combatNearNow = AliveEnemies.get().exists(e =>
       e.unitClass.isCombatBuilding && ! e.flying && e.likelyStillThere &&
         e.pixelDistanceEdge(unit) / 32.0 < ReaverContain.fightDistTiles)
+    // Unload veto: ranged ground-hitters covering the landing spot inside
+    // their range plus margin. Mobile guns only; statics vote elsewhere.
+    val landingAt = unit.transport.map(_.pixel).getOrElse(unit.pixel)
+    val gunsOnLanding = AliveEnemies.get().count(e =>
+      e.unitClass.ranged && e.unitClass.attacksGround && e.likelyStillThere &&
+        e.pixelDistanceEdge(landingAt) < e.pixelRangeGround + ReaverUnloadVeto.safetyMarginTiles * 32.0)
+    val unloadVetoedNow = ReaverUnloadVeto.veto(gunsOnLanding)
     val firedAgo = With.framesSince(unit.lastFrameStartingAttack)
     val hasFiredShot = unit.lastFrameStartingAttack >= 0
 
@@ -93,6 +101,7 @@ object ReaverSituation {
       isTerran        = isTerranNow,
       containing      = containingNow,
       combatNear      = combatNearNow,
+      unloadVetoed    = unloadVetoedNow,
       reaveOrdered    = unit.agent.fightReason == FightOrFlee.Reave,
       shouldFight     = unit.agent.shouldFight,
       walkableTile    = unit.tile.walkable,
