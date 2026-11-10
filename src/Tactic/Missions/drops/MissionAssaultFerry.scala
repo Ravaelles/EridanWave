@@ -22,7 +22,7 @@ import scala.collection.mutable
  * at staging, and delivered fighters stay fighters (excluded from pickup
  * by requiredPassenger, never re-boarded).
  */
-class MissionFerry extends MissionDrop {
+class MissionAssaultFerry extends MissionDrop {
 
   override protected def additionalFormationConditions: Boolean =
     With.blackboard.ferry() &&
