@@ -30,6 +30,7 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
   var orderedTile     : Option[Tile]        = None
   var foundation      : Option[Foundation]  = None
   var intendAfter     : Option[Int]         = None
+  var stallFrames     : Int                 = 0
 
   private var _trainee: Option[FriendlyUnitInfo] = None
   private val recycledBuilder = new Cache(() => ?(
@@ -43,6 +44,18 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
 
   def builder             : Option[FriendlyUnitInfo]  = recycledBuilder().orElse(builderLock.units.headOption)
   def desiredTile         : Option[Tile]              = trainee.map(_.tileTopLeft).orElse(foundation.map(_.tile))
+
+  /** Nearest buildable town-hall footprint inside four tiles of the base spot. */
+  private def shiftedFoundation(): Option[Foundation] =
+    foundation.flatMap(f => {
+      val home = f.tile
+      val spots = Mathematics.Shapes.Spiral(ExpoBuildShift.maxShiftTiles)
+        .map(p => home.add(p.x, p.y))
+        .filter(t => t.tileDistanceChebyshev(home) <= ExpoBuildShift.maxShiftTiles)
+        .filter(t => With.groundskeeper.isFree(t, buildingClass.tileWidthPlusAddon, buildingClass.tileHeight))
+      if (spots.isEmpty) None
+      else Some(f.copy(tile = spots.minBy(_.tileDistanceChebyshev(home))))
+    })
   override def trainee    : Option[FriendlyUnitInfo]  = _trainee
   override def hasSpent   : Boolean                   = trainee.exists(b => MacroCounter.countExtant(b)(buildingClass) > 0)
   override def isComplete : Boolean                   = trainee.exists(b => MacroCounter.countComplete(b)(buildingClass) > 0)
@@ -110,6 +123,26 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
 
         return
       }
+    }
+
+    // Expo deadlock: an invisible burrowed blocker passes every placement
+    // filter, so the builder camps a dead tile forever. A stalled town hall
+    // shifts to the nearest buildable footprint inside four tiles while we
+    // hold no Observer, and latches eyes demand for the gameplan.
+    if (buildingClass.isTownHall && trainee.isEmpty && foundation.isDefined) {
+      val arrived = builder.exists(b =>
+        b.pixelDistanceCenter(foundation.get.tile.center) <= ExpoBuildShift.arriveDistTiles * 32)
+      stallFrames = ?(arrived && currencyLock.satisfied, stallFrames + 1, 0)
+      if (ExpoBuildShift.stalled(stallFrames) && With.self.isProtoss &&
+        ! With.units.existsOurs(Protoss.Observer)) {
+        shiftedFoundation().foreach(f => {
+          foundation = Some(f)
+          stallFrames = 0
+        })
+        With.blackboard.expoBuildStalled.set(true)
+      }
+    } else {
+      stallFrames = 0
     }
 
     if (desiredTile.isEmpty) return

@@ -54,6 +54,7 @@ class Blackboard {
   val cannonRushMaximum: Property[Boolean] = add(new Property(false))
   val ferry                   : Property[Boolean]           = add(new Property(false))
   val workerRushers           : Property[Int]               = add(new Property[Int](0))
+  val expoBuildStalled        : Property[Boolean]        = add(new Property(false))
 
   var lastStatus: Seq[String] = Seq.empty
 }

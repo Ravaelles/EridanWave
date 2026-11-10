@@ -111,14 +111,18 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     }
   }
   protected def detectionVsLurker(): Unit = {
-    if (enemyHasShown(Zerg.Lurker, Zerg.LurkerEgg)) {
+    if (enemyHasShown(Zerg.Lurker, Zerg.LurkerEgg) || With.blackboard.expoBuildStalled()) {
       status("Lurkers")
       get(Protoss.RoboticsFacility, Protoss.Observatory, Protoss.Observer)
-      if (enemies(Zerg.Lurker) > 0 && ! have(Protoss.Observer)) {
-        status("LurkerDanger")
-        buildCannonsAtOpenings(1)
+      if (enemyHasShown(Zerg.Lurker, Zerg.LurkerEgg)) {
+        if (enemies(Zerg.Lurker) > 0 && ! have(Protoss.Observer)) {
+          status("LurkerDanger")
+          buildCannonsAtOpenings(1)
+        }
+        pump(Protoss.Observer, 2)
+      } else {
+        pump(Protoss.Observer)
       }
-      pump(Protoss.Observer, 2)
     }
   }
 
@@ -242,6 +246,13 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
       get(Protoss.CitadelOfAdun)
       get(Protoss.ZealotSpeed)
       get(Protoss.TemplarArchives)
+      if (StormResearch.shouldResearch(
+        UnitArchive.producedTotal(Protoss.HighTemplar),
+        unitsComplete(Protoss.HighTemplar),
+        units(Protoss.HighTemplar),
+        gas)) {
+        get(Protoss.PsionicStorm)
+      }
       if ( ! anticipateSpeedlings && ! enemyHydralisksLikely) {
         get(Protoss.Stargate)
         get(Protoss.Corsair)
@@ -310,6 +321,13 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
           buildCannonsAtMain(2, PlaceLabels.DefendAir)
         }
         get(Protoss.TemplarArchives)
+        if (StormResearch.shouldResearch(
+          UnitArchive.producedTotal(Protoss.HighTemplar),
+          unitsComplete(Protoss.HighTemplar),
+          units(Protoss.HighTemplar),
+          gas)) {
+          get(Protoss.PsionicStorm)
+        }
         if (have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)) {
           if (DarkTemplarEffectiveness.allows(
             UnitArchive.producedTotal(Protoss.DarkTemplar),
@@ -401,12 +419,14 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     compositor.reset()
     compositor.setNeed(Protoss.Zealot, weighZealots)
     compositor.setGoal(Protoss.Zealot, 0.35 * countZerglings)
-    if (composition.contains(Goon)) {
-      compositor.setNeed(Protoss.Dragoon, weighDragoons)
-      compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
-    } else {
-      compositor.setNeed(Protoss.Dragoon, 5.0)
-      compositor.capGoal(Protoss.Dragoon, ?(composition.contains(Stargate) && enemyHasShown(Zerg.Scourge), 2, 1))
+    if (GasBank.allowsDragoon(units(Protoss.Dragoon), gas)) {
+      if (composition.contains(Goon)) {
+        compositor.setNeed(Protoss.Dragoon, weighDragoons)
+        compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
+      } else {
+        compositor.setNeed(Protoss.Dragoon, 5.0)
+        compositor.capGoal(Protoss.Dragoon, ?(composition.contains(Stargate) && enemyHasShown(Zerg.Scourge), 2, 1))
+      }
     }
 
     if (composition.contains(Reaver)) {
