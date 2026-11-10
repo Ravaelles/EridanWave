@@ -44,6 +44,7 @@ case class ReaverSituation(
   holdTarget      : Boolean = false,
   targetPath      : Boolean = false,
   toAttackPath    : Boolean = false,
+  braveDrop       : Boolean = false,
   unloadSpotSafe  : Boolean = true) {
 
   /** A threat in range or close enough to hit us (derived, never stale). */
@@ -61,6 +62,8 @@ object ReaverSituation {
     val wound         = unit.woundPercent()
     val threatenedNow = threatsInRange.nonEmpty
     val pressuredCloseNow = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.pixelDistanceEdge(t) < 4 * 32)
+
+    val unloadRadius = ReaverDropBravery.radiusPixels
 
     ReaverSituation(
       rideNearby      = unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= ?(unit.agent.isPrimaryPassenger, 64, 32)),
@@ -94,6 +97,13 @@ object ReaverSituation {
       holdTarget      = targetNearest.exists(t => ! t.flying && unit.canAttack(t) && unit.pixelDistanceEdge(t) < 7.25 * 32),
       targetPath      = targetNearest.exists(unit.hasScarabPathTo(_, unit.pixel)),
       toAttackPath    = unit.agent.toAttack.orElse(targetNearest).exists(unit.hasScarabPathTo(_, unit.pixel)),
+      braveDrop       = unit.transport.exists(shuttle => {
+        val foes = shuttle.matchups.targets.filter(_.pixelDistanceEdge(shuttle) < unloadRadius)
+        ReaverDropBravery.shouldDrop(foes.size, shuttle.shieldPoints, unit.shieldPoints) &&
+          ReaverDropBravery.canAffordShot(
+            shuttle.shieldPoints + shuttle.hitPoints,
+            foes.map(foe => Math.max(foe.dpfAir, foe.dpfGround)).sum)
+      }),
       unloadSpotSafe  = ! threats.exists(t => ! t.flying && unit.pixelDistanceEdge(t) < ReaverUnloadSafety.radiusTiles(wound) * 32))
   }
 }
