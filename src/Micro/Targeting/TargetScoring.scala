@@ -176,6 +176,11 @@ object TargetScoring {
     val actionMatch = (inCombat && active) || ( ! inCombat && passive)
     val combatValue = combatBonus * ?(actionMatch, 1, -1)
 
+    // Contain doctrine: a warrior-less Reaver breaks statics, not miners.
+    val warriorInRange = attacker.matchups.targetsInRange.exists(_.unitClass.isWarrior)
+    val containValue = ReaverContainTarget.bonus(
+      Protoss.Reaver(attacker), warriorInRange, target.unitClass.isStaticDefense)
+
     var meleeSpreadBonus = 8.0
     if (attacker.unitClass.melee) {
       val otherAttackers  = Math.max(0, target.targetedByRecentlyMelee.size - 1)
@@ -195,7 +200,7 @@ object TargetScoring {
       case _ => 3.0
     }
 
-    (attackValue + combatValue + meleeSpreadBonus + catchBonus) * splashEfficacy - threatCost
+    (attackValue + combatValue + containValue + meleeSpreadBonus + catchBonus) * splashEfficacy - threatCost
   }
 
   /**
