@@ -23,14 +23,23 @@ object MissionVerdict {
   /** Dead inside this lifetime never paid for itself. */
   val doomedLifetimeFrames: Int = 10 * 24
 
-  def evaluate(profitResources: Int, lifetimeFrames: Int, wonGame: Boolean): Verdict = {
+  /**
+   * Worker-harass frames needed for full credit: a minute denying mining
+   * succeeds on its own. Below it credit scales linearly, so partial
+   * pressure moves the needle instead of flipping a cliff.
+   */
+  val harassSuccessFrames: Int = 60 * 24
+
+  def evaluate(profitResources: Int, lifetimeFrames: Int, wonGame: Boolean, workerHarassFrames: Int = 0): Verdict = {
+    val harassCredit = Math.min(1.0, workerHarassFrames.toDouble / harassSuccessFrames)
     var level =
-      if (profitResources > 0) 2
-      else if (lifetimeFrames >= harassLifetimeFrames) 2
-      else if (lifetimeFrames <= doomedLifetimeFrames) 0
-      else 1
-    if (wonGame) level = Math.min(2, level + 1)
-    if (level >= 2) Success else if (level == 1) Unclear else Failure
+      if (profitResources > 0) 2.0
+      else if (lifetimeFrames >= harassLifetimeFrames) 2.0
+      else if (lifetimeFrames <= doomedLifetimeFrames) harassCredit * 2.0
+      else 1.0 + harassCredit
+    if (wonGame) level += 1.0
+    level = Math.min(2.0, Math.max(0.0, level))
+    if (level >= 1.5) Success else if (level >= 0.5) Unclear else Failure
   }
 
   def name(verdict: Verdict): String = verdict match {

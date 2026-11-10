@@ -63,6 +63,6 @@ class MissionHistory extends MacroCounting {
     spans.clear()
   }
 
-  protected def evaluateMission(mission: String, profit: Int, lifetimeFrames: Int, wonGame: Boolean): MissionVerdict.Verdict =
-    MissionVerdict.evaluate(profit, lifetimeFrames, wonGame)
+  protected def evaluateMission(mission: String, profit: Int, lifetimeFrames: Int, wonGame: Boolean, workerHarassFrames: Int = 0): MissionVerdict.Verdict =
+    MissionVerdict.evaluate(profit, lifetimeFrames, wonGame, workerHarassFrames)
 }

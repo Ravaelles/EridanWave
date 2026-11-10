@@ -28,4 +28,15 @@ class MissionVerdictSuite extends AnyFunSuite {
     assert(MissionVerdict.evaluate(0, 300, wonGame = true) == MissionVerdict.Success)
     assert(MissionVerdict.evaluate(1, 0, wonGame = true) == MissionVerdict.Success)
   }
+
+  test("a minute denying mining succeeds with zero kills") {
+    assert(MissionVerdict.evaluate(-50, 100, wonGame = false, workerHarassFrames = 1440) == MissionVerdict.Success)
+  }
+
+  test("partial pressure moves the needle linearly") {
+    assert(MissionVerdict.evaluate(-50, 100, wonGame = false, workerHarassFrames = 720) == MissionVerdict.Unclear)
+    assert(MissionVerdict.evaluate(0, 300, wonGame = false, workerHarassFrames = 1440) == MissionVerdict.Success)
+    assert(MissionVerdict.evaluate(0, 300, wonGame = false, workerHarassFrames = 100) == MissionVerdict.Unclear)
+    assert(MissionVerdict.evaluate(-50, 100, wonGame = false, workerHarassFrames = 0) == MissionVerdict.Failure)
+  }
 }
