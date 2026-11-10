@@ -44,8 +44,9 @@ final class UnitTracker {
         else if (With.enemies.exists(_.id == bwapiUnit.getPlayer.getID))  bufferEnemy     .add(new ForeignUnitInfo(bwapiUnit, id))
         else                                                              bufferNeutral   .add(new ForeignUnitInfo(bwapiUnit, id))
       units(id) = Some(newUnit)
-      newUnit.friendly.foreach(Tactic.Missions.evaluation.KillCredits.noteBirth)
       newUnit.readProxy()
+      // KillCredits after the proxy read: isOurs needs the player image.
+      newUnit.friendly.foreach(Tactic.Missions.evaluation.KillCredits.noteBirth)
       newUnit.friendly.filter(Protoss.Scarab).foreach(newScarabs += _)
       With.scouting.onUnitBirthTimings(newUnit)
     }
