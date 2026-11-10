@@ -67,13 +67,7 @@ object ReaverSituation {
     val pressuredCloseNow = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.pixelDistanceEdge(t) < 4 * 32)
 
     val isTerranNow = With.enemies.exists(_.isTerran)
-    // Contain read off the main cluster: warriors plus defensive buildings.
-    val mainCluster = With.tactics.attackSquad
-    val mainWarriors = mainCluster.units.count(_.unitClass.isWarrior)
-    val staticsNearMain = AliveEnemies.get().count(e =>
-      e.unitClass.isStaticDefense && ! e.flying && e.likelyStillThere &&
-        e.pixelDistanceEdge(mainCluster.centroidGround) / 32.0 < ReaverContain.staticsDistTiles)
-    val containingNow = ReaverContain.containing(mainWarriors, staticsNearMain)
+    val containingNow = ContainStatus.now()
     val combatNearNow = AliveEnemies.get().exists(e =>
       e.unitClass.isCombatBuilding && ! e.flying && e.likelyStillThere &&
         e.pixelDistanceEdge(unit) / 32.0 < ReaverContain.fightDistTiles)

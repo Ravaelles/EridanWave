@@ -50,9 +50,20 @@ trait DropManifestOps { self: MissionDrop =>
     transports.foreach(t => t.agent.passengers.filterNot(p => assigned.get(p).contains(t)).foreach(t.agent.removePassenger))
     assigned.foreach { case (p, t) => if (!p.agent.ride.contains(t)) t.agent.addPassenger(p) }
     releasePassengers(passengers.filterNot(assigned.contains).toSet)
+    releaseContainReavers()
     routes.keys.filterNot(transports.contains).toVector.foreach(routes.remove)
     pickupTargets.keys.filterNot(transports.contains).toVector.foreach(pickupTargets.remove)
     raidingTransports.retain(transports.contains)
+  }
+
+  /** Contain vs Zerg drafts every mission Reaver to the break; other
+   * races keep one crew while the rest stay mission-free. */
+  private[Missions] def releaseContainReavers(): Unit = {
+    if ( ! Micro.Actions.Protoss.Reaver.ContainStatus.now()) return
+
+    if ( ! Micro.Actions.Protoss.Reaver.ReaverContain.recallAll(Micro.Actions.Protoss.Reaver.ContainStatus.vsZerg())) return
+
+    releasePassengers(passengers.filter(Protoss.Reaver).toSet)
   }
 
   private[Missions] def releasePassengers(stranded: Set[FriendlyUnitInfo]): Unit = {
