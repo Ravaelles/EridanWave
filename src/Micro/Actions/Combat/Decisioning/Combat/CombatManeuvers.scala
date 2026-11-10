@@ -4,7 +4,7 @@ import Debugging.Visualizations.{ForceLabel, Forces}
 import Mathematics.Physics.Force
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Protoss.Reaver.BeReaver
-import Micro.Actions.Combat.Decisioning.Formation.FormationHold
+import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -100,7 +100,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
   private[Decisioning] def charge(): Boolean = {
     if (unit.ready && ( ! combat.target.exists(unit.inRangeToAttack) || ! combat.engagement.attackIfReady())) {
       // If we have an attack formation
-      if ( ! combat.engagement.overwhelm && unit.formationEngage.isDefined && ! unit.flying && combat.shouldChase && combat.formationHelpsChase && FormationHold.shouldAdvanceInFormation(combat.formationReadiness)) {
+      if ( ! OverwhelminglyStronger.skipFormation(unit) && unit.formationEngage.isDefined && ! unit.flying && combat.shouldChase && combat.formationHelpsChase && FormationHold.shouldAdvanceInFormation(combat.formationReadiness)) {
         unit.agent.act("Slide")
         unit.agent.escalatePriority(TrafficPriorities.Nudge)
         move()
