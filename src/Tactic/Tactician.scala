@@ -32,6 +32,8 @@ import Tactic.Squads.attack.SquadAttack
 import Tactic.Squads.attack.SquadBackstabProxy
 import Tactic.Squads.attack.SquadDarkTemplar
 import Tactic.Squads.attack.SquadMindControl
+import Tactic.Squads.defense.BaseGuardPost
+import Tactic.Squads.defense.SquadBaseGuards
 import Tactic.Squads.defense.SquadDefendBase
 import Tactic.Squads.defense.SquadCatchDTs
 import Tactic.Squads.defense.SquadClearExpansionBlockers
@@ -94,6 +96,7 @@ final class Tactician extends TimedTask {
   lazy val defenseSquads: Map[Base, SquadDefendBase] = With.geography.bases.map(base => (base, new SquadDefendBase(base))).toMap
   private val catchDTs = new SquadCatchDTs
   val attackSquad = new SquadAttack
+  val baseGuards = new SquadBaseGuards
 
   ////////////////////////
   // Background tactics //
@@ -127,7 +130,7 @@ final class Tactician extends TimedTask {
     fillDefenseSquads(squadsDefending, freelancers)
     defendVsMutas(freelancers)
     defendVsDrops(freelancers, freelancerCountInitial)
-    guardHomeVsHarass(freelancers)
+    staffBaseGuards(freelancers)
     enforceClusterSplit()
     fillAttackSquad(freelancers, squadsDefending)
     pullDefenseWorkers(squadsDefending)
@@ -206,26 +209,24 @@ final class Tactician extends TimedTask {
     }
   }
 
-  // Home guard: a big army spares exactly one body per harassed home base
-  // (air-and-ground hitters first) so Alpha never walks home mid-contain.
-  // Created on demand only; the squad persists, membership refreshes.
-  private def guardHomeVsHarass(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
-    val armyWarriors = With.units.ours.count(_.unitClass.isWarrior)
-    if (armyWarriors < HomeGuard.armySize) return
-
-    val harassed = With.geography.ourBases.filterNot(_.isMain).filter(h =>
-      h.metro.units.exists(u => u.isEnemy && u.unitClass.isWarrior))
-    if (harassed.isEmpty) return
-
-    val squads = harassed.map(h => defenseSquads(h))
-    Assignment.unitsPick(
-      freelancers,
-      squads,
-      filter = (f, s) => f.unitClass.attacksAir && f.unitClass.attacksGround && s.unitsNext.size < 1)
-    Assignment.unitsPick(
-      freelancers,
-      squads,
-      filter = (f, s) => f.unitClass.isWarrior && s.unitsNext.size < 1)
+  // Standing guard: from twenty warriors the army spares bodies for home
+  // (air-and-ground hitters first), posted at the natural choke, answering
+  // enemies at any base. Sized through the lock counter, so ablation shrinks
+  // it when the army bleeds and zeroes it below twenty warriors.
+  private def staffBaseGuards(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
+    val wanted = BaseGuardStaffing.guardsFor(With.units.ours.count(_.unitClass.isWarrior))
+    baseGuards.lock.setCounter(CountUpTo(wanted))
+    if (wanted > 0) {
+      baseGuards.vicinity = BaseGuardPost()
+      Assignment.unitsPick(
+        freelancers,
+        Seq(baseGuards),
+        filter = (f, s) => f.unitClass.attacksAir && f.unitClass.attacksGround && s.unitsNext.size < wanted)
+      Assignment.unitsPick(
+        freelancers,
+        Seq(baseGuards),
+        filter = (f, s) => f.unitClass.isWarrior && s.unitsNext.size < wanted)
+    }
   }
 
   // Cluster split: most of the army always stays main, or contains break
@@ -240,7 +241,10 @@ final class Tactician extends TimedTask {
     var trimmed = true
     while (trimmed && ClusterSplit.overDelegated(totalWarriors, delegated)) {
       trimmed = false
-      val donor = defenseSquads.values.toVector.filter(_.unitsNext.size > 1)
+      val guardFloor = Math.min(1, BaseGuardStaffing.guardsFor(totalWarriors))
+      val donors = defenseSquads.values.toVector.filter(_.unitsNext.size > 1) ++
+        Vector(baseGuards).filter(_.unitsNext.size > guardFloor)
+      val donor = donors
         .sortBy(-_.unitsNext.size).headOption
         .flatMap(squad => Maff.minBy(squad.unitsNext.filter(_.unitClass.isWarrior))(squad.candidateValue).map((squad, _)))
       donor.foreach { case (squad, victim) =>
