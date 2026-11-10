@@ -11,9 +11,8 @@ import scala.collection.mutable
  * Mission ledger, evaluated once at game end: every launched mission gets
  * one row (mission, enemy, map, verdict, profit, lifetime, supply, won) in
  * mission-history.csv next to the game history. Profit is the global kill
- * window over the mission span (no killer attribution yet: per-unit credit
- * arrives with KillCredits); lifetime is the mission span (last-member
- * precision needs death tracking). Override evaluateMission per mission
+ * window over the mission span; lifetime runs from launch to the last frame
+ * any member was alive. Override evaluateMission per mission
  * for custom rules; the default verdict is MissionVerdict.
  */
 class MissionHistory extends MacroCounting {
@@ -59,17 +58,24 @@ class MissionHistory extends MacroCounting {
     spans.get(mission).foreach(span => span.endFrame = With.frame)
   }
 
-  /** One denial frame per launched mission parked on enemy workers. */
+  /**
+   * Per-frame span upkeep while launched: the end frame tracks the last
+   * frame any member was alive (last-member lifetime precision - terminate
+   * may lag deaths by hundreds of frames, or never come before game end),
+   * plus one denial frame parked on enemy workers.
+   */
   def onFrame(): Unit = {
     if (spans.isEmpty) return
 
     val workers = ProxyBwapi.UnitTracking.AliveEnemies.get().filter(_.unitClass.isWorker)
-    if (workers.isEmpty) return
 
     spans.foreach { case (mission, span) =>
-      if (mission.launched && mission.units.exists(u =>
-        workers.exists(w => MissionHarass.denying(u.pixelDistanceEdge(w) / 32.0)))) {
-        span.harassFrames += 1
+      if (mission.launched && mission.units.exists(_.alive)) {
+        span.endFrame = With.frame
+        if (workers.nonEmpty && mission.units.exists(u =>
+          workers.exists(w => MissionHarass.denying(u.pixelDistanceEdge(w) / 32.0)))) {
+          span.harassFrames += 1
+        }
       }
     }
   }
