@@ -33,7 +33,7 @@ object ZealotIntoGoon extends MacroActions {
     compositor.setNeed(Protoss.Zealot, 4.0)
     compositor.setGoal(Protoss.Zealot, zealotTarget)
     if (units(Protoss.Zealot) >= zealotTarget && have(Protoss.CyberneticsCore) &&
-      Gameplans.Protoss.PvZ.GasBank.allowsDragoon(units(Protoss.Dragoon), gas)) {
+      Gameplans.Protoss.PvZ.GasBank.allowsDragoon(units(Protoss.Dragoon), gas, With.units.ours.count(_.unitClass.isWarrior))) {
       compositor.setNeed(Protoss.Dragoon, 2.0)
       compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
     }
@@ -66,6 +66,9 @@ object ZealotIntoGoon extends MacroActions {
     if (have(Protoss.RoboticsSupportBay) && Gameplans.Protoss.PvZ.ReaverGas.allowsReaver(units(Protoss.Reaver), gas)) {
       compositor.setNeed(Protoss.Reaver, 3.0)
       compositor.setGoal(Protoss.Reaver, 6)
+    }
+    // A Shuttle for the ferry always queues; one only for Reavers waits on gas.
+    if (have(Protoss.RoboticsSupportBay) && (With.blackboard.ferry() || Gameplans.Protoss.PvZ.ReaverGas.allowsReaver(units(Protoss.Reaver), gas))) {
       compositor.setNeed(Protoss.Shuttle, 3.0)
       compositor.capGoal(Protoss.Shuttle, units(Protoss.Reaver) / 2)
     }

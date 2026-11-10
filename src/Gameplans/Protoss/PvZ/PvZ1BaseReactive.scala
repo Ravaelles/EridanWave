@@ -405,7 +405,7 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     compositor.reset()
     compositor.setNeed(Protoss.Zealot, weighZealots)
     compositor.setGoal(Protoss.Zealot, 0.35 * countZerglings)
-    if (GasBank.allowsDragoon(units(Protoss.Dragoon), gas)) {
+    if (GasBank.allowsDragoon(units(Protoss.Dragoon), gas, With.units.ours.count(_.unitClass.isWarrior))) {
       if (composition.contains(Goon)) {
         compositor.setNeed(Protoss.Dragoon, weighDragoons)
         compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
@@ -417,8 +417,11 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
 
     if (composition.contains(Reaver) && ReaverGas.allowsReaver(units(Protoss.Reaver), gas)) {
       compositor.setNeed(Protoss.Reaver,  weighReavers)
-      compositor.setNeed(Protoss.Shuttle, weighReavers * 4)
       compositor.setGoal(Protoss.Reaver,  6)
+    }
+    // A Shuttle for the ferry always queues; one only for Reavers waits on gas.
+    if (composition.contains(Reaver) && (With.blackboard.ferry() || ReaverGas.allowsReaver(units(Protoss.Reaver), gas))) {
+      compositor.setNeed(Protoss.Shuttle, weighReavers * 4)
       compositor.capGoal(Protoss.Shuttle,  units(Protoss.Reaver) / 2)
     }
 
