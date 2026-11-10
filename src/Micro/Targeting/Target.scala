@@ -135,7 +135,11 @@ object Target {
     ?(found, Some(best), None)
   }
 
+  // Confirmed corpses are never legal: remembered units keep alive=true,
+  // so this only drops Visibility.Dead, in every stratum at once.
   private def legalByFilters(attacker: FriendlyUnitInfo, target: UnitInfo, allFilters: IndexedSeq[TargetFilter]): Boolean = {
+    if ( ! target.alive) return false
+
     if (With.yolo.active) return attacker.canAttack(target) && TargetFilterType.legal(attacker, target)
 
     var filterIndex = 0
@@ -160,7 +164,7 @@ object Target {
   }
 
   private def legalWithFilters(attacker: FriendlyUnitInfo, targets: Seq[UnitInfo], allFilters: Seq[TargetFilter]): Seq[UnitInfo] = {
-    targets.view.filter(target => ?(With.yolo.active,
+    targets.view.filter(target => target.alive && ?(With.yolo.active,
       attacker.canAttack(target) && TargetFilterType.legal(attacker, target),
       allFilters.forall(_.legal(attacker, target))))
   }

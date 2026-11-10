@@ -5,6 +5,7 @@ import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Targeting.Target
+import ProxyBwapi.UnitTracking.AliveEnemies
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -17,7 +18,7 @@ object BeMutalisk extends Action {
 
   // A recovering Mutalisk with a safety margin fights back instead of fleeing.
   private def recoverByFighting(unit: FriendlyUnitInfo): Unit = {
-    unit.agent.toAttack = Target.best(unit, With.units.enemy.filter(_.tile.enemyRangeAir <= 0))
+    unit.agent.toAttack = Target.best(unit, AliveEnemies.get().filter(_.tile.enemyRangeAir <= 0))
     val target = unit.agent.toAttack
     if (target.isEmpty) return
 
