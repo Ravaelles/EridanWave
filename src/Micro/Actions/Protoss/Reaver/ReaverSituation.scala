@@ -4,7 +4,7 @@ import Lifecycle.With
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import ProxyBwapi.UnitTracking.AliveEnemies
 import Micro.Actions.Protoss.ReaverLegacy.BeReaverLegacy
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.?
 
@@ -64,8 +64,8 @@ object ReaverSituation {
     val threatenedNow = threatsInRange.nonEmpty
     val pressuredCloseNow = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.pixelDistanceEdge(t) < 4 * 32)
 
-    val unloadRadiusTiles = ReaverDropBravery.radiusTiles
     val isTerranNow = With.enemies.exists(_.isTerran)
+    val firedAgo = With.framesSince(unit.lastFrameStartingAttack)
 
     ReaverSituation(
       rideNearby      = unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= ?(unit.agent.isPrimaryPassenger, 64, 32)),
@@ -79,7 +79,7 @@ object ReaverSituation {
       latencyFrames   = latency,
       doomed          = unit.cooldownLeft >= unit.doomedInFrames,
       targetedByScarab= unit.matchups.targetedByScarab,
-      framesSinceFired= With.framesSince(unit.lastFrameStartingAttack),
+      framesSinceFired= firedAgo,
       framesSinceHit  = With.framesSince(unit.lastFrameTakingDamage),
       hikingFar       = unit.moving && unit.pixelDistanceTravelling(unit.agent.destinationNext()) > 15 * 32,
       woundFraction   = wound,
@@ -100,13 +100,24 @@ object ReaverSituation {
       targetPath      = targetNearest.exists(unit.hasScarabPathTo(_, unit.pixel)),
       toAttackPath    = unit.agent.toAttack.orElse(targetNearest).exists(unit.hasScarabPathTo(_, unit.pixel)),
       braveDrop       = unit.transport.exists(shuttle => {
-        // Engine edge distance is pixels; the threshold is tiles (rule 10).
-        val foes = shuttle.matchups.targets.filter(_.pixelDistanceEdge(shuttle) / 32.0 < unloadRadiusTiles)
+        // Engine edge distances are pixels; thresholds are tiles (rule 10).
+        val distTiles = shuttle.matchups.targets.map(foe => (foe, foe.pixelDistanceEdge(shuttle) / 32.0))
+        val foesClose = distTiles.count(_._2 < ReaverDropBravery.closeDist)
+        val foesNear = distTiles.filter(_._2 < ReaverDropBravery.rangedDist)
+        val rangedNear = foesNear.count({ case (foe, _) => ReaverDropBravery.isRangedThreat(
+          foe.unitClass.canAttack, foe.unitClass.melee, foe.flying, foe.canAttack(shuttle), Zerg.Scourge(foe)) })
         val tanks = AliveEnemies.get().count(_.isAny(Terran.SiegeTankUnsieged, Terran.SiegeTankSieged))
-        ReaverDropBravery.shouldDrop(foes.size, shuttle.shieldPoints, unit.shieldPoints, isTerran = isTerranNow, enemyTanks = tanks) &&
+        val nearStatics = AliveEnemies.get().exists(e =>
+          e.unitClass.isStaticDefense && ! e.flying && e.pixelDistanceEdge(shuttle) / 32.0 < ReaverDropBravery.staticDefenseDist)
+        val ringsOk = ReaverDropBravery.shouldDrop(
+          foesClose, rangedNear, shuttle.shieldPoints, unit.shieldPoints,
+          isTerran = isTerranNow, enemyTanks = tanks, nearStaticDefense = nearStatics) &&
           ReaverDropBravery.canAffordShot(
             shuttle.shieldPoints + shuttle.hitPoints,
-            foes.map(foe => Math.max(foe.dpfAir, foe.dpfGround)).sum)
+            foesNear.map({ case (foe, _) => Math.max(foe.dpfAir, foe.dpfGround) }).sum)
+        val staleOk = ReaverDropBravery.mayDropStale(firedAgo, wound) &&
+          ! nearStatics && ( ! isTerranNow || tanks <= ReaverDropBravery.maxTerranTanks)
+        ringsOk || staleOk
       }),
       unloadSpotSafe  = ! threats.exists(t => ! t.flying && unit.pixelDistanceEdge(t) < ReaverUnloadSafety.radiusTiles(wound) * 32))
   }

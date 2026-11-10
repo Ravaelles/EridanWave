@@ -3,17 +3,25 @@ package Micro.Actions.Protoss.Reaver
 /**
  * Pure healthy-drop decision (no game access): a healthy Shuttle plus a
  * healthy Reaver must not circle forever taking potshots from a lone
- * Hydralisk. At most two nearby enemies and shields up on both means the
- * drop goes in; the firepower check below prices the shot we are about
- * to take so a healthy pair still refuses a real firing squad.
+ * Hydralisk. Guns decide, in two rings: the inner ring counts everything
+ * (melee chews the landed Reaver), the outer ring counts ranged threats
+ * only (melee at six-plus tiles cannot touch the Shuttle, and the Reaver
+ * outranges it at eight). The firepower check prices the shot over one
+ * drop cycle; the staleness rule stops the dithering when a healthy
+ * Reaver sat unfired. Enemy ground statics veto everything.
  */
 object ReaverDropBravery {
 
-  /** Enemies this close, in tiles, to the Shuttle count against the drop. */
-  val radiusTiles: Double = 12.0
+  /** Inner ring, in tiles: at most one foe of any kind inside. */
+  val closeDist: Double = 6.0
+  val maxFoesClose: Int = 1
 
-  /** More than this many nearby enemies keeps the Shuttle flying. */
-  val maxEnemiesNear: Int = 2
+  /** Outer ring, in tiles: at most two ranged threats inside. */
+  val rangedDist: Double = 8.0
+  val maxRangedNear: Int = 2
+
+  /** No drop this close, in tiles, to enemy ground statics. Overrides all. */
+  val staticDefenseDist: Double = 8.0
 
   /** Both hulls need at least this many shields to risk the drop. */
   val minShields: Int = 50
@@ -25,6 +33,14 @@ object ReaverDropBravery {
   val maxTerranTanks: Int = 2
 
   /**
+   * A Reaver unfired this long that still holds most of its health gets
+   * the drop even when the rings refuse it: sitting aboard forever helps
+   * nobody. Frames and wound fraction over hit points plus shields.
+   */
+  val staleFrames: Int = 10 * 24
+  val maxStaleWound: Double = 0.5
+
+  /**
    * Frames of exposure for one drop cycle: unload, Scarab flight,
    * reboard. The pair must stomach that long under the nearby guns.
    */
@@ -33,14 +49,30 @@ object ReaverDropBravery {
   /** Keep this multiple of the expected damage as a safety margin. */
   val safetyMargin: Double = 2.0
 
+  /**
+   * Ranged-threat classification on primitives: guns with range, flying
+   * anti-air, and the Scourge, which carries no weapon in the data yet
+   * kills Shuttles. Unarmed spotters and ground melee are not threats
+   * to the Shuttle in the air.
+   */
+  def isRangedThreat(canAttack: Boolean, melee: Boolean, flying: Boolean, canHitShuttle: Boolean, isScourge: Boolean): Boolean =
+    (canAttack && ( ! melee || (flying && canHitShuttle))) || (flying && isScourge)
+
   def shouldDrop(
-    enemyCount    : Int,
-    shuttleShields: Int,
-    reaverShields : Int,
-    isTerran      : Boolean = false,
-    enemyTanks    : Int = 0): Boolean =
-    enemyCount <= maxEnemiesNear && shuttleShields >= minShields && reaverShields >= minShields &&
+    foesClose        : Int,
+    rangedNear       : Int,
+    shuttleShields   : Int,
+    reaverShields    : Int,
+    isTerran         : Boolean = false,
+    enemyTanks       : Int = 0,
+    nearStaticDefense: Boolean = false): Boolean =
+    ! nearStaticDefense &&
+      foesClose <= maxFoesClose && rangedNear <= maxRangedNear &&
+      shuttleShields >= minShields && reaverShields >= minShields &&
       ( ! isTerran || enemyTanks <= maxTerranTanks)
+
+  def mayDropStale(framesSinceFired: Int, woundFraction: Double): Boolean =
+    framesSinceFired > staleFrames && woundFraction < maxStaleWound
 
   /**
    * @param ourHitPoints shields plus hull of the Shuttle taking the fire
