@@ -15,4 +15,11 @@ class TargetScoringSuite extends AnyFunSuite {
     assert(TargetScoring.damageForSize(false, 1, 10, 20, 30, 40, 50, 60) == 50)
     assert(TargetScoring.damageForSize(false, 0, 10, 20, 30, 40, 50, 60) == 60)
   }
+
+  test("morphing Creep Colony outranks idle, idle outranks ordinary targets") {
+    assert(TargetScoring.creepColonyBonus(isCreepColony = true, morphing = true) == 14.0)
+    assert(TargetScoring.creepColonyBonus(isCreepColony = true, morphing = false) == 8.0)
+    assert(TargetScoring.creepColonyBonus(isCreepColony = false, morphing = true) == 0.0)
+    assert(TargetScoring.creepColonyBonus(isCreepColony = false, morphing = false) == 0.0)
+  }
 }

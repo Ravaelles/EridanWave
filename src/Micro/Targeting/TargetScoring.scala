@@ -214,6 +214,9 @@ object TargetScoring {
     output += add(4.0, target.constructing)
     output += add(6.0, target.gathering)
 
+    // Creep Colony urgency: a morphing colony is seconds from a Sunken
+    output += creepColonyBonus(Zerg.CreepColony(target), target.constructing || target.morphing)
+
     if (target.unitClass.attacksOrCastsOrDetectsOrTransports && ! Zerg.Overlord(target)) {
       // Combat bonus; granted by default to aid simulation, but removed selectively
       output += combatBonus
@@ -273,4 +276,13 @@ object TargetScoring {
   @inline private def mult(value: => Double, predicate: Boolean): Double = {
     ?(predicate, value, 1.0)
   }
+
+  /**
+   * Creep Colony urgency (Atlantis Targ_CB_CreepC/C5d tiers): a morphing
+   * colony is seconds from a Sunken and ranks near fighters (combatBonus
+   * is 12); an idle colony still outranks ordinary buildings. Pure
+   * numbers for the suite; the game seam passes colony/morphing flags.
+   */
+  def creepColonyBonus(isCreepColony: Boolean, morphing: Boolean): Double =
+    if (isCreepColony && morphing) 14.0 else if (isCreepColony) 8.0 else 0.0
 }
