@@ -4,7 +4,9 @@ import Gameplans.Protoss.PvZ.StormResearch
 import Lifecycle.With
 import Macro.Actions.MacroActions
 import Macro.Facts.UnitArchive
-import ProxyBwapi.Races.Protoss
+import Mathematics.Maff
+import Placement.Access.PlaceLabels
+import ProxyBwapi.Races.{Protoss, Zerg}
 
 /**
  * Cross-cutting tech intents, evaluated for every gameplan every game:
@@ -19,6 +21,7 @@ object GlobalTech extends MacroActions {
     if (With.umsMode) return
 
     stormForTemplars()
+    cannonsVsMutalisks()
   }
 
   private def stormForTemplars(): Unit = {
@@ -34,4 +37,16 @@ object GlobalTech extends MacroActions {
       get(Protoss.PsionicStorm)
     }
   }
+
+  // Shown Mutalisks kill unguarded naturals: Forge plus two-to-five
+  // DefendAir cannons at every base, scaled with the flock. Prerequisites
+  // and repeat requests dedup in production; shown (not likely) fires it.
+  private def cannonsVsMutalisks(): Unit = {
+    if ( ! With.self.isProtoss) return
+    if ( ! With.enemies.exists(_.isZerg)) return
+    if ( ! enemyHasShown(Zerg.Mutalisk)) return
+
+    buildCannonsAtBases(Maff.clamp(1 + enemies(Zerg.Mutalisk) / 3, 2, 5), PlaceLabels.DefendAir)
+  }
+
 }
