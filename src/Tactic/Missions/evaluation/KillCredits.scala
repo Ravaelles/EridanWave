@@ -13,9 +13,13 @@ import scala.collection.mutable
 object KillCredits {
 
   private val balances = new mutable.HashMap[Int, Double]
+  private val order    = new mutable.HashMap[UnitClass, Vector[Int]]
 
   def noteBirth(unit: FriendlyUnitInfo): Unit = {
-    if (unit.isOurs) balances(unit.id) = -UnitBounty.weightedOf(unit.unitClass)
+    if ( ! unit.isOurs) return
+
+    balances(unit.id) = -UnitBounty.weightedOf(unit.unitClass)
+    order(unit.unitClass) = order.getOrElse(unit.unitClass, Vector.empty) :+ unit.id
   }
 
   def noteKill(killerId: Int, victimClass: UnitClass): Double = {
@@ -27,8 +31,26 @@ object KillCredits {
   def balanceOf(unitId: Int): Double =
     balances.getOrElse(unitId, 0.0)
 
-  def reset(): Unit =
+  /** Mean lifetime balance over every unit of the class, live and dead. */
+  def classAverageOf(unitClass: UnitClass): Double = {
+    val ids = order.getOrElse(unitClass, Vector.empty)
+    if (ids.isEmpty) return 0.0
+
+    ids.map(balanceOf).sum / ids.size
+  }
+
+  /** Mean balance over the last n produced, fewer when young. */
+  def recentAverageOf(unitClass: UnitClass, lastN: Int): Double = {
+    val ids = order.getOrElse(unitClass, Vector.empty).takeRight(Math.max(1, lastN))
+    if (ids.isEmpty) return 0.0
+
+    ids.map(balanceOf).sum / ids.size
+  }
+
+  def reset(): Unit = {
     balances.clear()
+    order.clear()
+  }
 
   def shortName(unitClass: UnitClass): String =
     unitClass.toString.replaceFirst("^(Protoss|Terran|Zerg|Neutral)_", "")

@@ -4,6 +4,7 @@ import Lifecycle.With
 import Macro.Actions.{Compositor, MacroActions}
 import Macro.Facts.UnitArchive
 import ProxyBwapi.Races.{Protoss, Zerg}
+import Tactic.Missions.evaluation.DarkTemplarEffectiveness
 import Utilities.?
 import Utilities.UnitFilters.IsWarrior
 
@@ -75,7 +76,12 @@ object ZealotIntoGoon extends MacroActions {
         compositor.setGoal(Protoss.HighTemplar, 4)
         pump(Protoss.HighTemplar)
       }
-      pump(Protoss.DarkTemplar, 4)
+      if (DarkTemplarEffectiveness.allows(
+        UnitArchive.producedTotal(Protoss.DarkTemplar),
+        units(Protoss.DarkTemplar),
+        gas)) {
+        pump(Protoss.DarkTemplar, 4)
+      }
     }
     val airThreat = enemies(Zerg.Mutalisk, Zerg.Scourge)
     if (have(Protoss.Stargate) && airThreat > 0) {

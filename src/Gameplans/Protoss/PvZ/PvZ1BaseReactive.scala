@@ -8,6 +8,7 @@ import Placement.Access.PlaceLabels
 import ProxyBwapi.Buildable
 import ProxyBwapi.Races.{Protoss, Zerg}
 import Strategery.Strategies.Protoss._
+import Tactic.Missions.evaluation.DarkTemplarEffectiveness
 import Utilities.Time.{GameTime, Minutes}
 import Utilities.UnitFilters.{IsHatchlike, IsWarrior, IsWorker}
 import Utilities.{?, SwapIf}
@@ -283,7 +284,12 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
         }
         get(Protoss.TemplarArchives)
         if (have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)) {
-          get(Protoss.DarkTemplar)
+          if (DarkTemplarEffectiveness.allows(
+            UnitArchive.producedTotal(Protoss.DarkTemplar),
+            units(Protoss.DarkTemplar),
+            gas)) {
+            get(Protoss.DarkTemplar)
+          }
         }
         // Four Dark Templars before High Templars (lifetime count), and High
         // Templars only at 150+ supply, unless Mutalisks force faster Archons
