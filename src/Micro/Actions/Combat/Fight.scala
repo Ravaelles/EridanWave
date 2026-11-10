@@ -32,6 +32,7 @@ object Fight extends Action {
     BeVulture(unit)
     BeRushingZealot(unit)
     BeZealotVsZealot(unit)
+    BeDecoyZealot(unit)
     BeDragoonVsSlowlot(unit)
     BeDarkTemplar(unit)
     BeCarrier(unit)
