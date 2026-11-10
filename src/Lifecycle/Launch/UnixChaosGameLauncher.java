@@ -42,7 +42,8 @@ public final class UnixChaosGameLauncher implements GameLauncher {
         System.out.println("[launcher] Backend: Wine + StarCraft + ChaosLauncher (Linux).");
         System.out.println("===============================================");
 
-        if (config.isHeadless()) {
+        // Script default is headless; the hook lives only on explicit --visible.
+        if (config.isHeadless() || ! config.isHeadlessExplicit()) {
             System.out.println("[keyboard] Headless run: supervisor shortcuts disabled.");
         } else {
             Lifecycle.Keyboard.Keyboard.listen(Lifecycle.Keyboard.Keyboard.Mode.SUPERVISOR);

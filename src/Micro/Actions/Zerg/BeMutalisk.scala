@@ -5,8 +5,8 @@ import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Targeting.Target
-import ProxyBwapi.UnitTracking.AliveEnemies
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
+import ProxyBwapi.UnitTracking.AliveEnemies
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object BeMutalisk extends Action {
