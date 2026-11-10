@@ -118,7 +118,7 @@ abstract class MissionDrop extends Mission
   }
 
   final override protected def shouldForm: Boolean = {
-    With.blackboard.wantToHarass() && With.recruiter.available.exists(transportLock.matcher) && additionalFormationConditions && { populateItinerary(); itinerary.nonEmpty }
+    With.blackboard.wantToHarass() && With.recruiter.available.exists(transportLock.matcher) && additionalFormationConditions && With.missionHistory.repeatAllowed(this) && { populateItinerary(); itinerary.nonEmpty }
   }
 
   protected def populateItinerary(): Unit = {

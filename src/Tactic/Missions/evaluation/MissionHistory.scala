@@ -29,6 +29,20 @@ class MissionHistory extends MacroCounting {
 
   private val spans = new mutable.HashMap[Mission, Span]
 
+  /** Past launches per mission, loaded once from mission-history.csv. */
+  private lazy val pastRuns: Map[String, Vector[MissionRepeatGate.PastRun]] = {
+    try {
+      val file = With.bwapiData.write + "/mission-history.csv"
+      scala.io.Source.fromFile(file).getLines().toVector
+        .flatMap(MissionRepeatGate.parseRow)
+        .groupBy(_._1).mapValues(_.map(_._2).toVector).toMap
+    } catch { case _: Exception => Map.empty }
+  }
+
+  def repeatAllowed(mission: Mission): Boolean =
+    MissionRepeatGate.repeatAllowed(
+      pastRuns.getOrElse(mission.getClass.getSimpleName.stripSuffix("$"), Vector.empty))
+
   def recordLaunch(mission: Mission): Unit = {
     spans(mission) = Span(
       mission.getClass.getSimpleName.stripSuffix("$"),
