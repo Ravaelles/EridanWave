@@ -24,6 +24,17 @@ object ReaverContain {
   def containing(ourWarriors: Int, enemyStaticsNear: Int): Boolean =
     ourWarriors > warriorsNeeded && enemyStaticsNear >= staticsNeeded
 
+  /** Release the hold only on real collapse: single-unit dips around the
+    * entry bar must not flap the mode and roster every few frames. */
+  val releaseWarriorsAtOrBelow: Int = 9
+  val releaseStaticsAtOrBelow: Int = 1
+
+  def holding(currentlyHolding: Boolean, ourWarriors: Int, enemyStaticsNear: Int): Boolean =
+    if (currentlyHolding)
+      ourWarriors > releaseWarriorsAtOrBelow && enemyStaticsNear > releaseStaticsAtOrBelow
+    else
+      containing(ourWarriors, enemyStaticsNear)
+
   def recallAll(isZerg: Boolean): Boolean =
     isZerg
 }

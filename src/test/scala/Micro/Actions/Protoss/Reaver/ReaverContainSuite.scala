@@ -15,6 +15,15 @@ class ReaverContainSuite extends AnyFunSuite {
     assert( ! ReaverContain.containing(ourWarriors = 0, enemyStaticsNear = 0))
   }
 
+  test("the hold survives single-unit dips, releases on collapse") {
+    assert(ReaverContain.holding(currentlyHolding = false, ourWarriors = 11, enemyStaticsNear = 3))
+    assert( ! ReaverContain.holding(currentlyHolding = false, ourWarriors = 10, enemyStaticsNear = 3))
+    assert(ReaverContain.holding(currentlyHolding = true, ourWarriors = 10, enemyStaticsNear = 2))
+    assert( ! ReaverContain.holding(currentlyHolding = true, ourWarriors = 9, enemyStaticsNear = 3))
+    assert( ! ReaverContain.holding(currentlyHolding = true, ourWarriors = 11, enemyStaticsNear = 1))
+    assert( ! ReaverContain.holding(currentlyHolding = true, ourWarriors = 0, enemyStaticsNear = 0))
+  }
+
   test("only Zerg recalls every Reaver") {
     assert(ReaverContain.recallAll(isZerg = true))
     assert( ! ReaverContain.recallAll(isZerg = false))

@@ -26,6 +26,7 @@ class EridanWave extends DefaultBWListener {
         Debugging.ErrorLedger.reset()
         Lifecycle.HitCounter.reset()
         Debugging.DeathWatch.reset()
+        Micro.Actions.Protoss.Reaver.ContainStatus.reset()
         Debugging.CherryVis.CherryVis.initialize()
         With.history.onStart()
         With.units.onStart()
