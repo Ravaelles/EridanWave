@@ -24,7 +24,7 @@ class TargetScoringSuite extends AnyFunSuite {
   }
 
   test("lone far Ling baits nothing while buildings stand") {
-    assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = false, farFromHome = true, betterTargets = true) == -16.0)
+    assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = false, farFromHome = true, betterTargets = true) == -10000.0)
     assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = true, farFromHome = true, betterTargets = true) == 0.0)
     assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = false, farFromHome = false, betterTargets = true) == 0.0)
     assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = false, farFromHome = true, betterTargets = false) == 0.0)

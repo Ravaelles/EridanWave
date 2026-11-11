@@ -310,10 +310,12 @@ object TargetScoring {
   val loneLingHomeTiles: Double = 15.0
 
   /**
-   * Lone-ling lure penalty (pure numbers for the suite): a solitary
-   * Zergling far from home while enemy buildings stand loses sixteen,
-   * dropping under fighters and buildings but staying top alone.
+   * Lone-ling lure veto (pure numbers for the suite): a solitary Zergling
+   * far from home while enemy buildings stand is never selected - veto
+   * depth beats any distance penalty a far building can take, and the
+   * picker takes the max with no positivity floor, so a truly alone
+   * Ling still gets killed instead of idling the army.
    */
   def loneLingLurePenalty(isLing: Boolean, packNear: Boolean, farFromHome: Boolean, betterTargets: Boolean): Double =
-    if (isLing && ! packNear && farFromHome && betterTargets) -16.0 else 0.0
+    if (isLing && ! packNear && farFromHome && betterTargets) -10000.0 else 0.0
 }
