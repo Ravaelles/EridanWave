@@ -15,11 +15,4 @@ class ClusterSplitSuite extends AnyFunSuite {
     assert( ! ClusterSplit.overDelegated(totalWarriors = 100, delegated = 45))
     assert( ! ClusterSplit.overDelegated(totalWarriors = 10, delegated = 4))
   }
-
-  test("detachments never go below five warriors") {
-    assert(ClusterSplit.detachmentFloor(0) == 5)
-    assert(ClusterSplit.detachmentFloor(2) == 5)
-    assert(ClusterSplit.detachmentFloor(5) == 5)
-    assert(ClusterSplit.detachmentFloor(12) == 12)
-  }
 }

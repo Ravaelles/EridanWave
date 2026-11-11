@@ -10,8 +10,8 @@ package Tactic
  */
 object ClusterSplit {
 
-  /** Share of warriors that must stay with the main cluster. */
-  val mainShare: Double = 0.55
+  /** Percent of warriors that must stay with the main cluster. */
+  val mainPercent: Int = 55
 
   /** Smallest detachment worth sending at a real attack, in warriors. */
   val minDetachment: Int = 5
@@ -22,11 +22,8 @@ object ClusterSplit {
    * per hundred from the delegation.
    */
   def maxDelegated(totalWarriors: Int): Int =
-    totalWarriors - (totalWarriors * 55) / 100
+    totalWarriors - (totalWarriors * mainPercent) / 100
 
   def overDelegated(totalWarriors: Int, delegated: Int): Boolean =
     delegated > maxDelegated(totalWarriors)
-
-  def detachmentFloor(sizedNeed: Int): Int =
-    Math.max(minDetachment, sizedNeed)
 }

@@ -3,7 +3,7 @@ package Gameplans.Protoss.PvT.openings
 import Lifecycle.With
 import Placement.Access.PlaceLabels.Proxy4Gate
 import Placement.Access.{PlaceLabels, PlacementQuery}
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.Protoss
 
 /** One PvT opening recipe; mixed into PvTOpeners. Verbatim move. */
 trait PvTOpenOpen4Gate { self: Gameplans.Protoss.PvT.PvTOpeners =>

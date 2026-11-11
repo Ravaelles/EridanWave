@@ -7,7 +7,7 @@ import ProxyBwapi.Races.Protoss
 /**
  * Shared ferry planning (Stardust ShuttleHarass doctrine): from Robotics
  * with two Gates, keep two Shuttles coming and raise the ferry flag once a
- * Shuttle and six Dragoons stand ready. The MissionFerry itself stages at
+ * Shuttle and four Dragoons stand ready. The MissionFerry itself stages at
  * the vanguard and cycles the army to the front; this only plans the metal.
  */
 object PvTFerry extends MacroActions {

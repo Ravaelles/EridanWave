@@ -3,7 +3,7 @@ package Gameplans.Protoss.PvT.openings
 import Lifecycle.With
 import Macro.Requests.RequestUnit
 import Placement.Access.{PlaceLabels, PlacementQuery}
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.Protoss
 import Utilities.Time.{GameTime, Minutes}
 
 /** One PvT opening recipe; mixed into PvTOpeners. Verbatim move. */

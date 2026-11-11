@@ -41,7 +41,7 @@ object MissionRepeatGate {
 
   /** Past launches per mission, in file order. Pure for the suite. */
   def groupRows(lines: Seq[String]): Map[String, Vector[PastRun]] =
-    lines.flatMap(parseRow).groupBy(_._1).mapValues(_.map(_._2).toVector).toMap
+    lines.flatMap(parseRow).groupBy(_._1).map { case (mission, runs) => (mission, runs.map(_._2).toVector) }
 
   def averageLevel(runs: Seq[PastRun]): Double =
     if (runs.isEmpty) 0.0 else runs.map(_.level).sum.toDouble / runs.size

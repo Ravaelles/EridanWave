@@ -1,7 +1,7 @@
 package Gameplans.Protoss.PvT.openings
 
 import Lifecycle.With
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.Protoss
 
 /** One PvT opening recipe; mixed into PvTOpeners. Verbatim move. */
 trait PvTOpenOpen12NexusGateScout { self: Gameplans.Protoss.PvT.PvTOpeners =>

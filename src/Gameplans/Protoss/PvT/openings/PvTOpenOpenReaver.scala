@@ -1,6 +1,6 @@
 package Gameplans.Protoss.PvT.openings
 
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.Protoss
 
 /** One PvT opening recipe; mixed into PvTOpeners. Verbatim move. */
 trait PvTOpenOpenReaver { self: Gameplans.Protoss.PvT.PvTOpeners =>
