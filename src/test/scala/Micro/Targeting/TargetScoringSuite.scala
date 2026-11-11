@@ -22,4 +22,12 @@ class TargetScoringSuite extends AnyFunSuite {
     assert(TargetScoring.creepColonyBonus(isCreepColony = false, morphing = true) == 0.0)
     assert(TargetScoring.creepColonyBonus(isCreepColony = false, morphing = false) == 0.0)
   }
+
+  test("lone far Ling baits nothing while buildings stand") {
+    assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = false, farFromHome = true, betterTargets = true) == -16.0)
+    assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = true, farFromHome = true, betterTargets = true) == 0.0)
+    assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = false, farFromHome = false, betterTargets = true) == 0.0)
+    assert(TargetScoring.loneLingLurePenalty(isLing = true, packNear = false, farFromHome = true, betterTargets = false) == 0.0)
+    assert(TargetScoring.loneLingLurePenalty(isLing = false, packNear = false, farFromHome = true, betterTargets = true) == 0.0)
+  }
 }

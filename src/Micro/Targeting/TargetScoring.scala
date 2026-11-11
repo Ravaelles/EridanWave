@@ -252,6 +252,15 @@ object TargetScoring {
     // Disabled because it needs performant player-agnosticism for simulation
     //output += add(8.0, (target.burrowed && With.units.existsOurs(Terran.SpellScannerSweep)))
 
+    // Lone-ling lure: a single Zergling far from our buildings with
+    // enemy buildings to hit is bait, not a target. Sink it below
+    // buildings and fighters; alone it still wins and gets killed.
+    output += loneLingLurePenalty(
+      Zerg.Zergling(target),
+      With.units.enemy.exists(e => e != target && Zerg.Zergling(e) && e.pixelDistanceEdge(target) < loneLingPackTiles * 32),
+      Maff.min(With.units.ours.view.filter(_.unitClass.isBuilding).map(_.pixelDistanceEdge(target))).getOrElse(Double.PositiveInfinity) / 32.0 > loneLingHomeTiles,
+      With.units.enemy.exists(_.unitClass.isBuilding))
+
     // Detector bonus
     output += add(6.0,
       ?(
@@ -293,4 +302,18 @@ object TargetScoring {
    */
   def creepColonyBonus(isCreepColony: Boolean, morphing: Boolean): Double =
     if (isCreepColony && morphing) 14.0 else if (isCreepColony) 8.0 else 0.0
+
+  /** Pack radius that still counts Zerglings as company, in tiles. */
+  val loneLingPackTiles: Double = 8.0
+
+  /** Past this distance from our nearest building a lone Ling is bait, in tiles. */
+  val loneLingHomeTiles: Double = 15.0
+
+  /**
+   * Lone-ling lure penalty (pure numbers for the suite): a solitary
+   * Zergling far from home while enemy buildings stand loses sixteen,
+   * dropping under fighters and buildings but staying top alone.
+   */
+  def loneLingLurePenalty(isLing: Boolean, packNear: Boolean, farFromHome: Boolean, betterTargets: Boolean): Double =
+    if (isLing && ! packNear && farFromHome && betterTargets) -16.0 else 0.0
 }
