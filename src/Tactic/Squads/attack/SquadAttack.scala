@@ -19,6 +19,7 @@ import scala.collection.mutable.ArrayBuffer
 import Tactic.Squads.Decisions.HuntLogic
 import Tactic.Squads.Decisions.AttackModes
 import Tactic.Squads.Decisions.RegroupLatch
+import Tactic.Squads.Decisions.StanceVoteFilter
 import Tactic.Squads.Squad
 import Tactic.Squads.SquadAutomation
 import Tactic.Squads.Squads
@@ -33,6 +34,9 @@ class SquadAttack extends Squad {
   // A latched regroup overrules even this: a clear sim verdict to break off
   // beats marching blind into contact.
   var stance: RegroupLatch.Stance = RegroupLatch.Engaged
+  // Retreat proposals need consecutive confirmation (sim flicker must not
+  // swing the squad); re-engage passes through. Yolo/UMS set stance directly.
+  private val stanceFilter = new StanceVoteFilter()
   override def fightConsensus: Boolean = {
     if (stance == RegroupLatch.Regrouping) return false
 
@@ -258,7 +262,7 @@ class SquadAttack extends Squad {
       val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
       val coverage = verdicts.size.toDouble / units.size
       val fighting = if (verdicts.isEmpty) 1.0 else verdicts.count(identity).toDouble / verdicts.size
-      stance = RegroupLatch.nextStance(stance, fighting, coverage)
+      stance = stanceFilter.confirm(stance, RegroupLatch.nextStance(stance, fighting, coverage))
       Probe.note("Sim", 0, f"$stance fighting=$fighting%.2f coverage=$coverage%.2f")
     }
     Debugging.CherryVis.CherryVis.board("AttackStance", stance.toString)
