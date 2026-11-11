@@ -28,4 +28,11 @@ class SquadRallySuite extends AnyFunSuite {
     assert(SquadRally.isRallying(Pixel(1000, 1200), centroid))
     assert( ! SquadRally.isRallying(Pixel(1050, 1050), centroid))
   }
+
+  test("drifters at six tenths close ranks") {
+    assert(SquadRally.shouldJoinAlly(0.6))
+    assert(SquadRally.shouldJoinAlly(5.0))
+    assert( ! SquadRally.shouldJoinAlly(0.59))
+    assert( ! SquadRally.shouldJoinAlly(0.0))
+  }
 }

@@ -15,6 +15,9 @@ object SquadRally {
   /** Stragglers beyond this distance from the centroid rejoin instead of travelling. Mirrors Stardust's 128px rule. */
   val rallyRadiusPixels: Int = 128
 
+  /** Marching units this far from their nearest ally close ranks instead of milling. */
+  val allyJoinTiles: Double = 0.6
+
   def rallyFor(unitPixel: Pixel, centroid: Pixel, terminus: Pixel): Pixel = {
     if (isRallying(unitPixel, centroid)) centroid else terminus
   }
@@ -22,4 +25,7 @@ object SquadRally {
   def isRallying(unitPixel: Pixel, centroid: Pixel): Boolean = {
     unitPixel.pixelDistance(centroid) > rallyRadiusPixels
   }
+
+  def shouldJoinAlly(distTiles: Double): Boolean =
+    distTiles >= allyJoinTiles
 }

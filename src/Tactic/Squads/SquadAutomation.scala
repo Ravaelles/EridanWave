@@ -111,11 +111,17 @@ object SquadAutomation {
       lazy val pack     = ?(unit.flying, squad.centroidAir, squad.centroidGround)
       lazy val rallying = squad.fightConsensus && SquadRally.isRallying(unit.pixel, pack)
       lazy val finalMarch = ?(rallying, pack, finalTravel)
+      // Close ranks on the march: a unit adrift from its nearest ally
+      // rejoins instead of milling alone. Consensus-only, so guards and
+      // defenders keep their posts instead of bunching up.
+      lazy val nearestAlly = Maff.minBy(squad.units.view.filter(_ != unit))(_.pixelDistanceCenter(unit.pixel))
+      lazy val joiningAlly = squad.fightConsensus && nearestAlly.exists(a => SquadRally.shouldJoinAlly(unit.tileDistanceCenter(a.pixel)))
+      lazy val joinPixel = nearestAlly.map(_.pixel)
       // March dressing: a leader running ahead of the pack holds position so
       // the line arrives together instead of trickling in. Waiting zeroes the
       // stuck counter (tryingToMove is false), so Unstick stays out of it.
       lazy val waiting = squad.fightConsensus && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
-      lazy val finalTerminus = ?(waiting, unit.pixel, finalMarch)
+      lazy val finalTerminus = ?(waiting, unit.pixel, ?(joiningAlly, joinPixel.getOrElse(finalMarch), finalMarch))
       Debugging.CherryVis.CherryVis.decision(unit.id,
         ?(squad.fightConsensus, ?(waiting, "Waiting for pack", ?(rallying, "Rallying to pack centroid", "Marching to formation slot")), "Returning to slot"))
       unit.intend(squad)
