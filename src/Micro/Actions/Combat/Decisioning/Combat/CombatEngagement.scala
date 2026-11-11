@@ -6,7 +6,7 @@ import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Skirmish.FightRules
 import Micro.Actions.Combat.Decisioning.Formation.{FormationApproach, FormationHold, OverwhelminglyStronger}
-import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, CorsairSafety, FacingAway, HoldToShoot, KiteAway}
+import Micro.Actions.Combat.Decisioning.Kiting.{CorsairSafety, KiteAway}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -60,83 +60,6 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   // still overrules, and without a formation there is nothing to dress.
   private[Decisioning] def approachPosture: FormationApproach.ApproachPosture =
     ?(With.enemies.exists(_.isTerran), FormationApproach.Decisive, FormationApproach.Cautious)
-
-  // KiteAway: wounded units yield ground instead of dying in place.
-  // Runs before the dress line (withdrawing beats dressing), only while an
-  // enemy presses within range plus margin and the weapon still needs its
-  // cooldown. The retreat point sits behind the line by injury * max offset,
-  // so the most wounded absorb the least focus fire.
-  private[Decisioning] def kiteAway(): Boolean = {
-    if (With.yolo.active) return false
-    if ( ! unit.canMove) return false
-    if (staticStandoff()) return true
-    if (unit.unitClass.melee) return false
-    if (unit.formationEngage.isEmpty) return false
-
-    val nearest = unit.matchups.targetNearest
-    if (nearest.isEmpty) return false
-
-    val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
-    // Turned-away melee neither chases nor hits: it never counts as the
-    // enemy in margin that triggers the retreat.
-    val enemyInMargin = squadUnits.exists(u =>
-      u.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32).exists(t =>
-        ! FacingAway.dismissMelee(t.unitClass.melee,
-          FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel)))))
-    if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.woundPercent(), unit.cooldownLeft, enemyInMargin)) return false
-
-    // Hold-to-shoot: a committed chaser met with a ready gun is a free shot,
-    // not a reason to yield ground. Fires only when we'd otherwise kite, and
-    // never steals another duel's target: the chaser must be ours or none.
-    val chaser = Maff.minBy(unit.matchups.threats)(_.pixelDistanceEdge(unit))
-    if (chaser.exists(c => combat.target.forall(_.id == c.id) && HoldToShoot.shouldStand(
-      unit.pixelDistanceEdge(c),
-      HoldToShoot.effectiveRange(c.pixelRangeAgainst(unit), c.topSpeed, windupFrames = 0, unit.topSpeed * unit.unitClass.accelerationFrames / 2.0),
-      unit.cooldownLeft,
-      With.latency.latencyFrames,
-      c.speedApproaching(unit.pixel),
-      HoldToShoot.holdMarginFrames))) {
-      unit.agent.act("HoldToShoot")
-      unit.agent.decision.set(unit.pixel)
-      Commander.hold(unit)
-
-      return true
-    }
-
-    unit.agent.act("KiteAway")
-    val offsetPixels = KiteAway.woundOffsetTiles(unit.woundPercent()) * 32
-    unit.agent.decision.set(unit.pixel.project(nearest.get.pixel, -offsetPixels).walkablePixel)
-    combat.maneuvers.move()
-    true
-  }
-
-  // Static standoff: an idle unit standing inside a defensive building's
-  // reach while the cluster takes fire steps out to range + margin + bonus
-  // instead of absorbing hits. Fighting units (targets in range) and
-  // committed pushes (shouldFight) are untouched; the attack window lapses
-  // once fire stops, so the squad resumes on its own (hysteresis).
-  private def staticStandoff(): Boolean = {
-    if (unit.agent.shouldFight) return false
-
-    if (unit.matchups.targetsInRange.nonEmpty) return false
-
-    val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
-    val clusterHot = squadUnits.exists(u => ClusterSafety.recentlyAttacked(With.framesSince(u.lastFrameTakingDamage)))
-    if ( ! clusterHot) return false
-
-    val threat = Maff.minBy(unit.matchups.threats.filter(_.unitClass.isStaticDefense))(_.pixelDistanceEdge(unit))
-    val gap = threat.map(t => ClusterSafety.standoffGapPixels(
-      unit.pixelDistanceEdge(t),
-      t.pixelRangeAgainst(unit),
-      KiteAway.enemyMarginTiles,
-      clusterAttacked = true)).getOrElse(0.0)
-    if (gap <= 0) return false
-
-    unit.agent.act("StaticStandoff")
-    unit.agent.decision.set(unit.pixel.project(threat.get.pixel, -gap).walkablePixel)
-    combat.maneuvers.move()
-    true
-  }
 
   private[Decisioning] def approach(): Boolean = {
     if (With.yolo.active) return false
@@ -314,7 +237,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           }
         }
       } else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {
-        if ( ! kiteAway() && ! approach()) {
+        if ( ! KiteAwayBehavior.run(unit, combat) && ! approach()) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
