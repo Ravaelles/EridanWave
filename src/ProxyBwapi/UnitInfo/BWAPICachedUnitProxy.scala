@@ -16,7 +16,7 @@ import scala.collection.JavaConverters._
 abstract class BWAPICachedUnitProxy(bwapiUnit: bwapi.Unit, id: Int) extends UnitInfo(bwapiUnit, id) {
   private var _visibility             : Visibility.Value = _
   private var _player                 : PlayerInfo = _
-  private var _unitClass              : UnitClass = _
+  private var _unitClass              : UnitClass = UnitClasses.None
   private var _pixel                  : Pixel = _
   private var _pixelObserved          : Pixel = _
   private var _tile                   : Tile = _

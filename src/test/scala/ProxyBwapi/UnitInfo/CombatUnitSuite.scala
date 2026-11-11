@@ -18,4 +18,12 @@ class CombatUnitSuite extends AnyFunSuite {
     val zealot = TestKit.friendly(UnitType.Protoss_Zealot, id = 2)
     assert(zealot.pixelRangeMin == 0)
   }
+
+  test("unclassified units match nothing instead of throwing") {
+    TestKit.seedWorld()
+    val unit = new FriendlyUnitInfo(TestKit.mockUnit(UnitType.Protoss_Zealot), 3)
+    assert(unit.unitClass == ProxyBwapi.UnitClasses.UnitClasses.None)
+    assert( ! ProxyBwapi.Races.Protoss.Zealot(unit))
+    assert( ! unit.unitClass.isBuilding)
+  }
 }
