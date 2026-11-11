@@ -238,6 +238,14 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
    * gets, all no-ops once satisfied; early game stays on the openings.
    */
   private def ensureCompositionTech(): Unit = {
+    // Gas floor above composition: a standing army with no gas path
+    // never techs, whatever the scouting says - order it here so no
+    // opening, proxy or empty composition can starve it.
+    if (units(IsWarrior) >= 10) {
+      get(Protoss.Assimilator)
+      get(Protoss.CyberneticsCore)
+    }
+
     if (composition.isEmpty) return
 
     get(Protoss.Assimilator)

@@ -73,7 +73,7 @@ class PvEProxy2Gate extends GameplanImperative {
         // proxy stalled - a trickle-fed line may never reach thirteen.
         // Gas up so the Dragoon line (already prioritized) can take over.
         if (units(Protoss.Zealot) > 13 || enemyHasShown(Zerg.Hydralisk) || With.frame > Minutes(5)()) {
-          get(1, Protoss.Assimilator, new PlacementQuery(Protoss.Assimilator).requireBase(With.geography.ourMain))
+          get(1, Protoss.Assimilator)
           get(Protoss.CyberneticsCore)
           get(Protoss.DragoonRange)
         }
