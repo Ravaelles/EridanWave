@@ -13,6 +13,9 @@ object ZealotBank {
   /** Free Gateways that mean the line can take more. */
   val freeGatewaysNeeded: Int = 2
 
+  /** Past this supply the line is done: save room for Dragoons and casters. */
+  val maxSupply: Int = 190
+
   def allowsExtraZealots(minerals: Int, freeGateways: Int): Boolean =
     minerals >= bankedMinerals && freeGateways >= freeGatewaysNeeded
 }

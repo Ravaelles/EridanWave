@@ -44,20 +44,28 @@ object ZealotIntoGoon extends MacroActions {
   }
 
   // The line first: Zealots until the count fits the Ling pack.
+  // Dragoons always outrank Zealots (see queueDragoons), so the line
+  // takes the smaller need; past 190 supply it stands down entirely.
   private def queueZealots(): Unit = {
-    compositor.setNeed(Protoss.Zealot, 4.0)
+    if (supplyCapped) return
+
+    compositor.setNeed(Protoss.Zealot, 2.0)
     compositor.setGoal(Protoss.Zealot, zealotTarget)
   }
 
   // Dragoons once the line stands: Zealots at count, Core up, bank allows.
+  // The top need, so production fills Dragoons before more Zealots.
   private def queueDragoons(): Unit = {
     if ( ! zealotLineStands) return
     if ( ! have(Protoss.CyberneticsCore)) return
     if ( ! Gameplans.Protoss.PvZ.GasBank.allowsDragoon(units(Protoss.Dragoon), gas, With.units.ours.count(_.unitClass.isWarrior))) return
 
-    compositor.setNeed(Protoss.Dragoon, 2.0)
+    compositor.setNeed(Protoss.Dragoon, 4.0)
     compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
   }
+
+  private def supplyCapped: Boolean =
+    supplyUsed200 >= ZealotBank.maxSupply
 
   private def zealotLineStands: Boolean =
     units(Protoss.Zealot) >= zealotTarget
@@ -65,6 +73,7 @@ object ZealotIntoGoon extends MacroActions {
   // Banked minerals plus idle Gates means the line is starving, not the
   // bank: past the bank with two free Gates, queue Zealots uncapped.
   private def pumpBankedZealots(): Unit = {
+    if (supplyCapped) return
     if ( ! ZealotBank.allowsExtraZealots(minerals, freeGateways)) return
 
     pump(Protoss.Zealot)
