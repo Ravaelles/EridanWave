@@ -1,24 +1,10 @@
 package Micro.Actions.Combat.Decisioning
 
-import Debugging.Visualizations.Forces
 import Lifecycle.With
-import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
-import Micro.Actions.Combat.Decisioning.Skirmish.FightRules
-import Micro.Actions.Combat.Decisioning.Formation.{FormationApproach, FormationHold, OverwhelminglyStronger}
-import Micro.Actions.Combat.Decisioning.Kiting.{CorsairSafety, KiteAway}
-import Micro.Agency.Commander
-import Micro.Coordination.Pathing.MicroPathing
-import Micro.Coordination.Pushing.TrafficPriorities
-import Micro.Heuristics.Potential
-import Micro.Targeting.FiltersSituational.{TargetFilterPotshot, TargetFilterVisibleInRange}
-import Micro.Targeting.Target
-import ProxyBwapi.Races.{Terran, Zerg}
+import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
+import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Micro.Actions.Combat.Maneuvering.Retreat
-import Utilities.Time.Forever
-import Utilities.UnitFilters.IsWarrior
-import Utilities.?
 
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
@@ -62,54 +48,15 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       if ( ! combat.breakFormationToAttack) {
         unit.agent.perch.clear()
       }
-      if (combat.pushThrough) {
-        unit.agent.act("Push")
-        combat.maneuvers.applySeparationForces()
-        if (unit.agent.forces(Forces.spacing).lengthFast > 0 || ! AttackIfReadyBehavior.run(unit, combat)) {
-          combat.maneuvers.applyForce(Forces.travel, Potential.towards(unit, unit.agent.station.pixel.orElse(unit.agent.perch.pixel).getOrElse(unit.agent.destinationNext())))
-          combat.maneuvers.applyForce(Forces.target, Potential.towards(unit,                                 unit.agent.perch.pixel .getOrElse(unit.agent.destinationNext())))
-          combat.maneuvers.applyForce(Forces.threat, Potential.softAvoidThreatRange(unit) * 1.5)
-          combat.maneuvers.moveForcefully()
-        }
-      } else if (combat.assembling && combat.group.groupUnits.size > 1) {
-        unit.agent.act("Assemble")
-        val targetRangeDelta  = unit.matchups.pixelsToTargetRange.getOrElse(unit.sightPixels.toDouble) - combat.group.meanAttackerTargetDistance
-        val forwardness       = if (unit.flying) 0.0 else Maff.fastTanh11(targetRangeDelta / 96.0)
-        combat.maneuvers.applyForce(Forces.travel,     Potential.towards(unit, unit.agent.destinationNext()))
-        combat.maneuvers.applyForce(Forces.threat,     Potential.hardAvoidThreatRange(unit, 96.0))
-        combat.maneuvers.applyForce(Forces.regrouping, Potential.regroup(unit))
-        combat.maneuvers.moveForcefully()
-        combat.restrained = combat.target.forall(t => unit.pixelsToGetInRange(t) < unit.pixelsToGetInRangeFrom(t, unit.agent.destinationNext()))
-        combat.restrained ||= unit.intent.terminus.exists(p => unit.pixelDistanceTravelling(p) < unit.pixelDistanceTravelling(unit.agent.destinationNext(), p))
-      } else if (combat.techniqueIs(Scavenge)) {
-        if ( ! PotshotBehavior.run(unit, combat)) {
-          unit.agent.act("Snipe")
-          val framesSafe      = unit.matchups.threatSoonest.map(_.framesToLaunchAttack(unit)).getOrElse(Forever())
-          val framesToAttack  = combat.target.map(unit.framesToLaunchAttack).getOrElse(0)
-          if (framesToAttack >= framesSafe || ! AttackIfReadyBehavior.run(unit, combat)) {
-            unit.agent.act("Lurk")
-            unit.agent.escalatePriority(TrafficPriorities.Bump) // Stronger than attackers, less than full retreaters
-            combat.maneuvers.applyForce(Forces.target,   Potential.towardsTarget(unit))
-            combat.maneuvers.applyForce(Forces.threat,   Potential.hardAvoidThreatRange(unit, Math.max(unit.topSpeed * framesToAttack, 64.0)))
-            combat.maneuvers.applyForce(Forces.leaving,  Potential.towards(unit, unit.agent.safety) * combat.ground10)
-            combat.maneuvers.moveForcefully()
-          }
-        }
-      } else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {
+      if (combat.pushThrough) PushBehavior.run(unit, combat)
+      else if (combat.assembling && combat.group.groupUnits.size > 1) AssembleBehavior.run(unit, combat)
+      else if (combat.techniqueIs(Scavenge)) ScavengeBehavior.run(unit, combat)
+      else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {
         if ( ! KiteAwayBehavior.run(unit, combat) && ! ApproachBehavior.run(unit, combat)) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
-      } else {
-        unit.agent.act("Reposition")
-        val urgency01 = Math.max(0.0, (unit.cooldownMaxAirGround - unit.cooldownLeft).toDouble / (unit.cooldownMaxAirGround))
-        // Haven't tried this out; might help with sliding into formation
-        // engageFormation.flatMap(_(unit)).foreach(f => applyForce(Forces.travel, Potential.towards(unit, f)))
-        combat.maneuvers.applyForce(Forces.target,   Potential.towardsTarget(unit) * urgency01)
-        combat.maneuvers.applyForce(Forces.threat,   Potential.softAvoidThreatRange(unit))
-        combat.maneuvers.applyForce(Forces.leaving,  Potential.towards(unit, unit.agent.safety) * combat.ground10 * (1 - urgency01))
-        combat.maneuvers.moveForcefully()
-      }
+      } else RepositionBehavior.run(unit, combat)
     }
     unit.unready
   }
