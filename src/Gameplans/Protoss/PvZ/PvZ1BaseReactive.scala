@@ -198,6 +198,7 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     attack((allIn || canAttackEarly || timingAttack || needToPushLurkers) && ! DefenseWithoutDragoons.shouldDefend(
       With.enemies.exists(_.isZerg),
       units(Protoss.Dragoon),
+      units(Protoss.Zealot),
       With.battles.globalAttack.us.skimStrengthTotal,
       With.battles.globalAttack.enemy.skimStrengthTotal))
     status(allIn || canAttackEarly && ! timingAttack, "EarlyAttack")

@@ -142,6 +142,7 @@ object ZealotIntoGoon extends MacroActions {
       Gameplans.Protoss.PvZ.DefenseWithoutDragoons.shouldDefend(
         With.enemies.exists(_.isZerg),
         units(Protoss.Dragoon),
+        units(Protoss.Zealot),
         With.battles.globalAttack.us.skimStrengthTotal,
         With.battles.globalAttack.enemy.skimStrengthTotal)
     With.blackboard.wantToAttack.set(! tooWeakToFight)
