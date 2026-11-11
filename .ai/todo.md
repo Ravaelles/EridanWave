@@ -5,12 +5,20 @@ Atlantis picks through the ordered ladder in
 `Atlantis/src/atlantis/combat/targeting/TargetLadder.java`
 (chewer, keepCurrent, weakestInRange, sticky, shared, cover, nearest,
 breach) with the tiers in `src-old/.../battle/targeting/generic/
-ATargetingImportant.java`. No `UnitInfo` stub harness exists, so the
-strata themselves stay untested; what we pin instead, per rule:
+ATargetingImportant.java`. `testkit.TestKit` covers geometry, static
+class math and player-free fields; the strata themselves still need
+per-stratum MatchupSnapshot seams. What we pin instead, per rule:
 
 - Pure kernels beside the caller with a `*Suite` next to code
   (`TargetScoring.damageForSize`, `creepColonyBonus` — done).
 - Game-coupled strata stay thin and delegate to the kernels.
+
+## TestKit (DONE 2026-11-11: Mockito test-scope dep + testkit.TestKit
+seedWorld/mockUnit/friendly; TileSuite + CombatUnitSuite green). Boundary:
+geometry, static class math and player-free field math are testable;
+live fields via readProxy need grids->performance->geography (map data),
+and matchups/battles need a world - those stay game-only. Next seam on
+demand: per-stratum MatchupSnapshot data views, never a big rewrite.
 
 ## Atlantis tests to port (owner direction NEXT #184/#185)
 

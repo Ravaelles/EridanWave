@@ -16,8 +16,11 @@ levels. Decisions here outrank local habits; new code follows this file.
 ## 2. Arbitration inside each level: first-claims chain
 
 Ordered behaviors, first `applies` wins (`CorsairBrain`, `ReaverAtlantisBrain`,
-activity early-returns in `chooseActivity`). Order is the contract and reads
-as documentation. This complements §1, it does not compete with it.
+activity early-returns in `chooseActivity`). The generic fighter chain went
+the same way: one `*Behavior` object per decision (`Behaviors/`, each with
+a contract comment), orchestrated by `CombatEngagement.engage` dispatch.
+Order is the contract and reads as documentation. This complements §1,
+it does not compete with it.
 
 ## 3. Override contract (unit over squad)
 
@@ -46,6 +49,10 @@ holds/loads/unloads via `Commander`).
   (`ReaverSituation.read`) so behaviors take facts, not the game.
 - Squad choosers and missions stay untested (game-coupled) but thin;
   their kernels go pure (§4, first bullet).
+- `testkit.TestKit` seeds a game-free world (Mockito units, map dims,
+  frame): geometry, static class math and player-free field math have
+  suites. Live fields need grids, player queries need players, matchups
+  need a world - those stay game-only; next seam on demand.
 
 ## 5. Layer guide (which architecture for what)
 
@@ -67,6 +74,8 @@ Strategy switch with the old code intact and the new behavior default
 
 ## 7. Adding a behavior
 
-New object + one line in the chain + pure kernel and suite where numbers
-decide. No new entries in run-everything lists (`Fight.perform` is
-grandfathered, not a pattern).
+New `*Behavior` object plus its dispatch line, with a contract comment
+(when it fires, what it yields to). Pure kernel and suite where numbers
+decide. Split any method past 15 lines into named submethods. No new
+entries in run-everything lists (`Fight.perform` is grandfathered,
+not a pattern).
