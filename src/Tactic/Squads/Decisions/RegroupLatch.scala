@@ -11,6 +11,11 @@ package Tactic.Squads.Decisions
  *
  * Pure decisions on numbers so they stay unit-testable without a game;
  * SquadAttack supplies the game-aware seam (per-unit sim verdicts).
+ *
+ * No verdicts means no battle, and no battle means nothing argues for
+ * retreat: the latch releases to Engaged instead of freezing a stale
+ * Regrouping forever. Contact re-votes instantly if the advance meets
+ * resistance, so an old scare never pins the army down.
  */
 object RegroupLatch {
 
@@ -30,7 +35,7 @@ object RegroupLatch {
   val minimumCoverage: Double = 0.5
 
   def nextStance(current: Stance, fightingFraction: Double, coverageFraction: Double): Stance = {
-    if (coverageFraction < minimumCoverage) return current
+    if (coverageFraction < minimumCoverage) return Engaged
 
     current match {
       case Engaged    => if (fightingFraction < startRegroupBelow) Regrouping else Engaged

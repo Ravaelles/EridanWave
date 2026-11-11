@@ -28,13 +28,13 @@ class RegroupLatchSuite extends AnyFunSuite {
     assert(RegroupLatch.nextStance(Regrouping, fightingFraction = RegroupLatch.stopRegroupAbove, coverageFraction = fullCoverage) == Regrouping)
   }
 
-  test("thin sim coverage never flips either stance") {
+  test("thin sim coverage releases to Engaged") {
     assert(RegroupLatch.nextStance(Engaged, fightingFraction = 0.0, coverageFraction = 0.2) == Engaged)
-    assert(RegroupLatch.nextStance(Regrouping, fightingFraction = 1.0, coverageFraction = 0.2) == Regrouping)
+    assert(RegroupLatch.nextStance(Regrouping, fightingFraction = 1.0, coverageFraction = 0.2) == Engaged)
   }
 
-  test("no sim data at all keeps the stance") {
+  test("no sim data at all releases a stale regroup") {
     assert(RegroupLatch.nextStance(Engaged, fightingFraction = 0.0, coverageFraction = 0.0) == Engaged)
-    assert(RegroupLatch.nextStance(Regrouping, fightingFraction = 0.0, coverageFraction = 0.0) == Regrouping)
+    assert(RegroupLatch.nextStance(Regrouping, fightingFraction = 0.0, coverageFraction = 0.0) == Engaged)
   }
 }
