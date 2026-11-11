@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss
 
+import Lifecycle.With
 import Micro.Actions.Action
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -22,7 +23,7 @@ object BeDecoyZealot extends Action {
 
     val meleeFoes = unit.matchups.threats.count(t =>
       t.unitClass.melee && t.pixelDistanceEdge(unit) < radiusPixels)
-    if (ZealotDecoy.shouldDecoy(unit.shieldPoints, rangedAllies, meleeFoes)) {
+    if (ZealotDecoy.shouldDecoy(unit.shieldPoints, rangedAllies, meleeFoes, With.units.ours.count(_.unitClass.isWarrior))) {
       unit.agent.fightReason = "Decoy"
       unit.agent.shouldFight = false
     }

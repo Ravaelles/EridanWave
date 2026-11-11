@@ -5,7 +5,8 @@ package Micro.Actions.Protoss
  * standing with ranged allies against melee cannot win the fight, but it
  * can win the battle by fleeing instead - drawing the pack off the
  * Dragoons while they shoot unattacked. A dead Zealot helps nobody, so
- * below the shield line it withdraws to survive, not to duel.
+ * below the shield line it withdraws to survive, not to duel. Small armies
+ * never decoy: below ten combat units every body must deal damage.
  */
 object ZealotDecoy {
 
@@ -15,6 +16,9 @@ object ZealotDecoy {
   /** Allies and foes inside this range, in tiles, count for the decoy. */
   val decoyDistTiles: Double = 6.0
 
-  def shouldDecoy(shields: Int, rangedAlliesNear: Int, meleeFoesNear: Int): Boolean =
-    shields < lowShields && rangedAlliesNear >= 1 && meleeFoesNear >= 1
+  /** Below this many combat units in the army nobody decoys. */
+  val minCombatUnits: Int = 10
+
+  def shouldDecoy(shields: Int, rangedAlliesNear: Int, meleeFoesNear: Int, combatUnits: Int): Boolean =
+    combatUnits >= minCombatUnits && shields < lowShields && rangedAlliesNear >= 1 && meleeFoesNear >= 1
 }
