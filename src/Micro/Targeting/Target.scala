@@ -4,6 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Targeting.FiltersRequired.{TargetFilterAntiAir, TargetFilterCanAttack, TargetFilterEnemy, TargetFilterFocus, TargetFilterMissing, TargetFilterReaver, TargetFilterRush, TargetFilterScourge, TargetFilterStayCloaked, TargetFilterType, TargetFilterVsTank, TargetFilterVulture}
 import Micro.Targeting.FiltersSituational.TargetFilterWhitelist
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 
@@ -81,6 +82,36 @@ object Target {
       if (output.isDefined) return output
 
       output = bestInStratum(attacker, matchups, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = true,  requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+    }
+
+    if (Protoss.DarkTemplar(attacker)) {
+      // Dark Templar doctrine: whatever is hittable goes first, then sieged
+      // tanks inside 6 tiles, then unsieged ones. Ranked by score inside each
+      // stratum, assigned before matchups, like the rest of the ladder.
+      def hittable(target: UnitInfo): Boolean =
+        DarkTemplarTanks.hittable(attacker.tileDistanceEdge(target))
+      def siegedNear(target: UnitInfo): Boolean =
+        Terran.SiegeTankSieged(target) && DarkTemplarTanks.siegedNear(attacker.tileDistanceEdge(target))
+      def unsiegedNear(target: UnitInfo): Boolean =
+        Terran.SiegeTankUnsieged(target) && DarkTemplarTanks.unsiegedNear(attacker.tileDistanceEdge(target))
+
+      output = bestInStratum(attacker, assigned.view.filter(hittable), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(hittable), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, assigned.view.filter(siegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(siegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, assigned.view.filter(unsiegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(unsiegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
       if (output.isDefined) return output
     }
 
