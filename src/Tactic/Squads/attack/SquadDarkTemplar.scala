@@ -49,13 +49,15 @@ class SquadDarkTemplar extends Squad {
       if (bases.isEmpty) return
     }
 
-    // The first Templar always raids; past one, a single bodyguard stays
-    // with the main army while the rest raid.
+    // The first Templar always raids; past one, a grown army keeps a
+    // single escort while the rest raid (smaller armies raid with all).
     // Sized from our own lock view: a second DT lock would leave its own.
     // Preference refreshes here, not at construction: enemyHome moves.
     lock.setPreference(PreferClose(With.scouting.enemyHome.center))
     lock.setCounter(CountEverything)
-    val raiders = DarkTemplarSplit.raidersToTake(lock.inquire().map(_.size).getOrElse(0))
+    val raiders = DarkTemplarSplit.raidersToTake(
+      lock.inquire().map(_.size).getOrElse(0),
+      With.units.ours.count(_.unitClass.isWarrior))
     lock.setCounter(CountUpTo(raiders))
     lock.acquire()
   }

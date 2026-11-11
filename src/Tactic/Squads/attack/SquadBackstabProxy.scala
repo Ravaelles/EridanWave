@@ -11,7 +11,7 @@ import Tactic.Squads.Squads
 
 class SquadBackstabProxy extends Squad {
 
-  lock.matcher = IsAny(Terran.Vulture, Protoss.Zealot, Protoss.DarkTemplar, Zerg.Zergling, Zerg.Mutalisk)
+  lock.matcher = IsAny(Terran.Vulture, Protoss.Zealot, Zerg.Zergling, Zerg.Mutalisk)
   lock.counter = CountUpTo(2)
 
   override def launch(): Unit = {

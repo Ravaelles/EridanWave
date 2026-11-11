@@ -1,6 +1,6 @@
 package Utilities.UnitFilters
 
-import ProxyBwapi.Races.Zerg
+import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.UnitInfo
 
 object IsRecruitableForCombat extends UnitFilter {
@@ -8,6 +8,7 @@ object IsRecruitableForCombat extends UnitFilter {
     unit.unitClass.orderable
     && ! unit.unitClass.isWorker
     && ! Zerg.Larva(unit)
+    && ! Protoss.DarkTemplar(unit)
     && unit.remainingCompletionFrames < 48
     && (unit.unitClass.canMove || unit.unitClass.isTank || (unit.unitClass.isBuilding && unit.flying)))
 }

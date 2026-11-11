@@ -30,6 +30,7 @@ import _root_.Tactic.Squads.Qualities.Qualities
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import Tactic.Squads.attack.SquadAttack
 import Tactic.Squads.attack.SquadBackstabProxy
+import Tactic.Squads.attack.DarkTemplarSplit
 import Tactic.Squads.attack.SquadDarkTemplar
 import Tactic.Squads.attack.SquadMindControl
 import Tactic.Squads.defense.BaseGuardPost
@@ -133,6 +134,7 @@ final class Tactician extends TimedTask {
     staffBaseGuards(freelancers)
     enforceClusterSplit()
     fillAttackSquad(freelancers, squadsDefending)
+    attachLoneDarkTemplar()
     pullDefenseWorkers(squadsDefending)
     attachSCVs()
     publishSquadBoards()
@@ -240,11 +242,11 @@ final class Tactician extends TimedTask {
       Assignment.unitsPick(
         freelancers,
         Seq(baseGuards),
-        filter = (f, s) => f.unitClass.attacksAir && f.unitClass.attacksGround && s.unitsNext.size < wanted)
+        filter = (f, s) => Protoss.Dragoon(f) && s.unitsNext.size < wanted)
       Assignment.unitsPick(
         freelancers,
         Seq(baseGuards),
-        filter = (f, s) => f.unitClass.isWarrior && s.unitsNext.size < wanted)
+        filter = (f, s) => Protoss.Zealot(f) && s.unitsNext.size < wanted)
     }
   }
 
@@ -273,6 +275,22 @@ final class Tactician extends TimedTask {
         trimmed = true
       }
     }
+  }
+
+  // Lone Templar escort: the only Dark Templar a regular squad may ever
+  // hold. A grown army shelters exactly one; the raiders keep the rest,
+  // and small armies leave every blade raiding, so none sits squadless.
+  private def attachLoneDarkTemplar(): Unit = {
+    if (attackSquad.units.exists(_.isAny(Protoss.DarkTemplar))) return
+
+    val armyWarriors = With.units.ours.count(_.unitClass.isWarrior)
+    if (armyWarriors < DarkTemplarSplit.armyForEscort) return
+
+    Maff.minBy(With.recruiter.available.filter(_.isAny(Protoss.DarkTemplar)))(_.frameDiscovered)
+      .foreach(dt => {
+        attackSquad.addUnit(dt)
+        With.recruiter.lockTo(attackSquad.lock, dt)
+      })
   }
 
   private def fillAttackSquad(freelancers: ListBuffer[FriendlyUnitInfo], squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Unit = {

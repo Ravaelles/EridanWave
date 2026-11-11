@@ -3,10 +3,11 @@ package Tactic.Squads.defense
 import Information.Geography.Chokes
 import Lifecycle.With
 import Mathematics.Points.Pixel
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.UnitInfo
 import Tactic.Squads.Squad
 import Tactic.Squads.SquadAutomation
-import Utilities.UnitFilters.IsWarrior
+import Utilities.UnitFilters.IsAny
 
 /**
  * The standing guard's post: enemies at any home base first, the natural
@@ -34,7 +35,8 @@ object BaseGuardPost {
  */
 class SquadBaseGuards extends Squad {
 
-  lock.setMatcher(IsWarrior)
+  // Standing guard, never a specialist: Dragoons and Zealots only.
+  lock.setMatcher(IsAny(Protoss.Dragoon, Protoss.Zealot))
 
   override def launch(): Unit = {} // Staffed externally by Tactician
 

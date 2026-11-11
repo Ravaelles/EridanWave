@@ -15,7 +15,7 @@ import Tactic.Squads.Squads
 class SquadCatchDTs extends Squad {
 
   private lazy val lockWarriors: LockUnits = new LockUnits(this)
-    .setMatcher(IsAll(IsWarrior, _.canAttackGround))
+    .setMatcher(IsAll(IsWarrior, _.canAttackGround, u => ! Protoss.DarkTemplar(u)))
     .setCounter(CountUpTo(2));
 
   def launch(): Unit = {
