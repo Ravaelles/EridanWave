@@ -17,6 +17,16 @@ object BeShuttle extends Action {
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Shuttle(unit)
 
+  // Wound-scaled threat margin: a fresh Shuttle skates what it can outrun,
+  // a bleeding one runs early instead of letting Hydralisks close in.
+  // Replaces the flat withinSafetyMargin at the retreat gate below.
+  private def unsafe(shuttle: FriendlyUnitInfo): Boolean = {
+    val matchups = shuttle.matchups
+    matchups.threats.nonEmpty && matchups.pixelsEntangled > -ShuttleFleeGeometry.safetyMarginPixels(
+      shuttle.woundPercent(),
+      shuttle.flying && shuttle.topSpeed > matchups.groupVs.maxAttackerSpeedVsAir)
+  }
+
   trait QuestType extends SimpleString
   object Deliver  extends QuestType
   object Hover    extends QuestType
@@ -94,7 +104,7 @@ object BeShuttle extends Action {
     shuttle.agent.decision.set(passenger.pixel)
     if (shuttle.pixelDistanceCenter(passenger) <= 384) {
       Commander.rightClick(shuttle, passenger)
-    } else if (shuttle.matchups.threats.nonEmpty && !shuttle.matchups.withinSafetyMargin) {
+    } else if (unsafe(shuttle)) {
       Retreat.delegate(shuttle)
     } else {
       MicroPathing.tryMovingAlongTilePath(shuttle, MicroPathing.getThreatAwarePath(shuttle, preferHome = false, to = Some(passenger.tile)))

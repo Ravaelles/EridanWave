@@ -34,4 +34,14 @@ class ShuttleFleeGeometrySuite extends AnyFunSuite {
     val rear = ShuttleFleeGeometry.rearOfCluster(members, base)
     assert(rear.x < 960 && rear.y == 0)
   }
+
+  test("fresh Shuttles keep the flat margin") {
+    assert(ShuttleFleeGeometry.safetyMarginPixels(0.0, fasterFlyer = true) == 64)
+    assert(ShuttleFleeGeometry.safetyMarginPixels(0.0, fasterFlyer = false) == 160)
+  }
+
+  test("wounds scale the margin tenfold") {
+    assert(ShuttleFleeGeometry.safetyMarginPixels(0.1, fasterFlyer = true) == 128)
+    assert(ShuttleFleeGeometry.safetyMarginPixels(1.0, fasterFlyer = false) == 1760)
+  }
 }
