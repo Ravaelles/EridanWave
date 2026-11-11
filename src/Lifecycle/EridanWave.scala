@@ -24,6 +24,7 @@ class EridanWave extends DefaultBWListener {
         Tuning.Tuning.install()
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         Debugging.ErrorLedger.reset()
+        Lifecycle.HitCounter.reset()
         Debugging.CherryVis.CherryVis.initialize()
         With.history.onStart()
         With.units.onStart()
@@ -42,6 +43,7 @@ class EridanWave extends DefaultBWListener {
         unpauseIfPaused()
         With.latency.onFrame()
         With.units.onFrame()
+        Lifecycle.HitCounter.onFrame(With.units.ours)
         // Parked while paused: the engine is frozen by togglePause, but
         // onFrame keeps arriving, so tracking, chat commands, camera and
         // visualization keep running and the overlay never vanishes.
@@ -122,7 +124,8 @@ class EridanWave extends DefaultBWListener {
         Information.Battles.KillLedger.killed,
         Information.Battles.KillLedger.lost,
         Information.Battles.KillLedger.killedResources,
-        Information.Battles.KillLedger.lostResources))
+        Information.Battles.KillLedger.lostResources,
+        Lifecycle.HitCounter.total))
       Debugging.CherryVis.CherryVis.finish(isWinner)
       // Tuning score row (fixed-name + dated copy) when a strategy is active.
       Tuning.Tuning.finish(isWinner)

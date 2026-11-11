@@ -103,6 +103,7 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
   }
 
   @inline final def aliveAndComplete  : Boolean = alive && complete
+  @inline final def underAttack        : Boolean = alive && bwapiUnit.isUnderAttack
   @inline final def openForBusiness   : Boolean = complete || isAny(Zerg.Lair, Zerg.Hive, Zerg.GreaterSpire)
 
   @inline final def energyMax     : Int = unitClass.maxEnergy // TODO: Count effects of upgrades

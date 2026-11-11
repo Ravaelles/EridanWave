@@ -17,12 +17,13 @@ object GameSummary {
     "#####################################"
   }
 
-  def details(frames: Int, killed: Int, lost: Int, killedResources: Int, lostResources: Int): String = {
+  def details(frames: Int, killed: Int, lost: Int, killedResources: Int, lostResources: Int, timesHit: Int): String = {
     val seconds = frames / 24
     val balance = killedResources - lostResources
     "### Total time: " + seconds + " seconds. ########\n" +
     "### Units killed/lost: " + killed + "/" + lost + " ########\n" +
-    "### Resource killed/lost: " + (if (balance > 0) "+" + balance else balance.toString) + " #####" +
+    "### Resource killed/lost: " + (if (balance > 0) "+" + balance else balance.toString) + " #####\n" +
+    "### Times hit: " + timesHit + " ########\n" +
     "##########################################"
   }
 }
