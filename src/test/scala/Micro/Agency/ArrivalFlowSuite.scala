@@ -6,6 +6,7 @@ class ArrivalFlowSuite extends AnyFunSuite {
 
   test("flows past a waypoint short of a further final") {
     assert(ArrivalFlow.pushPast(distToTargetTiles = 1.0, distToFinalTiles = 10.0, aligned = true) == ArrivalFlow.overshootTiles)
+    assert(ArrivalFlow.pushPast(distToTargetTiles = 3.0, distToFinalTiles = 90.0, aligned = true) == ArrivalFlow.overshootTiles)
   }
 
   test("true arrivals brake normally") {
