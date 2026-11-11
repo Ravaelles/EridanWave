@@ -27,7 +27,7 @@ object CorsairDanceToOverlord {
     if ( ! Protoss.Corsair(unit)) return false
 
     duelOverlord(squad, unit).exists(overlord => {
-      if (shouldDance(unit.cooldownLeft, unit.pixelDistanceCenter(overlord.pixel) / 32.0, unit.woundPercent())) {
+      if (shouldDance(unit.cooldownLeft, unit.tileDistanceCenter(overlord.pixel), unit.woundPercent())) {
         unit.intend(squad).setTargets(Seq(overlord)).setTerminus(unit.pixel)
       } else {
         unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)

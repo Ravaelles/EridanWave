@@ -18,20 +18,20 @@ object RevealExpansionBlockedWithHiddenUnit {
   /** Enemies this close to the site count as blocking presence. */
   val blockerTiles: Double = 4.0
 
-  def lurkerThreatensMain(distPixels: Double): Boolean =
-    distPixels < lurkerNearMainTiles * 32
+  def lurkerThreatensMain(distTiles: Double): Boolean =
+    distTiles < lurkerNearMainTiles
 
-  def siteBlocked(distPixels: Double): Boolean =
-    distPixels < blockerTiles * 32
+  def siteBlocked(distTiles: Double): Boolean =
+    distTiles < blockerTiles
 
   /** Planned base with enemy presence, if any. */
   def siteToReveal(): Option[Base] =
     With.geography.bases.find(b =>
       b.plannedExpoRecently && With.units.enemy.exists(e =>
-        ! e.flying && siteBlocked(e.pixelDistanceCenter(b.heart.center))))
+        ! e.flying && siteBlocked(e.tileDistanceCenter(b.heart.center))))
 
   /** The first eye may go even when it's the only one. */
   def mayUseFirstEye: Boolean =
     ! With.units.enemy.exists(e => Zerg.Lurker(e) &&
-      lurkerThreatensMain(e.pixelDistanceCenter(With.geography.ourMain.heart.center)))
+      lurkerThreatensMain(e.tileDistanceCenter(With.geography.ourMain.heart.center)))
 }

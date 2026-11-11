@@ -114,7 +114,7 @@ object SquadAutomation {
       // March dressing: a leader running ahead of the pack holds position so
       // the line arrives together instead of trickling in. Waiting zeroes the
       // stuck counter (tryingToMove is false), so Unstick stays out of it.
-      lazy val waiting = squad.fightConsensus && MarchDress.shouldWait(unit.pixelDistanceCenter(squad.vicinity) / 32.0, meanDistToGoalTiles)
+      lazy val waiting = squad.fightConsensus && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
       lazy val finalTerminus = ?(waiting, unit.pixel, finalMarch)
       Debugging.CherryVis.CherryVis.decision(unit.id,
         ?(squad.fightConsensus, ?(waiting, "Waiting for pack", ?(rallying, "Rallying to pack centroid", "Marching to formation slot")), "Returning to slot"))

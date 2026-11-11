@@ -27,7 +27,7 @@ object CorsairHuntKnownOverlords {
 
   private def covered(overlord: UnitInfo): Boolean =
     With.units.enemy.exists(e => e.likelyStillThere && e.canAttackAir
-      && e.pixelDistanceCenter(overlord.pixel) < AaCoverTiles * 32)
+      && e.tileDistanceCenter(overlord.pixel) < AaCoverTiles)
 
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
     if ( ! Protoss.Corsair(unit)) return false

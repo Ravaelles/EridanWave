@@ -33,7 +33,7 @@ object BeDetector extends Action {
     // Engine edge distance is pixels; the threshold is tiles (rule 10).
     Maff.minBy(With.units.ours.view.filter(u => u.unitClass == unit.unitClass && u.id < unit.id))(_.pixelDistanceEdge(unit))
       .foreach(older => {
-        if (DetectorSpread.shouldSpread(unit.id, older.id, older.pixelDistanceEdge(unit) / 32.0)) {
+        if (DetectorSpread.shouldSpread(unit.id, older.id, older.tileDistanceEdge(unit))) {
           unit.agent.destinationNext.set(DetectorSpread.awayFrom(unit.pixel, older.pixel))
           Commander.move(unit)
         }

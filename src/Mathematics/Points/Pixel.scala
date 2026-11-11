@@ -81,6 +81,9 @@ final case class Pixel(argX: Int, argY: Int) extends AbstractPoint(argX, argY) {
   @inline def pixelDistance(other: Pixel): Double = {
     Maff.broodWarDistance(x, y, other.x, other.y)
   }
+  @inline def tileDistance(other: Pixel): Double = {
+    pixelDistance(other) * Maff.inv32
+  }
   @inline def pixelDistanceSquared(other: Pixel): Int = {
     Maff.squared(x - other.x) + Maff.squared(y - other.y)
   }

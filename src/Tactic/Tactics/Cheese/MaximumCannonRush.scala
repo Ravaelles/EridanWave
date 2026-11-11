@@ -152,7 +152,7 @@ class MaximumCannonRush extends Tactic {
       && Spiral(8).map(tile.add).exists(t =>
         goal.zone.tiles.contains(t)
         && legal(t)
-        && t.center.pixelDistance(tile.add(1, 1).topLeftPixel) <= 5 * 32))
+        && t.center.tileDistance(tile.add(1, 1).topLeftPixel) <= 5))
 
     val anchorCannon = ourCannons.find(u => acceptableAnchor(u.tileTopLeft))
 

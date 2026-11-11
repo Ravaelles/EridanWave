@@ -131,7 +131,7 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
     // hold no Observer, and latches eyes demand for the gameplan.
     if (buildingClass.isTownHall && trainee.isEmpty && foundation.isDefined) {
       val arrived = builder.exists(b =>
-        b.pixelDistanceCenter(foundation.get.tile.center) <= ExpoBuildShift.arriveDistTiles * 32)
+        b.tileDistanceCenter(foundation.get.tile.center) <= ExpoBuildShift.arriveDistTiles)
       stallFrames = ?(arrived && currencyLock.satisfied, stallFrames + 1, 0)
       if (ExpoBuildShift.stalled(stallFrames) && With.self.isProtoss &&
         ! With.units.existsOurs(Protoss.Observer)) {

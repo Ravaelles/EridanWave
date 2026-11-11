@@ -255,7 +255,7 @@ object CommanderMove {
         // into every hop. Backsteps and true arrivals keep braking.
         val finalPx: Pixel = unit.agent.destinationFinal()
         val aligned = Math.abs(Maff.normalizePiToPi(unit.pixel.radiansTo(finalPx) - unit.pixel.radiansTo(to))) <= Math.PI / 4
-        val flowPush = ArrivalFlow.pushPast(unit.pixelDistanceCenter(to) / 32.0, unit.pixelDistanceCenter(finalPx) / 32.0, aligned)
+        val flowPush = ArrivalFlow.pushPast(unit.tileDistanceCenter(to), unit.tileDistanceCenter(finalPx), aligned)
         val goal = if (flowPush > 0 && unit.order == Orders.Move) unit.pixel.project(to, unit.pixelDistanceCenter(to) + flowPush * 32).walkablePixel else to
         val alreadyMovingThere = unit.order == Orders.Move && unit.orderTargetPixel.exists(_.pixelDistance(goal) < tolerancePixels)
 

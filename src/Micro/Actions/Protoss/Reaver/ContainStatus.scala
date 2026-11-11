@@ -18,7 +18,7 @@ object ContainStatus {
 
     val statics = AliveEnemies.get().count(e =>
       e.unitClass.isStaticDefense && ! e.flying && e.likelyStillThere &&
-        e.pixelDistanceEdge(mainCluster.centroidGround) / 32.0 < ReaverContain.staticsDistTiles)
+        e.tileDistanceEdge(mainCluster.centroidGround) < ReaverContain.staticsDistTiles)
     ReaverContain.containing(warriors, statics)
   }
 

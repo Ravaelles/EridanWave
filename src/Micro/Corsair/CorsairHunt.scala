@@ -29,7 +29,7 @@ object CorsairHunt {
     if ( ! Protoss.Corsair(unit) || With.framesSince(unit.lastFrameTakingDamage) <= 3 * 24) return false
 
     huntTarget(unit).exists(overlord => {
-      if (unit.cooldownLeft >= 10 && unit.pixelDistanceCenter(overlord.pixel) >= 5 * 32) {
+      if (unit.cooldownLeft >= 10 && unit.tileDistanceCenter(overlord.pixel) >= 5) {
         unit.intend(squad).setTerminus(overlord.pixel)
       } else {
         unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)

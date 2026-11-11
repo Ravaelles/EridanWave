@@ -255,10 +255,10 @@ object TargetScoring {
     // Lone-ling lure: a single Zergling far from our buildings with
     // enemy buildings to hit is bait, not a target. Sink it below
     // buildings and fighters; alone it still wins and gets killed.
-    output += loneLingLurePenalty(
+    output += loneLingScatteredOnMapLurePenalty(
       Zerg.Zergling(target),
-      With.units.enemy.exists(e => e != target && Zerg.Zergling(e) && e.pixelDistanceEdge(target) < loneLingPackTiles * 32),
-      Maff.min(With.units.ours.view.filter(_.unitClass.isBuilding).map(_.pixelDistanceEdge(target))).getOrElse(Double.PositiveInfinity) / 32.0 > loneLingHomeTiles,
+      With.units.enemy.exists(e => e != target && Zerg.Zergling(e) && e.tileDistanceEdge(target) < loneLingPackTiles),
+      Maff.min(With.units.ours.view.filter(_.unitClass.isBuilding).map(_.tileDistanceEdge(target))).getOrElse(Double.PositiveInfinity) > loneLingHomeTiles,
       With.units.enemy.exists(_.unitClass.isBuilding))
 
     // Detector bonus
@@ -307,7 +307,7 @@ object TargetScoring {
   val loneLingPackTiles: Double = 8.0
 
   /** Past this distance from our nearest building a lone Ling is bait, in tiles. */
-  val loneLingHomeTiles: Double = 15.0
+  val loneLingHomeTiles: Double = 20.0
 
   /**
    * Lone-ling lure veto (pure numbers for the suite): a solitary Zergling
@@ -316,6 +316,6 @@ object TargetScoring {
    * picker takes the max with no positivity floor, so a truly alone
    * Ling still gets killed instead of idling the army.
    */
-  def loneLingLurePenalty(isLing: Boolean, packNear: Boolean, farFromHome: Boolean, betterTargets: Boolean): Double =
+  def loneLingScatteredOnMapLurePenalty(isLing: Boolean, packNear: Boolean, farFromHome: Boolean, betterTargets: Boolean): Double =
     if (isLing && ! packNear && farFromHome && betterTargets) -10000.0 else 0.0
 }

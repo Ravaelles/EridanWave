@@ -65,13 +65,13 @@ object ReaverSituation {
     val targetNearest = unit.matchups.targetNearest
     val wound         = unit.woundPercent()
     val threatenedNow = threatsInRange.nonEmpty
-    val pressuredCloseNow = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.pixelDistanceEdge(t) < 4 * 32)
+    val pressuredCloseNow = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.tileDistanceEdge(t) < 4)
 
     val isTerranNow = With.enemies.exists(_.isTerran)
     val containingNow = ContainStatus.now()
     val combatNearNow = AliveEnemies.get().exists(e =>
       e.unitClass.isCombatBuilding && ! e.flying && e.likelyStillThere &&
-        e.pixelDistanceEdge(unit) / 32.0 < ReaverContain.fightDistTiles)
+        e.tileDistanceEdge(unit) < ReaverContain.fightDistTiles)
     // Unload veto: ranged ground-hitters covering the landing spot inside
     // their range plus margin. Mobile guns only; statics vote elsewhere.
     val landingAt = unit.transport.map(_.pixel).getOrElse(unit.pixel)
@@ -113,8 +113,8 @@ object ReaverSituation {
       outranged       = threatsInRange.exists(t => ! t.flying && t.pixelRangeAgainst(unit) < unit.pixelRangeAgainst(t)),
       shotless        = ! (unit.scarabs > 0 && ! unit.hasActiveScarab && unit.matchups.targetsInRange.exists(unit.hasScarabPathTo(_, unit.pixel))),
       pressuredClose  = pressuredCloseNow,
-      tankAiming      = threats.exists(t => Terran.SiegeTankSieged(t) && unit.pixelDistanceEdge(t) < 10 * 32),
-      holdTarget      = targetNearest.exists(t => ! t.flying && unit.canAttack(t) && unit.pixelDistanceEdge(t) < 7.25 * 32),
+      tankAiming      = threats.exists(t => Terran.SiegeTankSieged(t) && unit.tileDistanceEdge(t) < 10),
+      holdTarget      = targetNearest.exists(t => ! t.flying && unit.canAttack(t) && unit.tileDistanceEdge(t) < 7.25),
       targetPath      = targetNearest.exists(unit.hasScarabPathTo(_, unit.pixel)),
       toAttackPath    = unit.agent.toAttack.orElse(targetNearest).exists(unit.hasScarabPathTo(_, unit.pixel)),
       braveDrop       = unit.transport.exists(shuttle => {
@@ -122,7 +122,7 @@ object ReaverSituation {
         // shuttle.matchups.targets is empty for an unarmed hull, so guns
         // aimed at the Shuttle come off the single registry instead.
         // Scourge rides along: alive and typed, weapon data or not.
-        val distTiles = AliveEnemies.get().map(foe => (foe, foe.pixelDistanceEdge(shuttle) / 32.0))
+        val distTiles = AliveEnemies.get().map(foe => (foe, foe.tileDistanceEdge(shuttle)))
         val foesClose = distTiles.count(_._2 < ReaverDropBravery.closeDist)
         val ranged = distTiles.filter(_._2 < ReaverDropBravery.rangedDist).filter({ case (foe, _) =>
           ReaverDropBravery.isRangedThreat(
@@ -130,10 +130,10 @@ object ReaverSituation {
         val rangedDps = ranged.map({ case (foe, _) => foe.dpfAir }).sum
         val tanks = AliveEnemies.get().count(t =>
           t.isAny(Terran.SiegeTankUnsieged, Terran.SiegeTankSieged) && t.likelyStillThere &&
-            t.pixelDistanceEdge(shuttle) / 32.0 < ReaverDropBravery.tankTheaterTiles)
+            t.tileDistanceEdge(shuttle) < ReaverDropBravery.tankTheaterTiles)
         val nearStatics = AliveEnemies.get().exists(e =>
           e.unitClass.isStaticDefense && ! e.flying && e.likelyStillThere &&
-            e.pixelDistanceEdge(shuttle) / 32.0 < ReaverDropBravery.staticDefenseDist)
+            e.tileDistanceEdge(shuttle) < ReaverDropBravery.staticDefenseDist)
         // Melee inside three tiles chews a dropped Reaver on the spot.
         val meleeNear = distTiles.count({ case (foe, dist) => dist < ReaverDropBravery.closeMeleeDist &&
           (foe.unitClass.melee || Zerg.Scourge(foe)) })
@@ -150,6 +150,6 @@ object ReaverSituation {
           shieldsUp && ! nearStatics && tankGate
         ringsOk || staleOk
       }),
-      unloadSpotSafe  = ! threats.exists(t => ! t.flying && unit.pixelDistanceEdge(t) < ReaverUnloadSafety.radiusTiles(wound) * 32))
+      unloadSpotSafe  = ! threats.exists(t => ! t.flying && unit.tileDistanceEdge(t) < ReaverUnloadSafety.radiusTiles(wound)))
   }
 }

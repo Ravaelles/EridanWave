@@ -176,7 +176,7 @@ class SquadDefendBase(base: Base) extends Squad {
     }
 
     val wallGaps        = wallGapsFor(units)
-    val blockZerglings  = With.enemies.exists(_.isZerg) && ! enemies.exists(_.isAny(Zerg.Hydralisk, Zerg.Lurker)) && guardChoke.exists(c => base.metro.ourUnits.exists(u => u.unitClass.isStaticDefense && u.pixelDistanceEdge(c.pixelCenter) < 8 * 32))
+    val blockZerglings  = With.enemies.exists(_.isZerg) && ! enemies.exists(_.isAny(Zerg.Hydralisk, Zerg.Lurker)) && guardChoke.exists(c => base.metro.ourUnits.exists(u => u.unitClass.isStaticDefense && u.tileDistanceEdge(c.pixelCenter) < 8))
     val canWithdraw     = defense.withdrawingUnits >= Math.max(2, 0.25 * units.size) && formationWithdraw.placements.size > units.size * .75
     val canPlugWall     = wallGaps.nonEmpty
     val canPlugEdge     = edgeToPlug().isDefined

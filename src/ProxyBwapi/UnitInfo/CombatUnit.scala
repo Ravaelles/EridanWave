@@ -128,6 +128,10 @@ trait CombatUnit {
   @inline final def pixelDistanceEdge             (boxStart: Pixel, boxEnd: Pixel)                    : Double  = Maff.broodWarDistanceBox(pixelStart, pixelEndExclusive, boxStart, boxEnd)
   @inline final def pixelDistanceEdge             (destination: Pixel)                                : Double  = Maff.broodWarDistanceBox(pixelStart, pixelEndExclusive, destination, destination)
   @inline final def pixelDistanceEdge             (other: CombatUnit)                                 : Double  = pixelDistanceEdge(other.pixelStart, other.pixelEndExclusive)
+  @inline final def tileDistanceEdge              (other: CombatUnit)                                 : Double  = pixelDistanceEdge(other) * Maff.inv32
+  @inline final def tileDistanceEdge              (destination: Pixel)                                : Double  = pixelDistanceEdge(destination) * Maff.inv32
+  @inline final def tileDistanceCenter            (other: CombatUnit)                                 : Double  = pixelDistanceCenter(other) * Maff.inv32
+  @inline final def tileDistanceCenter            (to: Pixel)                                         : Double  = pixelDistanceCenter(to) * Maff.inv32
   @inline final def pixelDistanceEdge             (other: CombatUnit,              otherAt: Pixel)    : Double  = pixelDistanceEdge(otherAt.subtract(other.unitClass.dimensionLeft, other.unitClass.dimensionUp), otherAt.add(other.unitClass.dimensionRightExclusive, other.unitClass.dimensionDownExclusive))
   @inline final def pixelDistanceEdge             (other: CombatUnit, usAt: Pixel, otherAt: Pixel)    : Double  = Maff.broodWarDistanceBox(usAt.subtract(unitClass.dimensionLeft, unitClass.dimensionUp), usAt.add(unitClass.dimensionRightExclusive, unitClass.dimensionDownExclusive), otherAt.subtract(other.unitClass.dimensionLeft, other.unitClass.dimensionUp), otherAt.add(other.unitClass.dimensionRightExclusive, other.unitClass.dimensionDownExclusive))
   @inline final def pixelDistanceEdgeFrom         (other: CombatUnit, usAt: Pixel)                    : Double  = other.pixelDistanceEdge(this, usAt)

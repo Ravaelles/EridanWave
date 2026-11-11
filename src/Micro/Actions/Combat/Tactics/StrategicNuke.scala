@@ -15,7 +15,7 @@ object StrategicNuke extends Action {
     unit.agent.decision.set(target)
     
     lazy val haveANuke = With.units.existsOurs(IsAll(Terran.NuclearMissile, IsComplete))
-    if (unit.pixelDistanceCenter(target) < 11.0 * 32.0 && haveANuke) {
+    if (unit.tileDistanceCenter(target) < 11.0 && haveANuke) {
       Commander.useTechOnPixel(unit, Terran.NuclearStrike, target)
     }
   }

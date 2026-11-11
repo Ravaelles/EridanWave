@@ -85,7 +85,7 @@ class MissionHistory extends MacroCounting {
         if (mission.launched && mission.units.exists(_.alive)) {
           s.endFrame = With.frame
           if (workers.nonEmpty && mission.units.exists(u => u.alive &&
-            workers.exists(w => MissionHarass.denying(u.pixelDistanceEdge(w) / 32.0)))) {
+            workers.exists(w => MissionHarass.denying(u.tileDistanceEdge(w))))) {
             s.harassFrames += 1
           }
         }

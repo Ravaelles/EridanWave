@@ -61,7 +61,7 @@ object FightOrFlee extends Action {
     cloaked     = u.effectivelyCloaked && u.isAny(Terran.Wraith, Protoss.DarkTemplar) && ( ! Terran.Wraith(u) || u.energy > 10),
     cloakable   = Terran.Wraith(u) && Terran.WraithCloak() && u.energy >= 50 && u.matchups.groupVs.detectors.isEmpty,
     lurking     = Zerg.Lurker(u) && u.matchups.groupVs.detectors.isEmpty,
-    towers      = With.frame < Minutes(8)() && u.matchups.allies.exists(a => a.unitClass.isBuilding && a.unitClass.canAttack && (a.matchups.targetNearest.exists(t => u.canAttack(t) && a.inRangeToAttack(t)) || a.matchups.threatNearest.exists(t => u.canAttack(t) && t.canAttack(a) && t.framesToGetInRange(a) <= u.framesToGetInRange(a) && ((t.pixelDistanceEdge(a) < 6 * 32) || t.inRangeToAttack(a))))),
+    towers      = With.frame < Minutes(8)() && u.matchups.allies.exists(a => a.unitClass.isBuilding && a.unitClass.canAttack && (a.matchups.targetNearest.exists(t => u.canAttack(t) && a.inRangeToAttack(t)) || a.matchups.threatNearest.exists(t => u.canAttack(t) && t.canAttack(a) && t.framesToGetInRange(a) <= u.framesToGetInRange(a) && ((t.tileDistanceEdge(a) < 6) || t.inRangeToAttack(a))))),
     scourge     = u.flying && With.enemies.exists(_.isZerg) && u.matchups.groupVs.has(Zerg.Scourge) && u.matchups.threats.exists(t => Zerg.Scourge(t) && t.pixelDistanceEdge(u) < 128 && t.matchups.threatsInRange.map(_.damageOnNextHitAgainst(t)).sum < t.hitPoints))
 
   private def ordnanceFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
