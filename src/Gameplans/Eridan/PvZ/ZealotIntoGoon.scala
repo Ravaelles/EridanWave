@@ -137,7 +137,13 @@ object ZealotIntoGoon extends MacroActions {
     // Constant early pressure; pull back only on evidence we'd lose.
     // attack() only votes yes, so set the blackboard directly: produce()
     // runs after the gameplan's own attack vote and the last write wins.
-    val tooWeakToFight = unitsComplete(IsWarrior) < 2 || confidenceAttacking11 < 0
+    // Broke without Dragoons falls back to defense, whatever earlier votes say.
+    val tooWeakToFight = unitsComplete(IsWarrior) < 2 || confidenceAttacking11 < 0 ||
+      Gameplans.Protoss.PvZ.DefenseWithoutDragoons.shouldDefend(
+        With.enemies.exists(_.isZerg),
+        units(Protoss.Dragoon),
+        With.battles.globalAttack.us.skimStrengthTotal,
+        With.battles.globalAttack.enemy.skimStrengthTotal)
     With.blackboard.wantToAttack.set(! tooWeakToFight)
     With.blackboard.aggressionRatio.set(?(tooWeakToFight, 0.75, 1.5))
     status(tooWeakToFight, "ZealotIntoGoonRetreat")
