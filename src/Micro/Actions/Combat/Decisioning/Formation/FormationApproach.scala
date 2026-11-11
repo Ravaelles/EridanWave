@@ -67,17 +67,20 @@ object FormationApproach {
   def decide(ownBeyondTiles: Double, stats: Option[LineStats], posture: ApproachPosture): ApproachOrder = {
     stats match {
       case None => FreeMarch
-      case Some(line) =>
-        if (line.meanTiles > dressBandTiles) FreeMarch
-        else if (line.stddevTiles < evenLineStddevTiles) posture match {
-          case Cautious => CloseCautious
-          case Decisive => BreakThrough
-        } else {
-          val deviation = ownBeyondTiles - line.meanTiles
-          if (deviation > lineToleranceTiles) StepBack
-          else if (deviation < -lineToleranceTiles) StepForward
-          else HoldLine
-        }
+      case Some(line) => orderForLine(ownBeyondTiles, line, posture)
+    }
+  }
+
+  private def orderForLine(ownBeyondTiles: Double, line: LineStats, posture: ApproachPosture): ApproachOrder = {
+    if (line.meanTiles > dressBandTiles) FreeMarch
+    else if (line.stddevTiles < evenLineStddevTiles) posture match {
+      case Cautious => CloseCautious
+      case Decisive => BreakThrough
+    } else {
+      val deviation = ownBeyondTiles - line.meanTiles
+      if (deviation > lineToleranceTiles) StepBack
+      else if (deviation < -lineToleranceTiles) StepForward
+      else HoldLine
     }
   }
 }

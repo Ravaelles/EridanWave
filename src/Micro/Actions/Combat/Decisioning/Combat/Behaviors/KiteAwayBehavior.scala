@@ -20,12 +20,26 @@ object KiteAwayBehavior {
     if (With.yolo.active) return false
     if ( ! unit.canMove) return false
     if (staticStandoff(unit, combat)) return true
-    if (unit.unitClass.melee) return false
-    if (unit.formationEngage.isEmpty) return false
+    if ( ! kitable(unit)) return false
 
     val nearest = unit.matchups.targetNearest
     if (nearest.isEmpty) return false
+    if ( ! shouldKite(unit)) return false
+    if (holdToShoot(unit, combat)) return true
 
+    kiteAway(unit, combat)
+
+    true
+  }
+
+  private def kitable(unit: FriendlyUnitInfo): Boolean = {
+    if (unit.unitClass.melee) return false
+    if (unit.formationEngage.isEmpty) return false
+
+    true
+  }
+
+  private def shouldKite(unit: FriendlyUnitInfo): Boolean = {
     val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
     // Turned-away melee neither chases nor hits: it never counts as the
     // enemy in margin that triggers the retreat.
@@ -35,29 +49,38 @@ object KiteAwayBehavior {
           FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel)))))
     if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.woundPercent(), unit.cooldownLeft, enemyInMargin)) return false
 
-    // Hold-to-shoot: a committed chaser met with a ready gun is a free shot,
-    // not a reason to yield ground. Fires only when we'd otherwise kite, and
-    // never steals another duel's target: the chaser must be ours or none.
+    true
+  }
+
+  // Hold-to-shoot: a committed chaser met with a ready gun is a free shot,
+  // not a reason to yield ground. Fires only when we'd otherwise kite, and
+  // never steals another duel's target: the chaser must be ours or none.
+  private def holdingShot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     val chaser = Maff.minBy(unit.matchups.threats)(_.pixelDistanceEdge(unit))
-    if (chaser.exists(c => combat.target.forall(_.id == c.id) && HoldToShoot.shouldStand(
+    chaser.exists(c => combat.target.forall(_.id == c.id) && HoldToShoot.shouldStand(
       unit.pixelDistanceEdge(c),
       HoldToShoot.effectiveRange(c.pixelRangeAgainst(unit), c.topSpeed, windupFrames = 0, unit.topSpeed * unit.unitClass.accelerationFrames / 2.0),
       unit.cooldownLeft,
       With.latency.latencyFrames,
       c.speedApproaching(unit.pixel),
-      HoldToShoot.holdMarginFrames))) {
-      unit.agent.act("HoldToShoot")
-      unit.agent.decision.set(unit.pixel)
-      Commander.hold(unit)
+      HoldToShoot.holdMarginFrames))
+  }
 
-      return true
-    }
+  private def holdToShoot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    if ( ! holdingShot(unit, combat)) return false
 
+    unit.agent.act("HoldToShoot")
+    unit.agent.decision.set(unit.pixel)
+    Commander.hold(unit)
+
+    true
+  }
+
+  private def kiteAway(unit: FriendlyUnitInfo, combat: Combat): Unit = {
     unit.agent.act("KiteAway")
     val offsetPixels = KiteAway.woundOffsetTiles(unit.woundPercent()) * 32
-    unit.agent.decision.set(unit.pixel.project(nearest.get.pixel, -offsetPixels).walkablePixel)
+    unit.agent.decision.set(unit.pixel.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
     combat.maneuvers.move()
-    true
   }
 
   // Static standoff: an idle unit standing inside a defensive building's
@@ -66,6 +89,17 @@ object KiteAwayBehavior {
   // committed pushes (shouldFight) are untouched; the attack window lapses
   // once fire stops, so the squad resumes on its own (hysteresis).
   private def staticStandoff(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    if ( ! standoffHot(unit)) return false
+
+    val gap = standoffGap(unit)
+    if (gap <= 0) return false
+
+    stepOut(unit, combat, gap)
+
+    true
+  }
+
+  private def standoffHot(unit: FriendlyUnitInfo): Boolean = {
     if (unit.agent.shouldFight) return false
 
     if (unit.matchups.targetsInRange.nonEmpty) return false
@@ -74,17 +108,22 @@ object KiteAwayBehavior {
     val clusterHot = squadUnits.exists(u => ClusterSafety.recentlyAttacked(With.framesSince(u.lastFrameTakingDamage)))
     if ( ! clusterHot) return false
 
+    true
+  }
+
+  private def standoffGap(unit: FriendlyUnitInfo): Double = {
     val threat = Maff.minBy(unit.matchups.threats.filter(_.unitClass.isStaticDefense))(_.pixelDistanceEdge(unit))
-    val gap = threat.map(t => ClusterSafety.standoffGapPixels(
+    threat.map(t => ClusterSafety.standoffGapPixels(
       unit.pixelDistanceEdge(t),
       t.pixelRangeAgainst(unit),
       KiteAway.enemyMarginTiles,
       clusterAttacked = true)).getOrElse(0.0)
-    if (gap <= 0) return false
+  }
 
+  private def stepOut(unit: FriendlyUnitInfo, combat: Combat, gap: Double): Unit = {
+    val threat = Maff.minBy(unit.matchups.threats.filter(_.unitClass.isStaticDefense))(_.pixelDistanceEdge(unit))
     unit.agent.act("StaticStandoff")
     unit.agent.decision.set(unit.pixel.project(threat.get.pixel, -gap).walkablePixel)
     combat.maneuvers.move()
-    true
   }
 }

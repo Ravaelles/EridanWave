@@ -3,7 +3,7 @@ package Micro.Actions.Combat.Decisioning
 import Lifecycle.With
 import Mathematics.Maff
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
-import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 import Utilities.SomeIf
 
@@ -20,50 +20,73 @@ class CombatDistances(combat: Combat, unit: FriendlyUnitInfo) {
   private[Decisioning] def getIdealTargetDistance: Double = {
     if (combat.target.isEmpty) return 0.0
 
-    val t = combat.target.get
-    lazy val distance           = unit.pixelDistanceEdge(t)
-    lazy val range              = unit.pixelRangeAgainst(t)
-    lazy val rangeAgainstUs     = SomeIf(t.canAttack(unit), t.pixelRangeAgainst(unit))
+    val readings = new TargetReadings(combat.target.get)
+    noChaseCases(readings)
+      .orElse(chaseCases(readings))
+      .orElse(holdCases(readings))
+      .getOrElse(defaultCase(readings))
+  }
+
+  // Otherwise, stay near max range. Get a little closer if we can in case they try to flee.
+  private def defaultCase(g: TargetReadings): Double =
+    g.rangeAgainstUs.map(rangeAgainst => Maff.clamp(rangeAgainst + 64, g.range - 16, g.range)).getOrElse(g.range - 16)
+
+  // Per-target geometry the distance rules read: one named fact per line,
+  // shared by every rule so no branch recomputes the same sight picture.
+  private class TargetReadings(val target: UnitInfo) {
+    lazy val distance           = unit.pixelDistanceEdge(target)
+    lazy val range              = unit.pixelRangeAgainst(target)
+    lazy val rangeAgainstUs     = SomeIf(target.canAttack(unit), target.pixelRangeAgainst(unit))
     lazy val rangeEqual         = rangeAgainstUs.contains(range)
-    lazy val pixelsOutranged    = rangeAgainstUs.map(_ - unit.pixelRangeAgainst(t)).filter(_ > 0)
+    lazy val pixelsOutranged    = rangeAgainstUs.map(_ - unit.pixelRangeAgainst(target)).filter(_ > 0)
     lazy val scourgeApproaching = unit.matchups.threats.exists(t => Zerg.Scourge(t) && t.pixelDistanceEdge(unit) < 32 * 5)
-    lazy val projectedUs        = unit.pixel.projectUpTo(t.pixel, 16)
-    lazy val projectedTarget    = t.pixel.projectUpTo(t.presumptiveDestinationNext, 16)
-    lazy val targetApproaching  = unit.pixelDistanceSquared(t) > unit.pixelDistanceSquared(projectedTarget)
-    lazy val targetEscaping     = unit.pixelDistanceSquared(t) < unit.pixelDistanceSquared(projectedTarget)
+    lazy val projectedUs        = unit.pixel.projectUpTo(target.pixel, 16)
+    lazy val projectedTarget    = target.pixel.projectUpTo(target.presumptiveDestinationNext, 16)
+    lazy val targetApproaching  = unit.pixelDistanceSquared(target) > unit.pixelDistanceSquared(projectedTarget)
+    lazy val targetEscaping     = unit.pixelDistanceSquared(target) < unit.pixelDistanceSquared(projectedTarget)
     lazy val inChoke            = ! unit.flying && unit.zone.edges.exists(_.contains(unit.pixel))
     lazy val sameThreatsChasing = unit.matchups.threats.forall(t => t.inRangeToAttack(unit) == t.inRangeToAttack(unit, projectedUs))
-    lazy val obiwanned          = ! unit.flying && ! t.flying && ! unit.unitClass.melee && t.altitude > unit.altitude
+    lazy val obiwanned          = ! unit.flying && ! target.flying && ! unit.unitClass.melee && target.altitude > unit.altitude
     lazy val chaseDistance      = rangeAgainstUs.filter(_ < range).map(r => Math.max(24, (range - r) / 2)).getOrElse(0d)
+  }
+
+  private def noChaseCases(g: TargetReadings): Option[Double] = {
     // Push through choke
-    if ( ! unit.flying && ! t.canMove && ! t.canAttack(unit)) return ?(inChoke && combat.nudgedTowards, 0, range)
+    if ( ! unit.flying && ! g.target.canMove && ! g.target.canAttack(unit)) Some(?(g.inChoke && combat.nudgedTowards, 0, g.range))
     // Some units shouldn't even try to chase
-    if (unit.isAny(Terran.SiegeTankUnsieged, Protoss.Reaver)) return range
+    else if (unit.isAny(Terran.SiegeTankUnsieged, Protoss.Reaver)) Some(g.range)
     // If we're safe, why not chase
-    if (unit.matchups.threatDeepest.isEmpty) return 0
+    else if (unit.matchups.threatDeepest.isEmpty) Some(0)
     // Some units should usually chase flying targets
-    if (unit.isAny(Terran.Wraith, Protoss.Corsair, Protoss.Scout, Zerg.Mutalisk) && t.flying && ! scourgeApproaching && ( ! Zerg.Overlord(t) || unit.matchups.pixelsEntangled < -64)) return 0
+    else if (unit.isAny(Terran.Wraith, Protoss.Corsair, Protoss.Scout, Zerg.Mutalisk) && g.target.flying && ! g.scourgeApproaching && ( ! Zerg.Overlord(g.target) || unit.matchups.pixelsEntangled < -64)) Some(0)
+    else None
+  }
+
+  private def chaseCases(g: TargetReadings): Option[Double] = {
     // Chase if they outrange us
-    if (pixelsOutranged.isDefined) return chaseDistance
+    if (g.pixelsOutranged.isDefined) Some(g.chaseDistance)
     // Chase if we're in a choke and being nudged towards them
-    if (inChoke && combat.nudgedTowards) return chaseDistance
+    else if (g.inChoke && combat.nudgedTowards) Some(g.chaseDistance)
     // Chase if we're confident and fighting up high ground
-    if (obiwanned) return chaseDistance
+    else if (g.obiwanned) Some(g.chaseDistance)
     // Chase if we're confident and being nudged towards them
-    if (combat.confidentEnoughToChase && combat.nudgedTowards) return chaseDistance
+    else if (combat.confidentEnoughToChase && combat.nudgedTowards) Some(g.chaseDistance)
     // Chase if we're confident and they're about to escape us
-    if (combat.confidentEnoughToChase && targetEscaping) return chaseDistance
+    else if (combat.confidentEnoughToChase && g.targetEscaping) Some(g.chaseDistance)
     // Chase if they're escaping out of our ideal range and chasing won't bring us into range of anyone new
-    if (targetEscaping && sameThreatsChasing) return chaseDistance
+    else if (g.targetEscaping && g.sameThreatsChasing) Some(g.chaseDistance)
+    else None
+  }
+
+  private def holdCases(g: TargetReadings): Option[Double] = {
     // Breathe if range is equal and they shoot first
-    if (rangeEqual && t.cooldownLeft < unit.cooldownLeft) return range + unit.topSpeed * Math.max(0, unit.cooldownLeft - With.latency.latencyFrames - unit.framesToTurnTo(t))
+    if (g.rangeEqual && g.target.cooldownLeft < unit.cooldownLeft) Some(g.range + unit.topSpeed * Math.max(0, unit.cooldownLeft - With.latency.latencyFrames - unit.framesToTurnTo(g.target)))
     // Maintain maximum range if chasing puts us in range of anyone new
-    if ( ! sameThreatsChasing) return range
+    else if ( ! g.sameThreatsChasing) Some(g.range)
     // Maintain maximum range if they're a threat coming towards us
-    if (targetApproaching) return range
+    else if (g.targetApproaching) Some(g.range)
     // Maintain just enough range if we're being nudged
-    if (combat.nudgedTowards) return chaseDistance
-    // Otherwise, stay near max range. Get a little closer if we can in case they try to flee
-    rangeAgainstUs.map(rangeAgainst => Maff.clamp(rangeAgainst + 64, range - 16, range)).getOrElse(range - 16)
+    else if (combat.nudgedTowards) Some(g.chaseDistance)
+    else None
   }
 }

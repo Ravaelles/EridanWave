@@ -16,7 +16,13 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       if ( ! combat.breakFormationToAttack) {
         unit.agent.perch.clear()
       }
-      if (combat.pushThrough) PushBehavior.run(unit, combat)
+      dispatchEngage()
+    }
+    unit.unready
+  }
+
+  private def dispatchEngage(): Unit = {
+    if (combat.pushThrough) PushBehavior.run(unit, combat)
       else if (combat.assembling && combat.group.groupUnits.size > 1) AssembleBehavior.run(unit, combat)
       else if (combat.techniqueIs(Scavenge)) ScavengeBehavior.run(unit, combat)
       else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {
@@ -25,8 +31,6 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           combat.maneuvers.charge()
         }
       } else RepositionBehavior.run(unit, combat)
-    }
-    unit.unready
   }
 
   // Formation resolution: break for the attack once no formation exists,

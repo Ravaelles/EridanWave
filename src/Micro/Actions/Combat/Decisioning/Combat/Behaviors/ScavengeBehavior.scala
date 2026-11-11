@@ -15,18 +15,27 @@ object ScavengeBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! PotshotBehavior.run(unit, combat)) {
-      unit.agent.act("Snipe")
-      val framesSafe      = unit.matchups.threatSoonest.map(_.framesToLaunchAttack(unit)).getOrElse(Forever())
-      val framesToAttack  = combat.target.map(unit.framesToLaunchAttack).getOrElse(0)
-      if (framesToAttack >= framesSafe || ! AttackIfReadyBehavior.run(unit, combat)) {
-        unit.agent.act("Lurk")
-        unit.agent.escalatePriority(TrafficPriorities.Bump) // Stronger than attackers, less than full retreaters
-        combat.maneuvers.applyForce(Forces.target,   Potential.towardsTarget(unit))
-        combat.maneuvers.applyForce(Forces.threat,   Potential.hardAvoidThreatRange(unit, Math.max(unit.topSpeed * framesToAttack, 64.0)))
-        combat.maneuvers.applyForce(Forces.leaving,  Potential.towards(unit, unit.agent.safety) * combat.ground10)
-        combat.maneuvers.moveForcefully()
-      }
+      snipe(unit, combat)
     }
+
     true
+  }
+
+  private def snipe(unit: FriendlyUnitInfo, combat: Combat): Unit = {
+    unit.agent.act("Snipe")
+    val framesSafe      = unit.matchups.threatSoonest.map(_.framesToLaunchAttack(unit)).getOrElse(Forever())
+    val framesToAttack  = combat.target.map(unit.framesToLaunchAttack).getOrElse(0)
+    if (framesToAttack >= framesSafe || ! AttackIfReadyBehavior.run(unit, combat)) {
+      lurk(unit, combat, framesToAttack)
+    }
+  }
+
+  private def lurk(unit: FriendlyUnitInfo, combat: Combat, framesToAttack: Int): Unit = {
+    unit.agent.act("Lurk")
+    unit.agent.escalatePriority(TrafficPriorities.Bump) // Stronger than attackers, less than full retreaters
+    combat.maneuvers.applyForce(Forces.target,   Potential.towardsTarget(unit))
+    combat.maneuvers.applyForce(Forces.threat,   Potential.hardAvoidThreatRange(unit, Math.max(unit.topSpeed * framesToAttack, 64.0)))
+    combat.maneuvers.applyForce(Forces.leaving,  Potential.towards(unit, unit.agent.safety) * combat.ground10)
+    combat.maneuvers.moveForcefully()
   }
 }

@@ -23,13 +23,15 @@ object Follow extends Action {
         unit.pixelDistanceCenter(leader) < Maff.vmax(256, Maff.min(unit.matchups.threats.view.map(_.pixelsToGetInRange(unit).toInt)).getOrElse(0))
         && ( ! unit.is(Protoss.Carrier) || leader.matchups.threatsInRange.forall(unit.matchups.threatsInRange.contains))
       )
-      .foreach(leader => {
-        if (unit.matchups.targetsInRange.isEmpty
-          && unit.matchups.framesOfSafety > 24
-          && unit.pixelDistanceCenter(leader) > 64) {
-          Commander.move(unit)
-        }
-        leader.agent.leadFollower(unit)
-      })
+      .foreach(leader => stayWithLeader(unit, leader))
+  }
+
+  private def stayWithLeader(unit: FriendlyUnitInfo, leader: FriendlyUnitInfo): Unit = {
+    if (unit.matchups.targetsInRange.isEmpty
+      && unit.matchups.framesOfSafety > 24
+      && unit.pixelDistanceCenter(leader) > 64) {
+      Commander.move(unit)
+    }
+    leader.agent.leadFollower(unit)
   }
 }

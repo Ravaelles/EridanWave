@@ -18,50 +18,12 @@ object FightOrFlee extends Action {
 
   //noinspection NameBooleanParameters
   override def perform(u: FriendlyUnitInfo): Unit = {
+    applyVerdict(u, gatherFacts(u))
 
-    val berzerkCutoff = Minutes(6)()
+    if (With.configuration.debugging && With.configuration.logCombatForecasts) Debugging.CombatForecastDiagnostics.decision(u)
+  }
 
-    val facts = FightFacts(
-      pacifist    = ! u.canAttack && ! u.unitClass.castsSpells,
-      cantFight   = ! u.intent.canFight,
-      cantFlee    = ! u.intent.canFlee,
-      static      = ! u.canMove,
-      committed   = u.agent.commit,
-      yolo        = With.yolo.active && IsWarrior(u),
-      irradiated  = u.painfullyIrradiated,
-      safe        = u.battle.exists(! _.enemy.canAttackIfVisible(u)),
-      // Cluster-level contact: no enemy within firing range plus margin of ANY
-      // squad unit means the fight is over - disengage unconditionally and
-      // reform instead of milling around scattered. Falls back to the lone
-      // unit when it has no squad.
-      outOfContact = ! u.squad.map(_.units).getOrElse(Seq(u)).exists(_.canAnyEnemyAttackUsWithMargin(FightRules.contactMarginTiles)),
-      detonated   = u.unitClass.suicides && u.matchups.targetsInRange.exists(_.canAttack(u)),
-      hugTank     = ! u.flying && u.agent.ride.isEmpty && With.enemies.exists(_.isTerran) && u.matchups.targetsInRange.exists(t => Terran.SiegeTankSieged(t) && t.visible && t.canAttack(u)),
-      archon      = Protoss.Archon(u) && u.matchups.targetsInRange.exists(_.unitClass.attacksOrCastsOrDetectsOrTransports),
-      coverFire   = u.unitClass.supportsAnchor && u.combatAllies.exists(ally => ! ally.loaded && ally.unitClass.isAnchor && u.matchups.threatDeepest.exists(enemy => u.canAttack(enemy) && ally.canAttack(enemy) && enemy.pixelsToGetInRange(ally) <= Math.min(32 * 8, 16 + u.pixelsToGetInRange(enemy)) && u.pixelDistanceEdge(ally) < 32 * 10)),
-      berzerk     = With.frame < berzerkCutoff && u.isAny(Protoss.Zealot, IsSlowling) && ! u.team.exists(_.catchesGround) && u.matchups.threatDeepest.exists(td => Terran.Vulture(td) && td.matchups.targetNearest.exists(tn => td.pixelsToGetInRange(tn) < 32 && tn.unitClass == u.unitClass)),
-      cloaked     = u.effectivelyCloaked && u.isAny(Terran.Wraith, Protoss.DarkTemplar) && ( ! Terran.Wraith(u) || u.energy > 10),
-      cloakable   = Terran.Wraith(u) && Terran.WraithCloak() && u.energy >= 50 && u.matchups.groupVs.detectors.isEmpty,
-      lurking     = Zerg.Lurker(u) && u.matchups.groupVs.detectors.isEmpty,
-      towers      = With.frame < Minutes(8)() && u.matchups.allies.exists(a => a.unitClass.isBuilding && a.unitClass.canAttack && (a.matchups.targetNearest.exists(t => u.canAttack(t) && a.inRangeToAttack(t)) || a.matchups.threatNearest.exists(t => u.canAttack(t) && t.canAttack(a) && t.framesToGetInRange(a) <= u.framesToGetInRange(a) && ((t.pixelDistanceEdge(a) < 6 * 32) || t.inRangeToAttack(a))))),
-      scourge     = u.flying && With.enemies.exists(_.isZerg) && u.matchups.groupVs.has(Zerg.Scourge) && u.matchups.threats.exists(t => Zerg.Scourge(t) && t.pixelDistanceEdge(u) < 128 && t.matchups.threatsInRange.map(_.damageOnNextHitAgainst(t)).sum < t.hitPoints),
-      scarabless  = Protoss.Reaver(u) && u.scarabs == 0 && ! u.trainee.exists(_.remainingCompletionFrames < Math.max(u.matchups.framesOfSafety, u.cooldownLeft)),
-      birdless    = Protoss.Carrier(u) && ! u.interceptors.exists(_.complete),
-      noEnergy    = ! u.canAttack && u.energyMax > 0 && u.unitClass.spells.forall(s => s.energyCost > u.energy || ! With.self.hasTech(s)),
-      disrupted   = ! u.flying && u.underDisruptionWeb && u.matchups.groupVs.canAttack(u),
-      bideSiege   = Terran.SiegeTankUnsieged(u) && ! With.blackboard.wantToAttack() && ! With.self.hasTech(Terran.SiegeMode) && u.matchups.groupVs.has(Protoss.Dragoon) && With.units.ours.exists(_.techProducing.contains(Terran.SiegeMode)) && u.alliesBattle.exists(a => Terran.Bunker(a) && a.complete),
-      carrierVuln = Protoss.Carrier(u) && u.matchups.threats.exists(t => ! t.flying && t.pixelsToGetInRange(u) < 32),
-      raze        = ((IsTank(u) && Terran.SiegeMode()) || u.isAny(Protoss.Reaver, Zerg.Guardian)) && u.matchups.threats.forall(t => t.unitClass.isWorker || t.unitClass.isBuilding),
-      miners      = ! u.isAny(IsWorker, Protoss.Carrier) && u.canAttack && u.battle.exists(_.us.minersThreatened) && u.presumptiveTarget.exists(t => t.isEnemyOf(u) && t.matchups.threateningMiners),
-      reave       = Protoss.Reaver(u) && u.scarabs > 0 && u.agent.ride.isDefined && u.confidence01 > 0.45 - Maff.or0(0.05, u.loaded) - Maff.or0(0.1, Protoss.ShuttleSpeed()) && u.matchups.threatNearest.exists(t => u.canAttack(t) && t.speedApproaching(u) > Protoss.Reaver.topSpeed) && (u.matchups.framesOfSafety >= ?(u.loaded, 30, 0) && (u.loaded || u.cooldownLeft <= 31)),
-      energized   = u.unitClass.maxShields > 20
-        && With.frame < Minutes(10)()
-        && u.alliesBattle.exists(ally =>
-          Protoss.ShieldBattery(ally)
-          && ally.complete
-          && ally.energy > 20
-          && ally.pixelDistanceEdge(u, u.presumptiveTarget.map(u.pixelToFireAtSimple).getOrElse(u.pixel)) < 72))
-
+  private def applyVerdict(u: FriendlyUnitInfo, facts: FightFacts): Unit = {
     FightRules.decide(facts) match {
       case Some((fight, reason)) =>
         u.agent.shouldFight = fight
@@ -69,10 +31,59 @@ object FightOrFlee extends Action {
       case None =>
         applyEstimation(u)
     }
-
-    if (With.configuration.debugging && With.configuration.logCombatForecasts) Debugging.CombatForecastDiagnostics.decision(u)
   }
-  
+
+  private def gatherFacts(u: FriendlyUnitInfo): FightFacts =
+    errandsFacts(u, ordnanceFacts(u, cloakFacts(u, contactFacts(u, personalFacts(u)))))
+
+  private def personalFacts(u: FriendlyUnitInfo): FightFacts = FightFacts(
+    pacifist    = ! u.canAttack && ! u.unitClass.castsSpells,
+    cantFight   = ! u.intent.canFight,
+    cantFlee    = ! u.intent.canFlee,
+    static      = ! u.canMove,
+    committed   = u.agent.commit,
+    yolo        = With.yolo.active && IsWarrior(u),
+    irradiated  = u.painfullyIrradiated)
+  private def contactFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
+    safe        = u.battle.exists(! _.enemy.canAttackIfVisible(u)),
+    // Cluster-level contact: no enemy within firing range plus margin of ANY
+    // squad unit means the fight is over - disengage unconditionally and
+    // reform instead of milling around scattered. Falls back to the lone
+    // unit when it has no squad.
+    outOfContact = ! u.squad.map(_.units).getOrElse(Seq(u)).exists(_.canAnyEnemyAttackUsWithMargin(FightRules.contactMarginTiles)),
+    detonated   = u.unitClass.suicides && u.matchups.targetsInRange.exists(_.canAttack(u)),
+    hugTank     = ! u.flying && u.agent.ride.isEmpty && With.enemies.exists(_.isTerran) && u.matchups.targetsInRange.exists(t => Terran.SiegeTankSieged(t) && t.visible && t.canAttack(u)),
+    archon      = Protoss.Archon(u) && u.matchups.targetsInRange.exists(_.unitClass.attacksOrCastsOrDetectsOrTransports),
+    coverFire   = u.unitClass.supportsAnchor && u.combatAllies.exists(ally => ! ally.loaded && ally.unitClass.isAnchor && u.matchups.threatDeepest.exists(enemy => u.canAttack(enemy) && ally.canAttack(enemy) && enemy.pixelsToGetInRange(ally) <= Math.min(32 * 8, 16 + u.pixelsToGetInRange(enemy)) && u.pixelDistanceEdge(ally) < 32 * 10)),
+    berzerk     = With.frame < Minutes(6)() && u.isAny(Protoss.Zealot, IsSlowling) && ! u.team.exists(_.catchesGround) && u.matchups.threatDeepest.exists(td => Terran.Vulture(td) && td.matchups.targetNearest.exists(tn => td.pixelsToGetInRange(tn) < 32 && tn.unitClass == u.unitClass)))
+
+  private def cloakFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
+    cloaked     = u.effectivelyCloaked && u.isAny(Terran.Wraith, Protoss.DarkTemplar) && ( ! Terran.Wraith(u) || u.energy > 10),
+    cloakable   = Terran.Wraith(u) && Terran.WraithCloak() && u.energy >= 50 && u.matchups.groupVs.detectors.isEmpty,
+    lurking     = Zerg.Lurker(u) && u.matchups.groupVs.detectors.isEmpty,
+    towers      = With.frame < Minutes(8)() && u.matchups.allies.exists(a => a.unitClass.isBuilding && a.unitClass.canAttack && (a.matchups.targetNearest.exists(t => u.canAttack(t) && a.inRangeToAttack(t)) || a.matchups.threatNearest.exists(t => u.canAttack(t) && t.canAttack(a) && t.framesToGetInRange(a) <= u.framesToGetInRange(a) && ((t.pixelDistanceEdge(a) < 6 * 32) || t.inRangeToAttack(a))))),
+    scourge     = u.flying && With.enemies.exists(_.isZerg) && u.matchups.groupVs.has(Zerg.Scourge) && u.matchups.threats.exists(t => Zerg.Scourge(t) && t.pixelDistanceEdge(u) < 128 && t.matchups.threatsInRange.map(_.damageOnNextHitAgainst(t)).sum < t.hitPoints))
+
+  private def ordnanceFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
+    scarabless  = Protoss.Reaver(u) && u.scarabs == 0 && ! u.trainee.exists(_.remainingCompletionFrames < Math.max(u.matchups.framesOfSafety, u.cooldownLeft)),
+    birdless    = Protoss.Carrier(u) && ! u.interceptors.exists(_.complete),
+    noEnergy    = ! u.canAttack && u.energyMax > 0 && u.unitClass.spells.forall(s => s.energyCost > u.energy || ! With.self.hasTech(s)),
+    disrupted   = ! u.flying && u.underDisruptionWeb && u.matchups.groupVs.canAttack(u),
+    bideSiege   = Terran.SiegeTankUnsieged(u) && ! With.blackboard.wantToAttack() && ! With.self.hasTech(Terran.SiegeMode) && u.matchups.groupVs.has(Protoss.Dragoon) && With.units.ours.exists(_.techProducing.contains(Terran.SiegeMode)) && u.alliesBattle.exists(a => Terran.Bunker(a) && a.complete),
+    carrierVuln = Protoss.Carrier(u) && u.matchups.threats.exists(t => ! t.flying && t.pixelsToGetInRange(u) < 32))
+
+  private def errandsFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
+    raze        = ((IsTank(u) && Terran.SiegeMode()) || u.isAny(Protoss.Reaver, Zerg.Guardian)) && u.matchups.threats.forall(t => t.unitClass.isWorker || t.unitClass.isBuilding),
+    miners      = ! u.isAny(IsWorker, Protoss.Carrier) && u.canAttack && u.battle.exists(_.us.minersThreatened) && u.presumptiveTarget.exists(t => t.isEnemyOf(u) && t.matchups.threateningMiners),
+    reave       = Protoss.Reaver(u) && u.scarabs > 0 && u.agent.ride.isDefined && u.confidence01 > 0.45 - Maff.or0(0.05, u.loaded) - Maff.or0(0.1, Protoss.ShuttleSpeed()) && u.matchups.threatNearest.exists(t => u.canAttack(t) && t.speedApproaching(u) > Protoss.Reaver.topSpeed) && (u.matchups.framesOfSafety >= ?(u.loaded, 30, 0) && (u.loaded || u.cooldownLeft <= 31)),
+    energized   = u.unitClass.maxShields > 20
+      && With.frame < Minutes(10)()
+      && u.alliesBattle.exists(ally =>
+        Protoss.ShieldBattery(ally)
+        && ally.complete
+        && ally.energy > 20
+        && ally.pixelDistanceEdge(u, u.presumptiveTarget.map(u.pixelToFireAtSimple).getOrElse(u.pixel)) < 72))
+
   private def applyEstimation(unit: FriendlyUnitInfo): Unit = {
     if (unit.combatForecast.isEmpty) {
       // Important for things which care about unit willingness to trot around

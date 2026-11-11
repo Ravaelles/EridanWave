@@ -72,21 +72,37 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     restrainedFrames = Math.max(0, restrainedFrames)
   }
   def innerPerform(): Unit = {
+    acquireTarget()
+    updateVerdicts()
+    selectTechnique()
+    dispatchByTechnique()
+  }
+
+  private def acquireTarget(): Unit = {
     if (unit.agent.toAttack.isEmpty) {
       Target.choose(unit)
     }
     unit.agent.choosePerch()
     Commander.defaultEscalation(unit)
+  }
 
+  private def updateVerdicts(): Unit = {
     framesUntilShot       = Maff.min((Seq(unit.pixel) ++ unit.agent.perch.pixel).view.flatMap(p =>  unit.matchups.threats.map(_.framesToGetInRange(unit, p)))).getOrElse(Forever())
     framesToPokeTarget    = target.map(unit.framesToLaunchAttack(_) + unit.unitClass.framesToPotshot + With.reaction.agencyMax + With.latency.latencyFrames)
     idealTargetDistance   = distances.getIdealTargetDistance
     hasSpacetimeToPoke    = framesToPokeTarget.exists(_ < framesUntilShot) && unit.agent.perch.pixel.forall(p => ! unit.matchups.threats.exists(t => t.inRangeToAttack(unit, p.project(t.pixel, 16))))
-    lazy val safePassage  = unit.matchups.ignorant || unit.topSpeedTransported >= 0.9 * group.meanTopSpeed && unit.matchups.pixelsToThreatRange.forall(_ > 32 * ?(unit.agent.receivedPushPriority() < TrafficPriorities.Bump, 2, 16))
+  }
 
+  private def selectTechnique(): Unit = {
     techniques.selectBaseTechnique(safePassage)
     techniques.applyTransitions()
     techniques.syncConsensus()
+  }
+
+  private def safePassage: Boolean =
+    unit.matchups.ignorant || unit.topSpeedTransported >= 0.9 * group.meanTopSpeed && unit.matchups.pixelsToThreatRange.forall(_ > 32 * ?(unit.agent.receivedPushPriority() < TrafficPriorities.Bump, 2, 16))
+
+  private def dispatchByTechnique(): Unit = {
 
     if (technique == Walk       && maneuvers.walk())        return
     if (technique == Aim        && AimBehavior.run(unit, this))        return

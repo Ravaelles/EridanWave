@@ -99,32 +99,47 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
 
   private[Decisioning] def charge(): Boolean = {
     if (unit.ready && ( ! combat.target.exists(unit.inRangeToAttack) || ! AttackIfReadyBehavior.run(unit, combat))) {
-      // If we have an attack formation
-      if ( ! OverwhelminglyStronger.skipFormation(unit) && unit.formationEngage.isDefined && ! unit.flying && combat.shouldChase && combat.formationHelpsChase && FormationHold.shouldAdvanceInFormation(combat.formationReadiness)) {
-        unit.agent.act("Slide")
-        unit.agent.escalatePriority(TrafficPriorities.Nudge)
-        move()
-
-      } else if (unit.isAny(Terran.Wraith, Protoss.Corsair, Protoss.Scout, Zerg.Mutalisk, Zerg.Scourge) && combat.target.exists(t =>
-        t.flying
-        && unit.pixelDistanceEdge(t)          > 0.25 * unit.pixelRangeAgainst(t)
-        && unit.speedApproachingEachOther(t)  < 0
-        && unit.speedApproaching(t)           < 0.9 * unit.topSpeed)) {
-        unit.agent.act("Dogfight")
-        chase()
-
-      } else if (combat.breakFormationToAttack) {
-        if (combat.shouldChase && combat.idealDistanceForward >= 32) {
-          chase()
-        } else {
-          unit.agent.act("Approach")
-          Commander.attack(unit)
-        }
-      } else {
-        unit.agent.act("Move")
-        move()
-      }
+      if (slidingInFormation) slideInFormation()
+      else if (dogfightingAir) dogfightAir()
+      else if (combat.breakFormationToAttack) breakToAttack()
+      else moveToSlot()
     }
     unit.unready
+  }
+
+  private def slidingInFormation: Boolean =
+    // If we have an attack formation
+    ! OverwhelminglyStronger.skipFormation(unit) && unit.formationEngage.isDefined && ! unit.flying && combat.shouldChase && combat.formationHelpsChase && FormationHold.shouldAdvanceInFormation(combat.formationReadiness)
+
+  private def dogfightingAir: Boolean =
+    unit.isAny(Terran.Wraith, Protoss.Corsair, Protoss.Scout, Zerg.Mutalisk, Zerg.Scourge) && combat.target.exists(t =>
+      t.flying
+      && unit.pixelDistanceEdge(t)          > 0.25 * unit.pixelRangeAgainst(t)
+      && unit.speedApproachingEachOther(t)  < 0
+      && unit.speedApproaching(t)           < 0.9 * unit.topSpeed)
+
+  private def slideInFormation(): Unit = {
+    unit.agent.act("Slide")
+    unit.agent.escalatePriority(TrafficPriorities.Nudge)
+    move()
+  }
+
+  private def dogfightAir(): Unit = {
+    unit.agent.act("Dogfight")
+    chase()
+  }
+
+  private def breakToAttack(): Unit = {
+    if (combat.shouldChase && combat.idealDistanceForward >= 32) {
+      chase()
+    } else {
+      unit.agent.act("Approach")
+      Commander.attack(unit)
+    }
+  }
+
+  private def moveToSlot(): Unit = {
+    unit.agent.act("Move")
+    move()
   }
 }

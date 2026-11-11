@@ -23,19 +23,25 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     combat.transition(Dodge,     unit.agent.receivedPushPriority() >= TrafficPriorities.Dodge)
     combat.transition(Abuse,     unit.unitClass.abuseAllowed && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && (combat.shouldRetreat || combat.framesUntilShot < unit.cooldownMaxAirGround))
     combat.transition(SuperKite, unit.isAny(Terran.Wraith, Zerg.Mutalisk))
-    combat.transition(Scavenge,
-      combat.target.exists(_.matchups.framesToLive > unit.matchups.framesToLive)
-      && unit.matchups.threatDeepest.exists(t => unit.canAttack(t) && unit.pixelRangeAgainst(t) >= t.pixelRangeAgainst(unit))
-      && unit.totalHealth * 2.0 <= combat.group.meanAttackerHealth
-      && unit.totalHealth * 3.0 <= unit.matchups.threatsInPixels(96).map(_.damageOnNextHitAgainst(unit)).sum)
+    combat.transition(Scavenge,  outmatchedPrey)
     combat.transition(Fallback,  unit.isAny(Terran.SiegeTankUnsieged, Terran.Goliath, Protoss.Reaver) && ! unit.airborne)
-    combat.transition(Fallback,
-      Protoss.Dragoon(unit)
-      && unit.agent.receivedPushPriority() < TrafficPriorities.Shove
-      && unit.matchups.targetNearest.exists(unit.inRangeToAttack)
-      && unit.matchups.threatsInFrames(unit.unitClass.framesToPotshot + 9).forall(_.isAny(Terran.Vulture, IsSpeedlot, Zerg.Zergling)))
+    combat.transition(Fallback,  dragoonFacesRush)
     combat.transition(Fallback,  unit.isAny(Protoss.Archon, Protoss.Zealot) && unit.matchups.targetsInRange.exists(IsSpeedling))
   }
+
+  private def outmatchedPrey: Boolean = (
+    combat.target.exists(_.matchups.framesToLive > unit.matchups.framesToLive)
+      && unit.matchups.threatDeepest.exists(t => unit.canAttack(t) && unit.pixelRangeAgainst(t) >= t.pixelRangeAgainst(unit))
+      && unit.totalHealth * 2.0 <= combat.group.meanAttackerHealth
+      && unit.totalHealth * 3.0 <= unit.matchups.threatsInPixels(96).map(_.damageOnNextHitAgainst(unit)).sum
+  )
+
+  private def dragoonFacesRush: Boolean = (
+    Protoss.Dragoon(unit)
+      && unit.agent.receivedPushPriority() < TrafficPriorities.Shove
+      && unit.matchups.targetNearest.exists(unit.inRangeToAttack)
+      && unit.matchups.threatsInFrames(unit.unitClass.framesToPotshot + 9).forall(_.isAny(Terran.Vulture, IsSpeedlot, Zerg.Zergling))
+  )
 
   private[Decisioning] def syncConsensus(): Unit = {
     if (combat.shouldEngage && ! unit.agent.shouldFight) {

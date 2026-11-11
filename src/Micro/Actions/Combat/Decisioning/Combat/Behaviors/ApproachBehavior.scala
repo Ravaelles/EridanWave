@@ -18,6 +18,12 @@ import Utilities.?
 object ApproachBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    if ( ! approachEligible(unit)) return false
+
+    dressLine(unit, combat)
+  }
+
+  private def approachEligible(unit: FriendlyUnitInfo): Boolean = {
     if (With.yolo.active) return false
     if (unit.unitClass.melee) return false
     if (unit.formationEngage.isEmpty || unit.formationEngage.exists(_.flanking)) return false
@@ -29,29 +35,45 @@ object ApproachBehavior {
     if (squadUnits.exists(_.canAnyEnemyAttackUsWithMargin(FightRules.contactMarginTiles))) return false
     if (OverwhelminglyStronger.skipFormation(unit)) return false
 
+    true
+  }
+
+  private def dressLine(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     FormationApproach.decide(
-      unit.pixelsToGetInRange(nearest.get) / 32.0,
+      unit.pixelsToGetInRange(unit.matchups.targetNearest.get) / 32.0,
       unit.squad.flatMap(_.lineStats),
       approachPosture) match {
       case FormationApproach.FreeMarch | FormationApproach.BreakThrough => false
-      case FormationApproach.HoldLine =>
-        unit.agent.act("Dress")
-        Commander.hold(unit)
-        true
-      case FormationApproach.StepForward | FormationApproach.CloseCautious =>
-        unit.agent.act("Dress")
-        combat.maneuvers.move()
-        true
-      case FormationApproach.StepBack =>
-        unit.agent.act("Dress")
-        if (With.frame % FormationApproach.correctionCadence == unit.id % FormationApproach.correctionCadence) {
-          unit.agent.decision.set(unit.pixel.project(nearest.get.pixel, -FormationApproach.correctionStepTiles * 32))
-          combat.maneuvers.move()
-        } else {
-          Commander.hold(unit)
-        }
-        true
+      case FormationApproach.HoldLine => holdLine(unit)
+      case FormationApproach.StepForward | FormationApproach.CloseCautious => stepForward(unit, combat)
+      case FormationApproach.StepBack => stepBack(unit, combat)
     }
+  }
+
+  private def holdLine(unit: FriendlyUnitInfo): Boolean = {
+    unit.agent.act("Dress")
+    Commander.hold(unit)
+
+    true
+  }
+
+  private def stepForward(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    unit.agent.act("Dress")
+    combat.maneuvers.move()
+
+    true
+  }
+
+  private def stepBack(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    unit.agent.act("Dress")
+    if (With.frame % FormationApproach.correctionCadence == unit.id % FormationApproach.correctionCadence) {
+      unit.agent.decision.set(unit.pixel.project(unit.matchups.targetNearest.get.pixel, -FormationApproach.correctionStepTiles * 32))
+      combat.maneuvers.move()
+    } else {
+      Commander.hold(unit)
+    }
+
+    true
   }
 
   private def approachPosture: FormationApproach.ApproachPosture =

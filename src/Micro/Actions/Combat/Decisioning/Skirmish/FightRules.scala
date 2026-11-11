@@ -10,35 +10,35 @@ package Micro.Actions.Combat.Decisioning.Skirmish
  * gets pinned by tests instead of living only in a 30-line if-chain.
  */
 final case class FightFacts(
-  pacifist    : Boolean,
-  cantFight   : Boolean,
-  cantFlee    : Boolean,
-  static      : Boolean,
-  committed   : Boolean,
-  yolo        : Boolean,
-  irradiated  : Boolean,
-  safe        : Boolean,
+  pacifist    : Boolean = false,
+  cantFight   : Boolean = false,
+  cantFlee    : Boolean = false,
+  static      : Boolean = false,
+  committed   : Boolean = false,
+  yolo        : Boolean = false,
+  irradiated  : Boolean = false,
+  safe        : Boolean = false,
   outOfContact: Boolean = false,
-  detonated   : Boolean,
-  hugTank     : Boolean,
-  archon      : Boolean,
-  coverFire   : Boolean,
-  berzerk     : Boolean,
-  cloaked     : Boolean,
-  cloakable   : Boolean,
-  lurking     : Boolean,
-  towers      : Boolean,
-  scourge     : Boolean,
-  scarabless  : Boolean,
-  birdless    : Boolean,
-  noEnergy    : Boolean,
-  disrupted   : Boolean,
-  bideSiege   : Boolean,
-  carrierVuln : Boolean,
-  raze        : Boolean,
-  miners      : Boolean,
-  reave       : Boolean,
-  energized   : Boolean)
+  detonated   : Boolean = false,
+  hugTank     : Boolean = false,
+  archon      : Boolean = false,
+  coverFire   : Boolean = false,
+  berzerk     : Boolean = false,
+  cloaked     : Boolean = false,
+  cloakable   : Boolean = false,
+  lurking     : Boolean = false,
+  towers      : Boolean = false,
+  scourge     : Boolean = false,
+  scarabless  : Boolean = false,
+  birdless    : Boolean = false,
+  noEnergy    : Boolean = false,
+  disrupted   : Boolean = false,
+  bideSiege   : Boolean = false,
+  carrierVuln : Boolean = false,
+  raze        : Boolean = false,
+  miners      : Boolean = false,
+  reave       : Boolean = false,
+  energized   : Boolean = false)
 
 object FightRules {
 
@@ -49,34 +49,63 @@ object FightRules {
   /**
    * First matching rule wins, in the historical priority order.
    * None means no rule fired and the battle forecast decides instead.
+   * Groups partition the order unchanged; orElse keeps the priority.
    */
-  def decide(f: FightFacts): Option[(Boolean, String)] = {
+  def decide(f: FightFacts): Option[(Boolean, String)] =
+    cannotFight(f)
+      .orElse(willToFight(f))
+      .orElse(contactState(f))
+      .orElse(cloakAndTricks(f))
+      .orElse(noAmmunition(f))
+      .orElse(objectives(f))
+
+  private def cannotFight(f: FightFacts): Option[(Boolean, String)] = {
     if (f.pacifist)         Some((false, "Pacifist"))
     else if (f.cantFight)   Some((false, "CantFight"))
     else if (f.cantFlee)    Some((true,  "CantFlee"))
     else if (f.static)      Some((true,  "Static"))
-    else if (f.committed)   Some((true,  "Committed"))
+    else None
+  }
+
+  private def willToFight(f: FightFacts): Option[(Boolean, String)] = {
+    if (f.committed)        Some((true,  "Committed"))
     else if (f.yolo)        Some((true,  "YOLO"))
     else if (f.irradiated)  Some((true,  "Irradiated"))
     else if (f.safe)        Some((true,  "Safe"))
-    else if (f.outOfContact)Some((false, "OutOfContact"))
+    else None
+  }
+
+  private def contactState(f: FightFacts): Option[(Boolean, String)] = {
+    if (f.outOfContact)     Some((false, "OutOfContact"))
     else if (f.detonated)   Some((true,  "Detonated"))
     else if (f.hugTank)     Some((true,  "HugTank"))
     else if (f.archon)      Some((true,  "Archon"))
     else if (f.coverFire)   Some((true,  "CoverFire"))
     else if (f.berzerk)     Some((true,  "Berzerk"))
-    else if (f.cloaked)     Some((true,  "Cloaked"))
+    else None
+  }
+
+  private def cloakAndTricks(f: FightFacts): Option[(Boolean, String)] = {
+    if (f.cloaked)          Some((true,  "Cloaked"))
     else if (f.cloakable)   Some((true,  "Cloakable"))
     else if (f.lurking)     Some((true,  "Lurking"))
     else if (f.towers)      Some((true,  "Towers"))
     else if (f.scourge)     Some((false, "Scourge"))
-    else if (f.scarabless)  Some((false, "Scarabless"))
+    else None
+  }
+
+  private def noAmmunition(f: FightFacts): Option[(Boolean, String)] = {
+    if (f.scarabless)       Some((false, "Scarabless"))
     else if (f.birdless)    Some((false, "Birdless"))
     else if (f.noEnergy)    Some((false, "NoEnergy"))
     else if (f.disrupted)   Some((false, "Disrupted"))
     else if (f.bideSiege)   Some((false, "BideSiege"))
     else if (f.carrierVuln) Some((false, "CarrierVuln"))
-    else if (f.raze)        Some((true,  "Raze"))
+    else None
+  }
+
+  private def objectives(f: FightFacts): Option[(Boolean, String)] = {
+    if (f.raze)             Some((true,  "Raze"))
     else if (f.miners)      Some((true,  "Miners"))
     else if (f.reave)       Some((true,  "Reave"))
     else if (f.energized)   Some((true,  "Energized"))
