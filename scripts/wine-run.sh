@@ -330,9 +330,19 @@ while [ "$(date +%s)" -lt "$END" ]; do
     say "SUCCESS: BWAPI attached, EridanWave is playing!"; ATTACHED=1; break
   fi
   # UMS maps idle in the briefing room: dismiss it so headless runs self-start (max 5 presses).
+  # The key must reach the game window: with no focused window on the Xvfb
+  # desktop an unfocused press goes nowhere, so focus Brood War first and
+  # address the key at its window explicitly.
   if [ "$KEYS" -lt 5 ] && [ "${GAME_TYPE:-}" = "USE_MAP_SETTINGS" ] && [ "${HIDDEN:-1}" = "1" ] \
     && [ $(( $(date +%s) - LASTKEY )) -ge 8 ] && command -v xdotool >/dev/null; then
-    DISPLAY=":99" xdotool key Return 2>/dev/null; LASTKEY=$(date +%s); KEYS=$((KEYS+1))
+    SC_WIN=$(DISPLAY=":99" xdotool search --name "^Brood War$" 2>/dev/null | head -1)
+    if [ -n "$SC_WIN" ]; then
+      DISPLAY=":99" xdotool windowfocus --sync "$SC_WIN" >/dev/null 2>&1
+      DISPLAY=":99" xdotool key --window "$SC_WIN" Return 2>/dev/null
+    else
+      DISPLAY=":99" xdotool key Return 2>/dev/null
+    fi
+    LASTKEY=$(date +%s); KEYS=$((KEYS+1))
   fi
   if ! kill -0 "$CLIENT_PID" 2>/dev/null; then
     say "FAILED: client JVM died. Log tail:"; tail -15 "$CLIENT_LOG" | sed 's/^/    /'
