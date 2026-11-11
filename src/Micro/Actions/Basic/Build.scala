@@ -1,8 +1,8 @@
 package Micro.Actions.Basic
 
-import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Tile
+import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import Micro.Actions.Combat.Fight
@@ -81,6 +81,7 @@ object Build extends Action {
       && unit.pixelDistanceCenter(movePixel) < 112 // Addtl reference: McRave uses 96
       && With.self.minerals >= building.mineralPrice - 8
       && With.self.gas      >= building.gasPrice - 8) {
+      if (With.configuration.debugging) unit.agent.act("Build")
       Commander.build(unit, building, ?(building.isAddon, tile.add(4, 1), tile))
 
       return
@@ -97,6 +98,7 @@ object Build extends Action {
     }
 
     unit.agent.decision.set(movePixel)
+    if (With.configuration.debugging) unit.agent.act("GoBuild")
     if (unit.pixelDistanceTravelling(movePixel) > 256 + ?(unit.agent.path.isEmpty, 0, 256)) {
       MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getSneakyPath(unit))
     }

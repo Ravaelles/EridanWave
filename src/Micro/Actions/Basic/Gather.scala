@@ -54,6 +54,7 @@ object Gather extends Action {
 
       // Help initial scout get home
       if (With.frame < Minutes(8)() && unit.metro.exists(_.bases.exists(_.isEnemy)) && unit.matchups.threats.exists( ! _.unitClass.melee) && unit.visibleToOpponents) {
+        if (With.configuration.debugging) unit.agent.act("HelpScout")
         Commander.gather(unit)
 
         return
@@ -65,6 +66,7 @@ object Gather extends Action {
           enemy.isNone(IsWorker, Terran.Wraith, Protoss.Arbiter, Protoss.Scout)
           && enemy.pixelDistanceEdge(unit) < enemy.pixelRangeAgainst(unit) + 32)
           && ! unit.tile.enemyDetected) {
+        if (With.configuration.debugging) unit.agent.act("Burrow")
         Commander.burrow(unit)
       }
 
@@ -83,14 +85,30 @@ object Gather extends Action {
             && unit.base.map(_.heart.center).forall(target.pixelDistanceCenter(_) < defenseRadiusPixels))))
 
       if (unit.totalHealth > 32 && beckonedToFight) {
+        if (With.configuration.debugging) unit.agent.act("Fight")
         Target.choose(unit)
         Commander.attack(unit)
+      }
+
+      // Hard threats end mining: Lurkers, Dark Templars and Vultures kill
+      // workers that stay on the line, so run instead of switching
+      // resources. Healthy packs still swarm (beckoned above); the hurt
+      // and the outnumbered leave.
+      lazy val hardThreatNear = ! beckonedToFight && unit.matchups.threats.exists(t =>
+        (Zerg.Lurker(t) || Protoss.DarkTemplar(t) || Terran.Vulture(t)) && t.pixelDistanceEdge(unit) < defenseRadiusPixels)
+      if (hardThreatNear) {
+        Retreat(unit)
+
+        return
       }
 
       // Escape dangerous melee units
       lazy val stabbers        = unit.matchups.threatsInRange.filter(t => t.unitClass.melee && ! t.burrowed)
       lazy val stabbingLethal  = stabbers.map(e => ?(e.presumptiveTarget.contains(unit), 3, 2) * e.damageOnNextHitAgainst(unit)).sum >= unit.totalHealth
-      if (unit.tile.enemyRangeGround > 0 && unit.base.isDefined && stabbingLethal) {
+      // Hurt miners leave early: shields at 14 or less cannot take another
+      // Zergling round, so any melee in range ends the shift.
+      lazy val hurtVsMelee     = unit.unitClass.maxShields > 0 && unit.shieldPoints <= 14 && stabbers.nonEmpty
+      if (unit.tile.enemyRangeGround > 0 && unit.base.isDefined && (stabbingLethal || hurtVsMelee)) {
         val drillGoal = (unit.base.get.resources ++ unit.base.flatMap(_.townHall))
           .filter(goal =>
             ((unit.carryingGas || unit.carryingMinerals)  && goal.unitClass.isTownHall  && goal.isOurs) ||
@@ -98,12 +116,14 @@ object Gather extends Action {
             (!unit.carryingMinerals                       && goal.unitClass.isMinerals))
         val bestGoal = Maff.maxBy(drillGoal)(resource => stabbers.map(stabber => resource.pixelDistanceCenter(stabber)).max)
         if (bestGoal.exists(_.unitClass.isTownHall)) {
+          if (With.configuration.debugging) unit.agent.act("ReturnCargo")
           Commander.returnCargo(unit)
         } else if (bestGoal.isDefined) {
           // If we expect to die anyway
           if (unit.pixelDistanceEdge(bestGoal.get) < 32) {
             Potshot(unit)
           } else {
+            if (With.configuration.debugging) unit.agent.act("Drill")
             unit.agent.toGather = bestGoal
             Commander.gather(unit)
           }
@@ -111,6 +131,7 @@ object Gather extends Action {
       }
 
       if (unit.base.exists(_.isOurs)) {
+        if (With.configuration.debugging) unit.agent.act("Potshot")
         Potshot(unit)
       }
 
@@ -138,15 +159,20 @@ object Gather extends Action {
 
     // Take safe/hidden route to expansion
     if (safeToWork && unit.metro != resource.metro && ! unit.carrying && unit.agent.decision.setAsWaypoint(MicroPathing.getWaypointAlongTilePath(unit, MicroPathing.getSneakyPath(unit, Some(resource.tile.walkableTile)))).isDefined) {
+      if (With.configuration.debugging) unit.agent.act("Travel")
       Commander.move(unit)
     }
 
     // Benzene travel hack
     if (safeToWork && Benzene() && resource.zone != unit.zone && unit.zone == With.geography.ourMain.zone) {
+      if (With.configuration.debugging) unit.agent.act("Travel")
       Commander.move(unit)
     }
 
     if (safeToWork) {
+      if (With.configuration.debugging) {
+        unit.agent.act(?(unit.carrying, "ReturnCargo", ?(resource.unitClass.isGas, "GatherGas", "GatherMinerals")))
+      }
       Commander.gather(unit)
     }
   }
