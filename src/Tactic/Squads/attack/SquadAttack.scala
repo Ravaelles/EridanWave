@@ -241,12 +241,13 @@ class SquadAttack extends Squad {
     if (With.yolo.active) {
       stance = RegroupLatch.Engaged
       Probe.note("Sim", 0, "Engaged yolo")
+    } else if (With.umsMode) {
+      // UMS duels have no economy and nowhere to regroup to: the squad
+      // stays Engaged so consensus (dress, rally, close-ranks) holds through
+      // sim-vote oscillation. Micro commitment already decides the fighting.
+      stance = RegroupLatch.Engaged
+      Probe.note("Sim", 0, "Engaged ums-duel")
     } else if (
-      // Duels stay sim-driven: UMS maps have no economy, so there are no
-      // reinforcements to time and nothing to preserve - the global
-      // reinforcement-timing retreat would break off the only battle.
-      // Melee keeps it: reinforcing a losing side feeds it piecemeal.
-      ! With.umsMode &&
       units.count(_.unitClass.isWarrior) >= ArmyStrength.retreatMinWarriors &&
       ArmyStrength.retreating(
         With.battles.globalAttack.us.skimStrengthTotal,
