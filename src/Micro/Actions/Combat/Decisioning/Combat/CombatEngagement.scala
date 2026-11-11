@@ -6,7 +6,7 @@ import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Skirmish.FightRules
 import Micro.Actions.Combat.Decisioning.Formation.{FormationApproach, FormationHold, OverwhelminglyStronger}
-import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, CorsairSafety, FacingAway, KiteAway}
+import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, CorsairSafety, FacingAway, HoldToShoot, KiteAway}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -84,6 +84,24 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         ! FacingAway.dismissMelee(t.unitClass.melee,
           FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel)))))
     if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.woundPercent(), unit.cooldownLeft, enemyInMargin)) return false
+
+    // Hold-to-shoot: a committed chaser met with a ready gun is a free shot,
+    // not a reason to yield ground. Fires only when we'd otherwise kite, and
+    // never steals another duel's target: the chaser must be ours or none.
+    val chaser = Maff.minBy(unit.matchups.threats)(_.pixelDistanceEdge(unit))
+    if (chaser.exists(c => combat.target.forall(_.id == c.id) && HoldToShoot.shouldStand(
+      unit.pixelDistanceEdge(c),
+      HoldToShoot.effectiveRange(c.pixelRangeAgainst(unit), c.topSpeed, windupFrames = 0, unit.topSpeed * unit.unitClass.accelerationFrames / 2.0),
+      unit.cooldownLeft,
+      With.latency.latencyFrames,
+      c.speedApproaching(unit.pixel),
+      HoldToShoot.holdMarginFrames))) {
+      unit.agent.act("HoldToShoot")
+      unit.agent.decision.set(unit.pixel)
+      Commander.hold(unit)
+
+      return true
+    }
 
     unit.agent.act("KiteAway")
     val offsetPixels = KiteAway.woundOffsetTiles(unit.woundPercent()) * 32
