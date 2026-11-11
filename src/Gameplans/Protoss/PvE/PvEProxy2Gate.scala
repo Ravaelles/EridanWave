@@ -11,7 +11,7 @@ import Utilities.?
 class PvEProxy2Gate extends GameplanImperative {
 
   override def activated: Boolean = PvEProxy2Gate()
-  override def completed: Boolean = bases > 1
+  override def completed: Boolean = bases > 1 || units(Protoss.Dragoon) >= 7
 
   override def executeBuild(): Unit = {
     scoutOn(Protoss.Gateway, quantity = 2)

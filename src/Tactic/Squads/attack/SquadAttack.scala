@@ -1,6 +1,7 @@
 package Tactic.Squads.attack
 
 import Debugging.Probe
+import Information.Battles.ArmyStrength
 import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
@@ -240,6 +241,11 @@ class SquadAttack extends Squad {
     if (With.yolo.active) {
       stance = RegroupLatch.Engaged
       Probe.note("Sim", 0, "Engaged yolo")
+    } else if (ArmyStrength.retreating(
+      With.battles.globalAttack.us.skimStrengthTotal,
+      With.battles.globalAttack.enemy.skimStrengthTotal)) {
+      stance = RegroupLatch.Regrouping
+      Probe.note("Sim", 0, "Regrouping outmatched")
     } else {
       val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
       val coverage = verdicts.size.toDouble / units.size
