@@ -11,15 +11,23 @@ import ProxyBwapi.UnitTracking.AliveEnemies
  */
 object ContainStatus {
 
+  private var holding: Boolean = false
+
+  def reset(): Unit = {
+    holding = false
+  }
+
   def now(): Boolean = {
     val mainCluster = With.tactics.attackSquad
     val warriors = mainCluster.units.count(_.unitClass.isWarrior)
-    if (warriors <= ReaverContain.warriorsNeeded) return false
+    if (warriors <= ReaverContain.warriorsNeeded && ! holding) return false
 
     val statics = AliveEnemies.get().count(e =>
       e.unitClass.isStaticDefense && ! e.flying && e.likelyStillThere &&
         e.tileDistanceEdge(mainCluster.centroidGround) < ReaverContain.staticsDistTiles)
-    ReaverContain.containing(warriors, statics)
+    holding = ReaverContain.holding(holding, warriors, statics)
+    Debugging.Probe.note("Contain", 0, f"$holding warriors=$warriors statics=$statics")
+    holding
   }
 
   def vsZerg(): Boolean =
