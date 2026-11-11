@@ -101,7 +101,7 @@ class MissionHistory extends MacroCounting {
         val verdict = evaluateMission(span.mission, profit, lifetime, wonGame, span.harassFrames)
         f"${System.currentTimeMillis},${With.history.currentMapName.replace(",", "")},${With.history.currentEnemyName.replace(",", "")},${span.mission},${MissionVerdict.name(verdict)},$profit,$lifetime,${span.supplyBase},$wonGame,${span.harassFrames}"
       }}
-      if (rows.nonEmpty) {
+      if (rows.nonEmpty && ! With.umsMode) {
         val file = With.bwapiData.write + "/mission-history.csv"
         val previous = try {
           val source = scala.io.Source.fromFile(file)

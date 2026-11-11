@@ -44,6 +44,10 @@ class History {
   }
   
   def onEnd(weWon: Boolean): Unit = {
+    // UMS micro maps must not pollute strategy history: no bases, no macro
+    // game, and their fingerprint tags would poison future selection.
+    if (With.umsMode) return
+
     val thisGame = HistoricalGame(
       timestamp       = System.currentTimeMillis,
       startLocations  = With.geography.startLocations.size,

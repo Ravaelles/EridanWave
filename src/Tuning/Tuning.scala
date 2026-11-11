@@ -87,6 +87,8 @@ object Tuning {
    */
   def finish(isWinner: Boolean): Unit = {
     if ( ! active) return
+    // Tuning scores from UMS micro maps would poison the archive.
+    if (Lifecycle.With.umsMode) return
 
     try {
       val strategy = current.get
