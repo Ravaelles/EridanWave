@@ -89,13 +89,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     techniques.syncConsensus()
 
     if (technique == Walk       && maneuvers.walk())        return
-    if (technique == Aim        && engagement.aim())        return
+    if (technique == Aim        && AimBehavior.run(unit, this))        return
     if (technique == Dodge      && maneuvers.dodge())       return
-    if (technique == Fallback   && engagement.potshot())    return
+    if (technique == Fallback   && PotshotBehavior.run(unit, this))    return
     if (shouldRetreat           && Retreat(unit)) return
     if (shouldEngage            && Brawl(unit))   return
-    if (technique == Abuse      && engagement.abuse())      return
-    if (technique == SuperKite  && engagement.superkite())  return
+    if (technique == Abuse      && AbuseBehavior.run(unit, this))      return
+    if (technique == SuperKite  && SuperkiteBehavior.run(unit, this))  return
 
     if (shouldEngage            && engagement.engage())      {}
   }

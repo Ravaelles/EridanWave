@@ -98,7 +98,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
   }
 
   private[Decisioning] def charge(): Boolean = {
-    if (unit.ready && ( ! combat.target.exists(unit.inRangeToAttack) || ! combat.engagement.attackIfReady())) {
+    if (unit.ready && ( ! combat.target.exists(unit.inRangeToAttack) || ! AttackIfReadyBehavior.run(unit, combat))) {
       // If we have an attack formation
       if ( ! OverwhelminglyStronger.skipFormation(unit) && unit.formationEngage.isDefined && ! unit.flying && combat.shouldChase && combat.formationHelpsChase && FormationHold.shouldAdvanceInFormation(combat.formationReadiness)) {
         unit.agent.act("Slide")

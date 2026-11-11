@@ -22,147 +22,6 @@ import Utilities.?
 
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
-  private[Decisioning] def attackIfReady(): Boolean = {
-    if (unit.ready && combat.target.exists(unit.readyForAttackOrder) && combat.distances.readyToApproachTarget) {
-      Commander.attack(unit)
-    }
-    unit.unready
-  }
-
-  private[Decisioning] def aim(): Boolean = {
-    if (unit.ready) {
-      Target.choose(unit, TargetFilterVisibleInRange)
-      Commander.attack(unit)
-      Commander.hold(unit)
-    }
-    unit.unready
-  }
-
-  private[Decisioning] def potshot(): Boolean = {
-    if (unit.ready) {
-      val potshotTarget = Maff.orElseFiltered(
-          Maff.minBy(unit.matchups.threats)(_.pixelDistanceEdge(unit)).filter(TargetFilterPotshot.legal(unit, _)),
-          combat.target.filter(TargetFilterPotshot.legal(unit, _)),
-          Target.best(unit, TargetFilterPotshot))(unit.canAttack).headOption
-      if (potshotTarget.exists(t => unit.readyForAttackOrder(t) && TargetFilterPotshot.legal(unit, t))) {
-        unit.agent.toAttack = potshotTarget
-        unit.agent.act("Potshot")
-        Commander.attack(unit)
-      }
-    }
-    unit.unready
-  }
-
-  // Formation approach governor (FormationApproachEnemy): dress the line
-  // before contact instead of trickling in piecemeal. Only while contact is
-  // lost - no live enemy within 1.5 tiles of any squad unit; real contact
-  // fights normally. Melee must still close, flankers still circle, yolo
-  // still overrules, and without a formation there is nothing to dress.
-  private[Decisioning] def approachPosture: FormationApproach.ApproachPosture =
-    ?(With.enemies.exists(_.isTerran), FormationApproach.Decisive, FormationApproach.Cautious)
-
-  private[Decisioning] def approach(): Boolean = {
-    if (With.yolo.active) return false
-    if (unit.unitClass.melee) return false
-    if (unit.formationEngage.isEmpty || unit.formationEngage.exists(_.flanking)) return false
-
-    val nearest = unit.matchups.targetNearest
-    if (nearest.isEmpty) return false
-
-    val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
-    if (squadUnits.exists(_.canAnyEnemyAttackUsWithMargin(FightRules.contactMarginTiles))) return false
-    if (OverwhelminglyStronger.skipFormation(unit)) return false
-
-    FormationApproach.decide(
-      unit.pixelsToGetInRange(nearest.get) / 32.0,
-      unit.squad.flatMap(_.lineStats),
-      approachPosture) match {
-      case FormationApproach.FreeMarch | FormationApproach.BreakThrough => false
-      case FormationApproach.HoldLine =>
-        unit.agent.act("Dress")
-        Commander.hold(unit)
-        true
-      case FormationApproach.StepForward | FormationApproach.CloseCautious =>
-        unit.agent.act("Dress")
-        combat.maneuvers.move()
-        true
-      case FormationApproach.StepBack =>
-        unit.agent.act("Dress")
-        if (With.frame % FormationApproach.correctionCadence == unit.id % FormationApproach.correctionCadence) {
-          unit.agent.decision.set(unit.pixel.project(nearest.get.pixel, -FormationApproach.correctionStepTiles * 32))
-          combat.maneuvers.move()
-        } else {
-          Commander.hold(unit)
-        }
-        true
-    }
-  }
-
-  private[Decisioning] def abuse(): Boolean = {
-    var minimumSpace = 16.0
-    unit.matchups.threatDeepest.foreach(t => {
-      if (IsWarrior(t)) {
-        minimumSpace += 32
-        if (t.presumptiveTarget.contains(unit)) {
-          minimumSpace += 32
-        }
-        if (t.topSpeed > unit.topSpeed) {
-          minimumSpace += 32
-        }
-      }
-      lazy val rangeDifferential = unit.pixelRangeAgainst(t) - t.pixelRangeAgainst(unit)
-      if (unit.canAttack(t) && rangeDifferential > 0) {
-        minimumSpace = Math.min(minimumSpace, rangeDifferential / 2)
-      }
-    })
-    if (combat.target.map(unit.readyForAttackOrder).getOrElse(unit.readyForAttackOrder)) {
-      minimumSpace = Math.min(minimumSpace, combat.target.map(unit.pixelRangeAgainst).getOrElse(unit.pixelRangeMax) - 24)
-    }
-
-    if (unit.matchups.threatDeepest.exists(_.pixelsToGetInRange(unit) < minimumSpace)) {
-      Retreat(unit)
-    }
-    if ( ! attackIfReady() && unit.matchups.threatDeepest.exists(a => a.presumptiveTarget.contains(unit) || a.speedApproaching(unit) > 0)) {
-      Retreat(unit)
-    }
-    if (combat.idealDistanceForward > 0) {
-      combat.maneuvers.chase()
-    }
-    combat.maneuvers.charge()
-    unit.unready
-  }
-
-  private[Decisioning] def superkite(): Boolean = {
-    combat.target.foreach(t => {
-      var kite  = false
-      var chase = false
-      if (unit.readyForAttackOrder(t)) {
-        if (unit.framesToGetInRange(t) < With.game.getRemainingLatencyFrames) {
-          if (unit.orderTarget.contains(t)) {
-            kite = true
-          } else {
-            Commander.attack(unit)
-          }
-        } else {
-          chase = true
-        }
-      } else if (unit.matchups.framesOfSafety < unit.cooldownLeft + unit.cooldownMaxAgainst(t)) {
-        kite = true
-      }
-      if (kite) {
-        unit.agent.forces(Forces.threat)      = Potential.hardAvoidThreatRange(unit, CorsairSafety.avoidanceMarginPixels(unit))
-        unit.agent.forces(Forces.regrouping)  = Potential.regroup(unit)
-        MicroPathing.moveForcefully(unit)
-      } else if (chase) {
-        unit.agent.forces(Forces.target)      = Potential.towards(unit, t.pixel)
-        unit.agent.forces(Forces.regrouping)  = Potential.regroup(unit) * 0.5
-        MicroPathing.moveForcefully(unit)
-      }
-    })
-
-    unit.unready
-  }
-
   private[Decisioning] def engage(): Boolean = {
     if (unit.ready) {
       combat.breakFormationToAttack  = unit.formationEngage.isEmpty
@@ -206,7 +65,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       if (combat.pushThrough) {
         unit.agent.act("Push")
         combat.maneuvers.applySeparationForces()
-        if (unit.agent.forces(Forces.spacing).lengthFast > 0 || ! attackIfReady()) {
+        if (unit.agent.forces(Forces.spacing).lengthFast > 0 || ! AttackIfReadyBehavior.run(unit, combat)) {
           combat.maneuvers.applyForce(Forces.travel, Potential.towards(unit, unit.agent.station.pixel.orElse(unit.agent.perch.pixel).getOrElse(unit.agent.destinationNext())))
           combat.maneuvers.applyForce(Forces.target, Potential.towards(unit,                                 unit.agent.perch.pixel .getOrElse(unit.agent.destinationNext())))
           combat.maneuvers.applyForce(Forces.threat, Potential.softAvoidThreatRange(unit) * 1.5)
@@ -223,11 +82,11 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         combat.restrained = combat.target.forall(t => unit.pixelsToGetInRange(t) < unit.pixelsToGetInRangeFrom(t, unit.agent.destinationNext()))
         combat.restrained ||= unit.intent.terminus.exists(p => unit.pixelDistanceTravelling(p) < unit.pixelDistanceTravelling(unit.agent.destinationNext(), p))
       } else if (combat.techniqueIs(Scavenge)) {
-        if ( ! potshot()) {
+        if ( ! PotshotBehavior.run(unit, combat)) {
           unit.agent.act("Snipe")
           val framesSafe      = unit.matchups.threatSoonest.map(_.framesToLaunchAttack(unit)).getOrElse(Forever())
           val framesToAttack  = combat.target.map(unit.framesToLaunchAttack).getOrElse(0)
-          if (framesToAttack >= framesSafe || ! attackIfReady()) {
+          if (framesToAttack >= framesSafe || ! AttackIfReadyBehavior.run(unit, combat)) {
             unit.agent.act("Lurk")
             unit.agent.escalatePriority(TrafficPriorities.Bump) // Stronger than attackers, less than full retreaters
             combat.maneuvers.applyForce(Forces.target,   Potential.towardsTarget(unit))
@@ -237,7 +96,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           }
         }
       } else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {
-        if ( ! KiteAwayBehavior.run(unit, combat) && ! approach()) {
+        if ( ! KiteAwayBehavior.run(unit, combat) && ! ApproachBehavior.run(unit, combat)) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
