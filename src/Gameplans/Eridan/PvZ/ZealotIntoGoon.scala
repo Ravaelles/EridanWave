@@ -36,8 +36,9 @@ object ZealotIntoGoon extends MacroActions {
       produceAdvanced()
     }
     compositor.produceAndPump()
-    pumpBankedZealots()
+    pumpBankedZealotsWhenAllowed()
     status(f"ZealotIntoGoon: want $zealotTarget zealots vs ${enemies(Zerg.Zergling)} lings")
+
     directPosture()
     ensureLurkerDetection()
     expandWhenAhead()
@@ -72,7 +73,7 @@ object ZealotIntoGoon extends MacroActions {
 
   // Banked minerals plus idle Gates means the line is starving, not the
   // bank: past the bank with two free Gates, queue Zealots uncapped.
-  private def pumpBankedZealots(): Unit = {
+  private def pumpBankedZealotsWhenAllowed(): Unit = {
     if (supplyCapped) return
     if ( ! ZealotBank.allowsExtraZealots(minerals, freeGateways)) return
 
