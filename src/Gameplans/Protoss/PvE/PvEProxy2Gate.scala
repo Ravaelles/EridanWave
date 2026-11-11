@@ -66,6 +66,14 @@ class PvEProxy2Gate extends GameplanImperative {
         pump(Protoss.Zealot)
         pumpWorkers()
         get(6, Protoss.Gateway)
+        // Failed proxy with a standing army is a tech transition, not a
+        // plan change: past thirteen Zealots gas up so the Dragoon line
+        // (already prioritized) can take over.
+        if (units(Protoss.Zealot) > 13) {
+          get(1, Protoss.Assimilator, new PlacementQuery(Protoss.Assimilator).requireBase(With.geography.ourMain))
+          get(Protoss.CyberneticsCore)
+          get(Protoss.DragoonRange)
+        }
       } else if (With.enemy.isProtoss) {
         autosupply()
         pump(Protoss.Zealot)
