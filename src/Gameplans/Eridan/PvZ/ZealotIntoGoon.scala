@@ -30,22 +30,48 @@ object ZealotIntoGoon extends MacroActions {
 
   def produce(): Unit = {
     compositor.reset()
-    compositor.setNeed(Protoss.Zealot, 4.0)
-    compositor.setGoal(Protoss.Zealot, zealotTarget)
-    if (units(Protoss.Zealot) >= zealotTarget && have(Protoss.CyberneticsCore) &&
-      Gameplans.Protoss.PvZ.GasBank.allowsDragoon(units(Protoss.Dragoon), gas, With.units.ours.count(_.unitClass.isWarrior))) {
-      compositor.setNeed(Protoss.Dragoon, 2.0)
-      compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
-    }
+    queueZealots()
+    queueDragoons()
     if (supplyUsed200 >= 85) {
       produceAdvanced()
     }
     compositor.produceAndPump()
+    pumpBankedZealots()
     status(f"ZealotIntoGoon: want $zealotTarget zealots vs ${enemies(Zerg.Zergling)} lings")
     directPosture()
     ensureLurkerDetection()
     expandWhenAhead()
   }
+
+  // The line first: Zealots until the count fits the Ling pack.
+  private def queueZealots(): Unit = {
+    compositor.setNeed(Protoss.Zealot, 4.0)
+    compositor.setGoal(Protoss.Zealot, zealotTarget)
+  }
+
+  // Dragoons once the line stands: Zealots at count, Core up, bank allows.
+  private def queueDragoons(): Unit = {
+    if ( ! zealotLineStands) return
+    if ( ! have(Protoss.CyberneticsCore)) return
+    if ( ! Gameplans.Protoss.PvZ.GasBank.allowsDragoon(units(Protoss.Dragoon), gas, With.units.ours.count(_.unitClass.isWarrior))) return
+
+    compositor.setNeed(Protoss.Dragoon, 2.0)
+    compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
+  }
+
+  private def zealotLineStands: Boolean =
+    units(Protoss.Zealot) >= zealotTarget
+
+  // Banked minerals plus idle Gates means the line is starving, not the
+  // bank: past the bank with two free Gates, queue Zealots uncapped.
+  private def pumpBankedZealots(): Unit = {
+    if ( ! ZealotBank.allowsExtraZealots(minerals, freeGateways)) return
+
+    pump(Protoss.Zealot)
+  }
+
+  private def freeGateways: Int =
+    With.units.ours.count(u => Protoss.Gateway(u) && u.complete && u.trainingQueue.isEmpty)
 
   private def expandWhenAhead(): Unit = {
     // Second base at 75 supply, but only from a position of strength
