@@ -4,7 +4,7 @@ import Gameplans.All.GameplanImperative
 import Lifecycle.With
 import Placement.Access.PlaceLabels._
 import Placement.Access.PlacementQuery
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Zerg}
 import Strategery.Strategies.Protoss.PvEProxy2Gate
 import Utilities.?
 
@@ -67,9 +67,10 @@ class PvEProxy2Gate extends GameplanImperative {
         pumpWorkers()
         get(6, Protoss.Gateway)
         // Failed proxy with a standing army is a tech transition, not a
-        // plan change: past thirteen Zealots gas up so the Dragoon line
+        // plan change: past thirteen Zealots, or the moment Hydralisks show
+        // (Zealots cannot trade into range), gas up so the Dragoon line
         // (already prioritized) can take over.
-        if (units(Protoss.Zealot) > 13) {
+        if (units(Protoss.Zealot) > 13 || enemyHasShown(Zerg.Hydralisk)) {
           get(1, Protoss.Assimilator, new PlacementQuery(Protoss.Assimilator).requireBase(With.geography.ourMain))
           get(Protoss.CyberneticsCore)
           get(Protoss.DragoonRange)
