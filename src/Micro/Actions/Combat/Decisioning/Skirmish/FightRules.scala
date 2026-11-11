@@ -37,6 +37,7 @@ final case class FightFacts(
   carrierVuln : Boolean = false,
   raze        : Boolean = false,
   miners      : Boolean = false,
+  hallTargeted: Boolean = false,
   reave       : Boolean = false,
   energized   : Boolean = false)
 
@@ -76,7 +77,9 @@ object FightRules {
   }
 
   private def contactState(f: FightFacts): Option[(Boolean, String)] = {
-    if (f.outOfContact)     Some((false, "OutOfContact"))
+    // Ordered onto the enemy hall, the fight is not over just because
+    // nothing can hit us: walk the hall down instead of reforming.
+    if (f.outOfContact && ! f.hallTargeted) Some((false, "OutOfContact"))
     else if (f.detonated)   Some((true,  "Detonated"))
     else if (f.hugTank)     Some((true,  "HugTank"))
     else if (f.archon)      Some((true,  "Archon"))

@@ -12,7 +12,7 @@ class FightRulesSuite extends AnyFunSuite {
     berzerk = false, cloaked = false, cloakable = false, lurking = false,
     towers = false, scourge = false, scarabless = false, birdless = false,
     noEnergy = false, disrupted = false, bideSiege = false, carrierVuln = false,
-    raze = false, miners = false, reave = false, energized = false)
+    raze = false, miners = false, hallTargeted = false, reave = false, energized = false)
 
   test("every rule fires in isolation with its verdict and label") {
     val cases = Seq(
@@ -81,6 +81,10 @@ class FightRulesSuite extends AnyFunSuite {
   test("lost contact outranks combat but not safety: reform, unless nothing can hurt us") {
     assert(FightRules.decide(off.copy(outOfContact = true, hugTank = true)).contains((false, "OutOfContact")))
     assert(FightRules.decide(off.copy(safe = true, outOfContact = true)).contains((true, "Safe")))
+  }
+
+  test("hall orders veto lost contact: walk the hall down, estimator decides") {
+    assert(FightRules.decide(off.copy(outOfContact = true, hallTargeted = true)).isEmpty)
   }
 
   test("silence means no rule fired and the estimator decides instead") {

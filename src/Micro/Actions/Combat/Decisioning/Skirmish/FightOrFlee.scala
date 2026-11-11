@@ -42,6 +42,7 @@ object FightOrFlee extends Action {
     cantFlee    = ! u.intent.canFlee,
     static      = ! u.canMove,
     committed   = u.agent.commit,
+    hallTargeted = u.agent.toAttack.exists(_.unitClass.isTownHall),
     yolo        = With.yolo.active && IsWarrior(u),
     irradiated  = u.painfullyIrradiated)
   private def contactFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
