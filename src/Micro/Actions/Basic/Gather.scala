@@ -131,17 +131,24 @@ object Gather extends Action {
       }
     }
 
+    // A threatened worker belongs to the flee brain: re-issuing work
+    // orders here ping-pongs with Retreat and crawls to death, one hop
+    // per frame, while the engine keeps the old gather target.
+    val safeToWork = unit.matchups.threatsInRange.isEmpty
+
     // Take safe/hidden route to expansion
-    if (unit.metro != resource.metro && ! unit.carrying && unit.agent.decision.setAsWaypoint(MicroPathing.getWaypointAlongTilePath(unit, MicroPathing.getSneakyPath(unit, Some(resource.tile.walkableTile)))).isDefined) {
+    if (safeToWork && unit.metro != resource.metro && ! unit.carrying && unit.agent.decision.setAsWaypoint(MicroPathing.getWaypointAlongTilePath(unit, MicroPathing.getSneakyPath(unit, Some(resource.tile.walkableTile)))).isDefined) {
       Commander.move(unit)
     }
 
     // Benzene travel hack
-    if (Benzene() && resource.zone != unit.zone && unit.zone == With.geography.ourMain.zone) {
+    if (safeToWork && Benzene() && resource.zone != unit.zone && unit.zone == With.geography.ourMain.zone) {
       Commander.move(unit)
     }
-    
-    Commander.gather(unit)
+
+    if (safeToWork) {
+      Commander.gather(unit)
+    }
   }
 }
 
