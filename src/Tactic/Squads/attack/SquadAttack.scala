@@ -242,6 +242,11 @@ class SquadAttack extends Squad {
       stance = RegroupLatch.Engaged
       Probe.note("Sim", 0, "Engaged yolo")
     } else if (
+      // Duels stay sim-driven: UMS maps have no economy, so there are no
+      // reinforcements to time and nothing to preserve - the global
+      // reinforcement-timing retreat would break off the only battle.
+      // Melee keeps it: reinforcing a losing side feeds it piecemeal.
+      ! With.umsMode &&
       units.count(_.unitClass.isWarrior) >= ArmyStrength.retreatMinWarriors &&
       ArmyStrength.retreating(
         With.battles.globalAttack.us.skimStrengthTotal,
@@ -258,6 +263,15 @@ class SquadAttack extends Squad {
     Debugging.CherryVis.CherryVis.board("AttackStance", stance.toString)
   }
 
+  // UMS maps have no economy: warriors exist only to fight, so the squad
+  // commits them and micro takes every engagement through the Committed
+  // rule. Without this the sim's patience (waiting to grow stronger) locks
+  // symmetric duels into retreat forever - nothing can ever grow. Pacifists
+  // (Observers) are unaffected: Pacifist outranks Committed in FightRules.
+  private def commitUmsDuelists(): Unit = {
+    if (With.umsMode) units.view.filter(_.unitClass.isWarrior).foreach(_.agent.commit = true)
+  }
+
   override def run(): Unit = {
     otherTargets.clear()
 
@@ -266,6 +280,7 @@ class SquadAttack extends Squad {
     lock.setInterruptible( ! Micro.Actions.Protoss.Reaver.ContainStatus.now())
     chooseMode()
     updateStance()
+    commitUmsDuelists()
 
     if (
       With.frame < Minutes(5)()
