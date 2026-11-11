@@ -34,3 +34,9 @@ Both live one parser away, in two tiers.
 Header + frame count + first 100 commands of `E_19:22:26 Steamhammer.rep`.
 If the command framing parses clean, Tier 1 is a go; if not, stop and
 reassess before touching OpenBW.
+
+Outcome 2026-11-11 (STOPPED): both engines emit the same opaque format -
+no magic, no ASCII (`TauCross`/`Monster` absent), screp offsets fail
+(frames@0x01 reads 19627646, dims garbage on a 128x128 map). Whole-file
+custom framing on our stack, not the documented layout. Tier 1 needs
+decompression/format research first; no parser code written.
