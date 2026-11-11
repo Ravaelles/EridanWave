@@ -51,8 +51,8 @@ final class Base(val name: String, val townHallTile: Tile, val tiles: Set[Tile])
         .filter(_.walkable)
         .filter(_.altitudeUnchecked > exitAltitude)
         .filter(_.groundTiles(exit.get.pixelCenter) < 48)
-        .map(tile => (tile, tile.center.pixelDistance(exit.get.pixelCenter)))
-        .filter(_._2 < 32 * ?(With.self.isTerran, 11 + 4, 6 + 4))
+        .map(tile => (tile, tile.center.tileDistance(exit.get.pixelCenter)))
+        .filter(_._2 < ?(With.self.isTerran, 11 + 4, 6 + 4))
         .toVector
         .sortBy(_._2)
     }

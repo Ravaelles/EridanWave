@@ -235,7 +235,7 @@ final class FormationStandard(val group: FriendlyUnitGroup, var style: Formation
           var output: Pixel = null
           while (output == null && i < overlooks.length) {
             val overlook = overlooks(i)
-            lazy val rangeAppropriate = overlook._2 <= slots.formationRangePixels + 96
+            lazy val rangeAppropriate = overlook._2 <= (slots.formationRangePixels + 96) * Maff.inv32
             lazy val enemyInRange     = overlook._1.enemyVulnerabilityGround <= With.grids.enemyVulnerabilityGround.margin
             if (enemyInRange || ( ! requireTarget && rangeAppropriate)) {
               output = overlook._1.center
