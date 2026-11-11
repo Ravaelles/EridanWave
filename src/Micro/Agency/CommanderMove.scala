@@ -207,7 +207,14 @@ object CommanderMove {
 
     unit.agent.tryingToMove = unit.pixelDistanceCenter(to) > CommanderCore.tryingToMoveThreshold
 
-    if (unit.unready) return
+    if (unit.unready) {
+      if (unit.pixelDistanceCenter(to) > 3 * 32) {
+        Debugging.Probe.note("Move", unit.id,
+          f"unready gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt} order ${unit.order}")
+      }
+
+      return
+    }
 
     if (CommanderCore.autoUnburrow(unit)) return
 
@@ -280,7 +287,9 @@ object CommanderMove {
         CommanderCore.pushThrough(unit, to, TrafficPriorities.Freedom)
 
       }
-
+    } else if (unit.pixelDistanceCenter(unit.agent.destinationFinal()) > 3 * 32) {
+      Debugging.Probe.note("Move", unit.id,
+        f"arrived gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt}")
     }
 
 
