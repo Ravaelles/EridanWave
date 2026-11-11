@@ -81,6 +81,8 @@ final case class Pixel(argX: Int, argY: Int) extends AbstractPoint(argX, argY) {
   @inline def pixelDistance(other: Pixel): Double = {
     Maff.broodWarDistance(x, y, other.x, other.y)
   }
+  @inline def tx: Int = Maff.div32(x)
+  @inline def ty: Int = Maff.div32(y)
   @inline def tileDistance(other: Pixel): Double = {
     pixelDistance(other) * Maff.inv32
   }
@@ -212,7 +214,7 @@ final case class Pixel(argX: Int, argY: Int) extends AbstractPoint(argX, argY) {
     tile.flowTo(to.tile)
   }
 
-  override def toString: String = f"[$x, $y](${Maff.signum101(x) * Math.abs(x / 32)}, ${Maff.signum101(y) * Math.abs(y / 32)})"
+  override def toString: String = f"[$x, $y](${Maff.signum101(x) * Maff.div32(Math.abs(x))}, ${Maff.signum101(y) * Maff.div32(Math.abs(y))})"
 }
 
 

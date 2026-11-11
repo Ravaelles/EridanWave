@@ -5,6 +5,7 @@ import Debugging.Visualizations.Rendering.{DrawMap, DrawScreen}
 import Debugging.Visualizations.Views.DebugView
 import Information.Geography.Pathfinding.PathfindProfile
 import Lifecycle.With
+import Mathematics.Maff
 import Mathematics.Points.Pixel
 
 object ShowTileInfo extends DebugView {
@@ -29,7 +30,7 @@ object ShowTileInfo extends DebugView {
     DrawMap.line(mouseTile.center, walkableTile.center, Colors.BrightYellow)
     DrawMap.tileRectangle(mouseTile.toRectangle, Colors.BrightYellow)
     DrawMap.tileRectangle(walkableTile.toRectangle, Colors.hsv((System.currentTimeMillis() % 256L).toInt, 255, 192))
-    DrawScreen.text(mousePixelScreen.add(4, -6), (walkableTile.groundPixels(With.geography.home).toInt / 32).toString)
+    DrawScreen.text(mousePixelScreen.add(4, -6), Maff.div32(walkableTile.groundPixels(With.geography.home).toInt).toString)
     ShowZones.renderZoneMap(zone)
   }
 }

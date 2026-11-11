@@ -43,7 +43,7 @@ object MicroPathing {
     val pathfindProfile               = new PathfindProfile(unit.tile)
     pathfindProfile.end               = to.orElse(SomeIf(preferHome, unit.agent.safety.tile))
     pathfindProfile.lengthMinimum     = Some(pathLengthMinimum)
-    pathfindProfile.lengthMaximum     = Some(Maff.clamp((unit.matchups.pixelsEntangled + unit.effectiveRangePixels).toInt / 32, pathLengthMinimum, 15))
+    pathfindProfile.lengthMaximum     = Some(Maff.clamp(Maff.div32((unit.matchups.pixelsEntangled + unit.effectiveRangePixels).toInt), pathLengthMinimum, 15))
     pathfindProfile.threatMaximum     = Some(0)
     pathfindProfile.employGroundDist  = true
     pathfindProfile.costOccupancy     = ?(unit.flying, 0, 3)

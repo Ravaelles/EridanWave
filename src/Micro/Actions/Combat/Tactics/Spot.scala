@@ -51,7 +51,7 @@ object Spot extends Action {
     val tankPixel = tank.map(t =>
       ?(t.matchups.engagedUpon,
         t.pixel,
-        Maff.weightedCentroid(Circle(unit.sightPixels / 32)
+        Maff.weightedCentroid(Circle(Maff.div32(unit.sightPixels))
           .map(t.tile.add)
           .map(t => (t.center, With.framesSince(t.lastSeen).toDouble)))))
 

@@ -2,6 +2,7 @@ package Information.Grids.Construction
 
 import Information.Grids.ArrayTypes.AbstractGridArrayBoolean
 import Lifecycle.With
+import Mathematics.Maff
 import ProxyBwapi.Players.Players
 import bwapi.{Race, UnitType}
 
@@ -11,8 +12,8 @@ object GridCreep {
   private[Grids] val ObservationPeriod: Int = 12
 
   private[Grids] case class InitialBuilding(unitType: UnitType, pixelX: Int, pixelY: Int, neutral: Boolean) {
-    val left: Int = pixelX / 32 - unitType.tileWidth / 2
-    val top : Int = pixelY / 32 - unitType.tileHeight / 2
+    val left: Int = Maff.div32(pixelX) - unitType.tileWidth / 2
+    val top : Int = Maff.div32(pixelY) - unitType.tileHeight / 2
     def isZerg: Boolean = unitType.getRace == Race.Zerg
     def spreads: Boolean = unitType match {
       case UnitType.Zerg_Hatchery | UnitType.Zerg_Lair | UnitType.Zerg_Hive |
@@ -50,10 +51,10 @@ object GridCreep {
     eachFootprintTile(i => if (canHaveCreep(i)) creep(i) = true)
     if ( ! source.spreads) return
 
-    val left   = Math.max(0, (source.pixelX - 320) / 32)
-    val right  = Math.min(width - 1, (source.pixelX + 320) / 32)
-    val top    = Math.max(0, (source.pixelY - 200) / 32)
-    val bottom = Math.min(height - 1, (source.pixelY + 200) / 32)
+    val left   = Math.max(0, Maff.div32(source.pixelX - 320))
+    val right  = Math.min(width - 1, Maff.div32(source.pixelX + 320))
+    val top    = Math.max(0, Maff.div32(source.pixelY - 200))
+    val bottom = Math.min(height - 1, Maff.div32(source.pixelY + 200))
     val queue = new Array[Int]((right - left + 1) * (bottom - top + 1))
     var head, tail = 0
 
