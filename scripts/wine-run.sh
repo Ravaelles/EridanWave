@@ -162,6 +162,8 @@ pkill -9 -x java.exe 2>/dev/null
 # Drop them; fresh keys arrive live. Both the current rendezvous and the
 # legacy repo-local path (pre-rendezvous builds may have left one behind).
 rm -f "$GAME_ROOT/bwapi-data/write/keys.txt" "$REPO/out/wine/keys.txt"
+# Stale error ledgers mislead post-game reads (frames from the last game).
+rm -f "$GAME_ROOT/bwapi-data/write/errors.json" "$REPO/bwapi-data/write/errors.json"
 for _ in $(seq 1 30); do
   if ! pgrep -x StarCraft.exe >/dev/null 2>&1 \
       && ! pgrep -f "[C]haoslauncher.exe" >/dev/null 2>&1; then break; fi

@@ -83,7 +83,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   // channel still dedups steady chains. Probe mirrors the same label for
   // games without a trace (UMS): arm keys in bwapi-data/write/probe.txt.
   private def flushDecisionChain(): Unit = {
-    val chain = actions.view.filterNot(chainActions.contains).distinct
+    val chain = actions.filterNot(chainActions).distinct
     if (chain.nonEmpty) {
       val label = chain.mkString("/")
       Debugging.CherryVis.CherryVis.decision(unit.id, label)

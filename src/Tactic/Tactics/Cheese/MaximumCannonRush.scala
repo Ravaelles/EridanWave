@@ -137,7 +137,7 @@ class MaximumCannonRush extends Tactic {
       if (builders.nonEmpty && mineralsLeft >= building.mineralPrice + 72 * With.accounting.ourIncomePerFrameMinerals) {
         mineralsLeft -= building.mineralPrice
         builtUpon ++= new TileRectangle(tile, 2, 2).tiles
-        val builder = builders.minBy(b => b.pixelDistanceTravelling(tile.add(1, 1).topLeftPixel) - 64 * Maff.fromBoolean(b.agent.actions.contains(Build.toString)))
+        val builder = builders.minBy(b => b.pixelDistanceTravelling(tile.add(1, 1).topLeftPixel) - 64 * Maff.fromBoolean(b.agent.actions.contains(Build.name)))
         builders -= builder
         builder.intend(this).setScout(Seq.empty).addBuild(BuildIntent(building, tile))
         pylonsMaking += Maff.fromBoolean(building.powers)

@@ -29,7 +29,7 @@ abstract class Action {
       val previousCredit = unit.agent.lastAction
       if (giveCredit) unit.agent.act(name)
       if (With.configuration.debugging) {
-        unit.agent.actions += toString
+        unit.agent.actions += name
       }
       perform(unit)
       if (unit.ready) {
