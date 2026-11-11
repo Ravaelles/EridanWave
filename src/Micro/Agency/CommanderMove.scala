@@ -1,6 +1,7 @@
 package Micro.Agency
 
 import Lifecycle.With
+import Mathematics.Maff
 import Mathematics.Points.{Pixel, Points, Tile}
 import Micro.Coordination.Pushing._
 import ProxyBwapi.Orders
@@ -248,17 +249,27 @@ object CommanderMove {
 
         // hops, and a wide deadband lets the unit arrive and idle between hops.
 
-        val alreadyMovingThere = unit.order == Orders.Move && unit.orderTargetPixel.exists(_.pixelDistance(to) < tolerancePixels)
+        // Arrival flow (PurpleWave): inside 1.8 tiles of the move target,
+        // while the final destination lies beyond along the same heading,
+        // aim past the waypoint so the unit flows through instead of braking
+        // into every hop. Backsteps and true arrivals keep braking.
+        val finalPx: Pixel = unit.agent.destinationFinal()
+        val aligned = Math.abs(Maff.normalizePiToPi(unit.pixel.radiansTo(finalPx) - unit.pixel.radiansTo(to))) <= Math.PI / 4
+        val flowPush = ArrivalFlow.pushPast(unit.pixelDistanceCenter(to) / 32.0, unit.pixelDistanceCenter(finalPx) / 32.0, aligned)
+        val goal = if (flowPush > 0 && unit.order == Orders.Move) unit.pixel.project(to, unit.pixelDistanceCenter(to) + flowPush * 32).walkablePixel else to
+        val alreadyMovingThere = unit.order == Orders.Move && unit.orderTargetPixel.exists(_.pixelDistance(goal) < tolerancePixels)
 
         if ( ! alreadyMovingThere || unit.seeminglyStuck) {
 
-          unit.bwapiUnit.move(to.bwapi)
+          unit.bwapiUnit.move(goal.bwapi)
 
-          Debugging.CherryVis.CherryVis.decision(unit.id, f"Moving to ${to.x},${to.y}")
+          Debugging.CherryVis.CherryVis.decision(unit.id, f"Moving to ${goal.x},${goal.y}")
 
         } else {
 
           Debugging.CherryVis.CherryVis.decision(unit.id, "Holding move order")
+          Debugging.Probe.note("Move", unit.id,
+            f"hold gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt}")
 
         }
 

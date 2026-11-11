@@ -9,6 +9,15 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
   private[Decisioning] def engage(): Boolean = {
+    // No consensus: the squad is leaving, so walk its march instead of
+    // dueling. Lone counterattacks while regrouping feed the enemy piecemeal;
+    // the contain roster and mode latch still hold, so the squad reforms.
+    if ( ! combat.fightConsensus) {
+      combat.maneuvers.move()
+
+      return true
+    }
+
     if (unit.ready) {
       resolveBreakFormation()
       applyFormationHold()

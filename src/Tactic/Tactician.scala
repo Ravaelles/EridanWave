@@ -135,6 +135,25 @@ final class Tactician extends TimedTask {
     fillAttackSquad(freelancers, squadsDefending)
     pullDefenseWorkers(squadsDefending)
     attachSCVs()
+    publishSquadBoards()
+  }
+
+  // Squad census for the trace: Alpha and Beta attack squads plus every
+  // staffed home base, numbered oldest-first by town hall id. Empty
+  // squads stay out so the rows only appear while they mean something.
+  private def publishSquadBoards(): Unit = {
+    val striking = Seq(("A", attackSquad), ("B", backstabProxy))
+      .filter(_._2.units.nonEmpty)
+      .map { case (name, squad) => f"$name(${squad.units.size})" }
+    Debugging.CherryVis.CherryVis.board("Squads", striking.mkString(", "))
+
+    val byAge = With.geography.ourBases.sortBy(_.townHall.map(_.id).getOrElse(Int.MaxValue)).toVector
+    val guarding = defenseSquads.toVector.flatMap { case (base, squad) =>
+      val count = squad.units.size
+      if (count == 0) None else Some((byAge.indexOf(base) + 1, count))
+    }.sortBy(_._1)
+    Debugging.CherryVis.CherryVis.board("SquadsBase", guarding.map { case (number, count) => f"$number($count)" }.mkString(", "))
+    Debugging.CherryVis.CherryVis.board("Contain", Micro.Actions.Protoss.Reaver.ContainStatus.now().toString)
   }
 
   private def defendDivisions(): Seq[(DefenseDivision, SquadDefendBase)] = {

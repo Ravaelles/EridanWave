@@ -75,11 +75,19 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   def act(value: String): Unit = {
     actions += value
     lastAction = Some(value)
-    // Micro decisions ride the change-only decision channel into the
-    // trace: one row per change, so combat reasoning (Hop, HoldToFire,
-    // FleeScourge, ...) is readable post-game without log spam.
-    if ( ! chainActions.contains(value)) {
-      Debugging.CherryVis.CherryVis.decision(unit.id, value)
+  }
+
+  // One row per frame: the leaf decisions chained as A/B/C instead of one
+  // value, so the logs show the reasoning path, not just its end. Chain
+  // containers stay out (half a million Idle rows a game); the change-only
+  // channel still dedups steady chains. Probe mirrors the same label for
+  // games without a trace (UMS): arm keys in bwapi-data/write/probe.txt.
+  private def flushDecisionChain(): Unit = {
+    val chain = actions.view.filterNot(chainActions.contains).distinct
+    if (chain.nonEmpty) {
+      val label = chain.mkString("/")
+      Debugging.CherryVis.CherryVis.decision(unit.id, label)
+      Debugging.Probe.note("Act", unit.id, label)
     }
   }
 
@@ -101,6 +109,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
     tryingToMove  = false
     wantsUnload   = false
     wantsPickup   = false
+    flushDecisionChain()
     actions.clear()
     unit.orderTarget.foreach(_.removeDamage(unit))
 
@@ -116,6 +125,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
     toNuke    = unit.intent.toNuke
     if ( ! combat.tryDodge()) unit.intent.action(unit)
     Debugging.CherryVis.CherryVis.noteBehavior(unit.id, unit.intent.action)
+    flushDecisionChain()
   }
 
   /////////////

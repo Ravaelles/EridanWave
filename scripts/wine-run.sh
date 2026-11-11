@@ -322,10 +322,15 @@ if [ "$SC_UP" -eq 1 ]; then say "  StarCraft is running"; since "StarCraft is up
 else say "  WARNING: StarCraft not running within 45 s (see $LOG_DIR/chaoslauncher.log)"; fi
 
 say "Step 3/3: watching for HELLO_ERIDANWAVE (grace 60s)..."
-END=$(( $(date +%s) + 60 )); ATTACHED=0
+END=$(( $(date +%s) + 60 )); ATTACHED=0; KEYS=0; LASTKEY=0
 while [ "$(date +%s)" -lt "$END" ]; do
   if grep -qE "HELLO_(ERIDAN|PURPLE)WAVE" "$CLIENT_LOG" 2>/dev/null; then
     say "SUCCESS: BWAPI attached, EridanWave is playing!"; ATTACHED=1; break
+  fi
+  # UMS maps idle in the briefing room: dismiss it so headless runs self-start (max 5 presses).
+  if [ "$KEYS" -lt 5 ] && [ "${GAME_TYPE:-}" = "USE_MAP_SETTINGS" ] && [ "${HIDDEN:-1}" = "1" ] \
+    && [ $(( $(date +%s) - LASTKEY )) -ge 8 ] && command -v xdotool >/dev/null; then
+    DISPLAY=":99" xdotool key Return 2>/dev/null; LASTKEY=$(date +%s); KEYS=$((KEYS+1))
   fi
   if ! kill -0 "$CLIENT_PID" 2>/dev/null; then
     say "FAILED: client JVM died. Log tail:"; tail -15 "$CLIENT_LOG" | sed 's/^/    /'

@@ -151,7 +151,11 @@ trait DropTransportActions { self: MissionDrop =>
       val pickup = pickupTarget(transport, assembling = false)
       if (pickup.isEmpty) {
         if (transport.matchups.threats.nonEmpty && !transport.matchups.withinSafetyMargin) Retreat.delegate(transport)
-        Commander.hold(transport)
+        // Same pin as the travel hold: under fire the hold cancels the
+        // retreat once moving, so a shuttle that cannot shoot waits to die.
+        // Rescue (below) still outranks safety; this branch has no rescue.
+        if (transport.matchups.threatsInRange.isEmpty) Commander.hold(transport)
+        else Commander.move(transport, transport.agent.defaultHome)
       } else if (transport.pixelDistanceCenter(pickup.get) > 384) {
         intendRoute(transport, pickup.get.tile)
         ActionTravelTransport.delegate(transport)

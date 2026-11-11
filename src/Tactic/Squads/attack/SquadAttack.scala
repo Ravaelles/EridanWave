@@ -1,5 +1,6 @@
 package Tactic.Squads.attack
 
+import Debugging.Probe
 import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
@@ -238,11 +239,13 @@ class SquadAttack extends Squad {
   private def updateStance(): Unit = {
     if (With.yolo.active) {
       stance = RegroupLatch.Engaged
+      Probe.note("Sim", 0, "Engaged yolo")
     } else {
       val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
       val coverage = verdicts.size.toDouble / units.size
       val fighting = if (verdicts.isEmpty) 1.0 else verdicts.count(identity).toDouble / verdicts.size
       stance = RegroupLatch.nextStance(stance, fighting, coverage)
+      Probe.note("Sim", 0, f"$stance fighting=$fighting%.2f coverage=$coverage%.2f")
     }
     Debugging.CherryVis.CherryVis.board("AttackStance", stance.toString)
   }
