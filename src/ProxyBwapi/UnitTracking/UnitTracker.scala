@@ -57,6 +57,7 @@ final class UnitTracker {
       if (countDeath) Information.Battles.KillLedger.noteDeath(unit)
       if (unit.isEnemy) creditKiller(unit)
       if (unit.isOurs) noteDeathBalance(unit)
+      if (unit.isOurs) Debugging.DeathWatch.reportIfWatched(unit)
       unit.friendly.foreach(bufferFriendly.remove)
       unit.foreign.filter(_.isEnemy).foreach(bufferEnemy.remove)
       unit.foreign.filter(_.isNeutral).foreach(bufferNeutral.remove)

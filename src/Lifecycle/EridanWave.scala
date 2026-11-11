@@ -25,6 +25,7 @@ class EridanWave extends DefaultBWListener {
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         Debugging.ErrorLedger.reset()
         Lifecycle.HitCounter.reset()
+        Debugging.DeathWatch.reset()
         Debugging.CherryVis.CherryVis.initialize()
         With.history.onStart()
         With.units.onStart()
@@ -44,6 +45,7 @@ class EridanWave extends DefaultBWListener {
         With.latency.onFrame()
         With.units.onFrame()
         Lifecycle.HitCounter.onFrame(With.units.ours)
+        Debugging.DeathWatch.update()
         // Parked while paused: the engine is frozen by togglePause, but
         // onFrame keeps arriving, so tracking, chat commands, camera and
         // visualization keep running and the overlay never vanishes.
