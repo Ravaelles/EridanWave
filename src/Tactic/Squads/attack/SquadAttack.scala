@@ -241,9 +241,11 @@ class SquadAttack extends Squad {
     if (With.yolo.active) {
       stance = RegroupLatch.Engaged
       Probe.note("Sim", 0, "Engaged yolo")
-    } else if (ArmyStrength.retreating(
-      With.battles.globalAttack.us.skimStrengthTotal,
-      With.battles.globalAttack.enemy.skimStrengthTotal)) {
+    } else if (
+      units.count(_.unitClass.isWarrior) >= ArmyStrength.retreatMinWarriors &&
+      ArmyStrength.retreating(
+        With.battles.globalAttack.us.skimStrengthTotal,
+        With.battles.globalAttack.enemy.skimStrengthTotal)) {
       stance = RegroupLatch.Regrouping
       Probe.note("Sim", 0, "Regrouping outmatched")
     } else {

@@ -16,6 +16,9 @@ object ArmyStrength {
     * fresh units march back out as the score recovers. */
   val retreatBelowStrength: Double = 130.0
 
+  /** Duels stay sim-driven: only a real force retreats on the score. */
+  val retreatMinWarriors: Int = 6
+
   def retreating(ours: Double, foe: Double): Boolean =
     foe > 0.0 && score(ours, foe) < retreatBelowStrength
 }
