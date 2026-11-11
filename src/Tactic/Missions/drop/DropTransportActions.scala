@@ -104,7 +104,12 @@ trait DropTransportActions { self: MissionDrop =>
         }
         transport.agent.redoubt.set(transport.agent.defaultHome)
         Retreat.delegate(transport)
-        Commander.hold(transport)
+        // Under fire the hold below would pin the transport: once it moves,
+        // hold sees velocity plus a Move order and cancels the retreat, so a
+        // shuttle that cannot shoot just waits to die. Wait only while the
+        // threats cannot hit us; otherwise run for the redoubt.
+        if (transport.matchups.threatsInRange.isEmpty) Commander.hold(transport)
+        else Commander.move(transport, transport.agent.defaultHome)
       }
     }
   }
