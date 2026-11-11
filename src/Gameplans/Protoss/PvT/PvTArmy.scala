@@ -70,7 +70,11 @@ object PvTArmy extends MacroActions {
       pump(Protoss.Scout, 1)
     }
 
-    if (upgradeStarted(Protoss.ZealotSpeed)) {
+    if (ZealotSurge.allowsMassZealots(minerals, supplyUsed200)) {
+      // Banked minerals mean the Gates starve: queue Zealots uncapped until
+      // the surge cap instead of holding the normal Dragoon-led mix.
+      pump(Protoss.Zealot)
+    } else if (upgradeStarted(Protoss.ZealotSpeed)) {
       pump(Protoss.Zealot, units(Protoss.Dragoon))
     }
     pump(Protoss.Dragoon)
