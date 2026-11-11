@@ -49,7 +49,8 @@ class SquadDarkTemplar extends Squad {
       if (bases.isEmpty) return
     }
 
-    // One Templar always stays with the main army; the rest raid.
+    // The first Templar always raids; past one, a single bodyguard stays
+    // with the main army while the rest raid.
     // Sized from our own lock view: a second DT lock would leave its own.
     // Preference refreshes here, not at construction: enemyHome moves.
     lock.setPreference(PreferClose(With.scouting.enemyHome.center))
