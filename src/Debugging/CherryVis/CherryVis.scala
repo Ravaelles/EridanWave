@@ -26,7 +26,6 @@ object CherryVis {
   private val lastBehavior  = new mutable.HashMap[Int, String]
   private val lastBehaviorRef = new mutable.HashMap[Int, AnyRef]
   private val lastBoard     = new mutable.HashMap[String, String]
-  private val lastOrders    = new mutable.HashMap[Int, String]
   private val lastDecision  = new mutable.HashMap[Int, String]
   private val knownUnits    = new mutable.HashSet[Int]
   private val rearmedUnits  = new mutable.HashSet[Int]
@@ -41,7 +40,6 @@ object CherryVis {
     lastBehavior.clear()
     lastBehaviorRef.clear()
     lastBoard.clear()
-    lastOrders.clear()
     lastDecision.clear()
     knownUnits.clear()
     rearmedUnits.clear()
@@ -53,7 +51,6 @@ object CherryVis {
 
     noteFirstSeen(With.units.ours)
     noteFirstSeen(With.units.neutral)
-    noteOrders(With.units.ours)
     val strategy = With.strategy.strategiesSelected.toSeq.map(_.toString).sorted.mkString("+")
     if (strategy != lastStrategy) {
       lastStrategy = strategy
@@ -117,8 +114,11 @@ object CherryVis {
    * Change-only like owner/behavior above: a steady reason costs one map
    * lookup, never a row, so per-frame call sites stay free in traced games.
    */
+  // Unit logs keep directing behaviors only: engine-order echoes
+  // (moves, holds, hash-commands) name no class and drown the reasoning.
   def decision(unitId: Int, reason: String): Unit = {
     if ( ! enabled) return
+    if (reason.startsWith("Moving to ") || reason == "Holding move order" || reason.startsWith("#")) return
 
     if (lastDecision.getOrElse(unitId, "") != reason) {
       lastDecision(unitId) = reason
@@ -191,24 +191,6 @@ object CherryVis {
   private def recordFirstSeen(unit: UnitInfo): Unit = {
     trace.firstSeen.record(With.frame, unit.id, unit.unitClass.id, unit.pixel.x, unit.pixel.y)
     trace.firstSeen.noteEngineId(unit.id, unit.id)
-  }
-
-  /**
-   * Engine-order narrative, one row per change: `#Move@0:12`.
-   * Observes only (like the Atlantis OrderWatcher): it never issues orders,
-   * so it cannot perturb the behavior it reports. Change-only keeps a traced
-   * game at a handful of rows per unit per game.
-   */
-  private def noteOrders(units: Iterable[UnitInfo]): Unit = {
-    units.foreach(unit => {
-      if ( ! unit.unitClass.isBuilding) {
-        val order = Option(unit.bwapiUnit.getLastCommand).map(_.getType.name).getOrElse("NO_COMMAND")
-        if (lastOrders.getOrElse(unit.id, "") != order) {
-          lastOrders(unit.id) = order
-          trace.logUnitLine(With.frame, unit.id, f"#$order@${minSec(With.frame)}")
-        }
-      }
-    })
   }
 
   private def minSec(frame: Int): String = {
