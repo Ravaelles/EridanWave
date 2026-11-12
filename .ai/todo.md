@@ -64,3 +64,21 @@ ordinary buildings. Ours lifts them in `TargetScoring.apply` via
 - Check both combat states: out of combat the colony bonus dominates,
   in combat fighters outrank it (slow scoring flips +-12 with action
   match) - both are intended, neither may idle past a standing colony.
+
+# SRP pass on the longest files
+
+`docs/longest-files.md` lists the 20 longest sources with every method over
+20 lines and what is done. Done so far: `UnitClass` build tables per race,
+`PlacementCacheFormat.writeWall`, three of `Tactician`'s methods, and
+`BeRushingZealot` (split into `Zealot/ZealotRush*`). Next, cheapest first:
+`WallFinder.canPlace/scoreWall`, `SimulationGrid.applySplash`, then the
+`Debugging/*` painters; the game-state controllers (`MacroSim.simulate`,
+`PvZ1BaseReactive.buildTech`, `SquadDefendBase.run`) need a game per cut.
+
+# ReaverLegacy removal criterion
+
+Two Reaver disciplines run side by side behind
+`With.blackboard.reaverAtlantisBehavior`. Decide once: if Atlantis drops hold
+through the next batch of games without a lost Reaver shuttle, fold
+`ReaverLegacy` into `Reaver/Legacy` and stop maintaining the switch.
+`src/Micro/Actions/Protoss/__REVIEW.md` has the details.
