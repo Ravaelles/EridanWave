@@ -109,7 +109,14 @@ object Retreat extends Action {
     lazy val waypointForces   = Seq(true, false).view.map(safety => MicroPathing.getWaypointInDirection(unit, force, requireSafety = safety)).find(_.nonEmpty).flatten.map((_, "Force"))
     lazy val waypointOrigin   = (unit.agent.safety, "Origin")
     lazy val tilePath         = MicroPathing.getThreatAwarePath(unit, preferHome = goalOrigin)
-    val waypoint              = waypointSimple.orElse(waypointPath).orElse(waypointForces).getOrElse(waypointOrigin)
+    // Large land units wedge between mineral fields and die there, so their
+    // flee spots stay over a tile clear of minerals.
+    def clearOfMinerals(pixel: Pixel): Boolean =
+      ! pixel.tile.adjacent9.exists(_.units.exists(_.unitClass.isMinerals))
+    val largeFleer = FleeMineralClearance.applies(unit.unitClass.size == ProxyBwapi.Size.Large, unit.flying)
+    val waypoint = ?(largeFleer,
+      Seq(waypointSimple, waypointPath, waypointForces).flatten.find(w => clearOfMinerals(w._1)).getOrElse(waypointOrigin),
+      waypointSimple.orElse(waypointPath).orElse(waypointForces).getOrElse(waypointOrigin))
     RetreatPlan(unit, waypoint._1, waypoint._2)
   }
 }
