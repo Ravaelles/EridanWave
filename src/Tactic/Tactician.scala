@@ -5,6 +5,7 @@ import Information.Geography.Types.Base
 import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
+import Micro.Targeting.CarrierBrawl
 import Performance.Tasks.TimedTask
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -15,6 +16,7 @@ import Tactic.Missions.ground.MissionKillExpansion
 import Tactic.Missions.reaver.MissionReaverDrop
 import Tactic.Production.core.Produce
 import Tactic.Squads._
+import Tactic.Squads.Decisions.OurBaseUnderAttack
 import Tactic.Tactics.Cheese._
 import Tactic.Tactics.Defense._
 import Tactic.Tactics.Economy._
@@ -131,6 +133,7 @@ final class Tactician extends TimedTask {
     fillDefenseSquads(squadsDefending, freelancers)
     defendVsMutas(freelancers)
     defendVsDrops(freelancers, freelancerCountInitial)
+    defendVsBreach(freelancers)
     staffBaseGuards(freelancers)
     enforceClusterSplit()
     fillAttackSquad(freelancers, squadsDefending)
@@ -234,6 +237,28 @@ final class Tactician extends TimedTask {
   // (air-and-ground hitters first), posted at the natural choke, answering
   // enemies at any base. Sized through the lock counter, so ablation shrinks
   // it when the army bleeds and zeroes it below twenty warriors.
+  // Carriers answer home breaches: two or more ground enemies in our main
+  // or natural pull a full wing (ten-plus interceptors) off the line to the
+  // breached base. Single raiders are left to static defense and workers.
+  private def defendVsBreach(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
+    val carriers = freelancers.filter(Protoss.Carrier).toVector
+    if (carriers.isEmpty) return
+    if (carriers.view.flatMap(_.interceptors).count(_.complete) < CarrierBrawl.minInterceptors) return
+
+    val homes = With.geography.ourMain +: With.geography.ourMain.natural.toSeq
+    val groundFoes = With.units.enemy.view.filterNot(_.flying).map(_.pixel).toVector
+    val breached = homes.filter(h => OurBaseUnderAttack.atLeastTwoGroundEnemies(h.heart.center, groundFoes))
+    if (breached.isEmpty) return
+
+    With.logger.debug(f"Carriers answering breach: ${carriers.size} to ${breached.size} base(s)")
+    carriers.foreach(c => {
+      val home = Maff.minBy(breached)(_.heart.center.pixelDistanceSquared(c.pixel)).getOrElse(breached.head)
+      val intruders = With.units.enemy.filter(e => ! e.flying && home.heart.center.tile.tileDistanceFast(e.tile) <= OurBaseUnderAttack.breachRadiusTiles)
+      c.intend(this).setTerminus(home.heart.center).setTargets(intruders)
+      freelancers -= c
+    })
+  }
+
   private def staffBaseGuards(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
     val wanted = BaseGuardStaffing.guardsFor(With.units.ours.count(_.unitClass.isWarrior))
     baseGuards.lock.setCounter(CountUpTo(wanted))
