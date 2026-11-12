@@ -60,6 +60,18 @@ class FormationAuditStatsSuite extends AnyFunSuite {
     FormationAudit.reset()
   }
 
+  test("dress verdicts accumulate per unit-frame and clear on reset") {
+    FormationAudit.reset()
+    FormationAudit.noteDress(10, 1, "Dragoon", 3.0, 2.5, 0.5, 14, "Cautious", "StepBack")
+    FormationAudit.noteDress(11, 1, "Dragoon", 2.8, 2.5, 0.5, 14, "Cautious", "HoldLine")
+    val rows = FormationAudit.dressRows
+    assert(rows.size == 2)
+    assert(rows.map(_.order) == Seq("StepBack", "HoldLine"))
+    assert(rows.head.lineMeanTiles == 2.5)
+    FormationAudit.reset()
+    assert(FormationAudit.dressRows.isEmpty)
+  }
+
   test("the tally counts every leaf label") {
     FormationAudit.reset()
     FormationAudit.tally("Engage/Approach")

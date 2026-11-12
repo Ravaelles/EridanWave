@@ -39,10 +39,23 @@ object ApproachBehavior {
   }
 
   private def dressLine(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    FormationApproach.decide(
-      unit.pixelsToGetInRange(unit.matchups.targetNearest.get) / 32.0,
-      unit.squad.flatMap(_.lineStats),
-      approachPosture) match {
+    val posture = approachPosture
+    val stats = unit.squad.flatMap(_.lineStats)
+    val ownBeyond = unit.pixelsToGetInRange(unit.matchups.targetNearest.get) / 32.0
+    val order = FormationApproach.decide(ownBeyond, stats, posture)
+    if (With.configuration.formationAudit) {
+      Debugging.FormationAudit.noteDress(
+        With.frame,
+        unit.id,
+        unit.unitClass.toString,
+        ownBeyond,
+        stats.map(_.meanTiles).getOrElse(Double.NaN),
+        stats.map(_.stddevTiles).getOrElse(Double.NaN),
+        stats.map(_.count).getOrElse(0),
+        posture.toString,
+        order.toString)
+    }
+    order match {
       case FormationApproach.FreeMarch | FormationApproach.BreakThrough => false
       case FormationApproach.HoldLine => holdLine(unit)
       case FormationApproach.StepForward | FormationApproach.CloseCautious => stepForward(unit, combat)

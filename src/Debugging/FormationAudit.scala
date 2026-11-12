@@ -18,19 +18,53 @@ object FormationAudit {
 
   final case class BreakRow(frame: Int, unitId: Int, ownClass: String, targetClass: String, distTiles: Double)
 
+  final case class DressRow(
+    frame         : Int,
+    unitId        : Int,
+    ownClass      : String,
+    ownBeyondTiles: Double,
+    lineMeanTiles : Double,
+    lineStddevTiles: Double,
+    lineCount     : Int,
+    posture       : String,
+    order         : String)
+
   private val tallyCounts = new mutable.HashMap[String, Int]
   private val breaks      = new ArrayBuffer[BreakRow]
+  private val dresses     = new ArrayBuffer[DressRow]
   private val lastBroken  = new mutable.HashMap[Int, Boolean]
 
   def reset(): Unit = {
     tallyCounts.clear()
     breaks.clear()
+    dresses.clear()
     lastBroken.clear()
   }
 
   def tallySnapshot: Map[String, Int] = tallyCounts.toMap
 
   def breakRows: Seq[BreakRow] = breaks.toSeq
+
+  def dressRows: Seq[DressRow] = dresses.toSeq
+
+  /**
+   * One dress verdict per eligible unit-frame: where the unit stands
+   * relative to its range, the line shape it dresses against, and the order
+   * it took. Alternating StepBack/StepForward/HoldLine across frames is the
+   * oscillation signature scripts/formation-audit.py ranks per unit.
+   */
+  def noteDress(
+    frame         : Int,
+    unitId        : Int,
+    ownClass      : String,
+    ownBeyondTiles: Double,
+    lineMeanTiles : Double,
+    lineStddevTiles: Double,
+    lineCount     : Int,
+    posture       : String,
+    order         : String): Unit = {
+    dresses += DressRow(frame, unitId, ownClass, ownBeyondTiles, lineMeanTiles, lineStddevTiles, lineCount, posture, order)
+  }
 
   def enabled: Boolean =
     With.configuration != null && With.configuration.formationAudit
@@ -67,6 +101,10 @@ object FormationAudit {
     val classLines = byClass.map({ case (cls, s) =>
       f"$cls%-28s n=${s.n}%4d mean=${s.mean}%5.2f std=${s.stddev}%5.2f min=${s.min}%5.2f max=${s.max}%5.2f" })
     val rowLines = breaks.map(r => f"${r.frame}%7d ${r.unitId}%5d ${r.ownClass}%-28s ${r.targetClass}%-28s ${r.distTiles}%.2f").toSeq
+    val dressCounts = dresses.groupBy(_.order).map({ case (order, rs) => (order, rs.size) }).toSeq.sortBy(-_._2)
+    val dressCountLines = dressCounts.map({ case (order, n) => f"$n%8d  $order" })
+    val dressRowLines = dresses.map(d =>
+      f"${d.frame}%7d ${d.unitId}%5d ${d.ownClass}%-16s ${d.ownBeyondTiles}%5.2f ${d.lineMeanTiles}%5.2f ${d.lineStddevTiles}%5.2f ${d.lineCount}%3d ${d.posture}%-10s ${d.order}").toSeq
     val text =
       f"# FormationAudit map=$mapName frames=$frames\n" +
       f"[behaviors] ${tallyCounts.values.sum} leaf decisions\n" +
@@ -74,8 +112,12 @@ object FormationAudit {
       f"[breaks-by-class] ${breaks.length} slot leaves\n" +
       classLines.mkString("\n") + "\n" +
       "[break-rows] frame unit own target distTiles\n" +
-      rowLines.mkString("\n") + "\n"
+      rowLines.mkString("\n") + "\n" +
+      f"[dress-orders] ${dresses.length} verdicts\n" +
+      dressCountLines.mkString("\n") + "\n" +
+      "[dress-rows] frame unit own beyond mean std count posture order\n" +
+      dressRowLines.mkString("\n") + "\n"
     With.bwapiData.writeToFile("formation-audit.txt", text)
-    With.logger.debug(f"FormationAudit: ${tallyCounts.size} behaviors, ${breaks.length} breaks -> formation-audit.txt")
+    With.logger.debug(f"FormationAudit: ${tallyCounts.size} behaviors, ${breaks.length} breaks, ${dresses.length} dress verdicts -> formation-audit.txt")
   }
 }
