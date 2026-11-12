@@ -29,6 +29,17 @@ class SquadRallySuite extends AnyFunSuite {
     assert( ! SquadRally.isRallying(Pixel(1050, 1050), centroid))
   }
 
+  test("slow hulls hold the line five tiles further out") {
+    assert(SquadRally.rallyRadiusFor(slow = false) == SquadRally.rallyRadiusPixels)
+    assert(SquadRally.rallyRadiusFor(slow = true) == SquadRally.rallyRadiusPixels + 5 * 32)
+    // 200px out rallies a normal unit but not a Reaver on the long leash.
+    assert(SquadRally.isRallying(Pixel(1000, 1200), centroid, SquadRally.rallyRadiusFor(slow = false)))
+    assert( ! SquadRally.isRallying(Pixel(1000, 1200), centroid, SquadRally.rallyRadiusFor(slow = true)))
+    // Past the long leash even a Reaver rejoins.
+    assert(SquadRally.isRallying(Pixel(1000, 1300), centroid, SquadRally.rallyRadiusFor(slow = true)))
+    assert(SquadRally.rallyFor(Pixel(1000, 1200), centroid, terminus, SquadRally.rallyRadiusFor(slow = true)) == terminus)
+  }
+
   test("drifters at six tenths close ranks") {
     assert(SquadRally.shouldJoinAlly(0.6))
     assert(SquadRally.shouldJoinAlly(5.0))

@@ -52,9 +52,12 @@ object MarchOrders {
   // Straggler rally (Stardust): a unit lagging behind the marching pack
   // rejoins the pack centroid first instead of walking alone to its slot.
   // Returning units keep their own slots - they are meant to disperse.
+  // Slow hulls (Reavers) rally on a longer leash so they keep their slot
+  // and their shot instead of chasing the pack all march.
   private def rallyLeg(squad: Squad, unit: FriendlyUnitInfo, finalTravel: Pixel, suicide: Boolean): (Pixel, Boolean) = {
     val pack     = ?(unit.flying, squad.centroidAir, squad.centroidGround)
-    val rallying = ! suicide && squad.fightConsensus && SquadRally.isRallying(unit.pixel, pack)
+    val leash    = SquadRally.rallyRadiusFor(Protoss.Reaver(unit))
+    val rallying = ! suicide && squad.fightConsensus && SquadRally.isRallying(unit.pixel, pack, leash)
     (?(rallying, pack, finalTravel), rallying)
   }
 
