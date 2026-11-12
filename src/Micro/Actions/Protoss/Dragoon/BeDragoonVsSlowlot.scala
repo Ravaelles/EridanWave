@@ -7,12 +7,10 @@ import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
-import Micro.Coordination.Pushing.TrafficPriorities
 import Micro.Heuristics.Potential
 import Micro.Targeting.Target
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Utilities.?
 import Utilities.Time.Minutes
 
 object BeDragoonVsSlowlot extends Action {
@@ -25,18 +23,11 @@ object BeDragoonVsSlowlot extends Action {
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     val margin    = Maff.min(unit.matchups.threatsInPixels(160).map(t => t.pixelsToGetInRange(unit) + 32 - Maff.or0(16, t.presumptiveTarget.contains(unit)) - 16 * t.dot(unit.pixel))).getOrElse(320d).toInt
-    val buffer    = margin / 32
-    val hitsLeft  = unit.totalHealth / 14
-    val safety    = buffer + hitsLeft
+    val safety    = DragoonSlowlotPolicy.safety(margin, unit.totalHealth)
 
-    unit.agent.escalatePriority(
-      ?(safety < 3, TrafficPriorities.Shove,
-      ?(safety < 5, TrafficPriorities.Bump,
-      ?(safety < 7, TrafficPriorities.Nudge,
-                    TrafficPriorities.Pardon))))
+    unit.agent.escalatePriority(DragoonSlowlotPolicy.priorityForSafety(safety))
 
-    val marginRequired  = Math.max(32, 128 - 8 * hitsLeft)
-    val marginDelta     = margin - marginRequired
+    val marginDelta = DragoonSlowlotPolicy.marginDeltaPixels(margin, unit.totalHealth)
 
     unit.agent.forces.put(Forces.spacing,  Potential.preferSpacing(unit))
     unit.agent.forces.put(Forces.pushing,  Potential.followPushes(unit))
@@ -65,7 +56,6 @@ object BeDragoonVsSlowlot extends Action {
 
   def retreat(unit: FriendlyUnitInfo): Unit = {
     val force = unit.agent.forces.sum.radians
-    MicroPathing.getWaypointInDirection(unit, force, requireSafety = true)
 
     lazy val waypointSimple   = MicroPathing.getWaypointInDirection(unit, force, requireSafety = true)
     lazy val waypointPath     = MicroPathing.getWaypointAlongTilePath(unit, tilePath).map(_.add(unit.pixel.offsetFromTileCenter))
