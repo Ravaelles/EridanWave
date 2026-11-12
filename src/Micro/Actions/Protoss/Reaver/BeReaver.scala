@@ -3,7 +3,6 @@ package Micro.Actions.Protoss.Reaver
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Protoss.ReaverLegacy.BeReaverLegacy
-import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -19,9 +18,5 @@ object BeReaver extends Action {
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (With.blackboard.reaverAtlantisBehavior()) BeReaverAtlantis(unit) else BeReaverLegacy(unit)
-  }
-
-  def clickShuttle(unit: FriendlyUnitInfo): Unit = {
-    Commander.rightClick(unit, unit.agent.ride.get)
   }
 }

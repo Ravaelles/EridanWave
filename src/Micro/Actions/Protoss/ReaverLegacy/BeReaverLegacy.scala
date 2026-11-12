@@ -3,7 +3,7 @@ package Micro.Actions.Protoss.ReaverLegacy
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
-import Micro.Actions.Protoss.Reaver.BeReaver
+import Micro.Actions.Protoss.Reaver.ReaverActions
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -28,7 +28,7 @@ object BeReaverLegacy extends Action {
     // Rescue before combat starts preparing another shot.
     if ( ! unit.loaded && ! unit.agent.commit && unit.hasActiveScarab && unit.cooldownLeft <= With.latency.remainingFrames && unit.matchups.threatsInRange.nonEmpty) {
       unit.agent.act("Hop")
-      BeReaver.clickShuttle(unit)
+      ReaverActions.clickShuttle(unit)
 
       return
     }
@@ -62,12 +62,12 @@ object BeReaverLegacy extends Action {
       // Dodge danger
       if ( ! unit.agent.commit && (needlesslyEndangered || needlesslyDoomed || unit.matchups.targetedByScarab)) {
         unit.agent.act("Hop")
-        BeReaver.clickShuttle(unit)
+        ReaverActions.clickShuttle(unit)
 
       // Hopping in and out of a Shuttle actually shortens your cooldown by forcing it to reset to 30
       } else if (needRefresh) {
         unit.agent.act("Refresh")
-        BeReaver.clickShuttle(unit)
+        ReaverActions.clickShuttle(unit)
       }
     }
   }

@@ -10,6 +10,6 @@ object ReaverRefreshCooldown {
 
   def act(unit: FriendlyUnitInfo): Unit = {
     unit.agent.act("Refresh")
-    BeReaver.clickShuttle(unit)
+    ReaverActions.clickShuttle(unit)
   }
 }

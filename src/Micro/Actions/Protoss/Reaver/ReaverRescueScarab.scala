@@ -14,6 +14,6 @@ object ReaverRescueScarab {
 
   def act(unit: FriendlyUnitInfo): Unit = {
     unit.agent.act("Hop")
-    BeReaver.clickShuttle(unit)
+    ReaverActions.clickShuttle(unit)
   }
 }

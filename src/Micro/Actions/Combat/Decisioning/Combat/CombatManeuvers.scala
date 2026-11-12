@@ -3,7 +3,7 @@ package Micro.Actions.Combat.Decisioning
 import Debugging.Visualizations.{ForceLabel, Forces}
 import Mathematics.Physics.Force
 import Micro.Actions.Combat.Decisioning.Techniques._
-import Micro.Actions.Protoss.Reaver.BeReaver
+import Micro.Actions.Protoss.Reaver.ReaverActions
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
@@ -40,7 +40,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
         if (combat.target
           .map(t => Math.min(unit.pixelsToGetInRange(t), unit.pixelsToGetInRange(t, t.projectFrames(48))) > 64)
           .getOrElse(unit.pixelDistanceTravelling(unit.agent.destinationNext()) > 96)) {
-          BeReaver.clickShuttle(unit)
+          ReaverActions.clickShuttle(unit)
         }
       }
       Commander.move(unit)

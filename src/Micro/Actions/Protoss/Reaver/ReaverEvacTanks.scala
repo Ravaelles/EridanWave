@@ -14,6 +14,6 @@ object ReaverEvacTanks {
 
   def act(unit: FriendlyUnitInfo): Unit = {
     unit.agent.act("HopTank")
-    BeReaver.clickShuttle(unit)
+    ReaverActions.clickShuttle(unit)
   }
 }
