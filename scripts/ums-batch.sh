@@ -107,7 +107,10 @@ run_one() {
   echo "=== ums-batch: $map ==="
   START=$(date +%s)
   rm -f bwapi-data/write/errors.json
-  bash scripts/run.sh --map="$map" --race=Protoss --headless --speed="$SPEED" --cherryvis &
+  # This script records its own richer dashboard rows below; keep wine-run
+  # from adding a second row for the same game.
+  ERIDAN_SKIP_DASHBOARD_RECORD=1 \
+    bash scripts/run.sh --map="$map" --race=Protoss --headless --speed="$SPEED" --cherryvis &
   RUN_PID=$!
   END=$(( START + TIMEOUT ))
   while kill -0 "$RUN_PID" 2>/dev/null; do

@@ -8,11 +8,11 @@
 <body>
 <h1>EridanWave results dashboard</h1>
 <p class="hint">
-  UMS survey rows are appended by <code>scripts/ums-batch.sh</code> to
-  <code>dashboard/data/history.jsonl</code> (one JSON object per line).
-  Melee rows use the same schema with <code>"kind": "melee"</code> and an
-  enemy name. Serve this folder over HTTP so the page can load the data,
-  e.g. <code>cd dashboard &amp;&amp; python3 -m http.server</code>.
+  Every game started through <code>scripts/run.sh</code> lands in
+  <code>dashboard/data/history.jsonl</code> (one JSON object per line) and in
+  the <code>data/history.js</code> snapshot this page loads when opened
+  straight from disk. Serving the folder over HTTP works too, e.g.
+  <code>cd dashboard &amp;&amp; python3 -m http.server</code>.
 </p>
 <p>
   <label>Filter map: <input id="filter" type="text" placeholder="substring…"></label>
@@ -27,8 +27,9 @@
   <span id="counts"></span>
 </p>
 <p id="localfile" style="display:none">
-  Direct file open blocks the data load (CORS). Either serve this folder
-  (<code>python3 -m http.server</code>) or pick
+  No recorded games yet, or the dashboard was copied without
+  <code>data/</code>. Play a game through <code>scripts/run.sh</code> (or
+  serve this folder with <code>python3 -m http.server</code>), or pick
   <code>data/history.jsonl</code> by hand:
   <input id="filepicker" type="file" accept=".jsonl,.json,.txt">
 </p>

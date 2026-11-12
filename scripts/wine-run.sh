@@ -443,5 +443,10 @@ cleanup
   fi
   ln -sfn "$RUN_DIR" "$WINE_RUNS_DIR/latest"
   say "run archived: $RUN_DIR"
+  # Dashboard row + file:// snapshot for every game. Batch runs opt out:
+  # ums-batch.sh records its own richer rows.
+  if [ -z "${ERIDAN_SKIP_DASHBOARD_RECORD:-}" ]; then
+    bash "$REPO/scripts/dashboard-record.sh" "$RUN_DIR" "${MAP:-?}" "${ENEMY_RACE:-?}" || true
+  fi
 } || true
 exit 0

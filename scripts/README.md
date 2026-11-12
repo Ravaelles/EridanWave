@@ -5,8 +5,11 @@ Play: `run.sh --map=...` (Wine, THE way) · `wine-run.sh` (its backend)
 · `ums-smoke.sh` (UMS duel gate: fought to a result, not seceded)
 · `ums-batch.sh` (UMS survey: map subset headless one-by-one + results TSV;
   appends JSONL rows to `dashboard/data/history.jsonl`)
+· `dashboard-record.sh` (one archived run -> dashboard row; `wine-run.sh`
+  calls it, so every `run.sh` game is recorded and `data/history.js` exists)
 · `dashboard/` (results page: `index.html` + `app.js` + `style.css`, zero
-  deps; serve with `python3 -m http.server`, melee rows reuse the schema)
+  deps; opens straight from disk via the snapshot, or serve with
+  `python3 -m http.server`)
 · `run-batch.sh` / `run-tuning.sh` (batches) · `deploy-eridan-slot.sh` (scbw jar)
 Read: `summarize-cherryvis.py` (trace) · `summarize-errors.py` (errors).
 Probe (UMS micro has no trace): arm keys in `bwapi-data/write/probe.txt`

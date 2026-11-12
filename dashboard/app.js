@@ -19,7 +19,19 @@ const LOSS = new Set(["DEFEAT"]);
 
 /* ---------- LOAD ---------- */
 
+function snapshotRows() {
+  return typeof window.HISTORY_DATA !== "undefined" ? window.HISTORY_DATA : [];
+}
+
 async function loadRows() {
+  // file:// blocks fetch (CORS) and Chrome logs the blocked request as an
+  // error, so never attempt it there: the history.js snapshot that
+  // scripts/dashboard-record.sh writes next to this file is loadable from
+  // disk, and the file picker covers a dashboard opened without one.
+  if (window.location.protocol === "file:") {
+    if (snapshotRows().length > 0) return snapshotRows();
+    throw new Error("file:// cannot read data/history.jsonl");
+  }
   try {
     const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error("HTTP " + res.status);
@@ -29,11 +41,7 @@ async function loadRows() {
       .filter((l) => l.length > 0)
       .map((l) => JSON.parse(l));
   } catch (e) {
-    // file:// blocks fetch (CORS): fall back to the snapshot baked by
-    // scripts/ums-batch.sh into data/history.js, if present.
-    if (typeof window.HISTORY_DATA !== "undefined" && window.HISTORY_DATA.length > 0) {
-      return window.HISTORY_DATA;
-    }
+    if (snapshotRows().length > 0) return snapshotRows();
     throw e;
   }
 }
@@ -176,7 +184,7 @@ async function refresh() {
     ALL_ROWS = await loadRows();
   } catch (e) {
     document.querySelector("#counts").textContent =
-      "No data yet (" + e.message + "). Run scripts/ums-batch.sh first, " +
+      "No data yet (" + e.message + "). Play a game through scripts/run.sh, " +
       "serve over HTTP, or pick the file below.";
     document.querySelector("#localfile").style.display = "block";
     return;
