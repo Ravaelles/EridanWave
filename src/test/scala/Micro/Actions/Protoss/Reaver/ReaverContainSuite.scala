@@ -4,23 +4,25 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class ReaverContainSuite extends AnyFunSuite {
 
-  test("eleven warriors against three statics is a contain") {
+  test("a lone warrior against one static is a contain") {
+    assert(ReaverContain.containing(ourWarriors = 1, enemyStaticsNear = 1))
     assert(ReaverContain.containing(ourWarriors = 11, enemyStaticsNear = 3))
     assert(ReaverContain.containing(ourWarriors = 50, enemyStaticsNear = 9))
   }
 
-  test("ten warriors is a raid, not a contain") {
-    assert( ! ReaverContain.containing(ourWarriors = 10, enemyStaticsNear = 3))
-    assert( ! ReaverContain.containing(ourWarriors = 11, enemyStaticsNear = 2))
+  test("nothing on either side is not a contain") {
+    assert( ! ReaverContain.containing(ourWarriors = 0, enemyStaticsNear = 1))
+    assert( ! ReaverContain.containing(ourWarriors = 1, enemyStaticsNear = 0))
     assert( ! ReaverContain.containing(ourWarriors = 0, enemyStaticsNear = 0))
   }
 
-  test("the hold survives single-unit dips, releases on collapse") {
-    assert(ReaverContain.holding(currentlyHolding = false, ourWarriors = 11, enemyStaticsNear = 3))
-    assert( ! ReaverContain.holding(currentlyHolding = false, ourWarriors = 10, enemyStaticsNear = 3))
-    assert(ReaverContain.holding(currentlyHolding = true, ourWarriors = 10, enemyStaticsNear = 2))
-    assert( ! ReaverContain.holding(currentlyHolding = true, ourWarriors = 9, enemyStaticsNear = 3))
-    assert( ! ReaverContain.holding(currentlyHolding = true, ourWarriors = 11, enemyStaticsNear = 1))
+  test("the hold releases only on collapse") {
+    assert(ReaverContain.holding(currentlyHolding = false, ourWarriors = 1, enemyStaticsNear = 1))
+    assert( ! ReaverContain.holding(currentlyHolding = false, ourWarriors = 0, enemyStaticsNear = 1))
+    assert( ! ReaverContain.holding(currentlyHolding = false, ourWarriors = 1, enemyStaticsNear = 0))
+    assert(ReaverContain.holding(currentlyHolding = true, ourWarriors = 1, enemyStaticsNear = 1))
+    assert( ! ReaverContain.holding(currentlyHolding = true, ourWarriors = 0, enemyStaticsNear = 1))
+    assert( ! ReaverContain.holding(currentlyHolding = true, ourWarriors = 1, enemyStaticsNear = 0))
     assert( ! ReaverContain.holding(currentlyHolding = true, ourWarriors = 0, enemyStaticsNear = 0))
   }
 
@@ -30,7 +32,7 @@ class ReaverContainSuite extends AnyFunSuite {
   }
 
   test("thresholds are stored in tiles") {
-    assert(ReaverContain.staticsDistTiles == 20.0)
+    assert(ReaverContain.staticsDistTiles == 25.0)
     assert(ReaverContain.fightDistTiles == 15.0)
   }
 }
