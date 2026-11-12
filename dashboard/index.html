@@ -12,7 +12,8 @@
   <code>dashboard/data/history.jsonl</code> (one JSON object per line) and in
   the <code>data/history.js</code> snapshot this page loads when opened
   straight from disk. Serving the folder over HTTP works too, e.g.
-  <code>cd dashboard &amp;&amp; python3 -m http.server</code>.
+  <code>cd dashboard &amp;&amp; python3 -m http.server</code>. The trash button
+  hides a run in this browser; the recorded file is left untouched.
 </p>
 <p>
   <label>Filter map: <input id="filter" type="text" placeholder="substring…"></label>
@@ -24,6 +25,7 @@
     </select>
   </label>
   <button id="reload">Reload</button>
+  <button id="restore" style="display:none">Restore removed</button>
   <span id="counts"></span>
 </p>
 <p id="localfile" style="display:none">
@@ -47,7 +49,7 @@
 <table id="runs">
   <thead><tr>
     <th>Date</th><th>Map</th><th>Result</th><th>Frames</th>
-    <th>Killed</th><th>Lost</th><th>Times&nbsp;hit</th><th>Secs</th>
+    <th>Killed</th><th>Lost</th><th>Times&nbsp;hit</th><th>Secs</th><th></th>
   </tr></thead>
   <tbody></tbody>
 </table>

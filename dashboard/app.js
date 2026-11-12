@@ -111,10 +111,21 @@ function renderRuns(rows) {
       `<td>${r.date}</td><td>${r.map}</td><td class="result">${r.result}</td>` +
       `<td class="num">${fmt(r.frames)}</td><td class="num">${fmt(r.killed)}</td>` +
       `<td class="num">${fmt(r.lost)}</td><td class="num">${fmt(r.times_hit)}</td>` +
-      `<td class="num">${fmt(r.duration_s)}</td>`;
+      `<td class="num">${fmt(r.duration_s)}</td>` +
+      `<td class="actions"><button class="trash" title="Remove this run from the dashboard" ` +
+      `data-key="${encodeURIComponent(runKey(r))}">\u{1F5D1}</button></td>`;
     tb.appendChild(tr);
   }
-  document.querySelector("#counts").textContent = `${rows.length} runs shown`;
+  renderCounts(rows);
+}
+
+function renderCounts(rows) {
+  const hidden = hiddenRunKeys().size;
+  const counts = document.querySelector("#counts");
+  counts.textContent = `${rows.length} runs shown` + (hidden > 0 ? ` (${hidden} removed)` : "");
+  const restore = document.querySelector("#restore");
+  restore.style.display = hidden > 0 ? "inline" : "none";
+  restore.textContent = `Restore ${hidden} removed`;
 }
 
 /* ---------- CHARTS ---------- */
@@ -168,10 +179,45 @@ function renderChart(rows) {
 
 let ALL_ROWS = [];
 
+/* A run the owner removed from the dashboard. The history file itself is
+ * never touched (the browser cannot rewrite it); the key lives in
+ * localStorage, so the removal survives reloads in this browser. */
+const HIDDEN_KEY = "eridanwave.dashboard.removedRuns";
+
+function runKey(r) {
+  return [r.date, r.map, r.result, r.frames].join("|");
+}
+
+function hiddenRunKeys() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY) || "[]"));
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function saveHiddenRunKeys(keys) {
+  localStorage.setItem(HIDDEN_KEY, JSON.stringify([...keys]));
+}
+
+function removeRun(key) {
+  const keys = hiddenRunKeys();
+  keys.add(key);
+  saveHiddenRunKeys(keys);
+  applyFilter();
+}
+
+function restoreRemovedRuns() {
+  saveHiddenRunKeys(new Set());
+  applyFilter();
+}
+
 function applyFilter() {
   const q = document.querySelector("#filter").value.toLowerCase();
   const kind = document.querySelector("#kind").value;
+  const hidden = hiddenRunKeys();
   const rows = ALL_ROWS.filter((r) =>
+    !hidden.has(runKey(r)) &&
     (kind === "all" || r.kind === kind) &&
     (q === "" || r.map.toLowerCase().includes(q)));
   renderSummary(rows);
@@ -212,6 +258,15 @@ function loadFile(file) {
 document.querySelector("#filepicker").addEventListener("change", (ev) => {
   if (ev.target.files.length > 0) loadFile(ev.target.files[0]);
 });
+
+// Trash button per run row: event delegation, so re-rendering never stacks
+// listeners on fresh rows.
+document.querySelector("#runs").addEventListener("click", (ev) => {
+  const button = ev.target.closest("button.trash");
+  if (button) removeRun(decodeURIComponent(button.dataset.key));
+});
+
+document.querySelector("#restore").addEventListener("click", restoreRemovedRuns);
 
 document.querySelector("#reload").addEventListener("click", refresh);
 document.querySelector("#filter").addEventListener("input", applyFilter);
