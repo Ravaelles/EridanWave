@@ -70,7 +70,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
     "BeDetector", "Evacuate", "BeShuttle", "CannonRush", "PylonTrap",
     "FightWithZealot", "DroneWarfare", "Harass4PoolWorkers", "SabotageProxy",
     "KnockKnock", "PreserveScout", "AttackBuilder", "BlockConstruction",
-    "Search", "SearchWhenBored")
+    "Search", "SearchWhenBored", "Idle", "DoNothing")
 
   def act(value: String): Unit = {
     actions += value
