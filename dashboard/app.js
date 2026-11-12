@@ -20,13 +20,22 @@ const LOSS = new Set(["DEFEAT"]);
 /* ---------- LOAD ---------- */
 
 async function loadRows() {
-  const res = await fetch(DATA_URL);
-  if (!res.ok) throw new Error("fetch " + DATA_URL + ": " + res.status);
-  const text = await res.text();
-  return text.split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-    .map((l) => JSON.parse(l));
+  try {
+    const res = await fetch(DATA_URL);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    return text.split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+      .map((l) => JSON.parse(l));
+  } catch (e) {
+    // file:// blocks fetch (CORS): fall back to the snapshot baked by
+    // scripts/ums-batch.sh into data/history.js, if present.
+    if (typeof window.HISTORY_DATA !== "undefined" && window.HISTORY_DATA.length > 0) {
+      return window.HISTORY_DATA;
+    }
+    throw e;
+  }
 }
 
 /* ---------- MODEL ---------- */

@@ -26,3 +26,4 @@
 /target/
 dependency-reduced-pom.xml
 
+/dashboard/data/

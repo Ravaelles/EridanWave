@@ -158,3 +158,19 @@ done
 
 echo "=== ums-batch RESULT: $WINS W / $LOSSES L, $SKIPPED skipped, $INCONCLUSIVE inconclusive, $NOATTACH no-attach ==="
 echo "(appended to out/ums-batch-results.tsv)"
+python3 - "$REPO" <<'PYEOF'
+import json, sys
+repo = sys.argv[1]
+rows = []
+try:
+    with open(repo + "/dashboard/data/history.jsonl", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+except FileNotFoundError:
+    pass
+with open(repo + "/dashboard/data/history.js", "w", encoding="utf-8") as f:
+    f.write("window.HISTORY_DATA = " + json.dumps(rows) + ";\n")
+print(f"dashboard snapshot: {len(rows)} rows -> dashboard/data/history.js")
+PYEOF
