@@ -1,8 +1,9 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.Detector
 
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Protoss.Air.BeFlier
 import Micro.Actions.Combat.Tactics.{Recharge, Spot}
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo

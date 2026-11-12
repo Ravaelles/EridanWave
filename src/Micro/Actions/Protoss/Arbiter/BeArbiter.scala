@@ -1,4 +1,4 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.Arbiter
 
 import Debugging.Visualizations.Forces
 import Mathematics.Maff

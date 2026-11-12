@@ -10,7 +10,11 @@ import Micro.Actions.Combat.Spells.Terran.Stim
 import Micro.Actions.Combat.Tactics._
 import Micro.Actions.Combat.Tactics.Bunker._
 import Micro.Actions.Combat.Tactics.Potshots._
-import Micro.Actions.Protoss._
+import Micro.Actions.Protoss.Air.BeFlier
+import Micro.Actions.Protoss.Arbiter.BeArbiter
+import Micro.Actions.Protoss.DarkTemplar.BeDarkTemplar
+import Micro.Actions.Protoss.Dragoon.BeDragoonVsSlowlot
+import Micro.Actions.Protoss.Zealot.{BeRushingZealot, BeZealotVsZealot}
 import Micro.Actions.Protoss.Carrier.BeCarrier
 import Micro.Actions.Protoss.Reaver.BeReaver
 import Micro.Actions.Terran.{BeCombatSCV, BeVulture}

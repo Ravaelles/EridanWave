@@ -1,4 +1,4 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.Detector
 
 import Mathematics.Points.Pixel
 

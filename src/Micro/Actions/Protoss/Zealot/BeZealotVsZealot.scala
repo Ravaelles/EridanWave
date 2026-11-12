@@ -1,4 +1,4 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.Zealot
 
 import Lifecycle.With
 import Mathematics.Maff

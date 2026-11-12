@@ -1,4 +1,4 @@
-package Micro.Actions.Protoss
+package Micro.Actions.Protoss.DarkTemplar
 
 import Lifecycle.With
 import Micro.Actions.Action

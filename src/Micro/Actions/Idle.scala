@@ -5,7 +5,7 @@ import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import Micro.Actions.Combat.Fight
 import Micro.Actions.Combat.Tactics.Bunker.Unbunk
 import Micro.Actions.Commands.{Attack, Travel}
-import Micro.Actions.Protoss.BeDetector
+import Micro.Actions.Protoss.Detector.BeDetector
 import Micro.Actions.Protoss.Support.{Meld, ReloadInterceptors, ReloadScarabs}
 import Micro.Actions.Scouting.Scout
 import Micro.Actions.Terran.{FinishConstruction, GetRepairedBuilding, GetRepairedMobile, Land, Liftoff, Repair, Scan}
