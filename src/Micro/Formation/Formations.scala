@@ -5,8 +5,8 @@ import Mathematics.Points.Pixel
 import Tactic.Squads.Group.FriendlyUnitGroup
 
 object Formations {
-  def march(group: FriendlyUnitGroup, destination: Pixel) : Formation = {
-    new FormationStandard(group, FormationStyleMarch, destination)
+  def march(group: FriendlyUnitGroup, destination: Pixel, meleeBack: Boolean = false) : Formation = {
+    new FormationStandard(group, FormationStyleMarch, destination, meleeBack = meleeBack)
   }
 
   def guard(group: FriendlyUnitGroup, toGuard: Option[Pixel]): Formation = {

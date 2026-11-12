@@ -20,7 +20,7 @@ import Tactic.Squads.Group.FriendlyUnitGroup
 
 //noinspection ComparingUnrelatedTypes
 //Disabling spurious IntelliJ warnings
-final class FormationStandard(val group: FriendlyUnitGroup, var style: FormationStyle, val goal: Pixel, var argZone: Option[Zone] = None) extends Formation {
+final class FormationStandard(val group: FriendlyUnitGroup, var style: FormationStyle, val goal: Pixel, var argZone: Option[Zone] = None, val meleeBack: Boolean = false) extends Formation {
   private case class ClassSlots(unitClass: UnitClass, var slots: Int, formationRangePixels: Double)
   private def units       = group.unintended
   private def airUnits    = units.filter(_.flying)
@@ -192,7 +192,9 @@ final class FormationStandard(val group: FriendlyUnitGroup, var style: Formation
       .groupBy(_.unitClass.baseClass)
       .map(g => (ClassSlots(g._1, g._2.size, g._2.head.formationRangePixels * Maff.inv32)))
       .toVector
-      .sortBy(_.formationRangePixels)
+      // In a contain the zealots only eat static fire: ranged classes take
+      // the inner arcs so Dragoons shoot, melee drops a tile and a half back.
+      .sortBy(c => (meleeBack && c.unitClass.melee, c.formationRangePixels))
 
     val classSlotsOverlook: Map[UnitClass, Seq[Pixel]] = Map.empty /*
       if      (style == FormationStyleGuard)  overlookSlots(classCount, requireTarget = false)
@@ -262,6 +264,7 @@ final class FormationStandard(val group: FriendlyUnitGroup, var style: Formation
     var slotsEvaluated  = 0
     var haltNegative    = false
     var haltPositive    = false
+    var meleeJumped     = false
     var arcZone: Zone   = null
     def nextRow(): Boolean = {
       radius          += radiusIncrement
@@ -277,6 +280,13 @@ final class FormationStandard(val group: FriendlyUnitGroup, var style: Formation
     var i = 0
     while (i < classSlots.length) {
       unitClass = classSlots(i).unitClass.baseClass
+      // Contain dressing: melee classes start a tile and a half farther
+      // out, so Dragoons hold the inner arc and shoot over nothing.
+      if (meleeBack && ! meleeJumped && classSlots(i).unitClass.melee) {
+        radius += 32 * 1.5
+        angleIncrement = radiusIncrement / radius
+        meleeJumped = true
+      }
       var j = 0
       while (j < classSlots(i).slots) {
         var proceed = true
