@@ -80,13 +80,11 @@ object Build extends Action {
     // build yet), moveToConstruct (traveling in), waiting (at the site but
     // cannot start), issueBuild:X (placing the order). Change-only logging
     // shows each transition once.
-    if (With.configuration.debugging) {
-      val atSite = unit.pixelDistanceCenter(pushPixel) < 128
-      lazy val affordable = With.self.minerals >= building.mineralPrice - 8 && With.self.gas >= building.gasPrice - 8
-      unit.agent.act(?(atSite,
-        ?(intent.startNow && tile.visible && affordable, f"issueBuild:${Tactic.Missions.evaluation.KillCredits.shortName(building)}", "waiting"),
-        ?(intent.startNow, "moveToConstruct", "assigned")))
-    }
+    val atSite = unit.pixelDistanceCenter(pushPixel) < 128
+    lazy val affordable = With.self.minerals >= building.mineralPrice - 8 && With.self.gas >= building.gasPrice - 8
+    unit.agent.act(?(atSite,
+      ?(intent.startNow && tile.visible && affordable, f"issueBuild:${Tactic.Missions.evaluation.KillCredits.shortName(building)}", "waiting"),
+      ?(intent.startNow, "moveToConstruct", "assigned")))
 
     if (intent.startNow
       && tile.visible
