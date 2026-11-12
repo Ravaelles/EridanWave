@@ -13,6 +13,10 @@ class CombatDistances(combat: Combat, unit: FriendlyUnitInfo) {
   private[Decisioning] def readyToApproachTarget: Boolean = {
     if (combat.target.isEmpty) return false
     if (unit.unitClass.melee) return true
+    // Sieged tanks outrange us: walk at them during the cooldown instead of
+    // waiting it out at a range we cannot shoot from (Atlantis Soyuz).
+    // Cooldown state itself lives in cooldownLeft/framesToBeReadyForAttackOrder.
+    if (Terran.SiegeTankSieged(combat.target.get)) return true
     if (?(unit.airlifted, 0, unit.framesToBeReadyForAttackOrder(combat.target.get)) > unit.framesToGetInRange(combat.target.get) + 4) return false
 
     true
