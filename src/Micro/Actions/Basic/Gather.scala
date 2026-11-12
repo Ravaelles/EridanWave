@@ -55,7 +55,7 @@ object Gather extends Action {
 
       // Help initial scout get home
       if (With.frame < Minutes(8)() && unit.metro.exists(_.bases.exists(_.isEnemy)) && unit.matchups.threats.exists( ! _.unitClass.melee) && unit.visibleToOpponents) {
-        if (With.configuration.debugging) unit.agent.act("HelpScout")
+        if (With.configuration.debugging) unit.agent.act("helpScout")
         Commander.gather(unit)
 
         return
@@ -67,7 +67,7 @@ object Gather extends Action {
           enemy.isNone(IsWorker, Terran.Wraith, Protoss.Arbiter, Protoss.Scout)
           && enemy.pixelDistanceEdge(unit) < enemy.pixelRangeAgainst(unit) + 32)
           && ! unit.tile.enemyDetected) {
-        if (With.configuration.debugging) unit.agent.act("Burrow")
+        if (With.configuration.debugging) unit.agent.act("burrow")
         Commander.burrow(unit)
       }
 
@@ -86,7 +86,7 @@ object Gather extends Action {
             && unit.base.map(_.heart.center).forall(target.pixelDistanceCenter(_) < defenseRadiusPixels))))
 
       if (unit.totalHealth > 32 && beckonedToFight) {
-        if (With.configuration.debugging) unit.agent.act("Fight")
+        if (With.configuration.debugging) unit.agent.act("fight")
         Target.choose(unit)
         Commander.attack(unit)
       }
@@ -124,14 +124,14 @@ object Gather extends Action {
             (!unit.carryingMinerals                       && goal.unitClass.isMinerals))
         val bestGoal = Maff.maxBy(drillGoal)(resource => stabbers.map(stabber => resource.pixelDistanceCenter(stabber)).max)
         if (bestGoal.exists(_.unitClass.isTownHall)) {
-          if (With.configuration.debugging) unit.agent.act("ReturnCargo")
+          if (With.configuration.debugging) unit.agent.act("returnCargo")
           Commander.returnCargo(unit)
         } else if (bestGoal.isDefined) {
           // If we expect to die anyway
           if (unit.pixelDistanceEdge(bestGoal.get) < 32) {
             Potshot(unit)
           } else {
-            if (With.configuration.debugging) unit.agent.act("Drill")
+            if (With.configuration.debugging) unit.agent.act("drill")
             unit.agent.toGather = bestGoal
             Commander.gather(unit)
           }
@@ -139,7 +139,7 @@ object Gather extends Action {
       }
 
       if (unit.base.exists(_.isOurs)) {
-        if (With.configuration.debugging) unit.agent.act("Potshot")
+        if (With.configuration.debugging) unit.agent.act("potshot")
         Potshot(unit)
       }
 
@@ -167,19 +167,19 @@ object Gather extends Action {
 
     // Take safe/hidden route to expansion
     if (safeToWork && unit.metro != resource.metro && ! unit.carrying && unit.agent.decision.setAsWaypoint(MicroPathing.getWaypointAlongTilePath(unit, MicroPathing.getSneakyPath(unit, Some(resource.tile.walkableTile)))).isDefined) {
-      if (With.configuration.debugging) unit.agent.act("Travel")
+      if (With.configuration.debugging) unit.agent.act("travel")
       Commander.move(unit)
     }
 
     // Benzene travel hack
     if (safeToWork && Benzene() && resource.zone != unit.zone && unit.zone == With.geography.ourMain.zone) {
-      if (With.configuration.debugging) unit.agent.act("Travel")
+      if (With.configuration.debugging) unit.agent.act("travel")
       Commander.move(unit)
     }
 
     if (safeToWork) {
       if (With.configuration.debugging) {
-        unit.agent.act(?(unit.carrying, "ReturnCargo", ?(resource.unitClass.isGas, "GatherGas", "GatherMinerals")))
+        unit.agent.act(?(unit.carrying, "returnCargo", ?(resource.unitClass.isGas, "gather:Gas", "gather:Minerals")))
       }
       Commander.gather(unit)
     }

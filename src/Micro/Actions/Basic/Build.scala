@@ -76,12 +76,23 @@ object Build extends Action {
 
     var movePixel = tile.topLeftPixel.add(building.tileWidth * 16, building.tileHeight * 16)
 
+    // Builder stages for the trace: assigned (has intent, not cleared to
+    // build yet), moveToConstruct (traveling in), waiting (at the site but
+    // cannot start), issueBuild:X (placing the order). Change-only logging
+    // shows each transition once.
+    if (With.configuration.debugging) {
+      val atSite = unit.pixelDistanceCenter(pushPixel) < 128
+      lazy val affordable = With.self.minerals >= building.mineralPrice - 8 && With.self.gas >= building.gasPrice - 8
+      unit.agent.act(?(atSite,
+        ?(intent.startNow && tile.visible && affordable, f"issueBuild:${Tactic.Missions.evaluation.KillCredits.shortName(building)}", "waiting"),
+        ?(intent.startNow, "moveToConstruct", "assigned")))
+    }
+
     if (intent.startNow
       && tile.visible
       && unit.pixelDistanceCenter(movePixel) < 112 // Addtl reference: McRave uses 96
       && With.self.minerals >= building.mineralPrice - 8
       && With.self.gas      >= building.gasPrice - 8) {
-      if (With.configuration.debugging) unit.agent.act("Build")
       Commander.build(unit, building, ?(building.isAddon, tile.add(4, 1), tile))
 
       return
@@ -98,7 +109,6 @@ object Build extends Action {
     }
 
     unit.agent.decision.set(movePixel)
-    if (With.configuration.debugging) unit.agent.act("GoBuild")
     if (unit.pixelDistanceTravelling(movePixel) > 256 + ?(unit.agent.path.isEmpty, 0, 256)) {
       MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getSneakyPath(unit))
     }
