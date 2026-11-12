@@ -8,11 +8,12 @@ import ProxyBwapi.Races.{Protoss, Zerg}
 import Strategery.Strategies.Protoss.PvEProxy2Gate
 import Utilities.?
 import Utilities.Time.Minutes
+import Utilities.UnitFilters.IsWarrior
 
 class PvEProxy2Gate extends GameplanImperative {
 
   override def activated: Boolean = PvEProxy2Gate()
-  override def completed: Boolean = bases > 1 || units(Protoss.Dragoon) >= 7
+  override def completed: Boolean = bases > 1 || units(Protoss.Dragoon) >= 7 || unitsEver(IsWarrior) >= 14
 
   override def executeBuild(): Unit = {
     scoutOn(Protoss.Gateway, quantity = 2)
