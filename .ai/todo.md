@@ -1,3 +1,16 @@
+# Distance hygiene (owner direction: tiles everywhere)
+
+Review every `.pixelDistance` use in `src/` and convert to tiles where
+possible (`tileDistanceEdge/Center` on units, `tileDistance` on pixels,
+`Pixel.tx/ty`, `Maff.div32` for the odd division). Wherever a raw `32`
+appears, prefer the tile form - it reads better and kills a whole class
+of factor-32 mixups (rule 10 in `.ai/conventions.md`). Exceptions stay:
+pixel construction (projections, order radii, grid indexing), mixed
+range math that genuinely mixes pixels and tiles, and hot sim loops
+where the conversion itself costs. Count before/after with
+`grep -rn "\.pixelDistance" src --include=*.scala | wc -l`; convert,
+keep suites green, no behavior change by construction.
+
 # Targeting parity with Atlantis — test roadmap
 
 Our picker is `Micro/Targeting/Target.scala` (strata + `TargetScoring`);
