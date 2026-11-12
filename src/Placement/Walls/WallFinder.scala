@@ -4,24 +4,19 @@ import Information.Geography.Types.{Edge, Zone}
 import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.{Point, Tile, TileRectangle}
-import Mathematics.Shapes.{Pylons, Rectangle, RoundedBox}
+import Mathematics.Shapes.Pylons
 import Placement.Generation.TileGeneratorRectangularSweep
 import Placement.Walls.WallFillers.{PylonsCannons, WallFiller}
-import Placement.Walls.WallProblems.{GapTooNarrow, GapTooWide, InsufficientFiller, InsufficientlyTight, IntersectsHall, IntersectsMining, IntersectsPrevious, NoHallway, UnbuildableGranular, UnbuildableTerrain, UnpoweredByFiller, UnpoweredByWall, WallProblem}
-import Placement.Walls.WallSpans.{TerrainGas, TerrainHall}
+import Placement.Walls.WallProblems.{InsufficientFiller, NoHallway, WallProblem}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitClasses.UnitClass
-import Utilities.?
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallConstraint], filler: WallFiller) {
   private val startedNanos                = System.nanoTime()
-  private val searchDeadlineNanos         = startedNanos + 45000000000L
   private val overallDeadlineNanos        = startedNanos + 58000000000L
-  private val maxCandidatesPerPermutation = 64
-  private val maxCandidatesPerConstraint  = 256
   private val maxFillerFinalists          = 256
   val metrics           : WallMetrics       = new WallMetrics
   val wallsUnacceptable : ArrayBuffer[Wall] = new ArrayBuffer[Wall]()
@@ -34,7 +29,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
     .getOrElse(With.geography.startLocations.minBy(_.groundPixels(zone.heart)))
 
   def generate(): Option[Wall] = {
-    placeRequiredBuildings()
+    new WallPlacementSearch(this, zone, constraints, startedNanos).run()
     selectWallWithFiller()
     wall.foreach(assignOutsideHallway)
     metrics.milliseconds = (System.nanoTime() - startedNanos) / 1000000L
@@ -52,193 +47,6 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
       if (wallsUnacceptable.length < 5000) wallsUnacceptable += copy
     }
     false
-  }
-
-  def placeRequiredBuildings(): Option[Wall] = {
-    if (constraints.isEmpty)        return None
-    if (zone.exitOriginal.isEmpty)  return None
-
-    var constraintIndex : Int   = 0
-    var gapsLeft        : Int   = 0
-    var candidatesThisConstraint  = 0
-    var candidatesThisPermutation = 0
-
-    def searchExpired: Boolean = System.nanoTime() >= searchDeadlineNanos
-
-    def constraint: WallConstraint = wallInProgress.constraint
-    def pickNextConstraint(): Unit = {
-      wallInProgress.buildings.clear()
-      wallInProgress.constraint = constraints(constraintIndex)
-      wallInProgress.gap        = None
-      wallInProgress.hallway    = Seq.empty
-      constraintIndex += 1
-      gapsLeft = constraint.gapTiles
-      candidatesThisConstraint = 0
-    }
-
-    // Overall plan:
-    // - Identify starting boundary
-    // - Identify ending boundaries
-    //   - Terrain-Terrain
-    //   - Terrain-Gas
-    //   - Terrain-Hall
-    // For each constraint:
-    // - For each starting boundary:
-    //  - For each ending boundary:
-    //    - If this line contains any other starting/ending boundaries, skip
-    //    - If this line's max width exceeds the max width of our buildings + gap size, skip
-    //    - If this line's max height exceeds the max height of our buildings + gap size, skip
-    //    - Fill queue with buildings to place
-    //    - For each place we could place the first building adjacent to the first tile: (LATER: Select cleverly to fill gaps)
-    //      - Try placing each building adjacent to it or using our gap budget
-    def boundaryEnd = constraint.span match {
-      case TerrainGas   => zone.wallPerimeterGas;
-      case TerrainHall  => zone.wallPerimeterHall;
-      case _            => zone.wallPerimeterExit
-    }
-
-    def tryPlace(horizon: Seq[Tile], buildingsLeft: Seq[UnitClass], gapsLeft: Int): Boolean = {
-      // Check if a complete placement is valid.
-      if (buildingsLeft.isEmpty) {
-
-        // A gap recorded while placing a building must not be covered by that building.
-        if (wallInProgress.gap.exists(gap => wallInProgress.buildings.exists(b => b._2.tileAreaPlusAddon.add(b._1).contains(gap)))) {
-          return fail(wallInProgress, GapTooNarrow)
-        }
-
-        // TODO: If gapsLeft is zero enforce constraint.blocksUnit
-
-        // Require the gap to meet constraints
-        if (horizon.forall(t => boundaryEnd.forall(_.tileDistanceManhattan(t) > 1 + gapsLeft))) {
-          return fail(wallInProgress, GapTooWide)
-        }
-
-        /* Disabling because we're changing the way we iterate to avoid having to do this check, at a cost of rejecting walls where the gap is at the far end
-        // Use Chebyshev distance to check gap size because cater-corner diagonals are not acceptable
-        if (horizon.exists(t => boundaryEnd.exists(_.tileDistanceChebyshev(t) <= gapsLeft))) {
-          metrics.gapTooNarrow += 1
-
-          return false
-        }
-        */
-        // If the wall has a Pylon, then it must power the other buildings.
-        val pylons = wallInProgress.buildings.filter(_._2.powers)
-        if (pylons.nonEmpty) {
-          val unpowered = wallInProgress.buildings.find(b => b._2.requiresPsi && ! pylons.exists(p => Pylons.powers(p._1, b._1, b._2)))
-          if (unpowered.isDefined) {
-            return fail(wallInProgress, UnpoweredByWall)
-          }
-        }
-
-        if (wallInProgress.gap.isEmpty && gapsLeft > 0) {
-          val gapCandidates       = horizon.flatMap(_.adjacent4).toSet.filter(t => t.walkable && ! wallInProgress.buildings.exists(b => b._2.tileAreaPlusAddon.add(b._1).contains(t)))
-          wallInProgress.gap      = Maff.minBy(gapCandidates)(t => boundaryEnd.map(_.tileDistanceChebyshev(t)).min)
-          if (wallInProgress.gap.forall(t => boundaryEnd.map(_.tileDistanceChebyshev(t)).min > gapsLeft)) {
-            return fail(wallInProgress, GapTooWide)
-          }
-        }
-
-        wallInProgress.score = scoreWall(wallInProgress)
-        wallsAcceptable += new Wall(wallInProgress)
-        candidatesThisConstraint += 1
-        candidatesThisPermutation += 1
-        metrics.candidatesGenerated += 1
-        val searchedEnough = searchExpired ||
-          candidatesThisConstraint >= maxCandidatesPerConstraint ||
-          candidatesThisPermutation >= maxCandidatesPerPermutation
-
-        return searchedEnough
-      }
-
-      // For each tile in the boundary,
-      //   for each way to place a tile adjacent to it,
-      //     for each gap size still available,
-      //       Try placing the next building there,
-      //       then repeat recursively.
-      //       If we're out of buildings to place,
-      //       and the whole arrangement is legal,
-      //       publish it.
-      //
-      // Places around the target tile to try at each gap size:
-      //    1111
-      //    0000
-      //  10----01
-      //  10----01
-      //  10---+01
-      //    0000
-      //    1111
-      //
-      val building  = buildingsLeft.head
-      val width     = building.tileWidthPlusAddon
-      val height    = building.tileHeight
-      horizon.exists(horizonTile => {
-        metrics.tilesConsidered += 1
-        RoundedBox(width + 2, height + 2).exists(relative =>
-          (0 to gapsLeft).exists(gapsUsed => {
-            val gapOffset =
-                    if (relative.x == 0)          Point(- gapsUsed,   0)
-              else  if (relative.y == 0)          Point(  0,        - gapsUsed)
-              else  if (relative.x == width + 1)  Point(  gapsUsed,   0)
-              else                                Point(  0,          gapsUsed)
-            val buildingTile = horizonTile
-              .subtract(width, height)
-              .add(relative)
-              .add(gapOffset)
-            lazy val (alleyLeft, alleyRight, alleyUp, alleyDown) = wallInProgress.buildings.lastOption.map(b => {
-              val lastBuilding  = b._2
-              val lastTile      = b._1
-              val tileGapLeft   = buildingTile.x  - lastTile.x      - lastBuilding.tileWidthPlusAddon
-              val tileGapRight  = lastTile.x      - buildingTile.x  - width
-              val tileGapUp     = buildingTile.y  - lastTile.y      - lastBuilding.tileHeight
-              val tileGapDown   = lastTile.y      - buildingTile.y  - height
-              val alleyLeft     = if (tileGapLeft   == 0) lastBuilding.marginRightInclusive   + building.marginLeft           else -1
-              val alleyRight    = if (tileGapRight  == 0) lastBuilding.marginLeft             + building.marginRightInclusive else -1
-              val alleyUp       = if (tileGapUp     == 0) lastBuilding.marginDownInclusive    + building.marginUp             else -1
-              val alleyDown     = if (tileGapDown   == 0) lastBuilding.marginUp               + building.marginDownInclusive  else -1
-              (alleyLeft, alleyRight, alleyUp, alleyDown)
-            }).getOrElse((-1, -1, -1, -1))
-
-            if ( ! canPlace(width, height, buildingTile, countMetrics = true)) {
-              false
-            }
-
-            // Gaps must meet tightness criterion
-            else if (gapsUsed == 0
-              && (constraint.blocksUnit.width < 32 || constraint.blocksUnit.height < 32) // Don't even bother checking for big units
-              && (alleyLeft >= constraint.blocksUnit.width || alleyRight >= constraint.blocksUnit.width || alleyUp >= constraint.blocksUnit.height || alleyDown >= constraint.blocksUnit.height)) {
-              return fail(wallInProgress, InsufficientlyTight)
-            }
-
-            // Success! Place the next building.
-            else {
-              // Apply changes
-              wallInProgress.buildings += ((buildingTile, building))
-
-              // Preserve state for later reversion
-              val gapBefore = wallInProgress.gap
-              if (gapBefore.isEmpty && gapsUsed > 0) {
-                wallInProgress.gap = Some(horizonTile.add(gapOffset.direction.x, gapOffset.direction.y))
-              }
-              // Test changes
-              val output = tryPlace(building.tileAreaPlusAddon.tilesAtEdge.map(buildingTile.add), buildingsLeft.drop(1), gapsLeft - gapsUsed)
-              // Revert changes
-              wallInProgress.gap = gapBefore
-              wallInProgress.buildings.remove(wallInProgress.buildings.length - 1)
-              output
-            }}))})
-    }
-
-    while (constraintIndex < constraints.length && ! searchExpired) {
-      pickNextConstraint()
-      val permutations = constraint.buildings.permutations.toVector.distinct
-      metrics.permutations += permutations.length
-      val startingBoundary = zone.wallPerimeterEntrance
-      permutations.iterator.takeWhile(_ => ! searchExpired && candidatesThisConstraint < maxCandidatesPerConstraint).foreach(buildings => {
-        candidatesThisPermutation = 0
-        tryPlace(startingBoundary, buildings, constraint.gapTiles)
-      })
-    }
-    Maff.minBy(wallsAcceptable)(_.score)
   }
 
   def canPlace(width: Int, height: Int, buildingTile: Tile, countMetrics: Boolean): Boolean = {
@@ -354,18 +162,6 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
         wall = Maff.minBy(filled)(_.score)
       })
     metrics.walkwayLength = wall.map(_.hallway.length).getOrElse(0)
-  }
-
-  def scoreWallByArea(wall: Wall): Double = {
-    if (wall.buildings.isEmpty) return 0.0
-
-    val endTiles  = wall.buildings.map(p => p._1.add(p._2.tileWidthPlusAddon, p._2.tileHeight))
-    val xMin      = wall.buildings.map(_._1.x).min
-    val yMin      = wall.buildings.map(_._1.y).min
-    val xMax      = endTiles.map(_.x).max
-    val yMax      = endTiles.map(_.y).max
-    val scoreArea = Maff.broodWarDistance(xMin, yMin, xMax, yMax)
-    scoreArea
   }
 
   def placeFiller(): Unit = {
