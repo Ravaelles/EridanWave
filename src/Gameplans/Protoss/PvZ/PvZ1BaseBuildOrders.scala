@@ -4,7 +4,7 @@ import Gameplans.All.GameplanImperative
 import Lifecycle.With
 import ProxyBwapi.Races.{Protoss, Zerg}
 import Utilities.Time.{Minutes, Seconds}
-import Utilities.UnitFilters.IsHatchlike
+import Utilities.UnitFilters.{IsHatchlike, IsWarrior}
 
 abstract class PvZ1BaseBuildOrders extends GameplanImperative {
 
@@ -39,6 +39,12 @@ abstract class PvZ1BaseBuildOrders extends GameplanImperative {
     once(10, Protoss.Zealot)
     once(21, Protoss.Probe)
     once(13, Protoss.Zealot)
+    // Failed speedling hold that never killed: gas up for Dragoons instead
+    // of trickling Zealots forever (same recovery bar as the proxy rule).
+    if (RecoveryGas.shouldGas(unitsEver(IsWarrior))) {
+      get(1, Protoss.Assimilator)
+      get(Protoss.CyberneticsCore)
+    }
   }
   protected def open910(): Unit = {
     if (unitsEver(Protoss.Gateway) < 2) {
