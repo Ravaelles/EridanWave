@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Detector
 
+import Mathematics.Maff
 import Mathematics.Points.Pixel
 
 /**
@@ -15,6 +16,13 @@ object DetectorSpread {
 
   def shouldSpread(newerId: Int, olderId: Int, distTiles: Double): Boolean =
     newerId > olderId && distTiles < minDistTiles
+
+  /** An older eye we may need to spread from. */
+  final case class OlderEye(id: Int, pixel: Pixel, distTiles: Double)
+
+  /** The nearest older eye, if any: only older neighbors count, the newer moves. */
+  def partner(usId: Int, others: Seq[OlderEye]): Option[OlderEye] =
+    Maff.minBy(others.filter(_.id < usId))(_.distTiles)
 
   /** Full separation along the ray from the older eye through us. */
   def awayFrom(us: Pixel, them: Pixel): Pixel =

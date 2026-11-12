@@ -1,7 +1,6 @@
 package Micro.Actions.Protoss.Detector
 
 import Lifecycle.With
-import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Protoss.Air.BeFlier
 import Micro.Actions.Combat.Tactics.{Recharge, Spot}
@@ -32,9 +31,13 @@ object BeDetector extends Action {
   private def spread(unit: FriendlyUnitInfo): Unit = {
     // Only older neighbors count: the newer eye moves, the older holds.
     // Engine edge distance is pixels; the threshold is tiles (rule 10).
-    Maff.minBy(With.units.ours.view.filter(u => u.unitClass == unit.unitClass && u.id < unit.id))(_.pixelDistanceEdge(unit))
+    val others = With.units.ours.view
+      .filter(u => u.unitClass == unit.unitClass && u.id != unit.id)
+      .map(u => DetectorSpread.OlderEye(u.id, u.pixel, u.tileDistanceEdge(unit)))
+      .toSeq
+    DetectorSpread.partner(unit.id, others)
       .foreach(older => {
-        if (DetectorSpread.shouldSpread(unit.id, older.id, older.tileDistanceEdge(unit))) {
+        if (DetectorSpread.shouldSpread(unit.id, older.id, older.distTiles)) {
           unit.agent.destinationNext.set(DetectorSpread.awayFrom(unit.pixel, older.pixel))
           Commander.move(unit)
         }
