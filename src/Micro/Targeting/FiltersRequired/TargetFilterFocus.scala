@@ -16,6 +16,10 @@ object TargetFilterFocus extends TargetFilter {
     output ||= With.yolo.active
     output ||= ! actor.canMove
     output ||= actor.squad.exists(_.engagedUpon) && target.team.exists(_.engagingOn)
+    // Focus dies with its targets: once every assigned target is a confirmed
+    // corpse the lock releases and the ladder re-picks (cleared-base
+    // buildings included) instead of holding the squad on thin air.
+    output ||= actor.targetsAssigned.exists(_.forall(! _.alive))
     output ||= actor.targetsAssigned.forall(_.contains(target))
     output ||= actor.squad.exists(canTargetAsRoadblock(_, target))
     // Lone hall cleanup: with no other reachable enemy within 8 tiles the

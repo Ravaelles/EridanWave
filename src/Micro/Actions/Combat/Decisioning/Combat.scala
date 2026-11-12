@@ -80,6 +80,11 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
   }
 
   private def acquireTarget(): Unit = {
+    // A corpse is not a target: the ladder only fills an empty slot, so a
+    // stale kill (squad focus included) would pin the unit on thin air
+    // forever while real buildings stand next door. Remembered fogged
+    // contacts keep alive=true, so only confirmed kills release the slot.
+    if (unit.agent.toAttack.exists(t => ! t.alive)) unit.agent.toAttack = None
     if (unit.agent.toAttack.isEmpty) {
       Target.choose(unit)
     }
