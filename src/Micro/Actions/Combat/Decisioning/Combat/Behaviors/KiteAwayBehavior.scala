@@ -18,6 +18,10 @@ object KiteAwayBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if (With.yolo.active) return false
+    // Committed units (scenario duelists, suicide charges, raid passengers)
+    // are ordered to hold their ground: yielding it stops their fire while
+    // the enemy keeps shooting, and the chase usually catches them anyway.
+    if (unit.agent.commit) return false
     if ( ! unit.canMove) return false
     if (staticStandoff(unit, combat)) return true
     if ( ! kitable(unit)) return false
