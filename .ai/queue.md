@@ -95,7 +95,12 @@ Findings so far:
 - Likely shape: DT brain override (take targets first, hold when no
   contact, unready Combat), march bypass (plain vicinity, no wait/rally/
   slots), `Stealth` wound berth (max +8 tiles), all pinned by suites.
-- Not started.
+- DONE (`1556073e9`, jar rebuilt after): no DT formation slots,
+  march bypass to plain vicinity with a `DarkTemplarHunt` label,
+  `BeDarkTemplar` hunts visible hittable, then freshest fogged contact
+  (<3 min), holds otherwise; `DarkTemplarBerth` wound berth (max +8)
+  wired into `Stealth` mobile-detector check, DT-only. Validation:
+  needs a game with DTs (no DT UMS map; awaits a natural melee game).
 
 ## Open: Reaver drops next to Sunken Colonies
 
@@ -110,7 +115,11 @@ Findings so far:
 - Fix direction: guard the actual unload (`Transport`/`requestUnload`
   path) against anti-ground combat buildings inside 8.1 tiles, so every
   path is covered - not another per-path check.
-- Not started.
+- DONE (`61bcb46eb`, jar rebuilt after): `DropSafety` veto inside
+  `CommanderTransport.unload` (flying transports only, so bunkers are
+  unaffected), suite-pinned. Validation: UMS reaver-vs-sunkens map
+  attempted repeatedly, attach kept failing on that map; needs a run
+  that actually starts.
 
 ## Open: Defiler > Lurker > Mutalisk targeting
 
