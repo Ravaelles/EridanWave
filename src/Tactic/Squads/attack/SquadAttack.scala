@@ -294,7 +294,9 @@ class SquadAttack extends Squad {
     commitUmsDuelists()
 
     if (
-      ! With.umsMode // No economy, no rush clock: a scenario fight is never the early rush this shortcut serves
+      // Only a tiny force is the early rush this shortcut serves (it drops
+      // the line for speed); any real squad forms up.
+      units.count(_.unitClass.isWarrior) <= 2
       && With.frame < Minutes(5)()
       && ! vicinity.zone.metro.exists(_.bases.exists(_.isOurs))
       && units.forall(_.matchups.threats.forall(IsWorker))) {
