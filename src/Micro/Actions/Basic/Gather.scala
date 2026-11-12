@@ -117,8 +117,9 @@ object Gather extends Action {
       lazy val meleePackNear = unit.matchups.threats.count(t => t.unitClass.melee && ! t.burrowed && t.pixelDistanceEdge(unit) < defenseRadiusPixels)
       // A weak miner never trades with a melee pack alone: at fleeHp or less
       // against two or more without a fighting warrior nearby there is no
-      // winning trade, so it runs instead of standing to potshot.
-      if (WorkerThreatFlee.doomedVsMelee(unit.totalHealth, meleePackNear, WorkerCombatSupport.supported(unit))) {
+      // winning trade, so it runs instead of standing to potshot. Worker
+      // rushers opted into trading and are exempt, like in Fight.
+      if (With.blackboard.workerRushers() == 0 && WorkerThreatFlee.doomedVsMelee(unit.totalHealth, meleePackNear, WorkerCombatSupport.supported(unit))) {
         Retreat(unit)
 
         return
