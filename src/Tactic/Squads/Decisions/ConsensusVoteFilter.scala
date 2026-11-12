@@ -1,5 +1,7 @@
 package Tactic.Squads.Decisions
 
+import Utilities.?
+
 /**
  * Temporal confirmation for the fight-consensus vote (StanceVoteFilter
  * companion for the squad destination). Near-even votes flicker every few
@@ -24,7 +26,7 @@ final class ConsensusVoteFilter(var confirmFrames: Int = 24) {
 
   def confirm(adopted: Boolean, proposed: Boolean): Boolean = (adopted, proposed) match {
     case (_, true)  => leaveStreak = 0; true
-    case (true, _)  => leaveStreak += 1; leaveStreak >= confirmFrames
+    case (true, _)  => leaveStreak += 1; ?(leaveStreak >= confirmFrames, false, true)
     case (false, _) => leaveStreak = 0; false
   }
 }
