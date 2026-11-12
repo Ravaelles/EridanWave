@@ -60,6 +60,10 @@ function summarize(rows) {
     const losses = rs.filter((r) => LOSS.has(r.result)).length;
     const decided = wins + losses;
     const frames = rs.map((r) => r.frames).filter((f) => typeof f === "number");
+    // Form of the last 5 runs, oldest first: V = win, X = loss,
+    // · = undecided (TIMEOUT / NOATTACH / UNKNOWN).
+    const last5 = rs.slice(-5).map((r) =>
+      WIN.has(r.result) ? "V" : (LOSS.has(r.result) ? "X" : "·"));
     return {
       map,
       kind: rs[0].kind || "?",
@@ -67,6 +71,7 @@ function summarize(rows) {
       wins,
       losses,
       winPct: decided > 0 ? (100 * wins / decided) : null,
+      last5,
       avgFrames: frames.length > 0
         ? Math.round(frames.reduce((a, b) => a + b, 0) / frames.length)
         : null,
@@ -94,10 +99,18 @@ function renderSummary(rows) {
       `<td class="num">${s.runs}</td><td class="num">${s.wins}</td>` +
       `<td class="num">${s.losses}</td>` +
       `<td class="num">${s.winPct === null ? "–" : s.winPct.toFixed(0) + "%"}</td>` +
+      `<td class="form">${formHtml(s.last5)}</td>` +
       `<td class="num">${fmt(s.avgFrames)}</td>` +
       `<td class="result">${s.last}</td><td>${s.lastDate}</td>`;
     tb.appendChild(tr);
   }
+}
+
+function formHtml(last5) {
+  return last5.map((m) =>
+    m === "V" ? `<span class="fwin">V</span>`
+      : m === "X" ? `<span class="floss">X</span>`
+        : `<span class="fother">·</span>`).join(" ");
 }
 
 function renderRuns(rows) {

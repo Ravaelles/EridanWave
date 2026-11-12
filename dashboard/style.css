@@ -8,6 +8,10 @@ td.num { text-align: right; }
 tr.win td.result { color: #4c4; font-weight: bold; }
 tr.loss td.result { color: #e66; font-weight: bold; }
 tr.other td.result { color: #db3; }
+td.form { white-space: nowrap; letter-spacing: 1px; }
+td.form span.fwin { color: #4c4; font-weight: bold; }
+td.form span.floss { color: #e66; font-weight: bold; }
+td.form span.fother { color: #666; }
 #chart svg { background: #1c1c1c; border: 1px solid #444; }
 #chart text { fill: #ccc; }
 #counts { margin-left: 1em; color: #999; }
