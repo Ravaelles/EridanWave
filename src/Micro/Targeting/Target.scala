@@ -4,7 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Targeting.FiltersRequired.{TargetFilterAntiAir, TargetFilterCanAttack, TargetFilterEnemy, TargetFilterFocus, TargetFilterMissing, TargetFilterReaver, TargetFilterRush, TargetFilterScourge, TargetFilterStayCloaked, TargetFilterType, TargetFilterVsTank, TargetFilterVulture}
 import Micro.Targeting.FiltersSituational.TargetFilterWhitelist
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 
@@ -73,6 +73,48 @@ object Target {
     var output: Option[UnitInfo] = None
     if (targetInRange) {
       output = focusedTarget(attacker, allFilters)
+      if (output.isDefined) return output
+
+      // Snipe priority: a visible Defiler, then Lurker, then Mutalisk in our
+      // range outranks the generic duel pick, most wounded first inside each
+      // tier. Assigned before matchups, and guaranteed-kill targets wait for
+      // the reprise pass, like every other stratum on this ladder.
+      def snipable(tier: Int)(target: UnitInfo): Boolean =
+        ThreatPriority.snipable(target.visible, ThreatPriority.tier(Zerg.Defiler(target), Zerg.Lurker(target), Zerg.Mutalisk(target)), tier)
+      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.defilerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.defilerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.lurkerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.lurkerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.mutaliskTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.mutaliskTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.defilerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.defilerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.lurkerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.lurkerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.mutaliskTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.mutaliskTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
       if (output.isDefined) return output
 
       output = bestInStratum(attacker, assigned, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = true,  requireAcceleratesDemise = true)
