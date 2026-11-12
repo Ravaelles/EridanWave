@@ -1,6 +1,9 @@
 package Micro.Actions.Combat
 
+import Lifecycle.With
 import Micro.Actions.Action
+import Micro.Actions.Basic.WorkerCombatSupport
+import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Decisioning.Actions.{Cast, Follow, Root}
 import Micro.Actions.Combat.Maneuvering.Stealth
 import Micro.Actions.Combat.Spells.Terran.Stim
@@ -20,6 +23,17 @@ object Fight extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canAttack || unit.canMove) && ! unit.agent.isScout && ! unit.unitClass.isDetector
 
   override def perform(unit: FriendlyUnitInfo): Unit = {
+    // Miners are not a combat squad. Without a fighting warrior nearby to
+    // anchor them, they withdraw instead of trading alone after the army
+    // has disengaged (worker rushes opt out explicitly).
+    if (unit.unitClass.isWorker
+      && With.blackboard.workerRushers() == 0
+      && ! WorkerCombatSupport.supported(unit)) {
+      Retreat(unit)
+
+      return
+    }
+
     Follow(unit)
     StrategicNuke(unit)
     Cast(unit)

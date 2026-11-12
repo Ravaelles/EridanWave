@@ -71,9 +71,12 @@ object Gather extends Action {
         Commander.burrow(unit)
       }
 
-      // Help with fights when appropriate
+      // Help with fights when appropriate, but only while a warrior is
+      // still fighting nearby: when the army disengages the miner goes back
+      // to work instead of trading alone.
       lazy val beckonedToFight = (
         unit.battle.isDefined
+        && WorkerCombatSupport.supported(unit)
         && unit.base.exists(base =>
           base.isOurs
           && base.enemies.exists(target =>
