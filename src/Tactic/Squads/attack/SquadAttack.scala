@@ -308,6 +308,9 @@ class SquadAttack extends Squad {
 
     lock.setInterruptible( ! Micro.Actions.Protoss.Reaver.ContainStatus.now())
     chooseMode()
+    if (With.configuration.formationAudit) {
+      Debugging.FormationAudit.noteMode(With.frame, mode.toString, vicinity.x, vicinity.y, With.units.enemy.count(_.visible))
+    }
     updateStance()
     commitUmsDuelists()
 

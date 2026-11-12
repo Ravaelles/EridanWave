@@ -89,6 +89,19 @@ class FormationAuditStatsSuite extends AnyFunSuite {
     assert(FormationAudit.verdictSnapshot.isEmpty)
   }
 
+  test("squad modes log change-only with vicinity and visibility") {
+    FormationAudit.reset()
+    FormationAudit.noteMode(10, "HuntContact", 100, 200, 0)
+    FormationAudit.noteMode(11, "HuntContact", 100, 200, 0)
+    FormationAudit.noteMode(12, "HuntContact", 100, 200, 1)
+    FormationAudit.noteMode(13, "ClearMap", 300, 400, 1)
+    val rows = FormationAudit.modeRows
+    assert(rows.size == 3)
+    assert(rows.head == ((10, "HuntContact", 100, 200, 0)))
+    FormationAudit.reset()
+    assert(FormationAudit.modeRows.isEmpty)
+  }
+
   test("the tally counts every leaf label") {
     FormationAudit.reset()
     FormationAudit.tally("Engage/Approach")

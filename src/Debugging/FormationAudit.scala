@@ -31,6 +31,8 @@ object FormationAudit {
 
   private val tallyCounts = new mutable.HashMap[String, Int]
   private val verdictCounts = new mutable.HashMap[String, Int]
+  private val modes         = new ArrayBuffer[(Int, String, Int, Int, Int)]
+  private var lastMode: String = ""
   private val breaks      = new ArrayBuffer[BreakRow]
   private val dresses     = new ArrayBuffer[DressRow]
   private val lastBroken  = new mutable.HashMap[Int, Boolean]
@@ -38,6 +40,8 @@ object FormationAudit {
   def reset(): Unit = {
     tallyCounts.clear()
     verdictCounts.clear()
+    modes.clear()
+    lastMode = ""
     breaks.clear()
     dresses.clear()
     lastBroken.clear()
@@ -50,6 +54,21 @@ object FormationAudit {
   }
 
   def verdictSnapshot: Map[String, Int] = verdictCounts.toMap
+
+  def modeRows: Seq[(Int, String, Int, Int, Int)] = modes.toSeq
+
+  /**
+   * Squad mode timeline, change-only: which chooseMode branch drives the
+   * squad, where its vicinity sits and how many enemies are visible. The
+   * mop-up question (hunt vs chase vs speculation) reads off one block.
+   */
+  def noteMode(frame: Int, mode: String, vicinityX: Int, vicinityY: Int, visibleEnemies: Int): Unit = {
+    val key = f"$mode@$vicinityX,$vicinityY+$visibleEnemies"
+    if (key != lastMode) {
+      lastMode = key
+      modes += ((frame, mode, vicinityX, vicinityY, visibleEnemies))
+    }
+  }
 
   def breakRows: Seq[BreakRow] = breaks.toSeq
 
@@ -117,12 +136,15 @@ object FormationAudit {
     val dressCountLines = dressCounts.map({ case (order, n) => f"$n%8d  $order" })
     val dressRowLines = dresses.map(d =>
       f"${d.frame}%7d ${d.unitId}%5d ${d.ownClass}%-16s ${d.ownBeyondTiles}%5.2f ${d.lineMeanTiles}%5.2f ${d.lineStddevTiles}%5.2f ${d.lineCount}%3d ${d.posture}%-10s ${d.order}").toSeq
+    val modeLines = modes.map({ case (f, m, x, y, v) => f"$f%7d $m%-14s ($x,$y) visible=$v" }).toSeq
     val text =
       f"# FormationAudit map=$mapName frames=$frames\n" +
       f"[behaviors] ${tallyCounts.values.sum} leaf decisions\n" +
       tallyLines.mkString("\n") + "\n" +
       f"[verdicts] ${verdictCounts.values.sum} fight votes\n" +
       verdictLines.mkString("\n") + "\n" +
+      f"[modes] ${modes.length} squad mode changes\n" +
+      modeLines.mkString("\n") + "\n" +
       f"[breaks-by-class] ${breaks.length} slot leaves\n" +
       classLines.mkString("\n") + "\n" +
       "[break-rows] frame unit own target distTiles\n" +
@@ -132,6 +154,6 @@ object FormationAudit {
       "[dress-rows] frame unit own beyond mean std count posture order\n" +
       dressRowLines.mkString("\n") + "\n"
     With.bwapiData.writeToFile("formation-audit.txt", text)
-    With.logger.debug(f"FormationAudit: ${tallyCounts.size} behaviors, ${verdictCounts.size} verdicts, ${breaks.length} breaks, ${dresses.length} dress verdicts -> formation-audit.txt")
+    With.logger.debug(f"FormationAudit: ${tallyCounts.size} behaviors, ${verdictCounts.size} verdicts, ${modes.length} modes, ${breaks.length} breaks, ${dresses.length} dress verdicts -> formation-audit.txt")
   }
 }

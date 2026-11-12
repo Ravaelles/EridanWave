@@ -24,6 +24,8 @@ DEFAULT_PATH = "bwapi-data/write/formation-audit.txt"
 def parse(path):
     header = {}
     tally = Counter()
+    verdicts = Counter()
+    modes = []
     rows = []
     dress_counts = Counter()
     dress_rows = []
@@ -40,6 +42,8 @@ def parse(path):
                 section = "verdicts"
             elif line.startswith("[breaks-by-class]"):
                 section = "classes"
+            elif line.startswith("[modes]"):
+                section = "modes"
             elif line.startswith("[break-rows]"):
                 section = "rows"
             elif line.startswith("[dress-orders]"):
@@ -82,7 +86,7 @@ def parse(path):
                         "posture": parts[7],
                         "order": parts[8],
                     })
-    return header, tally, verdicts, rows, dress_counts, dress_rows
+    return header, tally, verdicts, modes, rows, dress_counts, dress_rows
 
 
 def oscillation(dress_rows):
@@ -126,7 +130,7 @@ def main():
     if positional:
         path = positional[0]
     try:
-        header, tally, verdicts, rows, dress_counts, dress_rows = parse(path)
+        header, tally, verdicts, modes, rows, dress_counts, dress_rows = parse(path)
     except FileNotFoundError:
         print(f"no audit file at {path} - run a game with --formation-audit first",
               file=sys.stderr)
@@ -135,6 +139,10 @@ def main():
     print(f"map={header.get('map', '?')} frames={header.get('frames', '?')} "
           f"behaviors={sum(tally.values())} breaks={len(rows)} "
           f"dress={len(dress_rows)}")
+    if modes:
+        print("=== squad modes (vicinity, visible enemies) ===")
+        for f, m, x, y, v in modes:
+            print(f"f{f:6} {m:14} ({x},{y}) visible={v}")
     print("=== behaviors (leaf decisions per unit-frame) ===")
     for label, n in tally.most_common(20):
         print(f"{n:8}  {label}")
