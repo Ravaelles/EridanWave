@@ -1,10 +1,9 @@
-/* Results dashboard: table + SVG charts, zero dependencies.
+/* Results dashboard: table + per-row win-rate bars, zero dependencies.
  *
  * Sections (keep them separate as this file grows into the research base):
  *   LOAD    - fetch data/history.jsonl, parse one JSON object per line.
  *   MODEL   - group rows per map, win rates, averages.
  *   TABLE   - render the per-map summary and the full run list.
- *   CHARTS  - hand-rolled SVG bars (no chart library; offline box).
  *
  * Row schema (written by scripts/ums-batch.sh; melee rows later reuse it):
  *   {date, kind, map, enemy, result, frames, killed, lost, times_hit,
@@ -98,12 +97,20 @@ function renderSummary(rows) {
       `<td>${s.map}</td><td>${s.kind}</td>` +
       `<td class="num">${s.runs}</td><td class="num">${s.wins}</td>` +
       `<td class="num">${s.losses}</td>` +
-      `<td class="num">${s.winPct === null ? "–" : s.winPct.toFixed(0) + "%"}</td>` +
+      `<td class="winrate">${winBar(s.winPct)}</td>` +
       `<td class="form">${formHtml(s.last5)}</td>` +
       `<td class="num">${fmt(s.avgFrames)}</td>` +
       `<td class="result">${s.last}</td><td>${s.lastDate}</td>`;
     tb.appendChild(tr);
   }
+}
+
+function winBar(winPct) {
+  if (winPct === null) return "–";
+  const pct = Math.round(winPct);
+  const cls = winPct >= 50 ? "fill hi" : "fill lo";
+  return `<span class="bar"><span class="${cls}" style="width:${pct}%"></span></span> ` +
+    `<span class="num">${pct}%</span>`;
 }
 
 function formHtml(last5) {
@@ -139,55 +146,6 @@ function renderCounts(rows) {
   const restore = document.querySelector("#restore");
   restore.style.display = hidden > 0 ? "inline" : "none";
   restore.textContent = `Restore ${hidden} removed`;
-}
-
-/* ---------- CHARTS ---------- */
-
-function renderChart(rows) {
-  const div = document.querySelector("#chart");
-  div.innerHTML = "";
-  const data = summarize(rows).filter((s) => s.wins + s.losses > 0);
-  if (data.length === 0) {
-    div.textContent = "No decided games yet.";
-    return;
-  }
-  const W = 720, BH = 22, GAP = 6, LABEL = 320, MAXV = 320;
-  const H = data.length * (BH + GAP) + 10;
-  const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  svg.setAttribute("width", String(W));
-  svg.setAttribute("height", String(H));
-  data.forEach((s, i) => {
-    const y = 10 + i * (BH + GAP);
-    const pct = 100 * s.wins / (s.wins + s.losses);
-    const w = Math.round(MAXV * pct / 100);
-    const label = document.createElementNS(NS, "text");
-    label.setAttribute("x", "4");
-    label.setAttribute("y", String(y + BH - 6));
-    label.setAttribute("font-size", "12");
-    label.setAttribute("fill", "#ccc");
-    label.textContent = `${s.map} (${s.wins}W/${s.losses}L)`;
-    const bg = document.createElementNS(NS, "rect");
-    bg.setAttribute("x", String(LABEL));
-    bg.setAttribute("y", String(y));
-    bg.setAttribute("width", String(MAXV));
-    bg.setAttribute("height", String(BH));
-    bg.setAttribute("fill", "#2c2c2c");
-    const bar = document.createElementNS(NS, "rect");
-    bar.setAttribute("x", String(LABEL));
-    bar.setAttribute("y", String(y));
-    bar.setAttribute("width", String(w));
-    bar.setAttribute("height", String(BH));
-    bar.setAttribute("fill", pct >= 50 ? "#4c4" : "#c55");
-    const val = document.createElementNS(NS, "text");
-    val.setAttribute("x", String(LABEL + MAXV + 6));
-    val.setAttribute("y", String(y + BH - 6));
-    val.setAttribute("font-size", "12");
-    val.setAttribute("fill", "#ccc");
-    val.textContent = pct.toFixed(0) + "%";
-    svg.append(label, bg, bar, val);
-  });
-  div.appendChild(svg);
 }
 
 /* ---------- main ---------- */
@@ -237,7 +195,6 @@ function applyFilter() {
     (q === "" || r.map.toLowerCase().includes(q)));
   renderSummary(rows);
   renderRuns(rows);
-  renderChart(rows);
 }
 
 async function refresh() {

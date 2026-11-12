@@ -12,8 +12,11 @@ td.form { white-space: nowrap; letter-spacing: 1px; }
 td.form span.fwin { color: #4c4; font-weight: bold; }
 td.form span.floss { color: #e66; font-weight: bold; }
 td.form span.fother { color: #666; }
-#chart svg { background: #1c1c1c; border: 1px solid #444; }
-#chart text { fill: #ccc; }
+td.winrate { white-space: nowrap; }
+span.bar { display: inline-block; width: 120px; height: 12px; background: #2c2c2c; vertical-align: middle; }
+span.bar span.fill { display: block; height: 100%; }
+span.bar span.fill.hi { background: #4c4; }
+span.bar span.fill.lo { background: #c55; }
 #counts { margin-left: 1em; color: #999; }
 td.actions { text-align: center; padding: 2px 6px; }
 button.trash { background: none; border: none; cursor: pointer; font-size: 15px; opacity: 0.45; }
