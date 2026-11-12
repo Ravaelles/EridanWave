@@ -191,6 +191,9 @@ final class FormationStandard(val group: FriendlyUnitGroup, var style: Formation
     val classCount = groundUnits
       .groupBy(_.unitClass.baseClass)
       .map(g => (ClassSlots(g._1, g._2.size, g._2.head.formationRangePixels * Maff.inv32)))
+      // Dark Templars never form up: they duel alone instead of posing in
+      // the line, so they get no slots and the engage formation ignores them.
+      .filter(_.unitClass != Protoss.DarkTemplar)
       .toVector
       // In a contain the zealots only eat static fire: ranged classes take
       // the inner arcs so Dragoons shoot, melee drops a tile and a half back.

@@ -36,10 +36,18 @@ object MarchOrders {
   // The march rules, innermost first: rallying stragglers beat slots,
   // closing ranks beats marching alone, dressing beats everything but
   // a suicide charge (which skips the dressing room entirely).
+  // Dark Templars run their own hunt (visible or remembered contacts only):
+  // they never dress, rally, or take formation slots, so they march
+  // straight at the squad goal instead of posing with the line.
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): (Pixel, String) = {
     val finalTravel = getTravel(unit, squad, defaultReturn)
     val suicide = SuicideChargeSeam.inZone(unit)
     if (suicide) unit.agent.commit = true
+    // Dark Templars run their own hunt (visible or remembered contacts only):
+    // they never dress, rally, or take formation slots, so they march
+    // straight at the squad goal instead of posing with the line.
+    if (Protoss.DarkTemplar(unit)) return (squad.vicinity, "DarkTemplarHunt")
+
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide)
     val joinPixel              = joinLeg(squad, unit, suicide)
     val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide)
