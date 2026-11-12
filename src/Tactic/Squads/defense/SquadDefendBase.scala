@@ -156,25 +156,37 @@ class SquadDefendBase(base: Base) extends Squad {
     if (units.isEmpty) return
     if (emergencyDTHugs()) return
 
-    val defense  = new DefenseState(units, enemies, guardZone, guardChoke)
-    val canScour = defense.canScour
+    val defense = new DefenseState(units, enemies, guardZone, guardChoke)
 
-    lazy val formationWithdraw  = Formations.disengage(this, Some(defense.travelGoal))
-    lazy val formationScour     = Formations.march(this, targets.get.headOption.map(_.pixel).getOrElse(vicinity))
-    lazy val formationGuard     = guardChoke.map(_.pixelCenter).orElse(wallToPlug().map(_.center)).map(pixel => new FormationStandard(this, FormationStyleGuard, pixel, Some(guardZone))).getOrElse(formationBastion)
-    lazy val formationBastion   = {
-      val enemyTopSpeed         = Maff.max(enemies.view.filter(u => u.canAttack && ! IsWorker(u)).map(_.topSpeed)).getOrElse(2 * Terran.Vulture.topSpeed)
-      val formationBastion      = Formations.march(this, bastion())
-      def sendToCenter(unit: FriendlyUnitInfo): Boolean = unit.unitClass.ranged && unit.topSpeed >= enemyTopSpeed
-      if (units.exists(sendToCenter)) {
-        lazy val formationCenter  = Formations.march(this, bastion().zone.centroid.walkableTile.center)
-        new Formation {
-          override def style: FormationStyle = formationBastion.style
-          override def placements: Map[FriendlyUnitInfo, Pixel] = formationBastion.placements.filterNot(p => sendToCenter(p._1)) ++ formationCenter.placements.filter(p => sendToCenter(p._1))
-        }
-      } else formationBastion
-    }
+    lazy val formationWithdraw = Formations.disengage(this, Some(defense.travelGoal))
+    val plan                   = defensePlan(defense, formationWithdraw)
+    setTargets(plan.targets)
 
+    lazy val formationScour    = Formations.march(this, targets.get.headOption.map(_.pixel).getOrElse(vicinity))
+    lazy val formationGuard    = guardChoke.map(_.pixelCenter).orElse(wallToPlug().map(_.center)).map(pixel => new FormationStandard(this, FormationStyleGuard, pixel, Some(guardZone))).getOrElse(formationBastion)
+    lazy val formationBastion  = bastionFormation()
+
+    workerLock.setInterruptible(true)
+    if (plan.canWithdraw)         withdrawStance(plan, formationScour, formationWithdraw)
+    else if (plan.canScour)       scourStance(plan, formationScour, formationGuard)
+    else if (plan.canPlugWall)    plugWallStance(formationBastion, plan.wallGaps)
+    else if (plan.canPlugEdge)    plugEdgeStance()
+    else if (plan.canGuard)       guardStance(plan, formationScour, formationGuard)
+    else                          holdStance(formationBastion)
+  }
+
+  /** Everything the stance choice needs, read once and ranked into targets. */
+  private case class DefensePlan(
+    canScour     : Boolean,
+    canWithdraw  : Boolean,
+    canPlugWall  : Boolean,
+    canPlugEdge  : Boolean,
+    canGuard     : Boolean,
+    blockZerglings: Boolean,
+    wallGaps     : Map[FriendlyUnitInfo, Pixel],
+    targets      : Vector[UnitInfo])
+
+  private def defensePlan(defense: DefenseState, formationWithdraw: => Formation): DefensePlan = {
     val wallGaps        = wallGapsFor(units)
     val blockZerglings  = With.enemies.exists(_.isZerg) && ! enemies.exists(_.isAny(Zerg.Hydralisk, Zerg.Lurker)) && guardChoke.exists(c => base.metro.ourUnits.exists(u => u.unitClass.isStaticDefense && u.tileDistanceEdge(c.pixelCenter) < 8))
     val canWithdraw     = defense.withdrawingUnits >= Math.max(2, 0.25 * units.size) && formationWithdraw.placements.size > units.size * .75
@@ -182,58 +194,91 @@ class SquadDefendBase(base: Base) extends Squad {
     val canPlugEdge     = edgeToPlug().isDefined
     val canGuard        = guardChoke.isDefined && (units.size > 5 || blockZerglings || ! With.enemies.exists(_.isZerg) || With.geography.ourBases.length > 1)
     val targetsUnranked =
-      if        (canScour)    defense.scourables
-      else if   (canWithdraw) SquadAutomation.unrankedEnRouteTo(this, vicinity).toVector
-      else                    enemies.filter(threateningBase)
-    setTargets(targetsUnranked.sortBy(_.pixelDistanceTravelling(vicinity)).sortBy(IsWorker).sortBy( ! _.canAttackGround))
+      if      (defense.canScour) defense.scourables
+      else if (canWithdraw)      SquadAutomation.unrankedEnRouteTo(this, vicinity).toVector
+      else                       enemies.filter(threateningBase)
 
-    workerLock.setInterruptible(true)
-    if (canWithdraw) {
-      lastAction = "Withdraw"
-      if (canScour) {
-        formations += formationScour
+    DefensePlan(
+      defense.canScour,
+      canWithdraw,
+      canPlugWall,
+      canPlugEdge,
+      canGuard,
+      blockZerglings,
+      wallGaps,
+      targetsUnranked.sortBy(_.pixelDistanceTravelling(vicinity)).sortBy(IsWorker).sortBy( ! _.canAttackGround).toVector)
+  }
+
+  /** The formation that holds the base, with fast ranged units pushed to the centre. */
+  private def bastionFormation(): Formation = {
+    val enemyTopSpeed = Maff.max(enemies.view.filter(u => u.canAttack && ! IsWorker(u)).map(_.topSpeed)).getOrElse(2 * Terran.Vulture.topSpeed)
+    val bastionMarch  = Formations.march(this, bastion())
+    def sendToCenter(unit: FriendlyUnitInfo): Boolean = unit.unitClass.ranged && unit.topSpeed >= enemyTopSpeed
+    if (units.exists(sendToCenter)) {
+      lazy val formationCenter = Formations.march(this, bastion().zone.centroid.walkableTile.center)
+      new Formation {
+        override def style: FormationStyle = bastionMarch.style
+        override def placements: Map[FriendlyUnitInfo, Pixel] = bastionMarch.placements.filterNot(p => sendToCenter(p._1)) ++ formationCenter.placements.filter(p => sendToCenter(p._1))
       }
-      formations += formationWithdraw
-      if (canScour) scour() else SquadAutomation.send(this)
-    } else if (canScour) {
-      lastAction = "Scour"
+    } else bastionMarch
+  }
+
+  /** Walk out to scour, or send the squad after the en-route targets. */
+  private def withdrawStance(plan: DefensePlan, formationScour: => Formation, formationWithdraw: => Formation): Unit = {
+    lastAction = "Withdraw"
+    if (plan.canScour) {
       formations += formationScour
-      formations += formationGuard
-      scour()
-    } else if (canPlugWall) {
-      lastAction = "Plug Wall"
-      formations += FormationSimple(FormationStylePlug, formationBastion.placements ++ wallGaps)
-      formations += formationBastion
-      SquadAutomation.send(this)
-      wallGaps.foreach { case (unit, pixel) => intendHoldWallGap(unit, pixel) }
-      workerLock.setInterruptible(false)
-    } else if (canPlugEdge) {
-      val plugPixel = edgeToPlug().get._2.get.pixelCenter
-      lastAction = "Plug Edge"
-      formations += FormationSimple(FormationStylePlug, units.map((_, plugPixel)).toMap)
-      units.foreach(_.intend(this)
-        .setCanFlee(false)
-        .setRedoubt(plugPixel)
-        .setTerminus(plugPixel)
-        .setAction(Plug(plugPixel)))
-      workerLock.setInterruptible(false)
-    } else if (canGuard) {
-      lastAction = "Guard"
-      if (targets.exists(_.nonEmpty)) {
-        formations += formationScour
-      }
-      formations += formationGuard
-      SquadAutomation.send(this)
-      guardWithoutTargets()
-      if (blockZerglings) {
-        units.foreach(_.intent.setCanFlee(false))
-      }
-    } else {
-      lastAction = "Hold"
-      formations += formationBastion
-      SquadAutomation.send(this)
+    }
+    formations += formationWithdraw
+    if (plan.canScour) scour() else SquadAutomation.send(this)
+  }
+
+  private def scourStance(plan: DefensePlan, formationScour: => Formation, formationGuard: => Formation): Unit = {
+    lastAction = "Scour"
+    formations += formationScour
+    formations += formationGuard
+    scour()
+  }
+
+  private def plugWallStance(formationBastion: Formation, wallGaps: Map[FriendlyUnitInfo, Pixel]): Unit = {
+    lastAction = "Plug Wall"
+    formations += FormationSimple(FormationStylePlug, formationBastion.placements ++ wallGaps)
+    formations += formationBastion
+    SquadAutomation.send(this)
+    wallGaps.foreach { case (unit, pixel) => intendHoldWallGap(unit, pixel) }
+    workerLock.setInterruptible(false)
+  }
+
+  private def plugEdgeStance(): Unit = {
+    val plugPixel = edgeToPlug().get._2.get.pixelCenter
+    lastAction = "Plug Edge"
+    formations += FormationSimple(FormationStylePlug, units.map((_, plugPixel)).toMap)
+    units.foreach(_.intend(this)
+      .setCanFlee(false)
+      .setRedoubt(plugPixel)
+      .setTerminus(plugPixel)
+      .setAction(Plug(plugPixel)))
+    workerLock.setInterruptible(false)
+  }
+
+  private def guardStance(plan: DefensePlan, formationScour: => Formation, formationGuard: => Formation): Unit = {
+    lastAction = "Guard"
+    if (targets.exists(_.nonEmpty)) {
+      formations += formationScour
+    }
+    formations += formationGuard
+    SquadAutomation.send(this)
+    guardWithoutTargets()
+    if (plan.blockZerglings) {
       units.foreach(_.intent.setCanFlee(false))
     }
+  }
+
+  private def holdStance(formationBastion: Formation): Unit = {
+    lastAction = "Hold"
+    formations += formationBastion
+    SquadAutomation.send(this)
+    units.foreach(_.intent.setCanFlee(false))
   }
 
   private def threateningBase(enemy: UnitInfo): Boolean = {

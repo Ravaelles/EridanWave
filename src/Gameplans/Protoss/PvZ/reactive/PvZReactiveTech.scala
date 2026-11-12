@@ -120,76 +120,98 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
     }
 
     composition.foreach {
-      case Goon =>
-        cancelRoboUnlessLurker()
-        cancelAlternative(Protoss.CitadelOfAdun, Protoss.Forge)
-        get(Protoss.DragoonRange)
-      case Speedlot =>
-        cancelRoboUnlessLurker()
-        cancelRangeUnlessGoons()
-        val makeCorsairs = ! anticipateSpeedlings && ! enemyHydralisksLikely
-        if (makeCorsairs) {
-          get(Protoss.Stargate)
-          get(Protoss.Corsair)
-        } else {
-          cancelAlternative(Protoss.Stargate)
-        }
-        get(Protoss.Forge)
-        get(Protoss.GroundDamage)
-        if (makeCorsairs) {
-          get(2, Protoss.Corsair)
-        }
+      case Goon     => techGoon()
+      case Speedlot => techSpeedlot()
+      case Reaver   => techReaver()
+      case Stargate => techStargate()
+    }
+  }
+
+  private def techGoon(): Unit = {
+    cancelRoboUnlessLurker()
+    cancelAlternative(Protoss.CitadelOfAdun, Protoss.Forge)
+    get(Protoss.DragoonRange)
+  }
+
+  private def techSpeedlot(): Unit = {
+    cancelRoboUnlessLurker()
+    cancelRangeUnlessGoons()
+    val makeCorsairs = ! anticipateSpeedlings && ! enemyHydralisksLikely
+    techSpeedlotCorsairs(makeCorsairs)
+    get(Protoss.Forge)
+    get(Protoss.GroundDamage)
+    if (makeCorsairs) {
+      get(2, Protoss.Corsair)
+    }
+    get(Protoss.CitadelOfAdun)
+    get(Protoss.ZealotSpeed)
+    if (enemyMutalisksLikely) {
+      buildCannonsAtMain(2, PlaceLabels.DefendAir)
+    }
+    get(Protoss.TemplarArchives)
+    techSpeedlotCasters()
+  }
+
+  /** Corsairs are the Speedlot answer to Mutalisks, and a liability otherwise. */
+  private def techSpeedlotCorsairs(makeCorsairs: Boolean): Unit = {
+    if (makeCorsairs) {
+      get(Protoss.Stargate)
+      get(Protoss.Corsair)
+    } else {
+      cancelAlternative(Protoss.Stargate)
+    }
+  }
+
+  /**
+   * Dark Templars first (four lifetime, and only once Corsairs or speedlings
+   * let them in), then High Templars at 150 supply - or sooner if Mutalisks
+   * force faster Archons (mirror of ZealotIntoGoon).
+   */
+  private def techSpeedlotCasters(): Unit = {
+    val castersWelcome = have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)
+    if (castersWelcome && DarkTemplarEffectiveness.allows(
+      UnitArchive.producedTotal(Protoss.DarkTemplar),
+      units(Protoss.DarkTemplar),
+      gas)) {
+      get(Protoss.DarkTemplar)
+    }
+    if (supplyUsed200 >= 150 && (UnitArchive.producedTotal(Protoss.DarkTemplar) >= 4 || enemies(Zerg.Mutalisk) >= 5)) {
+      get(2, Protoss.HighTemplar)
+    }
+  }
+
+  private def techReaver(): Unit = {
+    cancelAlternative(Protoss.Stargate, Protoss.CitadelOfAdun, Protoss.Forge)
+    cancelRangeUnlessGoons()
+    get(Protoss.RoboticsFacility)
+    SwapIf(
+      safeDefending,
+      {
+        get(Protoss.RoboticsSupportBay)
+        get(2, Protoss.Reaver)
+      },
+      {
         get(Protoss.CitadelOfAdun)
+        if (safeDefending || units(Protoss.Reaver) >= 2) {
+          get(Protoss.Shuttle)
+        }
         get(Protoss.ZealotSpeed)
-        if (enemyMutalisksLikely) {
-          buildCannonsAtMain(2, PlaceLabels.DefendAir)
-        }
-        get(Protoss.TemplarArchives)
-        if (have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)) {
-          if (DarkTemplarEffectiveness.allows(
-            UnitArchive.producedTotal(Protoss.DarkTemplar),
-            units(Protoss.DarkTemplar),
-            gas)) {
-            get(Protoss.DarkTemplar)
-          }
-        }
-        // Four Dark Templars before High Templars (lifetime count), and High
-        // Templars only at 150+ supply, unless Mutalisks force faster Archons
-        // (mirror of ZealotIntoGoon).
-        if (supplyUsed200 >= 150 && (UnitArchive.producedTotal(Protoss.DarkTemplar) >= 4 || enemies(Zerg.Mutalisk) >= 5)) {
-          get(2, Protoss.HighTemplar)
-        }
-      case Reaver =>
-        cancelAlternative(Protoss.Stargate, Protoss.CitadelOfAdun, Protoss.Forge)
-        cancelRangeUnlessGoons()
-        get(Protoss.RoboticsFacility)
-        SwapIf(
-          safeDefending,
-          {
-            get(Protoss.RoboticsSupportBay)
-            get(2, Protoss.Reaver)
-          },
-          {
-            get(Protoss.CitadelOfAdun)
-            if (safeDefending || units(Protoss.Reaver) >= 2) {
-              get(Protoss.Shuttle)
-            }
-            get(Protoss.ZealotSpeed)
-          })
-      case Stargate =>
-        cancelRoboUnlessLurker()
-        cancelRangeUnlessGoons()
-        cancelAlternative(Protoss.Forge)
-        get(Protoss.Stargate)
-        if (enemyMutalisksLikely || ! enemyHydralisksLikely) {
-          get(Protoss.Corsair)
-        }
-        if (enemyMutalisksLikely) {
-          get(Protoss.DragoonRange)
-        } else {
-          get(Protoss.CitadelOfAdun)
-          get(Protoss.ZealotSpeed)
-        }
+      })
+  }
+
+  private def techStargate(): Unit = {
+    cancelRoboUnlessLurker()
+    cancelRangeUnlessGoons()
+    cancelAlternative(Protoss.Forge)
+    get(Protoss.Stargate)
+    if (enemyMutalisksLikely || ! enemyHydralisksLikely) {
+      get(Protoss.Corsair)
+    }
+    if (enemyMutalisksLikely) {
+      get(Protoss.DragoonRange)
+    } else {
+      get(Protoss.CitadelOfAdun)
+      get(Protoss.ZealotSpeed)
     }
   }
 
