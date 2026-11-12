@@ -10,6 +10,7 @@ import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Agency.Commander
 import Micro.Coordination.Pushing.TrafficPriorities
 import Micro.Targeting.Target
+import Micro.Targeting.WallBreach
 import Micro.Actions.Combat.Decisioning.Formation.FormationHold
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
@@ -94,6 +95,22 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
         o.visible && o.id != t.id && unit.canAttack(o))))) unit.agent.toAttack = None
     if (unit.agent.toAttack.isEmpty) {
       Target.choose(unit)
+    }
+    // Walled in (Stardust: no nav path to the goal means the wall is the
+    // fight): smash the nearest blocking building instead of bouncing off
+    // it. Fires only for grounded warriors at a live goal, and yields to a
+    // visible reachable duel - a flanker behind us still outranks masonry.
+    if (unit.unitClass.isWarrior && ! unit.flying && ! unit.loaded && unit.tile.valid) {
+      val goalBlocked = ! With.paths.groundPathExists(unit.tile, unit.agent.destinationNext().tile)
+      val dueling = unit.agent.toAttack.exists(t =>
+        t.visible && t.tile.valid && With.paths.groundPathExists(unit.tile, t.tile))
+      if (goalBlocked && ! dueling) {
+        Maff.minBy(With.units.enemy.view.filter(e =>
+          e.unitClass.isBuilding
+          && e.likelyStillThere
+          && WallBreach.breaches(noGroundPath = true, unit.pixelDistanceEdge(e) * Maff.inv32)))(
+          unit.pixelDistanceEdge(_)).foreach(b => unit.agent.toAttack = Some(b))
+      }
     }
     Probe.note("Target", unit.id, unit.agent.toAttack.map(_.id.toString).getOrElse("-"))
     unit.agent.choosePerch()
