@@ -25,11 +25,12 @@ object MarchOrders {
 
   private def sendUnit(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): Unit = {
     val finalReturn = getReturn(unit, squad, defaultReturn)
+    val assault = SuicideChargeSeam.inMainAssault(unit)
     val (terminus, marchLabel) = marchTerminus(squad, unit, meanDistToGoalTiles, defaultReturn)
     Debugging.CherryVis.CherryVis.decision(unit.id,
-      ?(squad.fightConsensus, marchLabel, "Returning to slot"))
+      ?(squad.fightConsensus || assault, marchLabel, "Returning to slot"))
     unit.intend(squad)
-      .setTerminus(?(squad.fightConsensus, terminus, finalReturn))
+      .setTerminus(?(squad.fightConsensus || assault, terminus, finalReturn))
       .setRedoubt(finalReturn)
   }
 
@@ -47,6 +48,15 @@ object MarchOrders {
     // they never dress, rally, or take formation slots, so they march
     // straight at the squad goal instead of posing with the line.
     if (Protoss.DarkTemplar(unit)) return (squad.vicinity, "DarkTemplarHunt")
+
+    // Main assault: a ground warrior inside the enemy main never poses,
+    // rallies or walks home - it commits (no retreat, attack only) and
+    // marches straight at the squad goal past every formation leg below.
+    if (SuicideChargeSeam.inMainAssault(unit)) {
+      unit.agent.commit = true
+
+      return (squad.vicinity, "MainAssault")
+    }
 
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide)
     val joinPixel              = joinLeg(squad, unit, suicide)

@@ -24,4 +24,14 @@ object SuicideChargeSeam {
   def squadInZone(squad: FriendlyUnitGroup): Boolean =
     enemyIsZerg && mainHeart.exists(heart =>
       SuicideCharge.charging(squad.centroidGround.groundPixels(heart) * Maff.inv32))
+
+  /**
+   * Any race, straight tile distance: a ground warrior inside the enemy
+   * main commits to the assault instead of posing or retreating. Euclidean
+   * on purpose - ground-path distance goes blind where UMS ground does not
+   * connect, which is exactly where packs mill around in formation.
+   */
+  def inMainAssault(unit: FriendlyUnitInfo): Boolean =
+    ! unit.flying && unit.unitClass.isWarrior && mainHeart.exists(heart =>
+      MainAssault.assaulting(unit.tileDistanceCenter(heart)))
 }
