@@ -107,11 +107,18 @@ fi
 
 # One Wine game per box: cleanup kills by process name, so a second game
 # alongside a running one murders the first mid-play (and vice versa).
+# WINE_BOX_SHARED=1 skips the lock for coexistence experiments (headless on
+# :99 + visible on the real display): teardown still kills by process name,
+# so whichever run ends first takes the other one down with it.
 WINE_GAME_LOCK="/tmp/eridanwave-wine-game.lock"
+if [ "${WINE_BOX_SHARED:-0}" != "1" ]; then
 exec {WINE_GAME_LOCK_FD}>"$WINE_GAME_LOCK" || { echo "[wine-run] cannot open lock $WINE_GAME_LOCK" >&2; exit 2; }
 if ! flock -n "$WINE_GAME_LOCK_FD" 2>/dev/null; then
   echo "[wine-run] REFUSED: another Wine game holds the box lock; one game at a time" >&2
   exit 2
+fi
+else
+  say "  WARNING: box lock skipped (WINE_BOX_SHARED=1); teardowns will cross-kill"
 fi
 bgs wineserver -p >/dev/null 2>&1 || true
 
@@ -133,11 +140,58 @@ since() { echo "[wine-run]   +$(( $(date +%s) - T0 ))s  $1"; }
 
 cleanup() {
   disown -a 2>/dev/null
-  pkill -9 -x StarCraft.exe 2>/dev/null
-  pkill -9 -f "[C]haoslauncher.exe" 2>/dev/null
-  pkill -9 -x java.exe 2>/dev/null
+  if [ -n "$SC_PID$CHAOS_PID$CLIENT_PID" ]; then
+    kill_pid "$SC_PID"
+    kill_pid "$CHAOS_PID"
+    kill_pid "$CLIENT_PID"
+  else
+    # Nothing of ours ever started (early exit): nothing to kill.
+    # Name-based pkill lives only in reap_leftovers(), never here, so a
+    # failing run can never murder a concurrent game on its way out.
+    :
+  fi
+  rm -f "$RUN_PIDFILE"
 }
 trap cleanup EXIT
+
+# PID-scoped teardown: every run records its own PIDs so concurrent runs
+# never murder each other. Name-based killing lives only in
+# reap_leftovers() below (crashed runs with no pidfile), never in cleanup().
+RUN_PIDFILE="/tmp/eridanwave-wine-run.$$.pid"
+SC_PID=""; CHAOS_PID=""; CLIENT_PID=""
+record_pids() {
+  { echo "SC=$SC_PID"; echo "CHAOS=$CHAOS_PID"; echo "CLIENT=$CLIENT_PID"; } > "$RUN_PIDFILE" 2>/dev/null
+}
+kill_pid() {
+  [ -n "${1:-}" ] && kill -0 "$1" 2>/dev/null && kill -9 "$1" 2>/dev/null
+  return 0
+}
+# Reap pidfiles of dead runs; adopt-and-kill live leftovers of crashed runs,
+# but never when sharing the box (live PIDs then belong to a concurrent game).
+reap_leftovers() {
+  for other in /tmp/eridanwave-wine-run.*.pid; do
+    [ -f "$other" ] || continue
+    [ "$other" = "$RUN_PIDFILE" ] && continue
+    # shellcheck disable=SC1090
+    SC=""; CHAOS=""; CLIENT=""; . "$other"
+    if kill -0 "${SC:-x}" 2>/dev/null || kill -0 "${CHAOS:-x}" 2>/dev/null || kill -0 "${CLIENT:-x}" 2>/dev/null; then
+      if [ "${WINE_BOX_SHARED:-0}" = "1" ]; then
+        say "  WARNING: $other holds live PIDs (concurrent game?) - leaving them alone"
+      else
+        say "  Killing leftovers from crashed run $other"
+        kill_pid "$SC"; kill_pid "$CHAOS"; kill_pid "$CLIENT"
+        rm -f "$other"
+      fi
+    else
+      rm -f "$other"
+    fi
+  done
+  if [ "${WINE_BOX_SHARED:-0}" != "1" ]; then
+    pkill -9 -x StarCraft.exe 2>/dev/null
+    pkill -9 -f "[C]haoslauncher.exe" 2>/dev/null
+    pkill -9 -x java.exe 2>/dev/null
+  fi
+}
 
 # Rebuild the jar from source in the background: StarCraft takes seconds to
 # come up anyway, so the compile hides inside that instead of adding to it.
@@ -154,9 +208,7 @@ if [ "$BUILD" = "1" ]; then
 fi
 
 say "Killing leftovers"
-pkill -9 -x StarCraft.exe 2>/dev/null
-pkill -9 -f "[C]haoslauncher.exe" 2>/dev/null
-pkill -9 -x java.exe 2>/dev/null
+reap_leftovers
 # Stale relay keys from a killed session would all fire at game start
 # (e.g. a Pause or an Escape) - the client drains the file blindly.
 # Drop them; fresh keys arrive live. Both the current rendezvous and the
@@ -170,8 +222,12 @@ for _ in $(seq 1 30); do
   sleep 0.1
 done
 if pgrep -x StarCraft.exe >/dev/null 2>&1 || pgrep -f "[C]haoslauncher.exe" >/dev/null 2>&1; then
-  say "FATAL: a leftover game survived the kill - refusing to attach to a stale map."
-  exit 1
+  if [ "${WINE_BOX_SHARED:-0}" = "1" ]; then
+    say "  WARNING: another game is up - assuming concurrent run, attaching anyway"
+  else
+    say "FATAL: a leftover game survived the kill - refusing to attach to a stale map."
+    exit 1
+  fi
 fi
 
 [ -f "$JAVA_EXE" ] || { say "Windows Java not found at $JAVA_EXE"; exit 1; }
@@ -260,6 +316,7 @@ else
   CLIENT_PID=$!
 fi
 say "  Client PID $CLIENT_PID, log: $CLIENT_LOG"
+record_pids
 CLIENT_ALIVE=0
 for _ in $(seq 1 15); do
   if kill -0 "$CLIENT_PID" 2>/dev/null; then CLIENT_ALIVE=1; break; fi
@@ -314,6 +371,8 @@ cd "$GAME_ROOT"
 bgs env WINEDEBUG=-all "${AUDIO_ENV[@]}" DISPLAY="${DISPLAY:-:0}" \
   wine chaoslauncher/Chaoslauncher.exe \
   > "$LOG_DIR/chaoslauncher.log" 2>&1 < /dev/null
+CHAOS_PID=$!
+record_pids
 
 SC_UP=0
 for _ in $(seq 1 90); do
@@ -322,6 +381,8 @@ for _ in $(seq 1 90); do
 done
 if [ "$SC_UP" -eq 1 ]; then say "  StarCraft is running"; since "StarCraft is up";
 else say "  WARNING: StarCraft not running within 45 s (see $LOG_DIR/chaoslauncher.log)"; fi
+SC_PID=$(pgrep -x StarCraft.exe --newest 2>/dev/null || true)
+record_pids
 
 say "Step 3/3: watching for HELLO_ERIDANWAVE (grace 60s)..."
 END=$(( $(date +%s) + 60 )); ATTACHED=0; KEYS=0; LASTKEY=0
