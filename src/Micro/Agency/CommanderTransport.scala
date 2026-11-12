@@ -1,5 +1,8 @@
 package Micro.Agency
 
+import Lifecycle.With
+import Mathematics.Maff
+import Micro.Actions.Transportation.DropSafety
 import ProxyBwapi.Orders
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
@@ -93,6 +96,15 @@ object CommanderTransport {
   private[Micro] def unload(transport: FriendlyUnitInfo, passenger: UnitInfo): Unit = {
 
     // No sleeping required
+
+    // Never drop into static defense: arrival and engage paths unload
+    // wherever the ride stops, so the veto lives here and covers them all.
+    // Bunkers at home are unaffected - no enemy buildings stand near them.
+    if (transport.flying) {
+      val nearestStatic = Maff.minBy(With.units.enemy.filter(e =>
+        e.unitClass.isCombatBuilding && e.canAttackGround && e.likelyStillThere))(_.tileDistanceEdge(transport))
+      if (DropSafety.vetoLanding(transportFlying = true, nearestStatic.map(_.tileDistanceEdge(transport)))) return
+    }
 
     transport.bwapiUnit.unload(passenger.bwapiUnit)
 
