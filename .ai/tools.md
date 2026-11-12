@@ -27,6 +27,12 @@
   `bwapi-data/write/probe.txt`: `Act` decision chains, `Move` ordered travel,
   `Sim` stance votes, `Formation` pack audit for `formation-check.py`, `Form`
   formation census, `Hold` line-hold decisions, `Target` chosen enemy id).
+- `bash scripts/run.sh --map=... --formation-audit` + `python3
+  scripts/formation-audit.py [path] [--assert-mean lo-hi] [--assert-breaks n]`:
+  flag-gated harness (off by default) tallying leaf behaviors per unit-frame
+  and slot-leave ranges at each breakFormationToAttack rising edge, written to
+  `bwapi-data/write/formation-audit.txt` at game end; the reader prints
+  per-class n/mean/stddev/min/max and can gate a future harness.
 - Traces: wine `bwapi-data/write/cherryvis_dir.rep.cvis/`; scbw
   `~/.scbw/games/GAME_*/write_0/...` auto-paired to `E_*.rep.cvis`
   (needs default-on cherryvis; checker depth is 3, not 2).

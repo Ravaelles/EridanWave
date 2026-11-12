@@ -20,6 +20,9 @@
 #   --speed=<0-1000>    default game speed (20 if absent; keyboard presets still work)
 #   --cherryvis[=bool] write the CherryVis viewer trace, 1/true/yes or
 #                       0/false/no (default: enabled). --no-cherryvis disables.
+#   --formation-audit[=bool] write the behavior tally and formation-break
+#                       distances to bwapi-data/write/formation-audit.txt,
+#                       1/true/yes or 0/false/no (default: disabled).
 #   --tuning-strategy=<name> tuning strategy from Tuning.Strategies
 #                       (absent = default play, no tuning)
 #   --tune-param=NAME=VALUE (repeatable) per-game param override
@@ -48,7 +51,7 @@ LOG_DIR="${LOG_DIR:-$REPO/out/wine}"
 WINE_RUNS_DIR="$REPO/out/wine_runs"
 REPLAYS_DIR="${REPLAYS_DIR:-/sc-ai/REPLAYS}"
 
-MAP=""; RACE=""; ENEMY_RACE=""; GAME_TYPE=""; SPEED=""; BUILD=1; CHERRYVIS="true"
+MAP=""; RACE=""; ENEMY_RACE=""; GAME_TYPE=""; SPEED=""; BUILD=1; CHERRYVIS="true"; FAUDIT="false"
 TUNE_STRATEGY=""; TUNE_PARAMS=()
 parse_bool() {
   case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
@@ -67,6 +70,9 @@ for arg in "$@"; do
     --cherryvis) CHERRYVIS="true" ;;
     --no-cherryvis) CHERRYVIS="false" ;;
     --cherryvis=*) CHERRYVIS="$(parse_bool "${arg#--cherryvis=}" "--cherryvis" "$CHERRYVIS")" ;;
+    --formation-audit) FAUDIT="true" ;;
+    --no-formation-audit) FAUDIT="false" ;;
+    --formation-audit=*) FAUDIT="$(parse_bool "${arg#--formation-audit=}" "--formation-audit" "$FAUDIT")" ;;
     --tuning-strategy=*) TUNE_STRATEGY="${arg#--tuning-strategy=}" ;;
     --tune-param=*) TUNE_PARAMS+=("${arg#--tune-param=}") ;;
     --jar=*) JAR="${arg#--jar=}" ;;
@@ -280,6 +286,7 @@ LIVE_OUTPUT="${LIVE_OUTPUT:-1}"
 # JBWAPI pick the W32 shared-memory backend under Wine.
 # An explicit --speed= travels as ERIDANWAVE_SPEED (see GameCommands.initialSpeed).
 # --cherryvis= travels as ERIDANWAVE_CHERRYVIS=1/0 (see ConfigurationLoader).
+# --formation-audit= travels as ERIDANWAVE_FORMATION_AUDIT=1/0 (same channel).
 # Explicit tuning travels as -D flags on the client JVM (same channel as
 # --speed/--cherryvis; no scattered env files - one flag per override).
 TUNE_DEFS=()
@@ -289,11 +296,13 @@ SPEED_ENV=()
 [ -n "${SPEED:-}" ] && SPEED_ENV=(ERIDANWAVE_SPEED="$SPEED")
 CVIS_ENV=()
 if [ "$CHERRYVIS" = "true" ]; then CVIS_ENV=(ERIDANWAVE_CHERRYVIS=1); else CVIS_ENV=(ERIDANWAVE_CHERRYVIS=0); fi
+FAUDIT_ENV=()
+if [ "$FAUDIT" = "true" ]; then FAUDIT_ENV=(ERIDANWAVE_FORMATION_AUDIT=1); else FAUDIT_ENV=(ERIDANWAVE_FORMATION_AUDIT=0); fi
 # Headless runs ignore the keyboard entirely (see GameLauncherFactory):
 # no hook, no relay drain, so typing space anywhere never pauses the bot.
 HEADLESS_ENV=(ERIDANWAVE_HEADLESS="$HIDDEN")
 if [ "$LIVE_OUTPUT" = "1" ]; then
-  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" "${HEADLESS_ENV[@]}" \
+  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" "${FAUDIT_ENV[@]}" "${HEADLESS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
       "-Deridanwave.bwapiIni=$WIN_INI" \
@@ -304,7 +313,7 @@ if [ "$LIVE_OUTPUT" = "1" ]; then
       > >(close_lock_fd; exec tee "$CLIENT_LOG") 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" >&2) < /dev/null
   CLIENT_PID=$!
 else
-  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" "${HEADLESS_ENV[@]}" \
+  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" "${FAUDIT_ENV[@]}" "${HEADLESS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
       "-Deridanwave.bwapiIni=$WIN_INI" \

@@ -11,7 +11,7 @@ Play: `run.sh --map=...` (Wine, THE way) · `wine-run.sh` (its backend)
   deps; opens straight from disk via the snapshot, or serve with
   `python3 -m http.server`)
 · `run-batch.sh` / `run-tuning.sh` (batches) · `deploy-eridan-slot.sh` (scbw jar)
-Read: `summarize-cherryvis.py` (trace) · `summarize-errors.py` (errors) · `profile-tests.sh` (test durations, slowest first).
+Read: `summarize-cherryvis.py` (trace) · `summarize-errors.py` (errors) · `profile-tests.sh` (test durations, slowest first) · `formation-audit.py` (behavior tally + slot-leave ranges from `--formation-audit` games).
 Probe (UMS micro has no trace): arm keys in `bwapi-data/write/probe.txt`
 (one per line: `Act`, `Move`, `Sim`), then `probe.py <normal.log> [--unit ID] [--key KEY]`.
 Legacy/Windows-only: `test_*.ps1` (ignore on Linux).

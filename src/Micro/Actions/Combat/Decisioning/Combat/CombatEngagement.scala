@@ -22,6 +22,15 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     if (unit.ready) {
       resolveBreakFormation()
       applyFormationHold()
+      if (With.configuration.formationAudit) {
+        Debugging.FormationAudit.noteBreakState(
+          With.frame,
+          unit.id,
+          unit.unitClass.toString,
+          combat.breakFormationToAttack,
+          combat.target.map(t => unit.pixelsToGetInRange(t) / 32.0),
+          combat.target.map(_.unitClass.toString))
+      }
 
       if ( ! combat.breakFormationToAttack) {
         unit.agent.perch.clear()

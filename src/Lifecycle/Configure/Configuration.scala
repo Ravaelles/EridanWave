@@ -27,6 +27,7 @@ class Configuration {
   var cherryVis         = true
   var auditFormationPaths = false
   var logCombatForecasts = false
+  var formationAudit = false
   var detectBreakpoints = false
   var camera            = false
 

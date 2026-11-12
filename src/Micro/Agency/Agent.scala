@@ -88,6 +88,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
       val label = chain.mkString("/")
       Debugging.CherryVis.CherryVis.decision(unit.id, label)
       Debugging.Probe.note("Act", unit.id, label)
+      if (With.configuration.formationAudit) Debugging.FormationAudit.tally(label)
       Debugging.DeathWatch.recordBehavior(unit.id, label)
     }
   }

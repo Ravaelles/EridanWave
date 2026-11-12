@@ -25,6 +25,7 @@ class EridanWave extends DefaultBWListener {
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         Debugging.ErrorLedger.reset()
         Lifecycle.HitCounter.reset()
+        Debugging.FormationAudit.reset()
         Debugging.DeathWatch.reset()
         Micro.Actions.Protoss.Reaver.ContainStatus.reset()
         Debugging.CherryVis.CherryVis.initialize()
@@ -129,6 +130,7 @@ class EridanWave extends DefaultBWListener {
         Information.Battles.KillLedger.killedResources,
         Information.Battles.KillLedger.lostResources,
         Lifecycle.HitCounter.total))
+      Debugging.FormationAudit.finish(With.mapFileName, With.frame)
       Debugging.CherryVis.CherryVis.finish(isWinner)
       // Tuning score row (fixed-name + dated copy) when a strategy is active.
       Tuning.Tuning.finish(isWinner)

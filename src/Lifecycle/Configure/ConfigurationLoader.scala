@@ -94,6 +94,8 @@ object ConfigurationLoader {
       With.configuration.cherryVis = cherryVisFlagOverride().getOrElse(With.configuration.cherryVis)
       With.configuration.auditFormationPaths = getOrDefault(config, "auditFormationPaths", false)
       With.configuration.logCombatForecasts = getOrDefault(config, "logCombatForecasts", false)
+      With.configuration.formationAudit = getOrDefault(config, "formationAudit", false)
+      With.configuration.formationAudit = formationAuditFlagOverride().getOrElse(With.configuration.formationAudit)
 
       if (tournament    && ladder)      With.logger.warn("Both tournament and ladder modes are enabled")
       if (tournament    && livestream)  With.logger.warn("Both tournament and livestream modes are enabled")
@@ -153,15 +155,30 @@ object ConfigurationLoader {
    * which wins over the JSON value. Accepts 1/true/yes and 0/false/no;
    * garbage warns and keeps the JSON value.
    */
-  private def cherryVisFlagOverride(): Option[Boolean] = {
-    val fromProperty  = Option(System.getProperty("eridanwave.cherryvis")).orElse(Option(System.getProperty("purplewave.cherryvis")))
-    val fromEnv       = scala.sys.env.get("ERIDANWAVE_CHERRYVIS").orElse(scala.sys.env.get("PURPLEWAVE_CHERRYVIS"))
+  private def cherryVisFlagOverride(): Option[Boolean] =
+    boolFlagOverride(
+      Option(System.getProperty("eridanwave.cherryvis")).orElse(Option(System.getProperty("purplewave.cherryvis"))),
+      scala.sys.env.get("ERIDANWAVE_CHERRYVIS").orElse(scala.sys.env.get("PURPLEWAVE_CHERRYVIS")),
+      "CherryVis")
+
+  /**
+   * Explicit --formation-audit control, same channel as --cherryvis above:
+   * writes the behavior tally and formation-break distances to
+   * bwapi-data/write/formation-audit.txt for post-game reading.
+   */
+  private def formationAuditFlagOverride(): Option[Boolean] =
+    boolFlagOverride(
+      Option(System.getProperty("eridanwave.formationAudit")),
+      scala.sys.env.get("ERIDANWAVE_FORMATION_AUDIT"),
+      "FormationAudit")
+
+  private def boolFlagOverride(fromProperty: Option[String], fromEnv: Option[String], label: String): Option[Boolean] = {
     fromProperty.orElse(fromEnv).flatMap(raw => {
       raw.trim.toLowerCase match {
         case "1" | "true" | "yes" => Some(true)
         case "0" | "false" | "no" => Some(false)
         case _ =>
-          With.logger.warn(f"Ignoring invalid CherryVis flag value: $raw (want 1/true/yes or 0/false/no)")
+          With.logger.warn(f"Ignoring invalid $label flag value: $raw (want 1/true/yes or 0/false/no)")
           None
       }
     })
