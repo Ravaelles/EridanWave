@@ -47,6 +47,12 @@ object DeathWatch {
 
     val orders = orderRings.getOrElse(unit.id, mutable.Queue.empty).map(p => f"f${p._1} #${p._2}").mkString("; ")
     val behaved = behavedRings.getOrElse(unit.id, mutable.Queue.empty).map(p => f"f${p._1} ${p._2}").mkString("; ")
+    // Deaths are rare and the whole point is reading them in the main log,
+    // so mirror to stdout like the game summary box (debug logging alone
+    // stays in the file when the tournament config mutes stdout).
+    System.out.println(f"DEATHWATCH $unit died f${With.frame} at ${unit.pixel}")
+    System.out.println(f"DEATHWATCH orders: $orders")
+    System.out.println(f"DEATHWATCH behaved: $behaved")
     With.logger.debug(f"DEATHWATCH $unit died f${With.frame} at ${unit.pixel}")
     With.logger.debug(f"DEATHWATCH orders: $orders")
     With.logger.debug(f"DEATHWATCH behaved: $behaved")
