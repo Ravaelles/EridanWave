@@ -82,21 +82,24 @@ object FormationAudit {
   }
 
   /**
-   * Rising edge of breakFormationToAttack with a live target: the frame the
-   * unit leaves its slot and starts fighting, with the range band it left
-   * from. A unit already broken on its first observed frame logs nothing -
-   * no transition was observed.
+   * Rising edge of breakFormationToAttack with a live target and a formation
+   * to leave: the frame the unit leaves its slot and starts fighting, with
+   * the range band it left from. A unit already broken on its first observed
+   * frame logs nothing - no transition was observed - and a unit with no
+   * formation logs nothing either, since there is no slot to leave (frame 0
+   * before staffing, or a squadless drifter).
    */
   def noteBreakState(
     frame       : Int,
     unitId      : Int,
     ownClass    : String,
     broken      : Boolean,
+    hasFormation: Boolean,
     distTiles   : Option[Double],
     targetClass : Option[String]): Unit = {
     val was = lastBroken.getOrElse(unitId, false)
     lastBroken(unitId) = broken
-    if (broken && ! was) {
+    if (broken && ! was && hasFormation) {
       for (d <- distTiles; t <- targetClass) breaks += BreakRow(frame, unitId, ownClass, t, d)
     }
   }

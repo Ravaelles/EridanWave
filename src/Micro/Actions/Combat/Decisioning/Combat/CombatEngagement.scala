@@ -28,6 +28,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           unit.id,
           unit.unitClass.toString,
           combat.breakFormationToAttack,
+          unit.formationEngage.isDefined,
           combat.target.map(t => unit.pixelsToGetInRange(t) / 32.0),
           combat.target.map(_.unitClass.toString))
       }

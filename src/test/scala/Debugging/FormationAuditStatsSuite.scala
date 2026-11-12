@@ -41,11 +41,11 @@ class FormationAuditStatsSuite extends AnyFunSuite {
 
   test("the rising edge logs once per break, not every frame") {
     FormationAudit.reset()
-    FormationAudit.noteBreakState(10, 1, "Dragoon", broken = false, Some(5.0), Some("Dragoon"))
-    FormationAudit.noteBreakState(11, 1, "Dragoon", broken = true, Some(4.0), Some("Dragoon"))
-    FormationAudit.noteBreakState(12, 1, "Dragoon", broken = true, Some(3.0), Some("Dragoon"))
-    FormationAudit.noteBreakState(13, 1, "Dragoon", broken = false, Some(3.0), Some("Dragoon"))
-    FormationAudit.noteBreakState(14, 1, "Dragoon", broken = true, Some(2.0), Some("Dragoon"))
+    FormationAudit.noteBreakState(10, 1, "Dragoon", broken = false, hasFormation = true, Some(5.0), Some("Dragoon"))
+    FormationAudit.noteBreakState(11, 1, "Dragoon", broken = true, hasFormation = true, Some(4.0), Some("Dragoon"))
+    FormationAudit.noteBreakState(12, 1, "Dragoon", broken = true, hasFormation = true, Some(3.0), Some("Dragoon"))
+    FormationAudit.noteBreakState(13, 1, "Dragoon", broken = false, hasFormation = true, Some(3.0), Some("Dragoon"))
+    FormationAudit.noteBreakState(14, 1, "Dragoon", broken = true, hasFormation = true, Some(2.0), Some("Dragoon"))
     val rows = FormationAudit.breakRows
     assert(rows.map(_.frame) == Seq(11, 14))
     assert(rows.map(_.distTiles) == Seq(4.0, 2.0))
@@ -55,7 +55,14 @@ class FormationAuditStatsSuite extends AnyFunSuite {
 
   test("breaks without a live target never reach the stats") {
     FormationAudit.reset()
-    FormationAudit.noteBreakState(10, 1, "Dragoon", broken = true, None, None)
+    FormationAudit.noteBreakState(10, 1, "Dragoon", broken = true, hasFormation = true, None, None)
+    assert(FormationAudit.breakRows.isEmpty)
+    FormationAudit.reset()
+  }
+
+  test("breaks without a formation never reach the stats") {
+    FormationAudit.reset()
+    FormationAudit.noteBreakState(10, 1, "Dragoon", broken = true, hasFormation = false, Some(20.0), Some("Dragoon"))
     assert(FormationAudit.breakRows.isEmpty)
     FormationAudit.reset()
   }
