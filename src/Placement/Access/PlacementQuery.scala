@@ -45,6 +45,7 @@ class PlacementQuery {
     requirements.zone     = Seq.empty
     requirements.base     = Seq.empty
     requirements.tile     = Seq.empty
+    requirements.nearTile = None
     preferences.width     = requirements.width
     preferences.height    = requirements.height
     preferences.building  = Some(building)
@@ -100,6 +101,7 @@ class PlacementQuery {
   def requireZone         (value: Zone*)        : PlacementQuery = { requirements.zone      = value;        this }
   def requireBase         (value: Base*)        : PlacementQuery = { requirements.base      = value;        this }
   def requireTile         (value: Tile*)        : PlacementQuery = { requirements.tile      = value;        this }
+  def requireNear         (value: Tile, tiles: Int): PlacementQuery = { requirements.nearTile = Some((value, tiles)); this }
   def preferWidth         (value: Int)          : PlacementQuery = { preferences.width      = Some(value);  this }
   def preferHeight        (value: Int)          : PlacementQuery = { preferences.height     = Some(value);  this }
   def preferBuilding      (value: UnitClass)    : PlacementQuery = { preferences.building   = Some(value);  this }
@@ -115,6 +117,7 @@ class PlacementQuery {
     if (requirements.zone.nonEmpty    && ! requirements.zone.contains(tile.zone)) return false
     if (requirements.base.nonEmpty    && ! requirements.base.exists(tile.base.contains)) return false
     if (requirements.tile.nonEmpty    && ! requirements.tile.contains(tile)) return false
+    if (requirements.nearTile.exists { case (anchor, tiles) => tile.tileDistanceChebyshev(anchor) > tiles }) return false
     if ( ! requirements.labelYes.forall(With.placement.at(tile).requirement.labels.contains)) return false
     if (    requirements.labelNo.exists(With.placement.at(tile).requirement.labels.contains)) return false
 
