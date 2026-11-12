@@ -1,4 +1,4 @@
-package Gameplans.Protoss.PvZ
+package Gameplans.Protoss.PvZ.policy
 
 import Information.Battles.ArmyStrength
 

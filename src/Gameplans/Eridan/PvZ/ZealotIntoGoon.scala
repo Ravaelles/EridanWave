@@ -1,6 +1,6 @@
 package Gameplans.Eridan.PvZ
 
-import Gameplans.Protoss.PvZ.EarlyPressure
+import Gameplans.Protoss.PvZ.policy.EarlyPressure
 import Lifecycle.With
 import Macro.Actions.{Compositor, MacroActions}
 import Macro.Facts.UnitArchive
@@ -60,7 +60,7 @@ object ZealotIntoGoon extends MacroActions {
   private def queueDragoons(): Unit = {
     if ( ! zealotLineStands) return
     if ( ! have(Protoss.CyberneticsCore)) return
-    if ( ! Gameplans.Protoss.PvZ.GasBank.allowsDragoon(units(Protoss.Dragoon), gas, With.units.ours.count(_.unitClass.isWarrior))) return
+    if ( ! Gameplans.Protoss.PvZ.policy.GasBank.allowsDragoon(units(Protoss.Dragoon), gas, With.units.ours.count(_.unitClass.isWarrior))) return
 
     compositor.setNeed(Protoss.Dragoon, 4.0)
     compositor.setGoal(Protoss.Dragoon, 6 + enemies(Zerg.Mutalisk) + enemies(Zerg.Hydralisk))
@@ -100,12 +100,12 @@ object ZealotIntoGoon extends MacroActions {
     // after the Zealot/Dragoon core is up. The tech buildings themselves
     // still follow composition (scouting decides Robo vs Archives vs
     // Stargate); without the tech these needs stay unfulfilled.
-    if (have(Protoss.RoboticsSupportBay) && Gameplans.Protoss.PvZ.ReaverGas.allowsReaver(units(Protoss.Reaver), gas)) {
+    if (have(Protoss.RoboticsSupportBay) && Gameplans.Protoss.PvZ.policy.ReaverGas.allowsReaver(units(Protoss.Reaver), gas)) {
       compositor.setNeed(Protoss.Reaver, 3.0)
       compositor.setGoal(Protoss.Reaver, 6)
     }
     // A Shuttle for the ferry always queues; one only for Reavers waits on gas.
-    if (have(Protoss.RoboticsSupportBay) && (With.blackboard.ferry() || Gameplans.Protoss.PvZ.ReaverGas.allowsReaver(units(Protoss.Reaver), gas))) {
+    if (have(Protoss.RoboticsSupportBay) && (With.blackboard.ferry() || Gameplans.Protoss.PvZ.policy.ReaverGas.allowsReaver(units(Protoss.Reaver), gas))) {
       compositor.setNeed(Protoss.Shuttle, 3.0)
       compositor.capGoal(Protoss.Shuttle, units(Protoss.Reaver) / 2)
     }
@@ -140,7 +140,7 @@ object ZealotIntoGoon extends MacroActions {
     // runs after the gameplan's own attack vote and the last write wins.
     // Broke without Dragoons falls back to defense, whatever earlier votes say.
     val tooWeakToFight = ! EarlyPressure.mayPush(unitsComplete(IsWarrior)) || confidenceAttacking11 < 0 ||
-      Gameplans.Protoss.PvZ.DefenseWithoutDragoons.shouldDefend(
+      Gameplans.Protoss.PvZ.policy.DefenseWithoutDragoons.shouldDefend(
         With.enemies.exists(_.isZerg),
         units(Protoss.Dragoon),
         units(Protoss.Zealot),

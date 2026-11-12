@@ -1,4 +1,4 @@
-package Gameplans.Protoss.PvZ
+package Gameplans.Protoss.PvZ.openings
 
 import Debugging.SimpleString
 import Lifecycle.With

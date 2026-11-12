@@ -1,4 +1,4 @@
-package Gameplans.Protoss.PvZ
+package Gameplans.Protoss.PvZ.policy
 
 import org.scalatest.funsuite.AnyFunSuite
 

@@ -1,4 +1,4 @@
-package Gameplans.Protoss.PvZ
+package Gameplans.Protoss.PvZ.policy
 
 /**
  * Pure recovery-gas gate (no game access): a gasless line that already

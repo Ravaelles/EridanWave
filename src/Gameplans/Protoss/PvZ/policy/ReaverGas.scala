@@ -1,4 +1,4 @@
-package Gameplans.Protoss.PvZ
+package Gameplans.Protoss.PvZ.policy
 
 /**
  * Pure Reaver gas gate (no game access): a Reaver may drink the bank dry,

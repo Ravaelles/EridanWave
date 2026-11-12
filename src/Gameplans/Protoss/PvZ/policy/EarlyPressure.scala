@@ -1,4 +1,4 @@
-package Gameplans.Protoss.PvZ
+package Gameplans.Protoss.PvZ.policy
 
 /**
  * Pure early-pressure gate (no game access): a normal PvZ opener waits at

@@ -1,6 +1,6 @@
 package Gameplans.All
 
-import Gameplans.Protoss.PvZ.StormResearch
+import Gameplans.Protoss.PvZ.policy.StormResearch
 import Lifecycle.With
 import Macro.Actions.MacroActions
 import Macro.Facts.UnitArchive

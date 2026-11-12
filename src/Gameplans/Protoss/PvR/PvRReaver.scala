@@ -3,7 +3,7 @@ package Gameplans.Protoss.PvR
 import Gameplans.All.GameplanImperative
 import Gameplans.Protoss.PvP.PvPLateGame
 import Gameplans.Protoss.PvT.PvTArbiter
-import Gameplans.Protoss.PvZ.PvZ1GateCoreExpand
+import Gameplans.Protoss.PvZ.openings.PvZ1GateCoreExpand
 import Lifecycle.With
 import Placement.Access.PlaceLabels
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}

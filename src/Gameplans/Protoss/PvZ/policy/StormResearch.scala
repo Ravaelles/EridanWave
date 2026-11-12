@@ -1,4 +1,4 @@
-package Gameplans.Protoss.PvZ
+package Gameplans.Protoss.PvZ.policy
 
 /**
  * Pure Psionic Storm gate (no game access): never upfront, mandatory once

@@ -1,4 +1,4 @@
-package Gameplans.Protoss.PvZ
+package Gameplans.Protoss.PvZ.policy
 
 /**
  * Pure gas-bank gate (no game access): late production must not drink the

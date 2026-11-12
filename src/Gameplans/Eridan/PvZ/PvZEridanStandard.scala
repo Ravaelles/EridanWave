@@ -1,6 +1,6 @@
 package Gameplans.Eridan.PvZ
 
-import Gameplans.Protoss.PvZ.PvZ1BaseReactive
+import Gameplans.Protoss.PvZ.reactive.PvZ1BaseReactive
 import Strategery.Strategies.Protoss.PvZ1BaseZealotIntoGoon
 
 /**

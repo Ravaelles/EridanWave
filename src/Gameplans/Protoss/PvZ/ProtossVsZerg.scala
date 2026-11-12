@@ -2,6 +2,8 @@ package Gameplans.Protoss.PvZ
 
 import Gameplans.All.{Modal, ModalGameplan}
 import Gameplans.Eridan.PvZ.PvZEridanStandard
+import Gameplans.Protoss.PvZ.openings._
+import Gameplans.Protoss.PvZ.reactive.PvZ1BaseReactive
 import Gameplans.Protoss.PvR.PvR2Gate4Gate
 
 object ProtossVsZerg {

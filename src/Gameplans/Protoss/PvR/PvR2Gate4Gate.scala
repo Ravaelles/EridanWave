@@ -2,7 +2,7 @@ package Gameplans.Protoss.PvR
 
 import Gameplans.All.GameplanImperative
 import Gameplans.Protoss.PvP.PvPIdeas
-import Gameplans.Protoss.PvZ.Pv4Pool
+import Gameplans.Protoss.PvZ.reactive.Pv4Pool
 import ProxyBwapi.Races.{Protoss, Terran}
 import Strategery.Strategies.Protoss.{PvR2Gate4Gate, PvZ2Gate4Gate}
 import Utilities.UnitFilters.IsWarrior
