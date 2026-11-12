@@ -32,5 +32,6 @@ object RequireEssentials extends MacroActions {
           MacroFacts.units(IsWorker) * 15))
       }
     }
+    ResearchBanked()
   }
 }

@@ -81,7 +81,7 @@ trait MacroActions extends MacroCounting {
       .map(_.gasMinersRequired)
       .sum)
     max = Math.max(max, 21)
-    max = Math.min(max, maximumTotal)
+    max = PumpWorkers.capTotal(Math.min(max, maximumTotal))
     pump(With.self.workerClass, max, maximumConcurrently)
   }
   def pumpRatio(unitClass: UnitClass, minimum: Int, maximum: Int, ratios: Seq[MatchingRatio], round: Rounding = Rounding.Up): Unit = {
