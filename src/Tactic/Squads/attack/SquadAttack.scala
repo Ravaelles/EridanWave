@@ -164,6 +164,18 @@ class SquadAttack extends Squad {
         Maff.maxBy(With.geography.enemyBases.map(_.heart))(_.groundPixels(With.scouting.enemyMuscleOrigin)).getOrElse(With.scouting.enemyHome).center,
         SquadAutomation.rankedAround(this))
 
+    } else if (With.umsMode && visibleEnemyChase.isDefined) {
+
+      // Mop-up chase (UMS): a live visible contact outranks the geography
+      // speculation in ClearMap below the same way a remembered one does
+      // above. Without this the squad sits in stale slots while a visible
+      // enemy walks away - advancing when it blinks out, stalling when it
+      // reappears. Battle modes above are untouched.
+      setMode(
+        HuntContact,
+        visibleEnemyChase.get,
+        SquadAutomation.rankedAround(this))
+
     } else {
 
       val target =
@@ -213,6 +225,12 @@ class SquadAttack extends Squad {
   private def shouldHuntContact: Boolean =
     With.umsMode &&
     With.units.enemy.forall(! _.visible)
+
+  // Live-contact chase (UMS mop-up): the nearest visible enemy by the
+  // squad's attack key, so the pack walks at something instead of holding
+  // stale formation slots while it walks away.
+  private def visibleEnemyChase: Option[Pixel] =
+    Maff.minBy(With.units.enemy.filter(e => e.alive && e.visible))(e => attackKeyDistanceTo(e.pixel)).map(_.pixel)
 
   private def freshestFoggedContact: Option[UnitInfo] =
     Maff.maxBy(With.units.enemy.filter(e => ! e.visible && With.framesSince(e.lastSeen) < Minutes(3)()))(_.lastSeen)
