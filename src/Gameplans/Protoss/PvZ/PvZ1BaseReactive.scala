@@ -177,7 +177,7 @@ class PvZ1BaseReactive extends PvZ1BaseReactiveUtilities {
     var canAttackEarly    = opened(Gates910, Gates1012)
     canAttackEarly      ||= opened(ZZCoreZ, ZCoreZ)  && enemyStrategy(With.fingerprints.twelveHatch, With.fingerprints.twelvePool, With.fingerprints.overpool)
     canAttackEarly      ||= haveComplete(Protoss.Scout,  Protoss.DarkTemplar)
-    canAttackEarly      &&= unitsComplete(IsWarrior) >= 3 || unitsEver(IsWarrior) >= 5 || With.fingerprints.twelveHatch()
+    canAttackEarly      &&= EarlyPressure.mayPush(unitsComplete(IsWarrior)) || With.fingerprints.twelveHatch()
     canAttackEarly      &&= confidenceAttacking11 > 0.2 + 0.1 * enemiesComplete(Zerg.SunkenColony)
     canAttackEarly      &&= ! enemyStrategy(With.fingerprints.fourPool, With.fingerprints.ninePoolGas, With.fingerprints.overpoolGas, With.fingerprints.tenHatchPoolGas, With.fingerprints.twoHatchMain)
 

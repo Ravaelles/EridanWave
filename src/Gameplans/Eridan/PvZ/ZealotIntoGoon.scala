@@ -1,5 +1,6 @@
 package Gameplans.Eridan.PvZ
 
+import Gameplans.Protoss.PvZ.EarlyPressure
 import Lifecycle.With
 import Macro.Actions.{Compositor, MacroActions}
 import Macro.Facts.UnitArchive
@@ -138,7 +139,7 @@ object ZealotIntoGoon extends MacroActions {
     // attack() only votes yes, so set the blackboard directly: produce()
     // runs after the gameplan's own attack vote and the last write wins.
     // Broke without Dragoons falls back to defense, whatever earlier votes say.
-    val tooWeakToFight = unitsComplete(IsWarrior) < 2 || confidenceAttacking11 < 0 ||
+    val tooWeakToFight = ! EarlyPressure.mayPush(unitsComplete(IsWarrior)) || confidenceAttacking11 < 0 ||
       Gameplans.Protoss.PvZ.DefenseWithoutDragoons.shouldDefend(
         With.enemies.exists(_.isZerg),
         units(Protoss.Dragoon),
