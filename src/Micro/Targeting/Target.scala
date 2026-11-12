@@ -115,6 +115,28 @@ object Target {
       if (output.isDefined) return output
     }
 
+    if (Protoss.Carrier(attacker) && CarrierTankHuntSeam.huntFor(attacker)) {
+      // Carrier doctrine: a hunting wing always goes for the tanks in
+      // range, sieged first. Ranked by score inside each stratum, assigned
+      // before matchups, like the rest of the ladder.
+      def siegedNear(target: UnitInfo): Boolean =
+        Terran.SiegeTankSieged(target) && attacker.tileDistanceEdge(target) <= CarrierTankHunt.tankHuntTiles
+      def unsiegedNear(target: UnitInfo): Boolean =
+        Terran.SiegeTankUnsieged(target) && attacker.tileDistanceEdge(target) <= CarrierTankHunt.tankHuntTiles
+
+      output = bestInStratum(attacker, assigned.view.filter(siegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(siegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, assigned.view.filter(unsiegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+
+      output = bestInStratum(attacker, matchups.view.filter(unsiegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+      if (output.isDefined) return output
+    }
+
     if (engaged) {
       output = bestInStratum(attacker, assigned, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = false, requireAcceleratesDemise = true)
       if (output.isDefined) return output

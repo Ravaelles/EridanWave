@@ -6,11 +6,12 @@ import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Protoss.Carrier._
 import Micro.Agency.Commander
 import Micro.Targeting.FiltersSituational.{TargetFilterCombatants, TargetFilterVisibleInRange}
-import Micro.Targeting.Target
+import Micro.Targeting.{CarrierTankHuntSeam, Target}
 import ProxyBwapi.Orders
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.LightYear
+import Utilities.UnitFilters.IsTank
 
 
 object BeCarrier extends Action {
@@ -53,7 +54,12 @@ object BeCarrier extends Action {
       val carrierSafetyMargin     = unit.matchups.pixelsEntangled
 
       if (target.isDefined) {
-        if (interceptorsActive) {
+        // Tank hunt: a hunting wing closes and shoots instead of playing
+        // leash games it cannot win against outranging tanks.
+        if (IsTank(target.get) && CarrierTankHuntSeam.huntFor(unit)) {
+          unit.agent.act("CarrierTankHunt")
+          Commander.attack(unit)
+        } else if (interceptorsActive) {
           val chasePixel = unit.agent.toAttack.get.projectFrames(48)
           val chasingAlready = unit.speedApproaching(chasePixel) > unit.topSpeed / 2
           unit.agent.decision.set(chasePixel)

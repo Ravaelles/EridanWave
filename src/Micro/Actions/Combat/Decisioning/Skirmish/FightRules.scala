@@ -38,6 +38,7 @@ final case class FightFacts(
   raze        : Boolean = false,
   miners      : Boolean = false,
   hallTargeted: Boolean = false,
+  tankHunt    : Boolean = false,
   reave       : Boolean = false,
   energized   : Boolean = false)
 
@@ -73,6 +74,7 @@ object FightRules {
     else if (f.yolo)        Some((true,  "YOLO"))
     else if (f.irradiated)  Some((true,  "Irradiated"))
     else if (f.safe)        Some((true,  "Safe"))
+    else if (f.tankHunt)     Some((true,  "TankHunt"))
     else None
   }
 

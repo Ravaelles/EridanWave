@@ -1,9 +1,11 @@
 
 package Micro.Actions.Combat.Decisioning.Skirmish
 
+import Debugging.Probe
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Targeting.CarrierTankHuntSeam
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.?
@@ -23,13 +25,17 @@ object FightOrFlee extends Action {
     if (With.configuration.debugging && With.configuration.logCombatForecasts) Debugging.CombatForecastDiagnostics.decision(u)
   }
 
+  // The verdict reason (rule label or sim Yes/No) rides the change-only
+  // Verdict probe so traceless games can answer "why is it retreating".
   private def applyVerdict(u: FriendlyUnitInfo, facts: FightFacts): Unit = {
     FightRules.decide(facts) match {
       case Some((fight, reason)) =>
         u.agent.shouldFight = fight
         u.agent.fightReason = reason
+        Probe.note("Verdict", u.id, ?(fight, "+", "-") + reason)
       case None =>
         applyEstimation(u)
+        Probe.note("Verdict", u.id, ?(u.agent.shouldFight, "+Sim", "-Sim"))
     }
   }
 
@@ -43,6 +49,7 @@ object FightOrFlee extends Action {
     static      = ! u.canMove,
     committed   = u.agent.commit,
     hallTargeted = u.agent.toAttack.exists(_.unitClass.isTownHall),
+    tankHunt    = Protoss.Carrier(u) && CarrierTankHuntSeam.huntFor(u),
     yolo        = With.yolo.active && IsWarrior(u),
     irradiated  = u.painfullyIrradiated)
   private def contactFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
