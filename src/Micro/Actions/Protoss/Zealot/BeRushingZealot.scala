@@ -2,8 +2,8 @@ package Micro.Actions.Protoss.Zealot
 
 import Debugging.Visualizations.Rendering.DrawMap
 import Lifecycle.With
-import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Combat.Maneuvering.Withdraw
 import Micro.Actions.Combat.Tactics.Recharge
 import Micro.Agency.Commander
 import ProxyBwapi.Races.{Protoss, Zerg}
@@ -86,10 +86,8 @@ object BeRushingZealot extends Action {
 
     Recharge(zealot)
 
-    val allies  = zealot.matchups.allies.filter(IsWarrior).filter(_.matchups.pixelsToThreatRange.exists(_ > zealot.matchups.pixelsToThreatRange.get + 64))
-    val home    = Maff.minBy(allies)(_.matchups.pixelsToThreatRange)
-      .map(_.pixel)
-      .getOrElse(With.geography.home.center)
+    val allies = zealot.matchups.allies.filter(IsWarrior).flatMap(a => a.matchups.pixelsToThreatRange.map(d => (a.pixel, d)))
+    val home = Withdraw.toAllies(zealot.matchups.pixelsToThreatRange, allies, With.geography.home.center)
 
     zealot.agent.destinationNext.set(home)
     Commander.move(zealot)
