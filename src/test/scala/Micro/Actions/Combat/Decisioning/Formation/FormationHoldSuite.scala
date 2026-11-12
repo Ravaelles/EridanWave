@@ -13,7 +13,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false))
   }
 
@@ -23,7 +23,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false))
   }
 
@@ -33,7 +33,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false))
   }
 
@@ -43,7 +43,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false))
   }
 
@@ -53,7 +53,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false))
   }
 
@@ -63,7 +63,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = true,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false))
   }
 
@@ -73,7 +73,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = false,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false))
   }
 
@@ -83,17 +83,17 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = true,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false))
   }
 
-  test("joins the fight once a cluster mate engages") {
+  test("joins the fight once this unit is itself engaged") {
     assert( ! FormationHold.shouldHoldLine(
       tilesBeyondRange  = 3.0,
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = true,
+      unitEngaged       = true,
       enemyFired        = false))
   }
 
@@ -103,7 +103,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = true))
   }
 
@@ -113,7 +113,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false,
       targetHoldable    = false))
   }
@@ -124,7 +124,7 @@ class FormationHoldSuite extends AnyFunSuite {
       melee             = false,
       hasFormation      = true,
       flanking          = false,
-      allyEngaged       = false,
+      unitEngaged       = false,
       enemyFired        = false,
       targetHoldable    = true))
   }

@@ -19,4 +19,14 @@ class OverwhelminglyStrongerSuite extends AnyFunSuite {
     assert(OverwhelminglyStronger.locally(10.0, 0.0))
     assert(OverwhelminglyStronger.locally(0.0, 0.0))
   }
+
+  test("an unmeasured forecast enemy never skips the formation") {
+    assert( ! OverwhelminglyStronger.measuredLocally(1000.0, 0.0))
+    assert( ! OverwhelminglyStronger.measuredLocally(0.0, 0.0))
+  }
+
+  test("a measured four-to-one still skips the formation") {
+    assert(OverwhelminglyStronger.measuredLocally(400.0, 100.0))
+    assert( ! OverwhelminglyStronger.measuredLocally(399.9, 100.0))
+  }
 }

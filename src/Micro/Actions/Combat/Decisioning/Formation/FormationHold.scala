@@ -36,10 +36,13 @@ object FormationHold {
    * Hold the line while the target is well beyond our range, in tiles.
    * Inside the release band (<= 1.1 tiles beyond range) the fight starts:
    * the unit steps in and shoots. The hold also releases when the fight is
-   * already on: a cluster mate engaging, or an enemy in range whose weapon
-   * is cooling down (it opened fire). Melee must still close (it cannot fight
-   * from a slot), flankers must still circle, and without a formation there
-   * is nothing to hold.
+   * already on for this unit: an enemy in range whose weapon is cooling down
+   * (it opened fire), or this unit itself in an enemy's range. A cluster mate
+   * engaging elsewhere does not release the line: in a mass drag fight the
+   * first shooter would otherwise push every formed unit into a charge and
+   * the arc dies before it is ever used. Melee must still close (it cannot
+   * fight from a slot), flankers must still circle, and without a formation
+   * there is nothing to hold.
    * The hold applies only to armed enemy combat units (targetHoldable):
    * buildings - even shooting ones like Sunkens - and unarmed units are
    * always attacked normally instead of being posed against.
@@ -49,10 +52,10 @@ object FormationHold {
     melee             : Boolean,
     hasFormation      : Boolean,
     flanking          : Boolean,
-    allyEngaged       : Boolean,
+    unitEngaged       : Boolean,
     enemyFired        : Boolean,
     targetHoldable    : Boolean = true): Boolean = {
-    hasFormation && ! melee && ! flanking && ! allyEngaged && ! enemyFired && targetHoldable && tilesBeyondRange > holdReleaseTiles
+    hasFormation && ! melee && ! flanking && ! unitEngaged && ! enemyFired && targetHoldable && tilesBeyondRange > holdReleaseTiles
   }
 
   /** Step the line forward only once every unit sits in its slot. */

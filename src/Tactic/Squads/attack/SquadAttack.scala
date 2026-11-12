@@ -294,13 +294,15 @@ class SquadAttack extends Squad {
     commitUmsDuelists()
 
     if (
-      With.frame < Minutes(5)()
+      ! With.umsMode // No economy, no rush clock: a scenario fight is never the early rush this shortcut serves
+      && With.frame < Minutes(5)()
       && ! vicinity.zone.metro.exists(_.bases.exists(_.isOurs))
       && units.forall(_.matchups.threats.forall(IsWorker))) {
       SquadAutomation.send(this)
     } else {
       SquadAutomation.formAndSend(this)
     }
+    Probe.note("Form", 0, f"n=${formations.size} engage=${formationEngage.isDefined} consensus=$fightConsensus enemies=${battleEnemies.size} unplaced=${units.count(_.formationEngage.isEmpty)}/${units.size}")
 
 
     if (In(mode, ContainArmy, ClearMap) && MacroFacts.safeSkirmishing && units.size >= 12) {

@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Debugging.Probe
 import Lifecycle.With
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
@@ -65,20 +66,23 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   // Buildings - even shooting ones - and unarmed units are always
   // attacked normally: there is no line to hold against them.
   // Inside ~1 tile of the range the fight starts - the unit steps in and
-  // shoots. The hold also releases once the fight is on: a cluster mate
-  // engaging, or an enemy in range whose weapon is cooling down (it opened
-  // fire). Melee must still close, flankers must still circle, and an
-  // explicit yolo overrules.
+  // shoots. The hold also releases once the fight is on for this unit: an
+  // enemy in range whose weapon is cooling down (it opened fire), or this
+  // unit itself inside an enemy's range. A squad mate shooting elsewhere
+  // must not turn the whole line into a charge. Melee must still close,
+  // flankers must still circle, and an explicit yolo overrules.
   private def applyFormationHold(): Unit = {
-    if ( ! OverwhelminglyStronger.skipFormation(unit) && ! With.yolo.active && combat.target.exists(t =>
+    lazy val hold = combat.target.exists(t =>
       FormationHold.shouldHoldLine(
         tilesBeyondRange  = unit.pixelsToGetInRange(t) / 32.0,
         melee             = unit.unitClass.melee,
         hasFormation      = unit.formationEngage.isDefined,
         flanking          = unit.formationEngage.exists(_.flanking),
-        allyEngaged       = combat.squadEngagingOn,
+        unitEngaged       = unit.matchups.engagedUpon,
         enemyFired        = unit.matchups.threatsInRange.exists(_.cooldownLeft > 0),
-        targetHoldable    = t.unitClass.isWarrior && t.unitClass.canAttack && (! t.unitClass.isBuilding || t.unitClass.isCombatBuilding)))) {
+        targetHoldable    = t.unitClass.isWarrior && t.unitClass.canAttack && (! t.unitClass.isBuilding || t.unitClass.isCombatBuilding)))
+    combat.target.foreach(t => Probe.note("Hold", unit.id, f"form=${unit.formationEngage.isDefined} flank=${unit.formationEngage.exists(_.flanking)} me=${unit.matchups.engagedUpon} fired=${unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)} beyond=${unit.pixelsToGetInRange(t) / 32.0}%.1f hold=$hold"))
+    if ( ! OverwhelminglyStronger.skipFormation(unit) && ! With.yolo.active && hold) {
       combat.breakFormationToAttack = false
     }
   }
