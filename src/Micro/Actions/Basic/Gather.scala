@@ -4,6 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
+import Micro.Actions.Combat.Maneuvering.WorkerThreatFlee
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import Micro.Targeting.Target
 import Micro.Agency.Commander
@@ -92,10 +93,17 @@ object Gather extends Action {
 
       // Hard threats end mining: Lurkers, Dark Templars and Vultures kill
       // workers that stay on the line, so run instead of switching
-      // resources. Healthy packs still swarm (beckoned above); the hurt
-      // and the outnumbered leave.
-      lazy val hardThreatNear = ! beckonedToFight && unit.matchups.threats.exists(t =>
+      // resources. A Mutalisk pack cannot be fought or outrun, a sieged
+      // tank shelling the line outranges any answer, and a storm on the
+      // worker needs no deliberation. Healthy packs still swarm (beckoned
+      // above); the hurt and the outnumbered leave, preferably for
+      // another base via the resource switch below.
+      lazy val mutasNear = unit.matchups.threats.count(t => Zerg.Mutalisk(t) && t.pixelDistanceEdge(unit) <= 32 * WorkerThreatFlee.mutaPackTiles)
+      lazy val tankShelling = unit.matchups.threats.exists(t =>
+        Terran.SiegeTankSieged(t) && WorkerThreatFlee.tankShelling(unit.tileDistanceEdge(t), t.pixelRangeAgainst(unit) * Maff.inv32))
+      lazy val hardThreatNear = ( ! beckonedToFight && unit.matchups.threats.exists(t =>
         (Zerg.Lurker(t) || Protoss.DarkTemplar(t) || Terran.Vulture(t)) && t.pixelDistanceEdge(unit) < defenseRadiusPixels)
+        || WorkerThreatFlee.mutaPack(mutasNear) || tankShelling || unit.underStorm)
       if (hardThreatNear) {
         Retreat(unit)
 
