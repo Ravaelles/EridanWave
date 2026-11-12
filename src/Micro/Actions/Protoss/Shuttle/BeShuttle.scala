@@ -4,7 +4,7 @@ import Debugging.SimpleString
 import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Micro.Actions.Action
-import Micro.Actions.Combat.Maneuvering.Retreat
+import Micro.Actions.Combat.Maneuvering.{AirFleeGeometry, Retreat}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import ProxyBwapi.Races.Protoss
@@ -43,6 +43,19 @@ object BeShuttle extends Action {
   protected def perform(shuttle: FriendlyUnitInfo): Unit = {
     if (ShuttleDitchPassengers(shuttle)) return
     if (ShuttleAdoptPassenger(shuttle)) return
+
+    // Air flee: enemies that can hit us inside twelve tiles push us straight
+    // out (single) or off their centroid (many), margin scaled by wounds.
+    // Survival outranks even emergency pickups - a dead Shuttle saves nobody.
+    val attackersNear = shuttle.matchups.threats.filter(t =>
+      t.canAttack(shuttle) && t.pixelDistanceEdge(shuttle) <= 32 * AirFleeGeometry.threatRadiusTiles)
+    AirFleeGeometry.focus(attackersNear.map(_.pixel)).foreach(focus => {
+      shuttle.agent.decision.set(AirFleeGeometry.fleePixel(shuttle.pixel, focus, shuttle.woundPercent()))
+      shuttle.agent.act("AirFlee")
+      Commander.move(shuttle)
+
+      return
+    })
 
     // Emergency pickups
     val supported = shuttle.agent.passengersPrioritized
