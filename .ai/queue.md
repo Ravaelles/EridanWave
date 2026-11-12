@@ -67,12 +67,13 @@ pack`/`Engage` flapping throughout.
 
 Two mechanisms, two fixes:
 - Vote flicker (consensus flapping) -> `ConsensusVoteFilter` latch is
-  COMMITTED (`501c42f4b`, `Squad.prepareToRun` refreshes once per frame)
-  but the FIRST version was a pass-through bug (`case (true, _)`
-  returned the streak comparison instead of holding adopted `true`;
-  fixed in `dee6339f3` with threaded tests). `GAME_78CFBB2C` ran the
-  broken version, so it validates nothing - needs a fresh melee game.
-- Overlord-chasing splitting the pack -> blocked on the Overlord fix above.
+  COMMITTED (`501c42f4b`, fixed pass-through in `dee6339f3`) and
+  VALIDATED in `GAME_A619B9B8`: 0 flapping units (was 47), 0 sub-24f
+  flips (was 122). The 1-9-frame `Abuse`/`Returning to slot` flapping
+  from the report cannot pass the fixed latch.
+- Overlord-chasing splitting the pack -> `TargetFilterOverlord`
+  COMMITTED (`a869e66d5`, suite green, no errors in game); awaits a
+  natural Overlord-in-combat occurrence for end-to-end proof.
 
 ## Open: Dark Templar doctrine
 
@@ -127,16 +128,17 @@ per-tier predicates + in-range/visible gating, mirroring the
 
 ## Open: melee validation games
 
-- `ConsensusVoteFilter` latch (fixed in `dee6339f3`): needs a fresh long
-  melee game showing sub-24-frame in/out flips gone (the 47-unit
-  `GAME_D95B0110` flap predates the latch; `GAME_78CFBB2C` ran the
-  pass-through bug). Sustained retreats must stay intact.
-- Reaver +5-tile rally leash (`b9eeb500a`): Crona game `GAME_78CFBB2C`
-  running at time of writing - check Reaver "Rallying to pack centroid"
-  counts vs the `GAME_D95B0110` baseline.
+- `ConsensusVoteFilter` latch (`dee6339f3`): VALIDATED in Crona
+  `GAME_A619B9B8` (VICTORY 53/11, clean, no errors): 0 flapping units
+  (baseline 47), 17 flips total, all with gaps >= 24 frames (baseline had
+  122 sub-24f flips, 37%). Sustained retreats still work.
+- Reaver +5-tile rally leash (`b9eeb500a`): indecisive so far - rally rows
+  down in `GAME_A619B9B8` (673 vs 1747 baseline, shorter game) but units
+  not identified as Reavers; needs a Reaver-heavy game.
 - Worker flee (`6a153ceb`, `7426f32d5`, `252b6facd`): melee-validated
-  once (Crona VICTORY 217/165, no errors, Retreat-dominated death rows).
-  Lone-fighter rule (`<=30hp` + closing fighter) has suite coverage only.
+  twice (Crona VICTORY 217/165: Retreat-dominated death rows, no endless
+  flap; Crona VICTORY 53/11: 1 probe lost, no flap chains). Lone-fighter
+  rule (`<=30hp` + closing fighter) has suite coverage only.
 
 ## Untracked files in the tree (not this thread's - coordinate first)
 
