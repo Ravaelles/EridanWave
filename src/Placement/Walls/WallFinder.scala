@@ -242,48 +242,24 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
   }
 
   def canPlace(width: Int, height: Int, buildingTile: Tile, countMetrics: Boolean): Boolean = {
-    val buildingTiles = Rectangle(width, height).map(buildingTile.add)
-    val buildingEndX  = buildingTile.x + width
-    val buildingEndY  = buildingTile.y + height
-    val metricsValue  = Maff.fromBoolean(countMetrics)
+    val at = WallPlacement.Rect(buildingTile.x, buildingTile.y, width, height)
+    val problem = WallPlacement.blocker(
+      at,
+      terrainBuildable = With.grids.buildableW(width)(buildingTile),
+      buildings        = wallInProgress.buildings.map(b => WallPlacement.Rect(b._1.x, b._1.y, b._2.tileWidthPlusAddon, b._2.tileHeight)).toSeq,
+      townHalls        = buildingTile.zone.bases.map(b => WallPlacement.Rect(
+        b.townHallArea.startInclusive.x,
+        b.townHallArea.startInclusive.y,
+        b.townHallArea.endExclusive.x - b.townHallArea.startInclusive.x,
+        b.townHallArea.endExclusive.y - b.townHallArea.startInclusive.y)).toSeq,
+      miningTiles      = at.tiles.flatMap(_.base).flatMap(_.resourcePathTiles).toSet,
+      terrain          = at.tiles.map(t => WallPlacement.Terrain(t, t.buildable, t.creep)),
+      creepBlocks      = ! With.self.isZerg)
 
-    // Terrain must be buildable
-    if ( ! With.grids.buildableW(width)(buildingTile)) {
-      return fail(wallInProgress, UnbuildableTerrain)
+    problem match {
+      case Some(reason) => fail(wallInProgress, reason)
+      case None         => true
     }
-
-    // Buildings can't intersect
-    if (wallInProgress.buildings.exists(existingBuilding =>
-      Maff.rectanglesIntersect(
-        buildingTile.x,
-        buildingTile.y,
-        buildingEndX,
-        buildingEndY,
-        existingBuilding._1.x,
-        existingBuilding._1.y,
-        existingBuilding._1.x + existingBuilding._2.tileWidthPlusAddon,
-        existingBuilding._1.y + existingBuilding._2.tileHeight))) {
-      return fail(wallInProgress, IntersectsPrevious)
-    }
-
-    // Buildings can't block town hall
-    if (buildingTile.zone.bases.exists(b => Maff.rectanglesIntersect(buildingTile.x, buildingTile.y, buildingEndX, buildingEndY,
-      b.townHallArea.startInclusive.x, b.townHallArea.startInclusive.y,
-      b.townHallArea.endExclusive.x, b.townHallArea.endExclusive.y))) {
-      return fail(wallInProgress, IntersectsHall)
-    }
-
-    // Buildings must not block mining
-    if(buildingTiles.exists(t => t.base.exists(_.resourcePathTiles.contains(t)))) {
-      return fail(wallInProgress, IntersectsMining)
-    }
-
-    // Tiles must be buildable (eg. not blocked by neutrals)
-    if (buildingTiles.exists(t => ! t.buildable || (! With.self.isZerg && t.creep))) {
-      return fail(wallInProgress, UnbuildableGranular)
-    }
-
-    true
   }
 
   private lazy val townHallTiles = zone.bases.flatMap(_.townHallArea.tiles)
@@ -297,36 +273,19 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
     val perimeter = union.tiles.count(t => ! compactRectangles.exists(_.contains(t)) && expanded.exists(_.contains(t)))
     val distance  = union.center.walkableTile.groundTiles(zone.heart)
     val margin    = Maff.min(townHallTiles.flatMap(hallTile => rectangles.flatMap(_.tiles).map(_.tileDistanceChebyshev(hallTile)))).getOrElse(0)
-    val centersX2 = wall.buildings.map(b => 2 * b._1.x + b._2.tileWidthPlusAddon)
-    val centersY2 = wall.buildings.map(b => 2 * b._1.y + b._2.tileHeight)
-    val alignment = Math.min(centersX2.max - centersX2.min, centersY2.max - centersY2.min) / 2.0
-    val horizontal = centersX2.max - centersX2.min >= centersY2.max - centersY2.min
-    val buildingCenterX2 = centersX2.sum / wall.buildings.length
-    val buildingCenterY2 = centersY2.sum / wall.buildings.length
-    val insideEdges = wall.buildings.map(b =>
-      if (horizontal) {
-        if (2 * startOrigin.y < buildingCenterY2) b._1.y else b._1.y + b._2.tileHeight
-      } else {
-        if (2 * startOrigin.x < buildingCenterX2) b._1.x else b._1.x + b._2.tileWidthPlusAddon
-      })
-    val insideEdgeAlignment = insideEdges.max - insideEdges.min
-    val gapPositionPenalty = wall.gap.map(gap => {
+    val boxes     = wall.buildings.map(b => WallPlacement.Rect(b._1.x, b._1.y, b._2.tileWidthPlusAddon, b._2.tileHeight)).toSeq
+    val centersX2 = boxes.map(box => 2 * box.x + box.width)
+    val centersY2 = boxes.map(box => 2 * box.y + box.height)
+    val horizontal = WallScoring.isHorizontal(centersX2, centersY2)
+    val alignment = WallScoring.alignment(centersX2, centersY2)
+    val insideEdgeSpread = WallScoring.insideEdgeSpread(boxes, horizontal, startOrigin)
+    val gapPenalty = wall.gap.map(gap => {
       val adjacentBuildings = rectangles.count(rectangle => gap.adjacent4.exists(rectangle.contains))
-      if (adjacentBuildings >= 2) {
-        0
-      } else if (gap.groundPixels(startOrigin) >= union.center.walkableTile.groundPixels(startOrigin)) {
-        400
-      } else {
-        1200
-      }
+      val fartherThanWall  = gap.groundPixels(startOrigin) >= union.center.walkableTile.groundPixels(startOrigin)
+      WallScoring.gapPenalty(adjacentBuildings, fartherThanWall)
     }).getOrElse(0)
-    (10 * perimeter
-    + 12 * alignment
-    + 24 * insideEdgeAlignment
-    + 60 * Math.max(0, 6 - margin)
-    + gapPositionPenalty
-    - 6 * distance)
 
+    WallScoring.score(perimeter, alignment, insideEdgeSpread, margin, gapPenalty, distance)
   }
 
   private def requiredBuildings(wall: Wall): Seq[(Tile, UnitClass)] = wall.buildings.take(wall.constraint.buildings.length)

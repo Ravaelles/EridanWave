@@ -5,6 +5,34 @@ import ProxyBwapi.Size
 import bwapi.{DamageType, WeaponType}
 
 private[Simulation] object SimulationSplash {
+
+  /**
+   * Damage split for a splash hit: 1 inside the inner radius, 2 inside the
+   * median, 4 in the outer ring, 0 when the unit is missed. Burrowed units
+   * take no partial splash (engine rule), and a travelling Lurker spine only
+   * hits its own footprint. Radii are pixels, passed in so the ladder can be
+   * tested without a weapon.
+   */
+  def splashDivisor(distance: Double, outerRadius: Double, innerRadius: Double, medianRadius: Double,
+    lineSplash: Boolean, airSplash: Boolean, burrowed: Boolean): Int = {
+    if (distance > outerRadius) 0
+    else if (lineSplash) { if (distance <= innerRadius) 1 else 0 }
+    else if ( ! airSplash && distance <= innerRadius) 1
+    else if (burrowed) 0
+    else if (distance <= medianRadius) 2
+    else 4
+  }
+
+  /** Tile box that can hold victims of a splash of `radius` around the segment. */
+  def splashBounds(startX: Double, startY: Double, endX: Double, endY: Double, radius: Int,
+    mapTileWidth: Int, mapTileHeight: Int): (Int, Int, Int, Int) = {
+    val xMin = Maff.clamp(Maff.div32(Math.floor(Math.min(startX, endX)).toInt - radius), 0, mapTileWidth - 1)
+    val xMax = Maff.clamp(Maff.div32(Math.ceil(Math.max(startX, endX)).toInt + radius), 0, mapTileWidth - 1)
+    val yMin = Maff.clamp(Maff.div32(Math.floor(Math.min(startY, endY)).toInt - radius), 0, mapTileHeight - 1)
+    val yMax = Maff.clamp(Maff.div32(Math.ceil(Math.max(startY, endY)).toInt + radius), 0, mapTileHeight - 1)
+    (xMin, xMax, yMin, yMax)
+  }
+
   def healthMultiplier(weapon: WeaponType, size: Size.Type): Double = {
     if (weapon.damageType == DamageType.Explosive) {
       if (size == Size.Small) 0.5 else if (size == Size.Medium) 0.75 else 1.0

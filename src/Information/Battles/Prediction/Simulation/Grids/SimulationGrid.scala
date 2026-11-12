@@ -67,10 +67,8 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
     val endX = if (length > 0) startX + (impact.x - startX) * weapon.maxRange / length else impact.x.toDouble
     val endY = if (length > 0) startY + (impact.y - startY) * weapon.maxRange / length else impact.y.toDouble
     val radius = weapon.outerSplashRadius + maxUnitExtent
-    val xMin = Maff.clamp(Maff.div32(Math.floor(Math.min(startX, endX)).toInt - radius), 0, With.mapTileWidth - 1)
-    val xMax = Maff.clamp(Maff.div32(Math.ceil(Math.max(startX, endX)).toInt + radius), 0, With.mapTileWidth - 1)
-    val yMin = Maff.clamp(Maff.div32(Math.floor(Math.min(startY, endY)).toInt - radius), 0, With.mapTileHeight - 1)
-    val yMax = Maff.clamp(Maff.div32(Math.ceil(Math.max(startY, endY)).toInt + radius), 0, With.mapTileHeight - 1)
+    val (xMin, xMax, yMin, yMax) = SimulationSplash.splashBounds(
+      startX, startY, endX, endY, radius, With.mapTileWidth, With.mapTileHeight)
     var y = yMin
     while (y <= yMax) {
       var x = xMin
@@ -91,12 +89,9 @@ final class SimulationGrid(val collisionEnabled: Boolean = true) {
             && ( ! airSplash || victim.unitClass != Protoss.Interceptor)) {
             val distance = if (lineSplash) SimulationSplash.lineDistance(victim, startX, startY, endX, endY)
               else SimulationSplash.pointDistance(victim, impact.x, impact.y)
-            val divisor = if (distance > weapon.outerSplashRadius) 0
-              else if (lineSplash) { if (distance <= weapon.innerSplashRadius) 1 else 0 }
-              else if ( ! airSplash && distance <= weapon.innerSplashRadius) 1
-              else if (victim.burrowed) 0
-              else if (distance <= weapon.medianSplashRadius) 2
-              else 4
+            val divisor = SimulationSplash.splashDivisor(distance,
+              weapon.outerSplashRadius, weapon.innerSplashRadius, weapon.medianSplashRadius,
+              lineSplash, airSplash, victim.burrowed)
             if (divisor > 0) {
               val splash = volley.copy(damagePerHit = volley.damagePerHit / divisor,
                 armorHealth = victim.armorHealth, armorShield = victim.armorShield,

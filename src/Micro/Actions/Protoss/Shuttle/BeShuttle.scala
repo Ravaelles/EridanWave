@@ -9,7 +9,6 @@ import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Utilities.?
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -33,83 +32,94 @@ object BeShuttle extends Action {
   object Pickup   extends QuestType
 
   case class ShuttleQuest(passenger: FriendlyUnitInfo, quest: QuestType, multiplier: Double, baseCost: Double, perform: () => Unit) {
-    private val passengerScore = ?(
-      passenger.isAny(Protoss.Reaver, Protoss.HighTemplar, Protoss.Archon) && (passenger.proximity < 0.7 || passenger.matchups.pixelsToThreatRange.exists(_ < 320)),
-      0.0001,
-      1.0)
-    val finalCost: Double = baseCost * multiplier * passengerScore
+    private val needsLift = passenger.isAny(Protoss.Reaver, Protoss.HighTemplar, Protoss.Archon) && (passenger.proximity < 0.7 || passenger.matchups.pixelsToThreatRange.exists(_ < 320))
+    val finalCost: Double = ShuttleQuestCost.finalCost(baseCost, multiplier, needsLift)
   }
 
   protected def perform(shuttle: FriendlyUnitInfo): Unit = {
     if (ShuttleDitchPassengers(shuttle)) return
     if (ShuttleAdoptPassenger(shuttle)) return
+    if (fleeFromAirThreats(shuttle)) return
+    if (makeEmergencyPickup(shuttle)) return
+    if (runBestQuest(shuttle)) return
 
-    // Air flee: enemies that can hit us inside twelve tiles push us straight
-    // out (single) or off their centroid (many), margin scaled by wounds.
-    // Survival outranks even emergency pickups - a dead Shuttle saves nobody.
+    ShuttlePark(shuttle)
+    ShuttleAwait(shuttle)
+  }
+
+  /**
+   * Enemies that can hit us inside twelve tiles push us straight out
+   * (single) or off their centroid (many), margin scaled by wounds.
+   * Survival outranks even emergency pickups - a dead Shuttle saves nobody.
+   * True when it took over movement.
+   */
+  private def fleeFromAirThreats(shuttle: FriendlyUnitInfo): Boolean = {
     val attackersNear = shuttle.matchups.threats.filter(t =>
       t.canAttack(shuttle) && t.pixelDistanceEdge(shuttle) <= 32 * AirFleeGeometry.threatRadiusTiles)
-    AirFleeGeometry.focus(attackersNear.map(_.pixel)).foreach(focus => {
+    AirFleeGeometry.focus(attackersNear.map(_.pixel)).exists(focus => {
       shuttle.agent.decision.set(AirFleeGeometry.fleePixel(shuttle.pixel, focus, shuttle.woundPercent()))
       shuttle.agent.act("AirFlee")
       Commander.move(shuttle)
+      true
+    })
+  }
 
-      return
+  /** A passenger that is about to die outranks whatever we were doing. */
+  private def makeEmergencyPickup(shuttle: FriendlyUnitInfo): Boolean =
+    emergencyHailer(shuttle).exists(hailer => {
+      pickup(shuttle, hailer)
+      shuttle.agent.act("EmergencyPickup")
+      true
     })
 
-    // Emergency pickups
+  private def emergencyHailer(shuttle: FriendlyUnitInfo): Option[FriendlyUnitInfo] = {
     val supported = shuttle.agent.passengersPrioritized
     val hailers = shuttle.agent.hailersPrioritized.filter(supported.contains)
-    val hailersMostUrgent = Maff.orElse(
+    val mostUrgent = Maff.orElse(
       hailers.filter(_.doomed),
       hailers.filter(_.likelyDoomed),
       hailers.filter(_.likelyDoomedInFrames < 24),
       hailers.filter(_.matchups.engagedUpon),
       hailers.filter(_.matchups.pixelsToThreatRange.exists(_ < 64)))
-    val emergencyHailer = Maff.minBy(hailersMostUrgent)(_.pixelDistanceEdge(shuttle))
-    emergencyHailer.foreach(u => {
-      pickup(shuttle, u)
-      shuttle.agent.act("EmergencyPickup")
+    Maff.minBy(mostUrgent)(_.pixelDistanceEdge(shuttle))
+  }
 
-      return
-    })
-
-    // Ordinary pickups/dropoffs/parking
-    val fightRadius = 320
-    val passengersFighting = supported.filter(p =>
-      p.agent.toAttack.isDefined
-      || p.agent.perch.isDefined
-      || p.matchups.pixelsToThreatRange.exists(_ < fightRadius)
-      || p.matchups.enemies.exists(e => Protoss.Shuttle(e) && e.pixelDistanceEdge(p) < fightRadius))
+  /** Cost the ordinary pickups, dropoffs and parking, and fly the cheapest. */
+  private def runBestQuest(shuttle: FriendlyUnitInfo): Boolean = {
+    val supported = shuttle.agent.passengersPrioritized
+    val passengersFighting = supported.filter(p => isFighting(p))
     val anyoneFighting = passengersFighting.nonEmpty
 
     val quests = new ArrayBuffer[ShuttleQuest]
     supported.foreach(p => {
       val goal = p.agent.rideGoal
-      val m = ?(passengersFighting.contains(p) || ! anyoneFighting, 1, 10)
+      val multiplier = ShuttleQuestCost.multiplier(passengersFighting.contains(p), anyoneFighting)
 
       def add(transform: Pixel => ShuttleQuest): Unit = { quests ++= goal.map(transform) }
 
-      lazy val doDeliver  = p.loaded
-      lazy val doPickup   = goal.exists(g => p.framesToTravelTo(g) > 24 + ?(p.canAttack, p.unitClass.cooldownOnDrop, 0)) && p.agent.toAttack.forall(t => Math.min(p.pixelsToGetInRange(t), p.pixelsToGetInRange(t, t.projectFrames(p.unitClass.cooldownOnDrop))) > 32)
-      lazy val doHover    = p.agent.toAttack.isDefined || p.agent.perch.isDefined || p.team.exists(_.engagedUpon) || p.matchups.pixelsToThreatRange.exists(_ < 320)
-              if (doDeliver)  { add(g => ShuttleQuest(p, Deliver, m, shuttle.pixelDistanceCenter(g),      () => deliver(shuttle, g)))
-      } else  if (doPickup)   { add(g => ShuttleQuest(p, Pickup,  m, shuttle.pixelDistanceEdge(p),        () => pickup(shuttle, p)))
-      } else  if (doHover)    { add(g => ShuttleQuest(p, Hover,   m, shuttle.pixelDistanceEdge(p) + 160,  () => ShuttlePark.park(shuttle, Seq(p.pixel))))
+      lazy val doDeliver = p.loaded
+      lazy val doPickup  = goal.exists(g => p.framesToTravelTo(g) > ShuttleQuestCost.pickupPatienceFrames(p.canAttack, p.unitClass.cooldownOnDrop)) && p.agent.toAttack.forall(t => Math.min(p.pixelsToGetInRange(t), p.pixelsToGetInRange(t, t.projectFrames(p.unitClass.cooldownOnDrop))) > 32)
+      lazy val doHover   = p.agent.toAttack.isDefined || p.agent.perch.isDefined || p.team.exists(_.engagedUpon) || p.matchups.pixelsToThreatRange.exists(_ < ShuttleQuestCost.fightRadiusPixels)
+      if (doDeliver)     { add(g => ShuttleQuest(p, Deliver, multiplier, shuttle.pixelDistanceCenter(g),     () => deliver(shuttle, g)))
+      } else if (doPickup) { add(g => ShuttleQuest(p, Pickup, multiplier, shuttle.pixelDistanceEdge(p),       () => pickup(shuttle, p)))
+      } else if (doHover)  { add(g => ShuttleQuest(p, Hover,  multiplier, shuttle.pixelDistanceEdge(p) + 160, () => ShuttlePark.park(shuttle, Seq(p.pixel))))
       }
     })
 
-    val quest = Maff.minBy(quests)(_.finalCost)
-    quest.foreach(q => {
-      q.perform()
-      shuttle.agent.act(q.quest.toString)
-
-      return
+    Maff.minBy(quests)(_.finalCost).exists(quest => {
+      quest.perform()
+      shuttle.agent.act(quest.quest.toString)
+      true
     })
-
-    ShuttlePark(shuttle)
-    ShuttleAwait(shuttle)
   }
+
+  /** A passenger with something to shoot, a perch, or enemies close by. */
+  private def isFighting(p: FriendlyUnitInfo): Boolean = (
+    p.agent.toAttack.isDefined
+    || p.agent.perch.isDefined
+    || p.matchups.pixelsToThreatRange.exists(_ < ShuttleQuestCost.fightRadiusPixels)
+    || p.matchups.enemies.exists(e => Protoss.Shuttle(e) && e.pixelDistanceEdge(p) < ShuttleQuestCost.fightRadiusPixels)
+  )
 
   // Pick up a passenger
   //
