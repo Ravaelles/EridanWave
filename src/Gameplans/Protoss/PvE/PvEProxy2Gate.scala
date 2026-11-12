@@ -68,11 +68,12 @@ class PvEProxy2Gate extends GameplanImperative {
         pumpWorkers()
         get(6, Protoss.Gateway)
         // Failed proxy with a standing army is a tech transition, not a
-        // plan change: past thirteen Zealots, the moment Hydralisks show
-        // (Zealots cannot trade into range), or past five minutes with the
-        // proxy stalled - a trickle-fed line may never reach thirteen.
-        // Gas up so the Dragoon line (already prioritized) can take over.
-        if (units(Protoss.Zealot) > 13 || enemyHasShown(Zerg.Hydralisk) || With.frame > Minutes(5)()) {
+        // plan change: nine Zealots out, or thirteen produced even if most
+        // bled away - a trickle-fed line may never field nine alive. Past
+        // that, the moment Hydralisks show (Zealots cannot trade into
+        // range), or past five minutes with the proxy stalled: gas up so
+        // the Dragoon line (already prioritized) can take over.
+        if (ProxyGasTiming.shouldGas(units(Protoss.Zealot), unitsEver(Protoss.Zealot), enemyHasShown(Zerg.Hydralisk), With.frame > Minutes(5)())) {
           get(1, Protoss.Assimilator)
           get(Protoss.CyberneticsCore)
           get(Protoss.DragoonRange)
