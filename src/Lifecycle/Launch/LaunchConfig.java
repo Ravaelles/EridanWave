@@ -19,6 +19,9 @@ package Lifecycle.Launch;
  *       (default {@code true}). Accepts {@code 1/true/yes} and
  *       {@code 0/false/no} (case-insensitive); {@code --no-cherryvis}
  *       disables it.</li>
+ *   <li>{@code --formation-audit[=&lt;bool&gt;]} write the behavior tally
+ *       and formation-break distances to
+ *       {@code bwapi-data/write/formation-audit.txt} (default {@code false}).</li>
  *   <li>{@code --headless} run the Wine session on Xvfb :99 (nothing on :0).</li>
  *   <li>{@code --visible} run on the current X display instead.
  *       Explicit visibility is forwarded to {@code wine-run.sh}; without an
@@ -59,6 +62,7 @@ public final class LaunchConfig {
     private boolean headless;
     private boolean headlessExplicit;
     private Boolean cherryvis;
+    private Boolean formationAudit;
     private String jar;
     private String winePrefix;
     private String gameRoot;
@@ -102,6 +106,12 @@ public final class LaunchConfig {
                     config.cherryvis = false;
                 } else if (arg.startsWith("--cherryvis=")) {
                     config.cherryvis = parseFlagBoolean(arg.substring("--cherryvis=".length()), "--cherryvis");
+                } else if (arg.equals("--formation-audit")) {
+                    config.formationAudit = true;
+                } else if (arg.equals("--no-formation-audit")) {
+                    config.formationAudit = false;
+                } else if (arg.startsWith("--formation-audit=")) {
+                    config.formationAudit = parseFlagBoolean(arg.substring("--formation-audit=".length()), "--formation-audit");
                 } else if (arg.equals("--headless")) {
                     config.headless = true;
                     config.headlessExplicit = true;
@@ -189,6 +199,7 @@ public final class LaunchConfig {
         System.out.println("      [--race=Protoss|Terran|Zerg|Random] [--enemy-race=...]");
         System.out.println("      [--game-type=MELEE|USE_MAP_SETTINGS] [--speed=0-1000] [--headless] [--jar=<path>]");
         System.out.println("      [--cherryvis[=1|true|yes|0|false|no]] [--no-cherryvis]");
+        System.out.println("      [--formation-audit[=1|true|yes|0|false|no]] [--no-formation-audit]");
         System.out.println("      [--wine-prefix=<path>] [--game-root=<path>] [--java-exe=<path>]");
         System.out.println("      [--bwapi-ini=<path>] [--chaoslauncher-exe=<path>]");
         System.out.println("      [--tuning-strategy=<name>] [--tune-param NAME=VALUE]...");
@@ -246,6 +257,18 @@ public final class LaunchConfig {
 
     public boolean isCherryVisExplicit() {
         return cherryvis != null;
+    }
+
+    /**
+     * Effective value: false unless explicitly enabled. Null means the flag
+     * was never passed, so the config file / environment still decide.
+     */
+    public boolean isFormationAudit() {
+        return formationAudit != null && formationAudit;
+    }
+
+    public boolean isFormationAuditExplicit() {
+        return formationAudit != null;
     }
 
     public String getJar() {

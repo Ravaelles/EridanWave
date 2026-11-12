@@ -70,6 +70,9 @@ public final class UnixChaosGameLauncher implements GameLauncher {
         if (config.isCherryVisExplicit()) {
             command.add("--cherryvis=" + config.isCherryVis());
         }
+        if (config.isFormationAuditExplicit()) {
+            command.add("--formation-audit=" + config.isFormationAudit());
+        }
         if (config.getJar() != null) {
             command.add("--jar=" + config.getJar());
         }
