@@ -264,6 +264,15 @@ object Target {
     best(attacker, TargetFilterWhitelist(whitelist))
   }
 
+  /**
+   * Memory release (pure booleans for the suite): a fogged contact never
+   * outranks a live one. With another hittable target in range the ladder
+   * must re-pick instead of posing at a memory - the caller feeds live
+   * visibility; this only combines the flags.
+   */
+  def shouldDropMemory(targetVisible: Boolean, otherHittableInRange: Boolean): Boolean =
+    ! targetVisible && otherHittableInRange
+
   def bestUnfiltered(attacker: FriendlyUnitInfo, targets: Iterable[UnitInfo]): Option[UnitInfo] = {
     Maff.maxBy(targets.filter(_.alive))(attacker.targetScore)
   }

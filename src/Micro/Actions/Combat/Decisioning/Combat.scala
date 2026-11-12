@@ -85,6 +85,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     // forever while real buildings stand next door. Remembered fogged
     // contacts keep alive=true, so only confirmed kills release the slot.
     if (unit.agent.toAttack.exists(t => ! t.alive)) unit.agent.toAttack = None
+    // A memory is not a contact either: with another hittable target in
+    // range the fogged recollection drops and the ladder re-picks, so a
+    // zealot posed at a far memory shoots the base a tile away instead.
+    if (unit.agent.toAttack.exists(t => Target.shouldDropMemory(
+      targetVisible = t.visible,
+      otherHittableInRange = unit.matchups.targetsInRange.exists(o =>
+        o.visible && o.id != t.id && unit.canAttack(o))))) unit.agent.toAttack = None
     if (unit.agent.toAttack.isEmpty) {
       Target.choose(unit)
     }
