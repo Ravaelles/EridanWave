@@ -165,13 +165,42 @@ object JudgmentModifiers {
   // Static defense (Photon Cannons, Sunken Colonies, Missile Turrets) must be
   // sieged, not traded against: count the enemy up to 20% stronger, scaled by
   // the defense's share of enemy value, so local fights engage only when
-  // sure of winning them.
+  // sure of winning them. A covered static - 2+ armed defenders within 8
+  // tiles - counts another 50%: charging a screened Cannon line is how
+  // armies evaporate, so the judgment must price the screen, not the brick.
   def staticDefense(battle: Battle): Option[JudgmentModifier] = {
-    val defenseShare = valueRatio(battle.enemy.units, _.unitClass.isStaticDefense)
-    if (defenseShare <= 0) return None
+    val enemies = battle.enemy.units
+    val base = value(enemies, _.unitClass.isStaticDefense)
+    if (base <= 0) return None
 
-    modifyTarget(0.2 * defenseShare)
+    val guarded = value(enemies.view.filter(d =>
+      d.unitClass.isStaticDefense && isGuarded(countGuards(d, enemies))))
+    modifyTarget(0.2 * guardedValue(base, guarded) / Math.max(1, value(enemies)))
   }
+
+  /** Extra strength of a screened static defense, as a share of its value. */
+  val guardBonus: Double = 0.5
+
+  /** Defenders this close, in tiles, screen a static defense. */
+  val guardRadiusTiles: Double = 8.0
+
+  /** Armed defenders that make a static screened. */
+  val minGuards: Int = 2
+
+  /** A screened static counts its value plus the guard bonus share. */
+  def guardedValue(baseValue: Double, guardedValue: Double): Double =
+    baseValue + guardBonus * guardedValue
+
+  /** Enough armed defenders nearby to screen the static. */
+  def isGuarded(guardCount: Int): Boolean =
+    guardCount >= minGuards
+
+  private def countGuards(building: UnitInfo, enemies: Iterable[UnitInfo]): Int =
+    enemies.count(e =>
+      e.id != building.id
+      && e.unitClass.isWarrior
+      && e.canAttack
+      && e.tileDistanceEdge(building) < guardRadiusTiles)
   // A handful of Zealots must not brawl Zerglings: few melee bodies get
   // surrounded and trade horribly, so count our strength a quarter lower
   // until the sixth Zealot stands. Skipped once ranged warriors carry it.
