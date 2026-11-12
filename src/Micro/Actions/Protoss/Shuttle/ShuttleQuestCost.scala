@@ -1,5 +1,7 @@
 package Micro.Actions.Protoss.Shuttle
 
+import Micro.Actions.Combat.Maneuvering.AirFleeGeometry
+
 /**
  * Cost model behind a Shuttle's errands: what a trip is worth against the
  * frames it costs. Pure arithmetic, so the priority order can be argued
@@ -7,8 +9,10 @@ package Micro.Actions.Protoss.Shuttle
  */
 object ShuttleQuestCost {
 
-  /** A passenger this close to enemies or targets counts as fighting. */
-  val fightRadiusPixels: Int = 320
+  /** A passenger this close to enemies or targets counts as fighting.
+    * Tiles live with the flee trigger in AirFleeGeometry; pixels here so
+    * the engine comparisons stay integer math. */
+  val fightRadiusPixels: Int = (AirFleeGeometry.fightRadiusTiles * 32).toInt
 
   /** Nearly-free errand: the passenger is already in reach or in danger. */
   val inReachScore: Double = 0.0001

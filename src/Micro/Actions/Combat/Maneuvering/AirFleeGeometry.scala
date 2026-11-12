@@ -18,6 +18,11 @@ object AirFleeGeometry {
   /** Only enemies inside this radius, in tiles, trigger the flee. */
   val threatRadiusTiles: Double = 12.0
 
+  /** A passenger this close, in tiles, still counts as fighting. Shorter
+    * than the flee trigger on purpose: the Shuttle holds its errand while
+    * shots land nearby and only runs once threats close the extra two. */
+  val fightRadiusTiles: Double = 10.0
+
   /** Base safe margin, in tiles, for a fresh hull. */
   val baseMarginTiles: Double = 2.5
 

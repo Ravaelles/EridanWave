@@ -37,4 +37,8 @@ class ShuttleQuestCostSuite extends AnyFunSuite {
   test("a passenger that cannot shoot only waits the base travel time") {
     assert(ShuttleQuestCost.pickupPatienceFrames(canAttack = false, cooldownOnDrop = 40) == 24)
   }
+
+  test("the fight radius stays ten tiles, two inside the flee trigger") {
+    assert(ShuttleQuestCost.fightRadiusPixels == 320)
+  }
 }
