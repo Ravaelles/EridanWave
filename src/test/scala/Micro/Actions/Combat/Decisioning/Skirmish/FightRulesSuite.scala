@@ -12,7 +12,7 @@ class FightRulesSuite extends AnyFunSuite {
     berzerk = false, cloaked = false, cloakable = false, lurking = false,
     towers = false, scourge = false, scarabless = false, birdless = false,
     noEnergy = false, disrupted = false, bideSiege = false, carrierVuln = false,
-    raze = false, miners = false, hallTargeted = false, tankHunt = false, reave = false, energized = false)
+    raze = false, miners = false, hallTargeted = false, tankHunt = false, carrierBrawl = false, reave = false, energized = false)
 
   test("every rule fires in isolation with its verdict and label") {
     val cases = Seq(
@@ -25,6 +25,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(irradiated = true),  (true,  "Irradiated")),
       (off.copy(safe = true),        (true,  "Safe")),
       (off.copy(tankHunt = true),    (true,  "TankHunt")),
+      (off.copy(carrierBrawl = true), (true,  "CarrierBrawl")),
       (off.copy(outOfContact = true), (false, "OutOfContact")),
       (off.copy(detonated = true),   (true,  "Detonated")),
       (off.copy(hugTank = true),     (true,  "HugTank")),
@@ -46,7 +47,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(miners = true),      (true,  "Miners")),
       (off.copy(reave = true),       (true,  "Reave")),
       (off.copy(energized = true),   (true,  "Energized")))
-    assert(cases.size == 30)
+    assert(cases.size == 31)
     cases.foreach { case (facts, expected) =>
       assert(FightRules.decide(facts).contains(expected), expected)
     }
@@ -91,6 +92,12 @@ class FightRulesSuite extends AnyFunSuite {
   test("carrier tank hunt outranks contact loss but not safety") {
     assert(FightRules.decide(off.copy(outOfContact = true, tankHunt = true)).contains((true, "TankHunt")))
     assert(FightRules.decide(off.copy(safe = true, tankHunt = true)).contains((true, "Safe")))
+  }
+
+  test("carrier brawl outranks everything but safety") {
+    assert(FightRules.decide(off.copy(outOfContact = true, carrierBrawl = true)).contains((true, "CarrierBrawl")))
+    assert(FightRules.decide(off.copy(safe = true, carrierBrawl = true)).contains((true, "Safe")))
+    assert(FightRules.decide(off.copy(tankHunt = true, carrierBrawl = true)).contains((true, "TankHunt")))
   }
 
   test("silence means no rule fired and the estimator decides instead") {

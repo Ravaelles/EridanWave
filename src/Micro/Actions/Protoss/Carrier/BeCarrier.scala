@@ -6,10 +6,11 @@ import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Protoss.Carrier._
 import Micro.Agency.Commander
 import Micro.Targeting.FiltersSituational.{TargetFilterCombatants, TargetFilterVisibleInRange}
-import Micro.Targeting.{CarrierTankHuntSeam, Target}
+import Micro.Targeting.{CarrierBrawl, CarrierTankHuntSeam, Target}
 import ProxyBwapi.Orders
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Utilities.?
 import Utilities.LightYear
 import Utilities.UnitFilters.IsTank
 
@@ -40,23 +41,35 @@ object BeCarrier extends Action {
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.agent.shouldFight) {
+      val brawling = CarrierTankHuntSeam.brawlingFor(unit)
+      // Brawl beat: hold the kill while it lasts inside nine tiles, else
+      // take the nearest enemy inside the beat, so airborne interceptors
+      // keep chewing the whole pack instead of chasing one far target.
+      def brawlTarget: Option[UnitInfo] = Maff.minBy(
+        unit.agent.toAttack.filter(t => t.alive && t.visible && t.isEnemy && unit.pixelDistanceEdge(t) <= 32 * CarrierBrawl.brawlRadiusTiles).toSeq ++
+        unit.matchups.targets.filter(t => t.isEnemy && t.visible && unit.canAttack(t) && unit.pixelDistanceEdge(t) <= 32 * CarrierBrawl.brawlRadiusTiles))(
+        _.pixelDistanceEdge(unit))
       // Avoid changing targets (causes interceptors to not attack)
       // Avoid targeting something leaving leash range
       def target = unit.agent.toAttack
-      unit.agent.toAttack = unit
+      unit.agent.toAttack = ?(brawling, brawlTarget, None)
+        .orElse(unit
         .orderTarget
         .filter(t => t.alive && t.visible && t.isEnemy && t.pixelDistanceEdge(unit) <= 32.0 * 10.0)
         .orElse(Target.choose(unit, TargetFilterCombatants, TargetFilterVisibleInRange))
-        .orElse(Target.choose(unit))
+        .orElse(Target.choose(unit)))
 
       val interceptorsActive      = unit.interceptors.count(isInterceptorActive) >= 1 + unit.interceptors.count(_.complete) / 2
       val interceptorSafetyMargin = Maff.min(unit.matchups.threats.filterNot(Protoss.Carrier).map(threat => threat.pixelsToGetInRange(unit) - 8 * 32)).getOrElse(LightYear().toDouble)
       val carrierSafetyMargin     = unit.matchups.pixelsEntangled
 
       if (target.isDefined) {
-        // Tank hunt: a hunting wing closes and shoots instead of playing
-        // leash games it cannot win against outranging tanks.
-        if (IsTank(target.get) && CarrierTankHuntSeam.huntFor(unit)) {
+        // Brawl: a fifty-interceptor wing never plays leash games, it
+        // closes and shoots while the beat holds targets.
+        if (brawling) {
+          unit.agent.act("CarrierBrawl")
+          Commander.attack(unit)
+        } else if (IsTank(target.get) && CarrierTankHuntSeam.huntFor(unit)) {
           unit.agent.act("CarrierTankHunt")
           Commander.attack(unit)
         } else if (interceptorsActive) {

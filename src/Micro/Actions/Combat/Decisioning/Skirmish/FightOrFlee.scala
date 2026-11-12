@@ -50,6 +50,7 @@ object FightOrFlee extends Action {
     committed   = u.agent.commit,
     hallTargeted = u.agent.toAttack.exists(_.unitClass.isTownHall),
     tankHunt    = Protoss.Carrier(u) && CarrierTankHuntSeam.huntFor(u),
+    carrierBrawl = Protoss.Carrier(u) && CarrierTankHuntSeam.brawlingFor(u),
     yolo        = With.yolo.active && IsWarrior(u),
     irradiated  = u.painfullyIrradiated)
   private def contactFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
