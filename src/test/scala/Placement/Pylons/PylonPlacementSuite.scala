@@ -18,4 +18,11 @@ class PylonPlacementSuite extends AnyFunSuite {
     assert(PylonPlacement.caseFor(2) == SupplyPylon)
     assert(PylonPlacement.caseFor(9) == SupplyPylon)
   }
+
+  test("Pylon origins keep four tiles from any choke center") {
+    assert( ! PylonPlacement.farFromChoke(0))
+    assert( ! PylonPlacement.farFromChoke(3))
+    assert(PylonPlacement.farFromChoke(4))
+    assert(PylonPlacement.farFromChoke(25))
+  }
 }

@@ -36,5 +36,24 @@ object PylonPlacement {
       case SecondPylon  => SecondPylonPlacement.applyTo(query)
       case SupplyPylon  => SupplyPylonPlacement.applyTo(query)
     }
+    keepOffChokes(query)
+  }
+
+  /** Nearest Pylon origin stays this far from any choke center, in tiles. */
+  val minimumChokeTiles: Int = 4
+
+  def farFromChoke(distanceTiles: Int): Boolean =
+    distanceTiles >= minimumChokeTiles
+
+  /**
+   * No base Pylon on a choke: every choke center on the map bans its
+   * Chebyshev disc, so Zealots never defend a Supply Pylon in the pass.
+   * Walls and cannon rushes place their own Pylons and are unaffected.
+   */
+  private def keepOffChokes(query: PlacementQuery): Unit = {
+    With.geography.metros.view
+      .flatMap(_.exits)
+      .map(_.pixelCenter.walkableTile)
+      .foreach(choke => query.requireFar(choke, minimumChokeTiles))
   }
 }

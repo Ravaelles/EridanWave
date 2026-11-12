@@ -18,6 +18,9 @@ class PlacementQueryParameters {
   var base      : Seq[Base]         = Seq.empty
   var tile      : Seq[Tile]         = Seq.empty
   var nearTile  : Option[(Tile, Int)] = None
+  // Keep-off anchors (choke centers for Pylons): every entry bans the
+  // Chebyshev disc below its radius, same cheap metric as nearTile.
+  var farTiles  : Seq[(Tile, Int)] = Seq.empty
 
   private def repr[T](name: String, values: Iterable[T]): String = if (values.isEmpty) "" else f"$name(${values.mkString(" ")})"
   override def toString: String = f"PQP: ${repr("Width", width)} ${repr("Height", height)} ${repr("Bldg", building)} ${repr("Yes", labelYes)} ${repr("No", labelNo)} ${repr("Zone", zone)} ${repr("Base", base)} ${repr("Tile", tile)}".replaceAll("  ", " ")
@@ -41,6 +44,7 @@ class PlacementQueryParameters {
     if ( ! tile.forall(otherParameters.tile.contains))          return false
     if ( ! otherParameters.tile.forall(tile.contains))          return false
     if (nearTile != otherParameters.nearTile)                   return false
+    if (farTiles != otherParameters.farTiles)                   return false
 
     true
   }
@@ -171,6 +175,9 @@ class PlacementQueryParameters {
   protected def acceptNear      (foundation: Foundation): Boolean = nearTile.forall {
     case (anchor, tiles) => foundation.tile.tileDistanceChebyshev(anchor) <= tiles
   }
+  protected def acceptFar       (foundation: Foundation): Boolean = farTiles.forall {
+    case (anchor, tiles) => foundation.tile.tileDistanceChebyshev(anchor) >= tiles
+  }
 
   def score(foundation: Foundation): Double = (
       1   * scoreImportance(foundation)
@@ -193,7 +200,8 @@ class PlacementQueryParameters {
     && acceptBase(foundation)
     && acceptBuilding(foundation)
     && acceptTile(foundation)
-    && acceptNear(foundation))
+    && acceptNear(foundation)
+    && acceptFar(foundation))
 
   def audit(foundation: Foundation): (Foundation, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double) = (
     foundation,
