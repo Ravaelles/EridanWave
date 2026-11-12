@@ -8,6 +8,7 @@ final class Scouting extends TimedTask
   with EnemyScouting
   with BaseInference
   with Intrigue
+  with SneakyWatch
   with Timings
   with Tugging {
   override protected def onRun(budgetMs: Long): Unit = {
@@ -15,6 +16,7 @@ final class Scouting extends TimedTask
     updateEnemyScouting()
     updateBaseInference()
     updateIntrigue()
+    updateSneakyWatch()
     updateDebuts()
     updateTimings()
   }
