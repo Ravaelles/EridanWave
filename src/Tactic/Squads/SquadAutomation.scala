@@ -1,20 +1,11 @@
 package Tactic.Squads
 
-import Lifecycle.With
-import Mathematics.Maff
 import Mathematics.Points.Pixel
-import Micro.Formation.{Formation, Formations}
-import Micro.Targeting.FiltersRequired.TargetFilterFocus
-import ProxyBwapi.Races.{Protoss, Zerg}
+import Micro.Formation.Formation
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.Decisions.SquadMarch
 import Tactic.Squads.Group.FriendlyUnitGroup
-import Tactic.Squads.attack.SquadAttack
-import Tactic.Squads.Decisions.AttackModes
-import Utilities.?
 
 import scala.collection.mutable.ArrayBuffer
-import Tactic.Squads.Decisions.SquadMarch
 
 object SquadAutomation {
 
@@ -22,81 +13,32 @@ object SquadAutomation {
   // Targeting //
   ///////////////
 
-  def target(squad: Squad): Unit = target(squad, ?(squad.fightConsensus, squad.vicinity, squad.homeConsensus))
-  def target(squad: Squad, to: Pixel): Unit = squad.setTargets(SquadAutomation.rankedEnRoute(squad, to))
+  def target(squad: Squad): Unit = SquadTargeting.target(squad)
+  def target(squad: Squad, to: Pixel): Unit = SquadTargeting.target(squad, to)
 
-  def targetRaid(squad: Squad): Unit = targetRaid(squad, squad.vicinity)
-  def targetRaid(squad: Squad, to: Pixel): Unit = {
-    val unrankedTargets   = unrankedAround(squad, to)
-    lazy val targetCombat = unrankedTargets.filter(t => t.unitClass.isWorker || squad.canBeAttackedBy(t) || (t.unitClass.isStaticDefense && squad.units.exists(t.inRangeToAttack)))
-    lazy val targetHall   = unrankedTargets.filter(_.unitClass.isTownHall)
-    squad.setTargets(SquadAutomation.rankForArmy(squad, Maff.orElse(targetCombat, targetHall, unrankedTargets).toVector).sortBy( ! _.unitClass.isWorker))
-  }
+  def targetRaid(squad: Squad): Unit = SquadTargeting.targetRaid(squad)
+  def targetRaid(squad: Squad, to: Pixel): Unit = SquadTargeting.targetRaid(squad, to)
 
-  def rankForArmy(squad: Squad, targets: Vector[UnitInfo]): Vector[UnitInfo] = {
-    targets.sortBy(t =>
-        ?(t.visible,                                  0, 32 * 5)
-      + ?(t.pixel == t.pixelObserved,                 0, 32 * 5)
-      + ?(t.unitClass.isWorker || squad.engagedUpon,  0, 32 * 5)
-      + t.pixelDistanceCenter(squad.centroidKey)
-      + t.pixelDistanceCenter(squad.vicinity))
-  }
+  def rankForArmy(squad: Squad, targets: Vector[UnitInfo]): Vector[UnitInfo] =
+    SquadTargeting.rankForArmy(squad, targets)
 
-  def unrankedEnRouteTo(group: FriendlyUnitGroup, to: Pixel): Set[UnitInfo] = {
-    val combatEnemiesInRoute = group.battleEnemies.filter(e =>
-      ! Protoss.Interceptor(e)
-      && e.likelyStillThere
-      && group.canAttack(e)
-      && (
-        TargetFilterFocus.canTargetAsRoadblock(group, e)
-        || e.matchups.engagingOn
-        || e.unitClass.isStaticDefense
-        || Zerg.CreepColony(e)
-        || (group.canBeAttackedBy(e)
-          && ! e.unitClass.isBuilding
-          && group.meanAttackerSpeed > 1.2 * e.topSpeed)))
-    val around = unrankedAround(group, to)
-    combatEnemiesInRoute ++ around
-  }
+  def unrankedEnRouteTo(group: FriendlyUnitGroup, to: Pixel): Set[UnitInfo] =
+    SquadTargeting.unrankedEnRouteTo(group, to)
 
-  def unrankedAround(group: FriendlyUnitGroup, to: Pixel): Vector[UnitInfo] = {
-    to.base.getOrElse(to.zone).enemies
-      .filter(_.likelyStillThere)
-      .filter(group.canAttack)
-      .toVector
-  }
+  def unrankedAround(group: FriendlyUnitGroup, to: Pixel): Vector[UnitInfo] =
+    SquadTargeting.unrankedAround(group, to)
 
-  def rankedEnRoute(squad: Squad): Seq[UnitInfo] = rankedEnRoute(squad, squad.vicinity)
-  def rankedEnRoute(squad: Squad, goalAir: Pixel): Seq[UnitInfo] = rankForArmy(squad, unrankedEnRouteTo(squad, goalAir).toVector)
-  def rankedAround(squad: Squad): Seq[UnitInfo] = rankedAround(squad, squad.vicinity)
-  def rankedAround(squad: Squad, goalAir: Pixel): Seq[UnitInfo] = rankForArmy(squad, unrankedAround(squad, goalAir))
+  def rankedEnRoute(squad: Squad): Seq[UnitInfo] = SquadTargeting.rankedEnRoute(squad)
+  def rankedEnRoute(squad: Squad, goalAir: Pixel): Seq[UnitInfo] = SquadTargeting.rankedEnRoute(squad, goalAir)
+  def rankedAround(squad: Squad): Seq[UnitInfo] = SquadTargeting.rankedAround(squad)
+  def rankedAround(squad: Squad, goalAir: Pixel): Seq[UnitInfo] = SquadTargeting.rankedAround(squad, goalAir)
 
   ////////////////
   // Formations //
   ////////////////
 
-  def form(squad: Squad, from: Pixel, to: Pixel): ArrayBuffer[Formation] = {
-    val output: ArrayBuffer[Formation] = ArrayBuffer.empty
-    // If advancing, give a formation for forward movement.
-    // March as soon as enemies are known en route (Stardust: form the line
-    // before contact), not only after the squad voted to fight.
-    if (SquadMarch.shouldFormMarch(squad.fightConsensus, squad.battleEnemies.nonEmpty)) {
-      // Contain dressing rides the march formation: melee drops back so the
-      // Dragoons keep the inner arc and shoot.
-      val meleeBack = squad match {
-        case attack: SquadAttack => attack.mode == AttackModes.ContainArmy
-        case _                   => false
-      }
-      output += Formations.march(squad, to, meleeBack)
-    }
-    // Always include a disengagey formation for units that want to retreat/kite
-    if (squad.centroidKey.zone == squad.homeConsensus.zone && With.scouting.enemyThreatOrigin.zone != squad.homeConsensus.zone) {
-      output += Formations.guard(squad, Some(squad.homeConsensus))
-    } else {
-      output += Formations.disengage(squad)
-    }
-    output
-  }
+  def form(squad: Squad, from: Pixel, to: Pixel): ArrayBuffer[Formation] =
+    SquadForming.form(squad, from, to)
 
   def send(squad: Squad, defaultRedoubt: Option[Pixel] = None): Unit = {
     MarchOrders.sendUnits(squad, squad.unintended, defaultRedoubt)

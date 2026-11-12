@@ -38,33 +38,44 @@ object MarchOrders {
   // a suicide charge (which skips the dressing room entirely).
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): (Pixel, String) = {
     val finalTravel = getTravel(unit, squad, defaultReturn)
-    // Suicide charge: this close to the Zerg main there is no holding,
-    // rallying, regrouping or dressing - only the attack. Committed like
-    // a drop so no verdict can call it off.
     val suicide = SuicideChargeSeam.inZone(unit)
     if (suicide) unit.agent.commit = true
-    // Straggler rally (Stardust): a unit lagging behind the marching pack
-    // rejoins the pack centroid first instead of walking alone to its slot.
-    // Returning units keep their own slots - they are meant to disperse.
-    val pack       = ?(unit.flying, squad.centroidAir, squad.centroidGround)
-    val rallying   = ! suicide && squad.fightConsensus && SquadRally.isRallying(unit.pixel, pack)
-    val finalMarch = ?(rallying, pack, finalTravel)
-    // Close ranks on the march: a unit adrift from its nearest ally
-    // rejoins instead of milling alone. Consensus-only, so guards and
-    // defenders keep their posts instead of bunching up.
+    val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide)
+    val joinPixel              = joinLeg(squad, unit, suicide)
+    val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide)
+    val pack                   = ?(unit.flying, squad.centroidAir, squad.centroidGround)
+    val terminus = ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch)))
+    val label    = ?(holding, "Waiting for pack", ?(rallying || homing, "Rallying to pack centroid", "Marching to formation slot"))
+    (terminus, label)
+  }
+
+  // Straggler rally (Stardust): a unit lagging behind the marching pack
+  // rejoins the pack centroid first instead of walking alone to its slot.
+  // Returning units keep their own slots - they are meant to disperse.
+  private def rallyLeg(squad: Squad, unit: FriendlyUnitInfo, finalTravel: Pixel, suicide: Boolean): (Pixel, Boolean) = {
+    val pack     = ?(unit.flying, squad.centroidAir, squad.centroidGround)
+    val rallying = ! suicide && squad.fightConsensus && SquadRally.isRallying(unit.pixel, pack)
+    (?(rallying, pack, finalTravel), rallying)
+  }
+
+  // Close ranks on the march: a unit adrift from its nearest ally
+  // rejoins instead of milling alone. Consensus-only, so guards and
+  // defenders keep their posts instead of bunching up.
+  private def joinLeg(squad: Squad, unit: FriendlyUnitInfo, suicide: Boolean): Option[Pixel] = {
     val nearestAlly  = Maff.minBy(squad.units.view.filter(_ != unit))(_.pixelDistanceCenter(unit.pixel))
     val joiningAlly  = ! suicide && squad.fightConsensus && nearestAlly.exists(a => SquadRally.shouldJoinAlly(unit.tileDistanceCenter(a.pixel)))
-    val joinPixel    = nearestAlly.map(_.pixel)
-    // March dressing: a leader running ahead of the pack holds position so
-    // the line arrives together instead of trickling in. Waiting zeroes the
-    // stuck counter (tryingToMove is false), so Unstick stays out of it.
-    // Reavers never hold: a slow hull waiting ahead of a stalled pack
-    // freezes next to the enemy, so it walks back to the pack instead.
+    if (joiningAlly) nearestAlly.map(_.pixel) else None
+  }
+
+  // March dressing: a leader running ahead of the pack holds position so
+  // the line arrives together instead of trickling in. Waiting zeroes the
+  // stuck counter (tryingToMove is false), so Unstick stays out of it.
+  // Reavers never hold: a slow hull waiting ahead of a stalled pack
+  // freezes next to the enemy, so it walks back to the pack instead.
+  private def dressLeg(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, suicide: Boolean): (Boolean, Boolean) = {
     val waiting      = ! suicide && squad.fightConsensus && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
     val reaverToArmy = Protoss.Reaver(unit) && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
-    val terminus     = ?(waiting && ! reaverToArmy, unit.pixel, ?(joiningAlly, joinPixel.getOrElse(finalMarch), ?(reaverToArmy, pack, finalMarch)))
-    val label        = ?(waiting && ! reaverToArmy, "Waiting for pack", ?(rallying || reaverToArmy, "Rallying to pack centroid", "Marching to formation slot"))
-    (terminus, label)
+    (waiting && ! reaverToArmy, reaverToArmy)
   }
 
   def getReturn(unit: FriendlyUnitInfo, squad: Squad, defaultReturn: Option[Pixel] = None): Pixel = squad
