@@ -16,4 +16,19 @@ class WorkerThreatFleeSuite extends AnyFunSuite {
     assert( ! WorkerThreatFlee.tankShelling(distTiles = 14.01, tankRangeTiles = 12.0))
     assert( ! WorkerThreatFlee.tankShelling(distTiles = 20.0, tankRangeTiles = 12.0))
   }
+
+  test("a hurt miner flees a melee pack it cannot beat alone") {
+    assert(WorkerThreatFlee.doomedVsMelee(totalHealth = 37, meleeNearby = 2, supported = false))
+    assert(WorkerThreatFlee.doomedVsMelee(totalHealth = 1, meleeNearby = 5, supported = false))
+  }
+
+  test("a healthy miner holds, one rival is not a pack") {
+    assert( ! WorkerThreatFlee.doomedVsMelee(totalHealth = 38, meleeNearby = 2, supported = false))
+    assert( ! WorkerThreatFlee.doomedVsMelee(totalHealth = 37, meleeNearby = 1, supported = false))
+  }
+
+  test("a supported miner still swarms with the army") {
+    assert( ! WorkerThreatFlee.doomedVsMelee(totalHealth = 37, meleeNearby = 2, supported = true))
+    assert( ! WorkerThreatFlee.doomedVsMelee(totalHealth = 1, meleeNearby = 9, supported = true))
+  }
 }

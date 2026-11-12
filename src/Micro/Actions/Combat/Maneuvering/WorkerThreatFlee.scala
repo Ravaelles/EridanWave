@@ -17,6 +17,20 @@ object WorkerThreatFlee {
   /** Shelling counts inside tank range plus this margin, in tiles. */
   val tankMarginTiles: Double = 2.0
 
+  /** A miner this hurt never trades with a melee pack alone, in hit points. */
+  val fleeHp: Int = 37
+
+  /** This many enemy melee fighters near one miner means a pack. */
+  val meleePackSize: Int = 2
+
+  /**
+   * A weak miner outnumbers its chances: at fleeHp or less against a melee
+   * pack with no fighting warrior nearby there is no winning trade, so it
+   * runs instead of potshotting. Supported miners still swarm with the army.
+   */
+  def doomedVsMelee(totalHealth: Int, meleeNearby: Int, supported: Boolean): Boolean =
+    totalHealth <= fleeHp && meleeNearby >= meleePackSize && ! supported
+
   def mutaPack(mutasNear: Int): Boolean =
     mutasNear >= mutaPackSize
 
