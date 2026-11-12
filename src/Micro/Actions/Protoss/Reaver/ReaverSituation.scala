@@ -1,17 +1,15 @@
 package Micro.Actions.Protoss.Reaver
 
-import Lifecycle.With
-import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
-import ProxyBwapi.UnitTracking.AliveEnemies
-import Micro.Actions.Protoss.ReaverLegacy.BeReaverLegacy
-import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Utilities.?
 
 /**
  * One-frame Reaver snapshot: every game read the Atlantis discipline needs,
- * collected once. Behaviors below combine these facts but never touch the
- * game themselves, so they stay unit-testable with hand-built literals.
+ * collected once. The snapshot is read as three coherent records - own state
+ * (ReaverOwn), threats (ReaverThreats) and mission (ReaverMission) - and
+ * composed here, so the facade keeps its field names for the behaviors below
+ * while each record stays small enough to reason about. Behaviors combine
+ * these facts but never touch the game themselves, so they stay unit-testable
+ * with hand-built literals.
  * Field defaults describe a quiet Reaver; tests override what they probe.
  */
 case class ReaverSituation(
@@ -58,98 +56,45 @@ case class ReaverSituation(
 object ReaverSituation {
 
   def read(unit: FriendlyUnitInfo): ReaverSituation = {
-    val latency       = With.latency.latencyFrames
-    val cooldownReset = BeReaverLegacy.cooldownOnLanding // Engine resets to 30 on drop
-    val threatsInRange= unit.matchups.threatsInRange
-    val threats       = unit.matchups.threats
-    val targetNearest = unit.matchups.targetNearest
-    val wound         = unit.woundPercent()
-    val threatenedNow = threatsInRange.nonEmpty
-    val pressuredCloseNow = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.tileDistanceEdge(t) < 4)
-
-    val isTerranNow = With.enemies.exists(_.isTerran)
-    val containingNow = ContainStatus.now()
-    val combatNearNow = AliveEnemies.get().exists(e =>
-      e.unitClass.isCombatBuilding && ! e.flying && e.likelyStillThere &&
-        e.tileDistanceEdge(unit) < ReaverContain.fightDistTiles)
-    // Unload veto: ranged ground-hitters covering the landing spot inside
-    // their range plus margin. Mobile guns only; statics vote elsewhere.
-    val landingAt = unit.transport.map(_.pixel).getOrElse(unit.pixel)
-    val gunsOnLanding = AliveEnemies.get().count(e =>
-      e.unitClass.ranged && e.unitClass.attacksGround && e.likelyStillThere &&
-        e.pixelDistanceEdge(landingAt) < e.pixelRangeGround + ReaverUnloadVeto.safetyMarginTiles * 32.0)
-    val unloadVetoedNow = ReaverUnloadVeto.veto(gunsOnLanding)
-    val firedAgo = With.framesSince(unit.lastFrameStartingAttack)
-    val hasFiredShot = unit.lastFrameStartingAttack >= 0
+    val own     = ReaverOwn.read(unit)
+    val threats = ReaverThreats.read(unit)
+    val mission = ReaverMission.read(unit)
 
     ReaverSituation(
-      rideNearby      = unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= ?(unit.agent.isPrimaryPassenger, 64, 32)),
-      loaded          = unit.loaded,
-      hasTransport    = unit.transport.isDefined,
-      committed       = unit.agent.commit,
-      shieldsDown     = unit.unitClass.maxShields - unit.shieldPoints,
-      scarabs         = unit.scarabs,
-      hasActiveScarab = unit.hasActiveScarab,
-      cooldownLeft    = unit.cooldownLeft,
-      latencyFrames   = latency,
-      doomed          = unit.cooldownLeft >= unit.doomedInFrames,
-      targetedByScarab= unit.matchups.targetedByScarab,
-      framesSinceFired= firedAgo,
-      framesSinceHit  = With.framesSince(unit.lastFrameTakingDamage),
-      hikingFar       = unit.moving && unit.pixelDistanceTravelling(unit.agent.destinationNext()) > 15 * 32,
-      woundFraction   = wound,
-      isTerran        = isTerranNow,
-      containing      = containingNow,
-      combatNear      = combatNearNow,
-      unloadVetoed    = unloadVetoedNow,
-      reaveOrdered    = unit.agent.fightReason == FightOrFlee.Reave,
-      shouldFight     = unit.agent.shouldFight,
-      walkableTile    = unit.tile.walkable,
-      traineeSoon     = unit.trainee.exists(_.remainingCompletionFrames < cooldownReset + latency),
-      leadLanding     = unit.agent.ride.exists(_.agent.passengersPrioritized.headOption.exists(r =>
-        Protoss.Reaver(r) && r != unit && r.agent.shouldFight && ! r.loaded && r.pixelDistanceEdge(unit) < 32)),
-      threatened      = threatenedNow,
-      cooling         = unit.cooldownLeft > cooldownReset + 2 * latency,
-      outranged       = threatsInRange.exists(t => ! t.flying && t.pixelRangeAgainst(unit) < unit.pixelRangeAgainst(t)),
-      shotless        = ! (unit.scarabs > 0 && ! unit.hasActiveScarab && unit.matchups.targetsInRange.exists(unit.hasScarabPathTo(_, unit.pixel))),
-      pressuredClose  = pressuredCloseNow,
-      tankAiming      = threats.exists(t => Terran.SiegeTankSieged(t) && unit.tileDistanceEdge(t) < 10),
-      holdTarget      = targetNearest.exists(t => ! t.flying && unit.canAttack(t) && unit.tileDistanceEdge(t) < 7.25),
-      targetPath      = targetNearest.exists(unit.hasScarabPathTo(_, unit.pixel)),
-      toAttackPath    = unit.agent.toAttack.orElse(targetNearest).exists(unit.hasScarabPathTo(_, unit.pixel)),
-      braveDrop       = unit.transport.exists(shuttle => {
-        // Engine edge distances are pixels; thresholds are tiles (rule 10).
-        // shuttle.matchups.targets is empty for an unarmed hull, so guns
-        // aimed at the Shuttle come off the single registry instead.
-        // Scourge rides along: alive and typed, weapon data or not.
-        val distTiles = AliveEnemies.get().map(foe => (foe, foe.tileDistanceEdge(shuttle)))
-        val foesClose = distTiles.count(_._2 < ReaverDropBravery.closeDist)
-        val ranged = distTiles.filter(_._2 < ReaverDropBravery.rangedDist).filter({ case (foe, _) =>
-          ReaverDropBravery.isRangedThreat(
-            foe.unitClass.canAttack, foe.unitClass.melee, foe.flying, foe.canAttack(shuttle), Zerg.Scourge(foe)) })
-        val rangedDps = ranged.map({ case (foe, _) => foe.dpfAir }).sum
-        val tanks = AliveEnemies.get().count(t =>
-          t.isAny(Terran.SiegeTankUnsieged, Terran.SiegeTankSieged) && t.likelyStillThere &&
-            t.tileDistanceEdge(shuttle) < ReaverDropBravery.tankTheaterTiles)
-        val nearStatics = AliveEnemies.get().exists(e =>
-          e.unitClass.isStaticDefense && ! e.flying && e.likelyStillThere &&
-            e.tileDistanceEdge(shuttle) < ReaverDropBravery.staticDefenseDist)
-        // Melee inside three tiles chews a dropped Reaver on the spot.
-        val meleeNear = distTiles.count({ case (foe, dist) => dist < ReaverDropBravery.closeMeleeDist &&
-          (foe.unitClass.melee || Zerg.Scourge(foe)) })
-        val shieldsUp = shuttle.shieldPoints >= ReaverDropBravery.minShields && unit.shieldPoints >= ReaverDropBravery.minShields
-        val affordable = ReaverDropBravery.canAffordShot(shuttle.shieldPoints + shuttle.hitPoints, rangedDps)
-        val tankGate = ! isTerranNow || tanks <= ReaverDropBravery.maxTerranTanks
-        val ringsOk = ReaverDropBravery.shouldDrop(
-          foesClose, ranged.size, shuttle.shieldPoints, unit.shieldPoints,
-          isTerran = isTerranNow, enemyTanks = tanks, nearStaticDefense = nearStatics) && affordable
-        // Stale rule: no melee at the landing, ten seconds dry, shields up.
-        // Decisive on purpose - no firepower pricing here; a ranged crowd
-        // past the rings still takes the drop while the gates stand.
-        val staleOk = ReaverDropBravery.mayDropStale(firedAgo, wound, hasFired = hasFiredShot, meleeNear = meleeNear) &&
-          shieldsUp && ! nearStatics && tankGate
-        ringsOk || staleOk
-      }),
-      unloadSpotSafe  = ! threats.exists(t => ! t.flying && unit.tileDistanceEdge(t) < ReaverUnloadSafety.radiusTiles(wound)))
+      rideNearby      = own.rideNearby,
+      loaded          = own.loaded,
+      hasTransport    = own.hasTransport,
+      committed       = own.committed,
+      shieldsDown     = own.shieldsDown,
+      scarabs         = own.scarabs,
+      hasActiveScarab = own.hasActiveScarab,
+      cooldownLeft    = own.cooldownLeft,
+      latencyFrames   = own.latencyFrames,
+      doomed          = own.doomed,
+      targetedByScarab= threats.targetedByScarab,
+      framesSinceFired= own.framesSinceFired,
+      framesSinceHit  = threats.framesSinceHit,
+      hikingFar       = mission.hikingFar,
+      woundFraction   = threats.woundFraction,
+      isTerran        = mission.isTerran,
+      reaveOrdered    = mission.reaveOrdered,
+      shouldFight     = mission.shouldFight,
+      walkableTile    = own.walkableTile,
+      traineeSoon     = own.traineeSoon,
+      leadLanding     = mission.leadLanding,
+      threatened      = threats.threatened,
+      cooling         = threats.cooling,
+      outranged       = threats.outranged,
+      shotless        = threats.shotless,
+      pressuredClose  = threats.pressuredClose,
+      tankAiming      = threats.tankAiming,
+      holdTarget      = threats.holdTarget,
+      targetPath      = threats.targetPath,
+      toAttackPath    = threats.toAttackPath,
+      braveDrop       = mission.braveDrop,
+      containing      = mission.containing,
+      combatNear      = mission.combatNear,
+      unloadVetoed    = mission.unloadVetoed,
+      unloadSpotSafe  = mission.unloadSpotSafe)
   }
 }
