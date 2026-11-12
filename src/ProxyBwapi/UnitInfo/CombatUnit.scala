@@ -55,6 +55,11 @@ trait CombatUnit {
   def injury                    : Double
   // Atlantis parity: wound fraction over hit points + shields (== injury).
   def woundPercent()            : Double = injury
+  // Linear wound bonus: low for a fresh hull, high for a dying one.
+  // Replaces the hand-rolled `base + k * woundPercent()` scattered over
+  // retreat margins so every berth reads as one lerp with its band edges.
+  def woundPercentBonus(low: Double, high: Double): Double =
+    low + (high - low) * Maff.clamp(woundPercent(), 0.0, 1.0)
 
   def canMove: Boolean
   def canAttack(other: CombatUnit): Boolean

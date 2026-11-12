@@ -98,8 +98,9 @@ Findings so far:
 - DONE (`1556073e9`, jar rebuilt after): no DT formation slots,
   march bypass to plain vicinity with a `DarkTemplarHunt` label,
   `BeDarkTemplar` hunts visible hittable, then freshest fogged contact
-  (<3 min), holds otherwise; `DarkTemplarBerth` wound berth (max +8)
-  wired into `Stealth` mobile-detector check, DT-only. Validation:
+  (<3 min), holds otherwise; `Stealth` mobile-detector check uses
+  `unit.woundPercentBonus(0, 8)` (DT-only; the `DarkTemplarBerth` kernel
+  was folded into the shared helper). Validation:
   needs a game with DTs (no DT UMS map; awaits a natural melee game).
 
 ## Open: Reaver drops next to Sunken Colonies

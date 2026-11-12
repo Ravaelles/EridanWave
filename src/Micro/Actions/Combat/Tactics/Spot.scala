@@ -80,9 +80,9 @@ object Spot extends Action {
   val detectionStandoffTiles: Double = 0.6
 
   private[Micro] def shouldRetreatFrom(unit: FriendlyUnitInfo, threat: UnitInfo): Boolean = {
-    // Wounded eyes keep a wider berth: +4 tiles per wound fraction on top of
-    // the base margins (an Observer has almost no hit points to trade).
-    val woundBonus = ?(unit.unitClass.isDetector, 4 * 32 * unit.woundPercent(), 0.0)
+    // Wounded eyes keep a wider berth: up to +4 tiles on top of the base
+    // margins (an Observer has almost no hit points to trade).
+    val woundBonus = ?(unit.unitClass.isDetector, unit.woundPercentBonus(0.0, 4.0) * 32.0, 0.0)
     // Only detection justifies closing inside the normal safety buffer.
     if (unit.unitClass.isDetector && threat.cloakedOrBurrowed) {
       unit.pixelDistanceCenter(threat) < Math.min(unit.detectionRangePixels - 32, threat.pixelRangeAgainst(unit) + 96) + woundBonus

@@ -1,6 +1,7 @@
 package ProxyBwapi.UnitInfo
 
 import bwapi.UnitType
+import org.mockito.Mockito
 import org.scalatest.funsuite.AnyFunSuite
 import testkit.TestKit
 
@@ -25,5 +26,28 @@ class CombatUnitSuite extends AnyFunSuite {
     assert(unit.unitClass == ProxyBwapi.UnitClasses.UnitClasses.None)
     assert( ! ProxyBwapi.Races.Protoss.Zealot(unit))
     assert( ! unit.unitClass.isBuilding)
+  }
+
+  // The helper only reads woundPercent: stub it on a trait mock so the
+  // tests pin the lerp without dragging the proxy/grid world along.
+  // (FriendlyUnitInfo itself is final and unmockable.)
+  private def bonusedUnit(wound: Double): CombatUnit = {
+    val unit = Mockito.mock(classOf[CombatUnit], Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS))
+    Mockito.when(unit.woundPercent()).thenReturn(wound)
+    unit
+  }
+
+  test("a fresh hull takes the low edge of the wound bonus") {
+    assert(bonusedUnit(0.0).woundPercentBonus(2.5, 6.5) == 2.5)
+  }
+
+  test("a dying hull takes the high edge of the wound bonus") {
+    assert(bonusedUnit(1.0).woundPercentBonus(2.5, 6.5) == 6.5)
+  }
+
+  test("the wound bonus interpolates linearly and clamps") {
+    assert(bonusedUnit(0.5).woundPercentBonus(0.0, 8.0) == 4.0)
+    assert(bonusedUnit(-1.0).woundPercentBonus(0.0, 8.0) == 0.0)
+    assert(bonusedUnit(2.0).woundPercentBonus(0.0, 8.0) == 8.0)
   }
 }

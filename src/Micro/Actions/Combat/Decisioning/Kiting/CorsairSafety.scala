@@ -27,5 +27,5 @@ object CorsairSafety {
     baseMarginTiles + woundBonusTiles * Maff.clamp(wound01, 0.0, 1.0)
 
   def avoidanceMarginPixels(unit: FriendlyUnitInfo): Double =
-    if (Protoss.Corsair(unit)) avoidanceMarginTiles(unit.woundPercent()) * 32.0 else 32.0
+    if (Protoss.Corsair(unit)) unit.woundPercentBonus(baseMarginTiles, baseMarginTiles + woundBonusTiles) * 32.0 else 32.0
 }

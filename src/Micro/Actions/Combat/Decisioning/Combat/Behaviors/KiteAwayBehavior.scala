@@ -82,7 +82,7 @@ object KiteAwayBehavior {
 
   private def kiteAway(unit: FriendlyUnitInfo, combat: Combat): Unit = {
     unit.agent.act("KiteAway")
-    val offsetPixels = KiteAway.woundOffsetTiles(unit.woundPercent()) * 32
+    val offsetPixels = unit.woundPercentBonus(0.0, KiteAway.maxOffsetTiles) * 32
     unit.agent.decision.set(unit.pixel.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
     combat.maneuvers.move()
   }
