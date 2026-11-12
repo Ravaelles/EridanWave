@@ -31,4 +31,15 @@ class WorkerThreatFleeSuite extends AnyFunSuite {
     assert( ! WorkerThreatFlee.doomedVsMelee(totalHealth = 37, meleeNearby = 2, supported = true))
     assert( ! WorkerThreatFlee.doomedVsMelee(totalHealth = 1, meleeNearby = 9, supported = true))
   }
+
+  test("a dying miner runs from a single closing fighter") {
+    assert(WorkerThreatFlee.doomedVsLoneFighter(totalHealth = 30, fighterClosing = true, supported = false))
+    assert(WorkerThreatFlee.doomedVsLoneFighter(totalHealth = 1, fighterClosing = true, supported = false))
+  }
+
+  test("a healthier miner holds, a distant fighter does not count") {
+    assert( ! WorkerThreatFlee.doomedVsLoneFighter(totalHealth = 31, fighterClosing = true, supported = false))
+    assert( ! WorkerThreatFlee.doomedVsLoneFighter(totalHealth = 30, fighterClosing = false, supported = false))
+    assert( ! WorkerThreatFlee.doomedVsLoneFighter(totalHealth = 30, fighterClosing = true, supported = true))
+  }
 }

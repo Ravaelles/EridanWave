@@ -17,11 +17,17 @@ object WorkerThreatFlee {
   /** Shelling counts inside tank range plus this margin, in tiles. */
   val tankMarginTiles: Double = 2.0
 
-  /** A miner this hurt never trades with a melee pack alone, in hit points. */
-  val fleeHp: Int = 37
+  /** A lone hurt miner runs from a single closing fighter, in hit points. */
+  val loneFighterHp: Int = 30
+
+  /** A fighter this close to landing hits, in tiles beyond its range, counts. */
+  val loneFighterTiles: Double = 1.5
 
   /** This many enemy melee fighters near one miner means a pack. */
   val meleePackSize: Int = 2
+
+  /** A miner this hurt never trades with a melee pack alone, in hit points. */
+  val fleeHp: Int = 37
 
   /**
    * A weak miner outnumbers its chances: at fleeHp or less against a melee
@@ -30,6 +36,15 @@ object WorkerThreatFlee {
    */
   def doomedVsMelee(totalHealth: Int, meleeNearby: Int, supported: Boolean): Boolean =
     totalHealth <= fleeHp && meleeNearby >= meleePackSize && ! supported
+
+  /**
+   * The same outnumbered logic for one fighter already closing in: at
+   * loneFighterHp or less with an enemy warrior inside loneFighterTiles
+   * past its range and nobody fighting alongside, the miner leaves instead
+   * of trading the last hit points for one potshot.
+   */
+  def doomedVsLoneFighter(totalHealth: Int, fighterClosing: Boolean, supported: Boolean): Boolean =
+    totalHealth <= loneFighterHp && fighterClosing && ! supported
 
   def mutaPack(mutasNear: Int): Boolean =
     mutasNear >= mutaPackSize
