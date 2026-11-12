@@ -164,8 +164,11 @@ object TargetScoring {
       Math.max(1.0, 0.5 * target.tile.adjacent9.iterator.map(_.units.count(u => attacker.canAttack(u) && u.isEnemy)).sum),
       attacker.isAny(Terran.SiegeTankSieged, Protoss.Archon, Protoss.Reaver, Zerg.Lurker))
 
+    // Contextual bonuses need the live unit table, so they stay on the game
+    // thread; targetValue itself is read by the combat-sim thread too.
+    val contextualValue = loneLingLurePenalty(target) + detectorBonus(target)
     val attackValue = this.attackValue(
-      targetValue = target.targetValue,
+      targetValue = target.targetValue + contextualValue,
       injury      = ?(target.doomed, 0.0, target.injury),
       pixelCost   = pixelCost(attacker, target),
       efficacy    = splashEfficacy * attacker.hitChanceAgainst(target) * attacker.damageMultiplierAgainst(target))
@@ -252,28 +255,39 @@ object TargetScoring {
     // Disabled because it needs performant player-agnosticism for simulation
     //output += add(8.0, (target.burrowed && With.units.existsOurs(Terran.SpellScannerSweep)))
 
-    // Lone-ling lure: a single Zergling far from our buildings with
-    // enemy buildings to hit is bait, not a target. Sink it below
-    // buildings and fighters; alone it still wins and gets killed.
-    output += loneLingScatteredOnMapLurePenalty(
-      Zerg.Zergling(target),
-      With.units.enemy.exists(e => e != target && Zerg.Zergling(e) && e.tileDistanceEdge(target) < loneLingPackTiles),
-      Maff.min(With.units.ours.view.filter(_.unitClass.isBuilding).map(_.tileDistanceEdge(target))).getOrElse(Double.PositiveInfinity) > loneLingHomeTiles,
-      With.units.enemy.exists(_.unitClass.isBuilding))
-
-    // Detector bonus
-    output += add(6.0,
-      ?(
-        target.isEnemy,
-        With.units.existsOurs(cloakyMatcher),
-        With.units.existsEnemy(cloakyMatcher))
-      && aidsDetection(target))
+    // Lone-ling and detector bonuses live in slow()/loneLingLurePenalty:
+    // target values are also read by the combat-sim thread, where the live
+    // unit table is unsafe. Keeping this function unit-local keeps sim
+    // resets race-free.
 
     // Alternative repair value
     output = Math.max(output, target.orderTarget.filter(target.repairing && ! _.repairing).map(2.5 + _.targetValue).getOrElse(0.0))
 
     output
   }
+
+  /** Lone-ling lure: a single Zergling far from our buildings with enemy
+    * buildings to hit is bait, not a target. Sink it below buildings and
+    * fighters; alone it still wins and gets killed. Game-thread only: it
+    * reads the live unit table, which the combat-sim thread must not touch.
+    */
+  private def loneLingLurePenalty(target: UnitInfo): Double = {
+    if ( ! Zerg.Zergling(target)) return 0.0
+
+    loneLingScatteredOnMapLurePenalty(
+      isLing = true,
+      packNear = With.units.enemy.exists(e => e != target && Zerg.Zergling(e) && e.tileDistanceEdge(target) < loneLingPackTiles),
+      farFromHome = Maff.min(With.units.ours.view.filter(_.unitClass.isBuilding).map(_.tileDistanceEdge(target))).getOrElse(Double.PositiveInfinity) > loneLingHomeTiles,
+      betterTargets = With.units.enemy.exists(_.unitClass.isBuilding))
+  }
+
+  /** Detector bonus: target cloaked makers before they escape detection. */
+  private def detectorBonus(target: UnitInfo): Double = add(6.0,
+    ?(
+      target.isEnemy,
+      With.units.existsOurs(cloakyMatcher),
+      With.units.existsEnemy(cloakyMatcher))
+    && aidsDetection(target))
 
   def aidsDetection(target: UnitInfo): Boolean = {
     var output = false

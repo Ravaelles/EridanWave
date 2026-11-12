@@ -117,7 +117,9 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
   def loadedUnits: Vector[FriendlyUnitInfo] = _loadedUnitsCache()
   private val _loadedUnitsCache = new Cache(() =>
          if (is(Protoss.Carrier))     interceptors.flatMap(_.friendly).toVector
-    else if (unitClass.canLoadUnits)  base.getLoadedUnits.asScala.flatMap(With.units.get).flatMap(_.friendly).toVector
+    // Snapshot the engine list with toArray: iterating the live view throws
+    // ConcurrentModificationException while BWAPI mutates passenger lists.
+    else if (unitClass.canLoadUnits)  base.getLoadedUnits.toArray(new Array[bwapi.Unit](0)).iterator.flatMap(With.units.get).flatMap(_.friendly).toVector
     else Vector.empty)
   def canTransport(passenger: FriendlyUnitInfo): Boolean = (
     isTransport
