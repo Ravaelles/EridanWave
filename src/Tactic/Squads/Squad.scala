@@ -14,10 +14,20 @@ import Tactic.Tactics.Tactic
 import Utilities.?
 
 import scala.collection.mutable.ArrayBuffer
+import Tactic.Squads.Decisions.ConsensusVoteFilter
 import Tactic.Squads.Group.FriendlyUnitGroup
 
 abstract class Squad extends Tactic with FriendlyUnitGroup {
   def fightsIndependently: Boolean = false
+  // Fight-consensus latch, updated exactly once per frame below: the raw
+  // mode vote flickers every few frames (contact-band edge, sim judgments
+  // appearing with battle clustering), and each flip swings every terminus
+  // and target between the formation and home. Leaving needs confirmation;
+  // rejoining passes instantly. Never confirm from the fightConsensus
+  // getter itself - it runs many times per frame and would burn the streak.
+  private val consensusFilter = new ConsensusVoteFilter
+  private var latchedConsensus: Boolean = true
+  override def fightConsensus: Boolean = latchedConsensus
   var batchId           : Int                           = Int.MinValue
   var targets           : Option[IndexedSet[UnitInfo]]  = None
   var formations        : ArrayBuffer[Formation]        = ArrayBuffer.empty
@@ -76,6 +86,7 @@ abstract class Squad extends Tactic with FriendlyUnitGroup {
   }
   final def prepareToRun(): Unit = {
     formations.clear()
+    latchedConsensus = consensusFilter.confirm(latchedConsensus, super.fightConsensus)
     val swapUnits = _unitsNow
     _unitsNow = _unitsNext
     _unitsNext = swapUnits
