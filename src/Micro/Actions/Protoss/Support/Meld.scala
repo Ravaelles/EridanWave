@@ -14,6 +14,10 @@ object Meld extends Action {
     && unit.isAny(Protoss.HighTemplar, Protoss.DarkTemplar))
   
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    // No return after the retreat: the meld below overrides it whenever a
+    // partner is present, so an unsafe pair still Archons on the spot while
+    // a lone Templar keeps the retreat move. Whether melding under fire
+    // beats running is game evidence, not this file, to decide.
     if (unit.matchups.framesOfSafety < Seconds(15)() && ! unit.base.exists(_.isOurs)) {
       Retreat(unit)
     }
