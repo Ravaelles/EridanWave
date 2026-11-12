@@ -58,6 +58,11 @@ def parse(path):
                 m = re.match(r"\s*(\d+)\s+(.*)", line)
                 if m:
                     verdicts[m.group(2)] = int(m.group(1))
+            elif section == "modes" and line.strip():
+                m = re.match(r"\s*(\d+)\s+(\S+)\s+\((\d+),(\d+)\)\s+visible=(\d+)", line)
+                if m:
+                    modes.append((int(m.group(1)), m.group(2),
+                                  int(m.group(3)), int(m.group(4)), int(m.group(5))))
             elif section == "dress_counts":
                 m = re.match(r"\s*(\d+)\s+(.*)", line)
                 if m:
