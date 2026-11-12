@@ -18,10 +18,12 @@ object TargetFilterFocus extends TargetFilter {
     output ||= actor.squad.exists(_.engagedUpon) && target.team.exists(_.engagingOn)
     output ||= actor.targetsAssigned.forall(_.contains(target))
     output ||= actor.squad.exists(canTargetAsRoadblock(_, target))
-    // Lone hall cleanup: with no other enemy within 8 tiles the hall is the
-    // fight, even out of range and unassigned - walk it down instead of
-    // milling past a cleared base.
-    output ||= target.unitClass.isTownHall && actor.matchups.enemies.forall(e => e.id == target.id || actor.pixelDistanceEdge(e) > 32 * 8)
+    // Lone hall cleanup: with no other reachable enemy within 8 tiles the
+    // hall is the fight, even out of range and unassigned - walk it down
+    // instead of milling past a cleared base. Stale contacts and fliers
+    // don't count: an Overlord parked overhead must never veto the hall.
+    output ||= target.unitClass.isTownHall && actor.matchups.enemies.forall(e =>
+      e.id == target.id || ! e.visible || e.flying || actor.pixelDistanceEdge(e) > 32 * 8)
     output ||= (actor.inRangeToAttack(target)
       && actor.readyForAttackOrder(target)
       && ( ! target.unitClass.isBuilding || target.unitClass.isStaticDefense))
