@@ -167,11 +167,34 @@ async function refresh() {
     ALL_ROWS = await loadRows();
   } catch (e) {
     document.querySelector("#counts").textContent =
-      "No data yet (" + e.message + "). Run scripts/ums-batch.sh first.";
+      "No data yet (" + e.message + "). Run scripts/ums-batch.sh first, " +
+      "serve over HTTP, or pick the file below.";
+    document.querySelector("#localfile").style.display = "block";
     return;
   }
+  document.querySelector("#localfile").style.display = "none";
   applyFilter();
 }
+
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      ALL_ROWS = String(reader.result).split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0)
+        .map((l) => JSON.parse(l));
+      applyFilter();
+    } catch (e) {
+      document.querySelector("#counts").textContent = "Could not parse file: " + e.message;
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.querySelector("#filepicker").addEventListener("change", (ev) => {
+  if (ev.target.files.length > 0) loadFile(ev.target.files[0]);
+});
 
 document.querySelector("#reload").addEventListener("click", refresh);
 document.querySelector("#filter").addEventListener("input", applyFilter);

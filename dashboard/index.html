@@ -26,6 +26,12 @@
   <button id="reload">Reload</button>
   <span id="counts"></span>
 </p>
+<p id="localfile" style="display:none">
+  Direct file open blocks the data load (CORS). Either serve this folder
+  (<code>python3 -m http.server</code>) or pick
+  <code>data/history.jsonl</code> by hand:
+  <input id="filepicker" type="file" accept=".jsonl,.json,.txt">
+</p>
 <h2>Per-map summary</h2>
 <table id="summary">
   <thead><tr>
