@@ -14,13 +14,14 @@ object BeDarkTemplar extends Action {
     if (unit.readyForAttackOrder && With.enemies.exists(_.isTerran)) {
       val mines = unit.matchups.threats.filter(Terran.SpiderMine)
       if (mines.nonEmpty) {
-        val mine      = mines.minBy(_.pixelDistanceEdge(unit))
-        val radius    = 96
-        var snipe     = mine.orderTarget.contains(unit)
-        snipe       ||= mine.pixelDistanceEdge(unit) < radius && mines.count(_.pixelDistanceEdge(mine) < radius) == 1
-        snipe       &&= mine.visible
-        snipe       &&= ! mine.effectivelyCloaked
-        if (snipe) {
+        val mine = mines.minBy(_.pixelDistanceEdge(unit))
+        val sighting = SpiderMineSniping.MineSighting(
+          targetedUs        = mine.orderTarget.contains(unit),
+          distPixels        = mine.pixelDistanceEdge(unit),
+          neighborsInRadius = mines.count(_.pixelDistanceEdge(mine) < SpiderMineSniping.radiusPixels),
+          visible           = mine.visible,
+          cloaked           = mine.effectivelyCloaked)
+        if (SpiderMineSniping.shouldSnipe(sighting)) {
           unit.agent.toAttack = Some(mine)
           Commander.attack(unit)
         }
