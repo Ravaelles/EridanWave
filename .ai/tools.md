@@ -16,9 +16,17 @@
   move/hold counts per unit (scout smoothness), acts, kills with balances.
 - `python3 scripts/summarize-errors.py <errors.json> [--min-priority ...]`:
   one line per key, worst first.
+- Dashboard: `dashboard/index.html` opens straight from disk. Every finished
+  `run.sh` game is recorded by `scripts/dashboard-record.sh` (called from
+  `wine-run.sh`) into `dashboard/data/history.jsonl` plus the
+  `history.js` snapshot the page can load under `file://`; `ums-batch.sh`
+  opts out and writes its own richer rows. Rows can be hidden per browser
+  with the row's trash button (localStorage, the file is untouched).
 - `python3 scripts/probe.py <normal.log> [--unit ID] [--key KEY]`:
-  per-unit decision chains on traceless UMS games (`Act`/`Move`/`Sim`;
-  arm keys live in `bwapi-data/write/probe.txt`).
+  per-unit decision chains on traceless UMS games (arm keys in
+  `bwapi-data/write/probe.txt`: `Act` decision chains, `Move` ordered travel,
+  `Sim` stance votes, `Formation` pack audit for `formation-check.py`, `Form`
+  formation census, `Hold` line-hold decisions, `Target` chosen enemy id).
 - Traces: wine `bwapi-data/write/cherryvis_dir.rep.cvis/`; scbw
   `~/.scbw/games/GAME_*/write_0/...` auto-paired to `E_*.rep.cvis`
   (needs default-on cherryvis; checker depth is 3, not 2).
