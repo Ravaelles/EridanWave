@@ -15,7 +15,8 @@ class SpellTargetAOE {
     evaluate            : (UnitInfo, FriendlyUnitInfo) => Double,
     pixelWidth          : Int,
     pixelHeight         : Int,
-    projectionFrames    : Double = 0.0)
+    projectionFrames    : Double = 0.0,
+    vetoBox             : Iterable[UnitInfo] => Boolean = _ => false)
       : Option[Pixel] = {
 
     val candidates = SpellTargets(caster).filter(_.pixelDistanceCenter(caster) <= searchRadiusPixels)
@@ -23,10 +24,10 @@ class SpellTargetAOE {
     def valueUnit(unit: UnitInfo): Double = values.getOrElseUpdate(unit, evaluate(unit, caster))
     val targets = candidates.filter(valueUnit(_) > 0)
     val boxes = targets.flatMap(target => Seq(
-      new AOETarget(target, caster,  1,  1, pixelWidth = pixelWidth, pixelHeight = pixelHeight, lookaheadPixels = projectionFrames, valueUnit = valueUnit),
-      new AOETarget(target, caster, -1,  1, pixelWidth = pixelWidth, pixelHeight = pixelHeight, lookaheadPixels = projectionFrames, valueUnit = valueUnit),
-      new AOETarget(target, caster,  1, -1, pixelWidth = pixelWidth, pixelHeight = pixelHeight, lookaheadPixels = projectionFrames, valueUnit = valueUnit),
-      new AOETarget(target, caster, -1, -1, pixelWidth = pixelWidth, pixelHeight = pixelHeight, lookaheadPixels = projectionFrames, valueUnit = valueUnit)))
+      new AOETarget(target, caster,  1,  1, pixelWidth = pixelWidth, pixelHeight = pixelHeight, lookaheadPixels = projectionFrames, valueUnit = valueUnit, vetoBox = vetoBox),
+      new AOETarget(target, caster, -1,  1, pixelWidth = pixelWidth, pixelHeight = pixelHeight, lookaheadPixels = projectionFrames, valueUnit = valueUnit, vetoBox = vetoBox),
+      new AOETarget(target, caster,  1, -1, pixelWidth = pixelWidth, pixelHeight = pixelHeight, lookaheadPixels = projectionFrames, valueUnit = valueUnit, vetoBox = vetoBox),
+      new AOETarget(target, caster, -1, -1, pixelWidth = pixelWidth, pixelHeight = pixelHeight, lookaheadPixels = projectionFrames, valueUnit = valueUnit, vetoBox = vetoBox)))
     val bestBox = Maff.maxBy(boxes)(_.netValue).filter(_.netValue >= minimumValue)
     val output = bestBox.map(_.finalTarget)
     output

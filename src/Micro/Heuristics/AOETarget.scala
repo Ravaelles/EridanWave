@@ -12,7 +12,8 @@ class AOETarget(
     pixelWidth: Int,
     pixelHeight: Int,
     lookaheadPixels: Double,
-    valueUnit: UnitInfo => Double) {
+    valueUnit: UnitInfo => Double,
+    vetoBox: Iterable[UnitInfo] => Boolean = _ => false) {
 
   private val margin          = 8
   private val p               = target.pixel
@@ -30,7 +31,7 @@ class AOETarget(
       SpellTargets.legal(u)
       && rectangle.contains(u.pixel))) // Require the unit to actually be there; don't trust the grid))
 
-  val netValue: Double = units.view.map(valueUnit).sum
+  val netValue: Double = if (vetoBox(units)) Double.NegativeInfinity else units.view.map(valueUnit).sum
   var xMin: Int = Int.MaxValue
   var yMin: Int = Int.MaxValue
   var xMax: Int = Int.MinValue

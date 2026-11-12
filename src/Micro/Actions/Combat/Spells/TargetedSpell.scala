@@ -26,6 +26,11 @@ abstract class TargetedSpell extends Action {
   
   protected def valueTarget(target: UnitInfo, caster: FriendlyUnitInfo): Double
 
+  // Box-level veto (storms over our own army): individual values stay
+  // soft so a great trade still tempts, but a box the veto rejects never
+  // casts no matter how red the neighborhood is.
+  protected def vetoBox(units: Iterable[UnitInfo]): Boolean = false
+
   def hasEnoughEnergy(unit: UnitInfo): Boolean = unit.energy >= tech.energyCost
   def canCast(unit: UnitInfo): Boolean = casterClass(unit) && unit.player.hasTech(tech) && hasEnoughEnergy(unit)
   final override def allowed(unit: FriendlyUnitInfo): Boolean = canCast(unit) && unit.matchups.enemies.nonEmpty && additionalConditions(unit)
@@ -37,7 +42,7 @@ abstract class TargetedSpell extends Action {
     val totalRange    = safeDistance + 32.0 * castRangeTiles + bonusSearchPixels // The margin is just some encouragement
     
     if (aoe) {
-      val targetPixel = new SpellTargetAOE().chooseTargetPixel(unit, totalRange, thresholdValue, valueTarget, pixelWidth = pixelWidth, pixelHeight = pixelHeight)
+      val targetPixel = new SpellTargetAOE().chooseTargetPixel(unit, totalRange, thresholdValue, valueTarget, pixelWidth = pixelWidth, pixelHeight = pixelHeight, vetoBox = vetoBox)
       targetPixel.foreach(target => {
         if (unit.pixelDistanceCenter(target) <= castRangePixels) {
           targetPixel.foreach(Commander.useTechOnPixel(unit, tech, _))

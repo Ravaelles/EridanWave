@@ -21,6 +21,19 @@ object PsionicStorm extends TargetedSpell {
 
   val castFrames = 4 // Derived from iScript; observed empirically by McRave
 
+  /** Own units that may share a storm, at most: the third is the veto. */
+  val maxFriendlyHits: Int = 2
+
+  /**
+   * Friendly-fire veto (pure count for the suite): a storm box catching
+   * more than two of ours never casts, however juicy the trade looks.
+   */
+  def vetoFriendlyHits(friendlyHits: Int): Boolean =
+    friendlyHits > maxFriendlyHits
+
+  override protected def vetoBox(units: Iterable[UnitInfo]): Boolean =
+    vetoFriendlyHits(units.count(_.isFriendly))
+
   override protected def valueTarget(target: UnitInfo, caster: FriendlyUnitInfo): Double = {
     if (With.grids.psionicStorm.isSet(target.tile)) return 0.0
     if ( ! target.unitClass.canBeStormed) return 0.0
