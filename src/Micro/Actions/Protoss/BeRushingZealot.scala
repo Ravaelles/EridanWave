@@ -91,7 +91,13 @@ object BeRushingZealot extends Action {
       && battery.isDefined) {
       Commander.rightClick(zealot, battery.get)
     } else if (shouldFight) {
-      if (canPotshot) {
+      // Outnumbered by faster melee that hunts us, the potshot is a trap:
+      // stopping to shoot a 1v3 against Zerglings kills the Zealot, so it
+      // rejoins the pack instead of trading.
+      val chasers = zealot.matchups.threatsInRange.filter(t => t.unitClass.melee && t.presumptiveTarget.contains(zealot))
+      val helpNear = zealot.matchups.allies.count(a => a.unitClass.isWarrior && a.pixelDistanceEdge(zealot) < 160)
+      val fleeOutnumbered = chasers.size > helpNear
+      if (canPotshot && ! fleeOutnumbered) {
         attack(zealot, zealot.matchups.targetsInRange.minBy(_.totalHealth))
       } else {
         val targets = With.units.enemy.filter(t => t.unitClass.attacksGround && t.visible)
@@ -112,7 +118,9 @@ object BeRushingZealot extends Action {
               .filter(t => ! IsWorker(t) || (t.metro.exists(zealot.agent.destinationFinal.pixel.get.metro.contains) && (t.matchups.targetsInRange.nonEmpty || t.constructing || t.gathering) || zealot.pixelsToGetInRange(t) < 16))
             if (targets.nonEmpty) {
               val target = targets.minBy(t => t.totalHealth + 1.0 * zealot.pixelsToGetInRange(t))
-              if (zealot.readyForAttackOrder(target) || ! target.canMove) {
+              if (fleeOutnumbered && target.canMove) {
+                retreat(zealot)
+              } else if (zealot.readyForAttackOrder(target) || ! target.canMove) {
                 attack(zealot, target)
               } else if (target.isAny(Protoss.Zealot, Zerg.Zergling, IsWorker) && target.presumptiveTarget.contains(zealot) && target.inRangeToAttack(zealot)) {
                 retreat(zealot)
