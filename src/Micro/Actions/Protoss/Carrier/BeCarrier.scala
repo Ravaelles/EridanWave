@@ -42,71 +42,71 @@ object BeCarrier extends Action {
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.agent.shouldFight) {
       val brawling = CarrierTankHuntSeam.brawlingFor(unit)
-      // Brawl beat: hold the kill while it lasts inside nine tiles, else
+      // Brawl beat: hold the kill while it lasts inside the beat, else
       // take the nearest enemy inside the beat, so airborne interceptors
       // keep chewing the whole pack instead of chasing one far target.
-      def brawlTarget: Option[UnitInfo] = Maff.minBy(
+      val brawlTarget: Option[UnitInfo] = Maff.minBy(
         unit.agent.toAttack.filter(t => t.alive && t.visible && t.isEnemy && unit.pixelDistanceEdge(t) <= 32 * CarrierBrawl.brawlRadiusTiles).toSeq ++
         unit.matchups.targets.filter(t => t.isEnemy && t.visible && unit.canAttack(t) && unit.pixelDistanceEdge(t) <= 32 * CarrierBrawl.brawlRadiusTiles))(
         _.pixelDistanceEdge(unit))
       // Avoid changing targets (causes interceptors to not attack)
       // Avoid targeting something leaving leash range
-      def target = unit.agent.toAttack
       unit.agent.toAttack = ?(brawling, brawlTarget, None)
         .orElse(unit
         .orderTarget
-        .filter(t => t.alive && t.visible && t.isEnemy && t.pixelDistanceEdge(unit) <= 32.0 * 10.0)
+        .filter(t => t.alive && t.visible && t.isEnemy && unit.pixelDistanceEdge(t) <= 32.0 * CarrierBrawl.leashTiles)
         .orElse(Target.choose(unit, TargetFilterCombatants, TargetFilterVisibleInRange))
         .orElse(Target.choose(unit)))
 
+      val target = unit.agent.toAttack
       val interceptorsActive      = unit.interceptors.count(isInterceptorActive) >= 1 + unit.interceptors.count(_.complete) / 2
       val interceptorSafetyMargin = Maff.min(unit.matchups.threats.filterNot(Protoss.Carrier).map(threat => threat.pixelsToGetInRange(unit) - 8 * 32)).getOrElse(LightYear().toDouble)
-      val carrierSafetyMargin     = unit.matchups.pixelsEntangled
-
-      if (target.isDefined) {
+      val chasePixel              = target.map(_.projectFrames(48))
+      val chasingAlready          = chasePixel.exists(p => unit.speedApproaching(p) > unit.topSpeed / 2)
+      if (target.isDefined && interceptorsActive) {
+        chasePixel.foreach(unit.agent.decision.set)
+      }
+      val order = CarrierEngagement.decide(CarrierEngagement.CarrierMargins(
+        hasTarget           = target.isDefined,
+        brawling            = brawling,
+        tankHunt            = target.exists(t => IsTank(t) && CarrierTankHuntSeam.huntFor(unit)),
+        interceptorsActive  = interceptorsActive,
+        chasingAlready      = chasingAlready,
+        safetyTiles         = interceptorSafetyMargin / 32.0,
+        targetDistTiles     = target.map(t => unit.pixelDistanceEdge(t) / 32.0).getOrElse(0.0)))
+      order match {
         // Brawl: a fifty-interceptor wing never plays leash games, it
         // closes and shoots while the beat holds targets.
-        if (brawling) {
+        case CarrierEngagement.Brawl =>
           unit.agent.act("CarrierBrawl")
           Commander.attack(unit)
-        } else if (IsTank(target.get) && CarrierTankHuntSeam.huntFor(unit)) {
+        case CarrierEngagement.TankHunt =>
           unit.agent.act("CarrierTankHunt")
           Commander.attack(unit)
-        } else if (interceptorsActive) {
-          val chasePixel = unit.agent.toAttack.get.projectFrames(48)
-          val chasingAlready = unit.speedApproaching(chasePixel) > unit.topSpeed / 2
-          unit.agent.decision.set(chasePixel)
-
-          // Chase with impunity, or if target is leaving leash range
-          if ( ! chasingAlready && (interceptorSafetyMargin > 32 || unit.pixelDistanceEdge(target.get) > 32 * 9)) {
-            unit.agent.act("CarrierChase")
-            Commander.move(unit)
-
-          // Attack with impunity
-          } else if (interceptorSafetyMargin > 0) {
-            unit.agent.act("CarrierAttack")
-            Commander.attack(unit)
-
-          // Open leash
-          } else if (target.get.pixelDistanceEdge(unit) < 32 * 8) {
-            Retreat.delegate(unit)
-            unit.agent.act("OpenLeash")
-
-          // Hold leash
-          } else {
-            unit.agent.decision.set(unit.agent.toAttack.map(_.pixel.project(unit.agent.defaultHome, 7.5 * 32)))
-            Commander.move(unit)
-          }
-        } else {
+        // Chase with impunity, or if target is leaving leash range
+        case CarrierEngagement.Chase =>
+          unit.agent.act("CarrierChase")
+          Commander.move(unit)
+        // Attack with impunity
+        case CarrierEngagement.Attack =>
+          unit.agent.act("CarrierAttack")
+          Commander.attack(unit)
+        // Open leash
+        case CarrierEngagement.OpenLeash =>
+          Retreat.delegate(unit)
+          unit.agent.act("OpenLeash")
+        // Hold leash
+        case CarrierEngagement.HoldLeash =>
+          unit.agent.decision.set(unit.agent.toAttack.map(_.pixel.project(unit.agent.defaultHome, CarrierBrawl.homeLeashTiles * 32)))
+          Commander.move(unit)
+        case CarrierEngagement.Launch =>
           unit.agent.act("Launch")
           Commander.attack(unit)
-        }
-      } else {
-        WarmUpInterceptors(unit)
-        Commander.attackMove(unit)
+        case CarrierEngagement.WarmUp =>
+          WarmUpInterceptors(unit)
+          Commander.attackMove(unit)
       }
     } else {
       Retreat(unit)
     }
-  }
-}
+  }}
