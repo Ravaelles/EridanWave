@@ -8,7 +8,7 @@ import ProxyBwapi.Buildable
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.Techs.Techs
 import ProxyBwapi.UnitClasses.{UnitClass, UnitClasses}
-import ProxyBwapi.UnitInfo.UnitInfo
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import ProxyBwapi.Upgrades.{Upgrade, Upgrades}
 import Utilities.Time.{Forever, GameTime}
 import Utilities.{?, CloneyCountMap}
@@ -60,6 +60,19 @@ final class MacroSim {
     steps.clear()
     minInsert.clear()
 
+    val initialState = insertInitialState()
+    seedLarva()
+    seedProducers(initialState)
+    seedProductionInProgress(initialState)
+    seedTerranAddons(initialState)
+
+    // Populate states as of each event
+    updateStatesFrom(1)
+
+    insertRequests()
+  }
+
+  private def insertInitialState(): MacroState = {
     val initialStep = new MacroStep
     val initialState = initialStep.state
     initialState.minerals           = With.self.minerals
@@ -74,100 +87,125 @@ final class MacroSim {
     Upgrades.all.foreach(u => initialState.upgrades(u) = With.self.getUpgradeLevel(u))
     initialState.techs ++= Techs.all.view.filter(With.self.hasTech)
     insert(initialStep)
+    initialState
+  }
 
-    /////////////////////////////////////////////////
-    // Construct events for production in progress //
-    /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  // Construct events for production in progress //
+  /////////////////////////////////////////////////
 
+  private def seedLarva(): Unit = {
     With.units.ours
       .filter(u => u.unitClass.isHatchlike && u.openForBusiness)
       .foreach(hatch => larvaSteps(hatch.completionFrame % 342, ASAP = true).foreach(insert))
+  }
 
+  private def seedProducers(initialState: MacroState): Unit = {
     With.units.ours
       .filter(trulyUnoccupied)
       .foreach(u => initialState.producers(u.unitClass) += 1)
+  }
 
+  private def seedProductionInProgress(initialState: MacroState): Unit = {
     With.units.ours
       .filterNot(trulyUnoccupied)
-      .foreach(u => {
-        val step      = new MacroStep
-        val event     = step.event
-        event.dFrames = u.remainingOccupationFrames
-        val finalClass =
-          if (u.isAny(Zerg.Egg, Zerg.Cocoon, Zerg.LurkerEgg)) {
-            u.buildType
-          } else {
-            u.unitClass
-          }
-        if (u.morphing || ! u.complete) {
-          step.request = Some(RequestUnit(finalClass, initialState.unitsExtant(u.unitClass), specificTraineeArg = Some(u)))
-          event.dUnitComplete       = finalClass
-          event.dUnitCompleteN      = finalClass.copiesProduced
-          event.dUnitCompleteASAP   = finalClass
-          event.dUnitCompleteASAPN  = finalClass.copiesProduced
-          event.dProducer1          = finalClass
-          event.dProducer1N         = finalClass.copiesProduced
-          if (u.isNone(Zerg.Lair, Zerg.Hive)) {
-            event.dSupplyAvailable += finalClass.supplyProvided400
-          }
-        }
-        if (u.upgrading) {
-          step.request = Some(RequestUpgrade(u.upgradingType, 1 + With.self.getUpgradeLevel(u.upgradingType)))
-          event.dUpgrade = u.upgradingType
-          event.dUpgradeLevel = 1 + initialState.upgrades(u.upgradingType)
-        } else if (u.teching) {
-          step.request = Some(RequestTech(u.techingType))
-          event.dTech = u.techingType
-        } else if (finalClass.isGas) {
-          event.dGeysers += 1
-        } else if ( ! u.complete && u.unitClass.isResourceDepot && u.isNone(Zerg.Lair, Zerg.Hive)) {
-          val base = u.base.filter(_.townHall.contains(u))
-          base.foreach(b => event.dMineralPatches += b.minerals.count(_.mineralsLeft >= 8))
-        }
-        event.dProducer1  = finalClass
-        event.dProducer1N = Maff.fromBoolean(! u.morphing)
-        insert(step)
-      })
-      if (With.self.isTerran) {
-        val addons = With.units.ours.filter(_.isAny(Terran.MachineShop, Terran.ControlTower))
-        addons.foreach(addon => addon.addonOf.foreach(parent => {
-          val substitute  = AddonSubstitution.fromReal(addon.unitClass)
-          initialState.unitsExtant(substitute) += 1
-          if (addon.complete && trulyUnoccupied(parent)) {
-            initialState.unitsComplete(substitute) += 1
-            initialState.producers(AddonSubstitution.fromReal(addon.unitClass)) += 1
-          }
-        }))
-        addons.foreach(addon =>addon.addonOf.foreach(parent => {
-          if ( ! addon.complete) {
-            val substitute  = AddonSubstitution.fromReal(addon.unitClass)
-            val step        = new MacroStep
-            val event       = step.event
-            step.request = Some(RequestUnit(substitute, initialState.unitsExtant(substitute), specificTraineeArg = Some(addon)))
-            event.dFrames             = addon.remainingCompletionFrames
-            event.dUnitComplete       = substitute
-            event.dUnitCompleteN      = 1
-            event.dUnitCompleteASAP   = substitute
-            event.dUnitCompleteASAPN  = 1
-            event.dAddon              = substitute
-            event.dAddonN             = 1
-            insert(step)
-          } else if ( ! trulyUnoccupied(parent)) {
-            val substitute  = AddonSubstitution.fromReal(addon.unitClass)
-            val step        = new MacroStep
-            val event       = step.event
-            event.dFrames   = parent.remainingOccupationFrames
-            event.dAddon    = substitute
-            event.dAddonN   = 1
-            insert(step)
-          }
-        }))
+      .foreach(u => insert(stepForUnitInProgress(u, initialState)))
+  }
+
+  private def stepForUnitInProgress(u: FriendlyUnitInfo, initialState: MacroState): MacroStep = {
+    val step      = new MacroStep
+    val event     = step.event
+    event.dFrames = u.remainingOccupationFrames
+    val finalClass =
+      if (u.isAny(Zerg.Egg, Zerg.Cocoon, Zerg.LurkerEgg)) {
+        u.buildType
+      } else {
+        u.unitClass
       }
+    if (u.morphing || ! u.complete) {
+      seedUnitCompletion(step, u, finalClass, initialState)
+    }
+    if (u.upgrading) {
+      step.request = Some(RequestUpgrade(u.upgradingType, 1 + With.self.getUpgradeLevel(u.upgradingType)))
+      event.dUpgrade = u.upgradingType
+      event.dUpgradeLevel = 1 + initialState.upgrades(u.upgradingType)
+    } else if (u.teching) {
+      step.request = Some(RequestTech(u.techingType))
+      event.dTech = u.techingType
+    } else if (finalClass.isGas) {
+      event.dGeysers += 1
+    } else if ( ! u.complete && u.unitClass.isResourceDepot && u.isNone(Zerg.Lair, Zerg.Hive)) {
+      val base = u.base.filter(_.townHall.contains(u))
+      base.foreach(b => event.dMineralPatches += b.minerals.count(_.mineralsLeft >= 8))
+    }
+    event.dProducer1  = finalClass
+    event.dProducer1N = Maff.fromBoolean(! u.morphing)
+    step
+  }
 
-    // Populate states as of each event
-    updateStatesFrom(1)
+  private def seedUnitCompletion(step: MacroStep, u: FriendlyUnitInfo, finalClass: UnitClass, initialState: MacroState): Unit = {
+    val event = step.event
+    step.request = Some(RequestUnit(finalClass, initialState.unitsExtant(u.unitClass), specificTraineeArg = Some(u)))
+    event.dUnitComplete       = finalClass
+    event.dUnitCompleteN      = finalClass.copiesProduced
+    event.dUnitCompleteASAP   = finalClass
+    event.dUnitCompleteASAPN  = finalClass.copiesProduced
+    event.dProducer1          = finalClass
+    event.dProducer1N         = finalClass.copiesProduced
+    if (u.isNone(Zerg.Lair, Zerg.Hive)) {
+      event.dSupplyAvailable += finalClass.supplyProvided400
+    }
+  }
 
-    // Insert requests
+  private def seedTerranAddons(initialState: MacroState): Unit = {
+    if ( ! With.self.isTerran) {
+      return
+    }
+
+    val addons = With.units.ours.filter(_.isAny(Terran.MachineShop, Terran.ControlTower))
+    seedExtantAddons(addons, initialState)
+    seedAddonProduction(addons, initialState)
+  }
+
+  private def seedExtantAddons(addons: Iterable[FriendlyUnitInfo], initialState: MacroState): Unit = {
+    addons.foreach(addon => addon.addonOf.foreach(parent => {
+      val substitute  = AddonSubstitution.fromReal(addon.unitClass)
+      initialState.unitsExtant(substitute) += 1
+      if (addon.complete && trulyUnoccupied(parent)) {
+        initialState.unitsComplete(substitute) += 1
+        initialState.producers(AddonSubstitution.fromReal(addon.unitClass)) += 1
+      }
+    }))
+  }
+
+  private def seedAddonProduction(addons: Iterable[FriendlyUnitInfo], initialState: MacroState): Unit = {
+    addons.foreach(addon =>addon.addonOf.foreach(parent => {
+      if ( ! addon.complete) {
+        val substitute  = AddonSubstitution.fromReal(addon.unitClass)
+        val step        = new MacroStep
+        val event       = step.event
+        step.request = Some(RequestUnit(substitute, initialState.unitsExtant(substitute), specificTraineeArg = Some(addon)))
+        event.dFrames             = addon.remainingCompletionFrames
+        event.dUnitComplete       = substitute
+        event.dUnitCompleteN      = 1
+        event.dUnitCompleteASAP   = substitute
+        event.dUnitCompleteASAPN  = 1
+        event.dAddon              = substitute
+        event.dAddonN             = 1
+        insert(step)
+      } else if ( ! trulyUnoccupied(parent)) {
+        val substitute  = AddonSubstitution.fromReal(addon.unitClass)
+        val step        = new MacroStep
+        val event       = step.event
+        event.dFrames   = parent.remainingOccupationFrames
+        event.dAddon    = substitute
+        event.dAddonN   = 1
+        insert(step)
+      }
+    }))
+  }
+
+  private def insertRequests(): Unit = {
     val requests = new ArrayBuffer[RequestBuildable]
     With.scheduler.requests.view
       .map(_.request)
@@ -202,13 +240,46 @@ final class MacroSim {
   }
 
   private def tryInsertRequest(request: RequestBuildable): Unit = {
-    // TODO: Don't occupy Probes
-    // TODO: Don't return producers which morph
-    // TODO: Reduce diff for zergling/scourge
+    val diff = missingCount(request)
+    if (diff <= 0) {
+      redundant += request
 
+      return
+    }
+
+    var allowSupplyInjection: Boolean = true
+    var iDiff = 0
+    while (iDiff < diff) {
+      iDiff += 1
+      val index = findInsertionIndex(request).getOrElse(return)
+      val stepBefore  = steps(index)
+      val framesAfter = framesUntilAffordable(request, stepBefore)
+      if (framesAfter < maximumFramesAhead) {
+        val (stepStart, stepFinish, stepsExtra) = constructStepsForRequest(request, framesAfter)
+        if (_autosupply && allowSupplyInjection && supplyWouldRunOut(stepStart, stepBefore)) {
+          val farm = With.self.supplyClass
+          tryInsertRequest(RequestUnit(farm, stepBefore.state.unitsExtant(farm) + 1, With.frame + stepBefore.event.dFrames - With.self.supplyClass.buildFrames))
+          iDiff -= 1
+          allowSupplyInjection = false
+        } else {
+          val iStart = insert(stepStart)
+          insert(stepFinish)
+          stepsExtra.foreach(insert)
+          updateStatesFrom(iStart)
+          allowSupplyInjection = true
+        }
+      }
+    }
+  }
+
+  // TODO: Don't occupy Probes
+  // TODO: Don't return producers which morph
+  // TODO: Reduce diff for zergling/scourge
+
+  private def missingCount(request: RequestBuildable): Int = {
     // Units:
     // - (Default) If there is no placement query, use our state count
-    // - (Special) If there is a  placement query, count our complete units which the tile filter accepts
+    // - (Special) If there is a placement query, count our complete units which the tile filter accepts
     var unitDiff = request.unit
       .map(u =>
         request.quantity -
@@ -226,70 +297,52 @@ final class MacroSim {
     }
     val upgradeDiff = request.upgrade.map(u => request.quantity - steps.last.state.upgrades(u)).getOrElse(0)
     val techDiff    = Maff.fromBoolean(request.tech.exists(t => ! steps.last.state.techs.contains(t)))
-    val diff        = Maff.vmax(unitDiff, upgradeDiff, techDiff)
-    if (diff <= 0) {
-      redundant += request
+    Maff.vmax(unitDiff, upgradeDiff, techDiff)
+  }
 
-      return
+  /** First step after which the request may start, or None if it cannot start
+    * within the simulated horizon and has to be denied.
+    */
+  private def findInsertionIndex(request: RequestBuildable): Option[Int] = {
+    var insertionResult : InsertionResult = TooFarInTheFuture
+    var stepIndex       : Int             = minInsert.getOrElse(request, 0)
+    while (stepIndex < steps.length && steps(stepIndex).event.dFrames < maximumFramesAhead) {
+      insertionResult = tryInsertAfter(request, steps(stepIndex), stepIndex)
+      if (insertionResult == Success) {
+        return Some(stepIndex)
+      }
+
+      minInsert(request) = Math.max(stepIndex, minInsert.getOrElse(request, stepIndex))
+      stepIndex += 1
+    }
+    denied += ((request, insertionResult))
+    None
+  }
+
+  private def framesUntilAffordable(request: RequestBuildable, stepBefore: MacroStep): Int = {
+    Math.ceil(Seq(
+      request.minStartFrame - With.frame,
+      stepBefore.event.dFrames,
+      if (request.mineralCost <= stepBefore.state.minerals) 0 else stepBefore.event.dFrames + Maff.nanToN((request.mineralCost - stepBefore.state.minerals)  / _simIncomeMineralsPerFrame,  Forever()),
+      if (request.gasCost     <= stepBefore.state.gas)      0 else stepBefore.event.dFrames + Maff.nanToN((request.gasCost      - stepBefore.state.gas)       / _simIncomeGasPerFrame,       Forever()))
+      .max).toInt
+  }
+
+  /** True when finishing this request would leave us supply-blocked, so a farm
+    * is worth inserting first.
+    */
+  private def supplyWouldRunOut(stepStart: MacroStep, stepBefore: MacroStep): Boolean = {
+    if (stepStart.event.dSupplyUsed <= 0) {
+      return false
     }
 
-    var allowSupplyInjection: Boolean = true
-    var iDiff = 0
-    while (iDiff < diff) {
-      iDiff += 1
-      var insertionResult : InsertionResult = TooFarInTheFuture
-      var stepIndex       : Int             = minInsert.getOrElse(request, 0)
-      var succeeded       : Boolean         = false
-      var stepBefore      : MacroStep       = null
-      while ( ! succeeded && stepIndex < steps.length && steps(stepIndex).event.dFrames < maximumFramesAhead) {
-        stepBefore      = steps(stepIndex)
-        insertionResult = tryInsertAfter(request, stepBefore, stepIndex)
-        succeeded       = insertionResult == Success
-        if ( ! succeeded) {
-          minInsert(request) = Math.max(stepIndex, minInsert.getOrElse(request, stepIndex))
-          stepIndex += 1
-        }
-      }
-      if ( ! succeeded) {
-        denied += ((request, insertionResult))
-
-        return
-      }
-
-      val framesAfter = Math.ceil(Seq(
-        request.minStartFrame - With.frame,
-        stepBefore.event.dFrames,
-        if (request.mineralCost <= stepBefore.state.minerals) 0 else stepBefore.event.dFrames + Maff.nanToN((request.mineralCost  - stepBefore.state.minerals)  / _simIncomeMineralsPerFrame,  Forever()),
-        if (request.gasCost     <= stepBefore.state.gas)      0 else stepBefore.event.dFrames + Maff.nanToN((request.gasCost      - stepBefore.state.gas)       / _simIncomeGasPerFrame,       Forever()))
-        .max).toInt
-      if (framesAfter < maximumFramesAhead) {
-        val (stepStart, stepFinish, stepsExtra) = constructStepsForRequest(request, framesAfter)
-        lazy val indexAfterSupplyWouldFinish  = fit(stepStart.event.dFrames + With.self.supplyClass.buildFrames)
-        lazy val stepAfterSupplyWouldFinish   = steps(Math.min(indexAfterSupplyWouldFinish, steps.length - 1))
-
-        if (_autosupply
-          && allowSupplyInjection
-          && stepStart.event.dSupplyUsed > 0
-          && stepAfterSupplyWouldFinish.state.supplyAvailable < Math.min(
-            400,
-            stepBefore.state.supplyUsed
-            + stepStart.event.dSupplyUsed
-            + stepBefore.state.supplyUsePerFrame * With.self.supplyClass.buildFrames / 2)) {
-
-          val
-          farm = With.self.supplyClass
-          tryInsertRequest(RequestUnit(farm, stepBefore.state.unitsExtant(farm) + 1, With.frame + stepBefore.event.dFrames - With.self.supplyClass.buildFrames))
-          iDiff -= 1
-          allowSupplyInjection = false
-        } else {
-          val iStart = insert(stepStart)
-          insert(stepFinish)
-          stepsExtra.foreach(insert)
-          updateStatesFrom(iStart)
-          allowSupplyInjection = true
-        }
-      }
-    }
+    val indexAfterSupplyWouldFinish = fit(stepStart.event.dFrames + With.self.supplyClass.buildFrames)
+    val stepAfterSupplyWouldFinish  = steps(Math.min(indexAfterSupplyWouldFinish, steps.length - 1))
+    stepAfterSupplyWouldFinish.state.supplyAvailable < Math.min(
+      400,
+      stepBefore.state.supplyUsed
+      + stepStart.event.dSupplyUsed
+      + stepBefore.state.supplyUsePerFrame * With.self.supplyClass.buildFrames / 2)
   }
 
   private def extantAt(buildable: Buildable, step: MacroStep): Int = {
@@ -479,37 +532,16 @@ final class MacroSim {
   private def updateStatesFrom(index: Int): Unit = {
     var i = index
     while (i < steps.length) {
-      val stateLast = steps(i - 1).state
-      val stateNext = steps(i).state
-      val event     = steps(i).event
-      val dFrames   = event.dFrames - steps(i - 1).event.dFrames
-      stateNext.minerals          = stateLast.minerals        + event.dMinerals + (dFrames * _simIncomeMineralsPerFrame).toInt
-      stateNext.gas               = stateLast.gas             + event.dGas      + (dFrames * _simIncomeGasPerFrame).toInt
-      stateNext.supplyAvailable   = Math.min(400, stateLast.supplyAvailable + event.dSupplyAvailable)
-      stateNext.supplyUsed        = stateLast.supplyUsed      + event.dSupplyUsed
-      stateNext.mineralPatches    = stateLast.mineralPatches  + event.dMineralPatches
-      stateNext.geysers           = stateLast.geysers         + event.dGeysers
-      stateNext.techs             = stateLast.techs
-      stateNext.upgrades          = stateLast.upgrades
-      stateNext.unitsExtant       = stateLast.unitsExtant
-      stateNext.unitsComplete     = stateLast.unitsComplete
-      stateNext.unitsCompleteASAP = stateLast.unitsCompleteASAP
-      stateNext.producers         = stateLast.producers
-      if (event.dUpgrade          != Upgrades.None)                                                                                 stateNext.upgrades          = stateNext.upgrades.clone
-      if (event.dUnitExtant1      != UnitClasses.None || event.dUnitExtant2 != UnitClasses.None)                                    stateNext.unitsExtant       = stateNext.unitsExtant.clone
-      if (event.dUnitComplete     != UnitClasses.None)                                                                              stateNext.unitsComplete     = stateNext.unitsComplete.clone
-      if (event.dUnitCompleteASAP != UnitClasses.None)                                                                              stateNext.unitsCompleteASAP = stateNext.unitsCompleteASAP.clone
-      if (event.dProducer1        != UnitClasses.None || event.dProducer2 != UnitClasses.None || event.dAddon != UnitClasses.None)  stateNext.producers         = stateNext.producers.clone
-      if (event.dTech             != Techs.None)        stateNext.techs                                       += event.dTech
-      if (event.dUpgrade          != Upgrades.None)     stateNext.upgrades(event.dUpgrade)                    =  event.dUpgradeLevel
-      if (event.dUnitExtant1      != UnitClasses.None)  stateNext.unitsExtant(event.dUnitExtant1)             += event.dUnitExtant1N
-      if (event.dUnitExtant2      != UnitClasses.None)  stateNext.unitsExtant(event.dUnitExtant2)             += event.dUnitExtant2N
-      if (event.dUnitComplete     != UnitClasses.None)  stateNext.unitsComplete(event.dUnitComplete)          += event.dUnitCompleteN
-      if (event.dUnitCompleteASAP != UnitClasses.None)  stateNext.unitsCompleteASAP(event.dUnitCompleteASAP)  += event.dUnitCompleteASAPN
-      if (event.dProducer1        != UnitClasses.None)  stateNext.producers(event.dProducer1)                 += event.dProducer1N
-      if (event.dProducer2        != UnitClasses.None)  stateNext.producers(event.dProducer2)                 += event.dProducer2N
-      if (event.dAddon            != UnitClasses.None)  stateNext.producers(event.dAddon)                     += event.dAddonN
-      stateNext.supplyUsePerFrame = MacroProducers.ours.view.map(p => stateNext.unitsExtant(p.producer) * p.supplyUsePerFrame).sum
+      val previous = steps(i - 1)
+      val step     = steps(i)
+      MacroStateAdvance.advance(
+        previous.state,
+        step.state,
+        step.event,
+        step.event.dFrames - previous.event.dFrames,
+        _simIncomeMineralsPerFrame,
+        _simIncomeGasPerFrame)
+      step.state.supplyUsePerFrame = MacroProducers.ours.view.map(p => step.state.unitsExtant(p.producer) * p.supplyUsePerFrame).sum
       i += 1
     }
   }
