@@ -294,26 +294,38 @@ object PlacementCacheFormat {
   }
 
   private def writeWall(output: DataOutputStream, wall: Wall): Unit = {
-    val spanIndex = spans.indexOf(wall.constraint.span)
-    if (spanIndex < 0) throw new IOException(f"Unknown wall span ${wall.constraint.span}")
-    output.writeByte(unsignedByte(wall.constraint.gapTiles, "wall gap tiles"))
-    output.writeByte(unsignedByte(wall.constraint.buildings.size, "wall constraint buildings"))
-    output.writeShort(unsignedShort(wall.constraint.blocksUnit.id, "wall blocking unit ID"))
+    writeConstraint(output, wall.constraint)
+    writeBuildings(output, wall.buildings)
+    writeHallway(output, wall.gap, wall.hallway, wall.hallwayOutside)
+    output.writeDouble(wall.score)
+  }
+
+  private def writeConstraint(output: DataOutputStream, constraint: WallConstraint): Unit = {
+    val spanIndex = spans.indexOf(constraint.span)
+    if (spanIndex < 0) throw new IOException(f"Unknown wall span ${constraint.span}")
+    output.writeByte(unsignedByte(constraint.gapTiles, "wall gap tiles"))
+    output.writeByte(unsignedByte(constraint.buildings.size, "wall constraint buildings"))
+    output.writeShort(unsignedShort(constraint.blocksUnit.id, "wall blocking unit ID"))
     output.writeByte(spanIndex)
-    output.writeByte(wall.constraint.buildings.size)
-    wall.constraint.buildings.foreach(building => output.writeShort(unsignedShort(building.id, "wall constraint unit ID")))
-    output.writeShort(unsignedShort(wall.buildings.size, "wall buildings"))
-    wall.buildings.foreach(building => {
+    output.writeByte(constraint.buildings.size)
+    constraint.buildings.foreach(building => output.writeShort(unsignedShort(building.id, "wall constraint unit ID")))
+  }
+
+  private def writeBuildings(output: DataOutputStream, buildings: Seq[(Tile, UnitClass)]): Unit = {
+    output.writeShort(unsignedShort(buildings.size, "wall buildings"))
+    buildings.foreach(building => {
       writeTile(output, building._1)
       output.writeShort(unsignedShort(building._2.id, "wall building unit ID"))
     })
-    output.writeBoolean(wall.gap.isDefined)
-    wall.gap.foreach(writeTile(output, _))
-    output.writeShort(unsignedShort(wall.hallway.size, "wall hallway"))
-    wall.hallway.foreach(writeTile(output, _))
-    output.writeShort(unsignedShort(wall.hallwayOutside.size, "outside wall hallway"))
-    wall.hallwayOutside.foreach(writeTile(output, _))
-    output.writeDouble(wall.score)
+  }
+
+  private def writeHallway(output: DataOutputStream, gap: Option[Tile], hallway: Seq[Tile], hallwayOutside: Seq[Tile]): Unit = {
+    output.writeBoolean(gap.isDefined)
+    gap.foreach(writeTile(output, _))
+    output.writeShort(unsignedShort(hallway.size, "wall hallway"))
+    hallway.foreach(writeTile(output, _))
+    output.writeShort(unsignedShort(hallwayOutside.size, "outside wall hallway"))
+    hallwayOutside.foreach(writeTile(output, _))
   }
 
   private def readTile(input: DataInputStream): Tile = {

@@ -319,48 +319,54 @@ final class Tactician extends TimedTask {
   }
 
   private def fillAttackSquad(freelancers: ListBuffer[FriendlyUnitInfo], squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Unit = {
-    //////////
-    // FILL //
-    //////////
-
-    def freelancerValue         = freelancers.view.map(_.subjectiveValue).sum
-    val freelancerValueInitial  = freelancerValue
-
-    // If we want to attack and enough freelancers remain, populate the attack squad
-    // TODO: If the attack goal is the enemy army, and we have a defense squad handling it, skip this step
-    // On UMS maps there are no bases to defend and no macro call to attack,
-    // so the squad would starve: units stay squadless with UmsMode termini and
-    // nobody (HuntContact, detectors, formations) owns them. Staff it anyway.
-    if ((With.blackboard.wantToAttack() || With.umsMode) && (With.blackboard.yoloing() || freelancerValue >= freelancerValueInitial * .7)) {
-      val attackQualities = attackSquad.qualityCounter.qualitiesEnemy
-      // Let's set the attack squad up for success
-      if (MacroFacts.enemyHasShown(Terran.MachineShop, Terran.Vulture, Terran.SpiderMine, Terran.SiegeTankUnsieged, Terran.SiegeTankSieged)) {
-        attackQualities.increaseTo(Qualities.Vulture,     (Terran.Vulture.subjectiveValue * Math.max(3, With.units.countEnemy(Terran.Vulture))).toInt)
-        attackQualities.increaseTo(Qualities.SpiderMine,  3 * Terran.SpiderMine.subjectiveValue.toInt)
-        attackQualities.increaseTo(Qualities.Cloaked,     3 * Terran.SpiderMine.subjectiveValue.toInt)
-      }
-      if (MacroFacts.enemyDarkTemplarLikely) {
-        attackQualities.increaseTo(Qualities.Cloaked, Protoss.DarkTemplar.subjectiveValue.toInt)
-      }
-      if (MacroFacts.enemyLurkersLikely) {
-        attackQualities.increaseTo(Qualities.Cloaked, Zerg.Lurker.subjectiveValue.toInt)
-      }
+    if (shouldStaffAttackSquad(freelancers)) {
+      primeAttackSquadQualities()
       Assignment.unitsPick(freelancers, Seq(attackSquad))
     } else if (With.geography.ourBases.nonEmpty) {
       // No own bases on UMS maps: nothing to defend, so freelancers keep the
       // terminus UmsMode gave them instead of joining phantom defense squads.
-      // Assign remaining freelancers to a defense squad.
-      // If none are active, activate one to defend our entrance
-      Assignment.unitsPick(freelancers, ?(
-        squadsDefending.nonEmpty,
-        squadsDefending.view.map(_._2),
-        Maff.maxBy(Maff.orElse(
-            With.blackboard.basesToHold(),
-            With.geography.ourBasesAndSettlements))(_.economicValue())
-          .map(GetDefenseBase(_))
-          .map(defenseSquads)
-          .toSeq))
+      Assignment.unitsPick(freelancers, defenseSquadsFor(squadsDefending))
     }
+  }
+
+  /**
+   * If we want to attack and enough freelancers remain, populate the attack
+   * squad. On UMS maps there are no bases to defend and no macro call to
+   * attack, so the squad would starve: units stay squadless with UmsMode
+   * termini and nobody (HuntContact, detectors, formations) owns them. Staff
+   * it anyway.
+   */
+  private def shouldStaffAttackSquad(freelancers: ListBuffer[FriendlyUnitInfo]): Boolean = {
+    val freelancerValue = freelancers.view.map(_.subjectiveValue).sum
+    (With.blackboard.wantToAttack() || With.umsMode) && (With.blackboard.yoloing() || freelancerValue >= freelancerValue * .7)
+  }
+
+  /** Let's set the attack squad up for success against what the enemy has shown. */
+  private def primeAttackSquadQualities(): Unit = {
+    val attackQualities = attackSquad.qualityCounter.qualitiesEnemy
+    if (MacroFacts.enemyHasShown(Terran.MachineShop, Terran.Vulture, Terran.SpiderMine, Terran.SiegeTankUnsieged, Terran.SiegeTankSieged)) {
+      attackQualities.increaseTo(Qualities.Vulture,     (Terran.Vulture.subjectiveValue * Math.max(3, With.units.countEnemy(Terran.Vulture))).toInt)
+      attackQualities.increaseTo(Qualities.SpiderMine,  3 * Terran.SpiderMine.subjectiveValue.toInt)
+      attackQualities.increaseTo(Qualities.Cloaked,     3 * Terran.SpiderMine.subjectiveValue.toInt)
+    }
+    if (MacroFacts.enemyDarkTemplarLikely) {
+      attackQualities.increaseTo(Qualities.Cloaked, Protoss.DarkTemplar.subjectiveValue.toInt)
+    }
+    if (MacroFacts.enemyLurkersLikely) {
+      attackQualities.increaseTo(Qualities.Cloaked, Zerg.Lurker.subjectiveValue.toInt)
+    }
+  }
+
+  /** Active defense squads, or one raised at the base worth holding most. */
+  private def defenseSquadsFor(squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Seq[Squad] = {
+    ?(squadsDefending.nonEmpty,
+      squadsDefending.view.map(_._2),
+      Maff.maxBy(Maff.orElse(
+          With.blackboard.basesToHold(),
+          With.geography.ourBasesAndSettlements))(_.economicValue())
+        .map(GetDefenseBase(_))
+        .map(defenseSquads)
+        .toSeq)
   }
 
   private def pullDefenseWorkers(squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Unit = {

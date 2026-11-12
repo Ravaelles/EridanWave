@@ -244,168 +244,219 @@ final case class UnitClass(base: UnitType) extends UnitClassProxy(base) with Uni
 
   lazy val baseClass: UnitClass = ?(isTank, Terran.SiegeTankUnsieged, this)
 
-  private def _buildUnitsEnabling: Vector[UnitClass] = {
-    lazy val output = new ListBuffer[UnitClass]
+  private def _buildUnitsEnabling: Vector[UnitClass] =
+    _enablingProtossBase ++ _enablingTerran ++ _enablingProtossTech ++ _enablingZerg
 
-    // Probes (Protoss buildings)
+  /** Every Protoss structure comes out of a Probe, and most need a Pylon. */
+  private def _enablingProtossBase: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
     addBuildUnitIf(output, isProtoss && isBuilding, Protoss.Probe)
-
-    // Pylon (Protoss buildings except Nexus/Pylon/Assimilator)
-    addBuildUnitIf(output, requiresPsi, Protoss.Pylon)
-
-    // Obvious prerequisites
-    addBuildUnitIf(output, Terran.Firebat, Terran.Academy)
-    addBuildUnitIf(output, Terran.Medic, Terran.Academy)
-    addBuildUnitIf(output, Terran.Ghost, Terran.Academy)
-    addBuildUnitIf(output, Terran.Ghost, Terran.CovertOps)
-    addBuildUnitIf(output, Terran.Goliath, Terran.Armory)
-    addBuildUnitIf(output, Terran.SiegeTankUnsieged, Terran.MachineShop)
-    addBuildUnitIf(output, Terran.Dropship, Terran.ControlTower)
-    addBuildUnitIf(output, Terran.Valkyrie, Terran.Armory)
-    addBuildUnitIf(output, Terran.Valkyrie, Terran.ControlTower)
-    addBuildUnitIf(output, Terran.ScienceVessel, Terran.ScienceFacility)
-    addBuildUnitIf(output, Terran.ScienceVessel, Terran.ControlTower)
-    addBuildUnitIf(output, Terran.Battlecruiser, Terran.PhysicsLab)
-    addBuildUnitIf(output, Terran.Battlecruiser, Terran.ControlTower)
-    addBuildUnitIf(output, Terran.MissileTurret, Terran.EngineeringBay)
-    addBuildUnitIf(output, Terran.Bunker, Terran.Barracks)
-    addBuildUnitIf(output, Terran.Factory, Terran.Barracks)
-    addBuildUnitIf(output, Terran.Academy, Terran.Barracks)
-    addBuildUnitIf(output, Terran.Comsat, Terran.Academy)
-    addBuildUnitIf(output, Terran.Armory, Terran.Factory)
-    addBuildUnitIf(output, Terran.Starport, Terran.Factory)
-    addBuildUnitIf(output, Terran.ScienceFacility, Terran.Factory)
-    addBuildUnitIf(output, Terran.ScienceFacility, Terran.Starport)
-    addBuildUnitIf(output, Terran.NuclearSilo, Terran.CovertOps)
-    addBuildUnitIf(output, Protoss.Dragoon, Protoss.CyberneticsCore)
-    addBuildUnitIf(output, Protoss.HighTemplar, Protoss.TemplarArchives)
-    addBuildUnitIf(output, Protoss.DarkTemplar, Protoss.TemplarArchives)
-    addBuildUnitIf(output, Protoss.Arbiter, Protoss.TemplarArchives)
-    addBuildUnitIf(output, Protoss.Reaver, Protoss.RoboticsSupportBay)
-    addBuildUnitIf(output, Protoss.Observer, Protoss.Observatory)
-    addBuildUnitIf(output, Protoss.Carrier, Protoss.FleetBeacon)
-    addBuildUnitIf(output, Protoss.Arbiter, Protoss.ArbiterTribunal)
-    addBuildUnitIf(output, Protoss.PhotonCannon, Protoss.Forge)
-    addBuildUnitIf(output, Protoss.ShieldBattery, Protoss.Gateway)
-    addBuildUnitIf(output, Protoss.CyberneticsCore, Protoss.Gateway)
-    addBuildUnitIf(output, Protoss.RoboticsFacility, Protoss.CyberneticsCore)
-    addBuildUnitIf(output, Protoss.Stargate, Protoss.CyberneticsCore)
-    addBuildUnitIf(output, Protoss.CitadelOfAdun, Protoss.CyberneticsCore)
-    addBuildUnitIf(output, Protoss.TemplarArchives, Protoss.CitadelOfAdun)
-    addBuildUnitIf(output, Protoss.RoboticsSupportBay, Protoss.RoboticsFacility)
-    addBuildUnitIf(output, Protoss.Observatory, Protoss.RoboticsFacility)
-    addBuildUnitIf(output, Protoss.FleetBeacon, Protoss.Stargate)
-    addBuildUnitIf(output, Protoss.ArbiterTribunal, Protoss.Stargate)
-    addBuildUnitIf(output, Protoss.ArbiterTribunal, Protoss.TemplarArchives)
-    addBuildUnitIf(output, Zerg.Zergling, Zerg.SpawningPool)
-    addBuildUnitIf(output, Zerg.Hydralisk, Zerg.HydraliskDen)
-    addBuildUnitIf(output, Zerg.Mutalisk, Zerg.Spire)
-    addBuildUnitIf(output, Zerg.Scourge, Zerg.Spire)
-    addBuildUnitIf(output, Zerg.Queen, Zerg.QueensNest)
-    addBuildUnitIf(output, Zerg.Ultralisk, Zerg.UltraliskCavern)
-    addBuildUnitIf(output, Zerg.Defiler, Zerg.DefilerMound)
-    addBuildUnitIf(output, Zerg.Guardian, Zerg.GreaterSpire)
-    addBuildUnitIf(output, Zerg.Devourer, Zerg.GreaterSpire)
-    addBuildUnitIf(output, Zerg.SporeColony, Zerg.EvolutionChamber)
-    addBuildUnitIf(output, Zerg.SunkenColony, Zerg.SpawningPool)
-    addBuildUnitIf(output, Zerg.HydraliskDen, Zerg.SpawningPool)
-    addBuildUnitIf(output, Zerg.Lair, Zerg.SpawningPool)
-    addBuildUnitIf(output, Zerg.Spire, Zerg.Lair)
-    addBuildUnitIf(output, Zerg.QueensNest, Zerg.Lair)
-    addBuildUnitIf(output, Zerg.Hive, Zerg.QueensNest)
-    addBuildUnitIf(output, Zerg.UltraliskCavern, Zerg.Hive)
-    addBuildUnitIf(output, Zerg.DefilerMound, Zerg.Hive)
-    addBuildUnitIf(output, Zerg.GreaterSpire, Zerg.Hive)
-    addBuildUnitIf(output, Zerg.NydusCanal, Zerg.Hive)
-
+    addBuildUnitIf(output, requiresPsi,             Protoss.Pylon)
     output.toVector
   }
 
-  private def _buildUnitsBorrowed: Vector[UnitClass] = {
+  private def _enablingTerran: Vector[UnitClass] =
+    _enablingTerranUnits ++ _enablingTerranStructures
 
-    lazy val output = new ListBuffer[UnitClass]
+  private def _enablingTerranUnits: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Terran.Firebat,          Terran.Academy)
+    addBuildUnitIf(output, Terran.Medic,            Terran.Academy)
+    addBuildUnitIf(output, Terran.Ghost,            Terran.Academy)
+    addBuildUnitIf(output, Terran.Ghost,            Terran.CovertOps)
+    addBuildUnitIf(output, Terran.Goliath,          Terran.Armory)
+    addBuildUnitIf(output, Terran.SiegeTankUnsieged,Terran.MachineShop)
+    addBuildUnitIf(output, Terran.Dropship,         Terran.ControlTower)
+    addBuildUnitIf(output, Terran.Valkyrie,         Terran.Armory)
+    addBuildUnitIf(output, Terran.Valkyrie,         Terran.ControlTower)
+    addBuildUnitIf(output, Terran.ScienceVessel,    Terran.ScienceFacility)
+    addBuildUnitIf(output, Terran.ScienceVessel,    Terran.ControlTower)
+    addBuildUnitIf(output, Terran.Battlecruiser,    Terran.PhysicsLab)
+    addBuildUnitIf(output, Terran.Battlecruiser,    Terran.ControlTower)
+    output.toVector
+  }
 
+  private def _enablingTerranStructures: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Terran.MissileTurret,  Terran.EngineeringBay)
+    addBuildUnitIf(output, Terran.Bunker,         Terran.Barracks)
+    addBuildUnitIf(output, Terran.Factory,        Terran.Barracks)
+    addBuildUnitIf(output, Terran.Academy,        Terran.Barracks)
+    addBuildUnitIf(output, Terran.Comsat,         Terran.Academy)
+    addBuildUnitIf(output, Terran.Armory,         Terran.Factory)
+    addBuildUnitIf(output, Terran.Starport,       Terran.Factory)
+    addBuildUnitIf(output, Terran.ScienceFacility,Terran.Factory)
+    addBuildUnitIf(output, Terran.ScienceFacility,Terran.Starport)
+    addBuildUnitIf(output, Terran.NuclearSilo,    Terran.CovertOps)
+    output.toVector
+  }
+
+  private def _enablingProtossTech: Vector[UnitClass] =
+    _enablingProtossUnits ++ _enablingProtossStructures
+
+  private def _enablingProtossUnits: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Protoss.Dragoon,      Protoss.CyberneticsCore)
+    addBuildUnitIf(output, Protoss.HighTemplar,  Protoss.TemplarArchives)
+    addBuildUnitIf(output, Protoss.DarkTemplar,  Protoss.TemplarArchives)
+    addBuildUnitIf(output, Protoss.Arbiter,      Protoss.TemplarArchives)
+    addBuildUnitIf(output, Protoss.Reaver,       Protoss.RoboticsSupportBay)
+    addBuildUnitIf(output, Protoss.Observer,     Protoss.Observatory)
+    addBuildUnitIf(output, Protoss.Carrier,      Protoss.FleetBeacon)
+    addBuildUnitIf(output, Protoss.Arbiter,      Protoss.ArbiterTribunal)
+    output.toVector
+  }
+
+  private def _enablingProtossStructures: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Protoss.PhotonCannon,      Protoss.Forge)
+    addBuildUnitIf(output, Protoss.ShieldBattery,     Protoss.Gateway)
+    addBuildUnitIf(output, Protoss.CyberneticsCore,   Protoss.Gateway)
+    addBuildUnitIf(output, Protoss.RoboticsFacility,  Protoss.CyberneticsCore)
+    addBuildUnitIf(output, Protoss.Stargate,          Protoss.CyberneticsCore)
+    addBuildUnitIf(output, Protoss.CitadelOfAdun,     Protoss.CyberneticsCore)
+    addBuildUnitIf(output, Protoss.TemplarArchives,   Protoss.CitadelOfAdun)
+    addBuildUnitIf(output, Protoss.RoboticsSupportBay,Protoss.RoboticsFacility)
+    addBuildUnitIf(output, Protoss.Observatory,       Protoss.RoboticsFacility)
+    addBuildUnitIf(output, Protoss.FleetBeacon,       Protoss.Stargate)
+    addBuildUnitIf(output, Protoss.ArbiterTribunal,   Protoss.Stargate)
+    addBuildUnitIf(output, Protoss.ArbiterTribunal,   Protoss.TemplarArchives)
+    output.toVector
+  }
+
+  private def _enablingZerg: Vector[UnitClass] =
+    _enablingZergUnits ++ _enablingZergStructures
+
+  private def _enablingZergUnits: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Zerg.Zergling,   Zerg.SpawningPool)
+    addBuildUnitIf(output, Zerg.Hydralisk,  Zerg.HydraliskDen)
+    addBuildUnitIf(output, Zerg.Mutalisk,   Zerg.Spire)
+    addBuildUnitIf(output, Zerg.Scourge,    Zerg.Spire)
+    addBuildUnitIf(output, Zerg.Queen,      Zerg.QueensNest)
+    addBuildUnitIf(output, Zerg.Ultralisk,  Zerg.UltraliskCavern)
+    addBuildUnitIf(output, Zerg.Defiler,    Zerg.DefilerMound)
+    addBuildUnitIf(output, Zerg.Guardian,   Zerg.GreaterSpire)
+    addBuildUnitIf(output, Zerg.Devourer,   Zerg.GreaterSpire)
+    output.toVector
+  }
+
+  private def _enablingZergStructures: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Zerg.SporeColony,    Zerg.EvolutionChamber)
+    addBuildUnitIf(output, Zerg.SunkenColony,   Zerg.SpawningPool)
+    addBuildUnitIf(output, Zerg.HydraliskDen,   Zerg.SpawningPool)
+    addBuildUnitIf(output, Zerg.Lair,           Zerg.SpawningPool)
+    addBuildUnitIf(output, Zerg.Spire,          Zerg.Lair)
+    addBuildUnitIf(output, Zerg.QueensNest,     Zerg.Lair)
+    addBuildUnitIf(output, Zerg.Hive,           Zerg.QueensNest)
+    addBuildUnitIf(output, Zerg.UltraliskCavern,Zerg.Hive)
+    addBuildUnitIf(output, Zerg.DefilerMound,   Zerg.Hive)
+    addBuildUnitIf(output, Zerg.GreaterSpire,   Zerg.Hive)
+    addBuildUnitIf(output, Zerg.NydusCanal,     Zerg.Hive)
+    output.toVector
+  }
+
+  private def _buildUnitsBorrowed: Vector[UnitClass] =
+    _borrowedTerran ++ _borrowedProtoss ++ _borrowedZerg
+
+  private def _borrowedTerran: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
     // SCV (for all Terran building except add-ons)
     addBuildUnitIf(output, isBuilding && race == Race.Terran && !isAddon, Terran.SCV)
-
     // All Terran units that train from buildings
-    addBuildUnitIf(output, Terran.SCV, Terran.CommandCenter)
-    addBuildUnitIf(output, Terran.Marine, Terran.Barracks)
-    addBuildUnitIf(output, Terran.Firebat, Terran.Barracks)
-    addBuildUnitIf(output, Terran.Medic, Terran.Barracks)
-    addBuildUnitIf(output, Terran.Ghost, Terran.Barracks)
-    addBuildUnitIf(output, Terran.Vulture, Terran.Factory)
-    addBuildUnitIf(output, Terran.Goliath, Terran.Factory)
-    addBuildUnitIf(output, Terran.SiegeTankUnsieged, Terran.Factory)
-    addBuildUnitIf(output, Terran.Dropship, Terran.Starport)
-    addBuildUnitIf(output, Terran.Wraith, Terran.Starport)
-    addBuildUnitIf(output, Terran.Valkyrie, Terran.Starport)
-    addBuildUnitIf(output, Terran.ScienceVessel, Terran.Starport)
-    addBuildUnitIf(output, Terran.Battlecruiser, Terran.Starport)
-    addBuildUnitIf(output, Terran.NuclearMissile, Terran.NuclearSilo)
-
+    addBuildUnitIf(output, Terran.SCV,                  Terran.CommandCenter)
+    addBuildUnitIf(output, Terran.Marine,               Terran.Barracks)
+    addBuildUnitIf(output, Terran.Firebat,              Terran.Barracks)
+    addBuildUnitIf(output, Terran.Medic,                Terran.Barracks)
+    addBuildUnitIf(output, Terran.Ghost,                Terran.Barracks)
+    addBuildUnitIf(output, Terran.Vulture,              Terran.Factory)
+    addBuildUnitIf(output, Terran.Goliath,              Terran.Factory)
+    addBuildUnitIf(output, Terran.SiegeTankUnsieged,    Terran.Factory)
+    addBuildUnitIf(output, Terran.Dropship,             Terran.Starport)
+    addBuildUnitIf(output, Terran.Wraith,               Terran.Starport)
+    addBuildUnitIf(output, Terran.Valkyrie,             Terran.Starport)
+    addBuildUnitIf(output, Terran.ScienceVessel,        Terran.Starport)
+    addBuildUnitIf(output, Terran.Battlecruiser,        Terran.Starport)
+    addBuildUnitIf(output, Terran.NuclearMissile,       Terran.NuclearSilo)
     // Factory (for Machine Shop)
     // Starport (for Control Tower)
     // Science Facility (for Covert Ops/Physics Lab)
     // Command Center (for Comsat/Nuke Silo)
     addBuildUnitIf(output, isAddon, whatBuilds._1)
-
-    // All Protoss units that train from buildings
-    addBuildUnitIf(output, Protoss.Probe, Protoss.Nexus)
-    addBuildUnitIf(output, Protoss.Zealot, Protoss.Gateway)
-    addBuildUnitIf(output, Protoss.Dragoon, Protoss.Gateway)
-    addBuildUnitIf(output, Protoss.HighTemplar, Protoss.Gateway)
-    addBuildUnitIf(output, Protoss.DarkTemplar, Protoss.Gateway)
-    addBuildUnitIf(output, Protoss.Shuttle, Protoss.RoboticsFacility)
-    addBuildUnitIf(output, Protoss.Reaver, Protoss.RoboticsFacility)
-    addBuildUnitIf(output, Protoss.Observer, Protoss.RoboticsFacility)
-    addBuildUnitIf(output, Protoss.Scout, Protoss.Stargate)
-    addBuildUnitIf(output, Protoss.Corsair, Protoss.Stargate)
-    addBuildUnitIf(output, Protoss.Carrier, Protoss.Stargate)
-    addBuildUnitIf(output, Protoss.Arbiter, Protoss.Stargate)
-
-    // Pop quiz: What's the only Zerg unit that trains from a building?
-    addBuildUnitIf(output, Zerg.InfestedTerran, Zerg.InfestedCommandCenter)
-    addBuildUnitIf(output, Zerg.InfestedCommandCenter, Zerg.Queen)
-
     output.toVector
   }
 
-  private def _buildUnitsSpent: Vector[UnitClass] = {
+  private def _borrowedProtoss: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Protoss.Probe,       Protoss.Nexus)
+    addBuildUnitIf(output, Protoss.Zealot,      Protoss.Gateway)
+    addBuildUnitIf(output, Protoss.Dragoon,     Protoss.Gateway)
+    addBuildUnitIf(output, Protoss.HighTemplar, Protoss.Gateway)
+    addBuildUnitIf(output, Protoss.DarkTemplar, Protoss.Gateway)
+    addBuildUnitIf(output, Protoss.Shuttle,     Protoss.RoboticsFacility)
+    addBuildUnitIf(output, Protoss.Reaver,      Protoss.RoboticsFacility)
+    addBuildUnitIf(output, Protoss.Observer,    Protoss.RoboticsFacility)
+    addBuildUnitIf(output, Protoss.Scout,       Protoss.Stargate)
+    addBuildUnitIf(output, Protoss.Corsair,     Protoss.Stargate)
+    addBuildUnitIf(output, Protoss.Carrier,     Protoss.Stargate)
+    addBuildUnitIf(output, Protoss.Arbiter,     Protoss.Stargate)
+    output.toVector
+  }
 
-    lazy val output = new ListBuffer[UnitClass]
+  /** Pop quiz: What's the only Zerg unit that trains from a building? */
+  private def _borrowedZerg: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Zerg.InfestedTerran,         Zerg.InfestedCommandCenter)
+    addBuildUnitIf(output, Zerg.InfestedCommandCenter,  Zerg.Queen)
+    output.toVector
+  }
 
-    // Archons
-    addBuildUnitIf(output, Protoss.Archon, Protoss.HighTemplar)
-    addBuildUnitIf(output, Protoss.Archon, Protoss.HighTemplar)
-    addBuildUnitIf(output, Protoss.DarkArchon, Protoss.DarkTemplar)
-    addBuildUnitIf(output, Protoss.DarkArchon, Protoss.DarkTemplar)
+  private def _buildUnitsSpent: Vector[UnitClass] =
+    _spentArchons ++ _spentLarva ++ _spentDrone ++ _spentZergMorphs
 
-    // Larva (All Zerg non-building units except Lurker/Guardian/Devourer)
-    addBuildUnitIf(output, Zerg.Drone, Zerg.Larva)
-    addBuildUnitIf(output, Zerg.Overlord, Zerg.Larva)
-    addBuildUnitIf(output, Zerg.Zergling, Zerg.Larva)
-    addBuildUnitIf(output, Zerg.Hydralisk, Zerg.Larva)
-    addBuildUnitIf(output, Zerg.Mutalisk, Zerg.Larva)
-    addBuildUnitIf(output, Zerg.Scourge, Zerg.Larva)
-    addBuildUnitIf(output, Zerg.Ultralisk, Zerg.Larva)
-    addBuildUnitIf(output, Zerg.Queen, Zerg.Larva)
-    addBuildUnitIf(output, Zerg.Defiler, Zerg.Larva)
+  private def _spentArchons: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Protoss.Archon,      Protoss.HighTemplar)
+    addBuildUnitIf(output, Protoss.Archon,      Protoss.HighTemplar)
+    addBuildUnitIf(output, Protoss.DarkArchon,  Protoss.DarkTemplar)
+    addBuildUnitIf(output, Protoss.DarkArchon,  Protoss.DarkTemplar)
+    output.toVector
+  }
 
-    // Drone (Most Zerg buildings)
-    addBuildUnitIf(output, Zerg.Hatchery, Zerg.Drone)
-    addBuildUnitIf(output, Zerg.Extractor, Zerg.Drone)
-    addBuildUnitIf(output, Zerg.CreepColony, Zerg.Drone)
-    addBuildUnitIf(output, Zerg.SpawningPool, Zerg.Drone)
+  /** All Zerg non-building units except Lurker/Guardian/Devourer. */
+  private def _spentLarva: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Zerg.Drone,      Zerg.Larva)
+    addBuildUnitIf(output, Zerg.Overlord,   Zerg.Larva)
+    addBuildUnitIf(output, Zerg.Zergling,   Zerg.Larva)
+    addBuildUnitIf(output, Zerg.Hydralisk,  Zerg.Larva)
+    addBuildUnitIf(output, Zerg.Mutalisk,   Zerg.Larva)
+    addBuildUnitIf(output, Zerg.Scourge,    Zerg.Larva)
+    addBuildUnitIf(output, Zerg.Ultralisk,  Zerg.Larva)
+    addBuildUnitIf(output, Zerg.Queen,      Zerg.Larva)
+    addBuildUnitIf(output, Zerg.Defiler,    Zerg.Larva)
+    output.toVector
+  }
+
+  private def _spentDrone: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
+    addBuildUnitIf(output, Zerg.Hatchery,       Zerg.Drone)
+    addBuildUnitIf(output, Zerg.Extractor,      Zerg.Drone)
+    addBuildUnitIf(output, Zerg.CreepColony,    Zerg.Drone)
+    addBuildUnitIf(output, Zerg.SpawningPool,   Zerg.Drone)
     addBuildUnitIf(output, Zerg.EvolutionChamber, Zerg.Drone)
-    addBuildUnitIf(output, Zerg.HydraliskDen, Zerg.Drone)
-    addBuildUnitIf(output, Zerg.Spire, Zerg.Drone)
-    addBuildUnitIf(output, Zerg.QueensNest, Zerg.Drone)
+    addBuildUnitIf(output, Zerg.HydraliskDen,   Zerg.Drone)
+    addBuildUnitIf(output, Zerg.Spire,          Zerg.Drone)
+    addBuildUnitIf(output, Zerg.QueensNest,     Zerg.Drone)
     addBuildUnitIf(output, Zerg.UltraliskCavern,Zerg.Drone)
-    addBuildUnitIf(output, Zerg.DefilerMound, Zerg.Drone)
-    addBuildUnitIf(output, Zerg.NydusCanal, Zerg.Drone)
+    addBuildUnitIf(output, Zerg.DefilerMound,   Zerg.Drone)
+    addBuildUnitIf(output, Zerg.NydusCanal,     Zerg.Drone)
+    output.toVector
+  }
 
-    // Zerg morphs
+  private def _spentZergMorphs: Vector[UnitClass] = {
+    val output = new ListBuffer[UnitClass]
     addBuildUnitIf(output, Zerg.LurkerEgg,    Zerg.Hydralisk)
     addBuildUnitIf(output, Zerg.Lurker,       Zerg.Hydralisk)
     addBuildUnitIf(output, Zerg.Cocoon,       Zerg.Mutalisk)
@@ -416,7 +467,6 @@ final case class UnitClass(base: UnitType) extends UnitClassProxy(base) with Uni
     addBuildUnitIf(output, Zerg.GreaterSpire, Zerg.Spire)
     addBuildUnitIf(output, Zerg.SunkenColony, Zerg.CreepColony)
     addBuildUnitIf(output, Zerg.SporeColony,  Zerg.CreepColony)
-
     output.toVector
   }
 
