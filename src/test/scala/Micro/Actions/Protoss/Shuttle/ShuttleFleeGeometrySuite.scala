@@ -44,4 +44,16 @@ class ShuttleFleeGeometrySuite extends AnyFunSuite {
     assert(ShuttleFleeGeometry.safetyMarginPixels(0.1, fasterFlyer = true) == 128)
     assert(ShuttleFleeGeometry.safetyMarginPixels(1.0, fasterFlyer = false) == 1760)
   }
+
+  test("melee reach never triggers the preemptive flee") {
+    assert( ! ShuttleFleeGeometry.threatensPreemptively(0.0, 32.0, 9.0 * 32.0))
+    assert( ! ShuttleFleeGeometry.threatensPreemptively(0.0, 16.0, 9.0 * 32.0))
+  }
+
+  test("a ranged threat inside reach plus band triggers the flee") {
+    // Hydralisk reach (4 tiles) + full band (9 tiles): 12 tiles flee,
+    // 14 tiles hold.
+    assert(ShuttleFleeGeometry.threatensPreemptively(12.0 * 32.0, 4.0 * 32.0, 9.0 * 32.0))
+    assert( ! ShuttleFleeGeometry.threatensPreemptively(14.0 * 32.0, 4.0 * 32.0, 9.0 * 32.0))
+  }
 }

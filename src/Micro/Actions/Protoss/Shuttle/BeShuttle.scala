@@ -50,12 +50,23 @@ object BeShuttle extends Action {
   /**
    * Enemies that can hit us inside twelve tiles push us straight out
    * (single) or off their centroid (many), margin scaled by wounds.
-   * Survival outranks even emergency pickups - a dead Shuttle saves nobody.
+   * On top of the flat radius a ranged threat whose reach plus the
+   * preemptive band (4 tiles fresh, up to 9 dying) touches us turns us
+   * around before its pack closes - sitting in the enemy main while
+   * Hydralisks walk up is how Shuttles die stupidly. Survival outranks
+   * even emergency pickups - a dead Shuttle saves nobody.
    * True when it took over movement.
    */
   private def fleeFromAirThreats(shuttle: FriendlyUnitInfo): Boolean = {
+    val preemptPixels = (ShuttleFleeGeometry.baseFleeMarginTiles
+      + shuttle.woundPercentBonus(0.0, ShuttleFleeGeometry.woundFleeBonusTiles)) * 32.0
     val attackersNear = shuttle.matchups.threats.filter(t =>
-      t.canAttack(shuttle) && t.pixelDistanceEdge(shuttle) <= 32 * AirFleeGeometry.threatRadiusTiles)
+      t.canAttack(shuttle) && (
+        t.pixelDistanceEdge(shuttle) <= 32 * AirFleeGeometry.threatRadiusTiles
+        || ShuttleFleeGeometry.threatensPreemptively(
+          t.pixelDistanceEdge(shuttle),
+          t.pixelRangeAgainst(shuttle),
+          preemptPixels)))
     AirFleeGeometry.focus(attackersNear.map(_.pixel)).exists(focus => {
       shuttle.agent.decision.set(AirFleeGeometry.fleePixel(shuttle.pixel, focus, shuttle.woundPercent()))
       shuttle.agent.act("AirFlee")

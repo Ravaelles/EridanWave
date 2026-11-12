@@ -28,6 +28,24 @@ object ShuttleFleeGeometry {
   /** Share of the cluster, nearest our base, counted as its rear. */
   val rearShare: Double = 0.33
 
+  /** Preemptive band beyond a ranged threat's own reach, in tiles. */
+  val baseFleeMarginTiles: Double = 4.0
+
+  /** Extra preemptive band at full wounds, in tiles (woundPercentBonus(0, 5)). */
+  val woundFleeBonusTiles: Double = 5.0
+
+  /** Reach above which a threat counts as ranged, in pixels. */
+  val rangedReachPixels: Double = 32.0
+
+  /**
+   * Preemptive flee trigger (pure pixels for the suite): a ranged threat
+   * whose reach plus the wound-scaled band touches us turns the Shuttle
+   * around before the pack closes - the flat twelve-tile radius alone
+   * lets Hydralisks walk up to a Shuttle sitting in the enemy main.
+   */
+  def threatensPreemptively(distPixels: Double, rangePixels: Double, marginPixels: Double): Boolean =
+    rangePixels > rangedReachPixels && distPixels < rangePixels + marginPixels
+
   def rearOfCluster(members: Seq[Pixel], base: Pixel): Pixel = {
     if (members.isEmpty) return base
 
