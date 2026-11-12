@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Debugging.Probe
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -82,6 +83,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     if (unit.agent.toAttack.isEmpty) {
       Target.choose(unit)
     }
+    Probe.note("Target", unit.id, unit.agent.toAttack.map(_.id.toString).getOrElse("-"))
     unit.agent.choosePerch()
     Commander.defaultEscalation(unit)
   }

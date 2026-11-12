@@ -72,6 +72,9 @@ object Target {
     val targetInRange = attacker.matchups.targetsInRange.exists(hasCombatPriority)
     var output: Option[UnitInfo] = None
     if (targetInRange) {
+      output = focusedTarget(attacker, allFilters)
+      if (output.isDefined) return output
+
       output = bestInStratum(attacker, assigned, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = true,  requireAcceleratesDemise = true)
       if (output.isDefined) return output
 
@@ -187,6 +190,16 @@ object Target {
     }
     ?(found, Some(best), None)
   }
+
+  // Mass fights fire as one: the squad's weakest reachable target outranks
+  // each unit's own nearest pick, so damage concentrates instead of
+  // spreading over the enemy line. Shooters that cannot reach it yet keep the
+  // normal ladder (and the formation march) instead of chasing across the
+  // line. Outside a mass fight this is None and the ladder decides.
+  private def focusedTarget(attacker: FriendlyUnitInfo, allFilters: IndexedSeq[TargetFilter]): Option[UnitInfo] =
+    FocusFire
+      .sharedTarget(attacker)
+      .filter(target => attacker.inRangeToAttack(target) && legalByFilters(attacker, target, allFilters))
 
   // Confirmed corpses are never legal: remembered units keep alive=true,
   // so this only drops Visibility.Dead, in every stratum at once.
