@@ -20,4 +20,26 @@ object MarchDress {
   def shouldWait(ownDistToGoalTiles: Double, meanDistToGoalTiles: Double): Boolean = {
     meanDistToGoalTiles - ownDistToGoalTiles > waitAheadTiles
   }
+
+  /** No dressing without contact: enemies this close, in tiles, justify it. */
+  val dressEnemyRadiusTiles: Double = 20.0
+
+  def enemyNear(distTiles: Double): Boolean =
+    distTiles <= dressEnemyRadiusTiles
+
+  /** A pack this strong marches through instead of dressing, in value. */
+  val strongArmyStrength: Double = 150.0
+
+  /** A pack this compact marches through instead of dressing, in tiles. */
+  val compactAllyTiles: Double = 3.0
+
+  /**
+   * Compact-strong-unopposed skip (pure numbers for the suite): with no
+   * armed enemy in sight, a strong pack marching elbow-to-elbow never
+   * dresses - waiting only accordion-marches a formation nobody threatens.
+   * The caller feeds live visibility, strength and spacing; this only
+   * combines them.
+   */
+  def shouldSkipWait(strength: Double, nearestAllyTiles: Double, armedEnemyVisible: Boolean): Boolean =
+    ! armedEnemyVisible && strength >= strongArmyStrength && nearestAllyTiles <= compactAllyTiles
 }

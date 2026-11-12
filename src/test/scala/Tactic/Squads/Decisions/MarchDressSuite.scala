@@ -21,4 +21,25 @@ class MarchDressSuite extends AnyFunSuite {
     assert( ! MarchDress.shouldWait(ownDistToGoalTiles = 9.0, meanDistToGoalTiles = 9.0 + MarchDress.waitAheadTiles))
     assert(MarchDress.shouldWait(ownDistToGoalTiles = 9.0 - 0.01, meanDistToGoalTiles = 9.0 + MarchDress.waitAheadTiles))
   }
+
+  test("no enemy inside twenty tiles means no dressing") {
+    assert( ! MarchDress.enemyNear(20.01))
+    assert( ! MarchDress.enemyNear(200.0))
+    assert(MarchDress.enemyNear(20.0))
+    assert(MarchDress.enemyNear(0.0))
+  }
+
+  test("an armed enemy in sight always dresses") {
+    assert( ! MarchDress.shouldSkipWait(1000.0, 0.0, armedEnemyVisible = true))
+  }
+
+  test("a weak or strung-out pack dresses even unopposed") {
+    assert( ! MarchDress.shouldSkipWait(149.0, 1.0, armedEnemyVisible = false))
+    assert( ! MarchDress.shouldSkipWait(500.0, 3.01, armedEnemyVisible = false))
+  }
+
+  test("a strong compact pack marches through instead of dressing") {
+    assert(MarchDress.shouldSkipWait(150.0, 3.0, armedEnemyVisible = false))
+    assert(MarchDress.shouldSkipWait(900.0, 0.5, armedEnemyVisible = false))
+  }
 }

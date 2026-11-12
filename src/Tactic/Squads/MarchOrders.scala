@@ -1,5 +1,6 @@
 package Tactic.Squads
 
+import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
@@ -94,7 +95,17 @@ object MarchOrders {
   // Reavers never hold: a slow hull waiting ahead of a stalled pack
   // freezes next to the enemy, so it walks back to the pack instead.
   private def dressLeg(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, suicide: Boolean): (Boolean, Boolean) = {
-    val waiting      = ! suicide && squad.fightConsensus && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
+    // Fresh reinforcements never dress on an empty battlefield: with no
+    // enemy inside twenty tiles there is no contact to dress for, so the
+    // line marches instead of posing at the spawn. A strong compact pack
+    // with no armed enemy in sight marches through for the same reason.
+    val enemyNear = unit.matchups.enemies.exists(e =>
+      e.likelyStillThere && MarchDress.enemyNear(unit.pixelDistanceEdge(e) * Maff.inv32))
+    val skipCompactStrong = MarchDress.shouldSkipWait(
+      squad.warriorsCasters.map(_.subjectiveValue).sum,
+      Maff.minBy(squad.units.view.filter(_ != unit))(_.pixelDistanceCenter(unit.pixel)).map(_.pixelDistanceCenter(unit.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      With.units.enemy.exists(e => e.visible && e.unitClass.canAttack))
+    val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
     val reaverToArmy = Protoss.Reaver(unit) && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
     (waiting && ! reaverToArmy, reaverToArmy)
   }
