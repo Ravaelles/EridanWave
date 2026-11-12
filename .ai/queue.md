@@ -67,8 +67,11 @@ pack`/`Engage` flapping throughout.
 
 Two mechanisms, two fixes:
 - Vote flicker (consensus flapping) -> `ConsensusVoteFilter` latch is
-  COMMITTED (`501c42f4b`, `Squad.prepareToRun` refreshes once per frame).
-  Still needs a long melee validation game.
+  COMMITTED (`501c42f4b`, `Squad.prepareToRun` refreshes once per frame)
+  but the FIRST version was a pass-through bug (`case (true, _)`
+  returned the streak comparison instead of holding adopted `true`;
+  fixed in `dee6339f3` with threaded tests). `GAME_78CFBB2C` ran the
+  broken version, so it validates nothing - needs a fresh melee game.
 - Overlord-chasing splitting the pack -> blocked on the Overlord fix above.
 
 ## Open: Dark Templar doctrine
@@ -124,9 +127,10 @@ per-tier predicates + in-range/visible gating, mirroring the
 
 ## Open: melee validation games
 
-- `ConsensusVoteFilter` latch: needs a long melee game showing the
-  20-30x in/out-of-consensus flips gone (Crona game `GAME_D95B0110`,
-  47 units flapping, is the baseline).
+- `ConsensusVoteFilter` latch (fixed in `dee6339f3`): needs a fresh long
+  melee game showing sub-24-frame in/out flips gone (the 47-unit
+  `GAME_D95B0110` flap predates the latch; `GAME_78CFBB2C` ran the
+  pass-through bug). Sustained retreats must stay intact.
 - Reaver +5-tile rally leash (`b9eeb500a`): Crona game `GAME_78CFBB2C`
   running at time of writing - check Reaver "Rallying to pack centroid"
   counts vs the `GAME_D95B0110` baseline.
