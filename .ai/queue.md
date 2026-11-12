@@ -26,11 +26,13 @@ Findings so far:
   JAVA_MIRROR); nothing to copy, but no blocker found either.
 
 Still to do:
-- Unzip the launcher archive into `/sc-ai/BOTS/krasi0/` as
-  `BWAPI.dll`, `AI/krasi0AIClient.exe` (+ DLLs), `read/`, `write/`,
-  `bot.json` (`name: krasi0`, race TBD - confirm Protoss, `botType: EXE`).
-- Validate with `BotPlayer("/sc-ai/BOTS/krasi0")` (structure check), then
-  one `scbw.play --bots krasi0:R` smoke game.
+- STAGED 2026-11-13: `/sc-ai/BOTS/krasi0/` holds `BWAPI.dll`,
+  `AI/krasi0AIClient.exe` (+ gmp/mpfr DLLs), `read/`, `write/`,
+  `bot.json` (`name: krasi0`, race Terran confirmed via Liquipedia -
+  Terran mech, `botType: EXE`). `BotPlayer` structure check passes
+  (TERRAN/EXE, single exe found).
+- Validate with one `scbw.play --bots krasi0:R` smoke game (needs a free
+  Wine slot - one game at a time on this box).
 - Caveats: krasi0 readme says it is SaaS (needs internet) and officially
   supports only its `supportedMaps` pack + BWTA2 data; TauCross is likely
   unsupported (still plays, possibly weaker). LF 3 required for full
@@ -54,9 +56,9 @@ Findings so far:
 - A required filter (`TargetFilter`, runs in every stratum via
   `legalByFilters`) is the right seam; `canAttack` on the filter keeps
   Corsairs hunting while Dragoons hold fire.
-- NOTE: `src/Micro/Targeting/ThreatPriority.scala` exists untracked in the
-  tree (Defiler/Lurker/Muta tiers?) - coordinate with its author before
-  touching targeting; do not duplicate the seam.
+- DONE (`a869e66d6`, suite green, no errors in game): `TargetFilterOverlord`
+  + `OverlordSnipe` kernel; awaits a natural Overlord-in-combat occurrence
+  for end-to-end proof.
 
 ## Open: army split in half
 
@@ -132,9 +134,11 @@ in range unless it dies within the next second (already handled via
 Findings so far: ladder structure mapped (`Target.best` combat-priority
 strata, `defaultTargets` is diagnostics-only). Untested seam candidate:
 per-tier predicates + in-range/visible gating, mirroring the
-`DarkTemplarTanks` doctrine shape. NOTE: untracked
-`ThreatPriority.scala` in the tree may already be this - coordinate.
-- Not started by this thread.
+`DarkTemplarTanks` doctrine shape.
+- DONE (`139b97e5a`, `ThreatPriority` kernel + suite, wired into
+  `Target.best` assigned/matchups strata): Defiler > Lurker > Mutalisk
+  tiers with wounds-first inside each tier; awaits a natural Zerg-comp
+  game for end-to-end proof.
 
 ## Open: melee validation games
 
@@ -153,7 +157,6 @@ per-tier predicates + in-range/visible gating, mirroring the
 ## Untracked files in the tree (not this thread's - coordinate first)
 
 - `scripts/kill-cleanup.sh` + `scripts/README.md` changes.
-- `src/Micro/Targeting/ThreatPriority.scala`.
 - Do not commit these from here without their author; the game-night box
   is shared - one Wine game at a time.
 

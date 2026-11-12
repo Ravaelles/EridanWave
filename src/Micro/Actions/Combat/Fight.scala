@@ -4,8 +4,9 @@ import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Basic.WorkerCombatSupport
 import Micro.Actions.Combat.Maneuvering.Retreat
-import Micro.Actions.Combat.Decisioning.Actions.{Cast, Follow, Root}
+import Micro.Actions.Combat.Maneuvering.StaticDefenseRepel
 import Micro.Actions.Combat.Maneuvering.Stealth
+import Micro.Actions.Combat.Decisioning.Actions.{Cast, Follow, Root}
 import Micro.Actions.Combat.Spells.Terran.Stim
 import Micro.Actions.Combat.Tactics._
 import Micro.Actions.Combat.Tactics.Bunker._
@@ -59,6 +60,7 @@ object Fight extends Action {
     Recharge(unit)
     Bust(unit)
     Stealth(unit)
+    StaticDefenseRepel(unit)
     unit.agent.combat.perform(unit)
     OccupyBunker(unit)
   }
