@@ -41,7 +41,7 @@ abstract class PvZ1BaseBuildOrders extends GameplanImperative {
     once(13, Protoss.Zealot)
     // Failed speedling hold that never killed: gas up for Dragoons instead
     // of trickling Zealots forever (same recovery bar as the proxy rule).
-    if (RecoveryGas.shouldGas(unitsEver(IsWarrior))) {
+    if (RecoveryGas.shouldGas(unitsEver(IsWarrior)) || With.frame > Minutes(5)()) {
       get(1, Protoss.Assimilator)
       get(Protoss.CyberneticsCore)
     }
