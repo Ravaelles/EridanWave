@@ -23,4 +23,17 @@ class ReaverBoardLogicSuite extends AnyFunSuite {
   test("a ready Reaver never boards for cooldown") {
     assert( ! ReaverBoardLogic.shouldBoardCooling(cooling = false, outranged = true, shotless = true, pressured = true))
   }
+
+  test("fighters nearby never stand") {
+    assert( ! ReaverBoardLogic.shouldStandVsWorkers(onlyWorkersNear = false, shields = 80))
+  }
+
+  test("seventy shields still board against workers") {
+    assert( ! ReaverBoardLogic.shouldStandVsWorkers(onlyWorkersNear = true, shields = 70))
+  }
+
+  test("above seventy shields the Reaver stands and shoots workers") {
+    assert(ReaverBoardLogic.shouldStandVsWorkers(onlyWorkersNear = true, shields = 71))
+    assert(ReaverBoardLogic.shouldStandVsWorkers(onlyWorkersNear = true, shields = 80))
+  }
 }

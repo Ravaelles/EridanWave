@@ -19,4 +19,18 @@ object ReaverBoardLogic {
    */
   def shouldBoardCooling(cooling: Boolean, outranged: Boolean, shotless: Boolean, pressured: Boolean): Boolean =
     cooling && (outranged || (shotless && pressured))
+
+  /** Shields above which a Reaver tanks workers instead of boarding. */
+  val standShields: Int = 70
+
+  /** Enemies this close, in tiles, decide worker-only standing. */
+  val workerStandRadiusTiles: Double = 8.0
+
+  /**
+   * Covered mineral-line stand: with only workers nearby and shields above
+   * standShields the Reaver stays grounded and shoots instead of hopping
+   * to the ride - workers cannot crack the shields before dying.
+   */
+  def shouldStandVsWorkers(onlyWorkersNear: Boolean, shields: Int): Boolean =
+    onlyWorkersNear && shields > standShields
 }

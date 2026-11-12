@@ -21,6 +21,7 @@ case class ReaverThreats(
   pressuredClose  : Boolean = false,
   tankAiming      : Boolean = false,
   holdTarget      : Boolean = false,
+  onlyWorkersNear : Boolean = false,
   targetPath      : Boolean = false,
   toAttackPath    : Boolean = false)
 
@@ -42,6 +43,10 @@ object ReaverThreats {
       outranged       = threatsInRange.exists(t => ! t.flying && t.pixelRangeAgainst(unit) < unit.pixelRangeAgainst(t)),
       shotless        = ! (unit.scarabs > 0 && ! unit.hasActiveScarab && unit.matchups.targetsInRange.exists(unit.hasScarabPathTo(_, unit.pixel))),
       pressuredClose  = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.tileDistanceEdge(t) < 4),
+      onlyWorkersNear = {
+        val nearby = unit.matchups.enemies.filter(e => unit.tileDistanceEdge(e) < ReaverBoardLogic.workerStandRadiusTiles)
+        nearby.nonEmpty && nearby.forall(_.unitClass.isWorker)
+      },
       tankAiming      = threats.exists(t => Terran.SiegeTankSieged(t) && unit.tileDistanceEdge(t) < 10),
       holdTarget      = targetNearest.exists(t => ! t.flying && unit.canAttack(t) && unit.tileDistanceEdge(t) < 7.25),
       targetPath      = targetNearest.exists(unit.hasScarabPathTo(_, unit.pixel)),

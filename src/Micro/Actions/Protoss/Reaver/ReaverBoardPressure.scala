@@ -12,6 +12,7 @@ object ReaverBoardPressure {
 
   def applies(situation: ReaverSituation): Boolean =
     ! situation.loaded && ! situation.committed && ! mustShootFirst(situation) &&
+    ! standVsWorkers(situation) &&
       ! (situation.containing && ! situation.pressured) && (
       situation.doomed ||
         situation.targetedByScarab ||
@@ -24,9 +25,13 @@ object ReaverBoardPressure {
         ReaverBoardLogic.shouldBoardCooling(situation.cooling, situation.outranged, situation.shotless, situation.pressured))
 
   /**
-   * A dropped Reaver with a Scarab ready and an enemy nearby holds to
-   * spend the shot; boarding first would circle without dealing damage.
+   * Covered mineral-line stand: with only workers nearby and shields above
+   * standShields the Reaver stays grounded and shoots instead of hopping
+   * to the ride - boarding first would circle without dealing damage.
    */
+  private def standVsWorkers(situation: ReaverSituation): Boolean =
+    ReaverBoardLogic.shouldStandVsWorkers(situation.onlyWorkersNear, situation.shields)
+
   private def mustShootFirst(situation: ReaverSituation): Boolean = {
     val shotReady = situation.scarabs > 0 && ! situation.hasActiveScarab && ! situation.cooling
     ReaverFireDiscipline.mustShootFirst(shotReady, situation.pressured || situation.holdTarget)

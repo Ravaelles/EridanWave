@@ -50,4 +50,14 @@ class ReaverBoardPressureSuite extends AnyFunSuite {
   test("a spent Reaver still boards under pressure") {
     assert(ReaverBoardPressure.applies(idle.copy(doomed = true, cooling = true, threatened = true)))
   }
+
+  test("only workers nearby with strong shields holds even doomed") {
+    assert( ! ReaverBoardPressure.applies(idle.copy(doomed = true, onlyWorkersNear = true, shields = 80)))
+    assert( ! ReaverBoardPressure.applies(idle.copy(threatened = true, pressuredClose = false, onlyWorkersNear = true, shields = 75)))
+  }
+
+  test("only workers nearby with weak shields still boards") {
+    assert(ReaverBoardPressure.applies(idle.copy(doomed = true, onlyWorkersNear = true, shields = 70)))
+    assert(ReaverBoardPressure.applies(idle.copy(doomed = true, onlyWorkersNear = true, shields = 0)))
+  }
 }
