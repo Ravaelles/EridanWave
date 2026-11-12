@@ -19,11 +19,18 @@ object Retreat extends Action {
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canMove && unit.matchups.threats.nonEmpty
 
-  case class RetreatPlan(unit: FriendlyUnitInfo, to: Pixel, name: String) {
+  case class RetreatPlan(unit: FriendlyUnitInfo, to: Pixel, name: String, preciseArrival: Boolean = false) {
     def apply(unit: FriendlyUnitInfo): Boolean = {
       if (unit.ready) {
         unit.agent.toAttack = None // Affects traffic prioritization
-        unit.agent.decision.set(to)
+        // Never brake into arrival while fleeing: a destination inside
+        // 1.5 tiles gets pushed past itself, so the unit keeps running
+        // instead of stopping under fire to re-decide. Precision maneuvers
+        // (boarding, formation offsets) opt out and arrive exactly.
+        val runTo = ?( ! preciseArrival && unit.pixelDistanceCenter(to) < 1.5 * 32,
+          unit.pixel.project(to, unit.pixelDistanceCenter(to) + 4 * 32).walkablePixel,
+          to)
+        unit.agent.decision.set(runTo)
         if (With.configuration.debugging) {
           unit.agent.act(f"Retreat$name")
         }
@@ -70,7 +77,7 @@ object Retreat extends Action {
     if ( ! unit.agent.shouldFight && unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= Shuttling.pickupRadiusEdge + 32) && unit.matchups.targetsInRange.isEmpty) {
       Commander.rightClick(unit, unit.agent.ride.get)
 
-      return RetreatPlan(unit, unit.agent.ride.map(_.pixel).getOrElse(unit.pixel), "Hail")
+      return RetreatPlan(unit, unit.agent.ride.map(_.pixel).getOrElse(unit.pixel), "Hail", preciseArrival = true)
     }
 
     // Against melee rush: Retreat directly to heart so workers can help
@@ -83,7 +90,7 @@ object Retreat extends Action {
     // Enshuttled VIPs: If not primary passenger, retreat towards primary passenger
     val leadPassenger = unit.agent.ride.flatMap(_.agent.passengersPrioritized.headOption)
     if (leadPassenger.isDefined && ! leadPassenger.contains(unit)) {
-      return RetreatPlan(unit, leadPassenger.get.pixel.add(forceVector.normalize(32).toPoint.asPixel.walkablePixel), "Shotgun")
+      return RetreatPlan(unit, leadPassenger.get.pixel.add(forceVector.normalize(32).toPoint.asPixel.walkablePixel), "Shotgun", preciseArrival = true)
     }
 
     // Corsairs outrun ground fire locally instead of running home: scatter
