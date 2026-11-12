@@ -36,6 +36,8 @@ def parse(path):
                     header[m.group(1)] = m.group(2)
             elif line.startswith("[behaviors]"):
                 section = "tally"
+            elif line.startswith("[verdicts]"):
+                section = "verdicts"
             elif line.startswith("[breaks-by-class]"):
                 section = "classes"
             elif line.startswith("[break-rows]"):
@@ -48,6 +50,10 @@ def parse(path):
                 m = re.match(r"\s*(\d+)\s+(.*)", line)
                 if m:
                     tally[m.group(2)] = int(m.group(1))
+            elif section == "verdicts":
+                m = re.match(r"\s*(\d+)\s+(.*)", line)
+                if m:
+                    verdicts[m.group(2)] = int(m.group(1))
             elif section == "dress_counts":
                 m = re.match(r"\s*(\d+)\s+(.*)", line)
                 if m:
@@ -76,7 +82,7 @@ def parse(path):
                         "posture": parts[7],
                         "order": parts[8],
                     })
-    return header, tally, rows, dress_counts, dress_rows
+    return header, tally, verdicts, rows, dress_counts, dress_rows
 
 
 def oscillation(dress_rows):
@@ -120,7 +126,7 @@ def main():
     if positional:
         path = positional[0]
     try:
-        header, tally, rows, dress_counts, dress_rows = parse(path)
+        header, tally, verdicts, rows, dress_counts, dress_rows = parse(path)
     except FileNotFoundError:
         print(f"no audit file at {path} - run a game with --formation-audit first",
               file=sys.stderr)
@@ -131,6 +137,9 @@ def main():
           f"dress={len(dress_rows)}")
     print("=== behaviors (leaf decisions per unit-frame) ===")
     for label, n in tally.most_common(20):
+        print(f"{n:8}  {label}")
+    print("=== verdicts (fight votes per unit-frame) ===")
+    for label, n in verdicts.most_common(20):
         print(f"{n:8}  {label}")
     print("=== breaks by class (slot-leave range in tiles) ===")
     by_class = {}

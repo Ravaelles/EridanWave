@@ -30,18 +30,26 @@ object FormationAudit {
     order         : String)
 
   private val tallyCounts = new mutable.HashMap[String, Int]
+  private val verdictCounts = new mutable.HashMap[String, Int]
   private val breaks      = new ArrayBuffer[BreakRow]
   private val dresses     = new ArrayBuffer[DressRow]
   private val lastBroken  = new mutable.HashMap[Int, Boolean]
 
   def reset(): Unit = {
     tallyCounts.clear()
+    verdictCounts.clear()
     breaks.clear()
     dresses.clear()
     lastBroken.clear()
   }
 
   def tallySnapshot: Map[String, Int] = tallyCounts.toMap
+
+  def tallyVerdict(reason: String): Unit = {
+    verdictCounts(reason) = verdictCounts.getOrElse(reason, 0) + 1
+  }
+
+  def verdictSnapshot: Map[String, Int] = verdictCounts.toMap
 
   def breakRows: Seq[BreakRow] = breaks.toSeq
 
@@ -97,6 +105,7 @@ object FormationAudit {
     if ( ! enabled) return
 
     val tallyLines = tallyCounts.toSeq.sortBy(-_._2).map({ case (label, n) => f"$n%8d  $label" })
+    val verdictLines = verdictCounts.toSeq.sortBy(-_._2).map({ case (label, n) => f"$n%8d  $label" })
     val byClass = FormationAuditStats.byClass(breaks.toSeq).toSeq.sortBy(-_._2.n)
     val classLines = byClass.map({ case (cls, s) =>
       f"$cls%-28s n=${s.n}%4d mean=${s.mean}%5.2f std=${s.stddev}%5.2f min=${s.min}%5.2f max=${s.max}%5.2f" })
@@ -109,6 +118,8 @@ object FormationAudit {
       f"# FormationAudit map=$mapName frames=$frames\n" +
       f"[behaviors] ${tallyCounts.values.sum} leaf decisions\n" +
       tallyLines.mkString("\n") + "\n" +
+      f"[verdicts] ${verdictCounts.values.sum} fight votes\n" +
+      verdictLines.mkString("\n") + "\n" +
       f"[breaks-by-class] ${breaks.length} slot leaves\n" +
       classLines.mkString("\n") + "\n" +
       "[break-rows] frame unit own target distTiles\n" +
@@ -118,6 +129,6 @@ object FormationAudit {
       "[dress-rows] frame unit own beyond mean std count posture order\n" +
       dressRowLines.mkString("\n") + "\n"
     With.bwapiData.writeToFile("formation-audit.txt", text)
-    With.logger.debug(f"FormationAudit: ${tallyCounts.size} behaviors, ${breaks.length} breaks, ${dresses.length} dress verdicts -> formation-audit.txt")
+    With.logger.debug(f"FormationAudit: ${tallyCounts.size} behaviors, ${verdictCounts.size} verdicts, ${breaks.length} breaks, ${dresses.length} dress verdicts -> formation-audit.txt")
   }
 }

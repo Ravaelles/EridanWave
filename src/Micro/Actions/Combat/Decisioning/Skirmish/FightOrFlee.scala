@@ -33,9 +33,11 @@ object FightOrFlee extends Action {
         u.agent.shouldFight = fight
         u.agent.fightReason = reason
         Probe.note("Verdict", u.id, ?(fight, "+", "-") + reason)
+        if (With.configuration.formationAudit) Debugging.FormationAudit.tallyVerdict(?(fight, "+", "-") + reason)
       case None =>
         applyEstimation(u)
         Probe.note("Verdict", u.id, ?(u.agent.shouldFight, "+Sim", "-Sim"))
+        if (With.configuration.formationAudit) Debugging.FormationAudit.tallyVerdict(?(u.agent.shouldFight, "+Sim", "-Sim"))
     }
   }
 

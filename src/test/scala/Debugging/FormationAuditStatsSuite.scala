@@ -72,6 +72,16 @@ class FormationAuditStatsSuite extends AnyFunSuite {
     assert(FormationAudit.dressRows.isEmpty)
   }
 
+  test("the verdict tally counts every fight vote") {
+    FormationAudit.reset()
+    FormationAudit.tallyVerdict("+Committed")
+    FormationAudit.tallyVerdict("+Committed")
+    FormationAudit.tallyVerdict("-OutOfContact")
+    assert(FormationAudit.verdictSnapshot == Map("+Committed" -> 2, "-OutOfContact" -> 1))
+    FormationAudit.reset()
+    assert(FormationAudit.verdictSnapshot.isEmpty)
+  }
+
   test("the tally counts every leaf label") {
     FormationAudit.reset()
     FormationAudit.tally("Engage/Approach")
