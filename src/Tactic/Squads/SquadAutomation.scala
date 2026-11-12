@@ -135,10 +135,13 @@ object SquadAutomation {
       // March dressing: a leader running ahead of the pack holds position so
       // the line arrives together instead of trickling in. Waiting zeroes the
       // stuck counter (tryingToMove is false), so Unstick stays out of it.
+      // Reavers never hold: a slow hull waiting ahead of a stalled pack
+      // freezes next to the enemy, so it walks back to the pack instead.
       lazy val waiting = ! suicide && squad.fightConsensus && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
-      lazy val finalTerminus = ?(waiting, unit.pixel, ?(joiningAlly, joinPixel.getOrElse(finalMarch), finalMarch))
+      lazy val reaverToArmy = Protoss.Reaver(unit) && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
+      lazy val finalTerminus = ?(waiting && ! reaverToArmy, unit.pixel, ?(joiningAlly, joinPixel.getOrElse(finalMarch), ?(reaverToArmy, pack, finalMarch)))
       Debugging.CherryVis.CherryVis.decision(unit.id,
-        ?(squad.fightConsensus, ?(waiting, "Waiting for pack", ?(rallying, "Rallying to pack centroid", "Marching to formation slot")), "Returning to slot"))
+        ?(squad.fightConsensus, ?(waiting && ! reaverToArmy, "Waiting for pack", ?(rallying || reaverToArmy, "Rallying to pack centroid", "Marching to formation slot")), "Returning to slot"))
       unit.intend(squad)
         .setTerminus(?(squad.fightConsensus, finalTerminus, finalReturn))
         .setRedoubt(finalReturn)
