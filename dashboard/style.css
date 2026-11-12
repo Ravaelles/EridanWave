@@ -1,14 +1,16 @@
-body { font-family: sans-serif; margin: 2em; color: #222; }
-.hint { color: #555; max-width: 70em; }
+:root { color-scheme: dark; }
+body { font-family: sans-serif; margin: 2em; background: #141414; color: #ccc; }
+.hint { color: #999; max-width: 70em; }
 table { border-collapse: collapse; margin-bottom: 2em; }
-th, td { border: 1px solid #bbb; padding: 4px 10px; text-align: left; }
-th { background: #eee; }
+th, td { border: 1px solid #444; padding: 4px 10px; text-align: left; }
+th { background: #242424; }
 td.num { text-align: right; }
-tr.win td.result { color: #0a0; font-weight: bold; }
-tr.loss td.result { color: #a00; font-weight: bold; }
-tr.other td.result { color: #a60; }
-#chart svg { background: #fafafa; border: 1px solid #ddd; }
-#counts { margin-left: 1em; color: #555; }
+tr.win td.result { color: #4c4; font-weight: bold; }
+tr.loss td.result { color: #e66; font-weight: bold; }
+tr.other td.result { color: #db3; }
+#chart svg { background: #1c1c1c; border: 1px solid #444; }
+#chart text { fill: #ccc; }
+#counts { margin-left: 1em; color: #999; }
 td.actions { text-align: center; padding: 2px 6px; }
 button.trash { background: none; border: none; cursor: pointer; font-size: 15px; opacity: 0.45; }
 button.trash:hover { opacity: 1; }
