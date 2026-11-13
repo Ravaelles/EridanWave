@@ -4,9 +4,9 @@ import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{LoneMarch, MainMarch, MarchDress, SquadRally, StrongMarch, SuicideMission}
+import Tactic.Squads.Decisions.{LoneMarch, MainMarch, MarchDress, NoTankMarch, SquadRally, StrongMarch, SuicideMission, ToothlessMarch}
 import Utilities.?
 
 /**
@@ -27,11 +27,19 @@ object MarchOrders {
   private def sendUnit(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): Unit = {
     val finalReturn = getReturn(unit, squad, defaultReturn)
     val assault = SuicideMission.isActive(unit)
+    // A toothless Terran fields nothing worth forming up against: combat
+    // units skip every formation leg, including the trip home, and walk
+    // straight at the goal instead.
+    val toothless = ToothlessMarch.shouldMarchDirectly(
+      unit.unitClass.isWarrior,
+      With.enemies.exists(_.isTerran),
+      With.units.enemy.exists(t => Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t)),
+      With.units.enemy.exists(Terran.Vulture(_)))
     val (terminus, marchLabel) = marchTerminus(squad, unit, meanDistToGoalTiles, defaultReturn)
     Debugging.CherryVis.CherryVis.decision(unit.id,
-      ?(squad.fightConsensus || assault, marchLabel, "Returning to slot"))
+      ?(squad.fightConsensus || assault || toothless, marchLabel, "Returning to slot"))
     unit.intend(squad)
-      .setTerminus(?(squad.fightConsensus || assault, terminus, finalReturn))
+      .setTerminus(?(squad.fightConsensus || assault || toothless, terminus, finalReturn))
       .setRedoubt(finalReturn)
   }
 
@@ -74,13 +82,29 @@ object MarchOrders {
       With.self.minerals,
       With.battles.globalAttack.us.skimStrengthTotal,
       With.self.supplyUsed200)),
+    // No tanks, no dressing: Dragoons walk straight at a Terran without
+    // siege lines instead of posing for guns that are not there.
+    MarchGate("NoTankMarch", (_, unit) => NoTankMarch.shouldMarchDirectly(
+      Protoss.Dragoon(unit),
+      With.enemies.exists(_.isTerran),
+      With.units.enemy.exists(t => Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t)))),
+    // Toothless Terran, no formations at all: without Vultures or Tanks
+    // combat units skip every march leg, including the trip home - the
+    // pack just walks at the goal.
+    MarchGate("ToothlessMarch", (_, unit) => ToothlessMarch.shouldMarchDirectly(
+      unit.unitClass.isWarrior,
+      With.enemies.exists(_.isTerran),
+      With.units.enemy.exists(t => Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t)),
+      With.units.enemy.exists(Terran.Vulture(_)))),
     // Lone march: with no friendly warrior inside ten tiles there is no
     // line to pose in, so the unit skips rallying to the pack centroid
     // and slot-marching and walks straight at the squad goal instead of
-    // milling alone. Latched (10.5 out, 9.5 back): the terminus on
+    // milling alone, and never while retreating (a falling-back unit
+    // walks home, not at the squad goal). Latched (10.5 out, 9.5 back): the terminus on
     // either side lives hundreds of pixels apart, so a sharp gate jerks
     // the destination for units breathing on the boundary.
     MarchGate("LoneMarch", (squad, unit) =>
+      unit.agent.shouldFight &&
       Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
         .map(a => LoneMarch.marchAlone(unit.id, unit.pixelDistanceCenter(a.pixel) * Maff.inv32))
         .getOrElse(true)))
@@ -144,7 +168,9 @@ object MarchOrders {
       squad.warriorsCasters.map(_.subjectiveValue).sum,
       Maff.minBy(squad.units.view.filter(_ != unit))(_.pixelDistanceCenter(unit.pixel)).map(_.pixelDistanceCenter(unit.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
       With.units.enemy.exists(e => e.visible && e.unitClass.canAttack))
-    val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
+    val staticNear = unit.matchups.enemies.exists(e =>
+      e.likelyStillThere && e.unitClass.isStaticDefense && MarchDress.staticNear(unit.tileDistanceEdge(e) * Maff.inv32))
+    val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && ! staticNear && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
     val reaverToArmy = Protoss.Reaver(unit) && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
     (waiting && ! reaverToArmy, reaverToArmy)
   }

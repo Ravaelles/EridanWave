@@ -184,7 +184,11 @@ needs an Observer-vs-Overlord game. March: StaticDefense overwhelm
 (THIS) - twelve of ours against one static defender pushes instead of
 repelling; needs a contain break. March: TankHug (THIS) -
 cooling ground warriors close sieged tanks to 0.2 tiles instead of
-kiting; needs a Terran mech game with tanks in range. March: StrongMarch (THIS) - banked stock or maxed strong army
+kiting; needs a Terran mech game with tanks in range. March: march straight at toothless Terrans (THIS) - dragoons skip
+Waiting/Rallying with no tanks around; combat units skip every
+formation dance (Waiting, Rallying, slots, trip home) with no Vultures
+and no Tanks; nobody dresses inside static reach; no LoneMarch while
+retreating. Macro PvT games to confirm the columns just walk. March: StrongMarch (THIS) - banked stock or maxed strong army
 marches straight at the goal, never rallies to the pack centroid or
 walks to a formation slot (`StrongMarchSuite`, macro game with bank).
 Micro: idle attackers force fire after 150 frames (THIS) - a

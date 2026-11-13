@@ -42,4 +42,10 @@ object MarchDress {
    */
   def shouldSkipWait(strength: Double, nearestAllyTiles: Double, armedEnemyVisible: Boolean): Boolean =
     ! armedEnemyVisible && strength >= strongArmyStrength && nearestAllyTiles <= compactAllyTiles
+
+  /** Never dress under static guns, in tiles: a leader holding inside their reach trades the line for nothing. */
+  val staticDressTiles: Double = 8.0
+
+  def staticNear(distTiles: Double): Boolean =
+    distTiles <= staticDressTiles
 }

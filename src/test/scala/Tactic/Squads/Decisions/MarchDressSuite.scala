@@ -42,4 +42,10 @@ class MarchDressSuite extends AnyFunSuite {
     assert(MarchDress.shouldSkipWait(150.0, 3.0, armedEnemyVisible = false))
     assert(MarchDress.shouldSkipWait(900.0, 0.5, armedEnemyVisible = false))
   }
+
+  test("nobody dresses inside static reach") {
+    assert(MarchDress.staticNear(0.0))
+    assert(MarchDress.staticNear(8.0))
+    assert( ! MarchDress.staticNear(8.01))
+  }
 }
