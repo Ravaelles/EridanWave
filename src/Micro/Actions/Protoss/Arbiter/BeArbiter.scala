@@ -1,11 +1,12 @@
 package Micro.Actions.Protoss.Arbiter
 
 import Debugging.Visualizations.Forces
+import Lifecycle.With
 import Mathematics.Maff
-import Mathematics.Physics.ForceMath
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
+import Micro.Actions.Protoss.Detector.DetectorSpread
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Heuristics.Potential
@@ -23,6 +24,27 @@ object BeArbiter extends Action {
     Protoss.Observer)
 
   val cloakRadiusPixels: Int = 64
+
+  /**
+   * Separation, exactly the Observer rule: same-type Arbiters keep nine
+   * tiles apart and only the newer one moves, sliding out along the ray
+   * to full separation. Claims the frame when it moves.
+   */
+  private def spread(arbiter: FriendlyUnitInfo): Boolean = {
+    val others = With.units.ours.view
+      .filter(u => Protoss.Arbiter(u) && u.id != arbiter.id)
+      .map(u => DetectorSpread.OlderEye(u.id, u.pixel, u.tileDistanceEdge(arbiter)))
+      .toSeq
+    DetectorSpread.partner(arbiter.id, others).exists(older => {
+      if (DetectorSpread.shouldSpread(arbiter.id, older.id, older.distTiles)) {
+        arbiter.cherryVisUnitLog("ArbiterSpread")
+        arbiter.agent.destinationNext.set(DetectorSpread.awayFrom(arbiter.pixel, older.pixel))
+        Commander.move(arbiter)
+        true
+      } else false
+    })
+  }
+
   override protected def perform(arbiter: FriendlyUnitInfo): Unit = {
     if (arbiter.matchups.pixelsEntangled > -16) {
       Retreat.delegate(arbiter)
@@ -32,6 +54,8 @@ object BeArbiter extends Action {
 
     val goal                              = arbiter.team.map(_.vanguardAll()).getOrElse(arbiter.agent.destinationNext())
     val goalDistanceSquared               = arbiter.pixelDistanceSquared(goal)
+    if (spread(arbiter)) return
+
     val seniorArbiters                    = arbiter.alliesSquad.filter(u => Protoss.Arbiter(u) && u.squadAge > arbiter.squadAge)
     val umbrellables                      = arbiter.alliesSquad.filter(needsUmbrella)
     val umbrellablesUncovered             = umbrellables.filterNot(u => seniorArbiters.exists(_.pixelDistanceCenter(u) < cloakRadiusPixels))
@@ -39,11 +63,6 @@ object BeArbiter extends Action {
     arbiter.agent.station.set(umbrellable.map(_.pixel).getOrElse(arbiter.agent.destinationNext()))
     arbiter.agent.forces(Forces.travel)   = Potential.towardsDestination(arbiter)
     arbiter.agent.forces(Forces.spacing)  = Potential.hardAvoidThreatRange(arbiter)
-    if (seniorArbiters.nonEmpty) {
-      arbiter.agent.forces(Forces.threat) = ForceMath
-        .sum(seniorArbiters.map(s => Potential.towardsUnit(arbiter, s, Math.min(0, arbiter.pixelDistanceCenter(s) - cloakRadiusPixels))))
-        .clipAtMost(1.0)
-    }
     MicroPathing.setWaypointForcefully(arbiter)
     if (arbiter.pixelDistanceCenter(arbiter.agent.destinationNext()) < 48 && arbiter.matchups.pixelsEntangled < 0) {
       Potshot.delegate(arbiter)
