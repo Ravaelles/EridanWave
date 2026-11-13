@@ -42,4 +42,10 @@ class WorkerThreatFleeSuite extends AnyFunSuite {
     assert( ! WorkerThreatFlee.doomedVsLoneFighter(totalHealth = 30, fighterClosing = false, supported = false))
     assert( ! WorkerThreatFlee.doomedVsLoneFighter(totalHealth = 30, fighterClosing = true, supported = true))
   }
+
+  test("a Dark Templar on top of a worker means run straight") {
+    assert(WorkerThreatFlee.fleeDarkTemplarStraight(distTiles = 0.0))
+    assert(WorkerThreatFlee.fleeDarkTemplarStraight(distTiles = 3.0))
+    assert( ! WorkerThreatFlee.fleeDarkTemplarStraight(distTiles = 3.01))
+  }
 }
