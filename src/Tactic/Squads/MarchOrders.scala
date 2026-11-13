@@ -52,8 +52,10 @@ object MarchOrders {
 
     // Main march: past 90 supply a unit sitting on our doorstep never
     // poses, rallies or walks to a slot - the column just walks out, so
-    // the base stops choking on its own formation dance.
-    if (MainMarch.shouldSkip(
+    // the base stops choking on its own formation dance. No bases (UMS
+    // micro maps) means no doorstep: skip quietly instead of asking
+    // geography for a main that isn't there.
+    if (With.geography.ourBases.nonEmpty && MainMarch.shouldSkip(
       With.self.supplyUsed200,
       unit.pixel.groundPixels(With.geography.ourMain.heart.center) * Maff.inv32)) {
 

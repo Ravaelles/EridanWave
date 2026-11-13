@@ -48,7 +48,8 @@ object SquadRazeExpansion {
   def expansionTarget: Option[Information.Geography.Types.Base] = {
     val main = With.scouting.enemyMain
     val expansions = With.geography.enemyBases.view.filter(b =>
-      main.forall(_ != b) && b.townHall.exists(t => t.isEnemy && t.likelyStillThere))
-    Maff.minBy(expansions)(_.heart.center.pixelDistanceSquared(With.tactics.attackSquad.centroidGround))
+      main.forall(_ != b) && b.townHall.exists(t => t.isEnemy && t.likelyStillThere)).toVector
+    if (expansions.isEmpty) None
+    else Maff.minBy(expansions)(_.heart.center.pixelDistanceSquared(With.tactics.attackSquad.centroidGround))
   }
 }
