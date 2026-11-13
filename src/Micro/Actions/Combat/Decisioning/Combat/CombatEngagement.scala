@@ -15,6 +15,9 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // range first - even while retreating - then carries on as ordered.
     if (CrucialAirSnipeBehavior.run(unit)) return unit.unready
 
+    // Contain fire: a ready weapon shoots instead of dressing past the kill.
+    if (ContainFireBehavior.run(unit)) return unit.unready
+
     // No consensus: the squad is leaving, so walk its march instead of
     // dueling. Lone counterattacks while regrouping feed the enemy piecemeal;
     // the contain roster and mode latch still hold, so the squad reforms.
