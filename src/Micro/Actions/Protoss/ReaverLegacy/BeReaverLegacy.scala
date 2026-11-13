@@ -15,7 +15,7 @@ import Utilities.?
  */
 object BeReaverLegacy extends Action {
 
-  val cooldownOnLanding = 30
+  val cooldownOnLanding = ReaverActions.cooldownOnLanding
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Reaver(unit)
 

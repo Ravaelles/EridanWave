@@ -11,9 +11,10 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
  * beats an evenly matched pack.
  *
  * The shared target is the enemy the most shooters can already hit (that is
- * what makes the fire actually shared), tie-broken by the fewest shots to
- * kill, then by distance to the squad centroid (identical for every shooter,
- * so all of them compute the same answer) and by id for stability. Only a
+ * what makes the fire actually shared), tie-broken by the fewest squad
+ * volleys to kill, then by distance to the squad centroid, then by id. Every
+ * key is built from squad-wide numbers rather than the caller's own damage,
+ * so all shooters compute the same answer by construction. Only a
  * real mass fight qualifies: enough ranged shooters, several targets in
  * reach, contact already on, and at least a handful able to hit the same
  * enemy. Buildings stay out of it - razing keeps its own targeting.
@@ -37,6 +38,14 @@ object FocusFire {
 
   /** One candidate target, reduced to the numbers the choice reads. */
   final case class Candidate(shotsToKill: Int, reach: Int, packDistanceTiles: Double, id: Int)
+
+  /** Damage the whole firing line puts into one target per volley. */
+  def volleyDamage(damages: Seq[Int]): Int = damages.sum
+
+  /** Volleys the line needs for a target: the same number for every shooter,
+    * because it prices the squad's combined damage, not one hull's. */
+  def volleysToKill(healthWithShields: Double, damages: Seq[Int]): Int =
+    shotsToKill(healthWithShields, volleyDamage(damages).toDouble)
 
   /** Volley count: hits needed to remove the target's remaining health. */
   def shotsToKill(healthWithShields: Double, damagePerShot: Double): Int = {
@@ -69,19 +78,18 @@ object FocusFire {
       .filter(t => shooters.exists(s => s.canAttack(t) && s.inRangeToAttack(t)))
     if (targets.size < minTargets) return None
 
-    val candidates = targets.map(t => (t, candidate(attacker, squad.centroidKey, t, shooters)))
+    val candidates = targets.map(t => (t, candidate(squad.centroidKey, t, shooters)))
     choose(candidates.map(_._2))
       .filter(_.reach >= minReach)
       .flatMap(chosen => candidates.find(_._2.id == chosen.id).map(_._1))
   }
 
   private def candidate(
-    attacker: FriendlyUnitInfo,
     pack     : Mathematics.Points.Pixel,
     target   : UnitInfo,
     shooters : Seq[UnitInfo]): Candidate =
     Candidate(
-      shotsToKill      = shotsToKill(target.totalHealth, attacker.damageOnNextHitAgainst(target)),
+      shotsToKill      = volleysToKill(target.totalHealth, shooters.map(_.damageOnNextHitAgainst(target))),
       reach            = shooters.count(s => s.canAttack(target) && s.inRangeToAttack(target)),
       packDistanceTiles = target.pixelDistanceCenter(pack) / 32.0,
       id               = target.id)

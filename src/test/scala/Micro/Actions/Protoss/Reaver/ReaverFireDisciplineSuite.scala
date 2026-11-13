@@ -16,4 +16,11 @@ class ReaverFireDisciplineSuite extends AnyFunSuite {
     assert( ! ReaverFireDiscipline.mustShootFirst(shotReady = false, enemyNear = true))
     assert( ! ReaverFireDiscipline.mustShootFirst(shotReady = false, enemyNear = false))
   }
+
+  test("a shot is ready only with a loaded Scarab, none in flight, off cooldown") {
+    assert(ReaverFireDiscipline.shotReady(scarabs = 1, hasActiveScarab = false, cooling = false))
+    assert( ! ReaverFireDiscipline.shotReady(scarabs = 0, hasActiveScarab = false, cooling = false))
+    assert( ! ReaverFireDiscipline.shotReady(scarabs = 1, hasActiveScarab = true, cooling = false))
+    assert( ! ReaverFireDiscipline.shotReady(scarabs = 1, hasActiveScarab = false, cooling = true))
+  }
 }

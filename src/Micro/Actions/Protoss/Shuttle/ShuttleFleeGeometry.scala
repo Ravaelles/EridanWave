@@ -1,6 +1,7 @@
 package Micro.Actions.Protoss.Shuttle
 
 import Mathematics.Maff
+import Micro.Actions.Combat.Maneuvering.RangedReach
 import Mathematics.Points.Pixel
 import Utilities.?
 
@@ -23,7 +24,7 @@ object ShuttleFleeGeometry {
   val woundMarginMult: Double = 10.0
 
   def safetyMarginPixels(woundPercent: Double, fasterFlyer: Boolean): Double =
-    ?(fasterFlyer, 64, 160) * (1 + woundMarginMult * woundPercent)
+    ?(fasterFlyer, 64, 160) * (1 + woundMarginMult * Maff.clamp01(woundPercent))
 
   /** Share of the cluster, nearest our base, counted as its rear. */
   val rearShare: Double = 0.33
@@ -34,9 +35,6 @@ object ShuttleFleeGeometry {
   /** Extra preemptive band at full wounds, in tiles (woundPercentBonus(0, 5)). */
   val woundFleeBonusTiles: Double = 5.0
 
-  /** Reach above which a threat counts as ranged, in pixels. */
-  val rangedReachPixels: Double = 32.0
-
   /**
    * Preemptive flee trigger (pure pixels for the suite): a ranged threat
    * whose reach plus the wound-scaled band touches us turns the Shuttle
@@ -44,7 +42,7 @@ object ShuttleFleeGeometry {
    * lets Hydralisks walk up to a Shuttle sitting in the enemy main.
    */
   def threatensPreemptively(distPixels: Double, rangePixels: Double, marginPixels: Double): Boolean =
-    rangePixels > rangedReachPixels && distPixels < rangePixels + marginPixels
+    RangedReach.isRanged(rangePixels) && distPixels < rangePixels + marginPixels
 
   def rearOfCluster(members: Seq[Pixel], base: Pixel): Pixel = {
     if (members.isEmpty) return base

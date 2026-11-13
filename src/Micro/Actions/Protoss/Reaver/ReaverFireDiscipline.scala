@@ -17,4 +17,13 @@ object ReaverFireDiscipline {
    */
   def mustShootFirst(shotReady: Boolean, enemyNear: Boolean): Boolean =
     shotReady && enemyNear
+
+  /**
+   * A shot is actually available: a Scarab is loaded, none is in flight
+   * (a flying Scarab cannot release another), and the cooldown is not
+   * longer than a drop would reset. Both the boarding ban and the brave
+   * stand read this one answer.
+   */
+  def shotReady(scarabs: Int, hasActiveScarab: Boolean, cooling: Boolean): Boolean =
+    scarabs > 0 && ! hasActiveScarab && ! cooling
 }

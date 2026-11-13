@@ -20,6 +20,10 @@ trait Reduce extends ReduceMacroForwarders {
   }
   @inline final def clamp01(value: Int)   : Int     = clamp(value,  0, 1)
   @inline final def clamp01(value: Double): Double  = clamp(value,  0, 1)
+
+  /** Linear 0..1 scaling of a low..high band, clamped at both ends. */
+  @inline final def woundBonus(woundPercent: Double, low: Double, high: Double): Double =
+    low + (high - low) * clamp01(woundPercent)
   @inline final def clamp11(value: Int)   : Int     = clamp(value, -1, 1)
   @inline final def clamp11(value: Double): Double  = clamp(value, -1, 1)
 

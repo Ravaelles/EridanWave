@@ -30,7 +30,7 @@ object AirFleeGeometry {
   val woundBonusTiles: Double = 8.0
 
   def safeMarginTiles(woundPercent: Double): Double =
-    baseMarginTiles + woundBonusTiles * woundPercent
+    Maff.woundBonus(woundPercent, baseMarginTiles, baseMarginTiles + woundBonusTiles)
 
   def focus(threats: Seq[Pixel]): Option[Pixel] = {
     if (threats.isEmpty) None

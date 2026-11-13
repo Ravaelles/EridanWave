@@ -1,6 +1,5 @@
 package Micro.Actions.Protoss.Reaver
 
-import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /** Hold a firing position instead of walking into the enemy. */
@@ -14,7 +13,6 @@ object ReaverHoldToFire {
       situation.holdTarget
 
   def act(unit: FriendlyUnitInfo): Unit = {
-    unit.agent.act("HoldToFire")
-    Commander.hold(unit)
+    ReaverActions.holdGround(unit, "HoldToFire")
   }
 }

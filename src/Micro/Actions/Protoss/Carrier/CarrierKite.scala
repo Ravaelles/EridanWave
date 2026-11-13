@@ -1,5 +1,7 @@
 package Micro.Actions.Protoss.Carrier
 
+import Micro.Actions.Combat.Maneuvering.RangedReach
+
 /**
  * Pure dying-Carrier kite (no game access): a Carrier with scratched
  * shields keeps its distance from ranged attackers that can hit it, on a
@@ -13,11 +15,8 @@ object CarrierKite {
   /** Wound margin at full wounds, in tiles (woundPercentBonus(0, 15)). */
   val maxMarginTiles: Double = 15.0
 
-  /** Reach above which a threat counts as ranged, in pixels. */
-  val rangedPixels: Double = 32.0
-
   def isRanged(rangePixels: Double): Boolean =
-    rangePixels > rangedPixels
+    RangedReach.isRanged(rangePixels)
 
   def shouldKite(shieldWounded: Boolean, distTiles: Double, marginTiles: Double): Boolean =
     shieldWounded && distTiles < marginTiles

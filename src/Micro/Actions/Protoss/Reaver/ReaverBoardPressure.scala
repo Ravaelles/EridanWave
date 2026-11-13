@@ -33,8 +33,8 @@ object ReaverBoardPressure {
     ReaverBoardLogic.shouldStandVsWorkers(situation.onlyWorkersNear, situation.shields)
 
   private def mustShootFirst(situation: ReaverSituation): Boolean = {
-    val shotReady = situation.scarabs > 0 && ! situation.hasActiveScarab && ! situation.cooling
-    ReaverFireDiscipline.mustShootFirst(shotReady, situation.pressured || situation.holdTarget)
+    val ready = ReaverFireDiscipline.shotReady(situation.scarabs, situation.hasActiveScarab, situation.cooling)
+    ReaverFireDiscipline.mustShootFirst(ready, situation.pressured || situation.holdTarget)
   }
 
   def act(unit: FriendlyUnitInfo): Unit = {

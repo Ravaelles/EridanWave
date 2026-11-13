@@ -103,7 +103,7 @@ object CommanderTransport {
     if (transport.flying) {
       val nearestStatic = Maff.minBy(With.units.enemy.filter(e =>
         e.unitClass.isCombatBuilding && e.canAttackGround && e.likelyStillThere))(_.tileDistanceEdge(transport))
-      if (DropSafety.vetoLanding(transportFlying = true, nearestStatic.map(_.tileDistanceEdge(transport)))) return
+      if (DropSafety.vetoLanding(nearestStatic.map(_.tileDistanceEdge(transport)))) return
     }
 
     transport.bwapiUnit.unload(passenger.bwapiUnit)

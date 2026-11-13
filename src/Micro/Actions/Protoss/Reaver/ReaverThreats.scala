@@ -2,7 +2,6 @@ package Micro.Actions.Protoss.Reaver
 
 import Lifecycle.With
 import Mathematics.Maff
-import Micro.Actions.Protoss.ReaverLegacy.BeReaverLegacy
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -31,9 +30,23 @@ case class ReaverThreats(
 
 object ReaverThreats {
 
+  /** Enemies this close, in tiles, are engaged instead of fled. */
+  val engageTiles: Double = 8.5
+
+  /** Sieged-tank range plus this margin, in tiles, is never entered. */
+  val tankMarginTiles: Double = 1.0
+
+  /** A foe this close is worth standing and shooting at. */
+  def inReach(distTiles: Double): Boolean =
+    distTiles <= engageTiles
+
+  /** Inside a sieged tank's reach plus the margin means the stand is suicide. */
+  def tankCovered(tankRangeTiles: Double, distTiles: Double): Boolean =
+    distTiles <= tankRangeTiles + tankMarginTiles
+
   def read(unit: FriendlyUnitInfo): ReaverThreats = {
     val latency       = With.latency.latencyFrames
-    val cooldownReset = BeReaverLegacy.cooldownOnLanding // Engine resets to 30 on drop
+    val cooldownReset = ReaverActions.cooldownOnLanding
     val threatsInRange= unit.matchups.threatsInRange
     val threats       = unit.matchups.threats
     val targetNearest = unit.matchups.targetNearest
@@ -53,7 +66,7 @@ object ReaverThreats {
         && t.likelyStillThere
         && t.canAttack(unit)
         && ReaverStaticStandoff.shouldBackOff(
-          unit.tileDistanceEdge(t) * Maff.inv32,
+          unit.tileDistanceEdge(t),
           unit.pixelRangeAgainst(t) * Maff.inv32,
           t.pixelRangeAgainst(unit) * Maff.inv32)),
       onlyWorkersNear = {
@@ -65,9 +78,9 @@ object ReaverThreats {
       targetPath      = targetNearest.exists(unit.hasScarabPathTo(_, unit.pixel)),
       toAttackPath    = unit.agent.toAttack.orElse(targetNearest).exists(unit.hasScarabPathTo(_, unit.pixel)),
       foeInReach      = unit.matchups.targets.exists(t =>
-        ! t.flying && unit.canAttack(t) && unit.tileDistanceEdge(t) <= ReaverBraveStand.engageTiles),
+        ! t.flying && unit.canAttack(t) && inReach(unit.tileDistanceEdge(t))),
       tankCovered     = threats.exists(t =>
         Terran.SiegeTankSieged(t) &&
-          unit.tileDistanceEdge(t) <= t.pixelRangeAgainst(unit) * Maff.inv32 + ReaverBraveStand.tankMarginTiles))
+          tankCovered(t.pixelRangeAgainst(unit) * Maff.inv32, unit.tileDistanceEdge(t))))
   }
 }

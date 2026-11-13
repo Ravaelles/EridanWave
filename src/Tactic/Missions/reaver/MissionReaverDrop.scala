@@ -10,7 +10,7 @@ import Mathematics.Maff
 import Mathematics.Points.{Pixel, Points, Tile}
 import Mathematics.Shapes.{Circle, Ray}
 import Micro.Actions.{Action, Idle}
-import Micro.Actions.Protoss.Reaver.ContainStatus
+import Tactic.Squads.ContainStatus
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}

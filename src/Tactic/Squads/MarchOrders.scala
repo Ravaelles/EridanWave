@@ -75,7 +75,7 @@ object MarchOrders {
     // and slot-marching and walks straight at the squad goal instead of
     // milling alone.
     val nearestWarrior = Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
-    if (nearestWarrior.forall(a => unit.pixelDistanceCenter(a.pixel) * Maff.inv32 > LoneMarch.aloneRadiusTiles)) return (squad.vicinity, "LoneMarch")
+    if (nearestWarrior.forall(a => LoneMarch.shouldMarchAlone(unit.pixelDistanceCenter(a.pixel) * Maff.inv32))) return (squad.vicinity, "LoneMarch")
 
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide)
     val joinPixel              = joinLeg(squad, unit, suicide)

@@ -89,8 +89,7 @@ object Build extends Action {
     if (intent.startNow
       && tile.visible
       && unit.pixelDistanceCenter(movePixel) < 112 // Addtl reference: McRave uses 96
-      && With.self.minerals >= building.mineralPrice - 8
-      && With.self.gas      >= building.gasPrice - 8) {
+      && affordable) {
       Commander.build(unit, building, ?(building.isAddon, tile.add(4, 1), tile))
 
       return

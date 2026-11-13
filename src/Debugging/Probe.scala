@@ -29,14 +29,16 @@ object Probe {
     enabledKeys.contains(key)
   }
 
-  def note(key: String, unitId: Int, message: String): Unit = {
+  def note(key: String, unitId: Int, message: => String): Unit = {
     if ( ! on(key)) return
 
+    // By-name message: an unarmed key never pays for its interpolation.
+    val text = message
     val seen = (key, unitId)
-    if (lastByUnitKey.get(seen).contains(message)) return
+    if (lastByUnitKey.get(seen).contains(text)) return
 
-    lastByUnitKey(seen) = message
-    With.logger.debug(f"PROBE $key ${With.frame} $unitId $message")
+    lastByUnitKey(seen) = text
+    With.logger.debug(f"PROBE $key ${With.frame} $unitId $text")
   }
 
   def reset(): Unit = {

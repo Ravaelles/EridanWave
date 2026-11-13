@@ -1,6 +1,7 @@
 package Tactic.Missions.drop
 
 import Tactic.Missions.core.MissionDrop
+import Tactic.Squads.ContainStatus
 import Tactic.Missions.routing.DropManifest
 import Lifecycle.With
 import Mathematics.Maff
@@ -59,9 +60,9 @@ trait DropManifestOps { self: MissionDrop =>
   /** Contain vs Zerg drafts every mission Reaver to the break; other
    * races keep one crew while the rest stay mission-free. */
   private[Missions] def releaseContainReavers(): Unit = {
-    if ( ! Micro.Actions.Protoss.Reaver.ContainStatus.now()) return
+    if ( ! ContainStatus.now()) return
 
-    if ( ! Micro.Actions.Protoss.Reaver.ReaverContain.recallAll(Micro.Actions.Protoss.Reaver.ContainStatus.vsZerg())) return
+    if ( ! Micro.Actions.Protoss.Reaver.ReaverContain.recallAll(ContainStatus.vsZerg())) return
 
     releasePassengers(passengers.filter(Protoss.Reaver).toSet)
   }

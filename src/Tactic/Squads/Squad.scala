@@ -14,7 +14,7 @@ import Tactic.Tactics.Tactic
 import Utilities.?
 
 import scala.collection.mutable.ArrayBuffer
-import Tactic.Squads.Decisions.ConsensusVoteFilter
+import Tactic.Squads.Decisions.VoteConfirmation
 import Tactic.Squads.Group.FriendlyUnitGroup
 
 abstract class Squad extends Tactic with FriendlyUnitGroup {
@@ -25,7 +25,7 @@ abstract class Squad extends Tactic with FriendlyUnitGroup {
   // and target between the formation and home. Leaving needs confirmation;
   // rejoining passes instantly. Never confirm from the fightConsensus
   // getter itself - it runs many times per frame and would burn the streak.
-  private val consensusFilter = new ConsensusVoteFilter
+  private val consensusFilter = new VoteConfirmation[Boolean](fastPath = true, slowPath = false)
   private var latchedConsensus: Boolean = true
   override def fightConsensus: Boolean = latchedConsensus
   var batchId           : Int                           = Int.MinValue

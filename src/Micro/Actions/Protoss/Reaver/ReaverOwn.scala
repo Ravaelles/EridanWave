@@ -1,7 +1,6 @@
 package Micro.Actions.Protoss.Reaver
 
 import Lifecycle.With
-import Micro.Actions.Protoss.ReaverLegacy.BeReaverLegacy
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.?
 
@@ -28,12 +27,19 @@ case class ReaverOwn(
 
 object ReaverOwn {
 
+  /**
+   * Cheap gate: the brain checks this before paying for the full
+   * three-record snapshot, because most Reavers are out of ride range.
+   */
+  def rideNearby(unit: FriendlyUnitInfo): Boolean =
+    unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= ?(unit.agent.isPrimaryPassenger, 64, 32))
+
   def read(unit: FriendlyUnitInfo): ReaverOwn = {
     val latency       = With.latency.latencyFrames
-    val cooldownReset = BeReaverLegacy.cooldownOnLanding // Engine resets to 30 on drop
+    val cooldownReset = ReaverActions.cooldownOnLanding
 
     ReaverOwn(
-      rideNearby      = unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= ?(unit.agent.isPrimaryPassenger, 64, 32)),
+      rideNearby      = rideNearby(unit),
       loaded          = unit.loaded,
       hasTransport    = unit.transport.isDefined,
       committed       = unit.agent.commit,

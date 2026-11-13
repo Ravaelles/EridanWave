@@ -45,6 +45,11 @@ class ShuttleFleeGeometrySuite extends AnyFunSuite {
     assert(ShuttleFleeGeometry.safetyMarginPixels(1.0, fasterFlyer = false) == 1760)
   }
 
+  test("the wound multiplier is clamped at full wounds") {
+    assert(ShuttleFleeGeometry.safetyMarginPixels(2.0, fasterFlyer = true) == 704)
+    assert(ShuttleFleeGeometry.safetyMarginPixels(9.0, fasterFlyer = false) == 1760)
+  }
+
   test("melee reach never triggers the preemptive flee") {
     assert( ! ShuttleFleeGeometry.threatensPreemptively(0.0, 32.0, 9.0 * 32.0))
     assert( ! ShuttleFleeGeometry.threatensPreemptively(0.0, 16.0, 9.0 * 32.0))

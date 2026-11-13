@@ -1,10 +1,13 @@
 package Micro.Actions.Combat.Maneuvering
 
+import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Combat.Decisioning.Kiting.ClusterSafety
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
+
 
 /**
  * Static-defense repel: a ground unit whose squad voted not to fight never
@@ -12,7 +15,9 @@ import Utilities.?
  * building it steps radially off the building every frame instead of
  * milling at the choke - the Returning/Rallying flap at the contact edge
  * walks zealots into Cannons one at a time, and a dead zealot deals no
- * damage. Committed assault troops fight through; frenzied (or otherwise
+ * damage. A unit under fire does not stop at the radial step: it falls
+ * back to safety with the rest of the squad instead of bouncing at nine
+ * tiles. Committed assault troops fight through; frenzied (or otherwise
  * engaged) squads are untouched, since their consensus says fight.
  * Pure radius for the suite; the caller gathers the building.
  */

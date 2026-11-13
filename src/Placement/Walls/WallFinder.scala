@@ -113,20 +113,21 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
     val centersX2 = required.map(b => 2 * b._1.x + b._2.tileWidthPlusAddon)
     val centersY2 = required.map(b => 2 * b._1.y + b._2.tileHeight)
     val horizontal = centersX2.max - centersX2.min >= centersY2.max - centersY2.min
-    val closest = tiles.sortBy(distanceFromRequired(wall, _)).take(6)
+    val closest = tiles.sortBy(distanceFromRequired(wall, _)).take(WallScoring.fillerCandidates)
     val aligned = closest.groupBy(t => if (horizontal) t.y else t.x).values.map(_.length).reduceOption(Math.max).getOrElse(0)
     val slots = if (closest.isEmpty) 0 else {
       val width  = (closest.map(_.x).max - closest.map(_.x).min) / 2 + 1
       val height = (closest.map(_.y).max - closest.map(_.y).min) / 2 + 1
       width * height
     }
-    val missing = 6 - closest.length
+    val missing = WallScoring.fillerCandidates - closest.length
     val holes = Math.max(0, slots - closest.length)
-    (8 * closest.map(t => Math.min(2, distanceFromRequired(wall, t))).sum
-    + 30 * missing
-    + 10 * (closest.length - aligned)
-    + 6 * holes
-    - 20 * Math.min(tiles.length, 8))
+    WallScoring.scoreFiller(
+      closest.map(t => Math.min(2, distanceFromRequired(wall, t))).sum,
+      missing,
+      closest.length - aligned,
+      holes,
+      tiles.length)
   }
 
   private def scoreFiller(wall: Wall): Double = {
@@ -134,7 +135,7 @@ class WallFinder(zone: Zone, exit: Edge, entrance: Tile, constraints: Seq[WallCo
     val fillerBuildings = wall.buildings.drop(requiredCount)
     val cannonTiles = wall.buildings.filter(_._2 == Protoss.PhotonCannon).map(_._1)
     val fillerPylons = fillerBuildings.count(_._2 == Protoss.Pylon)
-    scoreFillerGeometry(wall, cannonTiles) + 5 * fillerPylons
+    scoreFillerGeometry(wall, cannonTiles) + WallScoring.fillerPylonWeight * fillerPylons
   }
 
   private def selectWallWithFiller(): Unit = {

@@ -6,7 +6,6 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Micro.Targeting.CarrierBrawl
-import Micro.Actions.Protoss.Reaver.ContainStatus
 import Performance.Tasks.TimedTask
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -162,7 +161,7 @@ final class Tactician extends TimedTask {
       if (count == 0) None else Some((byAge.indexOf(base) + 1, count))
     }.sortBy(_._1)
     Debugging.CherryVis.CherryVis.board("SquadsBase", guarding.map { case (number, count) => f"$number($count)" }.mkString(", "))
-    Debugging.CherryVis.CherryVis.board("Contain", Micro.Actions.Protoss.Reaver.ContainStatus.now().toString)
+    Debugging.CherryVis.CherryVis.board("Contain", ContainStatus.now().toString)
   }
 
   private def defendDivisions(): Seq[(DefenseDivision, SquadDefendBase)] = {
@@ -248,6 +247,9 @@ final class Tactician extends TimedTask {
     val carriers = freelancers.filter(Protoss.Carrier).toVector
     if (carriers.isEmpty) return
     if (carriers.view.flatMap(_.interceptors).count(_.complete) < CarrierBrawl.minInterceptors) return
+
+    // UMS maps have no bases: nothing to defend, and ourMain has no heart.
+    if (With.geography.ourBases.isEmpty) return
 
     val homes = With.geography.ourMain +: With.geography.ourMain.natural.toSeq
     val groundFoes = With.units.enemy.view.filterNot(_.flying).map(_.pixel).toVector
@@ -351,18 +353,15 @@ final class Tactician extends TimedTask {
     val attackWarriors = attackSquad.units.count(_.unitClass.isWarrior)
     // Weak-army raid: too weak to contain, still raze - a few warriors
     // detach for the detected expansion while the army keeps its reserve.
-    var need = ?(ContainStatus.now(),
+    val need = ?(ContainStatus.now(),
       SquadRazeExpansion.donorsNeeded(mine, attackWarriors),
       SquadRazeExpansion.donorsNeededWeak(mine, attackWarriors))
     val donors = attackSquad.units.view
       .filter(_.unitClass.isWarrior)
       .sortBy(attackSquad.candidateValue)
-    donors.foreach(donor => {
-      if (need <= 0) return
-
+    donors.take(need).foreach(donor => {
       razeSquad.addUnit(donor)
       With.recruiter.lockTo(razeSquad.lock, donor)
-      need -= 1
     })
   }
 
@@ -374,8 +373,11 @@ final class Tactician extends TimedTask {
    * it anyway.
    */
   private def shouldStaffAttackSquad(freelancers: ListBuffer[FriendlyUnitInfo]): Boolean = {
-    val freelancerValue = freelancers.view.map(_.subjectiveValue).sum
-    (With.blackboard.wantToAttack() || With.umsMode) && (With.blackboard.yoloing() || freelancerValue >= freelancerValue * .7)
+    // The previous guard compared the freelancer value against itself, so
+    // it never vetoed anything. The initial value it meant to compare
+    // against was read before defense assignment and never kept; staff on
+    // intent alone until "enough remain" has a real measure.
+    (With.blackboard.wantToAttack() || With.umsMode) && (With.blackboard.yoloing() || freelancers.nonEmpty)
   }
 
   /** Let's set the attack squad up for success against what the enemy has shown. */

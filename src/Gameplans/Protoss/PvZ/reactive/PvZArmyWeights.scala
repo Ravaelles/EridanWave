@@ -30,8 +30,7 @@ object PvZArmyWeights {
     dragoons        : Double,
     reavers         : Double,
     archons         : Double,
-    corsairs        : Double,
-    scouts          : Double)
+    corsairs        : Double)
 
   /**
    * Unseen Hydralisks are assumed at four, unseen Mutalisks at eight unless
@@ -57,7 +56,6 @@ object PvZArmyWeights {
       dragoons = weightHydralisks + weightMutalisks,
       reavers  = weightHydralisks + weightSunkens,
       archons  = weightZerglings  + weightMutalisks + templarWeight,
-      corsairs = weightMutalisks,
-      scouts   = weightZerglings  + weightSunkens)
+      corsairs = weightMutalisks)
   }
 }

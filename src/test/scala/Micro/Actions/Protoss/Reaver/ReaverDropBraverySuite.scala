@@ -104,4 +104,52 @@ class ReaverDropBraverySuite extends AnyFunSuite {
     assert(ReaverDropBravery.staticDefenseDist == 8.0)
     assert(ReaverDropBravery.tankTheaterTiles == 20.0)
   }
+
+  private def facts(
+    foesClose        : Int = 0,
+    rangedNear       : Int = 0,
+    rangedDps        : Double = 0.0,
+    tanks            : Int = 0,
+    nearStaticDefense: Boolean = false,
+    meleeNear        : Int = 0,
+    shuttleShields   : Int = 60,
+    reaverShields    : Int = 80,
+    shuttleHitPoints : Double = 140.0,
+    firedAgo         : Int = 0,
+    woundFraction    : Double = 0.0,
+    hasFired         : Boolean = true,
+    isTerran         : Boolean = false): ReaverDropBravery.DropFacts =
+    ReaverDropBravery.DropFacts(
+      foesClose, rangedNear, rangedDps, tanks, nearStaticDefense, meleeNear,
+      shuttleShields, reaverShields, shuttleHitPoints, firedAgo, woundFraction, hasFired, isTerran)
+
+  test("decide: a healthy pair over a quiet landing drops") {
+    assert(ReaverDropBravery.decide(facts()))
+  }
+
+  test("decide: fire the pair cannot stomach vetoes the rings") {
+    assert( ! ReaverDropBravery.decide(facts(rangedNear = 1, rangedDps = 5.0)))
+    // The same shot is affordable for a full Shuttle.
+    assert(ReaverDropBravery.decide(facts(rangedNear = 1, rangedDps = 0.5)))
+  }
+
+  test("decide: a static vetoes the stale rule as well as the rings") {
+    assert( ! ReaverDropBravery.decide(facts(nearStaticDefense = true, firedAgo = 500, woundFraction = 0.1)))
+  }
+
+  test("decide: the stale rule rescues a blocked landing only when healthy") {
+    // Three ranged guns refuse the rings; ten dry seconds still take the drop.
+    val blocked = facts(rangedNear = 3, firedAgo = 500, woundFraction = 0.1)
+    assert(ReaverDropBravery.decide(blocked))
+    assert( ! ReaverDropBravery.decide(blocked.copy(meleeNear = 1)))
+    assert( ! ReaverDropBravery.decide(blocked.copy(reaverShields = 40)))
+    assert( ! ReaverDropBravery.decide(blocked.copy(shuttleShields = 40)))
+    assert( ! ReaverDropBravery.decide(blocked.copy(hasFired = false)))
+  }
+
+  test("decide: the Terran tank gate covers both rules") {
+    assert( ! ReaverDropBravery.decide(facts(isTerran = true, tanks = 3)))
+    assert( ! ReaverDropBravery.decide(facts(isTerran = true, tanks = 3, firedAgo = 500, woundFraction = 0.1)))
+    assert(ReaverDropBravery.decide(facts(isTerran = true, tanks = 2)))
+  }
 }

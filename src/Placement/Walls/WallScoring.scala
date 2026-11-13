@@ -59,6 +59,32 @@ object WallScoring {
    * near end still gets walked through; a gap on the far side of the wall
    * means the wall does not protect anything.
    */
+  /** Filler weights: how close, how many, how aligned, how few holes. */
+  val fillerDistanceWeight: Double = 8.0
+  val fillerMissingWeight: Double = 30.0
+  val fillerUnalignedWeight: Double = 10.0
+  val fillerHoleWeight: Double = 6.0
+  val fillerCrowdWeight: Double = 20.0
+  val fillerPylonWeight: Double = 5.0
+
+  /** Existing buildings this close to the wall count as the closest. */
+  val fillerCandidates: Int = 6
+
+  /** Buildings past this many stop crowding: the wall is already covered. */
+  val fillerCrowdCap: Int = 8
+
+  /**
+   * Filler score from measurements: distance of the closest buildings,
+   * how many are still missing, how far they are from aligned, holes in
+   * the block, and how many buildings the wall already has.
+   */
+  def scoreFiller(distanceSum: Int, missing: Int, unaligned: Int, holes: Int, wallBuildings: Int): Double =
+    fillerDistanceWeight  * distanceSum +
+    fillerMissingWeight   * missing +
+    fillerUnalignedWeight * unaligned +
+    fillerHoleWeight      * holes -
+    fillerCrowdWeight     * Math.min(wallBuildings, fillerCrowdCap)
+
   def gapPenalty(adjacentBuildings: Int, gapFartherThanWall: Boolean): Int =
     if (adjacentBuildings >= 2) 0
     else if (gapFartherThanWall) 400

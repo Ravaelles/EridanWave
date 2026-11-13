@@ -1,17 +1,13 @@
 package Gameplans.Protoss.PvZ.reactive
 
-import Gameplans.Protoss.PvZ.policy.{DefenseWithoutDragoons, EarlyPressure, GasBank, ReaverGas}
+import Gameplans.Protoss.PvZ.policy.{DefenseWithoutDragoons, EarlyPressure}
 import Lifecycle.With
 import Macro.Actions.Compositor
-import Macro.Facts.UnitArchive
 import Performance.Cache
-import Placement.Access.PlaceLabels
-import ProxyBwapi.Buildable
 import ProxyBwapi.Races.{Protoss, Zerg}
 import Strategery.Strategies.Protoss._
-import Tactic.Missions.evaluation.DarkTemplarEffectiveness
 import Utilities.Time.{GameTime, Minutes}
-import Utilities.UnitFilters.{IsHatchlike, IsWarrior, IsWorker}
+import Utilities.UnitFilters.IsWarrior
 import Utilities.{?, SwapIf}
 
 import scala.collection.mutable

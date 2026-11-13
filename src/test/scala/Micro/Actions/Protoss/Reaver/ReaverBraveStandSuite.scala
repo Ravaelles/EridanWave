@@ -6,6 +6,13 @@ class ReaverBraveStandSuite extends AnyFunSuite {
 
   private val idle = ReaverSituation()
 
+  private def standing(
+    shields         : Int = 80,
+    framesSinceFired: Int = 96,
+    scarabs         : Int = 1,
+    foeInReach      : Boolean = true): ReaverSituation =
+    idle.copy(shields = shields, framesSinceFired = framesSinceFired, scarabs = scarabs, foeInReach = foeInReach)
+
   test("bravery needs shields and a stale shot") {
     assert( ! ReaverBraveStand.brave(shields = 49, framesSinceFired = 999999))
     assert( ! ReaverBraveStand.brave(shields = 80, framesSinceFired = 95))
@@ -13,33 +20,39 @@ class ReaverBraveStandSuite extends AnyFunSuite {
     assert(ReaverBraveStand.brave(shields = 80, framesSinceFired = 999999))
   }
 
-  test("sieged-tank range plus margin is never entered") {
-    assert(ReaverBraveStand.tankCovered(tankRangeTiles = 12.0, distTiles = 0.0))
-    assert(ReaverBraveStand.tankCovered(tankRangeTiles = 12.0, distTiles = 13.0))
-    assert( ! ReaverBraveStand.tankCovered(tankRangeTiles = 12.0, distTiles = 13.01))
+  test("a stale shielded Reaver with a loaded Scarab and a foe in reach stands") {
+    assert(ReaverBraveStand.applies(standing()))
+    assert(ReaverBraveStand.applies(standing(shields = 50)))
   }
 
-  test("a stale shielded Reaver with a foe in reach stands") {
-    assert(ReaverBraveStand.applies(idle.copy(shields = 50, framesSinceFired = 96, scarabs = 1, foeInReach = true)))
-    assert(ReaverBraveStand.applies(idle.copy(hasActiveScarab = true, foeInReach = true)))
+  test("a Scarab in flight is not a loaded shot") {
+    assert( ! ReaverBraveStand.applies(standing().copy(hasActiveScarab = true)))
+  }
+
+  test("a cooling Reaver has nothing to stand for") {
+    assert( ! ReaverBraveStand.applies(standing().copy(cooling = true)))
   }
 
   test("a loaded or committed Reaver never stands") {
-    assert( ! ReaverBraveStand.applies(idle.copy(loaded = true, shields = 80, framesSinceFired = 96, scarabs = 1, foeInReach = true)))
-    assert( ! ReaverBraveStand.applies(idle.copy(committed = true, shields = 80, framesSinceFired = 96, scarabs = 1, foeInReach = true)))
+    assert( ! ReaverBraveStand.applies(standing().copy(loaded = true)))
+    assert( ! ReaverBraveStand.applies(standing().copy(committed = true)))
+  }
+
+  test("a foe close enough to chew it vetoes the stand") {
+    assert( ! ReaverBraveStand.applies(standing().copy(pressuredClose = true)))
   }
 
   test("doom, Scarabs, statics and tanks veto the stand") {
-    assert( ! ReaverBraveStand.applies(idle.copy(doomed = true, shields = 80, framesSinceFired = 96, scarabs = 1, foeInReach = true)))
-    assert( ! ReaverBraveStand.applies(idle.copy(targetedByScarab = true, shields = 80, framesSinceFired = 96, scarabs = 1, foeInReach = true)))
-    assert( ! ReaverBraveStand.applies(idle.copy(staticInFace = true, shields = 80, framesSinceFired = 96, scarabs = 1, foeInReach = true)))
-    assert( ! ReaverBraveStand.applies(idle.copy(tankCovered = true, shields = 80, framesSinceFired = 96, scarabs = 1, foeInReach = true)))
+    assert( ! ReaverBraveStand.applies(standing().copy(doomed = true)))
+    assert( ! ReaverBraveStand.applies(standing().copy(targetedByScarab = true)))
+    assert( ! ReaverBraveStand.applies(standing().copy(staticInFace = true)))
+    assert( ! ReaverBraveStand.applies(standing().copy(tankCovered = true)))
   }
 
-  test("a fresh or shotless Reaver never stands") {
-    assert( ! ReaverBraveStand.applies(idle.copy(shields = 49, framesSinceFired = 96, scarabs = 1, foeInReach = true)))
-    assert( ! ReaverBraveStand.applies(idle.copy(shields = 80, framesSinceFired = 95, scarabs = 1, foeInReach = true)))
-    assert( ! ReaverBraveStand.applies(idle.copy(shields = 80, framesSinceFired = 96, scarabs = 0, foeInReach = true)))
-    assert( ! ReaverBraveStand.applies(idle.copy(shields = 80, framesSinceFired = 96, scarabs = 1, foeInReach = false)))
+  test("a fresh, shotless or unreached Reaver never stands") {
+    assert( ! ReaverBraveStand.applies(standing(shields = 49)))
+    assert( ! ReaverBraveStand.applies(standing(framesSinceFired = 95)))
+    assert( ! ReaverBraveStand.applies(standing(scarabs = 0)))
+    assert( ! ReaverBraveStand.applies(standing(foeInReach = false)))
   }
 }

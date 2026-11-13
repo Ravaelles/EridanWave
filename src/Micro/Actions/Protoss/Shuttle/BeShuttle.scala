@@ -39,6 +39,7 @@ object BeShuttle extends Action {
   protected def perform(shuttle: FriendlyUnitInfo): Unit = {
     if (ShuttleDitchPassengers(shuttle)) return
     if (ShuttleAdoptPassenger(shuttle)) return
+    if (fleeFromScourgeRear(shuttle)) return
     if (fleeFromAirThreats(shuttle)) return
     if (makeEmergencyPickup(shuttle)) return
     if (runBestQuest(shuttle)) return
@@ -46,6 +47,20 @@ object BeShuttle extends Action {
     ShuttlePark(shuttle)
     ShuttleAwait(shuttle)
   }
+
+  /**
+   * A loaded Shuttle runs from Scourge to the rear of its cluster before
+   * any other flight decision - at the generic three tiles the Scourge are
+   * already on it. BeFlier skips transports, so this discipline is the one
+   * owner of every Shuttle move. True when it took over movement.
+   */
+  private def fleeFromScourgeRear(shuttle: FriendlyUnitInfo): Boolean =
+    ShuttleScourgeFlee.fleePixel(shuttle).exists(rear => {
+      shuttle.agent.act("FleeScourge")
+      shuttle.agent.destinationNext.set(rear)
+      Commander.move(shuttle)
+      true
+    })
 
   /**
    * Enemies that can hit us inside twelve tiles push us straight out

@@ -19,7 +19,8 @@ import scala.collection.mutable.ArrayBuffer
 import Tactic.Squads.Decisions.HuntLogic
 import Tactic.Squads.Decisions.AttackModes
 import Tactic.Squads.Decisions.RegroupLatch
-import Tactic.Squads.Decisions.StanceVoteFilter
+import Tactic.Squads.ContainStatus
+import Tactic.Squads.Decisions.VoteConfirmation
 import Tactic.Squads.Decisions.SuicideMission
 import Tactic.Squads.Squad
 import Tactic.Squads.SquadAutomation
@@ -37,7 +38,7 @@ class SquadAttack extends Squad {
   var stance: RegroupLatch.Stance = RegroupLatch.Engaged
   // Retreat proposals need consecutive confirmation (sim flicker must not
   // swing the squad); re-engage passes through. Yolo/UMS set stance directly.
-  private val stanceFilter = new StanceVoteFilter()
+  private val stanceFilter = new VoteConfirmation[RegroupLatch.Stance](RegroupLatch.Engaged, RegroupLatch.Regrouping)
   override def fightConsensus: Boolean = {
     if (stance == RegroupLatch.Regrouping) return false
 
@@ -69,7 +70,7 @@ class SquadAttack extends Squad {
   def chooseMode(): AttackMode = {
     // Never abandon contain: while the definition holds the cluster keeps
     // the contain spot and roster. Self-releasing as members fall.
-    if (Micro.Actions.Protoss.Reaver.ContainStatus.now()) {
+    if (ContainStatus.now()) {
       setMode(
         ContainArmy,
         With.scouting.enemyThreatOrigin.center,
@@ -306,7 +307,7 @@ class SquadAttack extends Squad {
 
     if (units.isEmpty) return
 
-    lock.setInterruptible( ! Micro.Actions.Protoss.Reaver.ContainStatus.now())
+    lock.setInterruptible( ! ContainStatus.now())
     chooseMode()
     if (With.configuration.formationAudit) {
       Debugging.FormationAudit.noteMode(With.frame, mode.toString, vicinity.x, vicinity.y, With.units.enemy.count(_.visible))

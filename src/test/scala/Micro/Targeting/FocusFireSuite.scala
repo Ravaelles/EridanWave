@@ -43,4 +43,16 @@ class FocusFireSuite extends AnyFunSuite {
       FocusFire.Candidate(shotsToKill = 2, reach = 4, packDistanceTiles = 3.0, id = 4)))
     assert(byId.map(_.id).contains(4))
   }
+
+  test("volleys are priced for the squad, not the shooter") {
+    // Same total damage from different hulls: the same number of volleys.
+    assert(FocusFire.volleysToKill(120.0, Seq(20, 20)) == 3)
+    assert(FocusFire.volleysToKill(120.0, Seq(40)) == 3)
+    assert(FocusFire.volleysToKill(120.0, Seq(5, 5, 5, 5)) == 6)
+    // A stronger line needs fewer volleys for the same target.
+    assert(FocusFire.volleysToKill(120.0, Seq(60)) == 2)
+    assert(FocusFire.volleysToKill(120.0, Seq(20)) == 6)
+    // No damage still means no kill.
+    assert(FocusFire.volleysToKill(120.0, Seq(0)) == Int.MaxValue)
+  }
 }

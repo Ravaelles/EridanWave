@@ -10,6 +10,15 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  */
 object ReaverActions {
 
+  /** The engine resets a dropped Reaver's cooldown to this many frames. */
+  val cooldownOnLanding: Int = 30
+
+  /** Stand ground to spend a shot: one order, a distinct trace label. */
+  def holdGround(unit: FriendlyUnitInfo, label: String): Unit = {
+    unit.agent.act(label)
+    Commander.hold(unit)
+  }
+
   def clickShuttle(unit: FriendlyUnitInfo): Unit = {
     Commander.rightClick(unit, unit.agent.ride.get)
   }

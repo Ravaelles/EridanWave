@@ -1,6 +1,5 @@
 package Micro.Actions.Protoss.Reaver
 
-import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
@@ -18,20 +17,8 @@ object ReaverBraveStand {
   /** A shot this stale, in frames, means the Reaver idles instead of dueling. */
   val staleShotFrames: Int = 4 * 24
 
-  /** Enemies this close, in tiles, are engaged instead of fled. */
-  val engageTiles: Double = 8.5
-
-  /** Sieged-tank range plus this margin, in tiles, is never entered. */
-  val tankMarginTiles: Double = 1.0
-
   def brave(shields: Int, framesSinceFired: Int): Boolean =
     shields >= braveShields && framesSinceFired >= staleShotFrames
-
-  def tankCovered(tankRangeTiles: Double, distTiles: Double): Boolean =
-    distTiles <= tankRangeTiles + tankMarginTiles
-
-  def armed(scarabs: Int, hasActiveScarab: Boolean): Boolean =
-    scarabs > 0 || hasActiveScarab
 
   def applies(situation: ReaverSituation): Boolean =
     ! situation.loaded &&
@@ -40,12 +27,12 @@ object ReaverBraveStand {
       ! situation.targetedByScarab &&
       ! situation.staticInFace &&
       brave(situation.shields, situation.framesSinceFired) &&
-      armed(situation.scarabs, situation.hasActiveScarab) &&
+      ReaverFireDiscipline.shotReady(situation.scarabs, situation.hasActiveScarab, situation.cooling) &&
       situation.foeInReach &&
-      ! situation.tankCovered
+      ! situation.tankCovered &&
+      ! situation.pressuredClose
 
   def act(unit: FriendlyUnitInfo): Unit = {
-    unit.agent.act("BraveStand")
-    Commander.hold(unit)
+    ReaverActions.holdGround(unit, "BraveStand")
   }
 }

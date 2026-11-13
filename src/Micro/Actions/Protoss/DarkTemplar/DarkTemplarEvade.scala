@@ -1,5 +1,7 @@
 package Micro.Actions.Protoss.DarkTemplar
 
+import Micro.Actions.Combat.Maneuvering.RangedReach
+
 /**
  * Pure detector evasion for a hunting Dark Templar (no game access): a
  * detector that can see the Templar unmakes it, so the hunt never leads
@@ -11,9 +13,6 @@ object DarkTemplarEvade {
 
   /** Avoidance band outside the detector's sight that still evades, in tiles. */
   val avoidBandTiles: Double = 2.0
-
-  /** Reach above which a threat counts as ranged, in pixels. */
-  val rangedReachPixels: Double = 32.0
 
   /**
    * Lone-detector radius, in tiles: with full shields and no attacker
@@ -33,7 +32,7 @@ object DarkTemplarEvade {
     distPixels < evadeRadiusPixels(sightPixels)
 
   def isRanged(rangePixels: Double): Boolean =
-    rangePixels > rangedReachPixels
+    RangedReach.isRanged(rangePixels)
 
   /**
    * Lone-detector hold (pure flags for the suite): full shields plus no

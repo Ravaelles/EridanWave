@@ -97,4 +97,47 @@ object ReaverDropBravery {
    */
   def canAffordShot(ourHitPoints: Double, enemyDps: Double, exposure: Int = exposureFrames, margin: Double = safetyMargin): Boolean =
     ourHitPoints > enemyDps * exposure * margin
+
+  /** Everything the drop decision reads, gathered once by the seam. */
+  final case class DropFacts(
+    foesClose        : Int,
+    rangedNear       : Int,
+    rangedDps        : Double,
+    tanks            : Int,
+    nearStaticDefense: Boolean,
+    meleeNear        : Int,
+    shuttleShields   : Int,
+    reaverShields    : Int,
+    shuttleHitPoints : Double,
+    firedAgo         : Int,
+    woundFraction    : Double,
+    hasFired         : Boolean,
+    isTerran         : Boolean)
+
+  /**
+   * Both drop rules in one place: the rings price the firepower of the
+   * landing, the staleness rule breaks a healthy pair out of dithering.
+   * Statics and the Terran tank gate override both; the stale rule is
+   * deliberately not firepower-priced.
+   */
+  def decide(facts: DropFacts): Boolean = {
+    val shieldsUp  = facts.shuttleShields >= minShields && facts.reaverShields >= minShields
+    val tankGate   = ! facts.isTerran || facts.tanks <= maxTerranTanks
+    val affordable = canAffordShot(facts.shuttleHitPoints, facts.rangedDps)
+    val ringsOk = shouldDrop(
+      foesClose        = facts.foesClose,
+      rangedNear       = facts.rangedNear,
+      shuttleShields   = facts.shuttleShields,
+      reaverShields    = facts.reaverShields,
+      isTerran         = facts.isTerran,
+      enemyTanks       = facts.tanks,
+      nearStaticDefense= facts.nearStaticDefense) && affordable
+    val staleOk = mayDropStale(
+      framesSinceFired = facts.firedAgo,
+      woundFraction    = facts.woundFraction,
+      hasFired         = facts.hasFired,
+      meleeNear        = facts.meleeNear) && shieldsUp && ! facts.nearStaticDefense && tankGate
+
+    ringsOk || staleOk
+  }
 }

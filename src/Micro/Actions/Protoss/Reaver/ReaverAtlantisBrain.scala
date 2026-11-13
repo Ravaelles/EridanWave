@@ -12,8 +12,11 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 object ReaverAtlantisBrain {
 
   def act(unit: FriendlyUnitInfo): Unit = {
+    // Cheap fact first: the snapshot behind it costs several registry
+    // scans, and most Reavers are out of ride range most frames.
+    if ( ! ReaverOwn.rideNearby(unit)) return
+
     val situation = ReaverSituation.read(unit)
-    if ( ! situation.rideNearby) return
 
     if (ReaverRescueScarab.applies(situation)) {
       ReaverRescueScarab.act(unit)
