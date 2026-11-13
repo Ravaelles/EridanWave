@@ -35,6 +35,7 @@ class EridanWave extends DefaultBWListener {
         Tuning.Tuning.install()
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         Debugging.ErrorLedger.reset()
+        Debugging.SlowAlone.reset()
         Lifecycle.HitCounter.reset()
         Debugging.FormationAudit.reset()
         Debugging.Probe.reset()

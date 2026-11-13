@@ -206,6 +206,7 @@ object CommanderMove {
     CommanderCore.leadFollower(unit, move(_, to))
 
     unit.agent.tryingToMove = unit.pixelDistanceCenter(to) > CommanderCore.tryingToMoveThreshold
+    Debugging.SlowAlone.noteIfSlowAlone(unit, to)
 
     if (unit.unready) {
       if (unit.pixelDistanceCenter(to) > 3 * 32) {

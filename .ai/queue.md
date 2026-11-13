@@ -41,8 +41,9 @@ of our natural always attacked, no retreat (`TanksAtNatural` rows).
 enemy workers in the main (assault itself verified GAME_54CCDB32:
 labels from f11600, commit, kills, VICTORY 77/7). `LoneMarch`
 (`ea28a943e`) - lone unit walks straight at goal. Order continuation
-(HASH) - far shifted goals keep cruising (Move hold-vs-issue counts
-vs GAME_54CCDB32). No-dressing
+(`92564a364`) - far shifted goals keep cruising (Move hold-vs-issue counts
+vs GAME_54CCDB32). Slow-alone watch (THIS) - log stutter with no units
+nearby, max 10 per game. No-dressing
 (`c2af083ed`, `782bbb938`) - Waiting/Marching dry with no enemy
 near, column out of main. Base guards 30 tiles (`a5c7f3303`) -
 enemy near guarded base. Screened static +50% (`601e43dbd`) -
