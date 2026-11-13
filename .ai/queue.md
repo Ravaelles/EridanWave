@@ -14,6 +14,18 @@ launches, talks BWAPI, then exits - no TA cache for TauCross
 (`Pick from supportedMaps!`); pack + BWTA2 unreachable (site down).
 Parked. Caveats: SaaS (needs internet), LF 3 for full strength.
 
+## Open: Micro/Actions edge-case review (no game needed)
+
+Audit `src/Micro/Actions` for edge cases that smuggle in whole new
+behaviors: three classes for one case (attack always, never retreat,
+never flee - suicide-because-in-enemy-base vs fighting-in-defense vs
+whatever else). For each class write down its intent (one line in the
+header: what it is for, what it yields to); where the intents match,
+merge toward one concept. Group unit functionality into shared
+concepts, not 300 edge cases. Suspects from the field: suicide
+targeting (workers-only, buildings vetoed), KiteTo-vs-kiteaway overlap,
+reboard/board/park/await chains in the pair doctrine.
+
 ## Awaiting a validation game (all committed, suite-green, jar synced)
 
 Targeting/micro: `OverlordSnipe` (`a869e66d6`, chase never, snipe
