@@ -153,7 +153,10 @@ health, Tickle precedent), retreat still outranks shooting under fire
 (macro game: dragoons vs sunken+lings trade). Micro: Storm walks short, storms cheap (THIS) - approach leash
 12 tiles vs Terran / 10 otherwise plus the 75/120/180 pack ladder
 (base at 75, discount at 120, pairs at 180, singles at 195, hold fire
-below 75); needs a Storm game with HTs. Micro: DT flees guns first (THIS) - visible enemy that can hit the
+below 75); needs a Storm game with HTs. Micro: crucial air victims first (THIS) - grounded AA shoots
+Scourge nearest, then weakest Carrier/Vessel/Battlecruiser/Wraith in
+range, ahead of kiting, dressing and retreat; needs air-heavy games.
+Micro: DT flees guns first (THIS) - visible enemy that can hit the
 Templar inside 13 tiles outranks the detector; Overlords alone never
 move the hunt. March: TankHug (THIS) -
 cooling ground warriors close sieged tanks to 0.2 tiles instead of

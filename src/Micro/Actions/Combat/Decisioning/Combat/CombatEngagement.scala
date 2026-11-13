@@ -10,6 +10,11 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
   private[Decisioning] def engage(): Boolean = {
+    // Crucial air victims outrank everything: a grounded anti-air warrior
+    // shoots Scourge, Carriers, Vessels, Battlecruisers and Wraiths in
+    // range first - even while retreating - then carries on as ordered.
+    if (CrucialAirSnipeBehavior.run(unit)) return unit.unready
+
     // No consensus: the squad is leaving, so walk its march instead of
     // dueling. Lone counterattacks while regrouping feed the enemy piecemeal;
     // the contain roster and mode latch still hold, so the squad reforms.
