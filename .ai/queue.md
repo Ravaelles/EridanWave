@@ -32,7 +32,9 @@ repairing a tasked Terran building gets sniped. Detector spread
 
 March/stance: `DragoonBrave` (`d6d4f8af0`) - early ready shielded
 Dragoon stands up to Marines (`DragoonBrave` rows, no Retreat flap).
-`HomeStand` (HASH) - Protoss between main and natural-4 never retreats.
+`HomeStand` (`617bdfb18`) - Protoss between main and natural-4 never retreats.
+`NoRetreat` tanks (HASH) - siege tanks within 18 of our natural always
+attacked, no retreat (`TanksAtNatural` rows).
 `SuicideMission` (`7c75e98eb`, ex-`MainAssault`
 `706edf6e6`/`dee6339f3`) - warriors in enemy main: label+commit, no
 retreat/flee, KiteAway cools, workers first. `LoneMarch`
