@@ -18,22 +18,27 @@ object ShuttleFleeGeometry {
   /** Scourge this close, in tiles, send a loaded Shuttle running. */
   val scourgeFleeDist: Double = 12.0
 
-  /** Wounds scale the threat margin tenfold: a fresh Shuttle may skate
-    * threats it can outrun, a bleeding one runs early. Mirrors the
-    * MatchupAnalysis safety branches (64 skating, 160 standing). */
-  val woundMarginMult: Double = 10.0
-
-  def safetyMarginPixels(woundPercent: Double, fasterFlyer: Boolean): Double =
-    ?(fasterFlyer, 64, 160) * (1 + woundMarginMult * Maff.clamp01(woundPercent))
-
   /** Share of the cluster, nearest our base, counted as its rear. */
   val rearShare: Double = 0.33
 
+  /**
+   * The one wound curve for the whole Shuttle, in tiles: a fresh hull
+   * skates what it can outrun, a bleeding one runs early. The unsafe
+   * gate adds it to its flat base margin below; the preemptive band in
+   * BeShuttle adds it to its own base the same way - one knob retunes
+   * both. Mirrors the MatchupAnalysis safety branches (64 skating,
+   * 160 standing).
+   */
+  val woundFleeBonusTiles: Double = 9.0
+
+  def woundBonusTiles(woundPercent: Double): Double =
+    Maff.clamp01(woundPercent) * woundFleeBonusTiles
+
+  def safetyMarginPixels(woundPercent: Double, fasterFlyer: Boolean): Double =
+    ?(fasterFlyer, 64, 160) + woundBonusTiles(woundPercent) * 32.0
+
   /** Preemptive band beyond a ranged threat's own reach, in tiles. */
   val baseFleeMarginTiles: Double = 4.0
-
-  /** Extra preemptive band at full wounds, in tiles (woundPercentBonus(0, 5)). */
-  val woundFleeBonusTiles: Double = 5.0
 
   /**
    * Preemptive flee trigger (pure pixels for the suite): a ranged threat

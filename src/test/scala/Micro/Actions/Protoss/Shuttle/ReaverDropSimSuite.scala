@@ -18,7 +18,7 @@ class ReaverDropSimSuite extends AnyFunSuite {
     // One Scarab kills one Hydra.
     assert(p.scarabDmg >= p.hydraHp, "scarab one-shots hydras")
     // Preemptive band matches production: 4 tiles fresh, up to 9 dying.
-    assert(p.preemptBaseTiles == 4.0 && p.preemptWoundTiles == 5.0)
+    assert(p.preemptBaseTiles == 4.0 && p.preemptWoundTiles == 9.0)
   }
 
   test("the landing zone is the base corner farthest from the pack") {

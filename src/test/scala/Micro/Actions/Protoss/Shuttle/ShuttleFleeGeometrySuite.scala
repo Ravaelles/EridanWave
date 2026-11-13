@@ -40,15 +40,18 @@ class ShuttleFleeGeometrySuite extends AnyFunSuite {
     assert(ShuttleFleeGeometry.safetyMarginPixels(0.0, fasterFlyer = false) == 160)
   }
 
-  test("wounds scale the margin tenfold") {
-    assert(ShuttleFleeGeometry.safetyMarginPixels(0.1, fasterFlyer = true) == 128)
-    assert(ShuttleFleeGeometry.safetyMarginPixels(1.0, fasterFlyer = false) == 1760)
+  test("one wound curve prices the margin: nine tiles when dying") {
+    assert(ShuttleFleeGeometry.woundFleeBonusTiles == 9.0)
+    assert(ShuttleFleeGeometry.woundBonusTiles(0.5) == 4.5)
+    assert(ShuttleFleeGeometry.safetyMarginPixels(0.5, fasterFlyer = true) == 208)
+    assert(ShuttleFleeGeometry.safetyMarginPixels(1.0, fasterFlyer = false) == 448)
   }
 
-  test("the wound multiplier is clamped at full wounds") {
-    assert(ShuttleFleeGeometry.safetyMarginPixels(2.0, fasterFlyer = true) == 704)
-    assert(ShuttleFleeGeometry.safetyMarginPixels(9.0, fasterFlyer = false) == 1760)
+  test("the wound curve is clamped at full wounds") {
+    assert(ShuttleFleeGeometry.safetyMarginPixels(2.0, fasterFlyer = true) == 352)
+    assert(ShuttleFleeGeometry.safetyMarginPixels(9.0, fasterFlyer = false) == 448)
   }
+
 
   test("melee reach never triggers the preemptive flee") {
     assert( ! ShuttleFleeGeometry.threatensPreemptively(0.0, 32.0, 9.0 * 32.0))
