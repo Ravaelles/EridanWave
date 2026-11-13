@@ -39,6 +39,11 @@ class SquadAttack extends Squad {
   // Retreat proposals need consecutive confirmation (sim flicker must not
   // swing the squad); re-engage passes through. Yolo/UMS set stance directly.
   private val stanceFilter = new VoteConfirmation[RegroupLatch.Stance](RegroupLatch.Engaged, RegroupLatch.Regrouping)
+  // Contain-leave proposals need consecutive confirmation (the contain
+  // verdict flickers on its static-count boundary); re-entering passes
+  // through. Yolo/UMS never contain, so the filter idles off the path.
+  private val containFilter = new VoteConfirmation[Boolean](fastPath = true, slowPath = false)
+
   override def fightConsensus: Boolean = {
     if (stance == RegroupLatch.Regrouping) return false
 
@@ -62,6 +67,14 @@ class SquadAttack extends Squad {
     .map(_.center))
 
   private def setMode(newMode: AttackMode, newVicinity: Pixel, newTargets: => Iterable[UnitInfo]): Unit = {
+    // Leaving a contain to chase elsewhere is the risky proposal: the
+    // contain verdict flickers on its static-count boundary, and every
+    // flip swings the squad destination (the pair unloads into guns on
+    // the swing). Confirm the leave over consecutive frames the way
+    // retreats confirm; re-entering passes through instantly.
+    val keepContain = containFilter.confirm(mode == ContainArmy, newMode == ContainArmy)
+    if (mode == ContainArmy && ! keepContain) return
+
     mode = newMode
     vicinity = newVicinity
     setTargets(newTargets) // The => in the function definition is key when using the vicinity to choose targets
