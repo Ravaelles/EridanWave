@@ -7,8 +7,11 @@ package starengine
  * pilots and the gun resolution share it instead of each copying it.
  *
  * Order per frame (documented, fixed): pilots move ours, then foes, then
- * constraints adjust, then foes shoot, then ours shoot. Foes shoot first
- * so outcomes never depend on who the engine favors.
+ * constraints adjust, then casts resolve, then foes shoot, then ours
+ * shoot. Foes shoot first so outcomes never depend on who the engine
+ * favors. Casting never counts as a reissue and never moves the caster:
+ * the cast resolves from the post-move positions, so storming does not
+ * break march continuity the way redirecting does.
  */
 final class World(
   val ours: Seq[Body],
@@ -17,6 +20,29 @@ final class World(
   val constraints: Seq[Constraint]) {
 
   var frame: Int = 0
+
+  /** Reissues per body: every order change costs the frame (re-aiming resets acceleration to a crawl). */
+  val reissues = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
+  private val lastOrder = new scala.collection.mutable.HashMap[Body, Directive]()
+
+  /** Storms cast per body, in order. */
+  val stormsCast = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
+
+  /** Same order if same target, or a goal that barely moved (waypoint following, not redirecting). */
+  private def sameOrderAs(previous: Option[Directive], next: Directive): Boolean = (previous, next) match {
+    case (None, _) => true
+    case (Some(Hold), Hold) => true
+    case (Some(Chase(a)), Chase(c)) => a eq c
+    case (Some(CastStorm(x1, y1)), CastStorm(x2, y2)) =>
+      val dx = x1 - x2
+      val dy = y1 - y2
+      dx * dx + dy * dy <= 32.0 * 32.0
+    case (Some(MoveTo(x1, y1)), MoveTo(x2, y2)) =>
+      val dx = x1 - x2
+      val dy = y1 - y2
+      dx * dx + dy * dy <= 32.0 * 32.0
+    case _ => false
+  }
 
   def nearestFoeOf(me: Body, among: Seq[Body], valid: (Body, Body) => Boolean): Option[Body] = {
     val live = among.view.filter(b => b.alive && valid(me, b))
@@ -29,6 +55,7 @@ final class World(
     moveSide(ours, orders)
     moveSide(foes, orders)
     constraints.foreach(_.apply(this))
+    castSide(ours, orders)
     shootSide(foes, ours, orders)
     shootSide(ours, foes, orders)
     frame += 1
@@ -44,7 +71,23 @@ final class World(
 
   private def moveSide(side: Seq[Body], orders: Map[Body, Directive]): Unit = {
     side.filter(_.alive).foreach(body => {
-      orders.getOrElse(body, Hold) match {
+      val order = orders.getOrElse(body, Hold)
+      // Casts resolve in the cast phase from post-move positions: no move,
+      // no reissue, and the march memory is untouched so storming never
+      // reads as dithering.
+      if ( ! order.isInstanceOf[CastStorm]) {
+        if (sameOrderAs(lastOrder.get(body), order)) {
+          moveBody(body, order)
+        } else {
+          reissues(body) = reissues(body) + 1
+        }
+        lastOrder.put(body, order)
+      }
+    })
+  }
+
+  private def moveBody(body: Body, order: Directive): Unit = {
+    order match {
         case Hold => ()
         case MoveTo(x, y) => body.stepToward(x, y)
         case Chase(target) =>
@@ -63,6 +106,28 @@ final class World(
             }
           }
       }
+  }
+
+  /**
+   * Storm casts, ours only (no foe caster exists in these scenarios).
+   * A cast deducts the battery and deals flat damage to every body in
+   * the box - friend or foe, the game does not discriminate either.
+   * Casters do not shoot in the cast frame; the orders map carries who
+   * cast into the gun phase.
+   */
+  private def castSide(side: Seq[Body], orders: Map[Body, Directive]): Unit = {
+    side.filter(_.alive).foreach(body => {
+      orders.get(body).foreach {
+        case CastStorm(x, y) if body.energy >= World.StormCostEnergy =>
+          body.energy -= World.StormCostEnergy
+          stormsCast(body) = stormsCast(body) + 1
+          (ours ++ foes).filter(_.alive).foreach(victim => {
+            if (Math.abs(victim.x - x) <= World.StormBoxHalfPx && Math.abs(victim.y - y) <= World.StormBoxHalfPx) {
+              victim.hp = Math.max(0, victim.hp - World.StormDamage)
+            }
+          })
+        case _ => ()
+      }
     })
   }
 
@@ -70,6 +135,8 @@ final class World(
     side.filter(_.alive).foreach(body => {
       if (body.cooldownLeft > 0) {
         body.cooldownLeft -= 1
+      } else if (orders.get(body).exists(_.isInstanceOf[CastStorm])) {
+        // Cast this frame: the energy is already spent, the guns stay silent.
       } else {
         // The chase target is the committed pick (mirrors toAttack): shoot
         // it while it holds, otherwise fall back to the nearest hittable.
@@ -84,4 +151,19 @@ final class World(
       }
     })
   }
+}
+
+/**
+ * Storm numbers, one home (SRP): the cast phase and the pilots read
+ * these instead of each copying them. Cost is the game cost
+ * (TechType.Psionic_Storm.energyCost); damage is the full-game total
+ * dealt instantly (no lingering field in this engine); the box matches
+ * the 96px search box the shipped targeting uses.
+ */
+object World {
+
+  val StormCostEnergy: Int = 75
+  val StormDamage: Int = 112
+  val StormBoxHalfPx: Double = 48.0
+  val StormCastRangePx: Double = 9 * 32.0
 }

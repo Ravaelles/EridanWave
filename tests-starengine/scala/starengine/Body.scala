@@ -9,11 +9,15 @@ import ProxyBwapi.UnitClasses.UnitClass
  * engine). Pixels everywhere, like the game reports them. Simplifications,
  * all documented here: constant top speed with instant stops (no
  * acceleration or braking), one pooled hit-point bar (no shield/hull
- * split), instant damage on the firing frame (no projectiles).
+ * split), instant damage on the firing frame (no projectiles), storms as
+ * instant flat damage in the cast frame (no lingering field).
  */
 final class Body(val kind: UnitClass, var x: Double, var y: Double, var hp: Double) {
 
   var cooldownLeft: Int = 0
+
+  /** Spell energy (High Templars start scenarios charged, everyone else at zero). */
+  var energy: Int = 0
 
   def alive: Boolean = hp > 0
 

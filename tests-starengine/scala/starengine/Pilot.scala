@@ -23,6 +23,9 @@ final case class MoveTo(x: Double, y: Double) extends Directive
 
 final case class Chase(target: Body) extends Directive
 
+/** Storm cast at a point: resolves in the cast phase, never moves the caster that frame. */
+final case class CastStorm(x: Double, y: Double) extends Directive
+
 object Pilots {
 
   /** Hold position, always. Rides, observers, artillery that sits. */
