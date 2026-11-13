@@ -22,25 +22,30 @@ object BeDetector extends Action {
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     BeFlier(unit)
+    // Spread outranks everything but survival: stacked eyes die together,
+    // and every Spot/combat step after this one walks them back into the
+    // same pile. While spreading the eye moves and reports, nothing else.
+    if (spread(unit)) return
+
     Spot(unit)
     Recharge(unit)
-    spread(unit)
     unit.agent.combat.perform(unit)
   }
 
-  private def spread(unit: FriendlyUnitInfo): Unit = {
+  private def spread(unit: FriendlyUnitInfo): Boolean = {
     // Only older neighbors count: the newer eye moves, the older holds.
     // Engine edge distance is pixels; the threshold is tiles (rule 10).
     val others = With.units.ours.view
       .filter(u => u.unitClass == unit.unitClass && u.id != unit.id)
       .map(u => DetectorSpread.OlderEye(u.id, u.pixel, u.tileDistanceEdge(unit)))
       .toSeq
-    DetectorSpread.partner(unit.id, others)
-      .foreach(older => {
-        if (DetectorSpread.shouldSpread(unit.id, older.id, older.distTiles)) {
-          unit.agent.destinationNext.set(DetectorSpread.awayFrom(unit.pixel, older.pixel))
-          Commander.move(unit)
-        }
-      })
+    DetectorSpread.partner(unit.id, others).exists(older => {
+      if (DetectorSpread.shouldSpread(unit.id, older.id, older.distTiles)) {
+        unit.cherryVisUnitLog("DetectorSpread")
+        unit.agent.destinationNext.set(DetectorSpread.awayFrom(unit.pixel, older.pixel))
+        Commander.move(unit)
+        true
+      } else false
+    })
   }
 }

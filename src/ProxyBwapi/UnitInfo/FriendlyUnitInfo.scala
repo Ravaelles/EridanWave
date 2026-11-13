@@ -68,6 +68,16 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
   lazy val agent     : Agent      = new Agent(this)
   lazy val hysteresis: Hysteresis = new Hysteresis(this)
   private var _client : Any        = None
+
+  /**
+   * One-line manager/seam usage log: lands the label in the unit's
+   * CherryVis chain (units_logs) and the probe log, so manager use is
+   * visible per unit instead of vanishing between decisions.
+   */
+  def cherryVisUnitLog(label: String): Unit = {
+    agent.act(label)
+    Debugging.CherryVis.CherryVis.decision(id, label)
+  }
   private var _intent : Intention  = new Intention
   def client: Any       = _client
   def intent: Intention = _intent
