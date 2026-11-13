@@ -170,7 +170,9 @@ inside each tier; StarEngine DT scenario proves it end to end. Micro: returning 
 orders; same target keeps cruising instead of crawling to stops
 (macro scout-return smoothness). Micro: suicide forces the attack after ten idle seconds (THIS) -
 past the generic 150-frame rule, a suicide unit charges the nearest
-enemy regardless of advantage; macro suicide games to verify. Micro: contain fires when ready (THIS) - containing weapons shoot
+enemy regardless of advantage; macro suicide games to verify. Micro: no Reaver raids vs Zerg (THIS) - every pair supports the
+main army, never flies into the main; needs a PvZ macro game with
+Reavers. Micro: contain fires when ready (THIS) - containing weapons shoot
 the nearest hittable target instead of dressing past it; gated on the
 contain so volley discipline survives elsewhere. Micro: storms lead
 moving victims (THIS) - 2.0-tile lead along the heading, standing

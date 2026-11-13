@@ -5,8 +5,9 @@ package Micro.Actions.Protoss.ReaverShuttle
  * hulls - raid the enemy base or support the main army. The oldest Reaver
  * raids; every other pair supports. Either hull below half life defaults
  * to the army: a bleeding pair donates itself abroad, next to the army
- * it still shoots. New land/attack/reboard rules read this instead of
- * deciding alone per frame.
+ * it still shoots. Against Zerg every pair supports, no exceptions: no
+ * flying into the main, the Reavers walk with the army instead. New
+ * land/attack/reboard rules read this instead of deciding alone per frame.
  */
 object ReaverShuttleStatus {
 
@@ -19,8 +20,9 @@ object ReaverShuttleStatus {
   /** Either hull below this health fraction sends the pair to the army. */
   val retreatHealthFraction: Double = 0.5
 
-  def decide(isOldestReaver: Boolean, shuttleHealth01: Double, reaverHealth01: Double): PairStatus =
-    if (shuttleHealth01 < retreatHealthFraction || reaverHealth01 < retreatHealthFraction) SupportArmy
+  def decide(isOldestReaver: Boolean, shuttleHealth01: Double, reaverHealth01: Double, enemyIsZerg: Boolean): PairStatus =
+    if (enemyIsZerg) SupportArmy
+    else if (shuttleHealth01 < retreatHealthFraction || reaverHealth01 < retreatHealthFraction) SupportArmy
     else if (isOldestReaver) RaidBase
     else SupportArmy
 }

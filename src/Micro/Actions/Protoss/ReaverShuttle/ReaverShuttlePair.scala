@@ -36,7 +36,8 @@ object ReaverShuttlePair {
     ReaverShuttleStatus.decide(
       isOldestReaver  = passenger.exists(isOldest),
       shuttleHealth01 = health01(shuttle),
-      reaverHealth01  = passenger.map(health01).getOrElse(1.0))
+      reaverHealth01  = passenger.map(health01).getOrElse(1.0),
+      enemyIsZerg     = With.enemies.exists(_.isZerg))
   }
 
   /** Shared status for the Reaver's pair (no ride supports the army). */
@@ -45,7 +46,8 @@ object ReaverShuttlePair {
     ReaverShuttleStatus.decide(
       isOldestReaver  = isOldest(reaver),
       shuttleHealth01 = ride.map(health01).getOrElse(1.0),
-      reaverHealth01  = health01(reaver))
+      reaverHealth01  = health01(reaver),
+      enemyIsZerg     = With.enemies.exists(_.isZerg))
   }
 
   /** The army to follow: the attack squad's goal, or home. */
