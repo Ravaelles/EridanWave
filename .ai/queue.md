@@ -64,7 +64,14 @@ accel, benign; same window exposed destinationFinal +-300px flap
 Terran army within 8.5 tiles, never under sieged tanks (`BraveStand`
 rows, no Hop/retreat flap). Reaver+Shuttle doctrine rebuild (research) -
 baseline in `.ai/reaver-shuttle-baseline.md`, then a fresh doctrine on a
-shared Shuttle+Reaver status; StarTest harness for drop-loss <=5%. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
+shared Shuttle+Reaver status; StarTest harness for drop-loss <=5%.
+StarTest sunkens scenario (`b6f207975`): Reaver+Shuttle vs 2 lings (0.5)
+screening a Sunken (7) vs our 8 - lings die f63, sunken f246, reaver
+8.3% (pure ling-melee tax, zero static damage), shuttle untouched.
+Same test caught two live-game gaps: fresh-hull reboard band never
+opened (`815dd4306`, +2.0 base) and no step-back inside outranged
+statics (THIS, advantageBackoff + harness standoff rule). Per user
+2026-11-13: no more validation games, reproduce in StarTest. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
 (`Reav&Shut_*` unblocked by `60564e111`). `WallBreach`
 (`fbd43ba36`) - no-ground-path Terran wall. DT evade/hide
 (`2ca28d0b5`) - detectors/ranged on DT. DT lone hold (`3319f24ae`) - full
@@ -73,12 +80,19 @@ shields + no attacker in 10 tiles ignores the detector, keeps hunting. Choke con
 Contain raze split (`0dac77449`, `75747c418`) - contain + live
 enemy expo. Weak raid (`fc06f634b`) - 2-4 warriors detach for a detected expo
 while too weak to contain (`R` squad rows). MainMarch guard (`75747c418`) - no `ourMain` crash on
-baseless UMS (`errors.json`). Eject-scout UMS guard (`00e5e63fd`) -
+baseless UMS (`errors.json`). C6 march-leg profiling - PARKED per user
+2026-11-13 (needs a live macro game; temporary timers were in and out
+of the tree uncommitted, nothing measured). DeathWatch silent in 3/3
+recent games incl. melee TauCross with 7 lost - hook likely broken
+globally, not UMS-specific. Eject-scout UMS guard (`00e5e63fd`) -
 GAME_182054 Reav&Shut DEFEAT 2/5: TacticEjectScout->scoutCleared->ourMain
 threw empty.minBy every frame f31-f4820 (4790 notes), Tactician dead all
 game; zonesToLookForEnemyScouts now answers empty with no bases, shuttle
-flee falls back to map home. Pair half-formed (FetchPassenger/Adopt x1,
-CloseStatic x2, StandShoot x2, no boards/unloads); RE-RUN with fixed jar.
+flee falls back to map home. GAME_182857 re-run (fixed jar, clean
+errors.json): full pair chain f0-f100 (Adopt, BoardRide x3, RaidFerry,
+UnloadStatic), then reaver fought on foot next to its ride and died
+~f480 with 1 kill - fresh-hull reboard band was 0 (fixed `815dd4306`)
+and no step-back inside outranged statics (fixed THIS).
 DeathWatch silent on both UMS losses despite Reaver deaths - hook never
 fired, telemetry gap to verify next game.
 
