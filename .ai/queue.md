@@ -40,7 +40,9 @@ of our natural always attacked, no retreat (`TanksAtNatural` rows).
 `SuicideMission` workers-first (`7c75e98eb`) - needs Dragoons meeting
 enemy workers in the main (assault itself verified GAME_54CCDB32:
 labels from f11600, commit, kills, VICTORY 77/7). `LoneMarch`
-(`ea28a943e`) - lone unit walks straight at goal. Order continuation
+(`ea28a943e`) - lone unit walks straight at goal. LoneMarch latch
+(`739d419ff`) - alone past 10.5, back below 9.5, per-unit, reset/game;
+re-run Reav&Shut to confirm the +-300px final stops flapping. Order continuation
 (`92564a364`) - far shifted goals keep cruising (Move hold-vs-issue counts
 vs GAME_54CCDB32). Slow-alone watch (THIS) - log stutter with no units
 nearby, max 10 per game. No-dressing
@@ -52,7 +54,13 @@ statics covered by 2+ defenders. Shuttle flee (`10c04fc8f`,
 single 9-tile wound curve keeps fresh behavior, caps dying. Reaver vs workers (`8f84e9745`) - worker-only pressure, shields
 >70, no Hop. Reaver leash (`b9eeb500a`) - Reaver-heavy game, rally
 rows down. Reaver standoff (`be5dbb90d`) - sunkens map, back off to
-max range. `ReaverBraveStand` (`cb7903db4`) - stale shielded Reaver holds vs
+max range. GAME_181312 Reaver_v_Sunkens DEFEAT 13/11: shuttle-less map,
+so no shuttle/unload acts possible (correct silence); on-foot
+StandShoot x4 + CloseStatic x2, BackOff x0 (nothing outranges us).
+Force (5 drag + reaver + obs) traded into ~30 Zerg, scarabs dry after
+f522, wipe ~f650, observer evaded to f4820. SlowAlone x4 = post-shot
+accel, benign; same window exposed destinationFinal +-300px flap
+(44-65% alternation, all units) -> latched LoneMarch (THIS). `ReaverBraveStand` (`cb7903db4`) - stale shielded Reaver holds vs
 Terran army within 8.5 tiles, never under sieged tanks (`BraveStand`
 rows, no Hop/retreat flap). Reaver+Shuttle doctrine rebuild (research) -
 baseline in `.ai/reaver-shuttle-baseline.md`, then a fresh doctrine on a
@@ -65,7 +73,14 @@ shields + no attacker in 10 tiles ignores the detector, keeps hunting. Choke con
 Contain raze split (`0dac77449`, `75747c418`) - contain + live
 enemy expo. Weak raid (`fc06f634b`) - 2-4 warriors detach for a detected expo
 while too weak to contain (`R` squad rows). MainMarch guard (`75747c418`) - no `ourMain` crash on
-baseless UMS (`errors.json`).
+baseless UMS (`errors.json`). Eject-scout UMS guard (`00e5e63fd`) -
+GAME_182054 Reav&Shut DEFEAT 2/5: TacticEjectScout->scoutCleared->ourMain
+threw empty.minBy every frame f31-f4820 (4790 notes), Tactician dead all
+game; zonesToLookForEnemyScouts now answers empty with no bases, shuttle
+flee falls back to map home. Pair half-formed (FetchPassenger/Adopt x1,
+CloseStatic x2, StandShoot x2, no boards/unloads); RE-RUN with fixed jar.
+DeathWatch silent on both UMS losses despite Reaver deaths - hook never
+fired, telemetry gap to verify next game.
 
 Macro: KillFrenzy (`78831687a`, 195 supply + bank, releases <170).
 `ResearchBanked` (`47089f1a2`, >700min+>500gas). Worker cap 63 +
