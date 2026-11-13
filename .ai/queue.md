@@ -70,8 +70,14 @@ screening a Sunken (7) vs our 8 - lings die f63, sunken f246, reaver
 8.3% (pure ling-melee tax, zero static damage), shuttle untouched.
 Same test caught two live-game gaps: fresh-hull reboard band never
 opened (`815dd4306`, +2.0 base) and no step-back inside outranged
-statics (THIS, advantageBackoff + harness standoff rule). Per user
-2026-11-13: no more validation games, reproduce in StarTest. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
+statics (`b6f207975`, advantageBackoff + harness standoff rule). Scarab
+rescue ported (`f99c81e0e`, THIS): pressured mid-shot boards while the
+shot is flying (old first claim, pure gate + suite). Per user
+2026-11-13: no more validation games, reproduce in StarTest. Refresh
+hop PARKED: the 30f drop-cooldown reset is engine timing no suite can
+prove; porting it blind would be guessing. Contain carve-out +
+mission-ordered unload PARKED: mission layer stays thin per
+architecture S4, UnloadOrdered already covers the ordered path. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
 (`Reav&Shut_*` unblocked by `60564e111`). `WallBreach`
 (`fbd43ba36`) - no-ground-path Terran wall. DT evade/hide
 (`2ca28d0b5`) - detectors/ranged on DT. DT lone hold (`3319f24ae`) - full
@@ -82,9 +88,11 @@ enemy expo. Weak raid (`fc06f634b`) - 2-4 warriors detach for a detected expo
 while too weak to contain (`R` squad rows). MainMarch guard (`75747c418`) - no `ourMain` crash on
 baseless UMS (`errors.json`). C6 march-leg profiling - PARKED per user
 2026-11-13 (needs a live macro game; temporary timers were in and out
-of the tree uncommitted, nothing measured). DeathWatch silent in 3/3
-recent games incl. melee TauCross with 7 lost - hook likely broken
-globally, not UMS-specific. Eject-scout UMS guard (`00e5e63fd`) -
+of the tree uncommitted, nothing measured). DeathWatch: mechanism proven
+in melee (Nov 11 log has full Shuttle+Reaver death chains) and the
+watched-set membership is suite-green (THIS); TauCross silence is
+probably correct (3 losses, likely unwatched classes); the two UMS
+Reaver silences stay unexplained and need a game to resolve. Eject-scout UMS guard (`00e5e63fd`) -
 GAME_182054 Reav&Shut DEFEAT 2/5: TacticEjectScout->scoutCleared->ourMain
 threw empty.minBy every frame f31-f4820 (4790 notes), Tactician dead all
 game; zonesToLookForEnemyScouts now answers empty with no bases, shuttle
