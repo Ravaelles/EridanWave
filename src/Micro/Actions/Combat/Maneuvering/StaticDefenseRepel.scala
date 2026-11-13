@@ -38,6 +38,15 @@ object StaticDefenseRepel extends Action {
     && repeller(unit).isDefined)
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    if (underFire(unit)) {
+      // Under fire the radial step is not enough: fall back to safety
+      // with the rest of the squad instead of bouncing at nine tiles.
+      unit.agent.act("StaticRepel")
+      Retreat.getRetreat(unit)(unit)
+
+      return
+    }
+
     repeller(unit).foreach(building => {
       // Radially off the building, past the radius: holding the line at
       // nine tiles beats trading inside seven.
@@ -48,6 +57,9 @@ object StaticDefenseRepel extends Action {
       Commander.move(unit)
     })
   }
+
+  private def underFire(unit: FriendlyUnitInfo): Boolean =
+    ClusterSafety.recentlyAttacked(With.framesSince(unit.lastFrameTakingDamage))
 
   private def repeller(unit: FriendlyUnitInfo): Option[UnitInfo] =
     Maff.minBy(unit.matchups.enemies.filter(e =>

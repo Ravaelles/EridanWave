@@ -41,7 +41,8 @@ retreat/flee, KiteAway cools, workers first. `LoneMarch`
 near, column out of main. Base guards 30 tiles (`a5c7f3303`) -
 enemy near guarded base. Screened static +50% (`601e43dbd`) -
 statics covered by 2+ defenders. `StaticDefenseRepel` (`3bc73c3bf`)
-- friendlies within 9 tiles of statics, no consensus. Shuttle flee
+- friendlies within 9 tiles of statics, no consensus; attacked units
+fall back to safety instead of bouncing at nine. Shuttle flee
 (`10c04fc8f`) - Hydras on loaded Shuttle, AirFlee before 12 tiles.
 Reaver vs workers (`8f84e9745`) - worker-only pressure, shields
 >70, no Hop. Reaver leash (`b9eeb500a`) - Reaver-heavy game, rally
