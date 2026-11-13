@@ -9,7 +9,8 @@ class DarkTemplarTargetsSuite extends AnyFunSuite {
 
   test("weak targets go first even when farther") {
     assert(DarkTemplarTargets.pick(Seq(mark(5.0, 100), mark(9.0, 39))).contains(1))
-    assert(DarkTemplarTargets.pick(Seq(mark(5.0, 100), mark(9.0, 40))).contains(0))
+    assert(DarkTemplarTargets.pick(Seq(mark(5.0, 100), mark(9.0, 40))).contains(1))
+    assert(DarkTemplarTargets.pick(Seq(mark(5.0, 100), mark(9.0, 41))).contains(0))
   }
 
   test("tanks outrank warriors outrank workers outrank the rest") {
