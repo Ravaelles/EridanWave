@@ -2,9 +2,11 @@
 package Micro.Actions.Combat.Decisioning.Skirmish
 
 import Debugging.Probe
+import Information.Battles.ArmyStrength
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Protoss.Dragoon.DragoonBrave
 import Micro.Targeting.CarrierTankHuntSeam
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -54,7 +56,14 @@ object FightOrFlee extends Action {
     tankHunt    = Protoss.Carrier(u) && CarrierTankHuntSeam.huntFor(u),
     carrierBrawl = Protoss.Carrier(u) && CarrierTankHuntSeam.brawlingFor(u),
     yolo        = With.yolo.active && IsWarrior(u),
-    irradiated  = u.painfullyIrradiated)
+    irradiated  = u.painfullyIrradiated,
+    dragoonBrave  = DragoonBrave.applies(
+      Protoss.Dragoon(u) && With.enemies.exists(_.isTerran),
+      u.shieldPoints,
+      u.cooldownLeft,
+      With.self.supplyUsed200,
+      ArmyStrength.score(With.battles.globalAttack.us.skimStrengthTotal, With.battles.globalAttack.enemy.skimStrengthTotal),
+      u.matchups.threats.nonEmpty && u.matchups.threats.forall(Terran.Marine)))
   private def contactFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
     safe        = u.battle.exists(! _.enemy.canAttackIfVisible(u)),
     // Cluster-level contact: no enemy within firing range plus margin of ANY
