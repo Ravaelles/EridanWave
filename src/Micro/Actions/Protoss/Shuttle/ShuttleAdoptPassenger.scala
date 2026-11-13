@@ -3,24 +3,33 @@ package Micro.Actions.Protoss.Shuttle
 import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
-import Micro.Actions.Action
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.attack.SquadAttack
 import Tactic.Squads.defense.SquadDefendBase
 
-object ShuttleAdoptPassenger extends Action {
+/**
+ * Passenger adoption (plain Boolean guard for the BeShuttle chain): a
+ * Shuttle with room picks up the neediest hailer, plus newborn Reavers
+ * for an army squad. Returns whether anyone was adopted, so the chain
+ * stops for the frame instead of questing on top of the pickup.
+ */
+object ShuttleAdoptPassenger {
 
-  override def allowed(shuttle: FriendlyUnitInfo): Boolean = BeShuttle.allowed(shuttle)
+  def adopt(shuttle: FriendlyUnitInfo): Boolean = {
+    if ( ! Protoss.Shuttle(shuttle)) return false
 
-  override protected def perform(shuttle: FriendlyUnitInfo): Unit = {
     val pickupCandidates =
       Maff.orElse(
         shuttle.alliesSquad.view.filter(shouldAdopt(shuttle, _)),
         shuttle.alliesBattle.view.filter(shouldAdopt(shuttle, _)),
         With.units.ours.filter(shouldAdopt(shuttle, _)))
 
-    Maff.maxBy(pickupCandidates)(c => pickupNeed(shuttle, c) / (1.0 + c.pixelDistanceSquared(shuttle))).foreach(shuttle.agent.addPassenger)
+    var acted = false
+    Maff.maxBy(pickupCandidates)(c => pickupNeed(shuttle, c) / (1.0 + c.pixelDistanceSquared(shuttle))).foreach(passenger => {
+      shuttle.agent.addPassenger(passenger)
+      acted = true
+    })
 
     // If we're not doing something fancy, pick up new Reavers as they're born
     if (shuttle.squad.exists(s => s.isInstanceOf[SquadAttack] || s.isInstanceOf[SquadDefendBase])) {
@@ -28,8 +37,14 @@ object ShuttleAdoptPassenger extends Action {
         .filter(u => ! u.complete && Protoss.Reaver(u) && u.remainingCompletionFrames < shuttle.framesToTravelTo(u.pixel))
         .toVector
 
-      Maff.minBy(newborns)(_.remainingCompletionFrames).foreach(shuttle.agent.addPassenger)
+      Maff.minBy(newborns)(_.remainingCompletionFrames).foreach(newborn => {
+        shuttle.agent.addPassenger(newborn)
+        acted = true
+      })
     }
+    if (acted) shuttle.agent.act("ShuttleAdoptPassenger")
+
+    acted
   }
 
   protected def shouldAdopt(shuttle: FriendlyUnitInfo, passenger: FriendlyUnitInfo): Boolean = (

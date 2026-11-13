@@ -37,8 +37,8 @@ object BeShuttle extends Action {
   }
 
   protected def perform(shuttle: FriendlyUnitInfo): Unit = {
-    if (ShuttleDitchPassengers(shuttle)) return
-    if (ShuttleAdoptPassenger(shuttle)) return
+    if (ShuttleDitchPassengers.ditch(shuttle)) return
+    if (ShuttleAdoptPassenger.adopt(shuttle)) return
     if (fleeFromScourgeRear(shuttle)) return
     if (fleeFromAirThreats(shuttle)) return
     if (makeEmergencyPickup(shuttle)) return
