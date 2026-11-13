@@ -27,4 +27,13 @@ class StarTestSuite extends AnyFunSuite {
     assert(world.hits.nonEmpty)
     assert(world.hits.head._1 < 20)
   }
+
+  test("a longer gun kills the approach before taking a hit") {
+    val reaver = Mover(x = 0.0, y = 30.0, speedTiles = 2.0, hp = 180.0, maxHp = 180.0, rangeTiles = 8.0, dmgPerShot = 100.0, cooldownFrames = 60)
+    val foe = Mover(x = 0.0, y = 20.0, speedTiles = 0.5, hp = 40.0, maxHp = 40.0, rangeTiles = 4.0, dmgPerShot = 10.0, cooldownFrames = 15)
+    val world = new World(Seq(reaver), Seq(foe))
+    world.run(100)
+    assert( ! foe.alive, "reaver never killed the approach")
+    assert(reaver.hp == reaver.maxHp, "reaver took hits it outranges")
+  }
 }

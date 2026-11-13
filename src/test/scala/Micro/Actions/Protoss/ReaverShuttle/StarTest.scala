@@ -59,7 +59,15 @@ object StarTest {
     }
 
     def step(): Unit = {
-      ours.filter(_.alive).foreach(o => o.goal.foreach(g => o.stepToward(g._1, g._2)))
+      ours.filter(_.alive).foreach(o => {
+        nearestFoe(o) match {
+          // Can hit it: hold and shoot. Cannot reach it: close in.
+          // Unarmed or no contact: fly the mission goal.
+          case Some(f) if o.dmgPerShot > 0 && o.rangeTiles > 0 && o.distTiles(f) <= o.rangeTiles =>
+          case Some(f) if o.dmgPerShot > 0 && o.rangeTiles > 0 => o.stepToward(f.x, f.y)
+          case _ => o.goal.foreach(g => o.stepToward(g._1, g._2))
+        }
+      })
       foes.filter(_.alive).foreach(f => nearestOur(f).foreach(n => f.stepToward(n.x, n.y)))
       foes.filter(_.alive).foreach(f => {
         if (f.cooldownLeft > 0) {
@@ -72,7 +80,23 @@ object StarTest {
           })
         }
       })
+      ours.filter(_.alive).foreach(o => {
+        if (o.cooldownLeft > 0) {
+          o.cooldownLeft -= 1
+        } else {
+          nearestFoe(o).filter(f => o.dmgPerShot > 0 && o.distTiles(f) <= o.rangeTiles).foreach(victim => {
+            victim.hp = Math.max(0, victim.hp - o.dmgPerShot)
+            hits += ((frame, -o.dmgPerShot))
+            o.cooldownLeft = o.cooldownFrames
+          })
+        }
+      })
       frame += 1
+    }
+
+    private def nearestFoe(o: Mover): Option[Mover] = {
+      val live = foes.filter(_.alive)
+      if (live.isEmpty) None else Some(live.minBy(o.distTiles))
     }
 
     def run(frames: Int): Unit = {
