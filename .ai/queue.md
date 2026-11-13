@@ -56,7 +56,9 @@ Reaver vs workers (`8f84e9745`) - worker-only pressure, shields
 rows down. Reaver standoff (`be5dbb90d`) - sunkens map, back off to
 max range. `ReaverBraveStand` (`cb7903db4`) - stale shielded Reaver holds vs
 Terran army within 8.5 tiles, never under sieged tanks (`BraveStand`
-rows, no Hop/retreat flap). DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
+rows, no Hop/retreat flap). Reaver+Shuttle doctrine rebuild (research) -
+baseline in `.ai/reaver-shuttle-baseline.md`, then fresh myths with a
+shared Shuttle+Reaver status; StarTest harness for drop-loss <=5%. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
 (`Reav&Shut_*` unblocked by `60564e111`). `WallBreach`
 (`fbd43ba36`) - no-ground-path Terran wall. DT evade/hide
 (`2ca28d0b5`) - detectors/ranged on DT. DT lone hold (HASH) - full

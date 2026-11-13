@@ -41,3 +41,10 @@ Two disciplines behind `With.blackboard.reaverAtlantisBehavior`.
 Decide once: if Atlantis holds through the next games with no lost
 Reaver shuttle, fold `ReaverLegacy` into `Reaver/Legacy`. Details:
 `src/Micro/Actions/Protoss/__REVIEW.md`.
+
+# SquadAutomation shell deletion target
+
+`Tactic.Squads.SquadAutomation` is a forwarder shell over
+`SquadTargeting`, `SquadForming` and `MarchOrders` (41 call sites).
+Migrate the callers to the halves and delete the shell; until then
+new code must call the halves, never the shell.
