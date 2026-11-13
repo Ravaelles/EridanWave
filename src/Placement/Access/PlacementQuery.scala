@@ -1,5 +1,6 @@
 package Placement.Access
 
+import Information.Geography.Chokes
 import Information.Geography.Types.{Base, Zone}
 import Lifecycle.With
 import Mathematics.Maff
@@ -75,6 +76,7 @@ class PlacementQuery {
     } else if (building == Terran.SupplyDepot) {
       preferences.labelYes = preferences.labelYes :+ PlaceLabels.Supply
     }
+    keepOffMainChoke(this)
     if (building.isGas) {
       foundationSource = FoundationSources.Gas
       lazy val basesOpening       = preferences.base.filter(_.townHall.exists(th => th.openForBusiness || th.remainingCompletionFrames < building.buildFrames))
@@ -104,6 +106,20 @@ class PlacementQuery {
   def requireTile         (value: Tile*)        : PlacementQuery = { requirements.tile      = value;        this }
   def requireNear         (value: Tile, tiles: Int): PlacementQuery = { requirements.nearTile = Some((value, tiles)); this }
   def requireFar          (value: Tile, tiles: Int): PlacementQuery = { requirements.farTiles = requirements.farTiles :+ (value, tiles); this }
+
+  /**
+   * Main choke clearance: nothing builds within five tiles of our main
+   * choke center. Walls go on the natural; a lone building halfway down
+   * the main ramp only gives the enemy something to shoot at while our
+   * Zealots babysit supply. PylonPlacement keeps its own four-tile ring
+   * around every choke; this is the stricter main-choke ban for all
+   * buildings, applied once per query next to the defaults.
+   */
+  private def keepOffMainChoke(query: PlacementQuery): PlacementQuery = {
+    Chokes.mainChoke.foreach(choke =>
+      query.requireFar(choke.pixelCenter.walkableTile, PlacementQuery.mainChokeClearTiles))
+    query
+  }
   def preferWidth         (value: Int)          : PlacementQuery = { preferences.width      = Some(value);  this }
   def preferHeight        (value: Int)          : PlacementQuery = { preferences.height     = Some(value);  this }
   def preferBuilding      (value: UnitClass)    : PlacementQuery = { preferences.building   = Some(value);  this }
@@ -207,5 +223,11 @@ class PlacementQuery {
   }
 
   override def toString: String = f"PlacementQuery Req$requirements) Pref$preferences)".replace("PQP", "")
+}
+
+object PlacementQuery {
+
+  /** Nothing builds this close to our main choke center, in tiles. */
+  val mainChokeClearTiles: Int = 5
 }
 
