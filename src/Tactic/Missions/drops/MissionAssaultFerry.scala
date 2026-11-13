@@ -5,6 +5,7 @@ import Lifecycle.With
 import Mathematics.Points.Pixel
 import Micro.Actions.{Action, Idle}
 import Micro.Agency.Commander
+import ProxyBwapi.Orders
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitTracking.AliveEnemies
@@ -25,10 +26,24 @@ import scala.collection.mutable
  */
 class MissionAssaultFerry extends MissionDrop {
 
-  override protected def additionalFormationConditions: Boolean =
-    With.blackboard.ferry() &&
-      With.recruiter.available.exists(transportLock.matcher) &&
-      With.recruiter.available.count(u => u.isAny(Protoss.Dragoon, Protoss.Zealot) && recruitablePassenger(u)) >= 4
+  override protected def additionalFormationConditions: Boolean = {
+    val crew = With.recruiter.available.count(u => u.isAny(Protoss.Dragoon, Protoss.Zealot) && recruitablePassenger(u))
+    val standard = With.blackboard.ferry() && crew >= 4
+    // Idle rides fly anyway: vs Terran a healthy taskless Shuttle (or one
+    // with no move order at all) gets drafted into the ferry instead of
+    // parking, so drops keep pressuring tanks as long as hulls sit idle.
+    val idleDraft = idleFerryRideAvailable && crew >= 2
+
+    standard || idleDraft
+  }
+
+  private def idleFerryRideAvailable: Boolean =
+    With.enemies.exists(_.isTerran) && With.recruiter.available.exists(t =>
+      Protoss.Shuttle(t) &&
+        FerryIdleDraft.shouldDraft(
+          healthFraction = t.totalHealth.toDouble / t.unitClass.maxTotalHealth,
+          hasTask = t.intent.action != Idle,
+          hasMoveOrder = t.order == Orders.Move))
 
   val goonLock: LockUnits = new LockUnits(this, u => Protoss.Dragoon(u) && recruitablePassenger(u)).setCounter(CountUpTo(6))
   val zealotLock: LockUnits = new LockUnits(this, u => Protoss.Zealot(u) && recruitablePassenger(u))
