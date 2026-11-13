@@ -6,7 +6,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{MainMarch, MarchDress, SquadRally, SuicideChargeSeam}
+import Tactic.Squads.Decisions.{LoneMarch, MainMarch, MarchDress, SquadRally, SuicideChargeSeam}
 import Utilities.?
 
 /**
@@ -70,6 +70,13 @@ object MarchOrders {
 
       return (squad.vicinity, "MainAssault")
     }
+
+    // Lone march: with no friendly warrior inside ten tiles there is no
+    // line to pose in, so the unit skips rallying to the pack centroid
+    // and slot-marching and walks straight at the squad goal instead of
+    // milling alone.
+    val nearestWarrior = Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
+    if (nearestWarrior.forall(a => unit.pixelDistanceCenter(a.pixel) * Maff.inv32 > LoneMarch.aloneRadiusTiles)) return (squad.vicinity, "LoneMarch")
 
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide)
     val joinPixel              = joinLeg(squad, unit, suicide)
