@@ -12,7 +12,8 @@ import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 abstract class TargetedSpell extends Action {
-  
+
+  /** Base for single-target and AoE spell casts: walk into range, commit the intent, fire when the spot reconfirms. Subclasses supply only value and thresholds. */
   protected def casterClass       : UnitClass
   protected def tech              : Tech
   protected def aoe               : Boolean
@@ -116,4 +117,13 @@ object TargetedSpell {
 
   def intentExpired(framesSinceIntent: Int, expiryFrames: Int): Boolean =
     framesSinceIntent > expiryFrames
+
+  /**
+   * Shared single-target reach pricing (no game access): subjective value
+   * discounted by how far out of casting range the shot starts, plus
+   * entanglement. Yamato and Lockdown price identically; only their
+   * target filters differ.
+   */
+  def reachValue(targetValue: Double, reachPixels: Double, entangledPixels: Double): Double =
+    targetValue / Math.max(1.0, reachPixels + entangledPixels)
 }

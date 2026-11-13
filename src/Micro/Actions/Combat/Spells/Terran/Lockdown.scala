@@ -7,21 +7,20 @@ import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo._
 
 object Lockdown extends TargetedSpell {
-  
+
+  /** Lockdown: freeze the most valuable mechanical threat at Ghost range; same reach pricing as Yamato, only the target filter differs. */
   override protected def casterClass    : UnitClass = Terran.Ghost
   override protected def tech           : Tech      = Terran.Lockdown
   override protected def aoe            : Boolean   = false
   override protected def castRangeTiles : Int       = 8
   override protected def thresholdValue : Double    = Terran.Goliath.subjectiveValue
-  
+
   override protected def valueTarget(target: UnitInfo, caster: FriendlyUnitInfo): Double = {
     if ( ! target.isEnemy)                return 0.0
     if ( ! target.unitClass.isMechanical) return 0.0
     if (target.unitClass.isBuilding)      return 0.0
     if (target.lockedDown)                return 0.0
-    
-    val reach = caster.pixelDistanceEdge(target) - 32 * castRangeTiles
-    val output = target.subjectiveValue / Math.max(1.0, reach + caster.matchups.pixelsEntangled)
-    output
+
+    TargetedSpell.reachValue(target.subjectiveValue, caster.pixelDistanceEdge(target) - 32 * castRangeTiles, caster.matchups.pixelsEntangled)
   }
 }

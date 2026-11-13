@@ -15,7 +15,8 @@ import Utilities.Time.Minutes
 import Utilities.UnitFilters.{IsTank, IsWorker}
 
 object Retreat extends Action {
-  
+
+  /** Full retreat planner: picks WHERE a fleeing unit runs (board, shotgun, scatter, path), never WHETHER it flees - that verdict belongs to FightRules. */
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canMove && unit.matchups.threats.nonEmpty
 
   case class RetreatPlan(unit: FriendlyUnitInfo, to: Pixel, name: String, preciseArrival: Boolean = false) {
@@ -117,9 +118,10 @@ object Retreat extends Action {
     lazy val waypointOrigin   = (unit.agent.safety, "Origin")
     lazy val tilePath         = MicroPathing.getThreatAwarePath(unit, preferHome = goalOrigin)
     // Large land units wedge between mineral fields and die there, so their
-    // flee spots stay over a tile clear of minerals.
+    // flee spots stay over a tile clear of minerals (one shared rule, not
+    // a second predicate next to FleeMineralClearance).
     def clearOfMinerals(pixel: Pixel): Boolean =
-      ! pixel.tile.adjacent9.exists(_.units.exists(_.unitClass.isMinerals))
+      FleeMineralClearance.clearOfMinerals(pixel.tile.adjacent9.exists(_.units.exists(_.unitClass.isMinerals)))
     val largeFleer = FleeMineralClearance.applies(unit.unitClass.size == ProxyBwapi.Size.Large, unit.flying)
     val waypoint = ?(largeFleer,
       Seq(waypointSimple, waypointPath, waypointForces).flatten.find(w => clearOfMinerals(w._1)).getOrElse(waypointOrigin),

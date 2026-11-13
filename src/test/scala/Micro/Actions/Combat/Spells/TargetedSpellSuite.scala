@@ -15,4 +15,11 @@ class TargetedSpellSuite extends AnyFunSuite {
     assert( ! TargetedSpell.intentExpired(framesSinceIntent = 10 * 24, expiryFrames = 10 * 24))
     assert(TargetedSpell.intentExpired(framesSinceIntent = 10 * 24 + 1, expiryFrames = 10 * 24))
   }
+
+  test("reach pricing discounts value by out-of-range distance") {
+    assert(TargetedSpell.reachValue(targetValue = 100.0, reachPixels = 0.0, entangledPixels = 0.0) == 100.0)
+    assert(TargetedSpell.reachValue(targetValue = 100.0, reachPixels = 99.0, entangledPixels = 0.0) == 100.0 / 99.0)
+    assert(TargetedSpell.reachValue(targetValue = 100.0, reachPixels = 49.0, entangledPixels = 51.0) == 1.0)
+    assert(TargetedSpell.reachValue(targetValue = 0.0, reachPixels = 500.0, entangledPixels = 0.0) == 0.0)
+  }
 }
