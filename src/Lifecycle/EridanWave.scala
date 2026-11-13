@@ -18,6 +18,16 @@ class EridanWave extends DefaultBWListener {
     With.frame0ms = 0
     timeFrameZero(() => {
       tryCatch(() => {
+        // Headless runs (wine-run.sh default) have no window to render and
+        // no watcher to wait for: kill the GUI and skip frames to the max
+        // so games finish as fast as the bot can think. Visible runs and
+        // scbw launches (no ERIDANWAVE_HEADLESS in the env) keep defaults.
+        // Map-specific pacing in MapSpecificCommander may still override
+        // the skip per frame for its micro maps.
+        if (scala.sys.env.get("ERIDANWAVE_HEADLESS").contains("1")) {
+          With.game.setGUI(false)
+          With.game.setFrameSkip(1000)
+        }
         With.onStart()
         // Tuning params (if --tuning-strategy= was passed): randomize or
         // override before the first frame, Atlantis OnGameStarted parity.
