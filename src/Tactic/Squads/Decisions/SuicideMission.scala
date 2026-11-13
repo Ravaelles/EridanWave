@@ -9,7 +9,7 @@ import Tactic.Squads.Group.FriendlyUnitGroup
  * Single suicide-mission detector (renamed from SuicideChargeSeam): a ground
  * warrior inside the enemy base never retreats, holds formation or dresses
  * the line - it only attacks, workers first. Thin on purpose: the distances
- * stay in the pure tested kernels (SuicideCharge, MainAssault); this only
+ * stay in the pure tested kernel (SuicideAssault); this only
  * reads the world. assign commits the unit, isActive reads live with no
  * stored state to go stale.
  */
@@ -37,11 +37,11 @@ object SuicideMission {
 
   def squadInZone(squad: FriendlyUnitGroup): Boolean =
     enemyIsZerg && mainHeart.exists(heart =>
-      SuicideCharge.charging(squad.centroidGround.groundPixels(heart) * Maff.inv32))
+      SuicideAssault.charging(squad.centroidGround.groundPixels(heart) * Maff.inv32))
 
   private def inZone(unit: FriendlyUnitInfo): Boolean =
     ! unit.flying && unit.unitClass.isWarrior && enemyIsZerg && mainHeart.exists(heart =>
-      SuicideCharge.charging(unit.pixel.groundPixels(heart) * Maff.inv32))
+      SuicideAssault.charging(unit.pixel.groundPixels(heart) * Maff.inv32))
 
   /**
    * Any race, straight tile distance: a ground warrior inside the enemy
@@ -51,5 +51,5 @@ object SuicideMission {
    */
   private def inMainAssault(unit: FriendlyUnitInfo): Boolean =
     ! unit.flying && unit.unitClass.isWarrior && mainHeart.exists(heart =>
-      MainAssault.assaulting(unit.tileDistanceCenter(heart)))
+      SuicideAssault.assaulting(unit.tileDistanceCenter(heart)))
 }
