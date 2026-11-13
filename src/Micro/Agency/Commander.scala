@@ -25,6 +25,7 @@ object Commander {
   def stop(unit: FriendlyUnitInfo): Unit = CommanderMove.stop(unit)
   def hold(unit: FriendlyUnitInfo): Unit = CommanderMove.hold(unit)
   def attack(unit: FriendlyUnitInfo): Unit = CommanderEngage.attack(unit)
+  def attack(unit: FriendlyUnitInfo, target: UnitInfo): Unit = CommanderEngage.attack(unit, target)
   def attackMove(unit: FriendlyUnitInfo): Unit = CommanderMove.attackMove(unit)
   def attackMove(unit: FriendlyUnitInfo, destination: Pixel): Unit = CommanderMove.attackMove(unit, destination)
   def patrol(unit: FriendlyUnitInfo): Unit = CommanderMove.patrol(unit)

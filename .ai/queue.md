@@ -128,7 +128,10 @@ March: PairRide (THIS) - loaded Shuttles never march the legs
 stale hailers (macro game: no shuttle idling in the natural). March: StrongMarch (THIS) - banked stock or maxed strong army
 marches straight at the goal, never rallies to the pack centroid or
 walks to a formation slot (`StrongMarchSuite`, macro game with bank).
-Macro: KillFrenzy (`78831687a`, 195 supply + bank, releases <170).
+Micro: idle attackers force fire after 150 frames (THIS) - a
+combat unit holding a hittable enemy with nobody able to hit it back
+stops dithering and shoots; never fleeing/retreating-gated
+(`IdleAttackSuite`, StarEngine chase-and-kill when ready). Macro: KillFrenzy (`78831687a`, 195 supply + bank, releases <170).
 `ResearchBanked` (`47089f1a2`, >700min+>500gas). Worker cap 63 +
 4th miner past 55 (`47089f1a2`, `dd1ee3c70`) - long macro. Pylon
 discs (`1ae475b4a`, `1a95c9282`) - no base Pylon inside. Main choke

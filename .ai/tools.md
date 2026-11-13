@@ -33,6 +33,9 @@
   and slot-leave ranges at each breakFormationToAttack rising edge, written to
   `bwapi-data/write/formation-audit.txt` at game end; the reader prints
   per-class n/mean/stddev/min/max and can gate a future harness.
+- After moving a class across packages, run `mvn -o clean`:
+stale zinc analysis leaves phantom packages that crash the 2.12
+backend globally ("Java member module without member class").
 - Traces: wine `bwapi-data/write/cherryvis_dir.rep.cvis/`; scbw
   `~/.scbw/games/GAME_*/write_0/...` auto-paired to `E_*.rep.cvis`
   (needs default-on cherryvis; checker depth is 3, not 2).
