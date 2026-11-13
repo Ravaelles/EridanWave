@@ -12,164 +12,91 @@ Conventions: repo docs stay English; implementation follows
 Goal: play vs the krasi0 files in `/sc-ai/BOTS/krasi0` through `scbw.play`,
 the way `FETCH-NEW-BOT.sh` sets up downloadable bots.
 
-Findings so far:
-- krasi0 is an EXE bot (`krasi0AIClient.exe` + `BWAPI.dll` + gmp/mpfr DLLs +
-  BWTA2 `.krasi0.bwta` blobs in `krasi0BotLatestVersion.zip`), not an AI
-  module. scbw supports this: `BotPlayer` accepts `AI/*.exe`
-  (`BotType.EXE`, exactly one exe, name must not contain "BWAPI"),
-  `bot.json` with `"botType": "EXE"`, plus `BWAPI.dll`, `AI/`, `read/`
-  (see `player.py: BotPlayer`, `_find_bot_filename`).
-- A configured bot dir looks like `/sc-ai/BOTS/Crona`
-  (`bot.json` + `BWAPI.dll` + `AI/` + `read/` + `write/`), played via
-  `/sc-ai/BOTS/__PlayAsEridan/_Crona.sh` (`play-cvis.sh --bots Name:Race`).
-- No EXE-bot precedent exists in `/sc-ai/BOTS` (all are AI_MODULE or
-  JAVA_MIRROR); nothing to copy, but no blocker found either.
+STAGED 2026-11-13: `/sc-ai/BOTS/krasi0/` holds `BWAPI.dll`,
+`AI/krasi0AIClient.exe` (+ gmp/mpfr DLLs), `read/`, `write/`,
+`bot.json` (`name: krasi0`, race Terran confirmed via Liquipedia -
+Terran mech, `botType: EXE`). `BotPlayer` structure check passes
+(TERRAN/EXE, single exe found).
 
-Still to do:
-- STAGED 2026-11-13: `/sc-ai/BOTS/krasi0/` holds `BWAPI.dll`,
-  `AI/krasi0AIClient.exe` (+ gmp/mpfr DLLs), `read/`, `write/`,
-  `bot.json` (`name: krasi0`, race Terran confirmed via Liquipedia -
-  Terran mech, `botType: EXE`). `BotPlayer` structure check passes
-  (TERRAN/EXE, single exe found).
-- Validate with one `scbw.play --bots krasi0:R` smoke game (needs a free
-  Wine slot - one game at a time on this box).
-- Caveats: krasi0 readme says it is SaaS (needs internet) and officially
-  supports only its `supportedMaps` pack + BWTA2 data; TauCross is likely
-  unsupported (still plays, possibly weaker). LF 3 required for full
-  strength.
+Still to do: one `scbw.play --bots krasi0:R` smoke game (needs a free
+Wine slot - one game at a time on this box). Caveats: krasi0 readme says
+it is SaaS (needs internet) and officially supports only its
+`supportedMaps` pack + BWTA2 data; TauCross is likely unsupported
+(still plays, possibly weaker). LF 3 required for full strength.
 
-## Open: Overlord targeting (DontAttackOverlords, refined)
+## Awaiting a validation game (all committed, suite-green, jar synced)
 
-User report (melee, vs Zerg): dragoons chased fleeing Overlords while a
-freshly hatched Hydralisk stood among the army; the chase split the army
-in half (see "Army split" below).
+One line each; details live in git log by hash. Run a game, check the
+named behavior in trace/`probe.txt`/`errors.json`, delete the line.
 
-Wanted: never target Overlords while any other combat unit - or even
-workers - are in our range; snipe a lone Overlord only when it is in our
-range and nothing else is around. (Atlantis forbids Overlords outright
-via `DontAttackOverlords.forbidden`; ours is the refined version above.)
+- `TargetFilterOverlord` + `OverlordSnipe` (`a869e66d6`): needs a natural
+  Overlord-in-combat occurrence (never chase, snipe the lone one).
+- DT doctrine (`1556073e9` + helper fold-in): needs a game with DTs
+  (no DT UMS map; natural melee only).
+- `DropSafety` veto (`61bcb46eb`): needs a reaver-vs-sunkens run that
+  attaches. NOTE: `wine-run.sh` sed `&`-escape fix (`60564e111`)
+  unblocks `Reav&Shut_*` names - retry those maps first.
+- Defiler > Lurker > Mutalisk tiers (`139b97e5a`): needs a natural
+  Zerg-comp game.
+- Reaver +5-tile rally leash (`b9eeb500a`): rally rows down in
+  `GAME_A619B9B8` (673 vs 1747) but units not identified as Reavers;
+  needs a Reaver-heavy game.
+- Worker lone-fighter rule (`<=30hp` + closing fighter): suite only.
+- Wall-bust Focus hatch (`9b595bb18`, outrange guard added later):
+  needs a Terran wall-in (idle guns break Depot/Barracks, Dragoons
+  hold off outranging statics).
+- Screened static +50% (`601e43dbd`): needs statics covered by 2+
+  armed defenders in a judged battle.
+- Base guards engage inside 30 ground tiles (`a5c7f3303`): needs an
+  enemy near a guarded base.
+- KillFrenzy latch (`78831687a`): needs 195 supply + (1000 min & 250
+  gas, or 1500 min); releases below 170. Rare state - watch long macros.
+- `ResearchBanked` float (`47089f1a2`): needs >700 min + >500 gas bank.
+- Worker cap 63 (`47089f1a2`) and 4th miner only past 55 workers
+  (`dd1ee3c70`): observable in any long macro game (miner counts).
+- Fogged-memory drop (`216ead4de`) and corpse clear (`142f4282c`):
+  needs zealots idling at an enemy base (the 7-time report).
+- Worker gather/build trace rows (`4c2a7b0cf`): check any game trace
+  for `gather:Minerals`, `moveToConstruct`, `issueBuild:X`.
+- No-dressing rules (`c2af083ed` 20-tile enemy check,
+  `782bbb938` 90-supply home column): watch Waiting/Marching rows dry
+  up with no enemy near / column marches out of main.
+- `MainAssault` (`706edf6e6`, fixed latch `dee6339f3`): needs our
+  units inside the enemy main (vicinity + commit, no formation).
+- DT detector evade + ranged hide (`2ca28d0b5`): needs detectors or
+  ranged fire on a DT (`DarkTemplarEvade`/`DarkTemplarHide` rows).
+- Shuttle preemptive flee (`10c04fc8f`): needs Hydras walking up on a
+  loaded Shuttle (AirFlee before 12-tile contact).
+- Reaver stands vs workers-only above 70 shields (`8f84e9745`):
+  needs worker-only pressure on a shielded Reaver (no Hop).
+- `StaticDefenseRepel` (`3bc73c3bf`): needs friendlies inside 9 tiles
+  of statics with no fight consensus (radial push-out rows).
+- `SneakyWatch` trace lines (`8deb6aa30`): needs visible enemy
+  Lurkers/DTs/Wraiths/Ghosts (`WeDetected:` rows).
+- `ReaverStaticStandoff` (`be5dbb90d`): needs a Reaver inside static
+  range on the sunkens map (back-off to max range, no 1.9-tile park).
+- `WallBreach` (`fbd43ba36`): needs no-ground-path-to-goal (Terran
+  wall game; nearest-blocker targeting).
+- Storm friendly veto (`c25aa6dee`): needs a stormable pack with 3+
+  own units in the box (no cast).
+- Vulture duels (`0dac77449`): needs Vultures vs Dragoons
+  (`PotshotVulture` rows, holds at 1.5x reach head-on).
+- Carrier wound berth (`d09a80cf1`): needs a scratched-shield Carrier
+  vs ranged (`CarrierKite` rows, margin grows to 15 tiles).
+- Contain raze split (`0dac77449`, empty-map guard `75747c418`):
+  needs contain + a live enemy expansion (10-warrior detail + return).
+- Pylon rules (`1ae475b4a` 4 tiles, `1a95c9282` 5 tiles off main
+  choke): check no base Pylon inside the discs in a macro game.
+- Point-blank Focus hatch (`b3c664ed1`): needs friendlies touching
+  enemy buildings (no more idle-at-hatchery).
+- Detector spread priority + `cherryVisUnitLog` (`e7cb6aaee`):
+  needs two Observers together (`DetectorSpread` rows, no clump).
+- Sim work (`53d081038`): test-only, no game needed.
+- `MarchOrders` MainMarch guard (`75747c418`): no `ourMain` crash
+  on baseless UMS maps (watch `errors.json`).
 
-Findings so far:
-- Our ladder (`Micro/Targeting/Target.scala`) already prefers combat
-  priority in range, but non-range strata (`requireInRange = false`) still
-  pick fleeing Overlords, and `Commander.attack` then chases them out.
-- A required filter (`TargetFilter`, runs in every stratum via
-  `legalByFilters`) is the right seam; `canAttack` on the filter keeps
-  Corsairs hunting while Dragoons hold fire.
-- DONE (`a869e66d6`, suite green, no errors in game): `TargetFilterOverlord`
-  + `OverlordSnipe` kernel; awaits a natural Overlord-in-combat occurrence
-  for end-to-end proof.
+## Coordination (not this thread - ask before touching)
 
-## Open: army split in half
-
-User report: half the army stayed at the enemy natural, half pushed the
-enemy main (`Squads A(2)` on the board - possibly stale rendering),
-with 1-9-frame `Abuse`/`Returning to slot` and `Waiting for
-pack`/`Engage` flapping throughout.
-
-Two mechanisms, two fixes:
-- Vote flicker (consensus flapping) -> `ConsensusVoteFilter` latch is
-  COMMITTED (`501c42f4b`, fixed pass-through in `dee6339f3`) and
-  VALIDATED in `GAME_A619B9B8`: 0 flapping units (was 47), 0 sub-24f
-  flips (was 122). The 1-9-frame `Abuse`/`Returning to slot` flapping
-  from the report cannot pass the fixed latch.
-- Overlord-chasing splitting the pack -> `TargetFilterOverlord`
-  COMMITTED (`a869e66d5`, suite green, no errors in game); awaits a
-  natural Overlord-in-combat occurrence for end-to-end proof.
-
-## Open: Dark Templar doctrine
-
-User report (probe log): DTs flap `Waiting for pack` / `Engage/Approach`,
-get march termini, and scout unseen areas. Wanted:
-1. Never `Waiting for pack`, never formation/dress for DTs.
-2. Send DTs only at visible or remembered (fogged, last-seen) contacts;
-   never sweep unseen tiles or scout.
-3. Double the wound flee margin vs detectors (recalled as +4 tiles max
-   today -> 8 tiles).
-
-Findings so far:
-- `BeDarkTemplar` is mine-sniping only; march/order comes from
-  `MarchOrders` + `Combat` on the shared pipeline. `Stealth` handles
-  cloak flee but has NO wound scaling today (`nearMobileDetector` is a
-  binary sight+8s-topSpeed check) - the +4-tile recall matches nothing
-  exactly; closest analogues are `Spot` detector wound bonus and
-  `Gather.threatenedWounded` (2.5 + 4 * wound).
-- Likely shape: DT brain override (take targets first, hold when no
-  contact, unready Combat), march bypass (plain vicinity, no wait/rally/
-  slots), `Stealth` wound berth (max +8 tiles), all pinned by suites.
-- DONE (`1556073e9`, jar rebuilt after): no DT formation slots,
-  march bypass to plain vicinity with a `DarkTemplarHunt` label,
-  `BeDarkTemplar` hunts visible hittable, then freshest fogged contact
-  (<3 min), holds otherwise; `Stealth` mobile-detector check uses
-  `unit.woundPercentBonus(0, 8)` (DT-only; the `DarkTemplarBerth` kernel
-  was folded into the shared helper). Validation:
-  needs a game with DTs (no DT UMS map; awaits a natural melee game).
-
-## Open: Reaver drops next to Sunken Colonies
-
-User report: Reaver dropped right next to 2 Sunken Colonies. Wanted:
-never unload within 8.1 tiles of anti-ground combat buildings.
-
-Findings so far:
-- `ReaverDropBravery.staticDefenseDist = 8.0` vetoes the brave-drop path,
-  but arrival auto-unload (`CommanderMove`: within 8 px of destination)
-  and engage unload (`CommanderEngage`) check nothing - the drop likely
-  came through one of those.
-- Fix direction: guard the actual unload (`Transport`/`requestUnload`
-  path) against anti-ground combat buildings inside 8.1 tiles, so every
-  path is covered - not another per-path check.
-- DONE (`61bcb46eb`, jar rebuilt after): `DropSafety` veto inside
-  `CommanderTransport.unload` (flying transports only, so bunkers are
-  unaffected), suite-pinned. Validation: UMS reaver-vs-sunkens map
-  attempted repeatedly, attach kept failing on that map; needs a run
-  that actually starts.
-
-## Open: Defiler > Lurker > Mutalisk targeting
-
-Wanted: every unit with a visible Lurker in attack range attacks it;
-Defiler outranks Lurker outranks Mutalisk; among those, the most wounded
-in range unless it dies within the next second (already handled via
-`acceleratesDemise` + `+4.0 * injury` in `TargetScoring`).
-
-Findings so far: ladder structure mapped (`Target.best` combat-priority
-strata, `defaultTargets` is diagnostics-only). Untested seam candidate:
-per-tier predicates + in-range/visible gating, mirroring the
-`DarkTemplarTanks` doctrine shape.
-- DONE (`139b97e5a`, `ThreatPriority` kernel + suite, wired into
-  `Target.best` assigned/matchups strata): Defiler > Lurker > Mutalisk
-  tiers with wounds-first inside each tier; awaits a natural Zerg-comp
-  game for end-to-end proof.
-
-## Open: melee validation games
-
-- `ConsensusVoteFilter` latch (`dee6339f3`): VALIDATED in Crona
-  `GAME_A619B9B8` (VICTORY 53/11, clean, no errors): 0 flapping units
-  (baseline 47), 17 flips total, all with gaps >= 24 frames (baseline had
-  122 sub-24f flips, 37%). Sustained retreats still work.
-- Reaver +5-tile rally leash (`b9eeb500a`): indecisive so far - rally rows
-  down in `GAME_A619B9B8` (673 vs 1747 baseline, shorter game) but units
-  not identified as Reavers; needs a Reaver-heavy game.
-- Worker flee (`6a153ceb`, `7426f32d5`, `252b6facd`): melee-validated
-  twice (Crona VICTORY 217/165: Retreat-dominated death rows, no endless
-  flap; Crona VICTORY 53/11: 1 probe lost, no flap chains). Lone-fighter
-  rule (`<=30hp` + closing fighter) has suite coverage only.
-
-## Untracked files in the tree (not this thread's - coordinate first)
-
-- `scripts/kill-cleanup.sh` + `scripts/README.md` changes.
-- Do not commit these from here without their author; the game-night box
-  is shared - one Wine game at a time.
-
-## Done and verified (keep for reference, prune when stale)
-
-- Worker flee vs melee packs (`doomedVsMelee`, rusher opt-out,
-  lone-fighter rule) - suite + Crona game, jar rebuilt + slot synced.
-- Dark dashboard theme (`#ccc` on `#141414`), verified by screenshot.
-- `benchmarks/goon_v_goon.sh` (N x MAP1 + M x MAP2, delegates to
-  `run.sh`) - smoke-tested 1+1 (1W/1L, TSV + summary print).
-- Formation harness (`--formation-audit`, tally/verdicts/modes/breaks/
-  dress + `scripts/formation-audit.py` incl. assert flags).
-- UMS chase of live contacts (`visibleEnemyChase`, validated VICTORY
-  16/12 with the endgame timeline), break rows ignore formation-less
-  frame-0 artifacts.
-- `ConsensusVoteFilter`, Reaver rally leash - committed, awaiting games.
+- `scripts/kill-cleanup.sh` (untracked) + `scripts/README.md` changes:
+  parallel thread's. The game-night box is shared - one Wine game
+  at a time.
