@@ -59,16 +59,13 @@ class PlacementQuery {
 
     if (building == Protoss.Gateway) {
       GatewayPlacement.applyDefaults(this)
-    } else if (Seq(Terran.Barracks, Terran.Factory, Protoss.RoboticsFacility).contains(building)) {
+    } else if (PlacementQuery.groundProductionBuildings.contains(building)) {
       preferences.labelYes = preferences.labelYes :+ PlaceLabels.GroundProduction
     }
-    if (Seq(
-      Terran.EngineeringBay, Terran.Academy, Terran.Armory, Terran.Starport, Terran.ScienceFacility,
-      Protoss.Forge, Protoss.CyberneticsCore, Protoss.Observatory, Protoss.RoboticsSupportBay, Protoss.CitadelOfAdun, Protoss.TemplarArchives, Protoss.FleetBeacon, Protoss.ArbiterTribunal,
-      Zerg.SpawningPool, Zerg.EvolutionChamber, Zerg.HydraliskDen, Zerg.Spire, Zerg.QueensNest, Zerg.DefilerMound, Zerg.UltraliskCavern).contains(building)) {
+    if (PlacementQuery.techBuildings.contains(building)) {
       preferences.labelYes = preferences.labelYes :+ PlaceLabels.Tech
     }
-    if (Seq(Terran.MissileTurret, Terran.Bunker, Protoss.PhotonCannon, Protoss.ShieldBattery, Zerg.CreepColony).contains(building)) {
+    if (PlacementQuery.defensiveBuildings.contains(building)) {
       preferences.labelYes = preferences.labelYes :+ PlaceLabels.Defensive
     }
     if (building == Protoss.Pylon) {
@@ -229,5 +226,17 @@ object PlacementQuery {
 
   /** Nothing builds this close to our main choke center, in tiles. */
   val mainChokeClearTiles: Int = 5
+
+  /** Production buildings that want ground access like a Gateway. */
+  val groundProductionBuildings: Seq[UnitClass] = Seq(Terran.Barracks, Terran.Factory, Protoss.RoboticsFacility)
+
+  /** Tech structures that want the tech yard. */
+  val techBuildings: Seq[UnitClass] = Seq(
+    Terran.EngineeringBay, Terran.Academy, Terran.Armory, Terran.Starport, Terran.ScienceFacility,
+    Protoss.Forge, Protoss.CyberneticsCore, Protoss.Observatory, Protoss.RoboticsSupportBay, Protoss.CitadelOfAdun, Protoss.TemplarArchives, Protoss.FleetBeacon, Protoss.ArbiterTribunal,
+    Zerg.SpawningPool, Zerg.EvolutionChamber, Zerg.HydraliskDen, Zerg.Spire, Zerg.QueensNest, Zerg.DefilerMound, Zerg.UltraliskCavern)
+
+  /** Static defense that wants the defensive yard. */
+  val defensiveBuildings: Seq[UnitClass] = Seq(Terran.MissileTurret, Terran.Bunker, Protoss.PhotonCannon, Protoss.ShieldBattery, Zerg.CreepColony)
 }
 
