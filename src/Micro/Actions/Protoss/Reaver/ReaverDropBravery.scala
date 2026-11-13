@@ -34,13 +34,6 @@ object ReaverDropBravery {
   val minShields: Int = 50
 
   /**
-   * Tank theater, in tiles: only Siege Tanks this close to the Shuttle
-   * vote. A battery across the map cannot hit the drop; stale intel that
-   * lingers on the registry cannot veto it either (seam filters).
-   */
-  val tankTheaterTiles: Double = 20.0
-
-  /**
    * Vs Terran the Scarab must beat Siege Tanks: more than a pair on the
    * field vetoes the brave drop. Other matchups ignore the tank count.
    */

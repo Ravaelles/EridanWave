@@ -79,7 +79,7 @@ object ReaverMission {
             rangedDps        = rangedNear.view.map(_.dpfAir).sum,
             tanks            = foes.count(t =>
               t.isAny(Terran.SiegeTankUnsieged, Terran.SiegeTankSieged) && t.likelyStillThere &&
-                t.tileDistanceEdge(shuttle) < ReaverDropBravery.tankTheaterTiles),
+                ReaverTanks.inTheater(t.tileDistanceEdge(shuttle))),
             nearStaticDefense= foes.exists(e =>
               e.unitClass.isStaticDefense && ! e.flying && e.likelyStillThere &&
                 e.tileDistanceEdge(shuttle) < ReaverDropBravery.staticDefenseDist),

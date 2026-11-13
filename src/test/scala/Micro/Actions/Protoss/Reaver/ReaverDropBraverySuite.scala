@@ -102,7 +102,7 @@ class ReaverDropBraverySuite extends AnyFunSuite {
     assert(ReaverDropBravery.closeDist == 6.0)
     assert(ReaverDropBravery.rangedDist == 8.0)
     assert(ReaverDropBravery.staticDefenseDist == 8.0)
-    assert(ReaverDropBravery.tankTheaterTiles == 20.0)
+    assert(ReaverTanks.theaterTiles == 20.0)
   }
 
   private def facts(
