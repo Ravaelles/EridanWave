@@ -40,15 +40,18 @@ object BeCarrier extends Action {
   protected final def isInterceptorActive(interceptor: UnitInfo): Boolean = Seq(Orders.InterceptorAttack, Orders.InterceptorReturn).contains(interceptor.order)
 
   private def carrierKite(unit: FriendlyUnitInfo): Boolean = {
-    if (unit.totalHealth >= CarrierKite.lowHp) return false
+    if ( ! unit.shieldWounded) return false
 
+    // Linear wound berth: fresh scratches hold close, a bleeding hull
+    // keeps fifteen tiles from anything that can answer.
+    val marginTiles = unit.woundPercentBonus(0.0, CarrierKite.maxMarginTiles)
     Maff.minBy(unit.matchups.threats.filter(t =>
       t.canAttack(unit) && CarrierKite.isRanged(t.pixelRangeAgainst(unit))))(
       unit.pixelDistanceEdge(_)).exists(threat => {
-      CarrierKite.shouldKite(unit.totalHealth, unit.pixelDistanceEdge(threat) * Maff.inv32) && {
+      CarrierKite.shouldKite(unit.shieldWounded, unit.pixelDistanceEdge(threat) * Maff.inv32, marginTiles) && {
         unit.agent.act("CarrierKite")
         unit.agent.toAttack = None
-        val away = unit.pixel.project(threat.pixel, -CarrierKite.kiteTiles * 32.0)
+        val away = threat.pixel.project(unit.pixel, marginTiles * 32.0)
         unit.agent.decision.set(?(away.walkable, away, away.walkablePixel))
         Commander.move(unit)
         true

@@ -4,19 +4,19 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class CarrierKiteSuite extends AnyFunSuite {
 
-  test("a healthy Carrier never kites") {
-    assert( ! CarrierKite.shouldKite(100, 0.0))
-    assert( ! CarrierKite.shouldKite(400, 0.0))
+  test("unscratched shields never kite") {
+    assert( ! CarrierKite.shouldKite(shieldWounded = false, distTiles = 0.0, marginTiles = 15.0))
   }
 
-  test("a distant attacker never kites") {
-    assert( ! CarrierKite.shouldKite(99, 14.0))
-    assert( ! CarrierKite.shouldKite(1, 200.0))
+  test("a fresh scratch holds a tight berth") {
+    // Margin ~0 at zero wounds: anything outside it holds orders.
+    assert( ! CarrierKite.shouldKite(shieldWounded = true, distTiles = 0.5, marginTiles = 0.5))
+    assert(CarrierKite.shouldKite(shieldWounded = true, distTiles = 0.4, marginTiles = 0.5))
   }
 
-  test("a dying Carrier kites a close ranged attacker") {
-    assert(CarrierKite.shouldKite(99, 13.99))
-    assert(CarrierKite.shouldKite(0, 0.0))
+  test("a bleeding hull keeps fifteen tiles") {
+    assert(CarrierKite.shouldKite(shieldWounded = true, distTiles = 14.99, marginTiles = 15.0))
+    assert( ! CarrierKite.shouldKite(shieldWounded = true, distTiles = 15.0, marginTiles = 15.0))
   }
 
   test("only true reach counts as ranged") {
