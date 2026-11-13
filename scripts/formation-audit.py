@@ -74,8 +74,8 @@ def parse(path):
                         "frame": int(parts[0]),
                         "unit": parts[1],
                         "own": parts[2],
-                        "target": parts[3],
-                        "dist": float(parts[4]),
+                        "target": " ".join(parts[3:-1]),
+                        "dist": float(parts[-1]),
                     })
             elif section == "dress" and line.strip():
                 parts = line.split()

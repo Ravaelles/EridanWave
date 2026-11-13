@@ -1,6 +1,7 @@
 package Micro.Actions.Protoss.Reaver
 
 import Lifecycle.With
+import Mathematics.Maff
 import Micro.Actions.Protoss.ReaverLegacy.BeReaverLegacy
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -19,6 +20,7 @@ case class ReaverThreats(
   outranged       : Boolean = false,
   shotless        : Boolean = false,
   pressuredClose  : Boolean = false,
+  staticInFace    : Boolean = false,
   tankAiming      : Boolean = false,
   holdTarget      : Boolean = false,
   onlyWorkersNear : Boolean = false,
@@ -43,6 +45,15 @@ object ReaverThreats {
       outranged       = threatsInRange.exists(t => ! t.flying && t.pixelRangeAgainst(unit) < unit.pixelRangeAgainst(t)),
       shotless        = ! (unit.scarabs > 0 && ! unit.hasActiveScarab && unit.matchups.targetsInRange.exists(unit.hasScarabPathTo(_, unit.pixel))),
       pressuredClose  = threats.exists(t => ! t.flying && t.canAttack(unit) && unit.tileDistanceEdge(t) < 4),
+      staticInFace    = threats.exists(t =>
+        t.unitClass.isStaticDefense
+        && ! t.flying
+        && t.likelyStillThere
+        && t.canAttack(unit)
+        && ReaverStaticStandoff.shouldBackOff(
+          unit.tileDistanceEdge(t) * Maff.inv32,
+          unit.pixelRangeAgainst(t) * Maff.inv32,
+          t.pixelRangeAgainst(unit) * Maff.inv32)),
       onlyWorkersNear = {
         val nearby = unit.matchups.enemies.filter(e => unit.tileDistanceEdge(e) < ReaverBoardLogic.workerStandRadiusTiles)
         nearby.nonEmpty && nearby.forall(_.unitClass.isWorker)

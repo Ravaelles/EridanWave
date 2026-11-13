@@ -6,8 +6,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  * Ordered Reaver discipline: the first behavior whose situation applies
  * acts, the rest stand down. Order is the contract - rescue a flying
  * Scarab, evacuate tanks, board under pressure, deliver the shot, reset
- * the cooldown, hold to fire. A new behavior slots in as one object plus
- * one line here.
+ * the cooldown, back off statics, hold to fire. A new behavior slots in
+ * as one object plus one line here.
  */
 object ReaverAtlantisBrain {
 
@@ -27,6 +27,8 @@ object ReaverAtlantisBrain {
       ReaverLandWithLead.act(unit)
     } else if (ReaverRefreshCooldown.applies(situation)) {
       ReaverRefreshCooldown.act(unit)
+    } else if (ReaverBackOffStatic.applies(situation)) {
+      ReaverBackOffStatic.act(unit)
     } else if (ReaverHoldToFire.applies(situation)) {
       ReaverHoldToFire.act(unit)
     }
