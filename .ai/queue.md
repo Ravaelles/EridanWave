@@ -162,7 +162,8 @@ move the hunt. March: Shuttle pair owns loaded hulls (THIS) - a Shuttle carrying
 a Reaver never takes other passengers and no drop mission assigns it
 new pickups; needs a Reaver-drop game. Micro: workers run straight from Dark Templars (THIS) - any
 worker within 3.0 tiles of a visible enemy DT flees directly away, no
-pathing detours; needs DT pressure on the mineral line. March: StaticDefense overwhelm
+pathing detours; needs DT pressure on the mineral line. Micro: storms lead moving victims (THIS) - 2.0-tile lead along
+the heading, standing victims keep the spot. March: StaticDefense overwhelm
 (THIS) - twelve of ours against one static defender pushes instead of
 repelling; needs a contain break. March: TankHug (THIS) -
 cooling ground warriors close sieged tanks to 0.2 tiles instead of

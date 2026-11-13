@@ -42,6 +42,10 @@ class PsionicStormSuite extends AnyFunSuite {
     assert(PsionicStorm.vetoThinPack(foeCount = 40, hasCrucialTarget = false, energy = 74, enemyIsProtoss = false))
   }
 
+  test("storms lead their victims two tiles") {
+    assert(PsionicStorm.stormLeadTiles == 2.0)
+  }
+
   test("storm walks short: twelve tiles vs Terran, ten otherwise") {
     assert(PsionicStorm.maxApproachVsTerran(isTerran = true) == 12)
     assert(PsionicStorm.maxApproachVsTerran(isTerran = false) == 10)

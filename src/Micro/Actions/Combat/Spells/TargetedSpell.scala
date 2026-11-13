@@ -32,6 +32,9 @@ abstract class TargetedSpell extends Action {
    * totalRange search). Subclasses cap per matchup.
    */
   protected def maxApproachTiles: Option[Int] = None
+
+  /** Lead, in tiles: project moving victims this far along their heading when placing the spell; standing victims stay put. */
+  protected def leadTiles: Double = 0.0
   
   protected def valueTarget(target: UnitInfo, caster: FriendlyUnitInfo): Double
 
@@ -64,7 +67,7 @@ abstract class TargetedSpell extends Action {
       // the next frame picks a new spot or stands down. The leash keeps
       // the walk short: spots past it are never picked.
       def pick(): Option[Pixel] =
-        new SpellTargetAOE().chooseTargetPixel(unit, searchRange, thresholdValue, valueTarget, pixelWidth = pixelWidth, pixelHeight = pixelHeight, vetoBox = vetoBox(_, unit))
+        new SpellTargetAOE().chooseTargetPixel(unit, searchRange, thresholdValue, valueTarget, pixelWidth = pixelWidth, pixelHeight = pixelHeight, projectionFrames = leadTiles * 32.0, vetoBox = vetoBox(_, unit))
       def inCastRange(target: Pixel): Boolean =
         unit.pixelDistanceCenter(target) <= castRangePixels
       unit.agent.spellIntent.filter(_._1 == tech).filterNot(intent => TargetedSpell.intentExpired(With.frame - intent._3, intentExpiryFrames)) match {

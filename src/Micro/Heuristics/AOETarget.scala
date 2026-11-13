@@ -43,7 +43,9 @@ class AOETarget(
     yMax = evalPixelEnd.y
   }
   units.foreach(unit => {
-    val positionProjected = if (lookaheadPixels == 0 || Protoss.Dragoon(unit)) unit.pixel else unit.pixel.radiateRadians(unit.angleRadians, lookaheadPixels)
+    // Stationary units hold their pixel: projecting a standing unit along
+    // its stale facing would walk the spell off a target that isn't moving.
+    val positionProjected = if (lookaheadPixels == 0 || unit.speed < 1.0 || Protoss.Dragoon(unit)) unit.pixel else unit.pixel.radiateRadians(unit.angleRadians, lookaheadPixels)
     xMin = Math.min(xMin, positionProjected.x)
     yMin = Math.min(yMin, positionProjected.y)
     xMax = Math.max(xMax, positionProjected.x)

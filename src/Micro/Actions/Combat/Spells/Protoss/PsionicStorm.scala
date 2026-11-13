@@ -18,6 +18,11 @@ object PsionicStorm extends TargetedSpell {
   override protected def castRangeTiles   : Int       = 9
   override protected def thresholdValue   : Double    = 1.0
   override protected def lookaheadPixels  : Int       = 12
+
+  /** Storms lead moving victims this far along their heading, in tiles; standing ones keep the spot. */
+  val stormLeadTiles: Double = 2.0
+
+  override protected def leadTiles: Double = stormLeadTiles
   override protected def additionalConditions(unit: FriendlyUnitInfo): Boolean = unit.agent.shouldFight || unit.matchups.threatsInRange.nonEmpty || unit.base.exists(_.owner.isEnemy)
 
   /** Approach leash vs Terran, in tiles: storms walk, not marches. */

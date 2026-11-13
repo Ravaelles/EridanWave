@@ -15,7 +15,7 @@ import Utilities.Time.Minutes
 import Utilities.UnitFilters.{IsTank, IsWorker}
 
 object Retreat extends Action {
-
+  
   /** Full retreat planner: picks WHERE a fleeing unit runs (board, shotgun, scatter, path), never WHETHER it flees - that verdict belongs to FightRules. */
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canMove && unit.matchups.threats.nonEmpty
 
