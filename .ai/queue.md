@@ -145,7 +145,11 @@ fired, telemetry gap to verify next game.
 
 March: PairRide (THIS) - loaded Shuttles never march the legs
 (rally/slot), the pair owns them; park centers on live cargo, not
-stale hailers (macro game: no shuttle idling in the natural). March: StrongMarch (THIS) - banked stock or maxed strong army
+stale hailers (macro game: no shuttle idling in the natural). March: ArbiterSpread (THIS) - Arbiters separate exactly like
+Observers (nine tiles, newer moves off the ray, `DetectorSpread`
+kernel); macro game with two Arbiter hulls. March: TankHug (THIS) -
+cooling ground warriors close sieged tanks to 0.2 tiles instead of
+kiting; needs a Terran mech game with tanks in range. March: StrongMarch (THIS) - banked stock or maxed strong army
 marches straight at the goal, never rallies to the pack centroid or
 walks to a formation slot (`StrongMarchSuite`, macro game with bank).
 Micro: idle attackers force fire after 150 frames (THIS) - a

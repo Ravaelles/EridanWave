@@ -46,7 +46,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       else if (combat.assembling && combat.group.groupUnits.size > 1) AssembleBehavior.run(unit, combat)
       else if (combat.techniqueIs(Scavenge)) ScavengeBehavior.run(unit, combat)
       else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {
-        if ( ! KiteAwayBehavior.run(unit, combat) && ! ApproachBehavior.run(unit, combat)) {
+        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! ApproachBehavior.run(unit, combat)) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
