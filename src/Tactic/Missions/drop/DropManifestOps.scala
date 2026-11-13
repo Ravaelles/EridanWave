@@ -62,7 +62,7 @@ trait DropManifestOps { self: MissionDrop =>
   private[Missions] def releaseContainReavers(): Unit = {
     if ( ! ContainStatus.now()) return
 
-    if ( ! Micro.Actions.Protoss.Reaver.ReaverContain.recallAll(ContainStatus.vsZerg())) return
+    if ( ! ContainStatus.vsZerg()) return
 
     releasePassengers(passengers.filter(Protoss.Reaver).toSet)
   }

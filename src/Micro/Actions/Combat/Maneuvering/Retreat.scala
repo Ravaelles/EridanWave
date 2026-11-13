@@ -6,7 +6,6 @@ import Mathematics.Points.Pixel
 import Mathematics.{Maff, Shapes}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
-import Micro.Actions.Protoss.Shuttle.Shuttling
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -74,7 +73,8 @@ object Retreat extends Action {
     }
     lazy val force = forceVector.radians
 
-    if ( ! unit.agent.shouldFight && unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= Shuttling.pickupRadiusEdge + 32) && unit.matchups.targetsInRange.isEmpty) {
+    // Board when the ride is a step away (engine pickup radius is 32 px edge-to-edge).
+    if ( ! unit.agent.shouldFight && unit.agent.ride.exists(_.pixelDistanceEdge(unit) <= 32 + 32) && unit.matchups.targetsInRange.isEmpty) {
       Commander.rightClick(unit, unit.agent.ride.get)
 
       return RetreatPlan(unit, unit.agent.ride.map(_.pixel).getOrElse(unit.pixel), "Hail", preciseArrival = true)

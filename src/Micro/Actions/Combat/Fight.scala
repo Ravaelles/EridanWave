@@ -17,7 +17,7 @@ import Micro.Actions.Protoss.DarkTemplar.BeDarkTemplar
 import Micro.Actions.Protoss.Dragoon.BeDragoonVsSlowlot
 import Micro.Actions.Protoss.Zealot.{BeRushingZealot, BeZealotVsZealot}
 import Micro.Actions.Protoss.Carrier.BeCarrier
-import Micro.Actions.Protoss.Reaver.BeReaver
+import Micro.Actions.Protoss.ReaverShuttle.BeReaver
 import Micro.Actions.Terran.{BeCombatSCV, BeVulture}
 import Micro.Actions.Zerg.BeMutalisk
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo

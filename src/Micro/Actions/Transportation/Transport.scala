@@ -1,7 +1,7 @@
 package Micro.Actions.Transportation
 
 import Micro.Actions.Action
-import Micro.Actions.Protoss.Shuttle.BeShuttle
+import Micro.Actions.Protoss.ReaverShuttle.BeShuttle
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
