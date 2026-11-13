@@ -43,13 +43,17 @@ statics covered by 2+ defenders. `StaticDefenseRepel` (`3bc73c3bf`)
 Reaver vs workers (`8f84e9745`) - worker-only pressure, shields
 >70, no Hop. Reaver leash (`b9eeb500a`) - Reaver-heavy game, rally
 rows down. Reaver standoff (`be5dbb90d`) - sunkens map, back off to
-max range. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
+max range. `ReaverBraveStand` (`cb7903db4`) - stale shielded Reaver holds vs
+Terran army within 8.5 tiles, never under sieged tanks (`BraveStand`
+rows, no Hop/retreat flap). DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
 (`Reav&Shut_*` unblocked by `60564e111`). `WallBreach`
 (`fbd43ba36`) - no-ground-path Terran wall. DT evade/hide
-(`2ca28d0b5`) - detectors/ranged on DT. Choke contain (`80e9e0f1a`)
+(`2ca28d0b5`) - detectors/ranged on DT. DT lone hold (HASH) - full
+shields + no attacker in 10 tiles ignores the detector, keeps hunting. Choke contain (`80e9e0f1a`)
 - parked on enemy natural choke vs anti-ground statics holds.
 Contain raze split (`0dac77449`, `75747c418`) - contain + live
-enemy expo. MainMarch guard (`75747c418`) - no `ourMain` crash on
+enemy expo. Weak raid (`fc06f634b`) - 2-4 warriors detach for a detected expo
+while too weak to contain (`R` squad rows). MainMarch guard (`75747c418`) - no `ourMain` crash on
 baseless UMS (`errors.json`).
 
 Macro: KillFrenzy (`78831687a`, 195 supply + bank, releases <170).

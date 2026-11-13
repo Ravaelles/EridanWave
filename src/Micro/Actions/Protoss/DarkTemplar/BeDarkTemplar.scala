@@ -36,6 +36,12 @@ object BeDarkTemplar extends Action {
   }
 
   private def evadeDetector(unit: FriendlyUnitInfo): Boolean = {
+    // Lone detector, full shields, nothing that can punish: hold the hunt
+    // instead of running - the reveal costs nothing yet.
+    if (DarkTemplarEvade.shouldHoldVsDetector(
+      unit.unitClass.maxShields - unit.shieldPoints,
+      unit.matchups.threats.exists(t => t.canAttack(unit) && unit.tileDistanceEdge(t) < DarkTemplarEvade.holdVsDetectorTiles))) return false
+
     Maff.minBy(unit.matchups.groupVs.detectors.filter(d =>
       d.likelyStillThere
       && DarkTemplarEvade.shouldEvade(unit.pixelDistanceEdge(d), d.sightPixels)))(

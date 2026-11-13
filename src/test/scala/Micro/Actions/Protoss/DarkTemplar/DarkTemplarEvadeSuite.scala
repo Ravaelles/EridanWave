@@ -25,4 +25,10 @@ class DarkTemplarEvadeSuite extends AnyFunSuite {
     assert(DarkTemplarEvade.shouldHide(5.0 * 32.0, 4.0 * 32.0))
     assert( ! DarkTemplarEvade.shouldHide(7.0 * 32.0, 4.0 * 32.0))
   }
+
+  test("a lone detector never moves a fresh hunt") {
+    assert(DarkTemplarEvade.shouldHoldVsDetector(shieldsDown = 0, attackerNear = false))
+    assert( ! DarkTemplarEvade.shouldHoldVsDetector(shieldsDown = 1, attackerNear = false))
+    assert( ! DarkTemplarEvade.shouldHoldVsDetector(shieldsDown = 0, attackerNear = true))
+  }
 }

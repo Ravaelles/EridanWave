@@ -15,6 +15,13 @@ object DarkTemplarEvade {
   /** Reach above which a threat counts as ranged, in pixels. */
   val rangedReachPixels: Double = 32.0
 
+  /**
+   * Lone-detector radius, in tiles: with full shields and no attacker
+   * this close, the reveal costs nothing yet - running just wastes
+   * the hunt.
+   */
+  val holdVsDetectorTiles: Double = 10.0
+
   /** Hold-the-hide band beyond a ranged threat's own reach, in tiles. */
   val hideBandTiles: Double = 2.0
 
@@ -27,6 +34,14 @@ object DarkTemplarEvade {
 
   def isRanged(rangePixels: Double): Boolean =
     rangePixels > rangedReachPixels
+
+  /**
+   * Lone-detector hold (pure flags for the suite): full shields plus no
+   * attacker near means the detector cannot punish the reveal, so the
+   * hunt holds instead of running from an Overlord that cannot hit it.
+   */
+  def shouldHoldVsDetector(shieldsDown: Int, attackerNear: Boolean): Boolean =
+    shieldsDown == 0 && ! attackerNear
 
   /**
    * Revealed-hide hold (pure numbers for the suite): a shot Templar is a
