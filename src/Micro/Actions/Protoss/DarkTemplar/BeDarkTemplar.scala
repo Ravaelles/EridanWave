@@ -4,6 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Agency.Commander
+import Micro.Targeting.DarkTemplarTargets
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Time.Minutes
@@ -121,8 +122,24 @@ object BeDarkTemplar extends Action {
     }
   }
 
-  private def visibleHittable(unit: FriendlyUnitInfo): Option[UnitInfo] =
-    Maff.minBy(unit.matchups.targets.filter(t => t.visible && unit.canAttack(t)))(_.pixelDistanceEdge(unit))
+  private def visibleHittable(unit: FriendlyUnitInfo): Option[UnitInfo] = {
+    // No cooldown, real contact close by: kill weakest first (a wounded
+    // Marauder dies to one swipe), then tanks, warriors, workers - nearest
+    // inside each tier. Otherwise the old nearest-hittable hunt holds.
+    val close = unit.matchups.targets.view.filter(t =>
+      t.visible && unit.canAttack(t) && unit.tileDistanceEdge(t) <= DarkTemplarTargets.closeTiles).toVector
+    if (unit.cooldownLeft <= 0 && close.nonEmpty) {
+      val marks = close.map(t => DarkTemplarTargets.Mark(
+        unit.tileDistanceEdge(t),
+        t.totalHealth,
+        Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t),
+        t.unitClass.isWarrior,
+        t.unitClass.isWorker))
+      DarkTemplarTargets.pick(marks).map(close)
+    } else {
+      Maff.minBy(unit.matchups.targets.filter(t => t.visible && unit.canAttack(t)))(_.pixelDistanceEdge(unit))
+    }
+  }
 
   private def rememberedContact(unit: FriendlyUnitInfo): Option[UnitInfo] =
     Maff.maxBy(With.units.enemy.filter(e =>

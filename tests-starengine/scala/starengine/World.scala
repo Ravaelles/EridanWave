@@ -24,11 +24,13 @@ final class World(
   }
 
   def step(): Unit = {
-    moveSide(ours)
-    moveSide(foes)
+    val orders = (ours ++ foes).view.filter(_.alive)
+      .map(b => b -> pilots.get(b).map(_.direct(b, this)).getOrElse(Hold)).toMap
+    moveSide(ours, orders)
+    moveSide(foes, orders)
     constraints.foreach(_.apply(this))
-    shootSide(foes, ours)
-    shootSide(ours, foes)
+    shootSide(foes, ours, orders)
+    shootSide(ours, foes, orders)
     frame += 1
   }
 
@@ -40,9 +42,9 @@ final class World(
     }
   }
 
-  private def moveSide(side: Seq[Body]): Unit = {
+  private def moveSide(side: Seq[Body], orders: Map[Body, Directive]): Unit = {
     side.filter(_.alive).foreach(body => {
-      pilots.get(body).map(_.direct(body, this)).getOrElse(Hold) match {
+      orders.getOrElse(body, Hold) match {
         case Hold => ()
         case MoveTo(x, y) => body.stepToward(x, y)
         case Chase(target) =>
@@ -64,14 +66,20 @@ final class World(
     })
   }
 
-  private def shootSide(side: Seq[Body], victims: Seq[Body]): Unit = {
+  private def shootSide(side: Seq[Body], victims: Seq[Body], orders: Map[Body, Directive]): Unit = {
     side.filter(_.alive).foreach(body => {
       if (body.cooldownLeft > 0) {
         body.cooldownLeft -= 1
       } else {
-        nearestFoeOf(body, victims, (me, foe) => me.canHit(foe) && me.dist(foe) <= me.rangeAgainst(foe)).foreach(victim => {
-          victim.hp = Math.max(0, victim.hp - body.damageAgainst(victim))
-          body.cooldownLeft = body.cooldownAgainst(victim)
+        // The chase target is the committed pick (mirrors toAttack): shoot
+        // it while it holds, otherwise fall back to the nearest hittable.
+        val committed = orders.get(body).collect {
+          case Chase(target) if target.alive && body.canHit(target) && body.dist(target) <= body.rangeAgainst(target) => target
+        }
+        val victim = committed.orElse(nearestFoeOf(body, victims, (me, foe) => me.canHit(foe) && me.dist(foe) <= me.rangeAgainst(foe)))
+        victim.foreach(v => {
+          v.hp = Math.max(0, v.hp - body.damageAgainst(v))
+          body.cooldownLeft = body.cooldownAgainst(v)
         })
       }
     })
