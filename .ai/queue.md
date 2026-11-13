@@ -26,6 +26,20 @@ concepts, not 300 edge cases. Suspects from the field: suicide
 targeting (workers-only, buildings vetoed), KiteTo-vs-kiteaway overlap,
 reboard/board/park/await chains in the pair doctrine.
 
+## Open: Micro/Actions concept merges (from the edge-case review)
+
+Single concept, one home - merge when touched (behavior-preserving,
+suite-carried; the risky ones need a game to prove):
+DONE (`9f36c2e82`): Yamato/Lockdown reach pricing, mineral-clearance
+rule, dead FewShot stub. NEXT - safe: `CombatManeuvers.move` Reaver
+boarding smuggle to the transport layer; `KiteAwayBehavior.staticStandoff`
+to Assemble/Push; `ApproachBehavior.stepBack` to kite; empty
+`GetRepairedBuilding.perform` - flag or fill. NEXT - needs a game:
+kite-vs-approach range axis; standoff-margin table (Corsair/Cluster);
+dress-the-line governor; fight-forcer thresholds; cloak on/off policy;
+Yamato/Lockdown-style value sharing for Maelstrom/Storm/Disruption/Stasis;
+scout-harass soup to one table; worker-fight backup question to one gate.
+
 ## Awaiting a validation game (all committed, suite-green, jar synced)
 
 Targeting/micro: `OverlordSnipe` (`a869e66d6`, chase never, snipe
