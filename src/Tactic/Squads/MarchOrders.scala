@@ -65,10 +65,13 @@ object MarchOrders {
     // Lone march: with no friendly warrior inside ten tiles there is no
     // line to pose in, so the unit skips rallying to the pack centroid
     // and slot-marching and walks straight at the squad goal instead of
-    // milling alone.
+    // milling alone. Latched (10.5 out, 9.5 back): the terminus on
+    // either side lives hundreds of pixels apart, so a sharp gate jerks
+    // the destination for units breathing on the boundary.
     MarchGate("LoneMarch", (squad, unit) =>
       Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
-        .forall(a => LoneMarch.shouldMarchAlone(unit.pixelDistanceCenter(a.pixel) * Maff.inv32))))
+        .map(a => LoneMarch.marchAlone(unit.id, unit.pixelDistanceCenter(a.pixel) * Maff.inv32))
+        .getOrElse(true)))
 
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): (Pixel, String) = {
     val suicide = SuicideMission.assign(unit)

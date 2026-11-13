@@ -36,6 +36,7 @@ class EridanWave extends DefaultBWListener {
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         Debugging.ErrorLedger.reset()
         Debugging.SlowAlone.reset()
+        Tactic.Squads.Decisions.LoneMarch.reset()
         Lifecycle.HitCounter.reset()
         Debugging.FormationAudit.reset()
         Debugging.Probe.reset()
