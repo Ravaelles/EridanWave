@@ -24,7 +24,9 @@ cast). Storm Overlord veto (`35c59bc1b`, HT<=190 never storms
 Overlord). Wall-bust Focus (`9b595bb18`) - Terran wall-in, idle guns
 break Depot/Barracks. Point-blank Focus (`b3c664ed1`) - friendlies
 touching enemy buildings. `RepairerSnipe` (`2d4521365`) - SCV
-repairing a tasked Terran building gets sniped. Detector spread
+repairing a tasked Terran building gets sniped. `ShuttleDitch/Adopt`
+(`c00ef3c3a`) - chain stops after a ditch/adopt (no quest on top).
+Detector spread
 (`e7cb6aaee`, two Observers, `DetectorSpread` rows). `SneakyWatch`
 (`8deb6aa30`, visible Lurkers/DTs/Wraiths/Ghosts). Vulture duels
 (`0dac77449` vs Dragoons, `PotshotVulture` rows). Carrier berth
@@ -33,7 +35,7 @@ repairing a tasked Terran building gets sniped. Detector spread
 March/stance: `DragoonBrave` (`d6d4f8af0`) - early ready shielded
 Dragoon stands up to Marines (`DragoonBrave` rows, no Retreat flap).
 `HomeStand` (`617bdfb18`) - Protoss between main and natural-4 never retreats.
-`NoRetreat` tanks (HASH) - siege tanks within 18 of our natural always
+`NoRetreat` tanks (`c4bb6ed62`) - siege tanks within 18 of our natural always
 attacked, no retreat (`TanksAtNatural` rows).
 `SuicideMission` (`7c75e98eb`, ex-`MainAssault`
 `706edf6e6`/`dee6339f3`) - warriors in enemy main: label+commit, no
