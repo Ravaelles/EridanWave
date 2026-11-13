@@ -21,10 +21,10 @@ lone) - natural Overlord-in-combat. DT doctrine (`1556073e9`) -
 natural melee with DTs. Defiler>Lurker>Mutalisk (`139b97e5a`) -
 Zerg-comp game. Storm friendly veto (`c25aa6dee`, 3+ own in box, no
 cast). Storm Overlord veto (`35c59bc1b`, HT<=190 never storms
-Overlord). Storm intent + Atlantis pack (HASH) - HT approaches with
-spell intent, casts only a reconfirmed in-range spot; energy-scaled
-pack (195:1, 180:2, 110:base-1), crucial Reaver/sieged-Tank bypass,
-never out of range. Wall-bust Focus (`9b595bb18`) - Terran wall-in, idle guns
+Overlord). Storm intent + Atlantis pack (`850a7bba`) - HT approaches
+with spell intent, casts only a reconfirmed in-range spot;
+energy-scaled pack (195:1, 180:2, 110:base-1), crucial
+Reaver/sieged-Tank bypass, never out of range. Wall-bust Focus (`9b595bb18`) - Terran wall-in, idle guns
 break Depot/Barracks. Point-blank Focus (`b3c664ed1`) - friendlies
 touching enemy buildings. `RepairerSnipe` (`2d4521365`) - SCV
 repairing a tasked Terran building gets sniped. `ShuttleDitch/Adopt`
@@ -57,7 +57,7 @@ rows down. Reaver standoff (`be5dbb90d`) - sunkens map, back off to
 max range. `ReaverBraveStand` (`cb7903db4`) - stale shielded Reaver holds vs
 Terran army within 8.5 tiles, never under sieged tanks (`BraveStand`
 rows, no Hop/retreat flap). Reaver+Shuttle doctrine rebuild (research) -
-baseline in `.ai/reaver-shuttle-baseline.md`, then fresh myths with a
+baseline in `.ai/reaver-shuttle-baseline.md`, then a fresh doctrine on a
 shared Shuttle+Reaver status; StarTest harness for drop-loss <=5%. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
 (`Reav&Shut_*` unblocked by `60564e111`). `WallBreach`
 (`fbd43ba36`) - no-ground-path Terran wall. DT evade/hide
