@@ -153,7 +153,9 @@ health, Tickle precedent), retreat still outranks shooting under fire
 (macro game: dragoons vs sunken+lings trade). Micro: Storm walks short, storms cheap (THIS) - approach leash
 12 tiles vs Terran / 10 otherwise plus the 75/120/180 pack ladder
 (base at 75, discount at 120, pairs at 180, singles at 195, hold fire
-below 75); needs a Storm game with HTs. March: TankHug (THIS) -
+below 75); needs a Storm game with HTs. Micro: DT flees guns first (THIS) - visible enemy that can hit the
+Templar inside 13 tiles outranks the detector; Overlords alone never
+move the hunt. March: TankHug (THIS) -
 cooling ground warriors close sieged tanks to 0.2 tiles instead of
 kiting; needs a Terran mech game with tanks in range. March: StrongMarch (THIS) - banked stock or maxed strong army
 marches straight at the goal, never rallies to the pack centroid or

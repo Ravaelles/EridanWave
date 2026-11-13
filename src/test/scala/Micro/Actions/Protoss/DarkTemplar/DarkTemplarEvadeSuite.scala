@@ -31,4 +31,10 @@ class DarkTemplarEvadeSuite extends AnyFunSuite {
     assert( ! DarkTemplarEvade.shouldHoldVsDetector(shieldsDown = 1, attackerNear = false))
     assert( ! DarkTemplarEvade.shouldHoldVsDetector(shieldsDown = 0, attackerNear = true))
   }
+
+  test("guns outrank eyes inside thirteen tiles") {
+    assert(DarkTemplarEvade.shouldFleeAttacker(distTiles = 0.0))
+    assert(DarkTemplarEvade.shouldFleeAttacker(distTiles = 13.0))
+    assert( ! DarkTemplarEvade.shouldFleeAttacker(distTiles = 13.01))
+  }
 }

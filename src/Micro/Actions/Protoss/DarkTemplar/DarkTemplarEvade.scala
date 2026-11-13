@@ -24,6 +24,17 @@ object DarkTemplarEvade {
   /** Hold-the-hide band beyond a ranged threat's own reach, in tiles. */
   val hideBandTiles: Double = 2.0
 
+  /**
+   * Attacker-flee radius, in tiles: a visible enemy that can actually hit
+   * the Templar this close outranks the detector - flee the guns, not
+   * the eyes. Overlords and Observers cannot hit back, so the reveal
+   * alone never triggers this; Marines and Hydras do.
+   */
+  val attackerFleeTiles: Double = 13.0
+
+  def shouldFleeAttacker(distTiles: Double): Boolean =
+    distTiles <= attackerFleeTiles
+
   /** Pixels below which a detector owns the Templar's position. */
   def evadeRadiusPixels(sightPixels: Double): Double =
     sightPixels + avoidBandTiles * 32.0

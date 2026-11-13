@@ -42,19 +42,30 @@ object BeDarkTemplar extends Action {
       unit.unitClass.maxShields - unit.shieldPoints,
       unit.matchups.threats.exists(t => t.canAttack(unit) && unit.tileDistanceEdge(t) < DarkTemplarEvade.holdVsDetectorTiles))) return false
 
+    // Attackers outrank detectors: a visible enemy that can actually
+    // hit us inside thirteen tiles is the run trigger, not the Overlord
+    // watching it happen - flee the guns, then the eyes.
+    if (Maff.minBy(unit.matchups.threats.filter(t =>
+      t.visible
+      && t.canAttack(unit)
+      && DarkTemplarEvade.shouldFleeAttacker(unit.pixelDistanceEdge(t) * Maff.inv32)))(
+      unit.pixelDistanceEdge(_)).exists(attacker => fleeFrom(unit, attacker.pixel))) return true
+
     Maff.minBy(unit.matchups.groupVs.detectors.filter(d =>
       d.likelyStillThere
       && DarkTemplarEvade.shouldEvade(unit.pixelDistanceEdge(d), d.sightPixels)))(
-      unit.pixelDistanceEdge(_)).exists(detector => {
-      // No re-attack while evading: a stale target would drag the hunt
-      // (and Combat) straight back under the detector next frame.
-      unit.agent.toAttack = None
-      unit.agent.act("DarkTemplarEvade")
-      val away = unit.pixel.project(detector.pixel, -4.0 * 32.0)
-      unit.agent.destinationNext.set(?(away.walkable, away, away.walkablePixel))
-      Commander.move(unit)
-      true
-    })
+      unit.pixelDistanceEdge(_)).exists(detector => fleeFrom(unit, detector.pixel))
+  }
+
+  private def fleeFrom(unit: FriendlyUnitInfo, threatPixel: Mathematics.Points.Pixel): Boolean = {
+    // No re-attack while evading: a stale target would drag the hunt
+    // (and Combat) straight back under the detector next frame.
+    unit.agent.toAttack = None
+    unit.agent.act("DarkTemplarEvade")
+    val away = unit.pixel.project(threatPixel, -4.0 * 32.0)
+    unit.agent.destinationNext.set(?(away.walkable, away, away.walkablePixel))
+    Commander.move(unit)
+    true
   }
 
   private def revealedHide(unit: FriendlyUnitInfo): Boolean = {
