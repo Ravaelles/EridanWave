@@ -4,6 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Targeting.FiltersRequired.{TargetFilterAntiAir, TargetFilterCanAttack, TargetFilterEnemy, TargetFilterFocus, TargetFilterMissing, TargetFilterOverlord, TargetFilterReaver, TargetFilterRush, TargetFilterScourge, TargetFilterStayCloaked, TargetFilterType, TargetFilterVsTank, TargetFilterVulture}
 import Micro.Targeting.FiltersSituational.TargetFilterWhitelist
+import ProxyBwapi.Orders
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
@@ -73,7 +74,17 @@ object Target {
     val targetInRange = attacker.matchups.targetsInRange.exists(hasCombatPriority)
     var output: Option[UnitInfo] = None
     if (targetInRange) {
+      
       output = focusedTarget(attacker, allFilters)
+      if (output.isDefined) return output
+
+      // Repairer snipe: a healthy unit tasked against a Terran building
+      // kills the SCV currently repairing it first (unless the building
+      // is nearly dead - then it finishes the building). Enforced even a
+      // step out of normal range. The Focus filter is bypassed for this
+      // pick on purpose; everything else still applies (no dueling
+      // inside tank range).
+      output = repairerSnipe(attacker, allFilters)
       if (output.isDefined) return output
 
       // Snipe priority: a visible Defiler, then Lurker, then Mutalisk in our
@@ -243,6 +254,27 @@ object Target {
     FocusFire
       .sharedTarget(attacker)
       .filter(target => attacker.inRangeToAttack(target) && legalByFilters(attacker, target, allFilters))
+
+  private def repairerSnipe(attacker: FriendlyUnitInfo, allFilters: IndexedSeq[TargetFilter]): Option[UnitInfo] = {
+    if (attacker.totalHealth < RepairerSnipe.healthyHp) return None
+
+    val buildings = (attacker.agent.toAttack.toSeq ++ attacker.targetsAssigned.getOrElse(Seq.empty))
+      .filter(b => b.unitClass.isBuilding && b.player.isTerran && b.alive && RepairerSnipe.shouldSnipe(attacker.totalHealth, b.totalHealth))
+    if (buildings.isEmpty) return None
+
+    val repairing = buildings.toSet
+    Maff.minBy(attacker.matchups.targets.view.filter(t =>
+      Terran.SCV(t)
+      && t.visible
+      && t.order == Orders.Repair
+      && t.orderTarget.exists(repairing.contains)
+      && attacker.canAttack(t)
+      && RepairerSnipe.inChaseRange(
+        attacker.tileDistanceEdge(t),
+        attacker.pixelRangeAgainst(t) * Maff.inv32)))(
+      attacker.pixelDistanceEdge)
+      .filter(t => legalByFilters(attacker, t, allFilters.filterNot(_ == TargetFilterFocus)))
+  }
 
   // Confirmed corpses are never legal: remembered units keep alive=true,
   // so this only drops Visibility.Dead, in every stratum at once.
