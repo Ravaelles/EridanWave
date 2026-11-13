@@ -3,6 +3,7 @@ package Micro.Actions.Combat.Decisioning.Skirmish
 
 import Debugging.Probe
 import Information.Battles.ArmyStrength
+import Information.Geography.Chokes
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -63,7 +64,13 @@ object FightOrFlee extends Action {
       u.cooldownLeft,
       With.self.supplyUsed200,
       ArmyStrength.score(With.battles.globalAttack.us.skimStrengthTotal, With.battles.globalAttack.enemy.skimStrengthTotal),
-      u.matchups.threats.nonEmpty && u.matchups.threats.forall(Terran.Marine)))
+      u.matchups.threats.nonEmpty && u.matchups.threats.forall(Terran.Marine)),
+    homeStand     = With.geography.ourBases.nonEmpty && Chokes.naturalChoke.exists(choke => {
+      val mainHeart = With.geography.ourMain.heart.center
+      HomeStand.holdsGround(
+        u.pixel.groundPixels(mainHeart) * Maff.inv32,
+        HomeStand.chokeDistToMain(mainHeart, choke.pixelCenter))
+    }))
   private def contactFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
     safe        = u.battle.exists(! _.enemy.canAttackIfVisible(u)),
     // Cluster-level contact: no enemy within firing range plus margin of ANY

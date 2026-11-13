@@ -30,7 +30,10 @@ repairing a tasked Terran building gets sniped. Detector spread
 (`0dac77449` vs Dragoons, `PotshotVulture` rows). Carrier berth
 (`d09a80cf1`, scratched shields vs ranged, `CarrierKite` rows).
 
-March/stance: `SuicideMission` (`7c75e98eb`, ex-`MainAssault`
+March/stance: `DragoonBrave` (`d6d4f8af0`) - early ready shielded
+Dragoon stands up to Marines (`DragoonBrave` rows, no Retreat flap).
+`HomeStand` (HASH) - Protoss between main and natural-4 never retreats.
+`SuicideMission` (`7c75e98eb`, ex-`MainAssault`
 `706edf6e6`/`dee6339f3`) - warriors in enemy main: label+commit, no
 retreat/flee, KiteAway cools, workers first. `LoneMarch`
 (`ea28a943e`) - lone unit walks straight at goal. No-dressing
