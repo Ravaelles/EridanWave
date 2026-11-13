@@ -31,11 +31,19 @@ object PsionicStorm extends TargetedSpell {
   def vetoFriendlyHits(friendlyHits: Int): Boolean =
     friendlyHits > maxFriendlyHits
 
+  /** Overlords eat storms only on a full battery: cheap, numerous, and
+    * rarely worth 75 energy that could erase a Hydra pack instead. */
+  val overlordStormEnergy: Int = 190
+
+  def vetoOverlord(isOverlord: Boolean, energy: Int): Boolean =
+    isOverlord && energy <= overlordStormEnergy
+
   override protected def vetoBox(units: Iterable[UnitInfo]): Boolean =
     vetoFriendlyHits(units.count(_.isFriendly))
 
   override protected def valueTarget(target: UnitInfo, caster: FriendlyUnitInfo): Double = {
     if (With.grids.psionicStorm.isSet(target.tile)) return 0.0
+    if (vetoOverlord(Zerg.Overlord(target), caster.energy)) return 0.0
     if ( ! target.unitClass.canBeStormed) return 0.0
     if (target.underStorm)  return 0.0
     if (target.stasised)    return 0.0
