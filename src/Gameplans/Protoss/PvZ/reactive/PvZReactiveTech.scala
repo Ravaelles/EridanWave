@@ -30,7 +30,10 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
   protected def detectionVsLurker(): Unit = {
     if (enemyHasShown(Zerg.Lurker, Zerg.LurkerEgg) || With.blackboard.expoBuildStalled()) {
       status("Lurkers")
-      get(Protoss.RoboticsFacility, Protoss.Observatory, Protoss.Observer)
+      if ( ! prioritizeTemplarsOverFirstRobo()) {
+        get(Protoss.RoboticsFacility)
+      }
+      get(Protoss.Observatory, Protoss.Observer)
       if (enemyHasShown(Zerg.Lurker, Zerg.LurkerEgg)) {
         if (enemies(Zerg.Lurker) > 0 && ! have(Protoss.Observer)) {
           status("LurkerDanger")
@@ -180,10 +183,34 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
     }
   }
 
+  /**
+   * First Robo waits for two lifetime Dark Templars while a complete
+   * Archives stands unused, the bank is thin, and no Lurkers are shown
+   * or likely - the sunk Archives earns before the next tech path opens.
+   * Queues the Dark Templar when it fires so the release condition moves;
+   * the scheduler still decides affordability as usual.
+   */
+  protected def prioritizeTemplarsOverFirstRobo(): Boolean = {
+    val prioritize = Gameplans.Protoss.PvZ.policy.TemplarArchivesOrRoboticsFacility.shouldPrioritizeTemplarsOverFirstRoboticsFacility(
+      haveArchives = haveComplete(Protoss.TemplarArchives),
+      hasRobo      = have(Protoss.RoboticsFacility),
+      dtProduced   = UnitArchive.producedTotal(Protoss.DarkTemplar),
+      gas          = gas,
+      lurkersShown = enemyHasShown(Zerg.Lurker, Zerg.LurkerEgg),
+      lurkersLikely = enemyLurkersLikely)
+    if (prioritize) {
+      get(Protoss.DarkTemplar)
+      status("TemplarsBeforeRobo")
+    }
+    prioritize
+  }
+
   private def techReaver(): Unit = {
     cancelAlternative(Protoss.Stargate, Protoss.CitadelOfAdun, Protoss.Forge)
     cancelRangeUnlessGoons()
-    get(Protoss.RoboticsFacility)
+    if ( ! prioritizeTemplarsOverFirstRobo()) {
+      get(Protoss.RoboticsFacility)
+    }
     SwapIf(
       safeDefending,
       {
