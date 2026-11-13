@@ -31,7 +31,9 @@ repairing a tasked Terran building gets sniped. `ShuttleDitch/Adopt`
 (`c00ef3c3a`) - chain stops after a ditch/adopt (no quest on top).
 Detector spread
 (`e7cb6aaee`, two Observers, `DetectorSpread` rows). `SneakyWatch`
-(`8deb6aa30`, visible Lurkers/DTs/Wraiths/Ghosts). Vulture duels
+(`8deb6aa30`, visible Lurkers/DTs/Wraiths/Ghosts). Rich bank skips kiting (THIS) - minerals >= 1000 buys the trade:
+expendable units hold DPS instead of yielding ground
+(`KiteAway.skipKiting`, macro game with banked stock). Vulture duels
 (`0dac77449` vs Dragoons, `PotshotVulture` rows). Dragoon closes
 fleeing workers (`1b425a873`, THIS): no more kite-away vs what cannot
 hit back - `KiteTo` takes `shieldWound` (was full-health

@@ -19,6 +19,9 @@ object KiteAwayBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if (With.yolo.active) return false
+    // A banked stock buys the trade: expendable units hold their DPS
+    // instead of yielding ground while cooling down.
+    if (KiteAway.skipKiting(With.self.minerals)) return false
     // Committed units (scenario duelists, raid passengers) hold their ground:
     // yielding it stops their fire while the enemy keeps shooting, and the
     // chase usually catches them anyway. Suicide missions still kite: a unit

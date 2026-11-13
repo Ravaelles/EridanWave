@@ -52,4 +52,11 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.exemptFromVolley(20))
     assert( ! KiteAway.exemptFromVolley(66))
   }
+
+  test("a banked stock skips kiting, poverty kites") {
+    assert( ! KiteAway.skipKiting(0))
+    assert( ! KiteAway.skipKiting(999))
+    assert(KiteAway.skipKiting(1000))
+    assert(KiteAway.skipKiting(4000))
+  }
 }

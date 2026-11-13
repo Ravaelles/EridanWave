@@ -47,6 +47,12 @@ object KiteAway {
   /** Retreat only while an enemy presses within firing range plus this margin (tiles). */
   var enemyMarginTiles: Double = 1.8
 
+  /** A banked mineral stock this big buys the trade: skip kiting, keep DPS up. */
+  var richBankMinerals: Int = 1000
+
+  /** Rich enough that the unit is expendable: hold and shoot, never yield ground. */
+  def skipKiting(minerals: Int): Boolean = minerals >= richBankMinerals
+
   /** A fully wounded unit sits this far (tiles) behind its line slot. Applied linearly with injury. */
   var maxOffsetTiles: Double = 1.4
 
