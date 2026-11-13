@@ -58,6 +58,9 @@ trait CombatUnit {
   // Shields scratched at all: the first thing a kiting hull checks before
   // measuring how far to run.
   def shieldWounded             : Boolean = shieldPoints < unitClass.maxShields
+  // Shield wound in points: how much of the shield is gone. A scratched
+  // shield still closes on what cannot hit back; a holed one keeps range.
+  def shieldWound               : Int = unitClass.maxShields - shieldPoints
   // Linear wound bonus: low for a fresh hull, high for a dying one.
   // Replaces the hand-rolled `base + k * woundPercent()` scattered over
   // retreat margins so every berth reads as one lerp with its band edges.
