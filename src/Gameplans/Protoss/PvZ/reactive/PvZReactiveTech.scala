@@ -69,25 +69,11 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
     }
 
     if (on(Speedlot)) {
-      get(Protoss.Forge)
-      get(Protoss.GroundDamage)
-      get(Protoss.CitadelOfAdun)
-      get(Protoss.ZealotSpeed)
-      get(Protoss.TemplarArchives)
-
       if ( ! anticipateSpeedlings && ! enemyHydralisksLikely) {
         get(Protoss.Stargate)
         get(Protoss.Corsair)
       }
-
-      if (have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)) {
-        if (DarkTemplarEffectiveness.allows(
-          UnitArchive.producedTotal(Protoss.DarkTemplar),
-          units(Protoss.DarkTemplar),
-          gas)) {
-          get(Protoss.DarkTemplar)
-        }
-      }
+      speedlotCore()
     }
 
     if (on(Goon)) {
@@ -95,24 +81,54 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
       get(Protoss.DragoonRange)
     }
 
+    // Stays separate from techReaver: the scheduled path swaps the Bay
+    // for Citadel/Speed/Shuttle while unsafe - the floor always covers it.
     if (on(Reaver)) {
       get(Protoss.RoboticsFacility)
       get(Protoss.RoboticsSupportBay)
     }
 
     if (on(Stargate)) {
-      get(Protoss.Stargate)
+      stargateCore()
+    }
+  }
 
-      if (enemyMutalisksLikely || ! enemyHydralisksLikely) {
-        get(Protoss.Corsair)
-      }
-      if (enemyMutalisksLikely) {
-        get(Protoss.CyberneticsCore)
-        get(Protoss.DragoonRange)
-      } else {
-        get(Protoss.CitadelOfAdun)
-        get(Protoss.ZealotSpeed)
-      }
+  /**
+   * Shared Speedlot core (no cancels, no counts): the floor and the
+   * scheduled tech order the same structures, so they read one list.
+   * Counts (Corsairs), cancels, cannons and High Templars stay with
+   * buildTech - the floor must stay lean while the army builds.
+   */
+  private def speedlotCore(): Unit = {
+    get(Protoss.Forge)
+    get(Protoss.GroundDamage)
+    get(Protoss.CitadelOfAdun)
+    get(Protoss.ZealotSpeed)
+    get(Protoss.TemplarArchives)
+    if ((have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)) && DarkTemplarEffectiveness.allows(
+      UnitArchive.producedTotal(Protoss.DarkTemplar),
+      units(Protoss.DarkTemplar),
+      gas)) {
+      get(Protoss.DarkTemplar)
+    }
+  }
+
+  /**
+   * Shared Stargate core: the floor and the scheduled tech order the same
+   * structures (the floor also covers Cybernetics, which buildTech orders
+   * at its head - the duplicate get is a no-op).
+   */
+  private def stargateCore(): Unit = {
+    get(Protoss.Stargate)
+    if (enemyMutalisksLikely || ! enemyHydralisksLikely) {
+      get(Protoss.Corsair)
+    }
+    if (enemyMutalisksLikely) {
+      get(Protoss.CyberneticsCore)
+      get(Protoss.DragoonRange)
+    } else {
+      get(Protoss.CitadelOfAdun)
+      get(Protoss.ZealotSpeed)
     }
   }
 
@@ -141,18 +157,14 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
     cancelRangeUnlessGoons()
     val makeCorsairs = ! anticipateSpeedlings && ! enemyHydralisksLikely
     techSpeedlotCorsairs(makeCorsairs)
-    get(Protoss.Forge)
-    get(Protoss.GroundDamage)
     if (makeCorsairs) {
       get(2, Protoss.Corsair)
     }
-    get(Protoss.CitadelOfAdun)
-    get(Protoss.ZealotSpeed)
     if (enemyMutalisksLikely) {
       buildCannonsAtMain(2, PlaceLabels.DefendAir)
     }
-    get(Protoss.TemplarArchives)
-    techSpeedlotCasters()
+    speedlotCore()
+    techSpeedlotHighTemplars()
   }
 
   /** Corsairs are the Speedlot answer to Mutalisks, and a liability otherwise. */
@@ -166,18 +178,12 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
   }
 
   /**
-   * Dark Templars first (four lifetime, and only once Corsairs or speedlings
-   * let them in), then High Templars at 150 supply - or sooner if Mutalisks
-   * force faster Archons (mirror of ZealotIntoGoon).
+   * High Templars at 150 supply (four lifetime Dark Templars first) - or
+   * sooner if Mutalisks force faster Archons (mirror of ZealotIntoGoon).
+   * The Dark Templar half of the old casters gate now lives in
+   * speedlotCore, shared with the floor.
    */
-  private def techSpeedlotCasters(): Unit = {
-    val castersWelcome = have(Protoss.Corsair) || (anticipateSpeedlings && ! safeDefending)
-    if (castersWelcome && DarkTemplarEffectiveness.allows(
-      UnitArchive.producedTotal(Protoss.DarkTemplar),
-      units(Protoss.DarkTemplar),
-      gas)) {
-      get(Protoss.DarkTemplar)
-    }
+  private def techSpeedlotHighTemplars(): Unit = {
     if (supplyUsed200 >= 150 && (UnitArchive.producedTotal(Protoss.DarkTemplar) >= 4 || enemies(Zerg.Mutalisk) >= 5)) {
       get(2, Protoss.HighTemplar)
     }
@@ -230,16 +236,7 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
     cancelRoboUnlessLurker()
     cancelRangeUnlessGoons()
     cancelAlternative(Protoss.Forge)
-    get(Protoss.Stargate)
-    if (enemyMutalisksLikely || ! enemyHydralisksLikely) {
-      get(Protoss.Corsair)
-    }
-    if (enemyMutalisksLikely) {
-      get(Protoss.DragoonRange)
-    } else {
-      get(Protoss.CitadelOfAdun)
-      get(Protoss.ZealotSpeed)
-    }
+    stargateCore()
   }
 
   private def cancelAlternative(buildables: Buildable*): Unit = {
