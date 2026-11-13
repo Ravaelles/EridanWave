@@ -7,7 +7,7 @@ import Utilities._
  * How close a Dragoon may sit to slow Zealots with N shots of slack.
  * Pure policy: the margin math never touches the game, so the stand-or-run
  * line can be argued with in a test instead of in a duel. Pixels in, tiles
- * out only where the name says so (rule 10); the engine reports pixels.
+ * out only where the name says so (rule 12); the engine reports pixels.
  */
 object DragoonSlowlotPolicy {
 

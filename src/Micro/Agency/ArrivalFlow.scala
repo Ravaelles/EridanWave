@@ -7,7 +7,7 @@ package Micro.Agency
  * destination lies beyond along the same heading, push the target past its
  * point so the unit flows through instead of sitting. True arrivals (final
  * at hand) and deliberate backsteps (target away from the final) brake
- * normally. Distances in tiles (rule 10); pixels convert once.
+ * normally. Distances in tiles (rule 12); pixels convert once.
  * Knobs are public vars, KiteAway style, for tuning.
  */
 object ArrivalFlow {

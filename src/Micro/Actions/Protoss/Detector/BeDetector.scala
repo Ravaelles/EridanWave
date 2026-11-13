@@ -34,7 +34,7 @@ object BeDetector extends Action {
 
   private def spread(unit: FriendlyUnitInfo): Boolean = {
     // Only older neighbors count: the newer eye moves, the older holds.
-    // Engine edge distance is pixels; the threshold is tiles (rule 10).
+    // Engine edge distance is pixels; the threshold is tiles (rule 12).
     val others = With.units.ours.view
       .filter(u => u.unitClass == unit.unitClass && u.id != unit.id)
       .map(u => DetectorSpread.OlderEye(u.id, u.pixel, u.tileDistanceEdge(unit)))

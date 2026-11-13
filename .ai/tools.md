@@ -47,11 +47,15 @@ backend globally ("Java member module without member class").
 `python3 scripts/check-blank-lines.py <touched>` +
 `mvn -o -Ptests test` (MAVEN_OPTS add-opens from `build-jar.sh:30`) +
 `./build-jar.sh` (auto-syncs the scbw slot jar). Then commit per unit.
+StarEngine scenarios run alone, never in the default suite:
+`mvn -o -Pstarengine test -Dsuites=starengine.<Suite>` (sources in
+`tests-starengine/scala`, real UnitType numbers, SOLID: pilots decide,
+engine advances, constraints adjust).
 
 ## Gotchas that already burned us
 - Never edit `scripts/wine-run.sh` mid-run (bash reparses, kills teardown).
 - New Scala = CRLF, scripts = LF; blank line after `return`.
-- Distances are tiles unless the name says pixels (rule 10).
+- Distances are tiles unless the name says pixels (rule 12).
 - `scripts/verify-drop.sh` (micro gate), `scripts/smoke.sh` (melee gate).
 - Full docs: `.ai/conventions.md` (rules), `.ai/architecture.md` (levels),
   `.ai/knowledge.md` (vendor/build).

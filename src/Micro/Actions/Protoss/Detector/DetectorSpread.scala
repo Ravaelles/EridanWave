@@ -7,7 +7,7 @@ import Mathematics.Points.Pixel
  * Pure detector spread (no game access): Atlantis SpreadOutDetectors keeps
  * same-type eyes nine tiles apart, and only the newer unit moves - the
  * older holds its watch. Tiles in, tiles out; pixels only convert to call
- * the engine project (rule 10).
+ * the engine project (rule 12).
  */
 object DetectorSpread {
 

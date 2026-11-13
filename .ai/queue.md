@@ -87,16 +87,18 @@ accel, benign; same window exposed destinationFinal +-300px flap
 Terran army within 8.5 tiles, never under sieged tanks (`BraveStand`
 rows, no Hop/retreat flap). Reaver+Shuttle doctrine rebuild (research) -
 baseline in `.ai/reaver-shuttle-baseline.md`, then a fresh doctrine on a
-shared Shuttle+Reaver status; StarTest harness for drop-loss <=5%.
-StarTest sunkens scenario (`b6f207975`): Reaver+Shuttle vs 2 lings (0.5)
-screening a Sunken (7) vs our 8 - lings die f63, sunken f246, reaver
-8.3% (pure ling-melee tax, zero static damage), shuttle untouched.
-Same test caught two live-game gaps: fresh-hull reboard band never
-opened (`815dd4306`, +2.0 base) and no step-back inside outranged
-statics (`b6f207975`, advantageBackoff + harness standoff rule). Scarab
+shared Shuttle+Reaver status; StarEngine harness for drop-loss <=5%.
+StarEngine sunkens scenario (THIS): Reaver+Shuttle vs 2 lings screening
+a Sunken, all real UnitType numbers (ling 5.49 px/f outruns the 1.78
+Reaver, Sunken 40dmg/32f) plus the 15-tile UMS leash with teleport -
+lings die first, then the static, reaver under 15% (melee tax only),
+shuttle untouched. Same test caught two live-game gaps: fresh-hull
+reboard band never opened (`815dd4306`, +2.0 base) and no step-back
+inside outranged statics (`b6f207975`, advantageBackoff + standoff
+rule). Scarab
 rescue ported (`f99c81e0e`, THIS): pressured mid-shot boards while the
 shot is flying (old first claim, pure gate + suite). Per user
-2026-11-13: no more validation games, reproduce in StarTest. Refresh
+2026-11-13: no more validation games, reproduce in StarEngine. Refresh
 hop PARKED: the 30f drop-cooldown reset is engine timing no suite can
 prove; porting it blind would be guessing. Contain carve-out +
 mission-ordered unload PARKED: mission layer stays thin per
