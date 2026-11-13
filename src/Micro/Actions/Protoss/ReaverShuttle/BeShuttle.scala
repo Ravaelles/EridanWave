@@ -115,7 +115,9 @@ object BeShuttle extends Action {
       Zerg.Scourge(t) && t.alive && t.pixelDistanceEdge(shuttle) < ReaverShuttleFlight.scourgeDistTiles * 32.0)
     if (scourgeRear) {
       val members = shuttle.matchups.allies.view.filter(a => a.flying && a != shuttle && a.pixelDistanceCenter(shuttle) < 20 * 32).map(_.pixel).toSeq :+ shuttle.pixel
-      val rear = ReaverShuttleFlight.rearOfCluster(members, With.geography.ourMain.heart.center)
+      // Baseless maps (UMS duels) have no main: fall back to map home.
+      val home = if (With.geography.ourBases.isEmpty) With.geography.home.center else With.geography.ourMain.heart.center
+      val rear = ReaverShuttleFlight.rearOfCluster(members, home)
       shuttle.agent.act("FleeScourge")
       shuttle.agent.destinationNext.set(rear)
       Commander.move(shuttle)
