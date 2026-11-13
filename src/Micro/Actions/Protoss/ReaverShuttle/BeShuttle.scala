@@ -161,10 +161,13 @@ object BeShuttle extends Action {
     }
   }
 
-  /** Hover with grounded passengers near their centroid, off the threat. */
+  /** Hover over the live cargo near its centroid, off the threat. Only the
+    * loaded hulls count: unboarded hailers (stale reservations included)
+    * drag the centroid to places the cargo never goes - a shuttle has sat
+    * out a fight in its natural this way instead of hovering its Reaver. */
   private def park(shuttle: FriendlyUnitInfo): Unit = {
-    val exposed = shuttle.agent.passengersPrioritized.filterNot(_.airborne)
-    val centroid = Maff.centroid(Maff.orElse(exposed.map(_.pixel), Seq(shuttle.pixel)))
+    val cargo = shuttle.loadedUnits.view.filterNot(_.airborne)
+    val centroid = Maff.centroid(Maff.orElse(cargo.map(_.pixel), Seq(shuttle.pixel)))
     val threat = Maff.minBy(shuttle.matchups.threats)(t => t.pixelDistanceCenter(centroid) - t.pixelRangeAgainst(shuttle))
     // Stand off past pickup reach so the ride stays boardable under fire.
     val to = threat
