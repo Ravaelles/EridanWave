@@ -107,7 +107,18 @@ object MarchOrders {
       unit.agent.shouldFight &&
       Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
         .map(a => LoneMarch.marchAlone(unit.id, unit.pixelDistanceCenter(a.pixel) * Maff.inv32))
-        .getOrElse(true)))
+        .getOrElse(true)),
+    // Static push: with an enemy static defense that can hit us inside
+    // ten tiles there is no pack to rally to and no slot to march to -
+    // milling in their reach trades the line for nothing, so the unit
+    // walks straight at the squad goal instead.
+    MarchGate("StaticPush", (_, unit) =>
+      unit.agent.shouldFight &&
+      unit.matchups.enemies.exists(e =>
+        e.likelyStillThere
+        && e.unitClass.isStaticDefense
+        && e.unitClass.canAttack(unit)
+        && MarchDress.shouldPushPastStatics(unit.tileDistanceEdge(e)))))
 
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): (Pixel, String) = {
     val suicide = SuicideMission.assign(unit)
@@ -169,7 +180,7 @@ object MarchOrders {
       Maff.minBy(squad.units.view.filter(_ != unit))(_.pixelDistanceCenter(unit.pixel)).map(_.pixelDistanceCenter(unit.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
       With.units.enemy.exists(e => e.visible && e.unitClass.canAttack))
     val staticNear = unit.matchups.enemies.exists(e =>
-      e.likelyStillThere && e.unitClass.isStaticDefense && MarchDress.staticNear(unit.tileDistanceEdge(e) * Maff.inv32))
+      e.likelyStillThere && e.unitClass.isStaticDefense && MarchDress.staticNear(unit.tileDistanceEdge(e)))
     val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && ! staticNear && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
     val reaverToArmy = Protoss.Reaver(unit) && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
     (waiting && ! reaverToArmy, reaverToArmy)

@@ -48,4 +48,10 @@ class MarchDressSuite extends AnyFunSuite {
     assert(MarchDress.staticNear(8.0))
     assert( ! MarchDress.staticNear(8.01))
   }
+
+  test("nobody rallies or slots inside ten tiles of static guns") {
+    assert(MarchDress.shouldPushPastStatics(0.0))
+    assert(MarchDress.shouldPushPastStatics(10.0))
+    assert( ! MarchDress.shouldPushPastStatics(10.01))
+  }
 }

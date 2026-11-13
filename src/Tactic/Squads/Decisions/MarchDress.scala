@@ -48,4 +48,10 @@ object MarchDress {
 
   def staticNear(distTiles: Double): Boolean =
     distTiles <= staticDressTiles
+
+  /** Never rally or slot under static guns, in tiles: a pack milling in their reach trades the line for nothing. */
+  val staticPushTiles: Double = 10.0
+
+  def shouldPushPastStatics(distTiles: Double): Boolean =
+    distTiles <= staticPushTiles
 }
