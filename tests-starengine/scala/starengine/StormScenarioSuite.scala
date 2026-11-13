@@ -75,7 +75,7 @@ class StormScenarioSuite extends AnyFunSuite {
       zealots.map(_ -> new Pilots.AttackMove(_.foes, (me, f) => me.canHit(f), (0.0, 500.0))).toMap
         ++ dragoons.map(_ -> new Pilots.AttackMove(_.foes, (me, f) => me.canHit(f), (0.0, 520.0))).toMap
         ++ templars.map(_ -> new TemplarStorm).toMap
-        ++ hydras.map(_ -> new Pilots.AttackMove(_.ours, (me, f) => me.canHit(f), (0.0, 500.0))).toMap).toMap
+        ++ hydras.map(h => h -> new Pilots.ZombieAttack(_.ours, (0.0, 500.0))).toMap).toMap
     val world = new World(ours, hydras, pilots, Seq.empty)
 
     var hydrasDeadFrame: Option[Int] = None
@@ -101,7 +101,7 @@ class StormScenarioSuite extends AnyFunSuite {
     val pilots: Map[Body, Pilot] = (
       zealots.map(_ -> new Pilots.AttackMove(_.foes, (me, f) => me.canHit(f), (0.0, 500.0))).toMap
         ++ templars.map(_ -> new TemplarStorm).toMap
-        ++ hydras.map(_ -> new Pilots.AttackMove(_.ours, (me, f) => me.canHit(f), (0.0, 500.0))).toMap).toMap
+        ++ hydras.map(h => h -> new Pilots.ZombieAttack(_.ours, (0.0, 500.0))).toMap).toMap
     val world = new World(ours, hydras, pilots, Seq.empty)
 
     while (world.frame < 600 && hydras.exists(_.alive) && zealots.exists(_.alive)) {

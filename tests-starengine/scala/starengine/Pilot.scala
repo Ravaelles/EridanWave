@@ -82,4 +82,31 @@ object Pilots {
       }
     }
   }
+
+  /**
+   * Zombie attacker: always presses toward the enemy, chewing the
+   * nearest most-wounded body. Nearest first, wounds break ties - the
+   * default decent-bot pressure every scenario plays against. Never
+   * retreats, never standoffs, so our restraint (vetoes, latches,
+   * hold-fire floors) is what gets proven.
+   */
+  final class ZombieAttack(
+    enemiesOf: World => Seq[Body],
+    fallback: (Double, Double)) extends Pilot {
+
+    override def direct(me: Body, world: World): Directive =
+      ZombieAttack.pick(me, enemiesOf(world)) match {
+        case Some(foe) => Chase(foe)
+        case None      => MoveTo(fallback._1, fallback._2)
+      }
+  }
+
+  object ZombieAttack {
+
+    /** Nearest live foe, most wounded wins ties; nothing when nobody lives. */
+    def pick(me: Body, foes: Seq[Body]): Option[Body] = {
+      val live = foes.filter(_.alive)
+      if (live.isEmpty) None else Some(live.minBy(f => (me.dist(f), - f.lossFraction)))
+    }
+  }
 }
