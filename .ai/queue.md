@@ -67,7 +67,8 @@ baseless UMS (`errors.json`).
 Macro: KillFrenzy (`78831687a`, 195 supply + bank, releases <170).
 `ResearchBanked` (`47089f1a2`, >700min+>500gas). Worker cap 63 +
 4th miner past 55 (`47089f1a2`, `dd1ee3c70`) - long macro. Pylon
-discs (`1ae475b4a`, `1a95c9282`) - no base Pylon inside. Fogged drop
+discs (`1ae475b4a`, `1a95c9282`) - no base Pylon inside. Main choke
+clear 6 (HASH) - nothing but wall-ins within 6 tiles. Fogged drop
 (`216ead4de`) + corpse clear (`142f4282c`) - zealots idling at enemy
 base. Worker gather/build rows (`4c2a7b0cf`) -
 `gather:Minerals`/`moveToConstruct`/`issueBuild:X` in trace.

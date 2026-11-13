@@ -5,8 +5,8 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class PlacementQuerySuite extends AnyFunSuite {
 
-  test("the main choke stays five tiles clear of everything") {
-    assert(PlacementQuery.mainChokeClearTiles == 5)
+  test("the main choke stays six tiles clear of everything but walls") {
+    assert(PlacementQuery.mainChokeClearTiles == 6)
   }
 
   test("keep-off anchors accumulate per choke") {

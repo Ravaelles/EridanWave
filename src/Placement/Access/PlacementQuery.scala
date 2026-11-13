@@ -6,6 +6,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Tile
 import Placement.Access.PlaceLabels.PlaceLabel
+import Placement.Access.PlaceLabels.Wall
 import Placement.FoundationSources
 import Placement.FoundationSources.FoundationSource
 import Placement.Gateways.GatewayPlacement
@@ -105,14 +106,17 @@ class PlacementQuery {
   def requireFar          (value: Tile, tiles: Int): PlacementQuery = { requirements.farTiles = requirements.farTiles :+ (value, tiles); this }
 
   /**
-   * Main choke clearance: nothing builds within five tiles of our main
+   * Main choke clearance: nothing builds within six tiles of our main
    * choke center. Walls go on the natural; a lone building halfway down
    * the main ramp only gives the enemy something to shoot at while our
    * Zealots babysit supply. PylonPlacement keeps its own four-tile ring
    * around every choke; this is the stricter main-choke ban for all
-   * buildings, applied once per query next to the defaults.
+   * buildings, applied once per query next to the defaults. Wall-ins are
+   * exempt: by definition they live on the choke.
    */
   private def keepOffMainChoke(query: PlacementQuery): PlacementQuery = {
+    if (query.preferences.labelYes.contains(Wall)) return query
+
     Chokes.mainChoke.foreach(choke =>
       query.requireFar(choke.pixelCenter.walkableTile, PlacementQuery.mainChokeClearTiles))
     query
@@ -225,7 +229,7 @@ class PlacementQuery {
 object PlacementQuery {
 
   /** Nothing builds this close to our main choke center, in tiles. */
-  val mainChokeClearTiles: Int = 5
+  val mainChokeClearTiles: Int = 6
 
   /** Production buildings that want ground access like a Gateway. */
   val groundProductionBuildings: Seq[UnitClass] = Seq(Terran.Barracks, Terran.Factory, Protoss.RoboticsFacility)
