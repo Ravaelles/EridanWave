@@ -11,7 +11,7 @@ package Micro.Targeting
 object DarkTemplarTargets {
 
   /** Weak enough to die to one swipe, in total hit points. */
-  val weakHp: Int = 39
+  val weakHp: Int = 40
 
   /** Only real units this close, in tiles, enter the tiered pick. */
   val closeTiles: Double = 0.9
