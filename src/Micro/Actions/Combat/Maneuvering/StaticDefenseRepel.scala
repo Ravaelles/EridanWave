@@ -41,11 +41,22 @@ object StaticDefenseRepel extends Action {
     if (underFire(unit)) {
       // Under fire the radial step is not enough: fall back to safety
       // with the rest of the squad instead of bouncing at nine tiles.
+      // Retreating outranks shooting - standing to trade under static
+      // fire is how repellers die.
       unit.agent.act("StaticRepel")
       Retreat.getRetreat(unit)(unit)
 
       return
     }
+
+    weakestInRange(unit).foreach(target => {
+      // Repelling is no excuse for holding fire: a hittable enemy in range
+      // dies to the weakest-first shot instead of chewing us for free.
+      unit.agent.act("StaticRepel")
+      Commander.attack(unit, target)
+
+      return
+    })
 
     repeller(unit).foreach(building => {
       // Radially off the building, past the radius: holding the line at
@@ -60,6 +71,10 @@ object StaticDefenseRepel extends Action {
 
   private def underFire(unit: FriendlyUnitInfo): Boolean =
     ClusterSafety.recentlyAttacked(With.framesSince(unit.lastFrameTakingDamage))
+
+  /** Weakest hittable enemy in our range: lowest remaining health goes first. */
+  private def weakestInRange(unit: FriendlyUnitInfo): Option[UnitInfo] =
+    Maff.minBy(unit.matchups.targetsInRange)(_.totalHealth)
 
   private def repeller(unit: FriendlyUnitInfo): Option[UnitInfo] =
     Maff.minBy(unit.matchups.enemies.filter(e =>
