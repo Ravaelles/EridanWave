@@ -3,6 +3,7 @@ package Micro.Actions.Protoss.ReaverShuttle
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
@@ -23,7 +24,19 @@ object BeReaver extends Action {
       if (shouldLand(unit)) {
         Commander.requestUnload(unit)
         unit.agent.act("UnloadStatic")
+
+        return
       }
+
+      // Ordered to fight by the mission or the sim verdict: the loop and
+      // the DropSafety veto below it handle the landing spot itself.
+      if (unit.agent.fightReason == FightOrFlee.Reave) {
+        Commander.requestUnload(unit)
+        unit.agent.act("UnloadOrdered")
+
+        return
+      }
+
       return
     }
 
@@ -34,7 +47,8 @@ object BeReaver extends Action {
 
       return
     }
-    if (foe.exists(t => unit.tileDistanceEdge(t) < ReaverShuttleStaticAttack.engageTiles && ! outranges(t, unit))) {
+
+    if (foe.exists(t => t.unitClass.isStaticDefense && unit.tileDistanceEdge(t) < ReaverShuttleStaticAttack.engageTiles && ! outranges(t, unit))) {
       foe.foreach(t => {
         unit.agent.act("CloseStatic")
         unit.agent.destinationNext.set(t.pixel)
@@ -43,6 +57,18 @@ object BeReaver extends Action {
 
       return
     }
+
+    if (foe.exists(t => t.unitClass.isStaticDefense && outranges(t, unit) && unit.inRangeToAttack(t))) {
+      foe.foreach(t => {
+        unit.agent.act("BackOffStatic")
+        val gap = unit.pixelRangeAgainst(t) + 32.0 - unit.pixelDistanceEdge(t)
+        unit.agent.destinationNext.set(unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
+        Commander.move(unit)
+      })
+
+      return
+    }
+
     val rideNearby = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0)
     if (rideNearby && (ReaverShuttleReboard.mayReboard(threatDist(unit), unit.woundPercent()) || needsRide(unit))) {
       unit.agent.act("BoardRide")
@@ -50,6 +76,7 @@ object BeReaver extends Action {
 
       return
     }
+
     if (rideNearby && shotlessPressured(unit)) {
       unit.agent.act("BoardShotless")
       Commander.rightClick(unit, unit.agent.ride.get)

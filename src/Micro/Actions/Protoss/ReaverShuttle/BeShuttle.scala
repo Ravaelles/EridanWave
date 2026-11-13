@@ -29,12 +29,14 @@ object BeShuttle extends Action {
     if (status == ReaverShuttleStatus.RaidBase) {
       if (raid(shuttle)) return
     }
+
     support(shuttle)
   }
 
   /** Drop passengers that are not ours to ferry. */
   private def ditch(shuttle: FriendlyUnitInfo): Boolean = {
     if (shuttle.base.exists(_.owner.isEnemy) && ! shuttle.agent.destinationFinal().base.exists(_.owner.isEnemy)) return false
+
     val hitchhikers = (shuttle.agent.passengers ++ shuttle.loadedUnits)
       .distinct
       .filter(p => p.isNone(Protoss.Reaver, Protoss.HighTemplar) && ! p.squad.exists(shuttle.squad.contains))
@@ -108,13 +110,14 @@ object BeShuttle extends Action {
       Zerg.Scourge(t) && t.alive && t.pixelDistanceEdge(shuttle) < ReaverShuttleFlight.scourgeDistTiles * 32.0)
     if (scourgeRear) {
       val members = shuttle.matchups.allies.view.filter(a => a.flying && a != shuttle && a.pixelDistanceCenter(shuttle) < 20 * 32).map(_.pixel).toSeq :+ shuttle.pixel
-      val rear = ReaverShuttleFlight.rearOfCluster(members :+ shuttle.pixel, With.geography.ourMain.heart.center)
+      val rear = ReaverShuttleFlight.rearOfCluster(members, With.geography.ourMain.heart.center)
       shuttle.agent.act("FleeScourge")
       shuttle.agent.destinationNext.set(rear)
       Commander.move(shuttle)
 
       return true
     }
+
     val preemptPixels = (ReaverShuttleFlight.baseFleeMarginTiles + shuttle.woundPercentBonus(0.0, ReaverShuttleFlight.woundFleeBonusTiles)) * 32.0
     val attackers = shuttle.matchups.threats.filter(t =>
       t.canAttack(shuttle) && t.likelyStillThere && (
@@ -122,7 +125,7 @@ object BeShuttle extends Action {
           ReaverShuttleFlight.threatensPreemptively(t.pixelDistanceEdge(shuttle), t.pixelRangeAgainst(shuttle), preemptPixels)))
     Maff.minBy(attackers.map(_.pixel))(_.pixelDistanceSquared(shuttle.pixel)).map(focus => {
       shuttle.agent.act("AirFlee")
-      shuttle.agent.destinationNext.set(shuttle.pixel.project(focus, -(preemptPixels + shuttle.pixelDistanceEdge(focus))).walkablePixel)
+      shuttle.agent.destinationNext.set(shuttle.pixel.project(focus, -preemptPixels).walkablePixel)
       Commander.move(shuttle)
       true
     }).getOrElse(false)
