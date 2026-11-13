@@ -27,10 +27,11 @@ class ReaverShuttleGatesSuite extends AnyFunSuite {
   }
 
   test("a grounded Reaver reboards only under direct threat") {
-    assert( ! ReaverShuttleReboard.mayReboard(threatDistTiles = 0.1, wound01 = 0.0))
+    assert(ReaverShuttleReboard.mayReboard(threatDistTiles = 0.1, wound01 = 0.0))
+    assert( ! ReaverShuttleReboard.mayReboard(threatDistTiles = 2.0, wound01 = 0.0))
     assert(ReaverShuttleReboard.mayReboard(threatDistTiles = 7.99, wound01 = 1.0))
     assert( ! ReaverShuttleReboard.mayReboard(threatDistTiles = 8.0, wound01 = 1.0))
-    assert(ReaverShuttleReboard.mayReboard(threatDistTiles = 3.99, wound01 = 0.5))
-    assert( ! ReaverShuttleReboard.mayReboard(threatDistTiles = 4.0, wound01 = 0.5))
+    assert(ReaverShuttleReboard.mayReboard(threatDistTiles = 4.99, wound01 = 0.5))
+    assert( ! ReaverShuttleReboard.mayReboard(threatDistTiles = 5.0, wound01 = 0.5))
   }
 }
