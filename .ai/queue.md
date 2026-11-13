@@ -35,21 +35,16 @@ Detector spread
 (`0dac77449` vs Dragoons, `PotshotVulture` rows). Carrier berth
 (`d09a80cf1`, scratched shields vs ranged, `CarrierKite` rows).
 
-March/stance: `DragoonBrave` (`d6d4f8af0`) - early ready shielded
-Dragoon stands up to Marines (`DragoonBrave` rows, no Retreat flap).
-`HomeStand` (`617bdfb18`) - Protoss between main and natural-4 never retreats.
-`NoRetreat` tanks (`c4bb6ed62`) - siege tanks within 18 of our natural always
-attacked, no retreat (`TanksAtNatural` rows).
-`SuicideMission` (`7c75e98eb`, ex-`MainAssault`
-`706edf6e6`/`dee6339f3`) - warriors in enemy main: label+commit, no
-retreat/flee, KiteAway cools, workers first. `LoneMarch`
+March/stance: `NoRetreat` tanks (`c4bb6ed62`) - siege tanks within 18
+of our natural always attacked, no retreat (`TanksAtNatural` rows).
+`SuicideMission` workers-first (`7c75e98eb`) - needs Dragoons meeting
+enemy workers in the main (assault itself verified GAME_54CCDB32:
+labels from f11600, commit, kills, VICTORY 77/7). `LoneMarch`
 (`ea28a943e`) - lone unit walks straight at goal. No-dressing
 (`c2af083ed`, `782bbb938`) - Waiting/Marching dry with no enemy
 near, column out of main. Base guards 30 tiles (`a5c7f3303`) -
 enemy near guarded base. Screened static +50% (`601e43dbd`) -
-statics covered by 2+ defenders. `StaticDefenseRepel` (`3bc73c3bf`)
-- friendlies within 9 tiles of statics, no consensus; attacked units
-fall back to safety instead of bouncing at nine. Shuttle flee
+statics covered by 2+ defenders. Shuttle flee
 (`10c04fc8f`) - Hydras on loaded Shuttle, AirFlee before 12 tiles.
 Reaver vs workers (`8f84e9745`) - worker-only pressure, shields
 >70, no Hop. Reaver leash (`b9eeb500a`) - Reaver-heavy game, rally
