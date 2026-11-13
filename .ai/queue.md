@@ -19,7 +19,14 @@ Terran mech, `botType: EXE`). `BotPlayer` structure check passes
 (TERRAN/EXE, single exe found).
 
 Still to do: one `scbw.play --bots krasi0:R` smoke game (needs a free
-Wine slot - one game at a time on this box). Caveats: krasi0 readme says
+Wine slot - one game at a time on this box).
+Smoke 2026-11-13: bot launches under Wine and talks to BWAPI
+(`gl & hf from krasi0 v2.781 (LF: 3)` in its log), then exits:
+`Fatal Error: No TA cache file for map in bwapi-data/BWTA2/.
+Pick from supportedMaps!`. Confirmed empirically: TauCross is
+unplayable for it; unblocked only by the supportedMaps pack + BWTA2
+cache, which has no reachable download (krasi0.com down, goo.gl
+links dead). Parked until the pack shows up. Caveats: krasi0 readme says
 it is SaaS (needs internet) and officially supports only its
 `supportedMaps` pack + BWTA2 data; TauCross is likely unsupported
 (still plays, possibly weaker). LF 3 required for full strength.
