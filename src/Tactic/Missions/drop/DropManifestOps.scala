@@ -97,6 +97,10 @@ trait DropManifestOps { self: MissionDrop =>
 
   private[Missions] def pickupTarget(transport: FriendlyUnitInfo, assembling: Boolean): Option[FriendlyUnitInfo] = pickupTargets.synchronized {
     abandonUnsafePickups()
+    // A transport already carrying a Reaver belongs to the pair: never
+    // fetch other passengers for it (no travel/assemble for other units).
+    if (transport.loadedUnits.exists(Protoss.Reaver(_))) return None
+
     if (assembling && unassignedCargo(transport).nonEmpty) return None
 
     val unloaded = passengersFor(transport).filterNot(_.loaded)

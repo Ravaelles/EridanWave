@@ -57,4 +57,17 @@ object ReaverShuttlePair {
     unit.squad.map(_.vicinity).getOrElse(
       Maff.minBy(With.geography.enemyBases)(b => unit.pixelDistanceCenter(b.heart.center))
         .map(_.heart.center).getOrElse(unit.pixel))
+
+  /**
+   * A bait ride: an empty hull with no Reaver or High Templar anywhere -
+   * nothing to ferry, so it provokes the enemy army instead of hovering
+   * over ours.
+   */
+  def isBaitRide(shuttle: FriendlyUnitInfo): Boolean =
+    shuttle.loadedUnitCount == 0 &&
+      ! With.units.ours.exists(u => Protoss.Reaver(u) || Protoss.HighTemplar(u))
+
+  /** Where a bait ride loiters: the known enemy main, else the enemy start. */
+  def baitGoal: Pixel =
+    With.scouting.enemyMain.map(_.heart.center).getOrElse(With.scouting.enemyHome.center)
 }

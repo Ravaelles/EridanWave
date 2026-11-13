@@ -26,8 +26,20 @@ object StaticDefenseRepel extends Action {
   /** Inside this edge distance, in tiles, the static owns the ground. */
   val repelRadiusTiles: Double = 9.0
 
+  /** Local advantage voids the repel: this many of our warriors nearby. */
+  val overwhelmOursRadiusTiles: Double = 10.0
+  val overwhelmOursCount: Int = 12
+
+  /** ...while at most this many enemy warriors hold the static itself. */
+  val overwhelmFoeRadiusTiles: Double = 10.0
+  val overwhelmFoeMax: Int = 1
+
   def shouldRepel(distTiles: Double): Boolean =
     distTiles < repelRadiusTiles
+
+  /** Overwhelming local force fights through instead of repelling. */
+  def locallyAhead(oursNear: Int, foesNearStatic: Int): Boolean =
+    oursNear >= overwhelmOursCount && foesNearStatic <= overwhelmFoeMax
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.canMove
@@ -35,7 +47,8 @@ object StaticDefenseRepel extends Action {
     && ! unit.loaded
     && ! unit.agent.commit
     && unit.squad.exists(! _.fightConsensus)
-    && repeller(unit).isDefined)
+    && repeller(unit).isDefined
+    && ! locallyAhead(unit))
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (underFire(unit)) {
@@ -75,6 +88,14 @@ object StaticDefenseRepel extends Action {
   /** Weakest hittable enemy in our range: lowest remaining health goes first. */
   private def weakestInRange(unit: FriendlyUnitInfo): Option[UnitInfo] =
     Maff.minBy(unit.matchups.targetsInRange)(_.totalHealth)
+
+  /** Twelve of ours around us against a lone static defender means push, not repel. */
+  private def locallyAhead(unit: FriendlyUnitInfo): Boolean =
+    repeller(unit).exists(building => StaticDefenseRepel.locallyAhead(
+      oursNear = unit.matchups.allies.count(a =>
+        a.alive && a.unitClass.isWarrior && unit.pixelDistanceCenter(a) <= StaticDefenseRepel.overwhelmOursRadiusTiles * 32.0),
+      foesNearStatic = With.units.enemy.count(e =>
+        e.alive && e.unitClass.isWarrior && e.pixelDistanceCenter(building) <= StaticDefenseRepel.overwhelmFoeRadiusTiles * 32.0)))
 
   private def repeller(unit: FriendlyUnitInfo): Option[UnitInfo] =
     Maff.minBy(unit.matchups.enemies.filter(e =>

@@ -52,6 +52,10 @@ object BeShuttle extends Action {
 
   /** Pick up the neediest hailer, plus newborn Reavers for an army squad. */
   private def adopt(shuttle: FriendlyUnitInfo): Boolean = {
+    // A Shuttle already carrying a Reaver belongs to the pair: never fetch
+    // other passengers for it (no travel/assemble for other units' sake).
+    if (shuttle.loadedUnits.exists(Protoss.Reaver(_))) return false
+
     val pickupCandidates =
       Maff.orElse(
         shuttle.alliesSquad.view.filter(shouldAdopt(shuttle, _)),
@@ -125,7 +129,10 @@ object BeShuttle extends Action {
       return true
     }
 
-    val preemptPixels = (ReaverShuttleFlight.baseFleeMarginTiles + shuttle.woundPercentBonus(0.0, ReaverShuttleFlight.woundFleeBonusTiles)) * 32.0
+    // Bait rides flee shorter when hurt (they are the provocation, not the
+    // cargo): a wound-scaled 4-to-9 band instead of the pair's 4-to-13.
+    val preemptPixels = (if (ReaverShuttlePair.isBaitRide(shuttle)) shuttle.woundPercentBonus(4.0, 9.0)
+      else ReaverShuttleFlight.baseFleeMarginTiles + shuttle.woundPercentBonus(0.0, ReaverShuttleFlight.woundFleeBonusTiles)) * 32.0
     val attackers = shuttle.matchups.threats.filter(t =>
       t.canAttack(shuttle) && t.likelyStillThere && (
         (Zerg.Scourge(t) && t.pixelDistanceEdge(shuttle) <= ReaverShuttleFlight.scourgeDistTiles * 32.0) ||
@@ -154,11 +161,22 @@ object BeShuttle extends Action {
   private def support(shuttle: FriendlyUnitInfo): Unit = {
     if (ReaverShuttlePair.passengerOf(shuttle).isDefined) {
       park(shuttle)
+    } else if (ReaverShuttlePair.isBaitRide(shuttle)) {
+      bait(shuttle)
     } else {
       shuttle.agent.act("AwaitRide")
       shuttle.agent.destinationNext.set(ReaverShuttlePair.armyGoal)
       Commander.move(shuttle)
     }
+  }
+
+  /** Bait: no pair cargo exists anywhere, so the empty hull flies at the
+    * enemy main and pulls combat units out of position instead of hovering
+    * over our own army. */
+  private def bait(shuttle: FriendlyUnitInfo): Unit = {
+    shuttle.agent.act("BaitRide")
+    shuttle.agent.destinationNext.set(ReaverShuttlePair.baitGoal)
+    Commander.move(shuttle)
   }
 
   /** Hover over the live cargo near its centroid, off the threat. Only the

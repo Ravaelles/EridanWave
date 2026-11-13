@@ -158,7 +158,11 @@ Scourge nearest, then weakest Carrier/Vessel/Battlecruiser/Wraith in
 range, ahead of kiting, dressing and retreat; needs air-heavy games.
 Micro: DT flees guns first (THIS) - visible enemy that can hit the
 Templar inside 13 tiles outranks the detector; Overlords alone never
-move the hunt. March: TankHug (THIS) -
+move the hunt. March: Shuttle pair owns loaded hulls (THIS) - a Shuttle carrying
+a Reaver never takes other passengers and no drop mission assigns it
+new pickups; needs a Reaver-drop game. March: StaticDefense overwhelm
+(THIS) - twelve of ours against one static defender pushes instead of
+repelling; needs a contain break. March: TankHug (THIS) -
 cooling ground warriors close sieged tanks to 0.2 tiles instead of
 kiting; needs a Terran mech game with tanks in range. March: StrongMarch (THIS) - banked stock or maxed strong army
 marches straight at the goal, never rallies to the pack centroid or
