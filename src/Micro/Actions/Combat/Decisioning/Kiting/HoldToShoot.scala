@@ -26,6 +26,25 @@ object HoldToShoot {
   /** Head-on reach multiplier: a committed Vulture eats the shot early. */
   var approachBonus: Double = 1.5
 
+  /** Potshot reach past our own range that still draws fire, in tiles. */
+  var potshotBonusTiles: Double = 1.5
+
+  /**
+   * Vulture potshot (pure numbers for the suite): with the gun nearly ready
+   * and a Vulture closing head-on inside our reach plus the bonus, shoot
+   * instead of picking another duel - the shot is free, the kite is not.
+   * The caller feeds live gap, reach, cooldown and facing; this only
+   * combines them.
+   */
+  def shouldPotshotVulture(
+    distPx:        Double,
+    ownRangePx:    Double,
+    cooldownLeft:  Int,
+    foeFacingUs:   Boolean): Boolean =
+    foeFacingUs &&
+      cooldownLeft <= attackCooldownFrames &&
+      distPx <= ownRangePx + potshotBonusTiles * 32.0
+
   /**
    * Vulture duel (pure numbers for the suite): with the gun nearly ready
    * and a Vulture in range, shoot it instead of yielding ground; a Vulture

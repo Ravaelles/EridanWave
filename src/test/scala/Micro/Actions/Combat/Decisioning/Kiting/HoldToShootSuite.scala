@@ -46,4 +46,16 @@ class HoldToShootSuite extends AnyFunSuite {
     assert( ! HoldToShoot.shouldStandVsVulture(190, 128, 0, 3, 8, foeFacingUs = false))
     assert( ! HoldToShoot.shouldStandVsVulture(190, 128, 0, 3, 0, foeFacingUs = true))
   }
+
+  test("a ready Dragoon potshots a head-on Vulture past its own reach") {
+    // Own reach 128 plus 1.5 tiles (48): 176 shoots, 177 holds fire.
+    assert(HoldToShoot.shouldPotshotVulture(176, 128, 5, foeFacingUs = true))
+    assert(HoldToShoot.shouldPotshotVulture(0, 128, 0, foeFacingUs = true))
+    assert( ! HoldToShoot.shouldPotshotVulture(177, 128, 5, foeFacingUs = true))
+  }
+
+  test("a cooling gun or a sideways Vulture holds the potshot") {
+    assert( ! HoldToShoot.shouldPotshotVulture(100, 128, 6, foeFacingUs = true))
+    assert( ! HoldToShoot.shouldPotshotVulture(100, 128, 0, foeFacingUs = false))
+  }
 }

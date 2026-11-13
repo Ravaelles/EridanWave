@@ -24,6 +24,17 @@ class TargetFilterFocusSuite extends AnyFunSuite {
     assert( ! TargetFilterFocus.wallBustLegal(coolingDown = false, noEnemyInsideMargin = true, targetIsBuilding = true, targetOutrangesUs = true))
   }
 
+  test("a building at our feet is always legal, assigned or not") {
+    assert(TargetFilterFocus.pointBlankLegal(targetIsBuilding = true, targetOutrangesUs = false, distPixels = 0.0, ownRangePixels = 16.0))
+    assert(TargetFilterFocus.pointBlankLegal(targetIsBuilding = true, targetOutrangesUs = false, distPixels = 48.0, ownRangePixels = 16.0))
+    assert( ! TargetFilterFocus.pointBlankLegal(targetIsBuilding = true, targetOutrangesUs = false, distPixels = 49.0, ownRangePixels = 16.0))
+  }
+
+  test("point-blank never forces a suicide into outranging statics") {
+    assert( ! TargetFilterFocus.pointBlankLegal(targetIsBuilding = true, targetOutrangesUs = true, distPixels = 0.0, ownRangePixels = 16.0))
+    assert( ! TargetFilterFocus.pointBlankLegal(targetIsBuilding = false, targetOutrangesUs = false, distPixels = 0.0, ownRangePixels = 16.0))
+  }
+
   test("the wall-bust margin is one and a half tiles") {
     assert(TargetFilterFocus.wallBustMarginTiles == 1.5)
   }
