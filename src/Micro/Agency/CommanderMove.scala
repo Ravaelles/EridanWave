@@ -264,9 +264,20 @@ object CommanderMove {
         val aligned = Math.abs(Maff.normalizePiToPi(unit.pixel.radiansTo(finalPx) - unit.pixel.radiansTo(to))) <= Math.PI / 4
         val flowPush = ArrivalFlow.pushPast(unit.tileDistanceCenter(to), unit.tileDistanceCenter(finalPx), aligned)
         val goal = if (flowPush > 0 && unit.order == Orders.Move) unit.pixel.project(to, unit.pixelDistanceCenter(to) + flowPush * 32).walkablePixel else to
-        val alreadyMovingThere = unit.order == Orders.Move && unit.orderTargetPixel.exists(_.pixelDistance(goal) < tolerancePixels)
+        // Order continuation, not just motion: keep the old order while it
+        // still takes us there - same target, or a far goal on our heading.
+        // A far goal that drifted keeps cruising instead of resetting
+        // acceleration every frame; near goals keep the exact point check,
+        // so kiting and dodges stay responsive. The heading math runs only
+        // past the point check, never on the hot path.
+        val orderTarget = unit.orderTargetPixel
+        lazy val distTiles = unit.pixelDistanceCenter(goal) * Maff.inv32
+        lazy val onCourse = Math.abs(Maff.normalizePiToPi(unit.angleRadians - unit.pixel.radiansTo(goal))) <= OrderContinue.headingConeRadians
+        val continuing = unit.order == Orders.Move && (
+          orderTarget.exists(_.pixelDistance(goal) < tolerancePixels) ||
+            OrderContinue.holdsCourse(distTiles, onCourse))
 
-        if ( ! alreadyMovingThere || unit.seeminglyStuck) {
+        if ( ! continuing || unit.seeminglyStuck) {
 
           unit.bwapiUnit.move(goal.bwapi)
 
