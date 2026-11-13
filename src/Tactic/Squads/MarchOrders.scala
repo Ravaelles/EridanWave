@@ -6,7 +6,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{MarchDress, SquadRally, SuicideChargeSeam}
+import Tactic.Squads.Decisions.{MainMarch, MarchDress, SquadRally, SuicideChargeSeam}
 import Utilities.?
 
 /**
@@ -49,6 +49,16 @@ object MarchOrders {
     // they never dress, rally, or take formation slots, so they march
     // straight at the squad goal instead of posing with the line.
     if (Protoss.DarkTemplar(unit)) return (squad.vicinity, "DarkTemplarHunt")
+
+    // Main march: past 90 supply a unit sitting on our doorstep never
+    // poses, rallies or walks to a slot - the column just walks out, so
+    // the base stops choking on its own formation dance.
+    if (MainMarch.shouldSkip(
+      With.self.supplyUsed200,
+      unit.pixel.groundPixels(With.geography.ourMain.heart.center) * Maff.inv32)) {
+
+      return (squad.vicinity, "MainMarch")
+    }
 
     // Main assault: a ground warrior inside the enemy main never poses,
     // rallies or walks home - it commits (no retreat, attack only) and
