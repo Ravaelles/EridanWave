@@ -8,7 +8,7 @@ package Micro.Actions.Combat.Decisioning.Kiting
  * in land tiles so a distant Shuttle never drags the army across the map
  * (Atlantis Soyuz bound). Distances in tiles, wounds in shield points.
  */
-object ApproachHelpless {
+object KiteTo {
 
   /** Only close helpless targets inside this land radius. */
   val approachTiles: Double = 12.0

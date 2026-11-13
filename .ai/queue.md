@@ -34,7 +34,7 @@ Detector spread
 (`8deb6aa30`, visible Lurkers/DTs/Wraiths/Ghosts). Vulture duels
 (`0dac77449` vs Dragoons, `PotshotVulture` rows). Dragoon closes
 fleeing workers (`1b425a873`, THIS): no more kite-away vs what cannot
-hit back - `ApproachHelpless` takes `shieldWound` (was full-health
+hit back - `KiteTo` takes `shieldWound` (was full-health
 only), closes grounded helpless at <=15 shield damage, same as
 buildings always did. StarEngine chase-and-kill scenario when the
 engine is ready. Carrier berth

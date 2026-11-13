@@ -2,7 +2,7 @@ package Micro.Actions.Combat.Decisioning
 
 import Lifecycle.With
 import Mathematics.Maff
-import Micro.Actions.Combat.Decisioning.Kiting.ApproachHelpless
+import Micro.Actions.Combat.Decisioning.Kiting.KiteTo
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
@@ -67,7 +67,7 @@ class CombatDistances(combat: Combat, unit: FriendlyUnitInfo) {
     // Close what cannot hit back: harmless air always, grounded helpless
     // (buildings, fleeing workers) while the shields are at most scratched.
     // Holed hulls keep their range instead.
-    else if (ApproachHelpless.shouldClose(g.rangeAgainstUs.isEmpty, g.target.flying, unit.shieldWound, unit.pixel.groundPixels(g.target.pixel) * Maff.inv32)) Some(0)
+    else if (KiteTo.shouldClose(g.rangeAgainstUs.isEmpty, g.target.flying, unit.shieldWound, unit.pixel.groundPixels(g.target.pixel) * Maff.inv32)) Some(0)
     else None
   }
 
