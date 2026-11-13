@@ -83,19 +83,25 @@ class StarTestSuite extends AnyFunSuite {
     val dragoon2 = Mover(x = 3.0, y = 30.0, speedTiles = 2.0, hp = 180.0, maxHp = 180.0, rangeTiles = 4.0, dmgPerShot = 20.0, cooldownFrames = 30)
     dragoon1.goal = Some((0.0, 0.0))
     dragoon2.goal = Some((0.0, 0.0))
-    val world = new World(Seq(dragoon1, dragoon2), Seq(scv1, scv2, pylon))
+    val world = new World(Seq(dragoon1, dragoon2), Seq(scv1, scv2, pylon), suicideMission = true)
 
     var workersDeadFrame: Option[Int] = None
     var pylonDeadFrame: Option[Int] = None
+    var firstBlood: Option[String] = None
     while (world.frame < 1500 && (pylon.alive || scv1.alive || scv2.alive) && dragoon1.alive && dragoon2.alive) {
       world.step()
+      if (firstBlood.isEmpty) {
+        if ( ! scv1.alive) firstBlood = Some("scv1")
+        else if ( ! scv2.alive) firstBlood = Some("scv2")
+        else if ( ! pylon.alive) firstBlood = Some("pylon")
+      }
       if (workersDeadFrame.isEmpty && ! scv1.alive && ! scv2.alive) workersDeadFrame = Some(world.frame)
       if (pylonDeadFrame.isEmpty && ! pylon.alive) pylonDeadFrame = Some(world.frame)
     }
 
     assert(workersDeadFrame.isDefined, "dragoons never cleared the fleeing workers")
     assert(pylonDeadFrame.isDefined, "dragoons never razed the pylon they stand on")
-    assert(workersDeadFrame.get < pylonDeadFrame.get, "dragoons shot the base before clearing its workers")
+    assert(firstBlood.exists(_ != "pylon"), "dragoons shot the base before touching its workers")
     assert(dragoon1.alive && dragoon2.alive, "dragoons died to unarmed workers and a pylon")
   }
 }

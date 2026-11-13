@@ -91,7 +91,7 @@ object StarTest {
     }
   }
 
-  class World(val ours: Seq[Mover], val foes: Seq[Mover]) {
+  class World(val ours: Seq[Mover], val foes: Seq[Mover], val suicideMission: Boolean = false) {
 
     // Suicide targeting veto, straight from the production rule: buildings
     // the squad never asked for get no vote. The pilot calls the real
@@ -99,7 +99,8 @@ object StarTest {
     private def vetoed(f: Mover): Boolean =
       f.isBuilding && ! Micro.Targeting.FiltersRequired.TargetFilterFocus.allowsBuilding(
         isBuilding = f.isBuilding,
-        isStaticDefense = f.isStaticDefense)
+        isStaticDefense = f.isStaticDefense,
+        isSuicideMission = suicideMission)
 
     var frame: Int = 0
     val hits: ArrayBuffer[(Int, Double)] = ArrayBuffer.empty

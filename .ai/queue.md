@@ -58,7 +58,11 @@ March/stance: `NoRetreat` tanks (`c4bb6ed62`) - siege tanks within 18
 of our natural always attacked, no retreat (`TanksAtNatural` rows).
 `SuicideMission` workers-first (`7c75e98eb`) - needs Dragoons meeting
 enemy workers in the main (assault itself verified GAME_54CCDB32:
-labels from f11600, commit, kills, VICTORY 77/7). `LoneMarch`
+labels from f11600, commit, kills, VICTORY 77/7). Suicide razes the base
+(THIS): unassigned buildings got no Focus vote, so suicide squads stood
+on Pylons forever - `TargetFilterFocus.allowsBuilding` now votes yes for
+suicide attackers, StarEngine suicide-raze scenario green (workers first
+blood, then the Pylon, no dragoon losses). `LoneMarch`
 (`ea28a943e`) - lone unit walks straight at goal. LoneMarch latch
 (`739d419ff`) - alone past 10.5, back below 9.5, per-unit, reset/game;
 re-run Reav&Shut to confirm the +-300px final stops flapping. Order continuation
