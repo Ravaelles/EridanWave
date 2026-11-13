@@ -25,4 +25,15 @@ object ReaverShuttleStaticAttack {
 
   def shouldLand(distTiles: Double, attackedAtLanding: Boolean, threatDistTiles: Double, wound01: Double): Boolean =
     distTiles < engageTiles && ! attackedAtLanding && threatDistTiles > marginTiles(wound01)
+
+  /**
+   * Standoff vs statics we outrange (no game access, tiles): an escort
+   * melee drags the landing inside the static's reach, and sitting there
+   * trades hull for nothing - a live game watched a fresh Reaver take six
+   * Sunken hits at 6.2 tiles. Back out to our max reach when we are inside
+   * theirs and our gun is the longer one; outranged guns disengage by the
+   * generic fighter instead of holding under them.
+   */
+  def advantageBackoff(ourRangeTiles: Double, staticRangeTiles: Double, distTiles: Double): Boolean =
+    ourRangeTiles > staticRangeTiles && distTiles <= staticRangeTiles
 }

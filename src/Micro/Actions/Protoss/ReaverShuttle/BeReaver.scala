@@ -41,6 +41,22 @@ object BeReaver extends Action {
     }
 
     val foe = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit))
+    if (foe.exists(t => t.unitClass.isStaticDefense && ReaverShuttleStaticAttack.advantageBackoff(
+      unit.pixelRangeAgainst(t) * Maff.inv32,
+      t.pixelRangeAgainst(unit) * Maff.inv32,
+      unit.pixelDistanceEdge(t) * Maff.inv32))) {
+      // Inside the reach of a static we outrange (an escort melee dragged
+      // us in): step back out to our max reach, keep shooting for free.
+      foe.foreach(t => {
+        unit.agent.act("BackOffStatic")
+        val gap = unit.pixelRangeAgainst(t) + 8.0 - unit.pixelDistanceEdge(t)
+        unit.agent.destinationNext.set(unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
+        Commander.move(unit)
+      })
+
+      return
+    }
+
     if (foe.exists(unit.inRangeToAttack)) {
       unit.agent.act("StandShoot")
       Commander.hold(unit)

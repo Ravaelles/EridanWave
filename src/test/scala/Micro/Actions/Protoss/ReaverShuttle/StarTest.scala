@@ -19,7 +19,8 @@ object StarTest {
     maxHp: Double,
     rangeTiles: Double,
     dmgPerShot: Double,
-    cooldownFrames: Int) {
+    cooldownFrames: Int,
+    isStatic: Boolean = false) {
 
     var cooldownLeft: Int = 0
     var goal: Option[(Double, Double)] = None
@@ -46,6 +47,33 @@ object StarTest {
         y += dy / dist * stride
       }
     }
+
+    def approach(tx: Double, ty: Double, stopTiles: Double): Unit = {
+      // Attack-move arrival: close in but stop at weapon reach instead of
+      // striding a full frame past it (a 2-tile stride would land inside
+      // the guns every approach). Unchanged when already inside reach.
+      val dx = tx - x
+      val dy = ty - y
+      val dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist > stopTiles) {
+        val stride = Math.min(speedTiles, dist - stopTiles)
+        x += dx / dist * stride
+        y += dy / dist * stride
+      }
+    }
+
+    def stepAwayFrom(tx: Double, ty: Double, standTiles: Double): Unit = {
+      val dx = x - tx
+      val dy = y - ty
+      val dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist > 0) {
+        val stride = Math.min(speedTiles, Math.max(0.0, standTiles - dist))
+        x += dx / dist * stride
+        y += dy / dist * stride
+      } else {
+        x += Math.min(speedTiles, standTiles)
+      }
+    }
   }
 
   class World(val ours: Seq[Mover], val foes: Seq[Mover]) {
@@ -61,10 +89,15 @@ object StarTest {
     def step(): Unit = {
       ours.filter(_.alive).foreach(o => {
         nearestFoe(o) match {
+          // Hold the reach advantage vs statics: backed inside their guns
+          // (an escort melee drags us in), step back out to max reach and
+          // keep shooting for free instead of sitting under them.
+          case Some(f) if f.isStatic && o.dmgPerShot > 0 && o.rangeTiles > f.rangeTiles && o.distTiles(f) <= f.rangeTiles =>
+            o.stepAwayFrom(f.x, f.y, o.rangeTiles)
           // Can hit it: hold and shoot. Cannot reach it: close in.
           // Unarmed or no contact: fly the mission goal.
           case Some(f) if o.dmgPerShot > 0 && o.rangeTiles > 0 && o.distTiles(f) <= o.rangeTiles =>
-          case Some(f) if o.dmgPerShot > 0 && o.rangeTiles > 0 => o.stepToward(f.x, f.y)
+          case Some(f) if o.dmgPerShot > 0 && o.rangeTiles > 0 => o.approach(f.x, f.y, o.rangeTiles)
           case _ => o.goal.foreach(g => o.stepToward(g._1, g._2))
         }
       })

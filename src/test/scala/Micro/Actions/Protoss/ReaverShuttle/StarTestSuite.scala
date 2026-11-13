@@ -36,4 +36,36 @@ class StarTestSuite extends AnyFunSuite {
     assert( ! foe.alive, "reaver never killed the approach")
     assert(reaver.hp == reaver.maxHp, "reaver took hits it outranges")
   }
+
+  test("a reaver drop clears its ling escort before the sunkens") {
+    // Drop validation without a game: a Reaver plus its Shuttle walk into
+    // two Zerglings screening a Sunken Colony. Speeds and reaches are the
+    // matchup contract - lings 0.5 tiles/frame, ours 2.0, sunkens 7 tiles
+    // against our 8 - so the only acceptable outcome is lings first (they
+    // are nearest, the doctrine shoots nearest), then the static, with the
+    // ride never taking a hit. Step manually to record the kill order.
+    val sunken = Mover(x = 0.0, y = 0.0, speedTiles = 0.0, hp = 300.0, maxHp = 300.0, rangeTiles = 7.0, dmgPerShot = 25.0, cooldownFrames = 32, isStatic = true)
+    val ling1 = Mover(x = 0.0, y = 15.0, speedTiles = 0.5, hp = 35.0, maxHp = 35.0, rangeTiles = 0.5, dmgPerShot = 5.0, cooldownFrames = 15)
+    val ling2 = Mover(x = 3.0, y = 18.0, speedTiles = 0.5, hp = 35.0, maxHp = 35.0, rangeTiles = 0.5, dmgPerShot = 5.0, cooldownFrames = 15)
+    val reaver = Mover(x = 0.0, y = 32.0, speedTiles = 2.0, hp = 180.0, maxHp = 180.0, rangeTiles = 8.0, dmgPerShot = 100.0, cooldownFrames = 60)
+    val shuttle = Mover(x = 0.0, y = 32.0, speedTiles = 2.0, hp = 200.0, maxHp = 200.0, rangeTiles = 0.0, dmgPerShot = 0.0, cooldownFrames = 0)
+    reaver.goal = Some((0.0, 0.0))
+    shuttle.goal = Some((0.0, 32.0))
+    val world = new World(Seq(shuttle, reaver), Seq(ling1, ling2, sunken))
+
+    var lingsDeadFrame: Option[Int] = None
+    var sunkenDeadFrame: Option[Int] = None
+    while (world.frame < 1200 && (sunken.alive || ling1.alive || ling2.alive) && reaver.alive) {
+      world.step()
+      if (lingsDeadFrame.isEmpty && ! ling1.alive && ! ling2.alive) lingsDeadFrame = Some(world.frame)
+      if (sunkenDeadFrame.isEmpty && ! sunken.alive) sunkenDeadFrame = Some(world.frame)
+    }
+
+    assert(lingsDeadFrame.isDefined, "reaver never cleared the ling escort")
+    assert(sunkenDeadFrame.isDefined, "reaver never killed the sunken")
+    assert(lingsDeadFrame.get < sunkenDeadFrame.get, "reaver shot the static before clearing its escort")
+    assert(reaver.alive, "reaver died clearing one sunken with an escort")
+    assert(shuttle.hp == shuttle.maxHp, "shuttle took hits holding off the statics")
+    assert(reaver.hpLossFraction < 0.15, f"reaver lost ${reaver.hpLossFraction * 100}%.1f%% - the 8v7 outrange is broken")
+  }
 }
