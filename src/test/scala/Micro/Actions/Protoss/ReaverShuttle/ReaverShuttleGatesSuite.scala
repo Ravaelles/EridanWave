@@ -35,12 +35,23 @@ class ReaverShuttleGatesSuite extends AnyFunSuite {
     assert( ! ReaverShuttleReboard.mayReboard(threatDistTiles = 5.0, wound01 = 0.5))
   }
 
-  test("a Reaver inside the reach of an outranged static backs off to max reach") {
-    assert(ReaverShuttleStaticAttack.advantageBackoff(ourRangeTiles = 8.0, staticRangeTiles = 7.0, distTiles = 6.17))
+  test("a Reaver inside the reach of an outranged static backs off to max reach") {    assert(ReaverShuttleStaticAttack.advantageBackoff(ourRangeTiles = 8.0, staticRangeTiles = 7.0, distTiles = 6.17))
     assert(ReaverShuttleStaticAttack.advantageBackoff(ourRangeTiles = 8.0, staticRangeTiles = 7.0, distTiles = 7.0))
     assert( ! ReaverShuttleStaticAttack.advantageBackoff(ourRangeTiles = 8.0, staticRangeTiles = 7.0, distTiles = 7.5))
     assert( ! ReaverShuttleStaticAttack.advantageBackoff(ourRangeTiles = 8.0, staticRangeTiles = 7.0, distTiles = 8.0))
     assert( ! ReaverShuttleStaticAttack.advantageBackoff(ourRangeTiles = 7.0, staticRangeTiles = 8.0, distTiles = 6.0))
     assert( ! ReaverShuttleStaticAttack.advantageBackoff(ourRangeTiles = 8.0, staticRangeTiles = 8.0, distTiles = 7.0))
+  }
+
+  test("a pressured mid-shot boards while its Scarab is still flying") {
+    def rescue(loaded: Boolean = false, committed: Boolean = false, flying: Boolean = true, cooldown: Int = 0, latency: Int = 3, threatened: Boolean = true): Boolean =
+      ReaverShuttleReboard.rescueScarab(loaded, committed, flying, cooldown, latency, threatened)
+    assert(rescue())
+    assert( ! rescue(loaded = true))
+    assert( ! rescue(committed = true))
+    assert( ! rescue(flying = false))
+    assert( ! rescue(cooldown = 4, latency = 3))
+    assert(rescue(cooldown = 3, latency = 3))
+    assert( ! rescue(threatened = false))
   }
 }

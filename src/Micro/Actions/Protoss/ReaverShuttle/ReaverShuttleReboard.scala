@@ -12,6 +12,25 @@ import Mathematics.Maff
  */
 object ReaverShuttleReboard {
 
+  /**
+   * Scarab rescue (no game access): a flying Scarab cannot be spent twice -
+   * board when pressured mid-shot, so the hull is safe while the shot lands.
+   * Ported from the old discipline's first claim; without it a fresh hull
+   * stands under guns with a Scarab in the air that boarding would save.
+   */
+  def rescueScarab(
+    loaded: Boolean,
+    committed: Boolean,
+    hasActiveScarab: Boolean,
+    cooldownLeft: Int,
+    latencyFrames: Int,
+    threatened: Boolean): Boolean =
+    ! loaded &&
+      ! committed &&
+      hasActiveScarab &&
+      cooldownLeft <= latencyFrames &&
+      threatened
+
   /** Reboard band at full health, in tiles: melee contact always escapes. */
   val baseBoardTiles: Double = 2.0
 

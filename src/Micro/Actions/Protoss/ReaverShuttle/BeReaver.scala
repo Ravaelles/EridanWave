@@ -40,6 +40,22 @@ object BeReaver extends Action {
       return
     }
 
+    val rideNearbyPre = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0)
+    if (rideNearbyPre && ReaverShuttleReboard.rescueScarab(
+      loaded            = unit.loaded,
+      committed         = unit.agent.commit,
+      hasActiveScarab   = unit.hasActiveScarab,
+      cooldownLeft      = unit.cooldownLeft,
+      latencyFrames     = With.latency.latencyFrames,
+      threatened        = unit.matchups.threatsInRange.nonEmpty)) {
+      // Pressured mid-shot with the ride at hand: the flying Scarab lands
+      // on its own, the hull does not need to tank for it.
+      unit.agent.act("BoardRescue")
+      Commander.rightClick(unit, unit.agent.ride.get)
+
+      return
+    }
+
     val foe = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit))
     if (foe.exists(t => t.unitClass.isStaticDefense && ReaverShuttleStaticAttack.advantageBackoff(
       unit.pixelRangeAgainst(t) * Maff.inv32,
@@ -85,7 +101,7 @@ object BeReaver extends Action {
       return
     }
 
-    val rideNearby = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0)
+    val rideNearby = rideNearbyPre
     if (rideNearby && (ReaverShuttleReboard.mayReboard(threatDist(unit), unit.woundPercent()) || needsRide(unit))) {
       unit.agent.act("BoardRide")
       Commander.rightClick(unit, unit.agent.ride.get)
