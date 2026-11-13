@@ -2,7 +2,7 @@ package Micro.Targeting
 
 import Lifecycle.With
 import Mathematics.Maff
-import Micro.Targeting.FiltersRequired.{TargetFilterAntiAir, TargetFilterCanAttack, TargetFilterEnemy, TargetFilterFocus, TargetFilterMissing, TargetFilterOverlord, TargetFilterReaver, TargetFilterRush, TargetFilterScourge, TargetFilterStayCloaked, TargetFilterType, TargetFilterVsTank, TargetFilterVulture}
+import Micro.Targeting.FiltersRequired.{TargetFilterAntiAir, TargetFilterCanAttack, TargetFilterEnemy, TargetFilterFocus, TargetFilterHallCleanup, TargetFilterMissing, TargetFilterOverlord, TargetFilterPointBlank, TargetFilterReaver, TargetFilterRush, TargetFilterScourge, TargetFilterStayCloaked, TargetFilterType, TargetFilterVsTank, TargetFilterVulture, TargetFilterWallBust}
 import Micro.Targeting.FiltersSituational.TargetFilterWhitelist
 import ProxyBwapi.Orders
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -18,6 +18,8 @@ object Target {
     TargetFilterMissing,
     TargetFilterType,
     TargetFilterFocus,
+    TargetFilterHallCleanup,
+    TargetFilterPointBlank,
     TargetFilterStayCloaked,
     TargetFilterScourge,
     TargetFilterAntiAir,
@@ -25,7 +27,8 @@ object Target {
     TargetFilterReaver,
     TargetFilterRush,
     TargetFilterVulture,
-    TargetFilterVsTank)
+    TargetFilterVsTank,
+    TargetFilterWallBust)
 
   def choose(attacker: FriendlyUnitInfo, required: TargetFilter*): Option[UnitInfo] = {
     attacker.agent.toAttack = best(attacker, required: _*)
@@ -252,23 +255,26 @@ object Target {
         attacker.tileDistanceEdge(t),
         attacker.pixelRangeAgainst(t) * Maff.inv32)))(
       attacker.pixelDistanceEdge)
-      .filter(t => legalByFilters(attacker, t, allFilters.filterNot(_ == TargetFilterFocus)))
+      .filter(t => legalByFilters(attacker, t, allFilters.filterNot(_.isInstanceOf[TargetOverrideFilter])))
   }
 
   // Confirmed corpses are never legal: remembered units keep alive=true,
   // so this only drops Visibility.Dead, in every stratum at once.
+  // Override votes OR, required votes AND: the old focus OR-chain now
+  // lives in four objects, but a target still needs one override vote
+  // plus every required vote - splitting the chain must not invert it.
+  private def votesLegal(attacker: FriendlyUnitInfo, target: UnitInfo, allFilters: Seq[TargetFilter]): Boolean = {
+    val (overrides, required) = allFilters.partition(_.isInstanceOf[TargetOverrideFilter])
+
+    (overrides.isEmpty || overrides.exists(_.legal(attacker, target))) && required.forall(_.legal(attacker, target))
+  }
+
   private def legalByFilters(attacker: FriendlyUnitInfo, target: UnitInfo, allFilters: IndexedSeq[TargetFilter]): Boolean = {
     if ( ! target.alive) return false
 
     if (With.yolo.active) return attacker.canAttack(target) && TargetFilterType.legal(attacker, target)
 
-    var filterIndex = 0
-    while (filterIndex < allFilters.length) {
-      if ( ! allFilters(filterIndex).legal(attacker, target)) return false
-
-      filterIndex += 1
-    }
-    true
+    votesLegal(attacker, target, allFilters)
   }
 
   def best(attacker: FriendlyUnitInfo, whitelist: Iterable[UnitInfo]): Option[UnitInfo] = {
@@ -295,7 +301,7 @@ object Target {
   private def legalWithFilters(attacker: FriendlyUnitInfo, targets: Seq[UnitInfo], allFilters: Seq[TargetFilter]): Seq[UnitInfo] = {
     targets.view.filter(target => target.alive && ?(With.yolo.active,
       attacker.canAttack(target) && TargetFilterType.legal(attacker, target),
-      allFilters.forall(_.legal(attacker, target))))
+      votesLegal(attacker, target, allFilters)))
   }
 
   def filtersRequired(attacker: FriendlyUnitInfo): Seq[TargetFilter] = {
