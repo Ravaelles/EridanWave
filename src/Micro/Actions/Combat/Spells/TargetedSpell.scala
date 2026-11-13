@@ -25,6 +25,13 @@ abstract class TargetedSpell extends Action {
   protected def bonusSearchPixels : Int = 32
 
   final def castRangePixels: Int = Maff.x32(castRangeTiles)
+
+  /**
+   * Approach leash, in tiles: no walking further than this from the
+   * current spot to land the cast. Empty means unbounded (the old
+   * totalRange search). Subclasses cap per matchup.
+   */
+  protected def maxApproachTiles: Option[Int] = None
   
   protected def valueTarget(target: UnitInfo, caster: FriendlyUnitInfo): Double
 
@@ -48,14 +55,16 @@ abstract class TargetedSpell extends Action {
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     val safeDistance  = Math.max(0, -unit.matchups.pixelsEntangled)
     val totalRange    = safeDistance + 32.0 * castRangeTiles + bonusSearchPixels // The margin is just some encouragement
-    
+    val searchRange   = maxApproachTiles.map(tiles => Math.min(totalRange, tiles * 32.0)).getOrElse(totalRange)
+
     if (aoe) {
       // Committed cast point: out of range we hold the intent and walk to
       // it instead of re-picking every frame; in range we recalculate and
       // cast only a spot that still holds, otherwise the intent dies and
-      // the next frame picks a new spot or stands down.
+      // the next frame picks a new spot or stands down. The leash keeps
+      // the walk short: spots past it are never picked.
       def pick(): Option[Pixel] =
-        new SpellTargetAOE().chooseTargetPixel(unit, totalRange, thresholdValue, valueTarget, pixelWidth = pixelWidth, pixelHeight = pixelHeight, vetoBox = vetoBox(_, unit))
+        new SpellTargetAOE().chooseTargetPixel(unit, searchRange, thresholdValue, valueTarget, pixelWidth = pixelWidth, pixelHeight = pixelHeight, vetoBox = vetoBox(_, unit))
       def inCastRange(target: Pixel): Boolean =
         unit.pixelDistanceCenter(target) <= castRangePixels
       unit.agent.spellIntent.filter(_._1 == tech).filterNot(intent => TargetedSpell.intentExpired(With.frame - intent._3, intentExpiryFrames)) match {

@@ -21,22 +21,29 @@ class PsionicStormSuite extends AnyFunSuite {
     assert( ! PsionicStorm.vetoOverlord(isOverlord = false, energy = 0))
   }
 
-  test("a full battery storms anything, a dry one only storms a pack") {
-    assert(PsionicStorm.minPackEnemies(energy = 200, enemyIsProtoss = false) == 1)
+  test("a full battery storms anything, a dry one only storms a pack") {    assert(PsionicStorm.minPackEnemies(energy = 200, enemyIsProtoss = false) == 1)
     assert(PsionicStorm.minPackEnemies(energy = 195, enemyIsProtoss = true) == 1)
     assert(PsionicStorm.minPackEnemies(energy = 194, enemyIsProtoss = false) == 2)
     assert(PsionicStorm.minPackEnemies(energy = 180, enemyIsProtoss = true) == 2)
     assert(PsionicStorm.minPackEnemies(energy = 179, enemyIsProtoss = false) == 3)
-    assert(PsionicStorm.minPackEnemies(energy = 110, enemyIsProtoss = true) == 2)
-    assert(PsionicStorm.minPackEnemies(energy = 109, enemyIsProtoss = true) == 3)
-    assert(PsionicStorm.minPackEnemies(energy = 109, enemyIsProtoss = false) == 4)
+    assert(PsionicStorm.minPackEnemies(energy = 120, enemyIsProtoss = true) == 2)
+    assert(PsionicStorm.minPackEnemies(energy = 119, enemyIsProtoss = true) == 3)
+    assert(PsionicStorm.minPackEnemies(energy = 119, enemyIsProtoss = false) == 4)
     assert(PsionicStorm.minPackEnemies(energy = 75, enemyIsProtoss = false) == 4)
+    assert(PsionicStorm.minPackEnemies(energy = 74, enemyIsProtoss = false) == Int.MaxValue)
+    assert(PsionicStorm.minPackEnemies(energy = 0, enemyIsProtoss = true) == Int.MaxValue)
   }
 
   test("crucial targets bypass the pack rule, thin packs never cast") {
     assert( ! PsionicStorm.vetoThinPack(foeCount = 1, hasCrucialTarget = true, energy = 75, enemyIsProtoss = false))
     assert(PsionicStorm.vetoThinPack(foeCount = 1, hasCrucialTarget = false, energy = 75, enemyIsProtoss = false))
-    assert(PsionicStorm.vetoThinPack(foeCount = 2, hasCrucialTarget = false, energy = 109, enemyIsProtoss = false))
-    assert( ! PsionicStorm.vetoThinPack(foeCount = 3, hasCrucialTarget = false, energy = 110, enemyIsProtoss = false))
+    assert(PsionicStorm.vetoThinPack(foeCount = 2, hasCrucialTarget = false, energy = 119, enemyIsProtoss = false))
+    assert( ! PsionicStorm.vetoThinPack(foeCount = 3, hasCrucialTarget = false, energy = 120, enemyIsProtoss = false))
+    assert(PsionicStorm.vetoThinPack(foeCount = 40, hasCrucialTarget = false, energy = 74, enemyIsProtoss = false))
+  }
+
+  test("storm walks short: twelve tiles vs Terran, ten otherwise") {
+    assert(PsionicStorm.maxApproachVsTerran(isTerran = true) == 12)
+    assert(PsionicStorm.maxApproachVsTerran(isTerran = false) == 10)
   }
 }

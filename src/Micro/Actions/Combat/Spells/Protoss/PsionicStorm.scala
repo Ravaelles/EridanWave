@@ -20,6 +20,19 @@ object PsionicStorm extends TargetedSpell {
   override protected def lookaheadPixels  : Int       = 12
   override protected def additionalConditions(unit: FriendlyUnitInfo): Boolean = unit.agent.shouldFight || unit.matchups.threatsInRange.nonEmpty || unit.base.exists(_.owner.isEnemy)
 
+  /** Approach leash vs Terran, in tiles: storms walk, not marches. */
+  val stormApproachVsTerranTiles: Int = 12
+
+  /** Approach leash vs everyone else, in tiles. */
+  val stormApproachVsOthersTiles: Int = 10
+
+  /** Pure leash pick for the suite: Terran gets the longer walk. */
+  def maxApproachVsTerran(isTerran: Boolean): Int =
+    if (isTerran) stormApproachVsTerranTiles else stormApproachVsOthersTiles
+
+  override protected def maxApproachTiles: Option[Int] =
+    Some(maxApproachVsTerran(With.enemies.exists(_.isTerran)))
+
   val castFrames = 4 // Derived from iScript; observed empirically by McRave
 
   /** Own units that may share a storm, at most: the third is the veto. */
@@ -40,10 +53,10 @@ object PsionicStorm extends TargetedSpell {
   def vetoOverlord(isOverlord: Boolean, energy: Int): Boolean =
     isOverlord && energy < overlordStormEnergy
 
-  /** Shared-pack minimum vs Protoss (Atlantis: three, two past 110). */
+  /** Shared-pack minimum vs Protoss (Atlantis: three, two past the discount). */
   val packBaseVsProtoss: Int = 3
 
-  /** Shared-pack minimum vs others (Atlantis: four, three past 110). */
+  /** Shared-pack minimum vs others (Atlantis: four, three past the discount). */
   val packBaseVsOthers: Int = 4
 
   /** At or above this energy a lone victim is worth a storm. */
@@ -53,7 +66,10 @@ object PsionicStorm extends TargetedSpell {
   val packPairEnergy: Int = 180
 
   /** At or above this energy the minimum drops by one. */
-  val packDiscountEnergy: Int = 110
+  val packDiscountEnergy: Int = 120
+
+  /** Below this energy hold fire entirely: not even a full pack is worth the last storm. */
+  val packFloorEnergy: Int = 75
 
   /**
    * Energy-scaled pack minimum (pure numbers for the suite, Atlantis
@@ -65,7 +81,10 @@ object PsionicStorm extends TargetedSpell {
     if (energy >= packPairEnergy) return 2
 
     val base = ?(enemyIsProtoss, packBaseVsProtoss, packBaseVsOthers)
-    ?(energy >= packDiscountEnergy, base - 1, base)
+    if (energy >= packDiscountEnergy) return base - 1
+    if (energy >= packFloorEnergy) return base
+
+    Int.MaxValue
   }
 
   /**
