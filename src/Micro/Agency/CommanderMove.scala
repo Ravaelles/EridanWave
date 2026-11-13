@@ -270,11 +270,8 @@ object CommanderMove {
 
           unit.bwapiUnit.move(goal.bwapi)
 
-          Debugging.CherryVis.CherryVis.decision(unit.id, f"Moving to ${goal.x},${goal.y}")
-
         } else {
 
-          Debugging.CherryVis.CherryVis.decision(unit.id, "Holding move order")
           Debugging.Probe.note("Move", unit.id,
             f"hold gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt}")
 

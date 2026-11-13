@@ -113,12 +113,11 @@ object CherryVis {
    * Why the unit is doing what it is doing (Stardust `CherryVis::log(id)`).
    * Change-only like owner/behavior above: a steady reason costs one map
    * lookup, never a row, so per-frame call sites stay free in traced games.
+   * Callers log directing reasons; engine-order echoes (moves, holds) are
+   * never sent here, so the sink filters nothing by wording.
    */
-  // Unit logs keep directing behaviors only: engine-order echoes
-  // (moves, holds, hash-commands) name no class and drown the reasoning.
   def decision(unitId: Int, reason: String): Unit = {
     if ( ! enabled) return
-    if (reason.startsWith("Moving to ") || reason == "Holding move order" || reason.startsWith("#")) return
 
     if (lastDecision.getOrElse(unitId, "") != reason) {
       lastDecision(unitId) = reason
