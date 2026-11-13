@@ -166,7 +166,9 @@ pathing detours; needs DT pressure on the mineral line. Micro: Arbiters flee lik
 tile margin against anything that can hit them, on top of the
 entanglement check. Micro: DT kills weak first (THIS) - no-cooldown Templar tiers
 in-range contacts: weaklings, then tanks, warriors, workers, nearest
-inside each tier; StarEngine DT scenario proves it end to end. Micro: suicide forces the attack after ten idle seconds (THIS) -
+inside each tier; StarEngine DT scenario proves it end to end. Micro: returning scouts walk home (THIS) - no re-issued gather
+orders; same target keeps cruising instead of crawling to stops
+(macro scout-return smoothness). Micro: suicide forces the attack after ten idle seconds (THIS) -
 past the generic 150-frame rule, a suicide unit charges the nearest
 enemy regardless of advantage; macro suicide games to verify. Micro: contain fires when ready (THIS) - containing weapons shoot
 the nearest hittable target instead of dressing past it; gated on the

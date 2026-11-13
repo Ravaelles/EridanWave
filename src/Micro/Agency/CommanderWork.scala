@@ -187,10 +187,11 @@ object CommanderWork {
 
           }
 
-        } else if ( ! onTargetMineral) {
-
+        } else if ( ! onTargetMineral && ! unit.orderTarget.contains(resource)) {
+          // Like gas above: never re-issue an identical gather - reorders
+          // reset acceleration, so a cross-map trip crawls to a stop
+          // instead of walking home.
           doGather()
-
         }
 
       }
