@@ -12,6 +12,7 @@ import ProxyBwapi.Races.Protoss
 import ProxyBwapi.Techs.{Tech, Techs}
 import ProxyBwapi.UnitTracking.IndexedSet
 import ProxyBwapi.Upgrades.{Upgrade, Upgrades}
+import Tactic.Squads.Decisions.SuicideMission
 import Tactic.Squads.Squad
 import Utilities.?
 import Utilities.Time.Forever
@@ -111,6 +112,9 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
   def alliesBattle        : Iterable[FriendlyUnitInfo]    = team.map(_.units.view.map(_.friendly).filter(_.nonEmpty).map(_.get)).getOrElse(Iterable.empty).filter(_ != this)
   def enemiesSquad        : Iterable[UnitInfo]            = squad.map(s => s.targets.getOrElse(s.enemies)).getOrElse(Iterable.empty)
   def enemiesBattle       : Iterable[UnitInfo]            = battle.map(_.enemy.units.view).getOrElse(Iterable.empty)
+
+  /** Live suicide-mission read (no stored state): true inside the enemy base. */
+  def isSuicideMission: Boolean = SuicideMission.isActive(this)
 
   def buildUnit     : Option[UnitInfo]  = With.units.get(base.getBuildUnit)
   def techingType   : Tech              = Techs.get(base.getTech)

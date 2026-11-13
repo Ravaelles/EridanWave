@@ -6,7 +6,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{LoneMarch, MainMarch, MarchDress, SquadRally, SuicideChargeSeam}
+import Tactic.Squads.Decisions.{LoneMarch, MainMarch, MarchDress, SquadRally, SuicideMission}
 import Utilities.?
 
 /**
@@ -26,7 +26,7 @@ object MarchOrders {
 
   private def sendUnit(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): Unit = {
     val finalReturn = getReturn(unit, squad, defaultReturn)
-    val assault = SuicideChargeSeam.inMainAssault(unit)
+    val assault = SuicideMission.isActive(unit)
     val (terminus, marchLabel) = marchTerminus(squad, unit, meanDistToGoalTiles, defaultReturn)
     Debugging.CherryVis.CherryVis.decision(unit.id,
       ?(squad.fightConsensus || assault, marchLabel, "Returning to slot"))
@@ -43,8 +43,7 @@ object MarchOrders {
   // straight at the squad goal instead of posing with the line.
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): (Pixel, String) = {
     val finalTravel = getTravel(unit, squad, defaultReturn)
-    val suicide = SuicideChargeSeam.inZone(unit)
-    if (suicide) unit.agent.commit = true
+    val suicide = SuicideMission.assign(unit)
     // Dark Templars run their own hunt (visible or remembered contacts only):
     // they never dress, rally, or take formation slots, so they march
     // straight at the squad goal instead of posing with the line.
@@ -62,13 +61,13 @@ object MarchOrders {
       return (squad.vicinity, "MainMarch")
     }
 
-    // Main assault: a ground warrior inside the enemy main never poses,
+    // Suicide mission: a ground warrior inside the enemy main never poses,
     // rallies or walks home - it commits (no retreat, attack only) and
     // marches straight at the squad goal past every formation leg below.
-    if (SuicideChargeSeam.inMainAssault(unit)) {
+    if (SuicideMission.isActive(unit)) {
       unit.agent.commit = true
 
-      return (squad.vicinity, "MainAssault")
+      return (squad.vicinity, "SuicideMission")
     }
 
     // Lone march: with no friendly warrior inside ten tiles there is no

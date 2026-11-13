@@ -20,7 +20,7 @@ import Tactic.Squads.Decisions.HuntLogic
 import Tactic.Squads.Decisions.AttackModes
 import Tactic.Squads.Decisions.RegroupLatch
 import Tactic.Squads.Decisions.StanceVoteFilter
-import Tactic.Squads.Decisions.SuicideChargeSeam
+import Tactic.Squads.Decisions.SuicideMission
 import Tactic.Squads.Squad
 import Tactic.Squads.SquadAutomation
 import Tactic.Squads.Squads
@@ -270,7 +270,7 @@ class SquadAttack extends Squad {
       // sim-vote oscillation. Micro commitment already decides the fighting.
       stance = RegroupLatch.Engaged
       Probe.note("Sim", 0, "Engaged ums-duel")
-    } else if (SuicideChargeSeam.squadInZone(this)) {
+    } else if (SuicideMission.squadInZone(this)) {
       // Suicide charge: this close to the Zerg main the squad only attacks,
       // so the stance never breaks off into a regroup.
       stance = RegroupLatch.Engaged

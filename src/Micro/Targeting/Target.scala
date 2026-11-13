@@ -7,6 +7,7 @@ import Micro.Targeting.FiltersSituational.TargetFilterWhitelist
 import ProxyBwapi.Orders
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Utilities.UnitFilters.IsWorker
 import Utilities.?
 
 object Target {
@@ -74,7 +75,17 @@ object Target {
     val targetInRange = attacker.matchups.targetsInRange.exists(hasCombatPriority)
     var output: Option[UnitInfo] = None
     if (targetInRange) {
-      
+      // Suicide mission: inside the enemy base workers die first, combat
+      // units second. In range, assigned before matchups, like the snipe
+      // tiers below.
+      if (attacker.isSuicideMission) {
+        output = bestInStratum(attacker, assigned.view.filter(IsWorker), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
+        if (output.isDefined) return output
+
+        output = bestInStratum(attacker, matchups.view.filter(IsWorker), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
+        if (output.isDefined) return output
+      }
+
       output = focusedTarget(attacker, allFilters)
       if (output.isDefined) return output
 

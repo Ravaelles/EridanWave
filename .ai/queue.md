@@ -70,6 +70,10 @@ named behavior in trace/`probe.txt`/`errors.json`, delete the line.
   up with no enemy near / column marches out of main.
 - `MainAssault` (`706edf6e6`, fixed latch `dee6339f3`): needs our
   units inside the enemy main (vicinity + commit, no formation).
+  Superseded by `SuicideMission` (uncommitted working tree): needs our
+  warriors inside the enemy main (`SuicideMission` march label + commit,
+  no retreat/flee, KiteAway still steps out while cooling, workers
+  targeted before combat units).
 - DT detector evade + ranged hide (`2ca28d0b5`): needs detectors or
   ranged fire on a DT (`DarkTemplarEvade`/`DarkTemplarHide` rows).
 - Shuttle preemptive flee (`10c04fc8f`): needs Hydras walking up on a
