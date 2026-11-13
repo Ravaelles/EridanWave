@@ -1,113 +1,61 @@
 # Request queue (living list, newest last)
 
-User requests that arrived faster than games could verify them. History
-lives in git log; this file keeps only open items with enough context to
-resume. Update on completion; delete lines that land.
+History lives in git log. Run a game, check the named behavior in
+trace/`probe.txt`/`errors.json`, delete the line.
 
-Conventions: repo docs stay English; implementation follows
-`.ai/conventions.md` (tests + blank-line gate per change, commit per unit).
+Conventions: docs stay English; `.ai/conventions.md` (tests +
+blank-line gate per change, commit per unit).
 
 ## Open: krasi0 bot config for SCBW.Play
 
-Goal: play vs the krasi0 files in `/sc-ai/BOTS/krasi0` through `scbw.play`,
-the way `FETCH-NEW-BOT.sh` sets up downloadable bots.
-
-STAGED 2026-11-13: `/sc-ai/BOTS/krasi0/` holds `BWAPI.dll`,
-`AI/krasi0AIClient.exe` (+ gmp/mpfr DLLs), `read/`, `write/`,
-`bot.json` (`name: krasi0`, race Terran confirmed via Liquipedia -
-Terran mech, `botType: EXE`). `BotPlayer` structure check passes
-(TERRAN/EXE, single exe found).
-
-Still to do: one `scbw.play --bots krasi0:R` smoke game (needs a free
-Wine slot - one game at a time on this box).
-Smoke 2026-11-13: bot launches under Wine and talks to BWAPI
-(`gl & hf from krasi0 v2.781 (LF: 3)` in its log), then exits:
-`Fatal Error: No TA cache file for map in bwapi-data/BWTA2/.
-Pick from supportedMaps!`. Confirmed empirically: TauCross is
-unplayable for it; unblocked only by the supportedMaps pack + BWTA2
-cache, which has no reachable download (krasi0.com down, goo.gl
-links dead). Parked until the pack shows up. Caveats: krasi0 readme says
-it is SaaS (needs internet) and officially supports only its
-`supportedMaps` pack + BWTA2 data; TauCross is likely unsupported
-(still plays, possibly weaker). LF 3 required for full strength.
+`/sc-ai/BOTS/krasi0/` staged (EXE, Terran mech, `BotPlayer` OK). Needs
+one `scbw.play --bots krasi0:R` smoke on a free Wine slot. 2026-11-13:
+launches, talks BWAPI, then exits - no TA cache for TauCross
+(`Pick from supportedMaps!`); pack + BWTA2 unreachable (site down).
+Parked. Caveats: SaaS (needs internet), LF 3 for full strength.
 
 ## Awaiting a validation game (all committed, suite-green, jar synced)
 
-One line each; details live in git log by hash. Run a game, check the
-named behavior in trace/`probe.txt`/`errors.json`, delete the line.
+Targeting/micro: `OverlordSnipe` (`a869e66d6`, chase never, snipe
+lone) - natural Overlord-in-combat. DT doctrine (`1556073e9`) -
+natural melee with DTs. Defiler>Lurker>Mutalisk (`139b97e5a`) -
+Zerg-comp game. Storm friendly veto (`c25aa6dee`, 3+ own in box, no
+cast). Storm Overlord veto (`35c59bc1b`, HT<=190 never storms
+Overlord). Wall-bust Focus (`9b595bb18`) - Terran wall-in, idle guns
+break Depot/Barracks. Point-blank Focus (`b3c664ed1`) - friendlies
+touching enemy buildings. `RepairerSnipe` (`2d4521365`) - SCV
+repairing a tasked Terran building gets sniped. Detector spread
+(`e7cb6aaee`, two Observers, `DetectorSpread` rows). `SneakyWatch`
+(`8deb6aa30`, visible Lurkers/DTs/Wraiths/Ghosts). Vulture duels
+(`0dac77449` vs Dragoons, `PotshotVulture` rows). Carrier berth
+(`d09a80cf1`, scratched shields vs ranged, `CarrierKite` rows).
 
-- `TargetFilterOverlord` + `OverlordSnipe` (`a869e66d6`): needs a natural
-  Overlord-in-combat occurrence (never chase, snipe the lone one).
-- DT doctrine (`1556073e9` + helper fold-in): needs a game with DTs
-  (no DT UMS map; natural melee only).
-- `DropSafety` veto (`61bcb46eb`): needs a reaver-vs-sunkens run that
-  attaches. NOTE: `wine-run.sh` sed `&`-escape fix (`60564e111`)
-  unblocks `Reav&Shut_*` names - retry those maps first.
-- Defiler > Lurker > Mutalisk tiers (`139b97e5a`): needs a natural
-  Zerg-comp game.
-- Reaver +5-tile rally leash (`b9eeb500a`): rally rows down in
-  `GAME_A619B9B8` (673 vs 1747) but units not identified as Reavers;
-  needs a Reaver-heavy game.
-- Worker lone-fighter rule (`<=30hp` + closing fighter): suite only.
-- Wall-bust Focus hatch (`9b595bb18`, outrange guard added later):
-  needs a Terran wall-in (idle guns break Depot/Barracks, Dragoons
-  hold off outranging statics).
-- Screened static +50% (`601e43dbd`): needs statics covered by 2+
-  armed defenders in a judged battle.
-- Base guards engage inside 30 ground tiles (`a5c7f3303`): needs an
-  enemy near a guarded base.
-- KillFrenzy latch (`78831687a`): needs 195 supply + (1000 min & 250
-  gas, or 1500 min); releases below 170. Rare state - watch long macros.
-- `ResearchBanked` float (`47089f1a2`): needs >700 min + >500 gas bank.
-- Worker cap 63 (`47089f1a2`) and 4th miner only past 55 workers
-  (`dd1ee3c70`): observable in any long macro game (miner counts).
-- Fogged-memory drop (`216ead4de`) and corpse clear (`142f4282c`):
-  needs zealots idling at an enemy base (the 7-time report).
-- Worker gather/build trace rows (`4c2a7b0cf`): check any game trace
-  for `gather:Minerals`, `moveToConstruct`, `issueBuild:X`.
-- No-dressing rules (`c2af083ed` 20-tile enemy check,
-  `782bbb938` 90-supply home column): watch Waiting/Marching rows dry
-  up with no enemy near / column marches out of main.
-- `MainAssault` (`706edf6e6`, fixed latch `dee6339f3`): needs our
-  units inside the enemy main (vicinity + commit, no formation).
-  Superseded by `SuicideMission` (uncommitted working tree): needs our
-  warriors inside the enemy main (`SuicideMission` march label + commit,
-  no retreat/flee, KiteAway still steps out while cooling, workers
-  targeted before combat units).
-- DT detector evade + ranged hide (`2ca28d0b5`): needs detectors or
-  ranged fire on a DT (`DarkTemplarEvade`/`DarkTemplarHide` rows).
-- Shuttle preemptive flee (`10c04fc8f`): needs Hydras walking up on a
-  loaded Shuttle (AirFlee before 12-tile contact).
-- Reaver stands vs workers-only above 70 shields (`8f84e9745`):
-  needs worker-only pressure on a shielded Reaver (no Hop).
-- `StaticDefenseRepel` (`3bc73c3bf`): needs friendlies inside 9 tiles
-  of statics with no fight consensus (radial push-out rows).
-- `SneakyWatch` trace lines (`8deb6aa30`): needs visible enemy
-  Lurkers/DTs/Wraiths/Ghosts (`WeDetected:` rows).
-- `ReaverStaticStandoff` (`be5dbb90d`): needs a Reaver inside static
-  range on the sunkens map (back-off to max range, no 1.9-tile park).
-- `WallBreach` (`fbd43ba36`): needs no-ground-path-to-goal (Terran
-  wall game; nearest-blocker targeting).
-- Storm friendly veto (`c25aa6dee`): needs a stormable pack with 3+
-  own units in the box (no cast).
-- Vulture duels (`0dac77449`): needs Vultures vs Dragoons
-  (`PotshotVulture` rows, holds at 1.5x reach head-on).
-- Carrier wound berth (`d09a80cf1`): needs a scratched-shield Carrier
-  vs ranged (`CarrierKite` rows, margin grows to 15 tiles).
-- Contain raze split (`0dac77449`, empty-map guard `75747c418`):
-  needs contain + a live enemy expansion (10-warrior detail + return).
-- Pylon rules (`1ae475b4a` 4 tiles, `1a95c9282` 5 tiles off main
-  choke): check no base Pylon inside the discs in a macro game.
-- Point-blank Focus hatch (`b3c664ed1`): needs friendlies touching
-  enemy buildings (no more idle-at-hatchery).
-- Detector spread priority + `cherryVisUnitLog` (`e7cb6aaee`):
-  needs two Observers together (`DetectorSpread` rows, no clump).
-- Sim work (`53d081038`): test-only, no game needed.
-- `MarchOrders` MainMarch guard (`75747c418`): no `ourMain` crash
-  on baseless UMS maps (watch `errors.json`).
+March/stance: `SuicideMission` (`7c75e98eb`, ex-`MainAssault`
+`706edf6e6`/`dee6339f3`) - warriors in enemy main: label+commit, no
+retreat/flee, KiteAway cools, workers first. `LoneMarch`
+(`ea28a943e`) - lone unit walks straight at goal. No-dressing
+(`c2af083ed`, `782bbb938`) - Waiting/Marching dry with no enemy
+near, column out of main. Base guards 30 tiles (`a5c7f3303`) -
+enemy near guarded base. Screened static +50% (`601e43dbd`) -
+statics covered by 2+ defenders. `StaticDefenseRepel` (`3bc73c3bf`)
+- friendlies within 9 tiles of statics, no consensus. Shuttle flee
+(`10c04fc8f`) - Hydras on loaded Shuttle, AirFlee before 12 tiles.
+Reaver vs workers (`8f84e9745`) - worker-only pressure, shields
+>70, no Hop. Reaver leash (`b9eeb500a`) - Reaver-heavy game, rally
+rows down. Reaver standoff (`be5dbb90d`) - sunkens map, back off to
+max range. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
+(`Reav&Shut_*` unblocked by `60564e111`). `WallBreach`
+(`fbd43ba36`) - no-ground-path Terran wall. DT evade/hide
+(`2ca28d0b5`) - detectors/ranged on DT. Choke contain (`80e9e0f1a`)
+- parked on enemy natural choke vs anti-ground statics holds.
+Contain raze split (`0dac77449`, `75747c418`) - contain + live
+enemy expo. MainMarch guard (`75747c418`) - no `ourMain` crash on
+baseless UMS (`errors.json`).
 
-## Coordination (not this thread - ask before touching)
-
-- `scripts/kill-cleanup.sh` (untracked) + `scripts/README.md` changes:
-  parallel thread's. The game-night box is shared - one Wine game
-  at a time.
+Macro: KillFrenzy (`78831687a`, 195 supply + bank, releases <170).
+`ResearchBanked` (`47089f1a2`, >700min+>500gas). Worker cap 63 +
+4th miner past 55 (`47089f1a2`, `dd1ee3c70`) - long macro. Pylon
+discs (`1ae475b4a`, `1a95c9282`) - no base Pylon inside. Fogged drop
+(`216ead4de`) + corpse clear (`142f4282c`) - zealots idling at enemy
+base. Worker gather/build rows (`4c2a7b0cf`) -
+`gather:Minerals`/`moveToConstruct`/`issueBuild:X` in trace.

@@ -56,8 +56,4 @@
   test scope); boundary in `todo.md`.
 
 ## Planned tooling (not built)
-- Replay reader: full plan in `.ai/replay-reader.md` (commands first,
-  OpenBW re-sim later for positions).
-- Replay reader: trace has orders, never positions - per-frame positions
-  from `.rep` would unlock true movement analysis (scout speed, spread
-  radii). Needs a replay parser; nothing in-repo reads `.rep` today.
+- Replay reader: parked (see remarks.md).
