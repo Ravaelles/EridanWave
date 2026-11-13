@@ -145,7 +145,9 @@ fired, telemetry gap to verify next game.
 
 March: PairRide (THIS) - loaded Shuttles never march the legs
 (rally/slot), the pair owns them; park centers on live cargo, not
-stale hailers (macro game: no shuttle idling in the natural). March: ArbiterSpread (THIS) - Arbiters separate exactly like
+stale hailers (macro game: no shuttle idling in the natural). Micro: drop lifted targets (THIS) - tasked buildings that take
+off release the slot for whoever cannot hit air instead of chewing
+vacuum; needs Terran liftoff in a game. March: ArbiterSpread (THIS) - Arbiters separate exactly like
 Observers (nine tiles, newer moves off the ray, `DetectorSpread`
 kernel); macro game with two Arbiter hulls. March: StaticDefenseRepel shoots (THIS) - repelling units no longer
 hold fire with a hittable enemy in range; weakest-first (lowest total

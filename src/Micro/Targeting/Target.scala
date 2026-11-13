@@ -290,6 +290,16 @@ object Target {
   def shouldDropMemory(targetVisible: Boolean, otherHittableInRange: Boolean): Boolean =
     ! targetVisible && otherHittableInRange
 
+  /**
+   * Liftoff release (pure booleans for the suite): a grounded target that
+   * takes to the air is gone for whoever cannot hit air. Reavers and
+   * Zealots holding a tasked building through its liftoff would chew thin
+   * air instead of re-picking, so the slot releases the moment the
+   * building flies and the ladder picks something hittable.
+   */
+  def shouldDropLifted(isFlyingBuilding: Boolean, canHitAir: Boolean): Boolean =
+    isFlyingBuilding && ! canHitAir
+
   def bestUnfiltered(attacker: FriendlyUnitInfo, targets: Iterable[UnitInfo]): Option[UnitInfo] = {
     Maff.maxBy(targets.filter(_.alive))(attacker.targetScore)
   }

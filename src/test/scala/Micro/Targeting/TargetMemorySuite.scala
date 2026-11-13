@@ -16,4 +16,10 @@ class TargetMemorySuite extends AnyFunSuite {
   test("a live contact in range releases the memory") {
     assert(Target.shouldDropMemory(targetVisible = false, otherHittableInRange = true))
   }
+
+  test("a lifted building releases whoever cannot hit air") {
+    assert(Target.shouldDropLifted(isFlyingBuilding = true, canHitAir = false))
+    assert( ! Target.shouldDropLifted(isFlyingBuilding = true, canHitAir = true))
+    assert( ! Target.shouldDropLifted(isFlyingBuilding = false, canHitAir = false))
+  }
 }
