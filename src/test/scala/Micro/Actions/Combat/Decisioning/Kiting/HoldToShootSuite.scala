@@ -26,4 +26,24 @@ class HoldToShootSuite extends AnyFunSuite {
     assert(HoldToShoot.effectiveRange(foeReachPx = 32, foeSpeedPxPerFrame = 4, windupFrames = 5, brakingPx = 10) == 42)
     assert(HoldToShoot.effectiveRange(foeReachPx = 32, foeSpeedPxPerFrame = 4, windupFrames = 0, brakingPx = 100) == 0)
   }
+
+  test("a nearly-ready gun shoots a Vulture in range instead of kiting") {
+    // Dragoon reach 128: inside it with cooldown 5 the Vulture eats steel.
+    assert(HoldToShoot.shouldStandVsVulture(100, 128, 5, 3, 4, foeFacingUs = true))
+    assert(HoldToShoot.shouldStandVsVulture(100, 128, 0, 3, 4, foeFacingUs = false))
+  }
+
+  test("a cooling gun keeps kiting a Vulture it cannot punish") {
+    assert( ! HoldToShoot.shouldStandVsVulture(100, 128, 6, 3, 4, foeFacingUs = false))
+  }
+
+  test("a head-on Vulture meets the shot at bonus reach") {
+    // 1.5x reach is 192: closing fast with a hot gun holds from 260 out,
+    // and point-blank at the bonus edge with no latency holds too - but a
+    // runner or a sideways Vulture never does.
+    assert(HoldToShoot.shouldStandVsVulture(260, 128, 0, 3, 8, foeFacingUs = true))
+    assert(HoldToShoot.shouldStandVsVulture(190, 128, 0, 0, 8, foeFacingUs = true))
+    assert( ! HoldToShoot.shouldStandVsVulture(190, 128, 0, 3, 8, foeFacingUs = false))
+    assert( ! HoldToShoot.shouldStandVsVulture(190, 128, 0, 3, 0, foeFacingUs = true))
+  }
 }

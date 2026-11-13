@@ -20,6 +20,38 @@ object HoldToShoot {
   /** Extra frames of arrival lead required to stand (order-issue slop). */
   var holdMarginFrames: Int = 5
 
+  /** Cooldown at or below which a Dragoon fires instead of kiting. */
+  var attackCooldownFrames: Int = 5
+
+  /** Head-on reach multiplier: a committed Vulture eats the shot early. */
+  var approachBonus: Double = 1.5
+
+  /**
+   * Vulture duel (pure numbers for the suite): with the gun nearly ready
+   * and a Vulture in range, shoot it instead of yielding ground; a Vulture
+   * sprinting straight at us meets the shot already at bonus reach, so the
+   * kite never donates free distance. The caller feeds live gap, reach,
+   * cooldown, closing speed and facing; this only combines them.
+   */
+  def shouldStandVsVulture(
+    distPx:             Double,
+    rangePx:            Double,
+    cooldownLeft:       Int,
+    latencyFrames:      Int,
+    closingPxPerFrame:  Double,
+    foeFacingUs:        Boolean): Boolean = {
+    if (distPx <= rangePx && cooldownLeft <= attackCooldownFrames) return true
+    if ( ! foeFacingUs || closingPxPerFrame <= 0) return false
+
+    shouldStand(
+      distPx,
+      approachBonus * rangePx,
+      cooldownLeft,
+      latencyFrames,
+      closingPxPerFrame,
+      holdMarginFrames)
+  }
+
   /**
    * The effective range R*: foe reach, plus what the chaser covers during
    * our windup, minus our braking glide. Floored at zero: braking longer

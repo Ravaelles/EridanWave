@@ -6,6 +6,7 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Micro.Targeting.CarrierBrawl
+import Micro.Actions.Protoss.Reaver.ContainStatus
 import Performance.Tasks.TimedTask
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -16,6 +17,7 @@ import Tactic.Missions.ground.MissionKillExpansion
 import Tactic.Missions.reaver.MissionReaverDrop
 import Tactic.Production.core.Produce
 import Tactic.Squads._
+import Tactic.Squads.attack.SquadRazeExpansion
 import Tactic.Squads.Decisions.OurBaseUnderAttack
 import Tactic.Tactics.Cheese._
 import Tactic.Tactics.Defense._
@@ -100,6 +102,7 @@ final class Tactician extends TimedTask {
   private val catchDTs = new SquadCatchDTs
   val attackSquad = new SquadAttack
   val baseGuards = new SquadBaseGuards
+  val razeSquad = new SquadRazeExpansion
 
   ////////////////////////
   // Background tactics //
@@ -137,6 +140,7 @@ final class Tactician extends TimedTask {
     staffBaseGuards(freelancers)
     enforceClusterSplit()
     fillAttackSquad(freelancers, squadsDefending)
+    staffRazeSquad()
     attachLoneDarkTemplar()
     pullDefenseWorkers(squadsDefending)
     attachSCVs()
@@ -147,7 +151,7 @@ final class Tactician extends TimedTask {
   // staffed home base, numbered oldest-first by town hall id. Empty
   // squads stay out so the rows only appear while they mean something.
   private def publishSquadBoards(): Unit = {
-    val striking = Seq(("A", attackSquad), ("B", backstabProxy))
+    val striking = Seq(("A", attackSquad), ("B", backstabProxy), ("R", razeSquad))
       .filter(_._2.units.nonEmpty)
       .map { case (name, squad) => f"$name(${squad.units.size})" }
     Debugging.CherryVis.CherryVis.board("Squads", striking.mkString(", "))
@@ -327,6 +331,37 @@ final class Tactician extends TimedTask {
       // terminus UmsMode gave them instead of joining phantom defense squads.
       Assignment.unitsPick(freelancers, defenseSquadsFor(squadsDefending))
     }
+  }
+
+  // Raze split: while the main army contains, a live enemy expansion pays
+  // for their whole war - peel ten warriors off the attack squad to raze
+  // it. The detail walks home on its own once the town hall falls, so the
+  // contain never bleeds out through an open tab.
+  private def staffRazeSquad(): Unit = {
+    if (SquadRazeExpansion.expansionTarget.isEmpty) {
+      razeSquad.units.foreach(u => {
+        attackSquad.addUnit(u)
+        With.recruiter.lockTo(attackSquad.lock, u)
+      })
+
+      return
+    }
+
+    if ( ! ContainStatus.now()) return
+
+    val mine = razeSquad.units.count(_.unitClass.isWarrior)
+    val attackWarriors = attackSquad.units.count(_.unitClass.isWarrior)
+    var need = SquadRazeExpansion.donorsNeeded(mine, attackWarriors)
+    val donors = attackSquad.units.view
+      .filter(_.unitClass.isWarrior)
+      .sortBy(attackSquad.candidateValue)
+    donors.foreach(donor => {
+      if (need <= 0) return
+
+      razeSquad.addUnit(donor)
+      With.recruiter.lockTo(razeSquad.lock, donor)
+      need -= 1
+    })
   }
 
   /**

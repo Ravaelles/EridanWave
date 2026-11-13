@@ -4,7 +4,8 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldToShoot, KiteAway}
 import Micro.Agency.Commander
-import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import ProxyBwapi.Races.Terran
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
  * Kite behavior (was CombatEngagement.kiteAway): wounded units yield ground
@@ -59,15 +60,32 @@ object KiteAwayBehavior {
   // Hold-to-shoot: a committed chaser met with a ready gun is a free shot,
   // not a reason to yield ground. Fires only when we'd otherwise kite, and
   // never steals another duel's target: the chaser must be ours or none.
+  // Vultures duel on their own rule: nearly-ready guns fire in range, and
+  // head-on sprinters meet the shot at bonus reach - kiting a Vulture
+  // donates the exact distance its speed wants.
   private def holdingShot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     val chaser = Maff.minBy(unit.matchups.threats)(_.pixelDistanceEdge(unit))
-    chaser.exists(c => combat.target.forall(_.id == c.id) && HoldToShoot.shouldStand(
-      unit.pixelDistanceEdge(c),
-      HoldToShoot.effectiveRange(c.pixelRangeAgainst(unit), c.topSpeed, windupFrames = 0, unit.topSpeed * unit.unitClass.accelerationFrames / 2.0),
-      unit.cooldownLeft,
-      With.latency.latencyFrames,
-      c.speedApproaching(unit.pixel),
-      HoldToShoot.holdMarginFrames))
+    chaser.exists(c => combat.target.forall(_.id == c.id) && holdsAgainst(unit, c))
+  }
+
+  private def holdsAgainst(unit: FriendlyUnitInfo, chaser: UnitInfo): Boolean = {
+    if (Terran.Vulture(chaser)) {
+      HoldToShoot.shouldStandVsVulture(
+        unit.pixelDistanceEdge(chaser),
+        chaser.pixelRangeAgainst(unit),
+        unit.cooldownLeft,
+        With.latency.latencyFrames,
+        chaser.speedApproaching(unit.pixel),
+        FacingAway.facingUs(chaser.angleRadians, chaser.pixel.radiansTo(unit.pixel)))
+    } else {
+      HoldToShoot.shouldStand(
+        unit.pixelDistanceEdge(chaser),
+        HoldToShoot.effectiveRange(chaser.pixelRangeAgainst(unit), chaser.topSpeed, windupFrames = 0, unit.topSpeed * unit.unitClass.accelerationFrames / 2.0),
+        unit.cooldownLeft,
+        With.latency.latencyFrames,
+        chaser.speedApproaching(unit.pixel),
+        HoldToShoot.holdMarginFrames)
+    }
   }
 
   private def holdToShoot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {

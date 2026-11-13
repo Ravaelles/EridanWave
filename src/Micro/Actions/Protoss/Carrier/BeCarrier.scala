@@ -39,7 +39,28 @@ object BeCarrier extends Action {
 
   protected final def isInterceptorActive(interceptor: UnitInfo): Boolean = Seq(Orders.InterceptorAttack, Orders.InterceptorReturn).contains(interceptor.order)
 
+  private def carrierKite(unit: FriendlyUnitInfo): Boolean = {
+    if (unit.totalHealth >= CarrierKite.lowHp) return false
+
+    Maff.minBy(unit.matchups.threats.filter(t =>
+      t.canAttack(unit) && CarrierKite.isRanged(t.pixelRangeAgainst(unit))))(
+      unit.pixelDistanceEdge(_)).exists(threat => {
+      CarrierKite.shouldKite(unit.totalHealth, unit.pixelDistanceEdge(threat) * Maff.inv32) && {
+        unit.agent.act("CarrierKite")
+        unit.agent.toAttack = None
+        val away = unit.pixel.project(threat.pixel, -CarrierKite.kiteTiles * 32.0)
+        unit.agent.decision.set(?(away.walkable, away, away.walkablePixel))
+        Commander.move(unit)
+        true
+      }
+    })
+  }
+
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    // Dying carriers kite: below 100 HP a ranged attacker inside fourteen
+    // tiles pushes the hull straight out instead of trading the game away.
+    if (carrierKite(unit)) return
+
     if (unit.agent.shouldFight) {
       val brawling = CarrierTankHuntSeam.brawlingFor(unit)
       // Brawl beat: hold the kill while it lasts inside the beat, else
