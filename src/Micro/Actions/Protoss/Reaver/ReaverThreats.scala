@@ -25,7 +25,9 @@ case class ReaverThreats(
   holdTarget      : Boolean = false,
   onlyWorkersNear : Boolean = false,
   targetPath      : Boolean = false,
-  toAttackPath    : Boolean = false)
+  toAttackPath    : Boolean = false,
+  foeInReach      : Boolean = false,
+  tankCovered     : Boolean = false)
 
 object ReaverThreats {
 
@@ -61,6 +63,11 @@ object ReaverThreats {
       tankAiming      = threats.exists(t => Terran.SiegeTankSieged(t) && unit.tileDistanceEdge(t) < 10),
       holdTarget      = targetNearest.exists(t => ! t.flying && unit.canAttack(t) && unit.tileDistanceEdge(t) < 7.25),
       targetPath      = targetNearest.exists(unit.hasScarabPathTo(_, unit.pixel)),
-      toAttackPath    = unit.agent.toAttack.orElse(targetNearest).exists(unit.hasScarabPathTo(_, unit.pixel)))
+      toAttackPath    = unit.agent.toAttack.orElse(targetNearest).exists(unit.hasScarabPathTo(_, unit.pixel)),
+      foeInReach      = unit.matchups.targets.exists(t =>
+        ! t.flying && unit.canAttack(t) && unit.tileDistanceEdge(t) <= ReaverBraveStand.engageTiles),
+      tankCovered     = threats.exists(t =>
+        Terran.SiegeTankSieged(t) &&
+          unit.tileDistanceEdge(t) <= t.pixelRangeAgainst(unit) * Maff.inv32 + ReaverBraveStand.tankMarginTiles))
   }
 }
