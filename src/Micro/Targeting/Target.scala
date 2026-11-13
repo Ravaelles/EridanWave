@@ -79,11 +79,8 @@ object Target {
       // units second. In range, assigned before matchups, like the snipe
       // tiers below.
       if (attacker.isSuicideMission) {
-        output = bestInStratum(attacker, assigned.view.filter(IsWorker), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
-        if (output.isDefined) return output
-
-        output = bestInStratum(attacker, matchups.view.filter(IsWorker), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
-        if (output.isDefined) return output
+        val suicidePick = firstInSources(attacker, assigned, matchups, allFilters, IsWorker, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
+        if (suicidePick.isDefined) return suicidePick
       }
 
       output = focusedTarget(attacker, allFilters)
@@ -104,41 +101,13 @@ object Target {
       // the reprise pass, like every other stratum on this ladder.
       def snipable(tier: Int)(target: UnitInfo): Boolean =
         ThreatPriority.snipable(target.visible, ThreatPriority.tier(Zerg.Defiler(target), Zerg.Lurker(target), Zerg.Mutalisk(target)), tier)
-      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.defilerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.defilerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.lurkerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.lurkerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.mutaliskTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.mutaliskTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = true)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.defilerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.defilerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.lurkerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.lurkerTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, assigned.view.filter(snipable(ThreatPriority.mutaliskTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(snipable(ThreatPriority.mutaliskTier)), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
+      // Guaranteed-kill targets wait for the reprise pass: demise-true
+      // tiers first, then the same tiers again without the demise gate.
+      val snipeTiers = Seq(ThreatPriority.defilerTier, ThreatPriority.lurkerTier, ThreatPriority.mutaliskTier)
+      for (demise <- Seq(true, false); tier <- snipeTiers) {
+        val sniped = firstInSources(attacker, assigned, matchups, allFilters, snipable(tier), rankByScore = true, requireCombatPriority = false, requireInRange = true, requireAcceleratesDemise = demise)
+        if (sniped.isDefined) return sniped
+      }
 
       output = bestInStratum(attacker, assigned, allFilters, rankByScore = true,  requireCombatPriority = true,  requireInRange = true,  requireAcceleratesDemise = true)
       if (output.isDefined) return output
@@ -164,23 +133,10 @@ object Target {
       def unsiegedNear(target: UnitInfo): Boolean =
         Terran.SiegeTankUnsieged(target) && DarkTemplarTanks.unsiegedNear(attacker.tileDistanceEdge(target))
 
-      output = bestInStratum(attacker, assigned.view.filter(hittable), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(hittable), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, assigned.view.filter(siegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(siegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, assigned.view.filter(unsiegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(unsiegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
+      for (doctrine <- Seq[UnitInfo => Boolean](hittable, siegedNear, unsiegedNear)) {
+        val darkPick = firstInSources(attacker, assigned, matchups, allFilters, doctrine, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+        if (darkPick.isDefined) return darkPick
+      }
     }
 
     if (Protoss.Carrier(attacker) && CarrierTankHuntSeam.huntFor(attacker)) {
@@ -192,17 +148,10 @@ object Target {
       def unsiegedNear(target: UnitInfo): Boolean =
         Terran.SiegeTankUnsieged(target) && attacker.tileDistanceEdge(target) <= CarrierTankHunt.tankHuntTiles
 
-      output = bestInStratum(attacker, assigned.view.filter(siegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(siegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, assigned.view.filter(unsiegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
-
-      output = bestInStratum(attacker, matchups.view.filter(unsiegedNear), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
-      if (output.isDefined) return output
+      for (doctrine <- Seq[UnitInfo => Boolean](siegedNear, unsiegedNear)) {
+        val carrierPick = firstInSources(attacker, assigned, matchups, allFilters, doctrine, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+        if (carrierPick.isDefined) return carrierPick
+      }
     }
 
     if (engaged) {
@@ -225,6 +174,25 @@ object Target {
     }
 
     bestInStratum(attacker, matchups, allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+  }
+
+  // Assigned-before-matchups sweep for one predicate: the ladder's atom.
+  // Every doctrine above walks the same two sources in the same order;
+  // only the predicate and the flags change.
+  private def firstInSources(
+    attacker: FriendlyUnitInfo,
+    assigned: Iterable[UnitInfo],
+    matchups: Iterable[UnitInfo],
+    allFilters: IndexedSeq[TargetFilter],
+    predicate: UnitInfo => Boolean,
+    rankByScore: Boolean,
+    requireCombatPriority: Boolean,
+    requireInRange: Boolean,
+    requireAcceleratesDemise: Boolean): Option[UnitInfo] = {
+    val inAssigned = bestInStratum(attacker, assigned.view.filter(predicate), allFilters, rankByScore, requireCombatPriority, requireInRange, requireAcceleratesDemise)
+    if (inAssigned.isDefined) return inAssigned
+
+    bestInStratum(attacker, matchups.view.filter(predicate), allFilters, rankByScore, requireCombatPriority, requireInRange, requireAcceleratesDemise)
   }
 
   private def bestInStratum(
