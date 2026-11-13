@@ -41,42 +41,48 @@ object MarchOrders {
   // Dark Templars run their own hunt (visible or remembered contacts only):
   // they never dress, rally, or take formation slots, so they march
   // straight at the squad goal instead of posing with the line.
-  private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): (Pixel, String) = {
-    val finalTravel = getTravel(unit, squad, defaultReturn)
-    val suicide = SuicideMission.assign(unit)
-    // Dark Templars run their own hunt (visible or remembered contacts only):
-    // they never dress, rally, or take formation slots, so they march
-    // straight at the squad goal instead of posing with the line.
-    if (Protoss.DarkTemplar(unit)) return (squad.vicinity, "DarkTemplarHunt")
+  private case class MarchGate(label: String, applies: (Squad, FriendlyUnitInfo) => Boolean)
 
+  // First claim wins, in order; every gate marches straight at the squad
+  // goal, so the terminus needs no per-gate branch. Suicide units commit
+  // above (every unit, every frame) before the gates are even asked.
+  private val marchGates: Seq[MarchGate] = Seq(
+    // Dark Templars run their own hunt (visible or remembered contacts
+    // only): they never dress, rally, or take formation slots.
+    MarchGate("DarkTemplarHunt", (_, unit) => Protoss.DarkTemplar(unit)),
     // Main march: past 90 supply a unit sitting on our doorstep never
     // poses, rallies or walks to a slot - the column just walks out, so
     // the base stops choking on its own formation dance. No bases (UMS
     // micro maps) means no doorstep: skip quietly instead of asking
     // geography for a main that isn't there.
-    if (With.geography.ourBases.nonEmpty && MainMarch.shouldSkip(
+    MarchGate("MainMarch", (_, unit) => With.geography.ourBases.nonEmpty && MainMarch.shouldSkip(
       With.self.supplyUsed200,
-      unit.pixel.groundPixels(With.geography.ourMain.heart.center) * Maff.inv32)) {
-
-      return (squad.vicinity, "MainMarch")
-    }
-
+      unit.pixel.groundPixels(With.geography.ourMain.heart.center) * Maff.inv32)),
     // Suicide mission: a ground warrior inside the enemy main never poses,
     // rallies or walks home - it commits (no retreat, attack only) and
     // marches straight at the squad goal past every formation leg below.
-    if (SuicideMission.isActive(unit)) {
-      unit.agent.commit = true
-
-      return (squad.vicinity, "SuicideMission")
-    }
-
+    MarchGate("SuicideMission", (_, unit) => SuicideMission.isActive(unit)),
     // Lone march: with no friendly warrior inside ten tiles there is no
     // line to pose in, so the unit skips rallying to the pack centroid
     // and slot-marching and walks straight at the squad goal instead of
     // milling alone.
-    val nearestWarrior = Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
-    if (nearestWarrior.forall(a => LoneMarch.shouldMarchAlone(unit.pixelDistanceCenter(a.pixel) * Maff.inv32))) return (squad.vicinity, "LoneMarch")
+    MarchGate("LoneMarch", (squad, unit) =>
+      Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
+        .forall(a => LoneMarch.shouldMarchAlone(unit.pixelDistanceCenter(a.pixel) * Maff.inv32))))
 
+  private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): (Pixel, String) = {
+    val suicide = SuicideMission.assign(unit)
+    marchGates.collectFirst { case gate if gate.applies(squad, unit) => gate.label } match {
+      case Some(label) => (squad.vicinity, label)
+      case None =>
+        val finalTravel = getTravel(unit, squad, defaultReturn)
+        marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide)
+    }
+  }
+
+  // The march legs: rallying stragglers beat slots, closing ranks beats
+  // marching alone, dressing beats everything but a gated march above.
+  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean): (Pixel, String) = {
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide)
     val joinPixel              = joinLeg(squad, unit, suicide)
     val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide)
