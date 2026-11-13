@@ -26,6 +26,15 @@ object BeArbiter extends Action {
   val cloakRadiusPixels: Int = 64
 
   /**
+   * Flee margin, in tiles: bold fresh hulls hold until two tiles, battered
+   * ones break off up to eleven out - Corsair-style wound scaling for a
+   * hull that must never trade. Applies on top of the entanglement check,
+   * which still catches long-range threats the margin cannot see.
+   */
+  def fleeMarginTiles(wound01: Double): Double =
+    2.0 + Maff.woundBonus(wound01, 4.0, 9.0)
+
+  /**
    * Separation, exactly the Observer rule: same-type Arbiters keep nine
    * tiles apart and only the newer one moves, sliding out along the ray
    * to full separation. Claims the frame when it moves.
@@ -46,7 +55,9 @@ object BeArbiter extends Action {
   }
 
   override protected def perform(arbiter: FriendlyUnitInfo): Unit = {
-    if (arbiter.matchups.pixelsEntangled > -16) {
+    if (arbiter.matchups.pixelsEntangled > -16
+      || arbiter.matchups.threats.exists(t =>
+        arbiter.pixelDistanceEdge(t) < fleeMarginTiles(arbiter.woundPercent()) * 32.0)) {
       Retreat.delegate(arbiter)
 
       return
