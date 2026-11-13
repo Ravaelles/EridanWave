@@ -32,7 +32,12 @@ repairing a tasked Terran building gets sniped. `ShuttleDitch/Adopt`
 Detector spread
 (`e7cb6aaee`, two Observers, `DetectorSpread` rows). `SneakyWatch`
 (`8deb6aa30`, visible Lurkers/DTs/Wraiths/Ghosts). Vulture duels
-(`0dac77449` vs Dragoons, `PotshotVulture` rows). Carrier berth
+(`0dac77449` vs Dragoons, `PotshotVulture` rows). Dragoon closes
+fleeing workers (`1b425a873`, THIS): no more kite-away vs what cannot
+hit back - `ApproachHelpless` takes `shieldWound` (was full-health
+only), closes grounded helpless at <=15 shield damage, same as
+buildings always did. StarEngine chase-and-kill scenario when the
+engine is ready. Carrier berth
 (`d09a80cf1`, scratched shields vs ranged, `CarrierKite` rows).
 
 March/stance: `NoRetreat` tanks (`c4bb6ed62`) - siege tanks within 18
