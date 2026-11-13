@@ -114,7 +114,12 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
 
   lazy val isBlocker: Boolean = (unitClass.isMinerals || unitClass.isGas) && gasLeft + mineralsLeft < 250 // Setting this goofily high as an AIIDE hack to account for the 249-mineral patches on Fortress
   lazy val inefficientGasPosition: Boolean = unitClass.isGas && base.map(_.townHallTile).exists(t => t.y + 3 < tileTopLeft.y || t.x + 4 < tileTopLeft.x)
-  lazy val gasMinersRequired: Int = if (unitClass.isGas) (if (inefficientGasPosition) 4 else 3) else 0
+  /** Workforce above which far gas earns its fourth miner; below it the
+    * fourth would only queue behind three that already saturate close gas. */
+  val richGasWorkforce: Int = 55
+  lazy val gasMinersRequired: Int = if (unitClass.isGas) {
+    if (inefficientGasPosition && With.units.ours.count(_.unitClass.isWorker) > richGasWorkforce) 4 else 3
+  } else 0
 
   @inline final def subjectiveValue: Double = subjectiveValueCache()
   private val subjectiveValueCache = new Cache(() =>
