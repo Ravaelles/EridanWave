@@ -1,10 +1,12 @@
 package Micro.Actions.Protoss.Detector
 
 import Lifecycle.With
+import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Protoss.Air.BeFlier
 import Micro.Actions.Combat.Tactics.{Recharge, Spot}
 import Micro.Agency.Commander
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
@@ -27,6 +29,8 @@ object BeDetector extends Action {
     // same pile. While spreading the eye moves and reports, nothing else.
     if (spread(unit)) return
 
+    if (keepOffDetectors(unit)) return
+
     Spot(unit)
     Recharge(unit)
     unit.agent.combat.perform(unit)
@@ -43,6 +47,22 @@ object BeDetector extends Action {
       if (DetectorSpread.shouldSpread(unit.id, older.id, older.distTiles)) {
         unit.cherryVisUnitLog("DetectorSpread")
         unit.agent.destinationNext.set(DetectorSpread.awayFrom(unit.pixel, older.pixel))
+        Commander.move(unit)
+        true
+      } else false
+    })
+  }
+
+  /** Observer keep-off: never close inside six tiles of an enemy detector; back straight out instead. */
+  private def keepOffDetectors(unit: FriendlyUnitInfo): Boolean = {
+    if ( ! Protoss.Observer(unit)) return false
+
+    // Nearest enemy detector, regardless of id: foe ids carry no seniority.
+    val nearest = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isDetector))(unit.pixelDistanceEdge)
+    nearest.exists(foe => {
+      if (DetectorSpread.shouldYieldToDetector(unit.tileDistanceEdge(foe) * Maff.inv32)) {
+        unit.cherryVisUnitLog("ObserverStandOff")
+        unit.agent.destinationNext.set(DetectorSpread.standOff(unit.pixel, foe.pixel))
         Commander.move(unit)
         true
       } else false

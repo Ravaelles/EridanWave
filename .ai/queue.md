@@ -176,7 +176,9 @@ Reavers. Micro: contain fires when ready (THIS) - containing weapons shoot
 the nearest hittable target instead of dressing past it; gated on the
 contain so volley discipline survives elsewhere. Micro: storms lead
 moving victims (THIS) - 2.0-tile lead along the heading, standing
-victims keep the spot. March: StaticDefense overwhelm
+victims keep the spot. Micro: Observers stand off detectors (THIS) - never closer than
+6 tiles to an enemy detector, same ray geometry as the pack spread;
+needs an Observer-vs-Overlord game. March: StaticDefense overwhelm
 (THIS) - twelve of ours against one static defender pushes instead of
 repelling; needs a contain break. March: TankHug (THIS) -
 cooling ground warriors close sieged tanks to 0.2 tiles instead of

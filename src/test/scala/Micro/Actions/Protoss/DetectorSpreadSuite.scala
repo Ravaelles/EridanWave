@@ -35,4 +35,10 @@ class DetectorSpreadSuite extends AnyFunSuite {
     assert(DetectorSpread.partner(5, Seq(newer)).isEmpty)
     assert(DetectorSpread.partner(5, Seq.empty).isEmpty)
   }
+
+  test("observers keep six tiles off enemy detectors") {
+    assert(DetectorSpread.shouldYieldToDetector(5.9))
+    assert( ! DetectorSpread.shouldYieldToDetector(6.0))
+    assert(DetectorSpread.standOff(Pixel(0, 0), Pixel(96, 0)) == Pixel(-96, 0))
+  }
 }

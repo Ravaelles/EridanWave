@@ -27,4 +27,15 @@ object DetectorSpread {
   /** Full separation along the ray from the older eye through us. */
   def awayFrom(us: Pixel, them: Pixel): Pixel =
     them.project(us, minDistTiles * 32.0)
+
+  /** Observers keep this clear of enemy detectors, in tiles. */
+  val enemyKeepOffTiles: Double = 6.0
+
+  /** Inside the keep-off radius the eye backs away instead of closing. */
+  def shouldYieldToDetector(distTiles: Double): Boolean =
+    distTiles < enemyKeepOffTiles
+
+  /** Full standoff from an enemy detector along the ray past us. */
+  def standOff(us: Pixel, them: Pixel): Pixel =
+    them.project(us, enemyKeepOffTiles * 32.0)
 }
