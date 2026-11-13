@@ -44,6 +44,24 @@ object SquadRazeExpansion {
   def donorsNeeded(mine: Int, attackWarriors: Int): Int =
     Math.max(0, Math.min(razeWarriors - mine, attackWarriors - attackReserve))
 
+  /** Weak-army raid detail, in warriors: too weak to contain, still raze. */
+  val weakRazeWarriors: Int = 4
+
+  /** Warriors the attack squad keeps while raiding weak. */
+  val weakAttackReserve: Int = 6
+
+  /**
+   * Weak split rule (pure numbers for the suite): grow the raid toward four
+   * warriors, but never below the raid reserve - a retreating army that
+   * donates its last Zealot is not an army anymore. Below two warriors the
+   * raid stays home: a lone Zealot abroad dies for nothing.
+   */
+  def donorsNeededWeak(mine: Int, attackWarriors: Int): Int = {
+    val need = Math.max(0, Math.min(weakRazeWarriors - mine, attackWarriors - weakAttackReserve))
+
+    if (mine + need >= 2) need else 0
+  }
+
   /** Enemy expansion with a live town hall, nearest the main army. */
   def expansionTarget: Option[Information.Geography.Types.Base] = {
     val main = With.scouting.enemyMain

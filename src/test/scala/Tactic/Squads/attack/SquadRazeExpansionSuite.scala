@@ -19,4 +19,20 @@ class SquadRazeExpansionSuite extends AnyFunSuite {
     assert(SquadRazeExpansion.donorsNeeded(mine = 0, attackWarriors = 15) == 5)
     assert(SquadRazeExpansion.donorsNeeded(mine = 8, attackWarriors = 11) == 1)
   }
+
+  test("a weak army raids four while keeping six") {
+    assert(SquadRazeExpansion.donorsNeededWeak(mine = 0, attackWarriors = 30) == 4)
+    assert(SquadRazeExpansion.donorsNeededWeak(mine = 1, attackWarriors = 30) == 3)
+  }
+
+  test("the raid reserve never donates") {
+    assert(SquadRazeExpansion.donorsNeededWeak(mine = 0, attackWarriors = 6) == 0)
+    assert(SquadRazeExpansion.donorsNeededWeak(mine = 0, attackWarriors = 8) == 2)
+  }
+
+  test("a lone raider stays home, a top-up marches") {
+    assert(SquadRazeExpansion.donorsNeededWeak(mine = 0, attackWarriors = 7) == 0)
+    assert(SquadRazeExpansion.donorsNeededWeak(mine = 1, attackWarriors = 7) == 1)
+    assert(SquadRazeExpansion.donorsNeededWeak(mine = 3, attackWarriors = 10) == 1)
+  }
 }

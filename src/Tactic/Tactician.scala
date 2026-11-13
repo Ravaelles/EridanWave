@@ -347,11 +347,13 @@ final class Tactician extends TimedTask {
       return
     }
 
-    if ( ! ContainStatus.now()) return
-
     val mine = razeSquad.units.count(_.unitClass.isWarrior)
     val attackWarriors = attackSquad.units.count(_.unitClass.isWarrior)
-    var need = SquadRazeExpansion.donorsNeeded(mine, attackWarriors)
+    // Weak-army raid: too weak to contain, still raze - a few warriors
+    // detach for the detected expansion while the army keeps its reserve.
+    var need = ?(ContainStatus.now(),
+      SquadRazeExpansion.donorsNeeded(mine, attackWarriors),
+      SquadRazeExpansion.donorsNeededWeak(mine, attackWarriors))
     val donors = attackSquad.units.view
       .filter(_.unitClass.isWarrior)
       .sortBy(attackSquad.candidateValue)
