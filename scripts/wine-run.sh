@@ -346,7 +346,11 @@ if [ -n "$MAP" ]; then
   RESOLVED_MAP=$(cd "$GAME_ROOT" && find -L maps -type f -iname "$(basename "$MAP")" 2>/dev/null | head -1)
   if [ -n "$RESOLVED_MAP" ]; then
     say "  Setting map in bwapi.ini to $RESOLVED_MAP"
-    sed -i -E "s|^map *=.*|map=$RESOLVED_MAP|" "$INI"
+    # Escape sed replacement metacharacters: a bare & in a map name
+    # (Reav&Shut_...) would otherwise expand to the matched text and
+    # corrupt bwapi.ini, leaving the game on a dead map with no HELLO.
+    ESCAPED_MAP=$(printf '%s' "$RESOLVED_MAP" | sed 's/[&\|]/\\&/g')
+    sed -i -E "s|^map *=.*|map=$ESCAPED_MAP|" "$INI"
     if [ -z "$GAME_TYPE" ]; then
       # Keep in sync with BwapiIni.java UMS_MARKERS: scenario content plays
       # USE_MAP_SETTINGS, everything else defaults to MELEE. Explicit
