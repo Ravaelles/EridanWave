@@ -6,7 +6,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{LoneMarch, MainMarch, MarchDress, SquadRally, SuicideMission}
+import Tactic.Squads.Decisions.{LoneMarch, MainMarch, MarchDress, SquadRally, StrongMarch, SuicideMission}
 import Utilities.?
 
 /**
@@ -62,6 +62,18 @@ object MarchOrders {
     // rallies or walks home - it commits (no retreat, attack only) and
     // marches straight at the squad goal past every formation leg below.
     MarchGate("SuicideMission", (_, unit) => SuicideMission.isActive(unit)),
+    // Pair ride: a loaded Shuttle belongs to its pair, never to the pack -
+    // routing cargo to a rally slot or a formation slot strands it while
+    // the park/raid brains wait for a march that never comes. Empty hulls
+    // still march the legs (they await the next ride, nothing to strand).
+    MarchGate("PairRide", (_, unit) => Protoss.Shuttle(unit) && unit.loadedUnitCount > 0),
+    // Strong march: a banked stock or a maxed strong army never poses -
+    // it walks straight at the squad goal instead of rallying to the pack
+    // centroid or marching to a formation slot.
+    MarchGate("StrongMarch", (_, unit) => StrongMarch.shouldMarchDirectly(
+      With.self.minerals,
+      With.battles.globalAttack.us.skimStrengthTotal,
+      With.self.supplyUsed200)),
     // Lone march: with no friendly warrior inside ten tiles there is no
     // line to pose in, so the unit skips rallying to the pack centroid
     // and slot-marching and walks straight at the squad goal instead of
