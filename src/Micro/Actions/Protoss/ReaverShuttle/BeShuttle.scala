@@ -59,8 +59,13 @@ object BeShuttle extends Action {
         With.units.ours.filter(shouldAdopt(shuttle, _)))
 
     var acted = false
-    Maff.maxBy(pickupCandidates)(c => pickupNeed(shuttle, c) / (1.0 + c.pixelDistanceSquared(shuttle))).foreach(passenger => {
+    // Fetch the neediest unboarded hailer; adoption alone strands it.
+    Maff.maxBy(pickupCandidates.filter(_.complete))(
+      c => pickupNeed(shuttle, c) / (1.0 + c.pixelDistanceSquared(shuttle))).foreach(passenger => {
       shuttle.agent.addPassenger(passenger)
+      shuttle.agent.act("FetchPassenger")
+      shuttle.agent.destinationNext.set(passenger.pixel)
+      Commander.move(shuttle)
       acted = true
     })
 
@@ -121,7 +126,7 @@ object BeShuttle extends Action {
     val preemptPixels = (ReaverShuttleFlight.baseFleeMarginTiles + shuttle.woundPercentBonus(0.0, ReaverShuttleFlight.woundFleeBonusTiles)) * 32.0
     val attackers = shuttle.matchups.threats.filter(t =>
       t.canAttack(shuttle) && t.likelyStillThere && (
-        t.pixelDistanceEdge(shuttle) <= ReaverShuttleFlight.scourgeDistTiles * 32.0 ||
+        (Zerg.Scourge(t) && t.pixelDistanceEdge(shuttle) <= ReaverShuttleFlight.scourgeDistTiles * 32.0) ||
           ReaverShuttleFlight.threatensPreemptively(t.pixelDistanceEdge(shuttle), t.pixelRangeAgainst(shuttle), preemptPixels)))
     Maff.minBy(attackers.map(_.pixel))(_.pixelDistanceSquared(shuttle.pixel)).map(focus => {
       shuttle.agent.act("AirFlee")
