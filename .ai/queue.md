@@ -44,9 +44,9 @@ labels from f11600, commit, kills, VICTORY 77/7). `LoneMarch`
 (`c2af083ed`, `782bbb938`) - Waiting/Marching dry with no enemy
 near, column out of main. Base guards 30 tiles (`a5c7f3303`) -
 enemy near guarded base. Screened static +50% (`601e43dbd`) -
-statics covered by 2+ defenders. Shuttle flee
-(`10c04fc8f`) - Hydras on loaded Shuttle, AirFlee before 12 tiles.
-Reaver vs workers (`8f84e9745`) - worker-only pressure, shields
+statics covered by 2+ defenders. Shuttle flee (`10c04fc8f`,
+`07d372772`) - Hydras on loaded Shuttle, AirFlee before 12 tiles;
+single 9-tile wound curve keeps fresh behavior, caps dying. Reaver vs workers (`8f84e9745`) - worker-only pressure, shields
 >70, no Hop. Reaver leash (`b9eeb500a`) - Reaver-heavy game, rally
 rows down. Reaver standoff (`be5dbb90d`) - sunkens map, back off to
 max range. `ReaverBraveStand` (`cb7903db4`) - stale shielded Reaver holds vs
@@ -56,7 +56,7 @@ baseline in `.ai/reaver-shuttle-baseline.md`, then a fresh doctrine on a
 shared Shuttle+Reaver status; StarTest harness for drop-loss <=5%. DropSafety (`61bcb46eb`) - reaver-vs-sunkens attach
 (`Reav&Shut_*` unblocked by `60564e111`). `WallBreach`
 (`fbd43ba36`) - no-ground-path Terran wall. DT evade/hide
-(`2ca28d0b5`) - detectors/ranged on DT. DT lone hold (HASH) - full
+(`2ca28d0b5`) - detectors/ranged on DT. DT lone hold (`3319f24ae`) - full
 shields + no attacker in 10 tiles ignores the detector, keeps hunting. Choke contain (`80e9e0f1a`)
 - parked on enemy natural choke vs anti-ground statics holds.
 Contain raze split (`0dac77449`, `75747c418`) - contain + live
@@ -68,7 +68,7 @@ Macro: KillFrenzy (`78831687a`, 195 supply + bank, releases <170).
 `ResearchBanked` (`47089f1a2`, >700min+>500gas). Worker cap 63 +
 4th miner past 55 (`47089f1a2`, `dd1ee3c70`) - long macro. Pylon
 discs (`1ae475b4a`, `1a95c9282`) - no base Pylon inside. Main choke
-clear 6 (HASH) - nothing but wall-ins within 6 tiles. Fogged drop
+clear 6 (`20e928ee2`) - nothing but wall-ins within 6 tiles. Fogged drop
 (`216ead4de`) + corpse clear (`142f4282c`) - zealots idling at enemy
 base. Worker gather/build rows (`4c2a7b0cf`) -
 `gather:Minerals`/`moveToConstruct`/`issueBuild:X` in trace.
