@@ -8,6 +8,7 @@ import Mathematics.Points.Pixel
 import Micro.Actions.Combat.Decisioning.Combat
 import Micro.Coordination.Pushing.{TrafficPriorities, TrafficPriority}
 import Performance.{Cache, KeyedCache}
+import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 import scala.collection.mutable
@@ -32,6 +33,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   ///////////////
 
   var toNuke        : Option[Pixel]             = None
+  var spellIntent   : Option[(Tech, Pixel, Int)]  = None // (Spell, committed pixel, frame): approach it, reconfirm in range, then cast
   var toAttack      : Option[UnitInfo]          = None
   var toAttackLast  : Option[UnitInfo]          = None
   var toGather      : Option[UnitInfo]          = None

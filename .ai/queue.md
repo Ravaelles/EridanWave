@@ -21,7 +21,10 @@ lone) - natural Overlord-in-combat. DT doctrine (`1556073e9`) -
 natural melee with DTs. Defiler>Lurker>Mutalisk (`139b97e5a`) -
 Zerg-comp game. Storm friendly veto (`c25aa6dee`, 3+ own in box, no
 cast). Storm Overlord veto (`35c59bc1b`, HT<=190 never storms
-Overlord). Wall-bust Focus (`9b595bb18`) - Terran wall-in, idle guns
+Overlord). Storm intent + Atlantis pack (HASH) - HT approaches with
+spell intent, casts only a reconfirmed in-range spot; energy-scaled
+pack (195:1, 180:2, 110:base-1), crucial Reaver/sieged-Tank bypass,
+never out of range. Wall-bust Focus (`9b595bb18`) - Terran wall-in, idle guns
 break Depot/Barracks. Point-blank Focus (`b3c664ed1`) - friendlies
 touching enemy buildings. `RepairerSnipe` (`2d4521365`) - SCV
 repairing a tasked Terran building gets sniped. `ShuttleDitch/Adopt`

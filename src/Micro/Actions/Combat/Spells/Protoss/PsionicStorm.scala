@@ -8,6 +8,7 @@ import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Utilities.?
 
 object PsionicStorm extends TargetedSpell {
   
@@ -32,14 +33,62 @@ object PsionicStorm extends TargetedSpell {
     friendlyHits > maxFriendlyHits
 
   /** Overlords eat storms only on a full battery: cheap, numerous, and
-    * rarely worth 75 energy that could erase a Hydra pack instead. */
-  val overlordStormEnergy: Int = 190
+    * rarely worth 75 energy that could erase a Hydra pack instead.
+    * Aligned with the pack ladder below (Atlantis storms singles at 195). */
+  val overlordStormEnergy: Int = 195
 
   def vetoOverlord(isOverlord: Boolean, energy: Int): Boolean =
-    isOverlord && energy <= overlordStormEnergy
+    isOverlord && energy < overlordStormEnergy
 
-  override protected def vetoBox(units: Iterable[UnitInfo]): Boolean =
-    vetoFriendlyHits(units.count(_.isFriendly))
+  /** Shared-pack minimum vs Protoss (Atlantis: three, two past 110). */
+  val packBaseVsProtoss: Int = 3
+
+  /** Shared-pack minimum vs others (Atlantis: four, three past 110). */
+  val packBaseVsOthers: Int = 4
+
+  /** At or above this energy a lone victim is worth a storm. */
+  val packSingleEnergy: Int = 195
+
+  /** At or above this energy a pair is worth a storm. */
+  val packPairEnergy: Int = 180
+
+  /** At or above this energy the minimum drops by one. */
+  val packDiscountEnergy: Int = 110
+
+  /**
+   * Energy-scaled pack minimum (pure numbers for the suite, Atlantis
+   * ladder): a full battery storms anything, a dry one only storms
+   * a pack - no 75-energy answers to a lone Marine.
+   */
+  def minPackEnemies(energy: Int, enemyIsProtoss: Boolean): Int = {
+    if (energy >= packSingleEnergy) return 1
+    if (energy >= packPairEnergy) return 2
+
+    val base = ?(enemyIsProtoss, packBaseVsProtoss, packBaseVsOthers)
+    ?(energy >= packDiscountEnergy, base - 1, base)
+  }
+
+  /**
+   * Crucial targets bypass the count: a Reaver or a sieged Tank dies to
+   * one storm, so the pack rule never protects them (Atlantis storms
+   * these two at any battery above the cast cost).
+   */
+  def crucialStormTarget(target: UnitInfo): Boolean =
+    target.isEnemy && target.isAny(Protoss.Reaver, Terran.SiegeTankSieged)
+
+  /**
+   * Thin-pack veto (pure flags for the suite): below the energy-scaled
+   * minimum a box without a crucial target never casts.
+   */
+  def vetoThinPack(foeCount: Int, hasCrucialTarget: Boolean, energy: Int, enemyIsProtoss: Boolean): Boolean =
+    ! hasCrucialTarget && foeCount < minPackEnemies(energy, enemyIsProtoss)
+
+  override protected def vetoBox(units: Iterable[UnitInfo], caster: FriendlyUnitInfo): Boolean =
+    vetoFriendlyHits(units.count(_.isFriendly)) || vetoThinPack(
+      foeCount          = units.count(_.isEnemy),
+      hasCrucialTarget  = units.exists(crucialStormTarget),
+      energy            = caster.energy,
+      enemyIsProtoss    = With.enemies.exists(_.isProtoss))
 
   override protected def valueTarget(target: UnitInfo, caster: FriendlyUnitInfo): Double = {
     if (With.grids.psionicStorm.isSet(target.tile)) return 0.0
