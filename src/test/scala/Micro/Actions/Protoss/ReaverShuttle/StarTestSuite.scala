@@ -44,7 +44,7 @@ class StarTestSuite extends AnyFunSuite {
     // against our 8 - so the only acceptable outcome is lings first (they
     // are nearest, the doctrine shoots nearest), then the static, with the
     // ride never taking a hit. Step manually to record the kill order.
-    val sunken = Mover(x = 0.0, y = 0.0, speedTiles = 0.0, hp = 300.0, maxHp = 300.0, rangeTiles = 7.0, dmgPerShot = 25.0, cooldownFrames = 32, isStatic = true)
+    val sunken = Mover(x = 0.0, y = 0.0, speedTiles = 0.0, hp = 300.0, maxHp = 300.0, rangeTiles = 7.0, dmgPerShot = 25.0, cooldownFrames = 32, isStatic = true, isBuilding = true, isStaticDefense = true)
     val ling1 = Mover(x = 0.0, y = 15.0, speedTiles = 0.5, hp = 35.0, maxHp = 35.0, rangeTiles = 0.5, dmgPerShot = 5.0, cooldownFrames = 15)
     val ling2 = Mover(x = 3.0, y = 18.0, speedTiles = 0.5, hp = 35.0, maxHp = 35.0, rangeTiles = 0.5, dmgPerShot = 5.0, cooldownFrames = 15)
     val reaver = Mover(x = 0.0, y = 32.0, speedTiles = 2.0, hp = 180.0, maxHp = 180.0, rangeTiles = 8.0, dmgPerShot = 100.0, cooldownFrames = 60)
@@ -67,5 +67,35 @@ class StarTestSuite extends AnyFunSuite {
     assert(reaver.alive, "reaver died clearing one sunken with an escort")
     assert(shuttle.hp == shuttle.maxHp, "shuttle took hits holding off the statics")
     assert(reaver.hpLossFraction < 0.15, f"reaver lost ${reaver.hpLossFraction * 100}%.1f%% - the 8v7 outrange is broken")
+  }
+
+  test("a suicide squad razes the base after the workers") {
+    // Suicide targeting repro: two Dragoons walk into a base with two
+    // fleeing SCVs screening a Pylon. Workers die first (nearest), then
+    // the base itself must fall - but the production in-range vote vetoes
+    // unassigned non-static buildings, so the squad stands on the Pylon
+    // forever. The pilot calls the real kernel, so this fails until the
+    // shipped rule changes, not when the harness does.
+    val pylon = Mover(x = 0.0, y = 0.0, speedTiles = 0.0, hp = 300.0, maxHp = 300.0, rangeTiles = 0.0, dmgPerShot = 0.0, cooldownFrames = 1, isStatic = true, isBuilding = true)
+    val scv1 = Mover(x = 0.0, y = 20.0, speedTiles = 0.5, hp = 60.0, maxHp = 60.0, rangeTiles = 0.0, dmgPerShot = 0.0, cooldownFrames = 1, flees = true)
+    val scv2 = Mover(x = 4.0, y = 23.0, speedTiles = 0.5, hp = 60.0, maxHp = 60.0, rangeTiles = 0.0, dmgPerShot = 0.0, cooldownFrames = 1, flees = true)
+    val dragoon1 = Mover(x = 0.0, y = 30.0, speedTiles = 2.0, hp = 180.0, maxHp = 180.0, rangeTiles = 4.0, dmgPerShot = 20.0, cooldownFrames = 30)
+    val dragoon2 = Mover(x = 3.0, y = 30.0, speedTiles = 2.0, hp = 180.0, maxHp = 180.0, rangeTiles = 4.0, dmgPerShot = 20.0, cooldownFrames = 30)
+    dragoon1.goal = Some((0.0, 0.0))
+    dragoon2.goal = Some((0.0, 0.0))
+    val world = new World(Seq(dragoon1, dragoon2), Seq(scv1, scv2, pylon))
+
+    var workersDeadFrame: Option[Int] = None
+    var pylonDeadFrame: Option[Int] = None
+    while (world.frame < 1500 && (pylon.alive || scv1.alive || scv2.alive) && dragoon1.alive && dragoon2.alive) {
+      world.step()
+      if (workersDeadFrame.isEmpty && ! scv1.alive && ! scv2.alive) workersDeadFrame = Some(world.frame)
+      if (pylonDeadFrame.isEmpty && ! pylon.alive) pylonDeadFrame = Some(world.frame)
+    }
+
+    assert(workersDeadFrame.isDefined, "dragoons never cleared the fleeing workers")
+    assert(pylonDeadFrame.isDefined, "dragoons never razed the pylon they stand on")
+    assert(workersDeadFrame.get < pylonDeadFrame.get, "dragoons shot the base before clearing its workers")
+    assert(dragoon1.alive && dragoon2.alive, "dragoons died to unarmed workers and a pylon")
   }
 }

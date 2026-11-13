@@ -10,6 +10,16 @@ object TargetFilterFocus extends TargetOverrideFilter {
 
   override def appliesTo(actor: FriendlyUnitInfo): Boolean = actor.targetsAssigned.isDefined
 
+  /**
+   * Building vote of the in-range rule (no game access): a ready shot at a
+   * hittable target is always legal - except unassigned non-static
+   * buildings, which the squad never asked for. Suicide attackers inherit
+   * the same veto for now; lifting it is the base-razing fix, proved in
+   * StarEngine before it ships.
+   */
+  def allowsBuilding(isBuilding: Boolean, isStaticDefense: Boolean): Boolean =
+    ! isBuilding || isStaticDefense
+
   def legal(actor: FriendlyUnitInfo, target: UnitInfo): Boolean = {
     var output = false
     output ||= actor.agent.commit
@@ -24,7 +34,7 @@ object TargetFilterFocus extends TargetOverrideFilter {
     output ||= actor.squad.exists(canTargetAsRoadblock(_, target))
     output ||= (actor.inRangeToAttack(target)
       && actor.readyForAttackOrder(target)
-      && ( ! target.unitClass.isBuilding || target.unitClass.isStaticDefense))
+      && allowsBuilding(target.unitClass.isBuilding, target.unitClass.isStaticDefense))
     output
   }
 

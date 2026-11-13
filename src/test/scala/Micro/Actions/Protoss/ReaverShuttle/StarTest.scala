@@ -20,7 +20,10 @@ object StarTest {
     rangeTiles: Double,
     dmgPerShot: Double,
     cooldownFrames: Int,
-    isStatic: Boolean = false) {
+    isStatic: Boolean = false,
+    isBuilding: Boolean = false,
+    isStaticDefense: Boolean = false,
+    flees: Boolean = false) {
 
     var cooldownLeft: Int = 0
     var goal: Option[(Double, Double)] = None
@@ -49,9 +52,11 @@ object StarTest {
     }
 
     def approach(tx: Double, ty: Double, stopTiles: Double): Unit = {
-      // Attack-move arrival: close in but stop at weapon reach instead of
-      // striding a full frame past it (a 2-tile stride would land inside
-      // the guns every approach). Unchanged when already inside reach.
+      // Attack-move arrival: close in, stopping at the given reach instead
+      // of striding a full frame past it. Callers pass weapon reach for
+      // statics with guns (a 2-tile stride would land inside them every
+      // approach) and zero for mobiles (a capped approach lets anything
+      // fleeing outward stalemate at the rim). Unchanged when inside reach.
       val dx = tx - x
       val dy = ty - y
       val dist = Math.sqrt(dx * dx + dy * dy)
@@ -74,9 +79,27 @@ object StarTest {
         x += Math.min(speedTiles, standTiles)
       }
     }
+
+    def fleeFrom(tx: Double, ty: Double): Unit = {
+      val dx = x - tx
+      val dy = y - ty
+      val dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist > 0) {
+        x += dx / dist * speedTiles
+        y += dy / dist * speedTiles
+      }
+    }
   }
 
   class World(val ours: Seq[Mover], val foes: Seq[Mover]) {
+
+    // Suicide targeting veto, straight from the production rule: buildings
+    // the squad never asked for get no vote. The pilot calls the real
+    // kernel, so a StarEngine raze proves the shipped rule, not a copy.
+    private def vetoed(f: Mover): Boolean =
+      f.isBuilding && ! Micro.Targeting.FiltersRequired.TargetFilterFocus.allowsBuilding(
+        isBuilding = f.isBuilding,
+        isStaticDefense = f.isStaticDefense)
 
     var frame: Int = 0
     val hits: ArrayBuffer[(Int, Double)] = ArrayBuffer.empty
@@ -97,11 +120,17 @@ object StarTest {
           // Can hit it: hold and shoot. Cannot reach it: close in.
           // Unarmed or no contact: fly the mission goal.
           case Some(f) if o.dmgPerShot > 0 && o.rangeTiles > 0 && o.distTiles(f) <= o.rangeTiles =>
-          case Some(f) if o.dmgPerShot > 0 && o.rangeTiles > 0 => o.approach(f.x, f.y, o.rangeTiles)
+          case Some(f) if o.dmgPerShot > 0 && o.rangeTiles > 0 =>
+            // Against a static with reach stop at weapon edge (landing
+            // inside its guns every approach is a harness artifact, not a
+            // maneuver); mobiles get full-stride pursuit, or a capped
+            // approach lets anything fleeing outward stalemate at the rim.
+            o.approach(f.x, f.y, if (f.isStatic && f.rangeTiles > 0) o.rangeTiles else 0.0)
           case _ => o.goal.foreach(g => o.stepToward(g._1, g._2))
         }
       })
-      foes.filter(_.alive).foreach(f => nearestOur(f).foreach(n => f.stepToward(n.x, n.y)))
+      foes.filter(_.alive).foreach(f => nearestOur(f).foreach(n =>
+        if (f.flees) f.fleeFrom(n.x, n.y) else f.stepToward(n.x, n.y)))
       foes.filter(_.alive).foreach(f => {
         if (f.cooldownLeft > 0) {
           f.cooldownLeft -= 1
@@ -128,7 +157,7 @@ object StarTest {
     }
 
     private def nearestFoe(o: Mover): Option[Mover] = {
-      val live = foes.filter(_.alive)
+      val live = foes.filter(_.alive).filterNot(vetoed)
       if (live.isEmpty) None else Some(live.minBy(o.distTiles))
     }
 
