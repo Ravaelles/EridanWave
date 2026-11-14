@@ -71,7 +71,16 @@ enemies instead of micro-gating the handshake. Adopt-vs-AirFlee
 flap on pressured pickups wants a flee latch next. Crona 4-pool overrun (scbw,
 11/36 at 5:47): lings arrive before the first Zealot, probes brawl
 and die, no Search acts in trace - early-pool scout reaction needs
-gameplan review.
+gameplan review. UMS batch 2026-11-14: 12V/12D over 24 maps.
+Confirmed fine: all 1v1 duels, up-duels, mass drag fights, upgraded
+fights, ZealDrag mixes. Watch, probably map-hard, not doctrine:
+3Zeal_v_3Zeal 2/3 mirror (focus suspected), 10Zeal_v_Lings 17/10
+(out-killed but wiped by the stream), 2Zeal_v_LingUp 3/2 in 169f
+(upgraded stream), 1DragWounded_v_1Zeal 0/1 (wounded start),
+14Drag_v_16Drag lost (down two), Reaver_v_Sunkens 3/8 (shuttle-less,
+ammo economy). Pair maps need the baseless mission fallback (Sunkens
+1-4 all DEFEAT/timeout, Drag flips VICTORY/DEFEAT run to run).
+DT_v_Protoss timeouts 1/1 (mill vs kiting dragoons).
 
 Storm consensus walk (Templars follow the attack: a personal retreat
 no longer blocks the approach; leash, ladder and veto unchanged) -
@@ -225,7 +234,11 @@ contain so volley discipline survives elsewhere. Micro: storms lead
 moving victims (THIS) - 2.0-tile lead along the heading, standing
 victims keep the spot. Micro: Observers stand off detectors (THIS) - never closer than
 6 tiles to an enemy detector, same ray geometry as the pack spread;
-needs an Observer-vs-Overlord game. March: StaticDefense overwhelm
+needs an Observer-vs-Overlord game. Micro: observer hunter early
+warning - a detector inside 11 tiles means seen, so Scourge/Corsair/
+Wraith/Mutalisk trigger the flee from 20 tiles; StarEngine proves the
+differential (breaks at f11 vs f34), macro game with muta pressure
+still needed. March: StaticDefense overwhelm
 (THIS) - twelve of ours against one static defender pushes instead of
 repelling; needs a contain break. March: TankHug (THIS) -
 cooling ground warriors close sieged tanks to 0.2 tiles instead of
@@ -233,7 +246,10 @@ kiting; needs a Terran mech game with tanks in range. March: march straight at t
 Waiting/Rallying with no tanks around; combat units skip every
 formation dance (Waiting, Rallying, slots, trip home) with no Vultures
 and no Tanks; nobody dresses inside static reach; no LoneMarch while
-retreating. Macro PvT games to confirm the columns just walk. March: StrongMarch (THIS) - banked stock or maxed strong army
+retreating. Macro PvT games to confirm the columns just walk. March: CorsairHunt - corsairs never
+take formation legs (march straight at the goal instead); needs a
+macro game with corsairs vs Overlords (StarEngine proves the hunt+flee,
+not the march gate). March: StrongMarch (THIS) - banked stock or maxed strong army
 marches straight at the goal, never rallies to the pack centroid or
 walks to a formation slot (`StrongMarchSuite`, macro game with bank).
 Micro: idle attackers force fire after 150 frames (THIS) - a
