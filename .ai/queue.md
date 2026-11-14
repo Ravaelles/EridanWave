@@ -54,6 +54,17 @@ long games crashed server-side at 8-12 min (wine path stable);
 production Storm proof still needs a game that reaches Templars
 (rushes keep ending them first).
 
+Storm consensus walk (Templars follow the attack: a personal retreat
+no longer blocks the approach; leash, ladder and veto unchanged) -
+needs a Templar game (rushes end too fast, we go carriers; Archives
+only ~11:18). Observer escort (`a727a0b3a`, ranged flee on a 6-12
+tile margin; an f89 death becomes a 1-1 timeout) - the DT on
+DT_v_Protoss mills without connecting against kiting Dragoons until
+timeout (open). Shuttle-less Reaver_v_Sunkens (THIS): the foot Reaver
+survives the whole game on StandShoot/CloseStatic, but 8 scarabs make
+3 kills against the ling stream - a stalemate. Two long scbw games
+crashed server-side at ~8-12 min (wine path stable, including an
+11:38) - infra, not the bot.
 Targeting/micro: `OverlordSnipe` (`a869e66d6`, chase never, snipe
 lone) - natural Overlord-in-combat. DT doctrine (`1556073e9`) -
 natural melee with DTs. Defiler>Lurker>Mutalisk (`139b97e5a`) -
