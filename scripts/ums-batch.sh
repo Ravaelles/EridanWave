@@ -56,8 +56,12 @@ MAPS=(
   "ums/rav/protoss/ZealDrag_v_ZealDrag.scm|"
   "ums/rav/protoss/ZealDrag_v_LingsHydra.scm|"
   "ums/rav/protoss/Reaver_v_Sunkens.scm|"
+  "ums/rav/protoss/Reav&Shut_v_Sunkens.scm|pair raid, no leash"
   "ums/rav/protoss/Reav&Shut_v_Sunkens2.scm|"
+  "ums/rav/protoss/Reav&Shut_v_Sunkens3.scx|"
   "ums/rav/protoss/Reav&Shut_v_Sunkens4.scx|"
+  "ums/rav/protoss/Reav_v_Drag.scm|pair vs dragoons, RaidBase path"
+  "ums/rav/protoss/DT_v_Protoss.scx|DT plus dragoon plus obs vs Protoss"
 #  "|"
 )
 
