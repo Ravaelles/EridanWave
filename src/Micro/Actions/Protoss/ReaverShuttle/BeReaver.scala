@@ -115,7 +115,26 @@ object BeReaver extends Action {
     if (rideNearby && (ReaverShuttleReboard.mayReboard(threatDist(unit), unit.woundPercent()) || needsRide(unit))) {
       unit.agent.act("BoardRide")
       Commander.rightClick(unit, unit.agent.ride.get)
+
+      return
     }
+
+    // Duelist walk (baseless maps only): with no contacts the squad march
+    // stalls, so the Reaver walks at the nearest known enemy instead of
+    // holding a stale HoldPosition until timeout. The static-attack
+    // unload above handles the landing when close; the ride follows on
+    // the sojourn and reboards under pressure.
+    if (With.geography.ourBases.isEmpty) {
+      duelWalk(unit)
+    }
+  }
+
+  private def duelWalk(unit: FriendlyUnitInfo): Unit = {
+    Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere))(_.pixelDistanceCenter(unit.pixel)).foreach(foe => {
+      unit.agent.act("DuelWalk")
+      unit.agent.destinationNext.set(foe.pixel)
+      Commander.move(unit)
+    })
   }
 
   /** Land on Zerg defense to kill it: close, undamaged on the way in, nothing inside the wound-scaled margin. */

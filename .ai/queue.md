@@ -46,7 +46,12 @@ Night 2026-11-14 (all on the jar, suite-green): contain-leave
 confirmation - Contain/Deprox alternation 160 down to 39 on the
 sunkens map, the Reaver lives, 6-7 becomes 1-1. Pair duelist loop -
 `DuelFerry`, `BoardShotless` (x5), `EscortRide` (x4) all fire live on
-Reav_v_Drag + Reav_v_DragB, both VICTORY. Storm consensus walk -
+Reav_v_Drag + Reav_v_DragB, both VICTORY. Sunkens2 loop proven end
+to end (DuelWalk, board, ferry, unload, CloseStatic, escort) - the
+wall is ammo, not doctrine: 5 scarabs then a dry hold to timeout.
+Adopt fetches hailing, endangered, travelling or Scarab-targeted
+Reavers only (was: any Reaver, gluing the ride and starving escort);
+foot Reavers duel-walk at known enemies on baseless maps. Storm consensus walk -
 casters re-arm on squad fightConsensus (unproven, needs a Storm
 game). Still open: the sunkens duel stays DEFEAT (the Reaver trades
 14-16 for its life when ammo runs dry with the ride late); two scbw

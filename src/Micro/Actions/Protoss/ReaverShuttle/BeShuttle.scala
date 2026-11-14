@@ -96,20 +96,31 @@ object BeShuttle extends Action {
       && passenger.transport.isEmpty
       && passenger.agent.ride.forall(shuttle==)
       && passenger.unitClass.spaceRequired + shuttle.agent.passengerSize <= shuttle.unitClass.spaceProvided
-      && (passenger.matchups.targetedByScarab || Protoss.Reaver(passenger) || (Protoss.HighTemplar(passenger) && MacroFacts.techStarted(Protoss.PsionicStorm)))
+      // A healthy Reaver holding its ground is not a pickup: adopting it
+      // glues the ride to a hull that will never board, and the chase
+      // claims every frame below, starving escort, park and await. Fetch
+      // only hailing, endangered, travelling or Scarab-targeted Reavers.
+      && (passenger.matchups.targetedByScarab
+        || passenger.agent.wantsPickup
+        || (Protoss.Reaver(passenger) && (endangered(shuttle, passenger) || sojourning(passenger)))
+        || (Protoss.HighTemplar(passenger) && MacroFacts.techStarted(Protoss.PsionicStorm)))
       && (shuttle.agent.passengers.isEmpty || shuttle.agent.passengers.headOption.map(_.squad).getOrElse(shuttle.squad).forall(passenger.squad.contains))
     )
 
+  private def endangered(shuttle: FriendlyUnitInfo, hailer: FriendlyUnitInfo): Boolean =
+    hailer.matchups.framesOfSafety < shuttle.framesToTravelTo(hailer.pixel) + 2 * shuttle.unitClass.framesToTurn180
+
+  private def sojourning(hailer: FriendlyUnitInfo): Boolean =
+    hailer.agent.destinationFinal().pixelDistance(hailer.pixel) > 32.0 * 20
+
   private def pickupNeed(shuttle: FriendlyUnitInfo, hailer: FriendlyUnitInfo): Double = {
-    val endangered = hailer.matchups.framesOfSafety < shuttle.framesToTravelTo(hailer.pixel) + 2 * shuttle.unitClass.framesToTurn180
-    val sojourning = hailer.agent.destinationFinal().pixelDistance(hailer.pixel) > 32.0 * 20
     var output = 1.0
     if (Protoss.Reaver(hailer))                     output *= 1000
     if (hailer.matchups.targetedByScarab)           output *= 100
     if (shuttle.squad.exists(hailer.squad.contains)) output *= 10
     if (shuttle.battle.exists(hailer.battle.contains)) output *= 5
-    if (endangered)                                 output *= 10
-    if (sojourning)                                 output *= 2
+    if (endangered(shuttle, hailer))                output *= 10
+    if (sojourning(hailer))                         output *= 2
     output
   }
 
