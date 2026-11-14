@@ -61,8 +61,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
    */
   private val chainActions: Set[String] = Set(
     "Cancel", "Liftoff", "Land", "Unbunk", "Meld", "Build",
-    "FinishConstruction", "FightOrFlee", "Repair", "GetRepairedMobile",
-    "GetRepairedBuilding", "Gather", "Addon", "Scan", "Unstick", "Produce",
+    "FinishConstruction", "FightOrFlee", "Repair", "GetRepairedMobile", "Gather", "Addon", "Scan", "Unstick", "Produce",
     "Rally", "ReloadInterceptors", "ReloadScarabs", "Transport", "Scout",
     "Bunk", "Crack", "Fight", "Attack", "Travel", "Follow", "StrategicNuke",
     "Cast", "Spot", "Stim", "EmergencyBunk", "Root", "BeFlier",
