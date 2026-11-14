@@ -48,4 +48,13 @@ object SquadRally {
 
   def shouldJoinAlly(distTiles: Double): Boolean =
     distTiles >= allyJoinTiles
+
+  /**
+   * Retreat never rallies (pure flags for the suite): a warrior falling
+   * back walks its own way out instead of rejoining the pack centroid -
+   * rallying into the line it just left feeds the guns it fled. Non-warriors
+   * keep their legs: probes and shuttles do not fight, so no verdict gates them.
+   */
+  def mayRally(isWarrior: Boolean, wantsFight: Boolean): Boolean =
+    ! isWarrior || wantsFight
 }

@@ -224,10 +224,14 @@ object MarchOrders {
   // Returning units keep their own slots - they are meant to disperse.
   // Slow hulls (Reavers) rally on a longer leash so they keep their slot
   // and their shot instead of chasing the pack all march.
+  // A retreating warrior never rallies: it walks its own way out instead
+  // of rejoining the pack centroid it just fled - the line it left is
+  // where the guns are. Non-warriors keep their legs (no verdict gates
+  // what never fights).
   private def rallyLeg(squad: Squad, unit: FriendlyUnitInfo, finalTravel: Pixel, suicide: Boolean): (Pixel, Boolean) = {
     val pack     = ?(unit.flying, squad.centroidAir, squad.centroidGround)
     val leash    = SquadRally.rallyRadiusFor(Protoss.Reaver(unit))
-    val rallying = ! suicide && squad.fightConsensus && SquadRally.isRallying(unit.pixel, pack, leash)
+    val rallying = ! suicide && squad.fightConsensus && SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) && SquadRally.isRallying(unit.pixel, pack, leash)
     (?(rallying, pack, finalTravel), rallying)
   }
 
@@ -236,7 +240,7 @@ object MarchOrders {
   // defenders keep their posts instead of bunching up.
   private def joinLeg(squad: Squad, unit: FriendlyUnitInfo, suicide: Boolean): Option[Pixel] = {
     val nearestAlly  = Maff.minBy(squad.units.view.filter(_ != unit))(_.pixelDistanceCenter(unit.pixel))
-    val joiningAlly  = ! suicide && squad.fightConsensus && nearestAlly.exists(a => SquadRally.shouldJoinAlly(unit.tileDistanceCenter(a.pixel)))
+    val joiningAlly  = ! suicide && squad.fightConsensus && SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) && nearestAlly.exists(a => SquadRally.shouldJoinAlly(unit.tileDistanceCenter(a.pixel)))
     if (joiningAlly) nearestAlly.map(_.pixel) else None
   }
 

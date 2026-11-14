@@ -46,4 +46,10 @@ class SquadRallySuite extends AnyFunSuite {
     assert( ! SquadRally.shouldJoinAlly(0.59))
     assert( ! SquadRally.shouldJoinAlly(0.0))
   }
+
+  test("a retreating warrior never rallies, others keep their legs") {
+    assert(SquadRally.mayRally(isWarrior = true, wantsFight = true))
+    assert( ! SquadRally.mayRally(isWarrior = true, wantsFight = false))
+    assert(SquadRally.mayRally(isWarrior = false, wantsFight = false))
+  }
 }
