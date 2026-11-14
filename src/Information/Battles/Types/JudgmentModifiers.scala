@@ -39,6 +39,7 @@ object JudgmentModifiers {
     add("Hysteresis",   Colors.MediumViolet,  hysteresis(battle))
     add("StaticDefense", Colors.DeepOrange,   staticDefense(battle))
     add("FewZealots",    Colors.MediumTeal,    fewZealotsVsLings(battle))
+    add("ZealotSwarm",   Colors.BrightYellow,  zealotsVsLings(battle))
     output
   }
 
@@ -212,6 +213,25 @@ object JudgmentModifiers {
     if (battle.us.units.count(_.unitClass.isWarrior) > fewZealotsCount) return None
 
     modifyTarget(fewZealotsPenalty)
+  }
+
+  /** Pure zealot-vs-ling fights demand a 10% safety margin: lings surround
+    * and trade up on even numbers, so require a clearly better position
+    * before committing. Only when both sides field nothing else that
+    * fights (spectators like Overlords do not count). */
+  val zealotsVsLingsMargin: Double = 0.10
+
+  def zealotsVsLings(battle: Battle): Option[JudgmentModifier] =
+    zealotsVsLings(battle.us.units, battle.enemy.units)
+
+  def zealotsVsLings(oursAll: Seq[UnitInfo], foesAll: Seq[UnitInfo]): Option[JudgmentModifier] = {
+    val ours = oursAll.view.filter(_.unitClass.isWarrior)
+    val foes = foesAll.view.filter(_.unitClass.isWarrior)
+    if (ours.isEmpty || foes.isEmpty) return None
+    if ( ! ours.forall(u => Protoss.Zealot(u))) return None
+    if ( ! foes.forall(u => Zerg.Zergling(u))) return None
+
+    modifyTarget(zealotsVsLingsMargin)
   }
   private case class Motivation(var amount: Double = 0, var weight: Double = 0)
   def hysteresis(unit: FriendlyUnitInfo): (Double, Double) = {
