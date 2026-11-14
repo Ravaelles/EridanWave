@@ -12,7 +12,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * the ride holds untouched behind it. Small pack: the Reaver eats it
  * alone. Large pack: the pair needs Dragoon escorts or the teeth win.
  */
-class ReaverZombieSuite extends AnyFunSuite {
+class ReaverZombieSuite extends AnyFunSuite with StarEngineSuite {
 
   private def vetoed(f: Body): Boolean =
     f.kind.isBuilding && ! TargetFilterFocus.allowsBuilding(

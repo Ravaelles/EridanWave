@@ -11,7 +11,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * pilot calls the shipped kernel, so the kill order proves the shipped
  * rule, not a copy: the SCV starts closest but dies last.
  */
-class DarkTemplarRazeSuite extends AnyFunSuite {
+class DarkTemplarRazeSuite extends AnyFunSuite with StarEngineSuite {
 
   private def tierPilot(fallback: (Double, Double)): Pilot = new Pilot {
 

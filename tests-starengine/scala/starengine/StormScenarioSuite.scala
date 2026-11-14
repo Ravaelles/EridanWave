@@ -12,7 +12,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * permits it, not a copy. Storm numbers (cost, damage, box) live in the
  * World companion, read by both the engine and the pilot.
  */
-class StormScenarioSuite extends AnyFunSuite {
+class StormScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
   /** Templar that storms the densest in-reach pack the shipped vetoes allow, else holds. */
   private class TemplarStorm extends Pilot {

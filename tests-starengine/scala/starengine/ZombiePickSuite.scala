@@ -8,7 +8,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * nothing when nobody lives. Every scenario plays against this pick,
  * so the pick itself stays pinned here instead of drifting per suite.
  */
-class ZombiePickSuite extends AnyFunSuite {
+class ZombiePickSuite extends AnyFunSuite with StarEngineSuite {
 
   private def ling(x: Double, y: Double, hpRatio: Double): Body = {
     val hp = (Zerg.Zergling.maxTotalHealth * hpRatio).toInt

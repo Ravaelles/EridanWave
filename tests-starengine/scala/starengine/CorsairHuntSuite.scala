@@ -13,7 +13,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * flee - the turn-away bug ends here - while real guns keep the hulls
  * out of reach and the Overlords still die.
  */
-class CorsairHuntSuite extends AnyFunSuite {
+class CorsairHuntSuite extends AnyFunSuite with StarEngineSuite {
 
   /** Production order: flee ranged threats first, hunt the nearest Overlord second. */
   private class CorsairHunt extends Pilot {

@@ -13,7 +13,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * (nearest), then the base falls; a vetoed Pylon standing under Dragoons
  * is the reproduced miss.
  */
-class SuicideRazeSuite extends AnyFunSuite {
+class SuicideRazeSuite extends AnyFunSuite with StarEngineSuite {
 
   private def vetoed(f: Body): Boolean =
     f.kind.isBuilding && ! TargetFilterFocus.allowsBuilding(

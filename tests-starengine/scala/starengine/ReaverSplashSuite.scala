@@ -12,7 +12,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * cost one scarab each. Lings hold still so the geometry stays exact;
  * the Reaver outranges them either way.
  */
-class ReaverSplashSuite extends AnyFunSuite {
+class ReaverSplashSuite extends AnyFunSuite with StarEngineSuite {
 
   private def pack(spacingPx: Double): Seq[Body] =
     (0 until 6).map(i =>

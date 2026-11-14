@@ -14,7 +14,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * hardcoded speeds) and calls the shipped veto kernels, so a kill
  * proves the shipped rule permits the cast and the lead math holds.
  */
-class StormLeadSuite extends AnyFunSuite {
+class StormLeadSuite extends AnyFunSuite with StarEngineSuite {
 
   /** Hydralisk drift: down-left, full speed, every frame. */
   private class DownLeft extends Pilot {

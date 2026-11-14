@@ -12,7 +12,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * fire. Speeds, reaches and damage are the real UnitType numbers; the
  * trickle is staggered Hold-then-zombie pilots, so no engine change.
  */
-class ContainSunkensSuite extends AnyFunSuite {
+class ContainSunkensSuite extends AnyFunSuite with StarEngineSuite {
 
   /** Shared ring latch: one hit pulls every hull back for pullbackFrames. */
   private class RingPullback(val pullbackFrames: Int) {

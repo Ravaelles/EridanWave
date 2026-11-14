@@ -331,8 +331,11 @@
                         <configuration>
                             <!-- JUnit XML with per-test times for scripts/profile-tests.sh.
                                  Relative to the plugin reports dir, so this lands in
-                                 target/scalatest-reports/junit-reports. -->
+                                 target/scalatest-reports/junit-reports.
+                                 StarEngine scenarios stay out: tagged starengine.Slow,
+                                 run ad hoc only (scripts/starengine.sh). -->
                             <junitxml>junit-reports</junitxml>
+                            <tagsToExclude>starengine.Slow</tagsToExclude>
                         </configuration>
                         <executions>
                             <execution>

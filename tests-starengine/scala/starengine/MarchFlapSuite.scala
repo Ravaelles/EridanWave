@@ -14,7 +14,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * goal that repeats - the VoteConfirmation shape. Same jitter, same map:
  * the raw goal must stall while the confirmed one walks home.
  */
-class MarchFlapSuite extends AnyFunSuite {
+class MarchFlapSuite extends AnyFunSuite with StarEngineSuite {
 
   private val goalA = (300.0, 0.0)
   private val goalB = (-300.0, 0.0)

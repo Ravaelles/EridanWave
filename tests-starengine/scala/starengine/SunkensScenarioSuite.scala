@@ -14,7 +14,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * back near it. Workers (lings) die first, then the static, the ride
  * never takes a hit.
  */
-class SunkensScenarioSuite extends AnyFunSuite {
+class SunkensScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
   private def vetoed(f: Body): Boolean =
     f.kind.isBuilding && ! TargetFilterFocus.allowsBuilding(
