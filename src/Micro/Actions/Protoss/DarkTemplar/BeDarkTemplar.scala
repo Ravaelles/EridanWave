@@ -146,7 +146,7 @@ object BeDarkTemplar extends Action {
         t.unitClass.isWorker))
       DarkTemplarTargets.pick(marks).map(close)
     } else {
-      Maff.minBy(open.filter(t => t.visible && unit.canAttack(t)))(_.pixelDistanceEdge(unit))
+      Maff.minBy(open)(_.pixelDistanceEdge(unit))
     }
   }
 
