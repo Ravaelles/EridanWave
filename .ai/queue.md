@@ -42,6 +42,18 @@ scout-harass soup to one table; worker-fight backup question to one gate.
 
 ## Awaiting a validation game (all committed, suite-green, jar synced)
 
+Night 2026-11-14 (all on the jar, suite-green): contain-leave
+confirmation - Contain/Deprox alternation 160 down to 39 on the
+sunkens map, the Reaver lives, 6-7 becomes 1-1. Pair duelist loop -
+`DuelFerry`, `BoardShotless` (x5), `EscortRide` (x4) all fire live on
+Reav_v_Drag + Reav_v_DragB, both VICTORY. Storm consensus walk -
+casters re-arm on squad fightConsensus (unproven, needs a Storm
+game). Still open: the sunkens duel stays DEFEAT (the Reaver trades
+14-16 for its life when ammo runs dry with the ride late); two scbw
+long games crashed server-side at 8-12 min (wine path stable);
+production Storm proof still needs a game that reaches Templars
+(rushes keep ending them first).
+
 Targeting/micro: `OverlordSnipe` (`a869e66d6`, chase never, snipe
 lone) - natural Overlord-in-combat. DT doctrine (`1556073e9`) -
 natural melee with DTs. Defiler>Lurker>Mutalisk (`139b97e5a`) -

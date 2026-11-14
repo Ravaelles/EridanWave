@@ -23,7 +23,19 @@ object PsionicStorm extends TargetedSpell {
   val stormLeadTiles: Double = 2.0
 
   override protected def leadTiles: Double = stormLeadTiles
-  override protected def additionalConditions(unit: FriendlyUnitInfo): Boolean = unit.agent.shouldFight || unit.matchups.threatsInRange.nonEmpty || unit.base.exists(_.owner.isEnemy)
+
+  /**
+   * Casters walk with the attack: a personal retreat verdict strands a
+   * full battery behind the army while Hydras chew it 300 pixels away,
+   * out of the threat band but inside storm range. The squad consensus
+   * re-arms the walk; the leash, the pack ladder and the friendly veto
+   * still gate the cast itself.
+   */
+  override protected def additionalConditions(unit: FriendlyUnitInfo): Boolean =
+    unit.agent.shouldFight ||
+      unit.matchups.threatsInRange.nonEmpty ||
+      unit.base.exists(_.owner.isEnemy) ||
+      unit.squad.exists(_.fightConsensus)
 
   /** Approach leash vs Terran, in tiles: storms walk, not marches. */
   val stormApproachVsTerranTiles: Int = 12
