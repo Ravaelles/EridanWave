@@ -7,6 +7,7 @@ import Mathematics.Maff
 import Mathematics.Physics.Force
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
+import Micro.Actions.Combat.Maneuvering.WorkerThreatFlee
 import Micro.Actions.Scouting.Scout
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
@@ -22,8 +23,13 @@ object Tickle extends Action {
 
   override protected def perform(tickler: FriendlyUnitInfo): Unit = {
 
-    // Return resources now so we can mine again later
-    if (tickler.carrying && tickler.base.exists(_.owner.isUs)) {
+    // Return resources now so we can mine again later - but only with the
+    // ground clear. Under fire the return trip is a fixed itinerary with the
+    // minerals in hand, and the worker walked it until it died (trace:
+    // potshot/Potshot/returnCargo under an attacking pack) instead of
+    // fighting or fleeing the thing shooting at it.
+    if (tickler.carrying && tickler.base.exists(_.owner.isUs) && WorkerThreatFlee.safeToReturnCargo(
+      Maff.min(tickler.matchups.threats.view.map(_.pixelDistanceEdge(tickler) * Maff.inv32)).getOrElse(Double.PositiveInfinity))) {
       Commander.returnCargo(tickler)
 
       return

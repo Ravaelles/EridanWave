@@ -48,4 +48,11 @@ class WorkerThreatFleeSuite extends AnyFunSuite {
     assert(WorkerThreatFlee.fleeDarkTemplarStraight(distTiles = 3.0))
     assert( ! WorkerThreatFlee.fleeDarkTemplarStraight(distTiles = 3.01))
   }
+
+  test("cargo returns only with clear ground") {
+    assert(WorkerThreatFlee.safeToReturnCargo(nearestEnemyTiles = 12.01))
+    assert(WorkerThreatFlee.safeToReturnCargo(nearestEnemyTiles = 100.0))
+    assert( ! WorkerThreatFlee.safeToReturnCargo(nearestEnemyTiles = 12.0))
+    assert( ! WorkerThreatFlee.safeToReturnCargo(nearestEnemyTiles = 0.0))
+  }
 }

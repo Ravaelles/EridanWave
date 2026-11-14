@@ -29,6 +29,17 @@ object WorkerThreatFlee {
   /** A fighter this close to landing hits, in tiles beyond its range, counts. */
   val loneFighterTiles: Double = 1.5
 
+  /**
+   * No enemy this close means it is safe to walk cargo home, in tiles.
+   * A carrying worker that starts the return trip under fire walks a
+   * fixed itinerary with the minerals in hand and dies on it instead of
+   * fighting or fleeing.
+   */
+  val cargoClearTiles: Double = 12.0
+
+  def safeToReturnCargo(nearestEnemyTiles: Double): Boolean =
+    nearestEnemyTiles > cargoClearTiles
+
   /** This many enemy melee fighters near one miner means a pack. */
   val meleePackSize: Int = 2
 
