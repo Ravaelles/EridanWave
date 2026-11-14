@@ -131,6 +131,16 @@ final case class UnitClass(base: UnitType) extends UnitClassProxy(base) with Uni
     else if (this == Protoss.Reaver) Protoss.Scarab.groundDamageRaw
     else groundDamageRaw
 
+  /**
+   * Outer splash radius of the ground weapon, in pixels (the Scarab's for
+   * the Reaver, like its damage); 0 without ground radial splash.
+   * Air-only splashers read 0 here - the engine models ground splash only.
+   */
+  lazy val splashOuterPx: Double =
+    if (this == Protoss.Reaver) Protoss.Scarab.groundWeaponRaw.outerSplashRadius
+    else if (dealsRadialSplashDamage) groundWeaponRaw.outerSplashRadius
+    else 0.0
+
   private def cooldownZeroBecomesInfinity(cooldown: Int): Int = if (cooldown <= 0) Int.MaxValue else cooldown
 
   lazy val airDamageCooldown: Int =

@@ -20,9 +20,9 @@ class ReaverZombieSuite extends AnyFunSuite {
       isStaticDefense = f.kind.isStaticDefense,
       isSuicideMission = false)
 
-  private def lings(n: Int, cx: Double, cy: Double): Seq[Body] =
+  private def lings(n: Int, cx: Double, cy: Double, gap: Double = 32.0): Seq[Body] =
     (0 until n).map(i =>
-      new Body(Zerg.Zergling, cx + (i % 3) * 32.0 - 32.0, cy + (i / 3) * 32.0, Zerg.Zergling.maxTotalHealth))
+      new Body(Zerg.Zergling, cx + (i % 3) * gap - gap, cy + (i / 3) * gap, Zerg.Zergling.maxTotalHealth))
 
   private def pair(reaverPos: (Double, Double)): (Body, Body) =
     (new Body(Protoss.Reaver, reaverPos._1, reaverPos._2, Protoss.Reaver.maxTotalHealth),
@@ -49,7 +49,9 @@ class ReaverZombieSuite extends AnyFunSuite {
 
   test("a large zombie pack needs dragoon escorts, the pair alone is teeth food") {
     val (reaver, shuttle) = pair((0.0, 600.0))
-    val pack = lings(6, 0.0, 200.0)
+    // Spread past splash overlap: twelve lings converge faster than one
+    // scarab per minute clears them, so the lone hull dies chewing.
+    val pack = lings(16, 0.0, 200.0, gap = 150.0)
     val pilots: Map[Body, Pilot] = Map(
       reaver -> new Pilots.AttackMove(_.foes, (me, f) => ! vetoed(f), (0.0, 0.0)),
       shuttle -> new Pilots.Hold) ++
@@ -61,7 +63,7 @@ class ReaverZombieSuite extends AnyFunSuite {
     }
 
     println(s"DIAG lone reaver alive=${reaver.alive} lingsLeft=${pack.count(_.alive)} frames=${world.frame}")
-    assert( ! reaver.alive, "lone reaver should not survive six hungry lings - the escort rule exists for this")
+    assert( ! reaver.alive, "lone reaver should not survive sixteen hungry lings - the escort rule exists for this")
   }
 
   test("dragoon escorts carry the pair through the large pack") {

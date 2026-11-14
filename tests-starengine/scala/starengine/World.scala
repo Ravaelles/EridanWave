@@ -165,6 +165,15 @@ final class World(
         val victim = committed.orElse(nearestFoeOf(body, victims, (me, foe) => me.canHit(foe) && me.dist(foe) <= me.rangeAgainst(foe)))
         victim.foreach(v => {
           v.hp = Math.max(0, v.hp - body.damageAgainst(v))
+          // Radial splash approximation (no divisors, no scarab flight):
+          // the primary takes the full shot, every other live enemy in
+          // the outer radius takes half. Scarabs are enemy-splash, so
+          // our own bodies never catch it.
+          if (body.splashOuterPx > 0) {
+            victims.filter(o => o.alive && (o ne v) && o.dist(v) <= body.splashOuterPx).foreach(o => {
+              o.hp = Math.max(0, o.hp - body.damageAgainst(o) / 2)
+            })
+          }
           body.cooldownLeft = body.cooldownAgainst(v)
         })
       }

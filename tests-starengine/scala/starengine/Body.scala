@@ -9,7 +9,8 @@ import ProxyBwapi.UnitClasses.UnitClass
  * engine). Pixels everywhere, like the game reports them. Simplifications,
  * all documented here: constant top speed with instant stops (no
  * acceleration or braking), one pooled hit-point bar (no shield/hull
- * split), instant damage on the firing frame (no projectiles), storms as
+ * split), instant damage on the firing frame (no projectiles, no scarab
+ * flight), radial splash as full-plus-half (no divisor ladder), storms as
  * instant flat damage in the cast frame (no lingering field).
  */
 final class Body(val kind: UnitClass, var x: Double, var y: Double, var hp: Double) {
@@ -38,6 +39,13 @@ final class Body(val kind: UnitClass, var x: Double, var y: Double, var hp: Doub
 
   def canHit(foe: Body): Boolean =
     foe.alive && damageAgainst(foe) > 0 && rangeAgainst(foe) > 0
+
+  /**
+   * Outer splash radius, in pixels (real BWAPI weapon data, Scarab for the
+   * Reaver); 0 without ground radial splash. No scarab flight is modeled -
+   * the shot lands instantly, per the approximation contract.
+   */
+  def splashOuterPx: Double = kind.splashOuterPx
 
   def dist(o: Body): Double = {
     val dx = x - o.x
