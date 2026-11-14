@@ -57,7 +57,10 @@ game). Still open: the sunkens duel stays DEFEAT (the Reaver trades
 14-16 for its life when ammo runs dry with the ride late); two scbw
 long games crashed server-side at 8-12 min (wine path stable);
 production Storm proof still needs a game that reaches Templars
-(rushes keep ending them first).
+(rushes keep ending them first). Crona 4-pool overrun (scbw,
+11/36 at 5:47): lings arrive before the first Zealot, probes brawl
+and die, no Search acts in trace - early-pool scout reaction needs
+gameplan review.
 
 Storm consensus walk (Templars follow the attack: a personal retreat
 no longer blocks the approach; leash, ladder and veto unchanged) -
