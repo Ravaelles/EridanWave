@@ -155,22 +155,34 @@ object BeShuttle extends Action {
     // cargo): a wound-scaled 4-to-9 band instead of the pair's 4-to-13.
     val preemptPixels = (if (ReaverShuttlePair.isBaitRide(shuttle)) shuttle.woundPercentBonus(4.0, 9.0)
       else ReaverShuttleFlight.baseFleeMarginTiles + shuttle.woundPercentBonus(0.0, ReaverShuttleFlight.woundFleeBonusTiles)) * 32.0
-    val attackers = shuttle.matchups.threats.filter(t =>
-      t.canAttack(shuttle) && t.likelyStillThere && (
-        (Zerg.Scourge(t) && t.pixelDistanceEdge(shuttle) <= ReaverShuttleFlight.scourgeDistTiles * 32.0) ||
-          ReaverShuttleFlight.threatensPreemptively(t.pixelDistanceEdge(shuttle), t.pixelRangeAgainst(shuttle), preemptPixels)))
-    Maff.minBy(attackers.map(_.pixel))(_.pixelDistanceSquared(shuttle.pixel)).map(focus => {
-      shuttle.agent.act("AirFlee")
-      // Corner-guarded: a flee that ends in a 6x6 corner trap strands the
-      // hull until something kills it, so slide along the nearest edge.
-      val away = AsAirAvoidLandUnits.outOfCorner(
-        shuttle.pixel.project(focus, -preemptPixels).walkablePixel,
-        With.mapPixelWidth,
-        With.mapPixelHeight)
-      shuttle.agent.destinationNext.set(away)
-      Commander.move(shuttle)
-      true
-    }).getOrElse(false)
+    // Latched on the worst penetration across every attacker: a sharp
+    // per-threat edge flips each time the pack breathes, so the ferry
+    // never delivers. Melee that cannot reach still counts nothing, and
+    // the flee runs from the worst threat, not the nearest pixel.
+    val attackers = shuttle.matchups.threats.view.filter(t => t.canAttack(shuttle) && t.likelyStillThere).toVector
+    val scored = attackers.view.flatMap(t =>
+      if (Zerg.Scourge(t)) Some((ReaverShuttleFlight.scourgeDistTiles * 32.0 - t.pixelDistanceEdge(shuttle), t.pixel))
+      else {
+        val reach = t.pixelRangeAgainst(shuttle)
+        if (Micro.Actions.Combat.Maneuvering.RangedReach.isRanged(reach))
+          Some((reach + preemptPixels - t.pixelDistanceEdge(shuttle), t.pixel))
+        else None
+      }).toVector
+    val worstValue = ReaverShuttleFlight.worstPenetration(scored.map(_._1))
+    if ( ! ReaverShuttleFlight.fleeLatched(shuttle.id, worstValue)) return false
+
+    val focus = scored.reduceOption((a, b) => if (a._1 >= b._1) a else b).map(_._2).getOrElse(shuttle.pixel)
+    shuttle.agent.act("AirFlee")
+    // Corner-guarded: a flee that ends in a 6x6 corner trap strands the
+    // hull until something kills it, so slide along the nearest edge.
+    val away = AsAirAvoidLandUnits.outOfCorner(
+      shuttle.pixel.project(focus, -preemptPixels).walkablePixel,
+      With.mapPixelWidth,
+      With.mapPixelHeight)
+    shuttle.agent.destinationNext.set(away)
+    Commander.move(shuttle)
+
+    true
   }
 
   /** Raid status with a loaded hull: fly the pair at the enemy base. */

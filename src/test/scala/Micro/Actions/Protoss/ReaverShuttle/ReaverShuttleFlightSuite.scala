@@ -29,4 +29,26 @@ class ReaverShuttleFlightSuite extends AnyFunSuite {
     val rear = ReaverShuttleFlight.rearOfCluster(members, Pixel(0, 0))
     assert(rear.x < 960 && rear.y == 0)
   }
+
+  test("the worst penetration is the deepest trigger") {
+    assert(ReaverShuttleFlight.worstPenetration(Seq.empty) == Double.NegativeInfinity)
+    assert(ReaverShuttleFlight.worstPenetration(Seq(-100.0, -10.0)) == -10.0)
+    assert(ReaverShuttleFlight.worstPenetration(Seq(-100.0, 5.0)) == 5.0)
+  }
+
+  test("the flee latch enters sharp and releases two tiles past every trigger") {
+    ReaverShuttleFlight.reset()
+    assert(ReaverShuttleFlight.fleeLatched(1, 1.0))
+    assert(ReaverShuttleFlight.fleeLatched(1, -1.0))
+    assert(ReaverShuttleFlight.fleeLatched(1, -63.0))
+    assert( ! ReaverShuttleFlight.fleeLatched(1, -65.0))
+    assert( ! ReaverShuttleFlight.fleeLatched(1, -1.0))
+  }
+
+  test("a fresh hull only flees past a live trigger") {
+    ReaverShuttleFlight.reset()
+    assert(ReaverShuttleFlight.fleeLatched(7, 1.0))
+    assert( ! ReaverShuttleFlight.fleeLatched(8, -1.0))
+    assert( ! ReaverShuttleFlight.fleeLatched(8, Double.NegativeInfinity))
+  }
 }
