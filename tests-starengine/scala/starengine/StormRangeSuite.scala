@@ -14,7 +14,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * starting distance stays the independent variable (zombie pressure is
  * covered by the other storm scenarios).
  */
-class StormRangeSuite extends AnyFunSuite {
+class StormRangeSuite extends AnyFunSuite with StarEngineSuite {
 
   /** Leash-honoring Templar: storms the densest in-leash box the shipped vetoes allow, walks to the leash edge, holds past it. */
   private class LeashTemplar(leashPx: Double) extends Pilot {

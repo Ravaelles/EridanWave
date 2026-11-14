@@ -36,7 +36,8 @@ class PsionicStormSuite extends AnyFunSuite {
   test("crucial targets bypass the pack rule, thin packs never cast") {
     assert( ! PsionicStorm.vetoThinPack(foeCount = 1, hasCrucialTarget = true, energy = 75, enemyIsProtoss = false))
     assert(PsionicStorm.vetoThinPack(foeCount = 1, hasCrucialTarget = false, energy = 75, enemyIsProtoss = false))
-    assert(PsionicStorm.vetoThinPack(foeCount = 2, hasCrucialTarget = false, energy = 119, enemyIsProtoss = false))
+    assert( ! PsionicStorm.vetoThinPack(foeCount = 2, hasCrucialTarget = false, energy = 100, enemyIsProtoss = false))
+    assert(PsionicStorm.vetoThinPack(foeCount = 2, hasCrucialTarget = false, energy = 99, enemyIsProtoss = false))
     assert( ! PsionicStorm.vetoThinPack(foeCount = 3, hasCrucialTarget = false, energy = 120, enemyIsProtoss = false))
     assert(PsionicStorm.vetoThinPack(foeCount = 40, hasCrucialTarget = false, energy = 74, enemyIsProtoss = false))
   }
