@@ -57,7 +57,8 @@ object FightOrFlee extends Action {
     irradiated  = u.painfullyIrradiated,
     dragoonBrave  = NoRetreat.dragoonBrave(u),
     homeStand     = NoRetreat.homeStand(u),
-    tanksAtNatural = NoRetreat.tanksAtNatural(u))
+    tanksAtNatural = NoRetreat.tanksAtNatural(u),
+    reaverBrave   = NoRetreat.reaverBrave(u))
   private def contactFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
     safe        = u.battle.exists(! _.enemy.canAttackIfVisible(u)),
     // Cluster-level contact: no enemy within firing range plus margin of ANY

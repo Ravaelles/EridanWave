@@ -5,6 +5,7 @@ import Information.Geography.Chokes
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Protoss.Dragoon.DragoonBrave
+import Micro.Actions.Protoss.ReaverShuttle.ReaverBrave
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.UnitFilters.IsTank
@@ -31,6 +32,22 @@ object NoRetreat {
       With.self.supplyUsed200,
       ArmyStrength.score(With.battles.globalAttack.us.skimStrengthTotal, With.battles.globalAttack.enemy.skimStrengthTotal),
       unit.matchups.threats.nonEmpty && unit.matchups.threats.forall(Terran.Marine))
+
+  /**
+   * A healthy escorted Reaver is a firing platform: the sim's blanket
+   * Fallback sent it walking away from packs it outranges ("Fallback/
+   * Retreat" with 150 health, allies beside it and a full scarab), so a
+   * braced Reaver stands and shoots what is already in reach instead.
+   */
+  def reaverBrave(unit: FriendlyUnitInfo): Boolean =
+    ReaverBrave.applies(
+      Protoss.Reaver(unit),
+      unit.totalHealth,
+      unit.matchups.allies.exists(a =>
+        ! a.flying && a.unitClass.isWarrior && a.pixelDistanceEdge(unit) <= ReaverBrave.escortTiles * Maff.inv32),
+      unit.matchups.targetsInRange.exists(t =>
+        unit.pixelDistanceEdge(t) <= ReaverBrave.reachTiles * Maff.inv32),
+      unit.cooldownLeft)
 
   /** Between our main and the natural choke minus four warriors hold home. */
   def homeStand(unit: FriendlyUnitInfo): Boolean =
