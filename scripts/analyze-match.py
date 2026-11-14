@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """One-page match debrief for a finished scbw game dir.
 
-Usage: python3 scripts/analyze-match.py <GAME_DIR> [--limit=N]
+Usage: python3 scripts/analyze-match.py <GAME_DIR> [--limit=N] [--tag=NAME]
 
 Prints: result, kills/lost, top acts (sorted), our deaths by class,
 and for the worst-dying combat classes the last decision each victim
 logged before dying (formation death vs combat death signal).
+With --tag, also appends one TSV row to out/matches.tsv for the
+campaign rollup (batch comparisons pre/post fix).
 """
 import csv
 import json
@@ -25,9 +27,12 @@ def load_trace(game_dir):
 def main(argv):
     args = [a for a in argv[1:] if not a.startswith("--")]
     limit = 40
+    tag = None
     for a in argv[1:]:
         if a.startswith("--limit="):
             limit = int(a.split("=")[1])
+        if a.startswith("--tag="):
+            tag = a.split("=")[1]
     if not args:
         print(__doc__)
 
@@ -121,7 +126,38 @@ def main(argv):
     print("--- death-tail rollup ---")
     for (t, last), n in tails.most_common(12):
         print("%5dx %-22s <- %s" % (n, t, last[:90]))
+    if tag:
+        log_campaign_row(name, game, tag, res, kl, acts, deaths)
     return 0
+
+def log_campaign_row(name, game_dir, tag, res, kl, acts, deaths):
+    tsv = os.path.join("out", "matches.tsv")
+    header = "game\ttag\tenemy\twinner\tkills_lost\tstorms\tdt_hunt\tdt_evade\tcorsair_hunt\tcorsair_dance\ttop_act\ttop_deaths\n"
+    bots = res.get("bots") or []
+    enemy = ",".join(b for b in bots if not b.startswith("EridanWave"))
+    kills = ""
+    import re
+    m = re.search(r"(\d+)/(\d+)", kl)
+    if m:
+        kills = "%s/%s" % (m.group(1), m.group(2))
+    acts_c = acts
+    top_act = acts_c.most_common(1)[0][0] if acts_c else ""
+    top_deaths = ",".join("%s:%d" % (k.split("_")[-1][:4], v)
+                           for k, v in deaths.most_common(3))
+    row = "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%s\t%s\n" % (
+        name, tag, enemy, res.get("winner", "?"), kills,
+        acts_c.get("PsionicStorm", 0),
+        acts_c.get("DarkTemplarHunt", 0),
+        acts_c.get("DarkTemplarEvade", 0),
+        acts_c.get("CorsairHunt", 0),
+        acts_c.get("CorsairDance", 0),
+        top_act, top_deaths)
+    new = not os.path.exists(tsv)
+    with open(tsv, "a", encoding="utf-8") as f:
+        if new:
+            f.write(header)
+        f.write(row)
+    print("logged to %s [%s]" % (tsv, tag))
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
