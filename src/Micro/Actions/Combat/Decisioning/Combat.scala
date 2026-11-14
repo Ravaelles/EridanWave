@@ -5,6 +5,8 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Techniques._
+import Micro.Actions.Combat.Maneuvering.AvoidDarkTemplar
+import Micro.Actions.Combat.Maneuvering.AvoidLurkers
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Agency.Commander
@@ -142,6 +144,11 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
     unit.matchups.ignorant || unit.topSpeedTransported >= 0.9 * group.meanTopSpeed && unit.matchups.pixelsToThreatRange.forall(_ > 32 * ?(unit.agent.receivedPushPriority() < TrafficPriorities.Bump, 2, 16))
 
   private def dispatchByTechnique(): Unit = {
+
+    // Unseen killers outrank every formation and duel: a remembered Lurker
+    // or cloaked Templar kills the line that rallies or engages through
+    // its memory, so the dodge claims before Walk, Aim, retreat and fight.
+    if (AvoidDarkTemplar.act(unit) || AvoidLurkers.act(unit)) return
 
     if (technique == Walk       && maneuvers.walk())        return
     if (technique == Aim        && AimBehavior.run(unit, this))        return
