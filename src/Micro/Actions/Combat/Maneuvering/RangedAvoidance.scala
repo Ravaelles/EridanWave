@@ -2,7 +2,6 @@ package Micro.Actions.Combat.Maneuvering
 
 import Mathematics.Maff
 import Mathematics.Points.Pixel
-import Utilities._
 
 /**
  * Generic standoff from enemy ranged units (no game access): flyers keep
@@ -44,8 +43,11 @@ object RangedAvoidance {
     else Some(Maff.centroid(threats))
   }
 
-  def fleeFrom(own: Pixel, focus: Pixel, marginTiles: Double): Pixel = {
-    val away = own.project(focus, -marginTiles * 32)
-    ?(away.walkable, away, away.walkablePixel)
-  }
+  /**
+   * Raw flee point, past the margin on the own-focus line: no walkability
+   * clamp here (that reads game grids, which suites do not have), the
+   * caller clamps before issuing the order.
+   */
+  def fleeFrom(own: Pixel, focus: Pixel, marginTiles: Double): Pixel =
+    own.project(focus, -marginTiles * 32)
 }
