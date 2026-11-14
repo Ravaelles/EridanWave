@@ -103,10 +103,31 @@ object BeShuttle extends Action {
       // only hailing, endangered, travelling or Scarab-targeted Reavers.
       && (passenger.matchups.targetedByScarab
         || passenger.agent.wantsPickup
-        || (Protoss.Reaver(passenger) && (endangered(shuttle, passenger) || travelsFar(passenger) || ReaverShuttlePair.pairIdle(shuttle, passenger)))
+        || (Protoss.Reaver(passenger) && (endangered(shuttle, passenger) || travelsFar(passenger) || ReaverShuttlePair.pairIdle(shuttle, passenger) || strandedFetch(shuttle, passenger) || shuttle.agent.passengers.contains(passenger)))
         || (Protoss.HighTemplar(passenger) && MacroFacts.techStarted(Protoss.PsionicStorm)))
       && (shuttle.agent.passengers.isEmpty || shuttle.agent.passengers.headOption.map(_.squad).getOrElse(shuttle.squad).forall(passenger.squad.contains))
     )
+
+  /**
+   * Idle hull, stranded Reaver: a Shuttle standing still by the main while
+   * a Reaver sits within twenty tiles and no ground enemy is inside
+   * eleven goes and picks it up. The empty hull otherwise awaited the
+   * army while the Reaver walked into the same choke all game. Once the
+   * fetch is committed the reservation keeps the hail alive as the hull
+   * moves off its idle spot.
+   */
+  private def strandedFetch(shuttle: FriendlyUnitInfo, passenger: FriendlyUnitInfo): Boolean = {
+    if (With.geography.ourBases.isEmpty) return false
+
+    FerryFetch.shouldFetch(
+      shuttleToMainTiles = shuttle.pixelDistanceCenter(With.geography.ourMain.heart.center) * Maff.inv32,
+      stationary         = shuttle.speed < FerryFetch.stationarySpeed,
+      reaverDistTiles  = shuttle.pixelDistanceEdge(passenger) * Maff.inv32,
+      groundFoeTiles     = Maff.minBy(
+        With.units.enemy.view.filter(e => ! e.flying && e.likelyStillThere))(_.pixelDistanceEdge(shuttle))
+        .map(_.pixelDistanceEdge(shuttle) * Maff.inv32)
+        .getOrElse(Double.PositiveInfinity))
+  }
 
   private def endangered(shuttle: FriendlyUnitInfo, hailer: FriendlyUnitInfo): Boolean =
     hailer.matchups.framesOfSafety < shuttle.framesToTravelTo(hailer.pixel) + 2 * shuttle.unitClass.framesToTurn180
