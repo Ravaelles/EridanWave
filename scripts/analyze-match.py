@@ -132,7 +132,7 @@ def main(argv):
 
 def log_campaign_row(name, game_dir, tag, res, kl, acts, deaths):
     tsv = os.path.join("out", "matches.tsv")
-    header = "game\ttag\tenemy\twinner\tkills_lost\tstorms\tdt_hunt\tdt_evade\tcorsair_hunt\tcorsair_dance\ttop_act\ttop_deaths\n"
+    header = "game\ttag\tenemy\twinner\tkills_lost\tstorms\tdt_hunt\tdt_evade\tcorsair_hunt\tcorsair_dance\tht_dead\tlurkers_killed\ttop_act\ttop_deaths\n"
     bots = res.get("bots") or []
     enemy = ",".join(b for b in bots if not b.startswith("EridanWave"))
     kills = ""
@@ -144,13 +144,26 @@ def log_campaign_row(name, game_dir, tag, res, kl, acts, deaths):
     top_act = acts_c.most_common(1)[0][0] if acts_c else ""
     top_deaths = ",".join("%s:%d" % (k.split("_")[-1][:4], v)
                            for k, v in deaths.most_common(3))
-    row = "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%s\t%s\n" % (
+    ht_dead = deaths.get("Protoss_High_Templar", 0)
+    lurkers_killed = 0
+    try:
+        with open(os.path.join(game_dir, "logs_0", "unit_events.csv"),
+                  encoding="utf-8", errors="replace") as f:
+            for row in csv.DictReader(f):
+                if (row["event_type"] == "unitDestroy"
+                        and row["player_owned"] == "false"
+                        and row["unit_type"] == "Zerg_Lurker"):
+                    lurkers_killed += 1
+    except OSError:
+        pass
+    row = "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s\n" % (
         name, tag, enemy, res.get("winner", "?"), kills,
         acts_c.get("PsionicStorm", 0),
         acts_c.get("DarkTemplarHunt", 0),
         acts_c.get("DarkTemplarEvade", 0),
         acts_c.get("CorsairHunt", 0),
         acts_c.get("CorsairDance", 0),
+        ht_dead, lurkers_killed,
         top_act, top_deaths)
     new = not os.path.exists(tsv)
     with open(tsv, "a", encoding="utf-8") as f:
