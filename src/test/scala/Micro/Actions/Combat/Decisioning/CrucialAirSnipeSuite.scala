@@ -33,6 +33,22 @@ class CrucialAirSnipeSuite extends AnyFunSuite {
       mark(3.0, Carrier, 150.0))).contains(1))
   }
 
+  test("a Scourge past the range still gets sniped when it is coming at us") {
+    assert(CrucialAirSnipe.inSnipeReach(inRange = true, isScourge = true, facingUs = true, beyondTiles = 0.0))
+    assert(CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = true, beyondTiles = 1.5))
+    assert(CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = true, beyondTiles = 0.5))
+  }
+
+  test("a leaving Scourge past the range is left alone") {
+    assert( ! CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = false, beyondTiles = 0.5))
+    assert( ! CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = true, beyondTiles = 1.51))
+  }
+
+  test("capitals never get the reach bonus") {
+    assert(CrucialAirSnipe.inSnipeReach(inRange = true, isScourge = false, facingUs = true, beyondTiles = 0.0))
+    assert( ! CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = false, facingUs = true, beyondTiles = 0.5))
+  }
+
   test("no victims means no pick") {
     assert(CrucialAirSnipe.pick(Seq.empty).isEmpty)
   }

@@ -23,6 +23,17 @@ object CrucialAirSnipe {
 
   final case class Mark(distTiles: Double, kind: VictimKind, totalHealth: Double)
 
+  /** Extra reach against an incoming Scourge, in tiles: shoot it before it connects. */
+  val scourgeReachBonusTiles: Double = 1.5
+
+  /**
+   * Snipe reach (pure flags for the suite): in range always counts; past
+   * the range an incoming Scourge still counts inside the bonus, a
+   * leaving one never does, and capitals never get the bonus.
+   */
+  def inSnipeReach(inRange: Boolean, isScourge: Boolean, facingUs: Boolean, beyondTiles: Double): Boolean =
+    inRange || (isScourge && facingUs && beyondTiles <= scourgeReachBonusTiles)
+
   /** First the nearest Scourge, then the weakest of each capital in order. */
   def pick(marks: Seq[Mark]): Option[Int] = {
     if (marks.isEmpty) return None

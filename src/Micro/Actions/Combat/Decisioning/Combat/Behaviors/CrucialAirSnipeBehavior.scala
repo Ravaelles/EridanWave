@@ -9,7 +9,9 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 /**
  * Crucial air-victim snipe: a grounded anti-air warrior shoots Scourge,
  * Carriers, Vessels, Battlecruisers and Wraiths on sight, in that order -
- * ahead of kiting, dressing, rallying and even retreating. A Scourge that
+ * ahead of kiting, dressing, rallying and even retreating. An incoming
+ * Scourge gets sniped from 1.5 tiles past the range edge, since waiting
+ * for contact means eating it. A Scourge that
  * lives one frame too long kills a Shuttle; a Carrier left alone kills
  * the army. Returns true when it shot or is already on the victim.
  */
@@ -23,7 +25,11 @@ object CrucialAirSnipeBehavior {
     if ( ! unit.unitClass.attacksAir) return false
 
     val victims = unit.matchups.targets.view.filter(t =>
-      t.visible && unit.inRangeToAttack(t) && kindOf(t).isDefined).toVector
+      t.visible && kindOf(t).isDefined && CrucialAirSnipe.inSnipeReach(
+        unit.inRangeToAttack(t),
+        Zerg.Scourge(t),
+        unit.isOtherUnitFacingUs(t),
+        unit.pixelsToGetInRange(t) * Maff.inv32)).toVector
     if (victims.isEmpty) return false
 
     val marks = victims.map(t => Mark(

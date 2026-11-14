@@ -549,6 +549,9 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
   @inline final def speed: Double = Maff.broodWarDistanceDouble(0.0, 0.0, velocityX, velocityY)
   @inline final def speedApproaching(other: UnitInfo): Double = speedApproaching(other.pixel)
   @inline final def speedApproaching(pixel: Pixel): Double = velocity.dot(Force(pixel.x - x, pixel.y - y).normalize)
+
+  /** Whether the other unit is coming at us (closing, not holding or leaving). */
+  @inline final def isOtherUnitFacingUs(other: UnitInfo): Boolean = other.speedApproaching(this) > 0.0
   private val _gatheringOrders = Seq(Orders.WaitForMinerals, Orders.MiningMinerals, Orders.WaitForGas, Orders.HarvestGas, Orders.MoveToMinerals, Orders.MoveToGas, Orders.ReturnGas, Orders.ReturnMinerals, Orders.ResetCollision)
   @inline final def speedApproachingEachOther(other: UnitInfo): Double = speedApproaching(other) + other.speedApproaching(this)
   @inline final def airborne  : Boolean = flying || airlifted
