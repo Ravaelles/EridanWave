@@ -21,4 +21,10 @@ class CorsairRelocateSuite extends AnyFunSuite {
     val spots = (0 to 20).map(id => CorsairRelocateWhenIdle.relocateOffset(id, 0, 12)).toSet
     assert(spots.size > 10)
   }
+
+  test("an uncovered Overlord nearby keeps the Corsair hunting") {
+    assert(CorsairRelocateWhenIdle.keepOverlord(0.0))
+    assert(CorsairRelocateWhenIdle.keepOverlord(18.0))
+    assert( ! CorsairRelocateWhenIdle.keepOverlord(18.01))
+  }
 }

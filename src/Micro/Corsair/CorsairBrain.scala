@@ -13,7 +13,8 @@ object CorsairBrain {
   def act(squad: SquadAcePilots): Boolean = {
     var claimed = false
     squad.units.foreach(unit => {
-      if (CorsairRelocateWhenIdle.act(squad, unit)
+      if (CorsairRangedFlee.act(squad, unit)
+        || CorsairRelocateWhenIdle.act(squad, unit)
         || CorsairHuntMutas.act(squad, unit)
         || CorsairDanceToOverlord.act(squad, unit)
         || CorsairHunt.act(squad, unit)

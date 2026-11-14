@@ -9,14 +9,23 @@ import Tactic.Squads.support.SquadAcePilots
  * Anti-idle relocation: a Corsair that fired nothing for a while goes
  * elsewhere instead of holding its pose. The destination is deterministic
  * per (unit, 6-second bucket): smooth within the bucket, re-rolled across
- * buckets, with no cross-game state to reset.
+ * buckets, with no cross-game state to reset. Never abandons an uncovered
+ * Overlord: the hunt chain below owns those, turning away strands the kill.
  */
 object CorsairRelocateWhenIdle {
+
+  /** An uncovered Overlord this close, in tiles, keeps the Corsair hunting. */
+  val overlordKeepTiles: Double = 18.0
+
+  def keepOverlord(distTiles: Double): Boolean =
+    distTiles <= overlordKeepTiles
 
   def applies(unit: FriendlyUnitInfo): Boolean = {
     val airNear = With.units.enemy.filter(e =>
       e.flying && e.likelyStillThere && e.pixelDistanceSquared(unit.pixel) <= 14 * 14 * 32 * 32).toSeq
     if (airNear.nonEmpty) {
+      false
+    } else if (CorsairHuntKnownOverlords.overlord(unit).exists(o => keepOverlord(o.tileDistanceCenter(unit.pixel)))) {
       false
     } else if (unit.totalHealth <= 95 && With.framesSince(unit.lastFrameTakingDamage) < 6 * 24) {
       true
