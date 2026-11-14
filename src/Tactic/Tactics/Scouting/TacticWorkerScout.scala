@@ -88,6 +88,11 @@ class TacticWorkerScout extends Tactic {
     val enemyHasCombatUnits = With.units.enemy.exists(u => u.canAttack && ! IsWorker(u))
     val orderedScouts       = scouts.sortBy(s => basesToScout.view.map(_.townHallTile).map(s.pixelDistanceTravelling).min)
     val basesToScoutQueue   = new UnorderedBuffer[Base]()
+    // Minute check of the enemy third: the closest base past the natural,
+    // stale past sixty seconds. The head scout walks it directly instead
+    // of joining the nearest-first queue, so the location can never sit
+    // unchecked for minutes again.
+    val forcedThird         = staleEnemyThird.map(orderedScouts.head -> _).toMap
 
     orderedScouts.indices.foreach(i => {
       if (basesToScoutQueue.isEmpty) {
@@ -96,19 +101,52 @@ class TacticWorkerScout extends Tactic {
         // For bookkeeping/debugging; vicinity is not actually used
         basesToScoutQueue.headOption.foreach(b => vicinity = b.heart.center)
       }
-      val scout     = orderedScouts(i)
-      val ovieBase  = With.tactics.scoutWithOverlord.vicinity.base.filter(b => With.tactics.scoutWithOverlord.units.nonEmpty)
-      val base      = Maff
-        .orElse(basesToScoutQueue.filter(_.isCross || i > 0 || ! With.blackboard.crossScout()), basesToScoutQueue)
-        .minBy(b => scout.pixelDistanceTravelling(b.townHallTile) + 32 * 64 * Maff.fromBoolean(ovieBase.contains(b)))
-      val bases     = Seq(base) ++ base.natural.filter(natural => ! enemyHasCombatUnits && ! base.tiles.exists(t => t.buildable && ! t.explored))
-      val explored  = base.townHallArea.tiles.exists(_.explored)
-      bases.foreach(basesToScoutQueue.remove)
-      scout.intend(this)
-        .setTerminus(base.townHallArea.cornerPixels.minBy(scout.pixelDistanceTravelling))
-        .setScout(
-          if (explored) bases.flatMap(_.tiles.view.filter(t => t.buildable && With.grids.enemyRangeGround(t) <= With.grids.enemyRangeGround.margin))
-          else          Seq(base.townHallArea.tiles.minBy(scout.pixelDistanceTravelling)))
+      val scout = orderedScouts(i)
+      forcedThird.get(scout) match {
+        case Some(third) => sendScoutTo(scout, third, basesToScoutQueue, enemyHasCombatUnits)
+        case None =>
+          val ovieBase  = With.tactics.scoutWithOverlord.vicinity.base.filter(b => With.tactics.scoutWithOverlord.units.nonEmpty)
+          val base      = Maff
+            .orElse(basesToScoutQueue.filter(_.isCross || i > 0 || ! With.blackboard.crossScout()), basesToScoutQueue)
+            .minBy(b => scout.pixelDistanceTravelling(b.townHallTile) + 32 * 64 * Maff.fromBoolean(ovieBase.contains(b)))
+          sendScoutTo(scout, base, basesToScoutQueue, enemyHasCombatUnits)
+      }
     })
+  }
+
+  private def sendScoutTo(
+    scout               : FriendlyUnitInfo,
+    base                : Base,
+    basesToScoutQueue   : UnorderedBuffer[Base],
+    enemyHasCombatUnits : Boolean): Unit = {
+    val bases     = Seq(base) ++ base.natural.filter(natural => ! enemyHasCombatUnits && ! base.tiles.exists(t => t.buildable && ! t.explored))
+    val explored  = base.townHallArea.tiles.exists(_.explored)
+    bases.foreach(basesToScoutQueue.remove)
+    scout.intend(this)
+      .setTerminus(base.townHallArea.cornerPixels.minBy(scout.pixelDistanceTravelling))
+      .setScout(
+        if (explored) bases.flatMap(_.tiles.view.filter(t => t.buildable && With.grids.enemyRangeGround(t) <= With.grids.enemyRangeGround.margin))
+        else          Seq(base.townHallArea.tiles.minBy(scout.pixelDistanceTravelling)))
+  }
+
+  /**
+   * Enemy third due for its minute check (no game decisions here, just
+   * the pick): the nearest base past the natural, unseen for sixty
+   * seconds. The base layout never changes, so the pick caches after
+   * the enemy main is known; only the staleness re-arms. All races -
+   * a hidden third kills against anyone.
+   */
+  private var cachedThird: Option[Base] = None
+
+  private def staleEnemyThird: Option[Base] = {
+    if ( ! With.scouting.enemyMainFullyScouted) return None
+
+    if (cachedThird.isEmpty) {
+      cachedThird = With.scouting.enemyMain.flatMap(main =>
+        With.geography.bases.filter(b => ! b.island && b != main).toVector
+          .sortBy(b => main.heart.groundPixels(b.heart))
+          .find(b => ! main.natural.contains(b)))
+    }
+    cachedThird.filter(third => With.framesSince(third.lastFrameScoutedByUs) > Seconds(60)())
   }
 }
