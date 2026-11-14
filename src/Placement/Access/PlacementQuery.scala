@@ -49,6 +49,7 @@ class PlacementQuery {
     requirements.tile     = Seq.empty
     requirements.nearTile = None
     requirements.farTiles = Seq.empty
+    requirements.nearAdjacent = Seq.empty
     preferences.width     = requirements.width
     preferences.height    = requirements.height
     preferences.building  = Some(building)
@@ -104,6 +105,10 @@ class PlacementQuery {
   def requireTile         (value: Tile*)        : PlacementQuery = { requirements.tile      = value;        this }
   def requireNear         (value: Tile, tiles: Int): PlacementQuery = { requirements.nearTile = Some((value, tiles)); this }
   def requireFar          (value: Tile, tiles: Int): PlacementQuery = { requirements.farTiles = requirements.farTiles :+ (value, tiles); this }
+  def requireNearAdjacent (anchor: Tile, width: Int, height: Int, tiles: Int): PlacementQuery = {
+    requirements.nearAdjacent = requirements.nearAdjacent :+ NearAdjacent(anchor, width, height, tiles)
+    this
+  }
 
   /**
    * Main choke clearance: nothing builds within six tiles of our main

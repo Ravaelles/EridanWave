@@ -34,9 +34,36 @@ object PylonPlacement {
     caseFor(With.units.countOurs(Protoss.Pylon)) match {
       case FirstPylon   => FirstPylonPlacement.applyTo(query)
       case SecondPylon  => SecondPylonPlacement.applyTo(query)
-      case SupplyPylon  => SupplyPylonPlacement.applyTo(query)
+      case SupplyPylon  => SupplyPylonPlacement.applyTo(query); hugNatural(query)
     }
     keepOffChokes(query)
+  }
+
+  /** A Pylon this close to our natural is at the natural, in tiles. */
+  val naturalReachTiles: Int = 10
+
+  /** At most this many Pylons at the natural: the wall owns the rest. */
+  val maxNaturalPylons: Int = 1
+
+  /**
+   * Supply Pylons at the natural hug the hall: inside the reach only a
+   * foundation touching the hall is offered, so a loose Pylon cannot eat
+   * the wall's tiles or sit powering nothing we planned - and that holds
+   * before the hall itself exists. Once the one natural Pylon is up, the
+   * whole reach is banned: a second loose Pylon there is the same mistake
+   * with a building already on it.
+   */
+  private def hugNatural(query: PlacementQuery): Unit = {
+    if (With.geography.ourBases.isEmpty) return
+
+    val natural = With.geography.ourNatural
+    val pylonsAtNatural = With.units.ours.count(u =>
+      Protoss.Pylon(u) && u.pixelDistanceEdge(natural.heart.center) * Mathematics.Maff.inv32 <= naturalReachTiles)
+    if (pylonsAtNatural >= maxNaturalPylons) {
+      query.requireFar(natural.townHallTile, naturalReachTiles)
+    } else {
+      query.requireNearAdjacent(natural.townHallTile, Protoss.Nexus.tileWidth, Protoss.Nexus.tileHeight, naturalReachTiles)
+    }
   }
 
   /** Nearest Pylon origin stays this far from any choke center, in tiles. */

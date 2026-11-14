@@ -21,6 +21,10 @@ class PlacementQueryParameters {
   // Keep-off anchors (choke centers for Pylons): every entry bans the
   // Chebyshev disc below its radius, same cheap metric as nearTile.
   var farTiles  : Seq[(Tile, Int)] = Seq.empty
+  // Hug rules (Pylons at the natural): inside the anchor rectangle's reach
+  // a foundation must touch it, outside it is unconstrained. Cheap
+  // rectangle gaps, no path queries.
+  var nearAdjacent: Seq[NearAdjacent] = Seq.empty
 
   private def repr[T](name: String, values: Iterable[T]): String = if (values.isEmpty) "" else f"$name(${values.mkString(" ")})"
   override def toString: String = f"PQP: ${repr("Width", width)} ${repr("Height", height)} ${repr("Bldg", building)} ${repr("Yes", labelYes)} ${repr("No", labelNo)} ${repr("Zone", zone)} ${repr("Base", base)} ${repr("Tile", tile)}".replaceAll("  ", " ")
@@ -45,6 +49,7 @@ class PlacementQueryParameters {
     if ( ! otherParameters.tile.forall(tile.contains))          return false
     if (nearTile != otherParameters.nearTile)                   return false
     if (farTiles != otherParameters.farTiles)                   return false
+    if (nearAdjacent != otherParameters.nearAdjacent)            return false
 
     true
   }
@@ -178,6 +183,8 @@ class PlacementQueryParameters {
   protected def acceptFar       (foundation: Foundation): Boolean = farTiles.forall {
     case (anchor, tiles) => foundation.tile.tileDistanceChebyshev(anchor) >= tiles
   }
+  protected def acceptNearAdjacent(foundation: Foundation): Boolean = nearAdjacent.forall(
+    _.accepts(foundation.tile, width.getOrElse(foundation.point.requirement.width), height.getOrElse(foundation.point.requirement.height)))
 
   def score(foundation: Foundation): Double = (
       1   * scoreImportance(foundation)
@@ -201,7 +208,8 @@ class PlacementQueryParameters {
     && acceptBuilding(foundation)
     && acceptTile(foundation)
     && acceptNear(foundation)
-    && acceptFar(foundation))
+    && acceptFar(foundation)
+    && acceptNearAdjacent(foundation))
 
   def audit(foundation: Foundation): (Foundation, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double) = (
     foundation,
