@@ -3,6 +3,7 @@ package Micro.Actions.Protoss.ReaverShuttle
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Combat.Maneuvering.AsAirAvoidLandUnits
 import Micro.Agency.Commander
 import Macro.Facts.MacroFacts
 import ProxyBwapi.Races.{Protoss, Zerg}
@@ -134,7 +135,7 @@ object BeShuttle extends Action {
       val home = if (With.geography.ourBases.isEmpty) With.geography.home.center else With.geography.ourMain.heart.center
       val rear = ReaverShuttleFlight.rearOfCluster(members, home)
       shuttle.agent.act("FleeScourge")
-      shuttle.agent.destinationNext.set(rear)
+      shuttle.agent.destinationNext.set(AsAirAvoidLandUnits.outOfCorner(rear, With.mapPixelWidth, With.mapPixelHeight))
       Commander.move(shuttle)
 
       return true
@@ -150,7 +151,13 @@ object BeShuttle extends Action {
           ReaverShuttleFlight.threatensPreemptively(t.pixelDistanceEdge(shuttle), t.pixelRangeAgainst(shuttle), preemptPixels)))
     Maff.minBy(attackers.map(_.pixel))(_.pixelDistanceSquared(shuttle.pixel)).map(focus => {
       shuttle.agent.act("AirFlee")
-      shuttle.agent.destinationNext.set(shuttle.pixel.project(focus, -preemptPixels).walkablePixel)
+      // Corner-guarded: a flee that ends in a 6x6 corner trap strands the
+      // hull until something kills it, so slide along the nearest edge.
+      val away = AsAirAvoidLandUnits.outOfCorner(
+        shuttle.pixel.project(focus, -preemptPixels).walkablePixel,
+        With.mapPixelWidth,
+        With.mapPixelHeight)
+      shuttle.agent.destinationNext.set(away)
       Commander.move(shuttle)
       true
     }).getOrElse(false)
