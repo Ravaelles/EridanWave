@@ -203,9 +203,8 @@ Observers (nine tiles, newer moves off the ray, `DetectorSpread`
 kernel); macro game with two Arbiter hulls. March: StaticDefenseRepel shoots (THIS) - repelling units no longer
 hold fire with a hittable enemy in range; weakest-first (lowest total
 health, Tickle precedent), retreat still outranks shooting under fire
-(macro game: dragoons vs sunken+lings trade). Micro: Storm walks short, storms cheap - approach leash
-12 tiles vs Terran / 10 otherwise plus the 75/100/180 pack ladder
-(base at 75, pairs at 100, singles at 180, hold fire below 75).
+(macro game: dragoons vs sunken+lings trade). Micro: Storm hunts inside cast range (8.9-tile search, no leash walk) and storms cheap - energy-scaled pack
+(singles at 180, pairs at 100, base at 75, hold fire below 75; lone Overlords need 190).
 Proven: Terminus PvT (1013 storm acts, bio deaths 2.4x enriched
 after casts, 299/202) plus StarEngine lead (0.0px miss) and range
 (6 tiles: storm f1, wipe f5; 10 tiles: walk 35px, wipe f16; 15
