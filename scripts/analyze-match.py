@@ -74,6 +74,21 @@ def main(argv):
     for m, n in acts.most_common(limit):
         print("%5dx %s" % (n, m[:90]))
 
+    flap = Counter()
+    flap_seq = {}
+    for uid, rows in logs.items():
+        seq = [r.get("message", "") for r in rows
+               if not r.get("message", "").startswith(
+                   ("#", "Moving to", "Holding", "Killed", "Died"))]
+        changes = sum(1 for a, b in zip(seq, seq[1:]) if a != b)
+        if changes > 0:
+            flap[uid] = changes
+            flap_seq[uid] = seq[:10]
+    print("--- top flappers (decision changes per unit) ---")
+    for uid, n in flap.most_common(12):
+        print("%5dx id=%s :: %s" % (
+            n, uid, " -> ".join(flap_seq[uid])[:160]))
+
     ue = os.path.join(game, "logs_0", "unit_events.csv")
     deaths = Counter()
     death_frame = {}
