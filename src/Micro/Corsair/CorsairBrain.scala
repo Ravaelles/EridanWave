@@ -41,6 +41,11 @@ object CorsairBrain {
 
   private def spreadOut(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
     if ( ! Protoss.Corsair(unit)) return false
+    // Shooting wings hold their line: spreading mid-duel walks the kill
+    // out of range, and a cooling hull is about to shoot again.
+    if (Separation.holdForAttack(
+      unit.agent.toAttack.isDefined,
+      unit.cooldownLeft > 0)) return false
 
     val others = squad.units.view.filter(u => u != unit && Protoss.Corsair(u))
       .map(u => Separation.Neighbor(u.id, u.pixel, unit.tileDistanceEdge(u))).toSeq

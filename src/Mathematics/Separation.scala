@@ -23,4 +23,13 @@ object Separation {
   /** Full separation along the ray from the older hull through us. */
   def awayFrom(us: Pixel, them: Pixel, minTiles: Double): Pixel =
     them.project(us, minTiles * 32.0)
+
+  /**
+   * Attack hold (pure flags for the suite): a hull that is shooting or
+   * about to keeps its firing line instead of sliding off the ray - the
+   * spread exists to dodge shared shots while repositioning, not to walk
+   * a dueling wing out of its own kill.
+   */
+  def holdForAttack(hasTarget: Boolean, coolingDown: Boolean): Boolean =
+    hasTarget || coolingDown
 }

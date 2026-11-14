@@ -25,4 +25,11 @@ class SeparationSuite extends AnyFunSuite {
     assert(away.x == 9 * 32)
     assert(away.y == 0)
   }
+
+  test("a shooting or committed hull holds its firing line") {
+    assert(Separation.holdForAttack(hasTarget = true, coolingDown = false))
+    assert(Separation.holdForAttack(hasTarget = false, coolingDown = true))
+    assert(Separation.holdForAttack(hasTarget = true, coolingDown = true))
+    assert( ! Separation.holdForAttack(hasTarget = false, coolingDown = false))
+  }
 }
