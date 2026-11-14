@@ -57,7 +57,12 @@ game). Still open: the sunkens duel stays DEFEAT (the Reaver trades
 14-16 for its life when ammo runs dry with the ride late); two scbw
 long games crashed server-side at 8-12 min (wine path stable);
 production Storm proof still needs a game that reaches Templars
-(rushes keep ending them first). Crona 4-pool overrun (scbw,
+(rushes keep ending them first). Sunkens2 pair stalls after the
+first pack with a live ride nearby: the reaver holds (contacts in
+matchups but out of reach), the ride holds (no need, no pressure) -
+needs a baseless mission fallback that ferries the pair at known
+enemies instead of micro-gating the handshake. Adopt-vs-AirFlee
+flap on pressured pickups wants a flee latch next. Crona 4-pool overrun (scbw,
 11/36 at 5:47): lings arrive before the first Zealot, probes brawl
 and die, no Search acts in trace - early-pool scout reaction needs
 gameplan review.

@@ -119,12 +119,22 @@ object BeReaver extends Action {
       return
     }
 
-    // Duelist walk (baseless maps only): with no contacts the squad march
-    // stalls, so the Reaver walks at the nearest known enemy instead of
-    // holding a stale HoldPosition until timeout. The static-attack
-    // unload above handles the landing when close; the ride follows on
-    // the sojourn and reboards under pressure.
-    if (With.geography.ourBases.isEmpty) {
+    val ride = ReaverShuttlePair.rideOf(unit)
+    if (ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0 && ReaverShuttlePair.pairIdle(r, unit))) {
+      // Idle pair on a baseless map: the ride came for us, board it even
+      // with nowhere urgent to go - the ferry below advances the pair.
+      unit.agent.act("BoardIdle")
+      Commander.rightClick(unit, ride.get)
+
+      return
+    }
+
+    // Duelist walk (baseless maps, shuttle-less pairs only): with no contacts
+    // the squad march stalls, so a Reaver with no ride at all walks at the
+    // nearest known enemy instead of holding a stale HoldPosition until
+    // timeout. With a live ride the hull holds for pickup instead - walking
+    // off alone while its Shuttle ferries elsewhere is how Reavers die solo.
+    if (With.geography.ourBases.isEmpty && ! With.units.ours.exists(u => u.alive && Protoss.Shuttle(u))) {
       duelWalk(unit)
     }
   }

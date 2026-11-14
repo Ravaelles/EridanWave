@@ -103,7 +103,7 @@ object BeShuttle extends Action {
       // only hailing, endangered, travelling or Scarab-targeted Reavers.
       && (passenger.matchups.targetedByScarab
         || passenger.agent.wantsPickup
-        || (Protoss.Reaver(passenger) && (endangered(shuttle, passenger) || sojourning(passenger)))
+        || (Protoss.Reaver(passenger) && (endangered(shuttle, passenger) || travelsFar(passenger) || ReaverShuttlePair.pairIdle(shuttle, passenger)))
         || (Protoss.HighTemplar(passenger) && MacroFacts.techStarted(Protoss.PsionicStorm)))
       && (shuttle.agent.passengers.isEmpty || shuttle.agent.passengers.headOption.map(_.squad).getOrElse(shuttle.squad).forall(passenger.squad.contains))
     )
@@ -113,6 +113,16 @@ object BeShuttle extends Action {
 
   private def sojourning(hailer: FriendlyUnitInfo): Boolean =
     hailer.agent.destinationFinal().pixelDistance(hailer.pixel) > 32.0 * 20
+
+  /**
+   * Travelling far: the same trip length that makes the Reaver board
+   * (ReaverShuttleFerry.needsRide) makes the Shuttle come and fetch it.
+   * Without the shared definition the pair deadlocks one tile past it:
+   * the ride waits for a hail the hull only raises at boarding range,
+   * and the hull walks into guns it meant to fly over.
+   */
+  private def travelsFar(passenger: FriendlyUnitInfo): Boolean =
+    ReaverShuttleFerry.needsRide(passenger.pixelDistanceCenter(passenger.agent.destinationNext()) * Maff.inv32)
 
   private def pickupNeed(shuttle: FriendlyUnitInfo, hailer: FriendlyUnitInfo): Double = {
     var output = 1.0

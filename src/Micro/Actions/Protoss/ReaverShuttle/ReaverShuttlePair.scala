@@ -45,6 +45,19 @@ object ReaverShuttlePair {
     distTiles <= mateEscortTiles
 
   /**
+   * An idle pair on a baseless map: the Reaver is on foot with nothing
+   * to fight and the ride is safe. One side waiting for the other is
+   * how duels stall to timeout, so idleness itself becomes the pickup
+   * and boarding reason - strictly inside combat-free, threat-free
+   * idleness, never a reason to leave a fight.
+   */
+  def pairIdle(shuttle: FriendlyUnitInfo, reaver: FriendlyUnitInfo): Boolean =
+    With.geography.ourBases.isEmpty &&
+      ! reaver.loaded &&
+      reaver.matchups.targets.isEmpty &&
+      shuttle.matchups.threats.isEmpty
+
+  /**
    * Duelist target on baseless maps (UMS duels itinerary no bases, so no
    * mission forms and no army exists to support): nearest known enemy
    * pixel. With bases the pair never hunts alone like this.
