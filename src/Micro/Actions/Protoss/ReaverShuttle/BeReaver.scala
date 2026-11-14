@@ -73,6 +73,16 @@ object BeReaver extends Action {
       return
     }
 
+    if (rideNearbyPre && shotlessPressured(unit)) {
+      // Dry under guns with the ride at hand: posing holds nothing, the
+      // shot is already spent - board now. Stands above StandShoot, which
+      // would otherwise hold a scarab-less hull in place until it dies.
+      unit.agent.act("BoardShotless")
+      Commander.rightClick(unit, unit.agent.ride.get)
+
+      return
+    }
+
     if (foe.exists(unit.inRangeToAttack)) {
       unit.agent.act("StandShoot")
       Commander.hold(unit)
@@ -104,13 +114,6 @@ object BeReaver extends Action {
     val rideNearby = rideNearbyPre
     if (rideNearby && (ReaverShuttleReboard.mayReboard(threatDist(unit), unit.woundPercent()) || needsRide(unit))) {
       unit.agent.act("BoardRide")
-      Commander.rightClick(unit, unit.agent.ride.get)
-
-      return
-    }
-
-    if (rideNearby && shotlessPressured(unit)) {
-      unit.agent.act("BoardShotless")
       Commander.rightClick(unit, unit.agent.ride.get)
     }
   }

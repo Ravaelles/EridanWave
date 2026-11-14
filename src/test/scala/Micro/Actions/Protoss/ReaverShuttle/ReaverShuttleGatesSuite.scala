@@ -11,6 +11,12 @@ class ReaverShuttleGatesSuite extends AnyFunSuite {
     assert(ReaverShuttleFerry.needsRide(30.0))
   }
 
+  test("the ride stays with an unloaded mate operating close") {
+    assert(ReaverShuttlePair.shouldEscort(0.0))
+    assert(ReaverShuttlePair.shouldEscort(15.0))
+    assert( ! ReaverShuttlePair.shouldEscort(15.01))
+  }
+
   test("a threatened landing aborts the static attack") {
     assert(ReaverShuttleStaticAttack.shouldLand(distTiles = 11.9, attackedAtLanding = false, threatDistTiles = 99.0, wound01 = 0.0))
     assert( ! ReaverShuttleStaticAttack.shouldLand(distTiles = 12.0, attackedAtLanding = false, threatDistTiles = 99.0, wound01 = 0.0))

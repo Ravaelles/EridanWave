@@ -157,10 +157,11 @@ object BeShuttle extends Action {
     true
   }
 
-  /** Otherwise stick with the army: park with passengers, await the next one. */
+  /** Otherwise stick with the army: park with passengers, escort the unloaded mate, await the next one. */
   private def support(shuttle: FriendlyUnitInfo): Unit = {
     if (ReaverShuttlePair.passengerOf(shuttle).isDefined) {
-      park(shuttle)
+      if (With.geography.ourBases.isEmpty) duel(shuttle) else park(shuttle)
+    } else if (escort(shuttle)) {
     } else if (ReaverShuttlePair.isBaitRide(shuttle)) {
       bait(shuttle)
     } else {
@@ -186,13 +187,48 @@ object BeShuttle extends Action {
   private def park(shuttle: FriendlyUnitInfo): Unit = {
     val cargo = shuttle.loadedUnits.view.filterNot(_.airborne)
     val centroid = Maff.centroid(Maff.orElse(cargo.map(_.pixel), Seq(shuttle.pixel)))
-    val threat = Maff.minBy(shuttle.matchups.threats)(t => t.pixelDistanceCenter(centroid) - t.pixelRangeAgainst(shuttle))
-    // Stand off past pickup reach so the ride stays boardable under fire.
-    val to = threat
-      .map(t => t.pixel.project(centroid, t.pixelDistanceCenter(centroid) + 64.0).walkablePixel)
-      .getOrElse(centroid)
     shuttle.agent.act("ParkRide")
-    shuttle.agent.destinationNext.set(to)
+    shuttle.agent.destinationNext.set(standoff(shuttle, centroid))
     Commander.move(shuttle)
+  }
+
+  /**
+   * Escort the unloaded mate: after a static-attack unload the bond is
+   * no bond in code (passengerOf reads loaded hulls only), so the empty
+   * ride awaited at the army goal while its Reaver died alone. Hover the
+   * fighting mate at board reach instead, off the threat - the rescue
+   * and reboard below it assume the ride inside 64 pixels.
+   */
+  private def escort(shuttle: FriendlyUnitInfo): Boolean = {
+    ReaverShuttlePair.mateOnFoot(shuttle)
+      .filter(mate => ReaverShuttlePair.shouldEscort(mate.pixelDistanceCenter(shuttle.pixel) * Maff.inv32))
+      .map(mate => {
+        shuttle.agent.act("EscortRide")
+        shuttle.agent.destinationNext.set(standoff(shuttle, mate.pixel))
+        Commander.move(shuttle)
+        true
+      }).getOrElse(false)
+  }
+
+  /** Board-reach hover off the threat: stand off past pickup reach so the ride stays boardable under fire. */
+  private def standoff(shuttle: FriendlyUnitInfo, point: Mathematics.Points.Pixel): Mathematics.Points.Pixel = {
+    val threat = Maff.minBy(shuttle.matchups.threats)(t => t.pixelDistanceCenter(point) - t.pixelRangeAgainst(shuttle))
+    threat
+      .map(t => t.pixel.project(point, t.pixelDistanceCenter(point) + 64.0).walkablePixel)
+      .getOrElse(point)
+  }
+
+  /**
+   * Duelist ferry (baseless maps only): no bases means no mission and no
+   * army to support, so the loaded pair flies at the nearest known enemy
+   * instead of parking in place - the static-attack unload fires the
+   * landing, flee answers the danger. With nothing known, park.
+   */
+  private def duel(shuttle: FriendlyUnitInfo): Unit = {
+    ReaverShuttlePair.duelTarget(shuttle.pixel).map(target => {
+      shuttle.agent.act("DuelFerry")
+      shuttle.agent.destinationNext.set(target)
+      Commander.move(shuttle)
+    }).getOrElse(park(shuttle))
   }
 }

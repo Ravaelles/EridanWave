@@ -27,6 +27,31 @@ object ReaverShuttlePair {
   def isOldest(reaver: FriendlyUnitInfo): Boolean =
     With.units.ours.view.filter(u => u.alive && Protoss.Reaver(u)).forall(_.id >= reaver.id)
 
+  /**
+   * The on-foot mate: nearest live unloaded Reaver of our squad. After
+   * an unload the loaded-passenger bond evaporates, but the pair does
+   * not - the ride the Reaver brain assumes (rescue and reboard inside
+   * 64 pixels) has to stay its ride until it boards again.
+   */
+  def mateOnFoot(shuttle: FriendlyUnitInfo): Option[FriendlyUnitInfo] =
+    Maff.minBy(With.units.ours.view.filter(u =>
+      u.alive && Protoss.Reaver(u) && ! u.loaded && shuttle.squad.exists(u.squad.contains)))(
+      _.pixelDistanceCenter(shuttle.pixel))
+
+  /** Stay with an unloaded mate operating this close, in tiles: the ride the Reaver brain assumes. */
+  val mateEscortTiles: Double = 15.0
+
+  def shouldEscort(distTiles: Double): Boolean =
+    distTiles <= mateEscortTiles
+
+  /**
+   * Duelist target on baseless maps (UMS duels itinerary no bases, so no
+   * mission forms and no army exists to support): nearest known enemy
+   * pixel. With bases the pair never hunts alone like this.
+   */
+  def duelTarget(from: Pixel): Option[Pixel] =
+    Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere))(_.pixelDistanceCenter(from)).map(_.pixel)
+
   private def health01(unit: FriendlyUnitInfo): Double =
     1.0 - unit.woundPercent()
 
@@ -54,11 +79,11 @@ object ReaverShuttlePair {
   def armyGoal: Pixel =
     With.tactics.attackSquad.vicinity
 
-  /** The raid goal: the squad's target, or the nearest enemy base. */
+  /** The raid goal: the squad's target, or the nearest enemy base, or - baseless - the nearest known enemy. */
   def raidGoal(unit: FriendlyUnitInfo): Pixel =
     unit.squad.map(_.vicinity).getOrElse(
       Maff.minBy(With.geography.enemyBases)(b => unit.pixelDistanceCenter(b.heart.center))
-        .map(_.heart.center).getOrElse(unit.pixel))
+        .map(_.heart.center).getOrElse(duelTarget(unit.pixel).getOrElse(unit.pixel)))
 
   /**
    * A bait ride: an empty hull with no Reaver or High Templar anywhere -
