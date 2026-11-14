@@ -32,6 +32,9 @@ final class World(
   /** Storms cast per body, in order. */
   val stormsCast = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
 
+  /** Attack lock, in frames: a body that just dealt damage holds still (no re-aiming mid-swing). */
+  val attackLock = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
+
   /** Committed storms waiting to land: (landing frame, x, y). */
   private val pendingStorms = new scala.collection.mutable.ListBuffer[(Int, Double, Double)]()
 
@@ -79,17 +82,23 @@ final class World(
 
   private def moveSide(side: Seq[Body], orders: Map[Body, Directive]): Unit = {
     side.filter(_.alive).foreach(body => {
-      val order = orders.getOrElse(body, Hold)
-      // Casts resolve in the cast phase from post-move positions: no move,
-      // no reissue, and the march memory is untouched so storming never
-      // reads as dithering.
-      if ( ! order.isInstanceOf[CastStorm]) {
-        if (sameOrderAs(lastOrder.get(body), order)) {
-          moveBody(body, order)
-        } else {
-          reissues(body) = reissues(body) + 1
+      if (attackLock.getOrElse(body, 0) > 0) {
+        // Rooted mid-swing: the order stands, the body does not move, and
+        // resuming it later is no redirect.
+        attackLock(body) = attackLock(body) - 1
+      } else {
+        val order = orders.getOrElse(body, Hold)
+        // Casts resolve in the cast phase from post-move positions: no move,
+        // no reissue, and the march memory is untouched so storming never
+        // reads as dithering.
+        if ( ! order.isInstanceOf[CastStorm]) {
+          if (sameOrderAs(lastOrder.get(body), order)) {
+            moveBody(body, order)
+          } else {
+            reissues(body) = reissues(body) + 1
+          }
+          lastOrder.put(body, order)
         }
-        lastOrder.put(body, order)
       }
     })
   }
