@@ -35,6 +35,7 @@ class EridanWave extends DefaultBWListener {
         Tuning.Tuning.install()
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         Debugging.ErrorLedger.reset()
+        Debugging.MapSnapshot.reset()
         Debugging.SlowAlone.reset()
         Tactic.Squads.Decisions.LoneMarch.reset()
         Tactic.Squads.Decisions.MarchDress.reset()
@@ -62,6 +63,7 @@ class EridanWave extends DefaultBWListener {
         unpauseIfPaused()
         With.latency.onFrame()
         With.units.onFrame()
+        Debugging.MapSnapshot.maybeDump()
         Lifecycle.HitCounter.onFrame(With.units.ours)
         Debugging.DeathWatch.update()
         // Parked while paused: the engine is frozen by togglePause, but
