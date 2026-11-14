@@ -99,6 +99,7 @@ object Skimulator {
     // TODO: Terrain influence: Choke
     battle.teams.foreach(team => team.units.foreach(unit => {
       team.skimStrengthTotal    += unit.skimStrength
+      team.skimStrengthUnits    += unit.skimStrength * Maff.fromBoolean( ! unit.unitClass.isStaticDefense)
       team.skimStrengthAir      += unit.skimStrength * Maff.fromBoolean(unit.flying)
       team.skimStrengthGround   += unit.skimStrength * Maff.fromBoolean( ! unit.flying)
       team.skimStrengthVsAir    += unit.skimStrength * Maff.fromBoolean(unit.canAttackAir     || ! unit.canAttack)

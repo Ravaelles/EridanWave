@@ -26,4 +26,12 @@ class ArmyStrengthSuite extends AnyFunSuite {
     assert( ! ArmyStrength.retreating(ours = 200.0, foe = 100.0))
     assert( ! ArmyStrength.retreating(ours = 50.0, foe = 0.0))
   }
+
+  test("a known Zerg expo dies to the main force at one-forty mobile") {
+    assert(ArmyStrength.shouldPunishExpo(isZerg = true, expoKnown = true, oursUnits = 140.0, foeUnits = 100.0))
+    assert(ArmyStrength.shouldPunishExpo(isZerg = true, expoKnown = true, oursUnits = 280.0, foeUnits = 100.0))
+    assert( ! ArmyStrength.shouldPunishExpo(isZerg = true, expoKnown = true, oursUnits = 139.0, foeUnits = 100.0))
+    assert( ! ArmyStrength.shouldPunishExpo(isZerg = true, expoKnown = false, oursUnits = 500.0, foeUnits = 100.0))
+    assert( ! ArmyStrength.shouldPunishExpo(isZerg = false, expoKnown = true, oursUnits = 500.0, foeUnits = 100.0))
+  }
 }

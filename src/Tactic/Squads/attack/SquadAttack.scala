@@ -94,6 +94,24 @@ class SquadAttack extends Squad {
       return mode
     }
 
+    // Zerg expo punish: a discovered expansion dies to the main force once
+    // the mobile score says so - the raze detail is for containing armies,
+    // not for this. Static turtle score cannot fake the punch (units only),
+    // and leaving a contain still confirms through setMode, so no flap.
+    if (ArmyStrength.shouldPunishExpo(
+      ContainStatus.vsZerg(),
+      SquadRazeExpansion.expansionTarget.isDefined,
+      With.battles.globalAttack.us.skimStrengthUnits,
+      With.battles.globalAttack.enemy.skimStrengthUnits)) {
+      val expo = SquadRazeExpansion.expansionTarget.get
+      setMode(
+        PushExpo,
+        expo.heart.center,
+        SquadAutomation.rankedAround(this))
+
+      return mode
+    }
+
     val legalTargets = With.units.enemy
       .filter(u => attacksAir     || ! u.unitClass.canFly || ( u.visible && ! u.flying) || u.tile.walkable)
       .filter(u => attacksGround  || u.flying)

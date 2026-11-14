@@ -21,4 +21,15 @@ object ArmyStrength {
 
   def retreating(ours: Double, foe: Double): Boolean =
     foe > 0.0 && score(ours, foe) < retreatBelowStrength
+
+  /**
+   * Expo punish, in mobile score: a discovered Zerg expansion dies to the
+   * main force once our mobile strength clearly outscales theirs. Counted
+   * on units alone - a static turtle score must not fake the punch, and a
+   * static-heavy defender must not hide from it either.
+   */
+  val expoPunishScore: Double = 140.0
+
+  def shouldPunishExpo(isZerg: Boolean, expoKnown: Boolean, oursUnits: Double, foeUnits: Double): Boolean =
+    isZerg && expoKnown && score(oursUnits, foeUnits) >= expoPunishScore
 }

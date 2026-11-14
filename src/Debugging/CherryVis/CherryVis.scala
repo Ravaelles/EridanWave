@@ -61,6 +61,11 @@ object CherryVis {
     board("ArmyStrength", ArmyStrength.score(
       With.battles.globalAttack.us.skimStrengthTotal,
       With.battles.globalAttack.enemy.skimStrengthTotal).toInt.toString)
+    // Mobile-only strength beside it: static turtle score fakes the punch
+    // above, so the expo-punish decision reads this one instead.
+    board("ArmyStrengthUnits", ArmyStrength.score(
+      With.battles.globalAttack.us.skimStrengthUnits,
+      With.battles.globalAttack.enemy.skimStrengthUnits).toInt.toString)
   }
 
   /**
