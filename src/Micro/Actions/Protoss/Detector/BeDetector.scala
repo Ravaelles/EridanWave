@@ -4,10 +4,10 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Protoss.Air.BeFlier
-import Micro.Actions.Combat.Maneuvering.{RangedAvoidance, RangedReach}
+import Micro.Actions.Combat.Maneuvering.AsAirAvoidLandUnits
 import Micro.Actions.Combat.Tactics.{Recharge, Spot}
 import Micro.Agency.Commander
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
@@ -28,6 +28,11 @@ object BeDetector extends Action {
     // Survival first: a defenseless eye never trades with guns that can
     // hit it - outrun any enemy ranged unit on the wound-scaled margin.
     if (fleeAttackers(unit)) return
+
+    // Compromised eyes run from fast hunters early: with a detector
+    // inside eleven tiles the eye is seen, and Scourge, Corsairs,
+    // Wraiths and Mutalisks close too fast to outrun once committed.
+    if (fleeFastHunters(unit)) return
 
     // Spread outranks everything but survival: stacked eyes die together,
     // and every Spot/combat step after this one walks them back into the
@@ -59,20 +64,54 @@ object BeDetector extends Action {
   }
 
   /**
-   * Shared avoidance: any enemy ranged unit. Wound-scaled 6-to-12 tile
-   * margin: unlike a Corsair the eye never shoots back, so even a fresh
-   * hull holds clear of gun reach instead of skating inside it.
+   * Eyes keep a wider berth than shooters: unlike a Corsair the eye
+   * never shoots back, so even a fresh hull holds clear of gun reach
+   * instead of skating inside it. Same shared rule, wider band.
    */
-  val avoidance = new RangedAvoidance(marginLowTiles = 6.0, marginHighTiles = 12.0)
+  val marginLowTiles: Double = 6.0
+  val marginHighTiles: Double = 12.0
 
-  /** Flee guns: a defenseless eye outruns any enemy ranged unit that can hit it. */
+  /**
+   * Fast-hunter early warning: a detector this close, in tiles, means the
+   * eye is compromised, so Scourge, Corsairs, Wraiths and Mutalisks -
+   * too fast to outrun once committed - trigger the flee from twice as
+   * far out as ordinary guns. Pure numbers for the suite.
+   */
+  val hunterFleeDetectorTiles: Double = 11.0
+  val hunterFleeThreatTiles: Double = 20.0
+
+  def shouldFleeHunters(detectorTiles: Double, hunterTiles: Double): Boolean =
+    detectorTiles <= hunterFleeDetectorTiles && hunterTiles <= hunterFleeThreatTiles
+
+  /** Flee fast hunters on early warning: detector inside eleven tiles means seen. */
+  private def fleeFastHunters(unit: FriendlyUnitInfo): Boolean = {
+    if ( ! Protoss.Observer(unit)) return false
+
+    val detectorTiles = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.unitClass.isDetector))(_.tileDistanceCenter(unit.pixel))
+      .map(e => unit.tileDistanceCenter(e.pixel))
+      .getOrElse(Double.PositiveInfinity)
+    val hunterPixel = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && e.isAny(Zerg.Scourge, Protoss.Corsair, Terran.Wraith, Zerg.Mutalisk)))(
+      _.pixelDistanceCenter(unit.pixel))
+    (for (hunter <- hunterPixel; if shouldFleeHunters(detectorTiles, unit.tileDistanceCenter(hunter.pixel))) yield {
+      unit.cherryVisUnitLog("ObserverFleeHunters")
+      unit.agent.destinationNext.set(AsAirAvoidLandUnits.outOfCorner(
+        AsAirAvoidLandUnits.fleeFrom(unit.pixel, hunter.pixel, AsAirAvoidLandUnits.marginTiles(unit.woundPercent, marginLowTiles, marginHighTiles)),
+        With.mapPixelWidth,
+        With.mapPixelHeight))
+      Commander.move(unit)
+      true
+    }).getOrElse(false)
+  }
+
+  /** Flee guns: a defenseless eye outruns any enemy unit that can hit it. */
   private def fleeAttackers(unit: FriendlyUnitInfo): Boolean = {
     if ( ! Protoss.Observer(unit)) return false
 
     val threats = With.units.enemy.view.filter(e =>
-      e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)
-        && RangedReach.isRanged(e.pixelRangeAgainst(unit))).map(_.pixel).toSeq
-    avoidance.fleePixel(unit.pixel, threats, unit.woundPercent()).exists(dest => {
+      e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
+    AsAirAvoidLandUnits.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight, marginLowTiles, marginHighTiles).exists(dest => {
       unit.cherryVisUnitLog("ObserverFlee")
       unit.agent.destinationNext.set(dest)
       Commander.move(unit)
