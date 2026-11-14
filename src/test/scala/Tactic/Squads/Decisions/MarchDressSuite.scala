@@ -25,6 +25,13 @@ class MarchDressSuite extends AnyFunSuite {
     assert(MarchDress.shouldSkipWait(900.0, 0.5, armedEnemyVisible = false))
   }
 
+  test("six friendlies inside four tiles never wait for the line") {
+    assert(MarchDress.isMassed(6))
+    assert(MarchDress.isMassed(40))
+    assert( ! MarchDress.isMassed(5))
+    assert( ! MarchDress.isMassed(0))
+  }
+
   test("nobody dresses inside static reach") {
     assert(MarchDress.staticNear(0.0))
     assert(MarchDress.staticNear(8.0))

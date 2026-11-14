@@ -258,7 +258,12 @@ object MarchOrders {
       With.units.enemy.exists(e => e.visible && e.unitClass.canAttack))
     val staticNear = unit.matchups.enemies.exists(e =>
       e.likelyStillThere && e.unitClass.isStaticDefense && MarchDress.staticNear(unit.tileDistanceEdge(e)))
-    val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && ! staticNear && MarchDress.holdDress(unit.id, meanDistToGoalTiles - unit.tileDistanceCenter(squad.vicinity))
+    // A crowd needs no line: with six friendlies inside four tiles the
+    // formation already stands, so the leader marches instead of posing
+    // for stragglers that are not straggling.
+    val massed = MarchDress.isMassed(squad.units.count(u =>
+      u != unit && unit.pixelDistanceCenter(u.pixel) <= MarchDress.massedTiles * 32.0))
+    val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && ! staticNear && ! massed && MarchDress.holdDress(unit.id, meanDistToGoalTiles - unit.tileDistanceCenter(squad.vicinity))
     val reaverToArmy = Protoss.Reaver(unit) && MarchDress.holdDress(unit.id, meanDistToGoalTiles - unit.tileDistanceCenter(squad.vicinity))
     (waiting && ! reaverToArmy, reaverToArmy)
   }

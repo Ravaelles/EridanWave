@@ -63,6 +63,22 @@ object MarchDress {
   def shouldSkipWait(strength: Double, nearestAllyTiles: Double, armedEnemyVisible: Boolean): Boolean =
     ! armedEnemyVisible && strength >= strongArmyStrength && nearestAllyTiles <= compactAllyTiles
 
+  /** A crowd this big never waits for a line that already stands. */
+  val massedFriendlies: Int = 6
+
+  /** The radius that counts as company, in tiles. */
+  val massedTiles: Double = 4.0
+
+  /**
+   * Massed skip (pure count for the suite): with this many friendlies
+   * inside the company radius the line is already formed, so a leader
+   * marches instead of posing for stragglers that are not straggling.
+   * The caller counts live bodies inside massedTiles; this only draws
+   * the line.
+   */
+  def isMassed(nearbyFriendlies: Int): Boolean =
+    nearbyFriendlies >= massedFriendlies
+
   /** Never dress under static guns, in tiles: a leader holding inside their reach trades the line for nothing. */
   val staticDressTiles: Double = 8.0
 
