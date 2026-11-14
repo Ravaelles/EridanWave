@@ -35,11 +35,11 @@ final class World(
   /** Committed storms waiting to land: (landing frame, x, y). */
   private val pendingStorms = new scala.collection.mutable.ListBuffer[(Int, Double, Double)]()
 
-  /** Same order if same target, or a goal that barely moved (waypoint following, not redirecting). */
+  /** Same order if same target, a target switch inside 32 pixels (dithering, not redirecting), or a goal that barely moved (waypoint following). */
   private def sameOrderAs(previous: Option[Directive], next: Directive): Boolean = (previous, next) match {
     case (None, _) => true
     case (Some(Hold), Hold) => true
-    case (Some(Chase(a)), Chase(c)) => a eq c
+    case (Some(Chase(a)), Chase(c)) => (a eq c) || a.dist(c) <= 32.0
     case (Some(CastStorm(x1, y1)), CastStorm(x2, y2)) =>
       val dx = x1 - x2
       val dy = y1 - y2
@@ -151,7 +151,7 @@ final class World(
   }
 
   private def shootSide(side: Seq[Body], victims: Seq[Body], orders: Map[Body, Directive]): Unit = {
-    side.filter(_.alive).foreach(body => {
+    side.filter(b => b.alive && ! b.passive).foreach(body => {
       if (body.cooldownLeft > 0) {
         body.cooldownLeft -= 1
       } else if (orders.get(body).exists(_.isInstanceOf[CastStorm])) {

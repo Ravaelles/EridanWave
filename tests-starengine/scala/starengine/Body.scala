@@ -20,6 +20,13 @@ final class Body(val kind: UnitClass, var x: Double, var y: Double, var hp: Doub
   /** Spell energy (High Templars start scenarios charged, everyone else at zero). */
   var energy: Int = 0
 
+  /**
+   * Passive hulls never shoot: decoys that draw fire for the Reaver to
+   * clear, mirroring hold-fire discipline. They still move, take damage
+   * and count as targets.
+   */
+  var passive: Boolean = false
+
   def alive: Boolean = hp > 0
 
   def maxHp: Double = kind.maxTotalHealth
