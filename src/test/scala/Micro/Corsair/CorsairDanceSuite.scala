@@ -18,6 +18,17 @@ class CorsairDanceSuite extends AnyFunSuite {
       wound01       = 0.0))
   }
 
+  test("ten or fewer frames left means no dance, eleven means dance") {
+    assert( ! CorsairDanceToOverlord.shouldDance(
+      cooldownLeft  = 10,
+      distTiles     = 6.0,
+      wound01       = 0.0))
+    assert(CorsairDanceToOverlord.shouldDance(
+      cooldownLeft  = 11,
+      distTiles     = 6.0,
+      wound01       = 0.0))
+  }
+
   test("a close Corsair goes for the kill instead of dancing") {
     assert( ! CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 12,

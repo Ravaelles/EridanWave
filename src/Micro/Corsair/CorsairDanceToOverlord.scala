@@ -12,7 +12,12 @@ import Tactic.Squads.support.SquadAcePilots
  */
 object CorsairDanceToOverlord {
 
-  val DanceCooldown = 9
+  /**
+   * Dance only on a long cooldown: a Corsair with ten or fewer frames
+   * left goes for the kill instead of holding standoff - the shot lands
+   * before the Spore math matters.
+   */
+  val DanceCooldown = 11
 
   def shouldDance(cooldownLeft: Int, distTiles: Double, wound01: Double): Boolean =
     cooldownLeft >= DanceCooldown && distTiles >= 3.0 + wound01 * 2.0
