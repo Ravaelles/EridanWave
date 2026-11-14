@@ -1,5 +1,7 @@
 package Tactic.Squads.Decisions
 
+import scala.collection.mutable
+
 /**
  * March dressing: leaders wait for the pack before first contact.
  *
@@ -19,6 +21,31 @@ object MarchDress {
 
   def shouldWait(ownDistToGoalTiles: Double, meanDistToGoalTiles: Double): Boolean = {
     meanDistToGoalTiles - ownDistToGoalTiles > waitAheadTiles
+  }
+
+  /**
+   * Latched dress wait (LoneMarch shape): the pack mean breathes a tile
+   * or two every frame, so a sharp two-tile gate holds and releases the
+   * same leader every few frames - a live UMS game showed Engage/Dress
+   * alternating every other frame for eighty frames. Latch on past 2.5,
+   * march on below 1.5, hold the side inside the band. Per-unit state,
+   * reset per game like the other march watches.
+   */
+  val dressEnterTiles: Double = 2.5
+  val dressExitTiles: Double = 1.5
+
+  private val dressing = new mutable.HashMap[Int, Boolean]()
+
+  def reset(): Unit = { dressing.clear() }
+
+  def holdDress(unitId: Int, aheadTiles: Double): Boolean = {
+    val next =
+      if (aheadTiles > dressEnterTiles) true
+      else if (aheadTiles < dressExitTiles) false
+      else dressing.getOrElse(unitId, aheadTiles > waitAheadTiles)
+    dressing.put(unitId, next)
+
+    next
   }
 
   /** No dressing without contact: enemies this close, in tiles, justify it. */

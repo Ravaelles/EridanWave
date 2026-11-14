@@ -181,8 +181,8 @@ object MarchOrders {
       With.units.enemy.exists(e => e.visible && e.unitClass.canAttack))
     val staticNear = unit.matchups.enemies.exists(e =>
       e.likelyStillThere && e.unitClass.isStaticDefense && MarchDress.staticNear(unit.tileDistanceEdge(e)))
-    val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && ! staticNear && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
-    val reaverToArmy = Protoss.Reaver(unit) && MarchDress.shouldWait(unit.tileDistanceCenter(squad.vicinity), meanDistToGoalTiles)
+    val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && ! staticNear && MarchDress.holdDress(unit.id, meanDistToGoalTiles - unit.tileDistanceCenter(squad.vicinity))
+    val reaverToArmy = Protoss.Reaver(unit) && MarchDress.holdDress(unit.id, meanDistToGoalTiles - unit.tileDistanceCenter(squad.vicinity))
     (waiting && ! reaverToArmy, reaverToArmy)
   }
 
