@@ -6,8 +6,28 @@ import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Utilities.Latch
 
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
+
+  /**
+   * Pursuit latch (auto-registered, reset per game with the rest): once the
+   * line breaks for a target past the pursuit horizon it stays broken until
+   * contact or incoming fire. Without the memory the cap edge itself
+   * becomes the new standoff - the line holds at twelve tiles instead of
+   * twenty-five and the dummy still never dies.
+   */
+  private val pursuit = new Latch
+
+  private def pursuing(): Boolean =
+    pursuit(
+      unit.id,
+      fires = combat.target.exists(t =>
+        unit.pixelsToGetInRange(t) > FormationHold.holdPursuitTiles * 32.0),
+      releases = combat.target.forall(t =>
+        unit.pixelsToGetInRange(t) <= FormationHold.holdReleaseTiles * 32.0)
+        || unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)
+        || unit.matchups.engagedUpon)
 
   private[Decisioning] def engage(): Boolean = {
     // Crucial air victims outrank everything: a grounded anti-air warrior
@@ -32,7 +52,9 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
     if (unit.ready) {
       resolveBreakFormation()
-      applyFormationHold()
+      // A pursuit in progress is never re-dressed: the hold would re-arm
+      // at the cap edge and the march would stall twelve tiles out.
+      if ( ! pursuing()) applyFormationHold()
       if (With.configuration.formationAudit) {
         Debugging.FormationAudit.noteBreakState(
           With.frame,
@@ -65,9 +87,16 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   }
 
   // Formation resolution: break for the attack once no formation exists,
-  // the target is approached, close, or yolo overrules.
+  // the target is approached, close, or yolo overrules. Past the pursuit
+  // horizon the formation is a freeze, not a line: no living enemy holds
+  // still that far out while staying a threat, so break and walk it down
+  // instead of dressing for a fight that never starts (UMS duels held a
+  // twenty-tile standoff against passive hulls until the timeout).
   private def resolveBreakFormation(): Unit = {
     combat.breakFormationToAttack  = unit.formationEngage.isEmpty
+    combat.breakFormationToAttack ||= pursuing()
+    combat.breakFormationToAttack ||= combat.target.exists(targ =>
+      unit.pixelsToGetInRange(targ) > FormationHold.holdPursuitTiles * 32.0)
     combat.breakFormationToAttack ||= combat.target.exists(targ =>
       // Maintain formation if we're not ready to attack yet
       combat.distances.readyToApproachTarget

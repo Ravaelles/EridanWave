@@ -55,12 +55,22 @@ object FormationHold {
     unitEngaged       : Boolean,
     enemyFired        : Boolean,
     targetHoldable    : Boolean = true): Boolean = {
-    hasFormation && ! melee && ! flanking && ! unitEngaged && ! enemyFired && targetHoldable && tilesBeyondRange > holdReleaseTiles
+    hasFormation && ! melee && ! flanking && ! unitEngaged && ! enemyFired && targetHoldable && tilesBeyondRange > holdReleaseTiles && tilesBeyondRange <= holdPursuitTiles
   }
 
   /** Step the line forward only once every unit sits in its slot. */
   def shouldAdvanceInFormation(fractionUnitsInSlot: Double): Boolean = {
     fractionUnitsInSlot >= 1.0
   }
+
+  /**
+   * Pursuit horizon, in tiles beyond our range: past dragoon sight plus a
+   * margin a standoff is either a retreat (handled by the chase) or a
+   * dummy (marched down) - no living enemy holds still that far out while
+   * staying a threat. The UMS duels froze here: four Dragoons held a
+   * twenty-tile standoff against two passive hulls until the timeout
+   * because nothing ever fired, closed or released the line.
+   */
+  val holdPursuitTiles: Double = 12.0
 }
 

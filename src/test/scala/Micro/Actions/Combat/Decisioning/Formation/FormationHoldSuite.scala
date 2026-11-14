@@ -37,6 +37,23 @@ class FormationHoldSuite extends AnyFunSuite {
       enemyFired        = false))
   }
 
+  test("a dummy past the pursuit horizon gets marched down, not posed at") {
+    assert(FormationHold.shouldHoldLine(
+      tilesBeyondRange  = FormationHold.holdPursuitTiles,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false,
+      unitEngaged       = false,
+      enemyFired        = false))
+    assert( ! FormationHold.shouldHoldLine(
+      tilesBeyondRange  = FormationHold.holdPursuitTiles + 0.01,
+      melee             = false,
+      hasFormation      = true,
+      flanking          = false,
+      unitEngaged       = false,
+      enemyFired        = false))
+  }
+
   test("holds just outside the release band") {
     assert(FormationHold.shouldHoldLine(
       tilesBeyondRange  = FormationHold.holdReleaseTiles + 0.1,
