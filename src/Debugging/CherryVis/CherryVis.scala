@@ -127,6 +127,13 @@ object CherryVis {
     if (lastDecision.getOrElse(unitId, "") != reason) {
       lastDecision(unitId) = reason
       trace.logUnitLine(With.frame, unitId, reason)
+      // The viewer Task tab reads this: same change-only label as the
+      // line above, so the current task is always the latest reason.
+      // Kill/death tallies are events, not tasks - the tab tracks jobs,
+      // and every bounty amount would mint its own task id.
+      if ( ! reason.startsWith("Killed ") && ! reason.startsWith("Died")) {
+        trace.logTask(With.frame, unitId, lastOwner.getOrElse(unitId, ""), reason)
+      }
     }
   }
 

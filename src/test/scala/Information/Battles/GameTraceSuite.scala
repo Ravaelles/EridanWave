@@ -102,4 +102,25 @@ class GameTraceSuite extends AnyFunSuite {
     val updates = trace.buildUnitsUpdates(table, true)
     assert(updates.indexOf("\"5\"") < updates.indexOf("\"30\""), updates)
   }
+
+  test("tasks register owner and name once, units point at the id") {
+    val trace = new GameTrace
+    trace.logTask(10, 1, "SquadAttack", "Engage/Approach")
+    trace.logTask(20, 2, "SquadAttack", "Engage/Approach")
+    assert(trace.buildTasks() == "\"0\":{\"owner\":\"SquadAttack\",\"name\":\"Engage/Approach\",\"upc_id\":0,\"creation_frame\":10}", trace.buildTasks())
+    val table = new StringTable
+    val updates = trace.buildUnitsUpdates(table, false)
+    assert(updates.contains("\"1\":{\"10\":{\"task\":0}}"), updates)
+    assert(updates.contains("\"2\":{\"20\":{\"task\":0}}"), updates)
+  }
+
+  test("repeat task logs land once, flips land per transition") {
+    val trace = new GameTrace
+    trace.logTask(10, 1, "SquadAttack", "Engage/Approach")
+    trace.logTask(20, 1, "SquadAttack", "Engage/Approach")
+    trace.logTask(30, 1, "SquadAttack", "Retreat")
+    val table = new StringTable
+    val updates = trace.buildUnitsUpdates(table, false)
+    assert(updates == "\"1\":{\"10\":{\"task\":0},\"30\":{\"task\":1}}", updates)
+  }
 }

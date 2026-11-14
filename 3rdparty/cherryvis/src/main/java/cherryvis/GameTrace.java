@@ -85,6 +85,35 @@ public class GameTrace {
     private final Map<Integer, List<UnitLine>> linesByUnit = new TreeMap<>();
     /** Unit id -> frame -> behavior tag, change-only. */
     private final Map<Integer, Map<Integer, String>> tooltipsByUnit = new TreeMap<>();
+    /** A named job units can sit on, for the viewer Task tab. */
+    private static class TaskEntry {
+        final String owner;
+        final String name;
+        int creationFrame;
+
+        TaskEntry(String owner, String name, int creationFrame) {
+            this.owner = owner;
+            this.name = name;
+            this.creationFrame = creationFrame;
+        }
+
+        String toJson() {
+            String json = "{\"owner\":\"" + Json.escape(owner) + "\","
+                + "\"name\":\"" + Json.escape(name) + "\","
+                + "\"upc_id\":" + 0 + ","
+                + "\"creation_frame\":" + creationFrame + "}";
+
+            return json;
+        }
+    }
+    /** Task key (owner + name) -> sequential task id, in first-logged order. */
+    private final Map<String, Integer> taskIdsByKey = new TreeMap<>();
+    private final Map<Integer, TaskEntry> tasksById = new TreeMap<>();
+    /** Unit id -> frame -> task id, change-only like managers. */
+    private final Map<Integer, Map<Integer, Integer>> tasksByUnit = new TreeMap<>();
+    /** Unit id -> last task logged; repeats of the running task land once. */
+    private final Map<Integer, Integer> lastTaskByUnit = new TreeMap<>();
+    private int nextTaskId = 0;
     /** Unit id -> last tooltip logged; repeats of the same tag land once. */
     private final Map<Integer, String> lastTooltipByUnit = new TreeMap<>();
     private final List<GlobalLine> globalLogs = new ArrayList<>();
@@ -147,6 +176,34 @@ public class GameTrace {
         globalLogs.add(new GlobalLine(frame, message, file));
     }
 
+    /**
+     * Current task of one unit (the viewer Task tab reads this): the owner
+     * is whoever claimed the unit, the name is what it is doing. Task ids
+     * are sequential in first-logged order and shared by every unit on the
+     * same owner + name, so tracking a task lists the whole crew on it.
+     * Change-only per unit: repeat logs of the running task land once.
+     */
+    public void logTask(int frame, int unitId, String owner, String task) {
+        if (task == null) task = "";
+        if (owner == null) owner = "";
+        String key = owner + "\n" + task;
+        Integer id = taskIdsByKey.get(key);
+        if (id == null) {
+            id = nextTaskId++;
+            taskIdsByKey.put(key, id);
+            tasksById.put(id, new TaskEntry(owner, task, frame));
+        }
+        Map<Integer, Integer> rows = tasksByUnit.get(unitId);
+        if (rows == null) {
+            rows = new TreeMap<>();
+            tasksByUnit.put(unitId, rows);
+        }
+        if ( ! id.equals(lastTaskByUnit.get(unitId))) {
+            lastTaskByUnit.put(unitId, id);
+            rows.put(frame, id);
+        }
+    }
+
     public void logState(int frame, String key, String value) {
         boardStates.add(new StateRow(frame, key, value));
     }
@@ -169,6 +226,11 @@ public class GameTrace {
         linesByUnit.clear();
         tooltipsByUnit.clear();
         lastTooltipByUnit.clear();
+        taskIdsByKey.clear();
+        tasksById.clear();
+        tasksByUnit.clear();
+        lastTaskByUnit.clear();
+        nextTaskId = 0;
         globalLogs.clear();
         boardStates.clear();
         gameValues.clear();
@@ -241,8 +303,10 @@ public class GameTrace {
         // Union of manager-driven units and behavior-tagged units: an army
         // unit with no manager still gets its behavior rows, so the viewer
         // can show what it does. The tooltip union is gated: flap writes
-        // 100k+ rows per game.
+        // 100k+ rows per game. Task rows join the union unconditionally:
+        // they are change-only like managers.
         Set<Integer> unitIds = new TreeSet<>(managersByUnit.keySet());
+        unitIds.addAll(tasksByUnit.keySet());
         if (withTooltips) unitIds.addAll(tooltipsByUnit.keySet());
 
         int counterForIds = 0;
@@ -252,10 +316,12 @@ public class GameTrace {
 
             Map<Integer, String> managerLogs = managersByUnit.get(unitId);
             Map<Integer, String> tooltips = withTooltips ? tooltipsByUnit.get(unitId) : null;
+            Map<Integer, Integer> taskRows = tasksByUnit.get(unitId);
 
             TreeSet<Integer> frames = new TreeSet<>();
             if (managerLogs != null) frames.addAll(managerLogs.keySet());
             if (tooltips != null) frames.addAll(tooltips.keySet());
+            if (taskRows != null) frames.addAll(taskRows.keySet());
 
             String carriedTooltip = "";
             int counterForFrames = 0;
@@ -275,6 +341,13 @@ public class GameTrace {
                 if (!carriedTooltip.isEmpty()) {
                     if (needsComma) row.append(",");
                     row.append("\"tooltip\":").append(strings.get(carriedTooltip));
+                    needsComma = true;
+                }
+                // Task rides change-only like the manager; the viewer carries
+                // it forward across frames, so this is the current task.
+                if (taskRows != null && taskRows.containsKey(frame)) {
+                    if (needsComma) row.append(",");
+                    row.append("\"task\":").append(taskRows.get(frame));
                 }
                 row.append("}");
                 unitString.append(row);
@@ -288,6 +361,22 @@ public class GameTrace {
             counterForIds++;
         }
 
+        return result.toString();
+    }
+
+    /**
+     * Task registry for the viewer Task tab: sequential ids shared by every
+     * unit on the same owner + name, so tracking a task lists the whole crew.
+     */
+    public String buildTasks() {
+        StringBuilder result = new StringBuilder();
+
+        boolean firstEntry = true;
+        for (Map.Entry<Integer, TaskEntry> task : tasksById.entrySet()) {
+            if (!firstEntry) result.append(",");
+            firstEntry = false;
+            result.append("\"").append(task.getKey()).append("\":").append(task.getValue().toJson());
+        }
         return result.toString();
     }
 
@@ -356,7 +445,7 @@ public class GameTrace {
             + "\"game_values\": {" + buildGameValues() + "},"
             + emptyLineArray("heatmaps") + ","
             + "\"logs\": [" + buildGlobalLogs() + "],"
-            + emptyLineMap("tasks") + ","
+            + "\"tasks\": {" + buildTasks() + "},"
             + emptyLineMap("tensors_summaries") + ","
             + emptyLineArray("trees") + ","
             + "\"types_names\": " + typesToString(strings) + ","
