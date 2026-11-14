@@ -6,12 +6,16 @@ package starengine
  * and resolves shots. Nearest-with-predicate is a query, not a decision:
  * pilots and the gun resolution share it instead of each copying it.
  *
- * Order per frame (documented, fixed): pilots move ours, then foes, then
- * constraints adjust, then casts resolve, then foes shoot, then ours
- * shoot. Foes shoot first so outcomes never depend on who the engine
- * favors. Casting never counts as a reissue and never moves the caster:
- * the cast resolves from the post-move positions, so storming does not
- * break march continuity the way redirecting does.
+ * Order per frame (documented, fixed): pilots decide, due storms land
+ * on the positions where the previous frame ended, then ours move,
+ * then foes, then constraints adjust, then casts commit, then foes
+ * shoot, then ours shoot. Foes shoot first so outcomes never depend
+ * on who the engine favors. A committed storm lands StormCastFrames
+ * later from its committed point: casting takes time, so pilots lead
+ * moving victims - the landing frame sees exactly castFrames of
+ * drift, which is what the lead covers. Casting never counts as a
+ * reissue and never moves the caster: storming does not break march
+ * continuity the way redirecting does.
  */
 final class World(
   val ours: Seq[Body],
@@ -27,6 +31,9 @@ final class World(
 
   /** Storms cast per body, in order. */
   val stormsCast = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
+
+  /** Committed storms waiting to land: (landing frame, x, y). */
+  private val pendingStorms = new scala.collection.mutable.ListBuffer[(Int, Double, Double)]()
 
   /** Same order if same target, or a goal that barely moved (waypoint following, not redirecting). */
   private def sameOrderAs(previous: Option[Directive], next: Directive): Boolean = (previous, next) match {
@@ -52,6 +59,7 @@ final class World(
   def step(): Unit = {
     val orders = (ours ++ foes).view.filter(_.alive)
       .map(b => b -> pilots.get(b).map(_.direct(b, this)).getOrElse(Hold)).toMap
+    landStorms()
     moveSide(ours, orders)
     moveSide(foes, orders)
     constraints.foreach(_.apply(this))
@@ -110,10 +118,12 @@ final class World(
 
   /**
    * Storm casts, ours only (no foe caster exists in these scenarios).
-   * A cast deducts the battery and deals flat damage to every body in
-   * the box - friend or foe, the game does not discriminate either.
-   * Casters do not shoot in the cast frame; the orders map carries who
-   * cast into the gun phase.
+   * A cast deducts the battery and lands StormCastFrames later - the
+   * game cast takes time, so the pilot must lead moving victims. Casts
+   * land from their committed point no matter what the caster does next;
+   * landing deals flat damage to every body in the box - friend or foe,
+   * the game does not discriminate either. Casters do not shoot in the
+   * cast frame; the orders map carries who cast into the gun phase.
    */
   private def castSide(side: Seq[Body], orders: Map[Body, Directive]): Unit = {
     side.filter(_.alive).foreach(body => {
@@ -121,14 +131,23 @@ final class World(
         case CastStorm(x, y) if body.energy >= World.StormCostEnergy =>
           body.energy -= World.StormCostEnergy
           stormsCast(body) = stormsCast(body) + 1
-          (ours ++ foes).filter(_.alive).foreach(victim => {
-            if (Math.abs(victim.x - x) <= World.StormBoxHalfPx && Math.abs(victim.y - y) <= World.StormBoxHalfPx) {
-              victim.hp = Math.max(0, victim.hp - World.StormDamage)
-            }
-          })
+          pendingStorms.append((frame + World.StormCastFrames, x, y))
         case _ => ()
       }
     })
+  }
+
+  /** Storms due this frame land on post-move positions. */
+  private def landStorms(): Unit = {
+    val due = pendingStorms.filter(_._1 <= frame)
+    pendingStorms --= due
+    due.foreach { case (_, x, y) =>
+      (ours ++ foes).filter(_.alive).foreach(victim => {
+        if (Math.abs(victim.x - x) <= World.StormBoxHalfPx && Math.abs(victim.y - y) <= World.StormBoxHalfPx) {
+          victim.hp = Math.max(0, victim.hp - World.StormDamage)
+        }
+      })
+    }
   }
 
   private def shootSide(side: Seq[Body], victims: Seq[Body], orders: Map[Body, Directive]): Unit = {
@@ -158,7 +177,10 @@ final class World(
  * these instead of each copying them. Cost is the game cost
  * (TechType.Psionic_Storm.energyCost); damage is the full-game total
  * dealt instantly (no lingering field in this engine); the box matches
- * the 96px search box the shipped targeting uses.
+ * the 96px search box the shipped targeting uses; the cast frames mirror
+ * the shipped PsionicStorm.castFrames (iScript-derived, observed by
+ * McRave - the closest thing BWAPI has to a cast time), pinned equal
+ * by suite so the two can never drift apart.
  */
 object World {
 
@@ -166,4 +188,5 @@ object World {
   val StormDamage: Int = 112
   val StormBoxHalfPx: Double = 48.0
   val StormCastRangePx: Double = 9 * 32.0
+  val StormCastFrames: Int = 4
 }
