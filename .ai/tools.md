@@ -45,10 +45,10 @@ backend globally ("Java member module without member class").
 
 ## Verify ritual (every change, one command chain)
 `python3 scripts/check-blank-lines.py <touched>` +
-`mvn -o -Ptests test` (MAVEN_OPTS add-opens from `build-jar.sh:30`) +
+`scripts/tests.sh` (all base tests; StarEngine excluded by tag) +
 `./build-jar.sh` (auto-syncs the scbw slot jar). Then commit per unit.
 StarEngine scenarios run alone, never in the default suite:
-`mvn -o -Pstarengine test -Dsuites=starengine.<Suite>` (sources in
+`scripts/starengine.sh [<Suite>...]` (sources in
 `tests-starengine/scala`, real UnitType numbers, SOLID: pilots decide,
 engine advances, constraints adjust).
 
