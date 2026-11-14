@@ -31,10 +31,16 @@ reboard/board/park/await chains in the pair doctrine.
 Single concept, one home - merge when touched (behavior-preserving,
 suite-carried; the risky ones need a game to prove):
 DONE (`9f36c2e82`): Yamato/Lockdown reach pricing, mineral-clearance
-rule, dead FewShot stub. NEXT - safe: `CombatManeuvers.move` Reaver
-boarding smuggle to the transport layer; `KiteAwayBehavior.staticStandoff`
-to Assemble/Push; `ApproachBehavior.stepBack` to kite; empty
-`GetRepairedBuilding.perform` - flag or fill. NEXT - needs a game:
+rule, dead FewShot stub. DONE (`2dc4c43ae`): empty
+`GetRepairedBuilding.perform` removed (buildings cannot seek repair;
+SCV-side Repair already owns healing via toHeal). WONT-MERGE (assessed
+2026-11-14, distinct concepts, merging would change behavior):
+`CombatManeuvers.move` Reaver boarding smuggle (travel-boarding vs
+transport primitives belong in different layers; the pair brain owns
+boarding decisions), `KiteAwayBehavior.staticStandoff` to
+Assemble/Push (idle-under-fire step-out vs pre-fight depth hold),
+`ApproachBehavior.stepBack` to kite (formation correction cadence vs
+cooldown kiting). NEXT - safe: (none left open). NEXT - needs a game:
 kite-vs-approach range axis; standoff-margin table (Corsair/Cluster);
 dress-the-line governor; fight-forcer thresholds; cloak on/off policy;
 Yamato/Lockdown-style value sharing for Maelstrom/Storm/Disruption/Stasis;
