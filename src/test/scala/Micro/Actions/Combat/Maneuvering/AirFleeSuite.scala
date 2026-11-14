@@ -13,6 +13,17 @@ class AirFleeSuite extends AnyFunSuite {
     assert(AirFlee.fleePixel(Pixel(0, 0), Seq.empty, wound01 = 1.0, mapW, mapH).isEmpty)
   }
 
+  test("a custom trigger reaches past the shared twelve") {
+    val at13 = Seq(Pixel(13 * 32, 0))
+    assert(AirFlee.fleePixel(Pixel(0, 0), at13, wound01 = 0.0, mapW, mapH).isEmpty)
+    assert(AirFlee.fleePixel(
+      Pixel(0, 0), at13, wound01 = 0.0, mapW, mapH,
+      AirFlee.marginLowTiles, AirFlee.marginHighTiles, triggerTiles = 14.0).isDefined)
+    assert(AirFlee.fleePixel(
+      Pixel(0, 0), Seq(Pixel(15 * 32, 0)), wound01 = 0.0, mapW, mapH,
+      AirFlee.marginLowTiles, AirFlee.marginHighTiles, triggerTiles = 14.0).isEmpty)
+  }
+
   test("a threat on the edge still triggers") {
     assert(AirFlee.fleePixel(Pixel(2000, 2000), Seq(Pixel(2000 + 12 * 32, 2000)), wound01 = 0.0, mapW, mapH).isDefined)
   }

@@ -17,12 +17,27 @@ import Tactic.Squads.support.SquadAcePilots
  */
 object CorsairRangedFlee {
 
+  /**
+   * Corsair trigger radius, in tiles: Corsairs start their run two tiles
+   * outside the shared air rule - ground guns outrange the skirmish, so
+   * reacting at twelve means reacting inside their reach.
+   */
+  val corsairTriggerTiles: Double = 14.0
+
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
     if ( ! Protoss.Corsair(unit)) return false
 
     val threats = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
-    AirFlee.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight).exists(away => {
+    AirFlee.fleePixel(
+      unit.pixel,
+      threats,
+      unit.woundPercent(),
+      With.mapPixelWidth,
+      With.mapPixelHeight,
+      AirFlee.marginLowTiles,
+      AirFlee.marginHighTiles,
+      corsairTriggerTiles).exists(away => {
       // Aired out: fleeing the same line without getting anywhere means
       // cornered or herded, so rotate the escape instead of milling.
       val dest = AirFlee.outOfCorner(

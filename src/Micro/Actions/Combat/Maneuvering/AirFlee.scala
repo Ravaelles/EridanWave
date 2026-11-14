@@ -78,7 +78,8 @@ object AirFlee {
     mapWpx: Int,
     mapHpx: Int,
     marginLowTiles: Double,
-    marginHighTiles: Double): Option[Pixel] = {
+    marginHighTiles: Double,
+    triggerTiles: Double = AirFlee.triggerTiles): Option[Pixel] = {
     val near = threats.filter(t => own.pixelDistance(t) <= triggerTiles * 32.0)
     focus(near).map(focus =>
       outOfCorner(fleeFrom(own, focus, marginTiles(wound01, marginLowTiles, marginHighTiles)), mapWpx, mapHpx))
