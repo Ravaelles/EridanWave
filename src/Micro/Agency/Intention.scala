@@ -36,6 +36,7 @@ class Intention {
   var shouldLiftoff: Boolean = false
   var shouldAdjustXY    : Boolean                       = true
   var targets           : Option[IndexedSet[UnitInfo]]  = None
+  var marchHome         : Boolean                       = false
 
   def setTerminus         (value: Pixel)                    : Intention = { terminus          = Some(value); this }
   def setStation          (value: Pixel)                    : Intention = { station           = Some(value); this }
@@ -70,6 +71,7 @@ class Intention {
   def setCanFight         (value: Boolean = true)           : Intention = { canFight          = value; this }
   def setCanFlee          (value: Boolean = true)           : Intention = { canFlee           = value; this }
   def setCanSneak         (value: Boolean = true)           : Intention = { canSneak          = value; this }
+  def setMarchHome        (value: Boolean = true)           : Intention = { marchHome         = value; this }
   def setShouldMeld       (value: Boolean = true)           : Intention = { shouldMeld        = value; this }
   def setShouldLiftoff    (value: Boolean = true)           : Intention = { shouldLiftoff     = value; this }
   def setShouldCorrectXY  (value: Boolean = true)           : Intention = { shouldAdjustXY   = value; this }

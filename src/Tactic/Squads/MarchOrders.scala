@@ -112,6 +112,12 @@ object MarchOrders {
     unit.intend(squad)
       .setTerminus(?(squad.fightConsensus || assault || toothless, terminus, finalReturn))
       .setRedoubt(finalReturn)
+      // The march-home verdict rides the frame-fresh intention: a unit the
+      // march sent home must not re-engage in the unit phase. Consensus
+      // reads agree within a frame, but the verdict can change hands
+      // between the phases (re-squadding, HuntContact mode), and one
+      // overwrite frame is enough to feed a charge into a retreat.
+      .setMarchHome( ! (squad.fightConsensus || assault || toothless))
   }
 
   // The march rules, innermost first: rallying stragglers beat slots,

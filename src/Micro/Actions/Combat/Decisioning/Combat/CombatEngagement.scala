@@ -21,7 +21,10 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // No consensus: the squad is leaving, so walk its march instead of
     // dueling. Lone counterattacks while regrouping feed the enemy piecemeal;
     // the contain roster and mode latch still hold, so the squad reforms.
-    if ( ! combat.fightConsensus) {
+    // March-home counts too: the verdict rides the frame-fresh intention,
+    // so a unit the march sent home never re-engages in this phase even
+    // when the consensus changed hands between the phases.
+    if ( ! combat.fightConsensus || unit.intent.marchHome) {
       combat.maneuvers.move()
 
       return true
