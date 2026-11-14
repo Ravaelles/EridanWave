@@ -125,7 +125,7 @@ object BeDetector extends Action {
     // Nearest enemy detector, regardless of id: foe ids carry no seniority.
     val nearest = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isDetector))(unit.pixelDistanceEdge)
     nearest.exists(foe => {
-      if (DetectorSpread.shouldYieldToDetector(unit.tileDistanceEdge(foe) * Maff.inv32)) {
+      if (DetectorSpread.standOffLatched(unit.id, unit.tileDistanceEdge(foe) * Maff.inv32)) {
         unit.cherryVisUnitLog("ObserverStandOff")
         unit.agent.destinationNext.set(DetectorSpread.standOff(unit.pixel, foe.pixel))
         Commander.move(unit)
