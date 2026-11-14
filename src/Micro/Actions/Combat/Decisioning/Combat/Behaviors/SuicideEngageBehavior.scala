@@ -20,9 +20,7 @@ object SuicideEngageBehavior {
     if ( ! unit.agent.shouldFight) return false
 
     val enemy = Maff.minBy(unit.matchups.enemies.filter(_.alive))(_.pixelDistanceEdge(unit))
-    if (enemy.isEmpty) return false
-
-    if ( ! SuicideEngage.shouldForceAttack(With.framesSince(unit.lastFrameStartingAttack), hasEnemy = true, unit.isSuicideMission)) return false
+    if ( ! SuicideEngage.shouldForceAttack(With.framesSince(unit.lastFrameStartingAttack), enemy.isDefined)) return false
 
     val target = enemy.get
     if ( ! unit.orderTarget.contains(target)) {

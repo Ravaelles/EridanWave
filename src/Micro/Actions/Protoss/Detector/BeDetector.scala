@@ -1,10 +1,10 @@
 package Micro.Actions.Protoss.Detector
 
 import Lifecycle.With
-import Mathematics.Maff
+import Mathematics.{Maff, Separation}
 import Micro.Actions.Action
 import Micro.Actions.Protoss.Air.BeFlier
-import Micro.Actions.Combat.Maneuvering.AsAirAvoidLandUnits
+import Micro.Actions.Combat.Maneuvering.AirFlee
 import Micro.Actions.Combat.Tactics.{Recharge, Spot}
 import Micro.Agency.Commander
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -51,12 +51,12 @@ object BeDetector extends Action {
     // Engine edge distance is pixels; the threshold is tiles (rule 12).
     val others = With.units.ours.view
       .filter(u => u.unitClass == unit.unitClass && u.id != unit.id)
-      .map(u => DetectorSpread.OlderEye(u.id, u.pixel, u.tileDistanceEdge(unit)))
+      .map(u => Separation.Neighbor(u.id, u.pixel, u.tileDistanceEdge(unit)))
       .toSeq
-    DetectorSpread.partner(unit.id, others).exists(older => {
-      if (DetectorSpread.shouldSpread(unit.id, older.id, older.distTiles)) {
+    Separation.partner(unit.id, others).exists(older => {
+      if (Separation.shouldSpread(unit.id, older.id, older.distTiles, DetectorSpread.minDistTiles)) {
         unit.cherryVisUnitLog("DetectorSpread")
-        unit.agent.destinationNext.set(DetectorSpread.awayFrom(unit.pixel, older.pixel))
+        unit.agent.destinationNext.set(Separation.awayFrom(unit.pixel, older.pixel, DetectorSpread.minDistTiles))
         Commander.move(unit)
         true
       } else false
@@ -96,8 +96,8 @@ object BeDetector extends Action {
       _.pixelDistanceCenter(unit.pixel))
     (for (hunter <- hunterPixel; if shouldFleeHunters(detectorTiles, unit.tileDistanceCenter(hunter.pixel))) yield {
       unit.cherryVisUnitLog("ObserverFleeHunters")
-      unit.agent.destinationNext.set(AsAirAvoidLandUnits.outOfCorner(
-        AsAirAvoidLandUnits.fleeFrom(unit.pixel, hunter.pixel, AsAirAvoidLandUnits.marginTiles(unit.woundPercent, marginLowTiles, marginHighTiles)),
+      unit.agent.destinationNext.set(AirFlee.outOfCorner(
+        AirFlee.fleeFrom(unit.pixel, hunter.pixel, AirFlee.marginTiles(unit.woundPercent(), marginLowTiles, marginHighTiles)),
         With.mapPixelWidth,
         With.mapPixelHeight))
       Commander.move(unit)
@@ -111,7 +111,7 @@ object BeDetector extends Action {
 
     val threats = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
-    AsAirAvoidLandUnits.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight, marginLowTiles, marginHighTiles).exists(dest => {
+    AirFlee.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight, marginLowTiles, marginHighTiles).exists(dest => {
       unit.cherryVisUnitLog("ObserverFlee")
       unit.agent.destinationNext.set(dest)
       Commander.move(unit)
@@ -120,7 +120,8 @@ object BeDetector extends Action {
   }
 
   /** Observer keep-off: never close inside six tiles of an enemy detector; back straight out instead. */
-  private def keepOffDetectors(unit: FriendlyUnitInfo): Boolean = {    if ( ! Protoss.Observer(unit)) return false
+  private def keepOffDetectors(unit: FriendlyUnitInfo): Boolean = {
+    if ( ! Protoss.Observer(unit)) return false
 
     // Nearest enemy detector, regardless of id: foe ids carry no seniority.
     val nearest = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isDetector))(unit.pixelDistanceEdge)

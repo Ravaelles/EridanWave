@@ -100,7 +100,7 @@ Zerg-comp game. Storm friendly veto (`c25aa6dee`, 3+ own in box, no
 cast). Storm Overlord veto (`35c59bc1b`, HT<=190 never storms
 Overlord). Storm intent + Atlantis pack (`850a7bba`) - HT approaches
 with spell intent, casts only a reconfirmed in-range spot;
-energy-scaled pack (195:1, 180:2, 110:base-1), crucial
+energy-scaled pack (180:1, 100:2, 75+:base, below 75 never), crucial
 Reaver/sieged-Tank bypass, never out of range. Wall-bust Focus (`9b595bb18`) - Terran wall-in, idle guns
 break Depot/Barracks. Point-blank Focus (`b3c664ed1`) - friendlies
 touching enemy buildings. `RepairerSnipe` (`2d4521365`) - SCV
@@ -285,3 +285,6 @@ Production jam find (GAME_F9888E0A PurpleWave DEFEAT 36/229): 93 observer traini
 Campaign final: 18 games vs real opponents (2 baseline + 5 pre-fix + 5 post-fix + 6 variety), 2 wins (Steamhammer 69/13, CherryPi 255/108 - both suicide-carried with ~1 probe lost). Fixes field-verified: corsair dance (150->0/12), DT dither signature (Hold-dominant), ZealotSwarm live in batch2, observer latch inconclusive (input flicker suspected).
 Micro: shuttle flee latched on worst penetration (THIS) - one call per frame over every attacker, release two tiles past every trigger; StarEngine duel pins sharp at 683 flips/8f longest run vs latched 57/90f (`ShuttleFerryLatchSuite`). Closes the Reav_v_Drag flip-flop: identical snapshots flipped DEFEAT 6/12/VICTORY 7/14/VICTORY 7/11/DEFEAT 6/11, defeat runs show AirFlee/DuelFerry ~100x each, victory runs adopt/flee decisively. Needs Reav_v_Drag re-runs on the new jar.
 Reav_v_Drag verdict (post-ferry-latch jar, 3 runs V/V/D): AirFlee/DuelFerry rows collapse from ~100 each to <=16 in every run - the dither is cured. Outcomes still flip (7/12, 7/8, 3/11) with identical snapshots AND identical dragoon decision rhythms, so the residual is even-fight snowball (first volley cascades), not doctrine - not actionable, stop chasing. UMS snapshot pipeline works (MapSnapshot dumper + probe Act arming); the three problem maps are archived with snapshots, no new scenarios (mechanisms covered or out of engine scope).
+
+Review phase-c applied (2026-11-14, `.ai/f/review-phase-c.md`): latches collapsed to `Utilities.Latch` (one reset sweep), same-type separation to `Mathematics.Separation` (eyes/wings/arbiters), dead `AirFleeGeometry` deleted and `AsAirAvoidLandUnits` renamed `AirFlee`, march gates read one `MarchFacts` per frame, dead kernels wired or removed, contain-leave streak now breaks on proposal-free frames. Needs a game: Arbiter spread replaced the senior-arbiter attraction force (`BeArbiter`), so watch cloak coverage/clumping in one Arbiter game; storm leash cache is behaviour-neutral.
+Arbiter doctrine change (recorded per review C2): arbiters now separate at nine tiles (`Separation`, the Observer rule) instead of bunching under the oldest hull's cloak. Removed `Forces.threat` attraction, no game behind it yet - if coverage suffers, restore a weaker pull inside the spread band rather than the old full vector.

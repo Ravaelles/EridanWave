@@ -1,7 +1,7 @@
 package Micro.Actions.Protoss.Detector
 
-import Mathematics.Maff
 import Mathematics.Points.Pixel
+import Utilities.Latch
 
 /**
  * Pure detector spread (no game access): Atlantis SpreadOutDetectors keeps
@@ -11,22 +11,8 @@ import Mathematics.Points.Pixel
  */
 object DetectorSpread {
 
-  /** Same-type eyes keep at least this apart, in tiles. */
+  /** Same-type eyes keep at least this apart, in tiles (`Separation` carries the rule). */
   val minDistTiles: Double = 9.0
-
-  def shouldSpread(newerId: Int, olderId: Int, distTiles: Double): Boolean =
-    newerId > olderId && distTiles < minDistTiles
-
-  /** An older eye we may need to spread from. */
-  final case class OlderEye(id: Int, pixel: Pixel, distTiles: Double)
-
-  /** The nearest older eye, if any: only older neighbors count, the newer moves. */
-  def partner(usId: Int, others: Seq[OlderEye]): Option[OlderEye] =
-    Maff.minBy(others.filter(_.id < usId))(_.distTiles)
-
-  /** Full separation along the ray from the older eye through us. */
-  def awayFrom(us: Pixel, them: Pixel): Pixel =
-    them.project(us, minDistTiles * 32.0)
 
   /** Observers keep this clear of enemy detectors, in tiles. */
   val enemyKeepOffTiles: Double = 6.0
@@ -48,19 +34,16 @@ object DetectorSpread {
 
   def standOffReleaseDistTiles: Double = enemyKeepOffTiles + standOffReleaseTiles
 
-  private val yielding = new scala.collection.mutable.HashMap[Int, Boolean]()
+  private val yielding = new Latch
 
-  def reset(): Unit = { yielding.clear() }
+  def reset(): Unit = { yielding.reset() }
 
-  def standOffLatched(eyeId: Int, distTiles: Double): Boolean = {
-    val next =
-      if (shouldYieldToDetector(distTiles)) true
-      else if (distTiles > standOffReleaseDistTiles) false
-      else yielding.getOrElse(eyeId, shouldYieldToDetector(distTiles))
-    yielding.put(eyeId, next)
-
-    next
-  }
+  def standOffLatched(eyeId: Int, distTiles: Double): Boolean =
+    yielding(
+      eyeId,
+      fires    = shouldYieldToDetector(distTiles),
+      releases = distTiles > standOffReleaseDistTiles,
+      initial  = shouldYieldToDetector(distTiles))
 
   /** Full standoff from an enemy detector along the ray past us. */
   def standOff(us: Pixel, them: Pixel): Pixel =

@@ -27,6 +27,14 @@ object ReaverShuttlePair {
   def isOldest(reaver: FriendlyUnitInfo): Boolean =
     With.units.ours.view.filter(u => u.alive && Protoss.Reaver(u)).forall(_.id >= reaver.id)
 
+  // Per-frame scans the pair brain asks for more than once (BeShuttle reads
+  // bait and mate every frame per Shuttle): one pass per frame, not per read.
+  private val unloadedReavers = new Performance.Cache(() =>
+    With.units.ours.view.filter(u => u.alive && Protoss.Reaver(u) && ! u.loaded).toVector)
+
+  private val anyPairCargo = new Performance.Cache(() =>
+    With.units.ours.exists(u => Protoss.Reaver(u) || Protoss.HighTemplar(u)))
+
   /**
    * The on-foot mate: nearest live unloaded Reaver of our squad. After
    * an unload the loaded-passenger bond evaporates, but the pair does
@@ -34,8 +42,7 @@ object ReaverShuttlePair {
    * 64 pixels) has to stay its ride until it boards again.
    */
   def mateOnFoot(shuttle: FriendlyUnitInfo): Option[FriendlyUnitInfo] =
-    Maff.minBy(With.units.ours.view.filter(u =>
-      u.alive && Protoss.Reaver(u) && ! u.loaded && shuttle.squad.exists(u.squad.contains)))(
+    Maff.minBy(unloadedReavers().filter(u => shuttle.squad.exists(u.squad.contains)))(
       _.pixelDistanceCenter(shuttle.pixel))
 
   /** Stay with an unloaded mate operating this close, in tiles: the ride the Reaver brain assumes. */
@@ -68,24 +75,32 @@ object ReaverShuttlePair {
   private def health01(unit: FriendlyUnitInfo): Double =
     1.0 - unit.woundPercent()
 
+  /**
+   * Raids are a Terran/Protoss tool: against Zerg every pair supports the
+   * army, so the doctrine lives here with the other pair reads, not inside
+   * the status mapper. One read per frame for every caller.
+   */
+  private val enemyIsZergCache = new Performance.Cache(() => With.enemies.exists(_.isZerg))
+
+  private def status(facts: => ReaverShuttleStatus.PairStatus): ReaverShuttleStatus.PairStatus =
+    if (enemyIsZergCache()) ReaverShuttleStatus.SupportArmy else facts
+
   /** Shared status for the Shuttle's pair (empty ride supports the army). */
   def statusOfShuttle(shuttle: FriendlyUnitInfo): ReaverShuttleStatus.PairStatus = {
     val passenger = passengerOf(shuttle)
-    ReaverShuttleStatus.decide(
+    status(ReaverShuttleStatus.decide(
       isOldestReaver  = passenger.exists(isOldest),
       shuttleHealth01 = health01(shuttle),
-      reaverHealth01  = passenger.map(health01).getOrElse(1.0),
-      enemyIsZerg     = With.enemies.exists(_.isZerg))
+      reaverHealth01  = passenger.map(health01).getOrElse(1.0)))
   }
 
   /** Shared status for the Reaver's pair (no ride supports the army). */
   def statusOfReaver(reaver: FriendlyUnitInfo): ReaverShuttleStatus.PairStatus = {
     val ride = rideOf(reaver)
-    ReaverShuttleStatus.decide(
+    status(ReaverShuttleStatus.decide(
       isOldestReaver  = isOldest(reaver),
       shuttleHealth01 = ride.map(health01).getOrElse(1.0),
-      reaverHealth01  = health01(reaver),
-      enemyIsZerg     = With.enemies.exists(_.isZerg))
+      reaverHealth01  = health01(reaver)))
   }
 
   /** The army to follow: the attack squad's goal, or home. */
@@ -104,8 +119,7 @@ object ReaverShuttlePair {
    * over ours.
    */
   def isBaitRide(shuttle: FriendlyUnitInfo): Boolean =
-    shuttle.loadedUnitCount == 0 &&
-      ! With.units.ours.exists(u => Protoss.Reaver(u) || Protoss.HighTemplar(u))
+    shuttle.loadedUnitCount == 0 && ! anyPairCargo()
 
   /** Where a bait ride loiters: the known enemy main, else the enemy start. */
   def baitGoal: Pixel =

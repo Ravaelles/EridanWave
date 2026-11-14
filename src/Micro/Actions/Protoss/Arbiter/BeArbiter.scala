@@ -2,7 +2,7 @@ package Micro.Actions.Protoss.Arbiter
 
 import Debugging.Visualizations.Forces
 import Lifecycle.With
-import Mathematics.Maff
+import Mathematics.{Maff, Separation}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
@@ -42,12 +42,12 @@ object BeArbiter extends Action {
   private def spread(arbiter: FriendlyUnitInfo): Boolean = {
     val others = With.units.ours.view
       .filter(u => Protoss.Arbiter(u) && u.id != arbiter.id)
-      .map(u => DetectorSpread.OlderEye(u.id, u.pixel, u.tileDistanceEdge(arbiter)))
+      .map(u => Separation.Neighbor(u.id, u.pixel, u.tileDistanceEdge(arbiter)))
       .toSeq
-    DetectorSpread.partner(arbiter.id, others).exists(older => {
-      if (DetectorSpread.shouldSpread(arbiter.id, older.id, older.distTiles)) {
+    Separation.partner(arbiter.id, others).exists(older => {
+      if (Separation.shouldSpread(arbiter.id, older.id, older.distTiles, DetectorSpread.minDistTiles)) {
         arbiter.cherryVisUnitLog("ArbiterSpread")
-        arbiter.agent.destinationNext.set(DetectorSpread.awayFrom(arbiter.pixel, older.pixel))
+        arbiter.agent.destinationNext.set(Separation.awayFrom(arbiter.pixel, older.pixel, DetectorSpread.minDistTiles))
         Commander.move(arbiter)
         true
       } else false

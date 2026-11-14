@@ -1,6 +1,6 @@
 package Tactic.Squads.Decisions
 
-import scala.collection.mutable
+import Utilities.Latch
 
 /**
  * March dressing: leaders wait for the pack before first contact.
@@ -19,10 +19,6 @@ object MarchDress {
   /** Leaders this far ahead of the pack mean (tiles) wait instead of running on. */
   val waitAheadTiles: Double = 2.0
 
-  def shouldWait(ownDistToGoalTiles: Double, meanDistToGoalTiles: Double): Boolean = {
-    meanDistToGoalTiles - ownDistToGoalTiles > waitAheadTiles
-  }
-
   /**
    * Latched dress wait (LoneMarch shape): the pack mean breathes a tile
    * or two every frame, so a sharp two-tile gate holds and releases the
@@ -34,19 +30,16 @@ object MarchDress {
   val dressEnterTiles: Double = 2.5
   val dressExitTiles: Double = 1.5
 
-  private val dressing = new mutable.HashMap[Int, Boolean]()
+  private val dressing = new Latch
 
-  def reset(): Unit = { dressing.clear(); pushing.clear() }
+  def reset(): Unit = { dressing.reset(); pushing.reset() }
 
-  def holdDress(unitId: Int, aheadTiles: Double): Boolean = {
-    val next =
-      if (aheadTiles > dressEnterTiles) true
-      else if (aheadTiles < dressExitTiles) false
-      else dressing.getOrElse(unitId, aheadTiles > waitAheadTiles)
-    dressing.put(unitId, next)
-
-    next
-  }
+  def holdDress(unitId: Int, aheadTiles: Double): Boolean =
+    dressing(
+      unitId,
+      fires    = aheadTiles > dressEnterTiles,
+      releases = aheadTiles < dressExitTiles,
+      initial  = aheadTiles > waitAheadTiles)
 
   /** No dressing without contact: enemies this close, in tiles, justify it. */
   val dressEnemyRadiusTiles: Double = 20.0
@@ -92,15 +85,12 @@ object MarchDress {
    */
   val staticPushExitTiles: Double = 12.0
 
-  private val pushing = new mutable.HashMap[Int, Boolean]()
+  private val pushing = new Latch
 
-  def pushPastStatics(unitId: Int, nearestTiles: Double): Boolean = {
-    val next =
-      if (nearestTiles <= staticPushTiles) true
-      else if (nearestTiles > staticPushExitTiles) false
-      else pushing.getOrElse(unitId, shouldPushPastStatics(nearestTiles))
-    pushing.put(unitId, next)
-
-    next
-  }
+  def pushPastStatics(unitId: Int, nearestTiles: Double): Boolean =
+    pushing(
+      unitId,
+      fires    = nearestTiles <= staticPushTiles,
+      releases = nearestTiles > staticPushExitTiles,
+      initial  = shouldPushPastStatics(nearestTiles))
 }

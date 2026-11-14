@@ -1,7 +1,11 @@
 package Micro.Actions.Combat.Decisioning
 
 /**
- * Crucial air-victim snipe (no game access): ground anti-air shoots the
+ * Crucial air-victim snipe (no game access) - a pre-`Target` doctrine pick
+ * (conventions rule 15): a fixed priority that outranks retreat, so it
+ * stays one documented ladder instead of joining `Target`'s scoring.
+ *
+ * Ground anti-air shoots the
  * targets that must die first, regardless of anything else the unit is
  * doing - even retreating. Fixed priority: suicide Scourge nearest,
  * then the weakest Carrier, Science Vessel, Battlecruiser, Wraith.

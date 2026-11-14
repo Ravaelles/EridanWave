@@ -4,19 +4,19 @@ import Mathematics.Maff
 import Mathematics.Points.Pixel
 
 /**
- * Air_{(and ground)} avoidance of anything that can hit us (no game
- * access): flyers run from the centroid of every live enemy that can
- * attack them instead of standing inside firing range, on a
- * wound-scaled 3-to-10 tile margin - a fresh hull skates, a dying one
- * turns early. The flee destination never lands in a map corner: the
- * 6x6-tile corner squares are unusable traps, so a destination inside
- * one slides out along the nearest edge instead of diving deeper.
- * Pure pixels in, pixels out; the caller gathers threats (any enemy
- * whose class can attack the victim), passes map bounds, and issues
- * the order. One home for the rule so air doctrines cannot drift apart
- * on where safety ends.
+ * Air flee from anything that can hit us (no game access): flyers run from
+ * the centroid of every live enemy that can attack them instead of standing
+ * inside firing range, on a wound-scaled margin - a fresh hull skates, a
+ * dying one turns early. The band is the caller's: Corsairs and Shuttles
+ * skate at 3->10, eyes hold wider at 6->12. The flee destination never
+ * lands in a map corner: the 6x6-tile corner squares are unusable traps, so
+ * a destination inside one slides out along the nearest edge instead of
+ * diving deeper. Pure pixels in, pixels out; the caller gathers threats
+ * (any enemy that can attack the victim), passes map bounds, and issues the
+ * order. One home for the rule so air doctrines cannot drift apart on where
+ * safety ends.
  */
-object AsAirAvoidLandUnits {
+object AirFlee {
 
   /** Only enemies inside this radius, in tiles, trigger the flee. */
   val triggerTiles: Double = 12.0
@@ -29,9 +29,6 @@ object AsAirAvoidLandUnits {
 
   /** Corner squares this wide, in tiles, are unusable: never flee into them. */
   val cornerTiles: Double = 6.0
-
-  def marginTiles(wound01: Double): Double =
-    marginTiles(wound01, marginLowTiles, marginHighTiles)
 
   def marginTiles(wound01: Double, lowTiles: Double, highTiles: Double): Double =
     Maff.woundBonus(wound01, lowTiles, highTiles)

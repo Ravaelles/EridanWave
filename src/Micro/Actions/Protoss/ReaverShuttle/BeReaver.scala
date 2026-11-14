@@ -21,113 +21,16 @@ object BeReaver extends Action {
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.loaded) {
-      if (shouldLand(unit)) {
-        Commander.requestUnload(unit)
-        unit.agent.act("UnloadStatic")
-
-        return
-      }
-
-      // Ordered to fight by the mission or the sim verdict: the loop and
-      // the DropSafety veto below it handle the landing spot itself.
-      if (unit.agent.fightReason == FightOrFlee.Reave) {
-        Commander.requestUnload(unit)
-        unit.agent.act("UnloadOrdered")
-
-        return
-      }
+      unload(unit)
 
       return
     }
 
-    val rideNearbyPre = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0)
-    if (rideNearbyPre && ReaverShuttleReboard.rescueScarab(
-      loaded            = unit.loaded,
-      committed         = unit.agent.commit,
-      hasActiveScarab   = unit.hasActiveScarab,
-      cooldownLeft      = unit.cooldownLeft,
-      latencyFrames     = With.latency.latencyFrames,
-      threatened        = unit.matchups.threatsInRange.nonEmpty)) {
-      // Pressured mid-shot with the ride at hand: the flying Scarab lands
-      // on its own, the hull does not need to tank for it.
-      unit.agent.act("BoardRescue")
-      Commander.rightClick(unit, unit.agent.ride.get)
-
-      return
-    }
-
-    val foe = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit))
-    if (foe.exists(t => t.unitClass.isStaticDefense && ReaverShuttleStaticAttack.advantageBackoff(
-      unit.pixelRangeAgainst(t) * Maff.inv32,
-      t.pixelRangeAgainst(unit) * Maff.inv32,
-      unit.pixelDistanceEdge(t) * Maff.inv32))) {
-      // Inside the reach of a static we outrange (an escort melee dragged
-      // us in): step back out to our max reach, keep shooting for free.
-      foe.foreach(t => {
-        unit.agent.act("BackOffStatic")
-        val gap = unit.pixelRangeAgainst(t) + 8.0 - unit.pixelDistanceEdge(t)
-        unit.agent.destinationNext.set(unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
-        Commander.move(unit)
-      })
-
-      return
-    }
-
-    if (rideNearbyPre && shotlessPressured(unit)) {
-      // Dry under guns with the ride at hand: posing holds nothing, the
-      // shot is already spent - board now. Stands above StandShoot, which
-      // would otherwise hold a scarab-less hull in place until it dies.
-      unit.agent.act("BoardShotless")
-      Commander.rightClick(unit, unit.agent.ride.get)
-
-      return
-    }
-
-    if (foe.exists(unit.inRangeToAttack)) {
-      unit.agent.act("StandShoot")
-      Commander.hold(unit)
-
-      return
-    }
-
-    if (foe.exists(t => t.unitClass.isStaticDefense && unit.tileDistanceEdge(t) < ReaverShuttleStaticAttack.engageTiles && ! outranges(t, unit))) {
-      foe.foreach(t => {
-        unit.agent.act("CloseStatic")
-        unit.agent.destinationNext.set(t.pixel)
-        Commander.move(unit)
-      })
-
-      return
-    }
-
-    if (foe.exists(t => t.unitClass.isStaticDefense && outranges(t, unit) && unit.inRangeToAttack(t))) {
-      foe.foreach(t => {
-        unit.agent.act("BackOffStatic")
-        val gap = unit.pixelRangeAgainst(t) + 32.0 - unit.pixelDistanceEdge(t)
-        unit.agent.destinationNext.set(unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
-        Commander.move(unit)
-      })
-
-      return
-    }
-
-    val rideNearby = rideNearbyPre
-    if (rideNearby && (ReaverShuttleReboard.mayReboard(threatDist(unit), unit.woundPercent()) || needsRide(unit))) {
-      unit.agent.act("BoardRide")
-      Commander.rightClick(unit, unit.agent.ride.get)
-
-      return
-    }
-
-    val ride = ReaverShuttlePair.rideOf(unit)
-    if (ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0 && ReaverShuttlePair.pairIdle(r, unit))) {
-      // Idle pair on a baseless map: the ride came for us, board it even
-      // with nowhere urgent to go - the ferry below advances the pair.
-      unit.agent.act("BoardIdle")
-      Commander.rightClick(unit, ride.get)
-
-      return
-    }
+    val context = GroundContext(
+      unit       = unit,
+      foe        = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit)),
+      rideNearby = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0))
+    if (groundClaims.exists(_.apply(context))) return
 
     // Duelist walk (baseless maps, shuttle-less pairs only): with no contacts
     // the squad march stalls, so a Reaver with no ride at all walks at the
@@ -136,6 +39,131 @@ object BeReaver extends Action {
     // off alone while its Shuttle ferries elsewhere is how Reavers die solo.
     if (With.geography.ourBases.isEmpty && ! With.units.ours.exists(u => u.alive && Protoss.Shuttle(u))) {
       duelWalk(unit)
+    }
+  }
+
+  /** One frame of context for the ground claims: the ride and the nearest reachable foe, measured once. */
+  private final case class GroundContext(unit: FriendlyUnitInfo, foe: Option[UnitInfo], rideNearby: Boolean) {
+    def ride: Option[FriendlyUnitInfo] = unit.agent.ride
+  }
+
+  /** First claim wins, in order; a claim that acts owns the frame. */
+  private val groundClaims: Seq[GroundContext => Boolean] = Seq(
+    rescueScarab, backOffOutrangedStatic, boardShotless, standShoot, closeStatic, backOffOutrangedInRange, boardRide, boardIdle)
+
+  /** Pressured mid-shot with the ride at hand: the flying Scarab lands on its own, the hull does not need to tank for it. */
+  private def rescueScarab(context: GroundContext): Boolean = {
+    if ( ! context.rideNearby) return false
+
+    if ( ! ReaverShuttleReboard.rescueScarab(
+      loaded          = context.unit.loaded,
+      committed       = context.unit.agent.commit,
+      hasActiveScarab = context.unit.hasActiveScarab,
+      cooldownLeft    = context.unit.cooldownLeft,
+      latencyFrames   = With.latency.latencyFrames,
+      threatened      = context.unit.matchups.threatsInRange.nonEmpty)) return false
+
+    context.unit.agent.act("BoardRescue")
+    Commander.rightClick(context.unit, context.ride.get)
+
+    true
+  }
+
+  /** Inside the reach of a static we outrange (an escort melee dragged us in): step back out to our max reach, keep shooting for free. */
+  private def backOffOutrangedStatic(context: GroundContext): Boolean = {
+    val backOff = context.foe.filter(t => t.unitClass.isStaticDefense && ReaverShuttleStaticAttack.advantageBackoff(
+      context.unit.pixelRangeAgainst(t) * Maff.inv32,
+      t.pixelRangeAgainst(context.unit) * Maff.inv32,
+      context.unit.pixelDistanceEdge(t) * Maff.inv32))
+    backOff.foreach(t => {
+      context.unit.agent.act("BackOffStatic")
+      val gap = context.unit.pixelRangeAgainst(t) + 8.0 - context.unit.pixelDistanceEdge(t)
+      context.unit.agent.destinationNext.set(context.unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
+      Commander.move(context.unit)
+    })
+    backOff.isDefined
+  }
+
+  /** Dry under guns with the ride at hand: posing holds nothing, the shot is already spent - board now. */
+  private def boardShotless(context: GroundContext): Boolean = {
+    if ( ! context.rideNearby || ! shotlessPressured(context.unit)) return false
+
+    context.unit.agent.act("BoardShotless")
+    Commander.rightClick(context.unit, context.ride.get)
+
+    true
+  }
+
+  /** Anything the scarab can reach dies from where we stand: holding is the whole plan. */
+  private def standShoot(context: GroundContext): Boolean = {
+    if ( ! context.foe.exists(context.unit.inRangeToAttack)) return false
+
+    context.unit.agent.act("StandShoot")
+    Commander.hold(context.unit)
+
+    true
+  }
+
+  /** Close a static we can outwalk and outrange, so the next shot lands inside our reach. */
+  private def closeStatic(context: GroundContext): Boolean = {
+    val close = context.foe.filter(t =>
+      t.unitClass.isStaticDefense
+      && context.unit.tileDistanceEdge(t) < ReaverShuttleStaticAttack.engageTiles
+      && ! outranges(t, context.unit))
+    close.foreach(t => {
+      context.unit.agent.act("CloseStatic")
+      context.unit.agent.destinationNext.set(t.pixel)
+      Commander.move(context.unit)
+    })
+    close.isDefined
+  }
+
+  /** Already inside the reach of a static that outranges us: back off to our own max reach instead of trading. */
+  private def backOffOutrangedInRange(context: GroundContext): Boolean = {
+    val backOff = context.foe.filter(t =>
+      t.unitClass.isStaticDefense && outranges(t, context.unit) && context.unit.inRangeToAttack(t))
+    backOff.foreach(t => {
+      context.unit.agent.act("BackOffStatic")
+      val gap = context.unit.pixelRangeAgainst(t) + 32.0 - context.unit.pixelDistanceEdge(t)
+      context.unit.agent.destinationNext.set(context.unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
+      Commander.move(context.unit)
+    })
+    backOff.isDefined
+  }
+
+  /** Board for a real trip, or when the position is lost and the ride is the way out. */
+  private def boardRide(context: GroundContext): Boolean = {
+    if ( ! context.rideNearby) return false
+
+    if ( ! ReaverShuttleReboard.mayReboard(threatDist(context.unit), context.unit.woundPercent()) && ! needsRide(context.unit)) return false
+
+    context.unit.agent.act("BoardRide")
+    Commander.rightClick(context.unit, context.ride.get)
+
+    true
+  }
+
+  /** Idle pair on a baseless map: the ride came for us, board it even with nowhere urgent to go. */
+  private def boardIdle(context: GroundContext): Boolean = {
+    val idle = ReaverShuttlePair.rideOf(context.unit).filter(r =>
+      r.pixelDistanceEdge(context.unit) <= 64.0 && ReaverShuttlePair.pairIdle(r, context.unit))
+    if (idle.isEmpty) return false
+
+    context.unit.agent.act("BoardIdle")
+    Commander.rightClick(context.unit, idle.get)
+
+    true
+  }
+
+  private def unload(unit: FriendlyUnitInfo): Unit = {
+    if (shouldLand(unit)) {
+      Commander.requestUnload(unit)
+      unit.agent.act("UnloadStatic")
+    } else if (unit.agent.fightReason == FightOrFlee.Reave) {
+      // Ordered to fight by the mission or the sim verdict: the loop and
+      // the DropSafety veto below it handle the landing spot itself.
+      Commander.requestUnload(unit)
+      unit.agent.act("UnloadOrdered")
     }
   }
 

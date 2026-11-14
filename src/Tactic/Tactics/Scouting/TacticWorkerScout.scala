@@ -5,6 +5,7 @@ import Tactic.Tactics.Tactic
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Mathematics.Maff
+import Mathematics.Points.Pixel
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import ProxyBwapi.UnitTracking.UnorderedBuffer
@@ -132,17 +133,22 @@ class TacticWorkerScout extends Tactic {
   /**
    * Enemy third due for its minute check (no game decisions here, just
    * the pick): the nearest base past the natural, unseen for sixty
-   * seconds. The base layout never changes, so the pick caches after
-   * the enemy main is known; only the staleness re-arms. All races -
-   * a hidden third kills against anyone.
+   * seconds. The base layout never changes, so the pick caches after the
+   * enemy main is known; only the staleness re-arms. The cache is keyed on
+   * that main, since that is the input the pick depends on (a re-identified
+   * main must not leave the old third walking forever). All races - a
+   * hidden third kills against anyone.
    */
-  private var cachedThird: Option[Base] = None
+  private var cachedThird      : Option[Base] = None
+  private var cachedThirdMain  : Option[Pixel] = None
 
   private def staleEnemyThird: Option[Base] = {
     if ( ! With.scouting.enemyMainFullyScouted) return None
 
-    if (cachedThird.isEmpty) {
-      cachedThird = With.scouting.enemyMain.flatMap(main =>
+    val mainPixel = With.scouting.enemyMain.map(_.heart.center)
+    if (cachedThird.isEmpty || cachedThirdMain != mainPixel) {
+      cachedThirdMain = mainPixel
+      cachedThird     = With.scouting.enemyMain.flatMap(main =>
         With.geography.bases.filter(b => ! b.island && b != main).toVector
           .sortBy(b => main.heart.groundPixels(b.heart))
           .find(b => ! main.natural.contains(b)))

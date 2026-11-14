@@ -21,7 +21,7 @@ object ContainFireBehavior {
     val hittable = unit.matchups.targetsInRange
     if (hittable.isEmpty) return false
 
-    if ( ! ContainFire.shouldShoot(containing = true, cooldownLeft = unit.cooldownLeft, hasHittableTarget = true)) return false
+    if ( ! ContainFire.shouldShoot(cooldownLeft = unit.cooldownLeft, hasHittableTarget = hittable.nonEmpty)) return false
 
     val target = Maff.minBy(hittable)(unit.pixelDistanceCenter(_)).get
     if ( ! unit.orderTarget.contains(target)) {

@@ -2,8 +2,7 @@ package Micro.Actions.Protoss.DarkTemplar
 
 import Mathematics.Points.Pixel
 import Micro.Actions.Combat.Maneuvering.RangedReach
-
-import scala.collection.mutable
+import Utilities.Latch
 
 /**
  * Pure detector evasion for a hunting Dark Templar (no game access): a
@@ -59,19 +58,16 @@ object DarkTemplarEvade {
   def evadeReleasePixels(sightPixels: Double): Double =
     evadeRadiusPixels(sightPixels) + exitMarginTiles * 32.0
 
-  private val evading = new mutable.HashMap[Int, Boolean]()
+  private val evading = new Latch
 
-  def reset(): Unit = { evading.clear() }
+  def reset(): Unit = { evading.reset() }
 
-  def evadeLatched(unitId: Int, distPixels: Double, sightPixels: Double): Boolean = {
-    val next =
-      if (shouldEvade(distPixels, sightPixels)) true
-      else if (distPixels > evadeReleasePixels(sightPixels)) false
-      else evading.getOrElse(unitId, shouldEvade(distPixels, sightPixels))
-    evading.put(unitId, next)
-
-    next
-  }
+  def evadeLatched(unitId: Int, distPixels: Double, sightPixels: Double): Boolean =
+    evading(
+      unitId,
+      fires    = shouldEvade(distPixels, sightPixels),
+      releases = distPixels > evadeReleasePixels(sightPixels),
+      initial  = shouldEvade(distPixels, sightPixels))
 
   /**
    * Covered-target filter (pure pixels for the suite): a hunt target

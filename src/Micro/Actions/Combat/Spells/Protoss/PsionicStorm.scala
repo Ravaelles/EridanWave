@@ -43,12 +43,19 @@ object PsionicStorm extends TargetedSpell {
   /** Approach leash vs everyone else, in tiles. */
   val stormApproachVsOthersTiles: Int = 10
 
-  /** Pure leash pick for the suite: Terran gets the longer walk. */
-  def maxApproachVsTerran(isTerran: Boolean): Int =
+  /** Leash pick: Terran gets the longer walk. */
+  def approachTilesFor(isTerran: Boolean): Int =
     if (isTerran) stormApproachVsTerranTiles else stormApproachVsOthersTiles
 
+  /**
+   * The matchup read, once per frame instead of once per caster: the leash
+   * is a threshold, and thresholds should not query the world on every
+   * access. A frame is as fresh as the answer needs to be.
+   */
+  private val approachTilesCache = new Performance.Cache(() => approachTilesFor(With.enemies.exists(_.isTerran)))
+
   override protected def maxApproachTiles: Option[Int] =
-    Some(maxApproachVsTerran(With.enemies.exists(_.isTerran)))
+    Some(approachTilesCache())
 
   val castFrames = 4 // Derived from iScript; observed empirically by McRave
 

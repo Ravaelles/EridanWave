@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Combat.Maneuvering.AsAirAvoidLandUnits
+import Micro.Actions.Combat.Maneuvering.AirFlee
 import ProxyBwapi.Races.{Protoss, Zerg}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -24,7 +24,7 @@ class ShuttleCornerSuite extends AnyFunSuite {
 
     override def direct(me: Body, world: World): Directive = {
       val threats = world.foes.filter(f => f.alive && f.kind.canAttack(me.kind))
-      AsAirAvoidLandUnits.fleePixel(
+      AirFlee.fleePixel(
         Mathematics.Points.Pixel(me.x.toInt, me.y.toInt),
         threats.map(f => Mathematics.Points.Pixel(f.x.toInt, f.y.toInt)),
         me.lossFraction,

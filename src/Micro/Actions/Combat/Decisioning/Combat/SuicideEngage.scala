@@ -13,6 +13,6 @@ object SuicideEngage {
   /** Force the attack past this many idle frames without a started attack. */
   val idleFrames: Int = 240 // 10 seconds
 
-  def shouldForceAttack(framesSinceAttack: Int, hasEnemy: Boolean, isSuicideMission: Boolean): Boolean =
-    isSuicideMission && hasEnemy && framesSinceAttack > idleFrames
+  def shouldForceAttack(framesSinceAttack: Int, hasEnemy: Boolean): Boolean =
+    hasEnemy && framesSinceAttack > idleFrames
 }

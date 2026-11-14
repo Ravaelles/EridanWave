@@ -1,7 +1,13 @@
 package Micro.Targeting
 
 /**
- * Pure Dark Templar target priority (no game access): a Templar with no
+ * Pure Dark Templar target priority (no game access) - a pre-`Target`
+ * doctrine pick, not a second scoring ladder (conventions rule 15):
+ * `BeDarkTemplar` applies it before `Target.choose` because a Templar's
+ * kill is a melee swing, not a volley the squad can share. If it ever needs
+ * the squad's assignment, it becomes a `TargetFilter` instead.
+ *
+ * A Templar with no
  * cooldown kills what it can reach, weakest first - wounded Marauders die
  * to one swipe instead of trading with the healthy pack. Then tanks, then
  * warriors, then workers, then anything else hittable. Nearest inside

@@ -21,12 +21,11 @@ object IdleEngageBehavior {
     if ( ! unit.unitClass.isWarrior) return false
 
     val hittable = unit.matchups.targetsInRange
-    if (hittable.isEmpty) return false
-
-    if (unit.matchups.threatsInRange.nonEmpty) return false
-
-    if (With.framesSince(unit.lastFrameStartingAttack) <= IdleAttack.idleFrames) return false
-
+    if ( ! IdleAttack.shouldForceAttack(
+      framesSinceAttack = With.framesSince(unit.lastFrameStartingAttack),
+      hasHittableEnemy  = hittable.nonEmpty,
+      shouldFight       = unit.agent.shouldFight,
+      locallyAhead      = unit.matchups.threatsInRange.isEmpty)) return false
 
     val target = Maff.minBy(hittable)(unit.pixelDistanceEdge(_)).get
     if ( ! unit.orderTarget.contains(target)) {

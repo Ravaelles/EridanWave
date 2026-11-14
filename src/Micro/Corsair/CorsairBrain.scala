@@ -1,6 +1,6 @@
 package Micro.Corsair
 
-import Mathematics.Maff
+import Mathematics.Separation
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.support.SquadAcePilots
@@ -36,14 +36,17 @@ object CorsairBrain {
    * the hunt. Runs after flee (survival first) and before every other
    * claim, since spacing constrains all of them equally.
    */
+  /** Corsairs mass for Mutalisks, but wings this close turn as one wide target. */
+  val minSpreadTiles: Double = 5.0
+
   private def spreadOut(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
     if ( ! Protoss.Corsair(unit)) return false
 
     val others = squad.units.view.filter(u => u != unit && Protoss.Corsair(u))
-      .map(u => SpreadOutAirUnits.OlderWing(u.id, u.pixel, unit.tileDistanceEdge(u))).toSeq
-    SpreadOutAirUnits.partner(unit.id, others).exists(older => {
-      if (SpreadOutAirUnits.shouldSpread(unit.id, older.id, older.distTiles)) {
-        unit.intend(squad).setTerminus(SpreadOutAirUnits.awayFrom(unit.pixel, older.pixel))
+      .map(u => Separation.Neighbor(u.id, u.pixel, unit.tileDistanceEdge(u))).toSeq
+    Separation.partner(unit.id, others).exists(older => {
+      if (Separation.shouldSpread(unit.id, older.id, older.distTiles, minSpreadTiles)) {
+        unit.intend(squad).setTerminus(Separation.awayFrom(unit.pixel, older.pixel, minSpreadTiles))
         unit.agent.act("CorsairSpread")
         true
       } else false

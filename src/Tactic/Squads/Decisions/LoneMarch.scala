@@ -1,6 +1,6 @@
 package Tactic.Squads.Decisions
 
-import scala.collection.mutable
+import Utilities.Latch
 
 /**
  * Pure lone-march gate (no game access): with no friendly warrior inside
@@ -31,17 +31,14 @@ object LoneMarch {
   def shouldMarchAlone(nearestWarriorTiles: Double): Boolean =
     nearestWarriorTiles > aloneRadiusTiles
 
-  private val alone = new mutable.HashMap[Int, Boolean]()
+  private val alone = new Latch
 
-  def reset(): Unit = { alone.clear() }
+  def reset(): Unit = { alone.reset() }
 
-  def marchAlone(unitId: Int, nearestWarriorTiles: Double): Boolean = {
-    val next =
-      if (nearestWarriorTiles > aloneEnterTiles) true
-      else if (nearestWarriorTiles < aloneExitTiles) false
-      else alone.getOrElse(unitId, shouldMarchAlone(nearestWarriorTiles))
-    alone.put(unitId, next)
-
-    next
-  }
+  def marchAlone(unitId: Int, nearestWarriorTiles: Double): Boolean =
+    alone(
+      unitId,
+      fires    = nearestWarriorTiles > aloneEnterTiles,
+      releases = nearestWarriorTiles < aloneExitTiles,
+      initial  = shouldMarchAlone(nearestWarriorTiles))
 }

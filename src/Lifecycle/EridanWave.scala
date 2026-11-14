@@ -37,11 +37,9 @@ class EridanWave extends DefaultBWListener {
         Debugging.ErrorLedger.reset()
         Debugging.MapSnapshot.reset()
         Debugging.SlowAlone.reset()
-        Micro.Actions.Protoss.DarkTemplar.DarkTemplarEvade.reset()
-        Micro.Actions.Protoss.Detector.DetectorSpread.reset()
-        Micro.Actions.Protoss.ReaverShuttle.ReaverShuttleFlight.reset()
-        Tactic.Squads.Decisions.LoneMarch.reset()
-        Tactic.Squads.Decisions.MarchDress.reset()
+        // Every hysteresis latch registers itself; unit ids restart each game,
+        // so one sweep clears the whole family (no per-latch line to forget).
+        Utilities.Latches.resetAll()
         Micro.Actions.Combat.Maneuvering.FleeRelocation.reset()
         Lifecycle.HitCounter.reset()
         Debugging.FormationAudit.reset()

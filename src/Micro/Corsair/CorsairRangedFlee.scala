@@ -1,7 +1,7 @@
 package Micro.Corsair
 
 import Lifecycle.With
-import Micro.Actions.Combat.Maneuvering.{AsAirAvoidLandUnits, FleeRelocation}
+import Micro.Actions.Combat.Maneuvering.{AirFlee, FleeRelocation}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.support.SquadAcePilots
@@ -11,7 +11,7 @@ import Tactic.Squads.support.SquadAcePilots
  * reach of any enemy unit that can hit it breaks off instead of trading
  * hull for nothing - a dying hull turns a full ten tiles out, a fresh
  * one skates at three. Survival outranks hunting, relocating and
- * exploring. Runs on the shared AsAirAvoidLandUnits rule (centroid of
+ * exploring. Runs on the shared AirFlee rule (centroid of
  * everything that can hit us, corner-guarded) so air doctrines cannot
  * drift apart on where safety ends.
  */
@@ -22,10 +22,10 @@ object CorsairRangedFlee {
 
     val threats = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
-    AsAirAvoidLandUnits.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight).exists(away => {
+    AirFlee.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight).exists(away => {
       // Aired out: fleeing the same line without getting anywhere means
       // cornered or herded, so rotate the escape instead of milling.
-      val dest = AsAirAvoidLandUnits.outOfCorner(
+      val dest = AirFlee.outOfCorner(
         FleeRelocation.relocate(unit.id, unit.pixel, away, With.frame),
         With.mapPixelWidth,
         With.mapPixelHeight)

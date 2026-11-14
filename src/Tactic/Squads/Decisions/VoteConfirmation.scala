@@ -20,6 +20,14 @@ final class VoteConfirmation[A](fastPath: A, slowPath: A, var confirmFrames: Int
 
   private var streak: Int = 0
 
+  /**
+   * A frame with no proposal at all breaks the streak: confirmation means
+   * consecutive frames, so consumers whose proposals are conditional (the
+   * squad's mode is only proposed on some frames) must call this instead of
+   * letting sparse proposals accumulate into a confirmation.
+   */
+  def confirmNothing(): Unit = { streak = 0 }
+
   def confirm(adopted: A, proposed: A): A = {
     if (proposed == fastPath) {
       streak = 0

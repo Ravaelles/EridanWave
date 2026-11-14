@@ -25,6 +25,7 @@ object WorkerThreatFlee {
 
   def fleeDarkTemplarStraight(distTiles: Double): Boolean =
     distTiles <= darkTemplarTiles
+
   /** A fighter this close to landing hits, in tiles beyond its range, counts. */
   val loneFighterTiles: Double = 1.5
 

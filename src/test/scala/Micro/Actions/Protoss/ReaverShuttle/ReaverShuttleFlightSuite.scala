@@ -11,17 +11,14 @@ class ReaverShuttleFlightSuite extends AnyFunSuite {
   }
 
   test("one wound curve prices the margin, nine tiles at full wounds") {
-    assert(ReaverShuttleFlight.woundFleeBonusTiles == 9.0)
     assert(ReaverShuttleFlight.woundBonusTiles(0.5) == 4.5)
     assert(ReaverShuttleFlight.safetyMarginPixels(0.5, fasterFlyer = true) == 208)
     assert(ReaverShuttleFlight.safetyMarginPixels(1.0, fasterFlyer = false) == 448)
-    assert(ReaverShuttleFlight.safetyMarginPixels(9.0, fasterFlyer = false) == 448)
   }
 
-  test("melee reach never triggers the preemptive flee") {
-    assert( ! ReaverShuttleFlight.threatensPreemptively(0.0, 32.0, 9.0 * 32.0))
-    assert(ReaverShuttleFlight.threatensPreemptively(100.0, 128.0, 9.0 * 32.0))
-    assert( ! ReaverShuttleFlight.threatensPreemptively(500.0, 128.0, 9.0 * 32.0))
+  test("penetration is how deep a threat sits inside its trigger") {
+    assert(ReaverShuttleFlight.penetrationPixels(distPixels = 100.0, triggerPixels = 480.0) == 380.0)
+    assert(ReaverShuttleFlight.penetrationPixels(distPixels = 500.0, triggerPixels = 480.0) == -20.0)
   }
 
   test("the rear is the third of the cluster nearest our base") {

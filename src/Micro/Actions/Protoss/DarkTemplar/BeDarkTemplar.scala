@@ -50,7 +50,7 @@ object BeDarkTemplar extends Action {
       t.visible
       && t.canAttack(unit)
       && DarkTemplarEvade.shouldFleeAttacker(unit.pixelDistanceEdge(t) * Maff.inv32)))(
-      unit.pixelDistanceEdge(_)).exists(attacker => fleeFrom(unit, attacker.pixel))) return true
+      unit.pixelDistanceEdge(_)).exists(attacker => fleeAway(unit, attacker.pixel, "DarkTemplarEvade"))) return true
 
     // Latched, nearest detector only: the latch is per-unit state, so one
     // call per frame keeps it consistent - a second call for a farther
@@ -59,14 +59,17 @@ object BeDarkTemplar extends Action {
     Maff.minBy(unit.matchups.groupVs.detectors.filter(_.likelyStillThere))(
       unit.pixelDistanceEdge(_)).exists(detector =>
       DarkTemplarEvade.evadeLatched(unit.id, unit.pixelDistanceEdge(detector), detector.sightPixels)
-        && fleeFrom(unit, detector.pixel))
+        && fleeAway(unit, detector.pixel, "DarkTemplarEvade"))
   }
 
-  private def fleeFrom(unit: FriendlyUnitInfo, threatPixel: Mathematics.Points.Pixel): Boolean = {
-    // No re-attack while evading: a stale target would drag the hunt
-    // (and Combat) straight back under the detector next frame.
+  /**
+   * Run straight off a threat, dropping the target first: a stale target
+   * would drag the hunt (and Combat) straight back under the guns next
+   * frame. Evade and hide are the same move with different labels.
+   */
+  private def fleeAway(unit: FriendlyUnitInfo, threatPixel: Mathematics.Points.Pixel, label: String): Boolean = {
     unit.agent.toAttack = None
-    unit.agent.act("DarkTemplarEvade")
+    unit.agent.act(label)
     val away = unit.pixel.project(threatPixel, -4.0 * 32.0)
     unit.agent.destinationNext.set(?(away.walkable, away, away.walkablePixel))
     Commander.move(unit)
@@ -79,16 +82,10 @@ object BeDarkTemplar extends Action {
       t.canAttack(unit)
       && ! Terran.SpiderMine(t)
       && DarkTemplarEvade.shouldHide(unit.pixelDistanceEdge(t), t.pixelRangeAgainst(unit))))(
-      unit.pixelDistanceEdge(_)).exists(threat => {
+      unit.pixelDistanceEdge(_)).exists(threat =>
       // No re-attack while hiding: the guns that just found the Templar
       // outrange patience, so the slot stays empty until the band clears.
-      unit.agent.toAttack = None
-      unit.agent.act("DarkTemplarHide")
-      val away = unit.pixel.project(threat.pixel, -4.0 * 32.0)
-      unit.agent.destinationNext.set(?(away.walkable, away, away.walkablePixel))
-      Commander.move(unit)
-      true
-    })
+      fleeAway(unit, threat.pixel, "DarkTemplarHide"))
   }
 
   private def snipeSpiders(unit: FriendlyUnitInfo): Unit = {

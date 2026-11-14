@@ -35,7 +35,7 @@ object TankHugBehavior {
       canMove         = unit.canMove)) return false
 
     unit.agent.act("HugTank")
-    if (unit.tileDistanceEdge(tank.get) > TankHug.hugGapTiles) {
+    if ( ! TankHug.closeEnough(unit.tileDistanceEdge(tank.get))) {
       Commander.move(unit, tank.get.pixel)
     } else {
       Commander.attack(unit, tank.get)

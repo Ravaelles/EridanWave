@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Combat.Maneuvering.AsAirAvoidLandUnits
+import Micro.Actions.Combat.Maneuvering.AirFlee
 import ProxyBwapi.Races.{Protoss, Zerg}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -20,7 +20,7 @@ class CorsairHuntSuite extends AnyFunSuite with StarEngineSuite {
 
     override def direct(me: Body, world: World): Directive = {
       val ranged = world.foes.view.filter(f => f.alive && f.kind.canAttack(me.kind)).toSeq
-      AsAirAvoidLandUnits.fleePixel(
+      AirFlee.fleePixel(
         Mathematics.Points.Pixel(me.x.toInt, me.y.toInt),
         ranged.map(f => Mathematics.Points.Pixel(f.x.toInt, f.y.toInt)),
         me.lossFraction, 8192, 8192).foreach(dest => {

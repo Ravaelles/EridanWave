@@ -43,6 +43,7 @@ class SquadAttack extends Squad {
   // verdict flickers on its static-count boundary); re-entering passes
   // through. Yolo/UMS never contain, so the filter idles off the path.
   private val containFilter = new VoteConfirmation[Boolean](fastPath = true, slowPath = false)
+  private var proposedModeThisFrame = false
 
   override def fightConsensus: Boolean = {
     if (stance == RegroupLatch.Regrouping) return false
@@ -72,8 +73,9 @@ class SquadAttack extends Squad {
     // flip swings the squad destination (the pair unloads into guns on
     // the swing). Confirm the leave over consecutive frames the way
     // retreats confirm; re-entering passes through instantly.
-    val keepContain = containFilter.confirm(mode == ContainArmy, newMode == ContainArmy)
-    if (mode == ContainArmy && ! keepContain) return
+    proposedModeThisFrame = true
+    val adoptProposal = containFilter.confirm(mode == ContainArmy, newMode == ContainArmy)
+    if (mode == ContainArmy && ! adoptProposal) return
 
     mode = newMode
     vicinity = newVicinity
@@ -322,6 +324,10 @@ class SquadAttack extends Squad {
 
     lock.setInterruptible( ! ContainStatus.now())
     chooseMode()
+    // A frame with no mode proposal breaks the contain streak: confirmation
+    // must mean consecutive frames, not 24 proposals spread over a minute.
+    if ( ! proposedModeThisFrame) containFilter.confirmNothing()
+    proposedModeThisFrame = false
     if (With.configuration.formationAudit) {
       Debugging.FormationAudit.noteMode(With.frame, mode.toString, vicinity.x, vicinity.y, With.units.enemy.count(_.visible))
     }

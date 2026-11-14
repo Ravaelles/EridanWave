@@ -2,7 +2,7 @@ package Micro.Actions.Protoss.ReaverShuttle
 
 import Mathematics.Maff
 import Mathematics.Points.Pixel
-import Micro.Actions.Combat.Maneuvering.RangedReach
+import Utilities.Latch
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
@@ -32,13 +32,13 @@ object ReaverShuttleFlight {
     (if (fasterFlyer) 64 else 160) + woundBonusTiles(woundPercent) * 32.0
 
   /**
-   * Preemptive flee trigger (pure pixels): a ranged threat whose reach
-   * plus the wound-scaled band touches us turns us around before the pack
-   * closes - Hydralisks walking up to a Shuttle sitting in the enemy main
-   * is how Shuttles die stupidly.
+   * How far inside its trigger a threat sits, in pixels: positive means the
+   * flee fires. A ranged threat's trigger is its reach plus the wound-scaled
+   * band, so a Hydralisk walking up to a Shuttle in the enemy main turns it
+   * around before the pack closes; an incoming Scourge gets its own radius.
    */
-  def threatensPreemptively(distPixels: Double, rangePixels: Double, marginPixels: Double): Boolean =
-    RangedReach.isRanged(rangePixels) && distPixels < rangePixels + marginPixels
+  def penetrationPixels(distPixels: Double, triggerPixels: Double): Double =
+    triggerPixels - distPixels
 
   /**
    * Flee exit margin, in tiles: a fleeing hull keeps running until every
@@ -57,19 +57,16 @@ object ReaverShuttleFlight {
   def worstPenetration(penetrations: Seq[Double]): Double =
     penetrations.reduceOption(_ max _).getOrElse(Double.NegativeInfinity)
 
-  private val fleeing = new scala.collection.mutable.HashMap[Int, Boolean]()
+  private val fleeing = new Latch
 
-  def reset(): Unit = { fleeing.clear() }
+  def reset(): Unit = { fleeing.reset() }
 
-  def fleeLatched(unitId: Int, worstPenetrationPixels: Double): Boolean = {
-    val next =
-      if (worstPenetrationPixels > 0) true
-      else if (worstPenetrationPixels < -fleeExitMarginPixels) false
-      else fleeing.getOrElse(unitId, worstPenetrationPixels > 0)
-    fleeing.put(unitId, next)
-
-    next
-  }
+  def fleeLatched(unitId: Int, worstPenetrationPixels: Double): Boolean =
+    fleeing(
+      unitId,
+      fires    = worstPenetrationPixels > 0,
+      releases = worstPenetrationPixels < -fleeExitMarginPixels,
+      initial  = worstPenetrationPixels > 0)
 
   /** Share of the cluster, nearest our base, counted as its rear. */
   val rearShare: Double = 0.33
