@@ -29,6 +29,19 @@ class CorsairDanceSuite extends AnyFunSuite {
       wound01       = 0.0))
   }
 
+  test("a duel means cooling down or a recently started attack") {
+    assert(CorsairDanceToOverlord.dueling(cooldownLeft = 5, framesSinceAttack = 1000))
+    assert(CorsairDanceToOverlord.dueling(cooldownLeft = 0, framesSinceAttack = 10))
+    assert( ! CorsairDanceToOverlord.dueling(cooldownLeft = 0, framesSinceAttack = 1000))
+  }
+
+  test("an ongoing attack on a live victim in range is never interrupted") {
+    assert(CorsairDanceToOverlord.keepsAttacking(hasCommittedTarget = true, targetAlive = true, inRange = true))
+    assert( ! CorsairDanceToOverlord.keepsAttacking(hasCommittedTarget = false, targetAlive = true, inRange = true))
+    assert( ! CorsairDanceToOverlord.keepsAttacking(hasCommittedTarget = true, targetAlive = false, inRange = true))
+    assert( ! CorsairDanceToOverlord.keepsAttacking(hasCommittedTarget = true, targetAlive = true, inRange = false))
+  }
+
   test("a close Corsair goes for the kill instead of dancing") {
     assert( ! CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 12,
