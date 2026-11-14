@@ -28,6 +28,12 @@ object Pump {
     val unitsComplete = With.macroCounts.oursComplete(unitClass)
     val wavesAhead    = 4
 
+    // Zealot overstock: past fifteen Zealots with ten times as many
+    // Zealots as Dragoons, the gates should be making Dragoons - more
+    // Zealots only feeds the line that dies to everything that shoots.
+    if (unitClass == ProxyBwapi.Races.Protoss.Zealot
+      && ZealotPump.shouldStop(unitsComplete, With.macroCounts.oursComplete(ProxyBwapi.Races.Protoss.Dragoon))) return
+
     if (maximumConcurrently < 400) {
       var maxQuantity = 0
       (0 until wavesAhead).foreach(wave => {
