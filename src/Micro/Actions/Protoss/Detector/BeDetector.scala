@@ -4,6 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Protoss.Air.BeFlier
+import Micro.Actions.Combat.Maneuvering.{RangedAvoidance, RangedReach}
 import Micro.Actions.Combat.Tactics.{Recharge, Spot}
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
@@ -24,6 +25,10 @@ object BeDetector extends Action {
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     BeFlier(unit)
+    // Survival first: a defenseless eye never trades with guns that can
+    // hit it - outrun any enemy ranged unit on the wound-scaled margin.
+    if (fleeAttackers(unit)) return
+
     // Spread outranks everything but survival: stacked eyes die together,
     // and every Spot/combat step after this one walks them back into the
     // same pile. While spreading the eye moves and reports, nothing else.
@@ -53,9 +58,30 @@ object BeDetector extends Action {
     })
   }
 
-  /** Observer keep-off: never close inside six tiles of an enemy detector; back straight out instead. */
-  private def keepOffDetectors(unit: FriendlyUnitInfo): Boolean = {
+  /**
+   * Shared avoidance: any enemy ranged unit. Wound-scaled 6-to-12 tile
+   * margin: unlike a Corsair the eye never shoots back, so even a fresh
+   * hull holds clear of gun reach instead of skating inside it.
+   */
+  val avoidance = new RangedAvoidance(marginLowTiles = 6.0, marginHighTiles = 12.0)
+
+  /** Flee guns: a defenseless eye outruns any enemy ranged unit that can hit it. */
+  private def fleeAttackers(unit: FriendlyUnitInfo): Boolean = {
     if ( ! Protoss.Observer(unit)) return false
+
+    val threats = With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)
+        && RangedReach.isRanged(e.pixelRangeAgainst(unit))).map(_.pixel).toSeq
+    avoidance.fleePixel(unit.pixel, threats, unit.woundPercent()).exists(dest => {
+      unit.cherryVisUnitLog("ObserverFlee")
+      unit.agent.destinationNext.set(dest)
+      Commander.move(unit)
+      true
+    })
+  }
+
+  /** Observer keep-off: never close inside six tiles of an enemy detector; back straight out instead. */
+  private def keepOffDetectors(unit: FriendlyUnitInfo): Boolean = {    if ( ! Protoss.Observer(unit)) return false
 
     // Nearest enemy detector, regardless of id: foe ids carry no seniority.
     val nearest = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isDetector))(unit.pixelDistanceEdge)
