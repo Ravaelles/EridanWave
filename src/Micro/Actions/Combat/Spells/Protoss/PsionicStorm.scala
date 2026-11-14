@@ -37,25 +37,18 @@ object PsionicStorm extends TargetedSpell {
       unit.base.exists(_.owner.isEnemy) ||
       unit.squad.exists(_.fightConsensus)
 
-  /** Approach leash vs Terran, in tiles: storms walk, not marches. */
-  val stormApproachVsTerranTiles: Int = 12
-
-  /** Approach leash vs everyone else, in tiles. */
-  val stormApproachVsOthersTiles: Int = 10
-
-  /** Leash pick: Terran gets the longer walk. */
-  def approachTilesFor(isTerran: Boolean): Int =
-    if (isTerran) stormApproachVsTerranTiles else stormApproachVsOthersTiles
-
   /**
-   * The matchup read, once per frame instead of once per caster: the leash
-   * is a threshold, and thresholds should not query the world on every
-   * access. A frame is as fresh as the answer needs to be.
+   * Storm hunt radius, in tiles: just inside the nine-tile cast range.
+   * The old leash reached three tiles past it, so a Templar picked a pack
+   * it could not hit, committed the intent, and walked into Hydralisk
+   * range to land the cast - five Templars died that way with a full
+   * battery. A storm is a standoff weapon: only pick victims already in
+   * reach, and the small box-centre step is all the walking left.
    */
-  private val approachTilesCache = new Performance.Cache(() => approachTilesFor(With.enemies.exists(_.isTerran)))
+  val stormSearchTiles: Double = 8.9
 
-  override protected def maxApproachTiles: Option[Int] =
-    Some(approachTilesCache())
+  override protected def searchTiles: Option[Double] =
+    Some(stormSearchTiles)
 
   val castFrames = 4 // Derived from iScript; observed empirically by McRave
 

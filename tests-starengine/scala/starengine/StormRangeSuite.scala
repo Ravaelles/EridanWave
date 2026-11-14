@@ -6,18 +6,21 @@ import org.scalatest.funsuite.AnyFunSuite
 
 /**
  * Storm reach ladder: three dragoons plus one full-battery Templar meet
- * six holding Hydralisks with the Templar starting 6, 10 or 15 tiles out.
- * The pilot honors the shipped approach leash (10 tiles vs non-Terran):
- * in range it storms through the shipped veto kernels, at the leash edge
- * it walks in first, past the leash it holds - documenting exactly how
- * far a Templar walks for its storm. Hydralisks hold their ground so the
- * starting distance stays the independent variable (zombie pressure is
- * covered by the other storm scenarios).
+ * six holding Hydralisks with the Templar starting 6, 9 or 15 tiles out.
+ * The pilot honors the shipped search cap (`PsionicStorm.stormSearchTiles`,
+ * just inside cast range): in reach it storms through the shipped veto
+ * kernels, past it it holds instead of walking into Hydralisk range - the
+ * live bug was a three-tile leash past cast range, Templars marching out
+ * to a pack they could not hit and dying without casting. Hydralisks hold
+ * their ground so the starting distance stays the independent variable
+ * (zombie pressure is covered by the other storm scenarios).
  */
 class StormRangeSuite extends AnyFunSuite with StarEngineSuite {
 
-  /** Leash-honoring Templar: storms the densest in-leash box the shipped vetoes allow, walks to the leash edge, holds past it. */
-  private class LeashTemplar(leashPx: Double) extends Pilot {
+  private val searchPx: Double = PsionicStorm.stormSearchTiles * 32.0
+
+  /** Search-capped Templar: storms the densest box in reach the shipped vetoes allow, holds past the cap. */
+  private class SearchTemplar(leashPx: Double) extends Pilot {
     override def direct(me: Body, world: World): Directive = {
       val live = world.foes.filter(f => f.alive && f.kind.canBeStormed)
       if (me.energy >= World.StormCostEnergy && live.nonEmpty) {
@@ -70,7 +73,7 @@ class StormRangeSuite extends AnyFunSuite with StarEngineSuite {
     val ours = dragoons :+ templar
     val pilots: Map[Body, Pilot] =
       dragoons.map(_ -> new Pilots.AttackMove(_.foes, (me, f) => me.canHit(f), (0.0, 200.0))).toMap +
-        (templar -> new LeashTemplar(10 * 32.0)) ++
+        (templar -> new SearchTemplar(searchPx)) ++
         hydras.map(_ -> new Pilots.Hold).toMap
     val world = new World(ours, hydras, pilots, Seq.empty)
 
@@ -95,19 +98,26 @@ class StormRangeSuite extends AnyFunSuite with StarEngineSuite {
     assert(o.oursAlive == 4, "line took losses under instant storms")
   }
 
-  test("ten tiles out the templar walks in on the leash and storms") {
-    val o = runAt(10 * 32.0)
-    println(s"DIAG 10 tiles: storms=${o.storms} hydrasLeft=${o.hydrasLeft} oursAlive=${o.oursAlive} moved=${o.htMovedPx.toInt}px killFrame=${o.killFrame}")
-    assert(o.storms >= 1, "leash-edge templar never closed in to storm")
-    assert(o.htMovedPx > 32.0, "templar never walked toward the pack")
-    assert(o.hydrasLeft == 0, "hydra pack survived leash-edge storms")
+  test("eight tiles out the templar storms without closing in") {
+    val o = runAt(8 * 32.0)
+    println(s"DIAG 8 tiles: storms=${o.storms} hydrasLeft=${o.hydrasLeft} oursAlive=${o.oursAlive} moved=${o.htMovedPx.toInt}px killFrame=${o.killFrame}")
+    assert(o.storms >= 1, "in-reach templar never stormed the pack")
+    assert(o.hydrasLeft == 0, "hydra pack survived in-reach storms")
   }
 
-  test("fifteen tiles out the templar holds past the leash") {
+  test("ten tiles out the templar holds instead of walking into Hydralisk range") {
+    val o = runAt(10 * 32.0)
+    println(s"DIAG 10 tiles: storms=${o.storms} hydrasLeft=${o.hydrasLeft} oursAlive=${o.oursAlive} moved=${o.htMovedPx.toInt}px killFrame=${o.killFrame}")
+    assert(o.storms == 0, "past-search-cap templar marched out to storm")
+    assert(o.htMovedPx <= 64.0, "past-search-cap templar left its post")
+    assert(o.hydrasLeft > 0, "dragoons cleared the pack alone - the walk cost is unproven")
+  }
+
+  test("fifteen tiles out the templar holds past the search cap") {
     val o = runAt(15 * 32.0)
     println(s"DIAG 15 tiles: storms=${o.storms} hydrasLeft=${o.hydrasLeft} oursAlive=${o.oursAlive} moved=${o.htMovedPx.toInt}px killFrame=${o.killFrame}")
-    assert(o.storms == 0, "past-leash templar marched out to storm")
-    assert(o.htMovedPx <= 64.0, "past-leash templar left its post")
-    assert(o.hydrasLeft > 0, "dragoons cleared the pack alone - leash cost unproven")
+    assert(o.storms == 0, "past-search-cap templar marched out to storm")
+    assert(o.htMovedPx <= 64.0, "past-search-cap templar left its post")
+    assert(o.hydrasLeft > 0, "dragoons cleared the pack alone - the walk cost is unproven")
   }
 }

@@ -27,11 +27,12 @@ abstract class TargetedSpell extends Action {
   final def castRangePixels: Int = Maff.x32(castRangeTiles)
 
   /**
-   * Approach leash, in tiles: no walking further than this from the
-   * current spot to land the cast. Empty means unbounded (the old
-   * totalRange search). Subclasses cap per matchup.
+   * Search cap, in tiles: targets further than this from the caster are
+   * never picked, so a caster never walks out of its spell range to land
+   * a cast. Empty keeps the historical totalRange search (cast range plus
+   * bonus margin).
    */
-  protected def maxApproachTiles: Option[Int] = None
+  protected def searchTiles: Option[Double] = None
 
   /** Lead, in tiles: project moving victims this far along their heading when placing the spell; standing victims stay put. */
   protected def leadTiles: Double = 0.0
@@ -58,7 +59,7 @@ abstract class TargetedSpell extends Action {
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     val safeDistance  = Math.max(0, -unit.matchups.pixelsEntangled)
     val totalRange    = safeDistance + 32.0 * castRangeTiles + bonusSearchPixels // The margin is just some encouragement
-    val searchRange   = maxApproachTiles.map(tiles => Math.min(totalRange, tiles * 32.0)).getOrElse(totalRange)
+    val searchRange   = searchTiles.map(tiles => Math.min(totalRange, tiles * 32.0)).getOrElse(totalRange)
 
     if (aoe) {
       // Committed cast point: out of range we hold the intent and walk to

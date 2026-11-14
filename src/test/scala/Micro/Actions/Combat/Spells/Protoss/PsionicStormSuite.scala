@@ -46,8 +46,8 @@ class PsionicStormSuite extends AnyFunSuite {
     assert(PsionicStorm.stormLeadTiles == 2.0)
   }
 
-  test("storm walks short: twelve tiles vs Terran, ten otherwise") {
-    assert(PsionicStorm.approachTilesFor(isTerran = true) == 12)
-    assert(PsionicStorm.approachTilesFor(isTerran = false) == 10)
+  test("storms search just inside cast range, never past it") {
+    assert(PsionicStorm.stormSearchTiles == 8.9)
+    assert(PsionicStorm.stormSearchTiles * 32 < PsionicStorm.castRangePixels, "storm picked victims out of cast range")
   }
 }
