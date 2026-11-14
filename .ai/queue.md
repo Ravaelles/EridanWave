@@ -263,3 +263,4 @@ clear 6 (`20e928ee2`) - nothing but wall-ins within 6 tiles. Fogged drop
 (`216ead4de`) + corpse clear (`142f4282c`) - zealots idling at enemy
 base. Worker gather/build rows (`4c2a7b0cf`) -
 `gather:Minerals`/`moveToConstruct`/`issueBuild:X` in trace.
+Micro: ZealotSwarm +10% (THIS, `485ab632d`) - warriors-only zealot-vs-ling battles demand a ten percent target margin; any other warrior (Dragoon, Hydra) or spectator-only sides lift it (`JudgmentModifiersSuite`, 4 cases). Needs a macro game that stays pure zealots-vs-lings to confirm the caution fires. Vs Monster 2026-11-14: DEFEAT 110/163, 106 zealots + 26 dragoons vs ling/hydra/muta mix - not the pure case, modifier correctly silent; no CorsairDance acts in the log.
