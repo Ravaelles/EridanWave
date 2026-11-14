@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.DarkTemplar
 
+import Mathematics.Points.Pixel
 import org.scalatest.funsuite.AnyFunSuite
 
 class DarkTemplarEvadeSuite extends AnyFunSuite {
@@ -36,5 +37,36 @@ class DarkTemplarEvadeSuite extends AnyFunSuite {
     assert(DarkTemplarEvade.shouldFleeAttacker(distTiles = 0.0))
     assert(DarkTemplarEvade.shouldFleeAttacker(distTiles = 13.0))
     assert( ! DarkTemplarEvade.shouldFleeAttacker(distTiles = 13.01))
+  }
+
+  test("the latch enters sharp and releases past the margin") {
+    DarkTemplarEvade.reset()
+    val sight = 256.0
+    val enter = DarkTemplarEvade.evadeRadiusPixels(sight)
+    val release = DarkTemplarEvade.evadeReleasePixels(sight)
+    assert(release == enter + 2.0 * 32.0)
+    assert(DarkTemplarEvade.evadeLatched(1, enter - 1.0, sight))
+    assert(DarkTemplarEvade.evadeLatched(1, enter + 1.0, sight))
+    assert( ! DarkTemplarEvade.evadeLatched(1, release + 1.0, sight))
+    assert( ! DarkTemplarEvade.evadeLatched(1, enter + 1.0, sight))
+  }
+
+  test("a fresh unit only evades past the sharp edge") {
+    DarkTemplarEvade.reset()
+    val sight = 256.0
+    val enter = DarkTemplarEvade.evadeRadiusPixels(sight)
+    assert(DarkTemplarEvade.evadeLatched(7, enter - 1.0, sight))
+    assert( ! DarkTemplarEvade.evadeLatched(8, enter + 1.0, sight))
+    assert( ! DarkTemplarEvade.evadeLatched(8, enter + 1.0, 0.0))
+  }
+
+  test("covered targets are skipped, open ones hunt") {
+    val detector = Pixel(0, 0)
+    val sight = 256.0
+    val covered = Pixel(100, 0)
+    val open = Pixel(10000, 0)
+    assert(DarkTemplarEvade.underDetection(covered, Seq((detector, sight))))
+    assert( ! DarkTemplarEvade.underDetection(open, Seq((detector, sight))))
+    assert( ! DarkTemplarEvade.underDetection(covered, Seq.empty))
   }
 }

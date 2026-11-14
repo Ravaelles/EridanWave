@@ -52,10 +52,14 @@ object BeDarkTemplar extends Action {
       && DarkTemplarEvade.shouldFleeAttacker(unit.pixelDistanceEdge(t) * Maff.inv32)))(
       unit.pixelDistanceEdge(_)).exists(attacker => fleeFrom(unit, attacker.pixel))) return true
 
-    Maff.minBy(unit.matchups.groupVs.detectors.filter(d =>
-      d.likelyStillThere
-      && DarkTemplarEvade.shouldEvade(unit.pixelDistanceEdge(d), d.sightPixels)))(
-      unit.pixelDistanceEdge(_)).exists(detector => fleeFrom(unit, detector.pixel))
+    // Latched, nearest detector only: the latch is per-unit state, so one
+    // call per frame keeps it consistent - a second call for a farther
+    // detector would overwrite the hold. Fleeing the nearest is the
+    // right move in the common single-Overlord case anyway.
+    Maff.minBy(unit.matchups.groupVs.detectors.filter(_.likelyStillThere))(
+      unit.pixelDistanceEdge(_)).exists(detector =>
+      DarkTemplarEvade.evadeLatched(unit.id, unit.pixelDistanceEdge(detector), detector.sightPixels)
+        && fleeFrom(unit, detector.pixel))
   }
 
   private def fleeFrom(unit: FriendlyUnitInfo, threatPixel: Mathematics.Points.Pixel): Boolean = {
@@ -126,8 +130,13 @@ object BeDarkTemplar extends Action {
     // No cooldown, real contact close by: kill weakest first (a wounded
     // Marauder dies to one swipe), then tanks, warriors, workers - nearest
     // inside each tier. Otherwise the old nearest-hittable hunt holds.
-    val close = unit.matchups.targets.view.filter(t =>
-      t.visible && unit.canAttack(t) && unit.tileDistanceEdge(t) <= DarkTemplarTargets.closeTiles).toVector
+    // Covered contacts are skipped: a target standing under a likely
+    // detector re-arms the evade on arrival, so the hunt holds instead
+    // of feeding the approach/evade loop the latch just broke.
+    val open = unit.matchups.targets.filter(t =>
+      t.visible && unit.canAttack(t) && ! coveredByDetector(unit, t))
+    val close = open.filter(t =>
+      unit.tileDistanceEdge(t) <= DarkTemplarTargets.closeTiles).toVector
     if (unit.cooldownLeft <= 0 && close.nonEmpty) {
       val marks = close.map(t => DarkTemplarTargets.Mark(
         unit.tileDistanceEdge(t),
@@ -137,13 +146,19 @@ object BeDarkTemplar extends Action {
         t.unitClass.isWorker))
       DarkTemplarTargets.pick(marks).map(close)
     } else {
-      Maff.minBy(unit.matchups.targets.filter(t => t.visible && unit.canAttack(t)))(_.pixelDistanceEdge(unit))
+      Maff.minBy(open.filter(t => t.visible && unit.canAttack(t)))(_.pixelDistanceEdge(unit))
     }
   }
+
+  private def coveredByDetector(unit: FriendlyUnitInfo, target: UnitInfo): Boolean =
+    DarkTemplarEvade.underDetection(
+      target.pixel,
+      unit.matchups.groupVs.detectors.view.filter(_.likelyStillThere).map(d => (d.pixel, d.sightPixels.toDouble)).toSeq)
 
   private def rememberedContact(unit: FriendlyUnitInfo): Option[UnitInfo] =
     Maff.maxBy(With.units.enemy.filter(e =>
       ! e.visible
       && unit.canAttack(e)
+      && ! coveredByDetector(unit, e)
       && With.framesSince(e.lastSeen) < Minutes(3)()))(_.lastSeen)
 }

@@ -37,6 +37,7 @@ class EridanWave extends DefaultBWListener {
         Debugging.ErrorLedger.reset()
         Debugging.MapSnapshot.reset()
         Debugging.SlowAlone.reset()
+        Micro.Actions.Protoss.DarkTemplar.DarkTemplarEvade.reset()
         Tactic.Squads.Decisions.LoneMarch.reset()
         Tactic.Squads.Decisions.MarchDress.reset()
         Micro.Actions.Combat.Maneuvering.FleeRelocation.reset()

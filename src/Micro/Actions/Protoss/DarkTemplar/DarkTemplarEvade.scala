@@ -1,6 +1,9 @@
 package Micro.Actions.Protoss.DarkTemplar
 
+import Mathematics.Points.Pixel
 import Micro.Actions.Combat.Maneuvering.RangedReach
+
+import scala.collection.mutable
 
 /**
  * Pure detector evasion for a hunting Dark Templar (no game access): a
@@ -41,6 +44,46 @@ object DarkTemplarEvade {
 
   def shouldEvade(distPixels: Double, sightPixels: Double): Boolean =
     distPixels < evadeRadiusPixels(sightPixels)
+
+  /**
+   * Exit margin beyond the avoidance band, in tiles: an evading Templar
+   * keeps running until the detector is this far past the band. The hunt
+   * destination (toward the enemy, often past the detector) directly
+   * opposes the evade destination (away), so a sharp release re-triggers
+   * on the next approach: live games show Hunt/Evade alternating ~150
+   * times until the Templar dies without connecting. Latched LoneMarch
+   * shape: enter sharp, hold inside the band, release past the margin.
+   */
+  val exitMarginTiles: Double = 2.0
+
+  def evadeReleasePixels(sightPixels: Double): Double =
+    evadeRadiusPixels(sightPixels) + exitMarginTiles * 32.0
+
+  private val evading = new mutable.HashMap[Int, Boolean]()
+
+  def reset(): Unit = { evading.clear() }
+
+  def evadeLatched(unitId: Int, distPixels: Double, sightPixels: Double): Boolean = {
+    val next =
+      if (shouldEvade(distPixels, sightPixels)) true
+      else if (distPixels > evadeReleasePixels(sightPixels)) false
+      else evading.getOrElse(unitId, shouldEvade(distPixels, sightPixels))
+    evading.put(unitId, next)
+
+    next
+  }
+
+  /**
+   * Covered-target filter (pure pixels for the suite): a hunt target
+   * standing inside a likely detector's evade radius re-arms the evade
+   * on arrival, so the hunt skips it and holds instead of feeding the
+   * same loop the latch just broke. The caller passes likely detectors
+   * only; the band matches the evade above, so release and hunt agree.
+   */
+  def underDetection(target: Pixel, detectors: Seq[(Pixel, Double)]): Boolean =
+    detectors.exists { case (detectorPixel, sightPixels) =>
+      target.pixelDistance(detectorPixel) < evadeRadiusPixels(sightPixels)
+    }
 
   def isRanged(rangePixels: Double): Boolean =
     RangedReach.isRanged(rangePixels)
