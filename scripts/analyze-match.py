@@ -19,6 +19,7 @@ def load_trace(game_dir):
         if os.path.exists(tj):
             with open(tj, encoding="utf-8", errors="replace") as f:
                 return json.load(f).get("units_logs", {})
+
     return {}
 
 def main(argv):
@@ -29,7 +30,9 @@ def main(argv):
             limit = int(a.split("=")[1])
     if not args:
         print(__doc__)
+
         return 2
+
     game = args[0]
     name = os.path.basename(game.rstrip("/"))
 
