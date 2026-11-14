@@ -62,44 +62,39 @@ object PsionicStorm extends TargetedSpell {
   def vetoFriendlyHits(friendlyHits: Int): Boolean =
     friendlyHits > maxFriendlyHits
 
-  /** Overlords eat storms only on a full battery: cheap, numerous, and
-    * rarely worth 75 energy that could erase a Hydra pack instead.
-    * Aligned with the pack ladder below (Atlantis storms singles at 195). */
+  /** Overlords eat storms only on a near-full battery: cheap, numerous, and
+    * rarely worth energy that could erase a Hydra pack instead. Deliberately
+    * above the pack ladder below: a lone Overlord never outranks a lone
+    * Hydralisk for the same storm. */
   val overlordStormEnergy: Int = 195
 
   def vetoOverlord(isOverlord: Boolean, energy: Int): Boolean =
     isOverlord && energy < overlordStormEnergy
 
-  /** Shared-pack minimum vs Protoss (Atlantis: three, two past the discount). */
+  /** Shared-pack minimum vs Protoss. */
   val packBaseVsProtoss: Int = 3
 
-  /** Shared-pack minimum vs others (Atlantis: four, three past the discount). */
+  /** Shared-pack minimum vs others. */
   val packBaseVsOthers: Int = 4
 
   /** At or above this energy a lone victim is worth a storm. */
-  val packSingleEnergy: Int = 195
+  val packSingleEnergy: Int = 180
 
   /** At or above this energy a pair is worth a storm. */
-  val packPairEnergy: Int = 180
-
-  /** At or above this energy the minimum drops by one. */
-  val packDiscountEnergy: Int = 120
+  val packPairEnergy: Int = 100
 
   /** Below this energy hold fire entirely: not even a full pack is worth the last storm. */
   val packFloorEnergy: Int = 75
 
   /**
-   * Energy-scaled pack minimum (pure numbers for the suite, Atlantis
-   * ladder): a full battery storms anything, a dry one only storms
-   * a pack - no 75-energy answers to a lone Marine.
+   * Energy-scaled pack minimum (pure numbers for the suite): a full
+   * battery storms anything, a half battery storms pairs, a low one
+   * only storms a pack - and below 75 nothing casts at all.
    */
   def minPackEnemies(energy: Int, enemyIsProtoss: Boolean): Int = {
     if (energy >= packSingleEnergy) return 1
     if (energy >= packPairEnergy) return 2
-
-    val base = ?(enemyIsProtoss, packBaseVsProtoss, packBaseVsOthers)
-    if (energy >= packDiscountEnergy) return base - 1
-    if (energy >= packFloorEnergy) return base
+    if (energy >= packFloorEnergy) return ?(enemyIsProtoss, packBaseVsProtoss, packBaseVsOthers)
 
     Int.MaxValue
   }

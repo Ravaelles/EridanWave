@@ -183,10 +183,13 @@ Observers (nine tiles, newer moves off the ray, `DetectorSpread`
 kernel); macro game with two Arbiter hulls. March: StaticDefenseRepel shoots (THIS) - repelling units no longer
 hold fire with a hittable enemy in range; weakest-first (lowest total
 health, Tickle precedent), retreat still outranks shooting under fire
-(macro game: dragoons vs sunken+lings trade). Micro: Storm walks short, storms cheap (THIS) - approach leash
-12 tiles vs Terran / 10 otherwise plus the 75/120/180 pack ladder
-(base at 75, discount at 120, pairs at 180, singles at 195, hold fire
-below 75); needs a Storm game with HTs. Micro: crucial air victims first (THIS) - grounded AA shoots
+(macro game: dragoons vs sunken+lings trade). Micro: Storm walks short, storms cheap - approach leash
+12 tiles vs Terran / 10 otherwise plus the 75/100/180 pack ladder
+(base at 75, pairs at 100, singles at 180, hold fire below 75).
+Proven: Terminus PvT (1013 storm acts, bio deaths 2.4x enriched
+after casts, 299/202) plus StarEngine lead (0.0px miss) and range
+(6 tiles: storm f1, wipe f5; 10 tiles: walk 35px, wipe f16; 15
+tiles: hold, 0 storms) scenarios. Micro: crucial air victims first (THIS) - grounded AA shoots
 Scourge nearest, then weakest Carrier/Vessel/Battlecruiser/Wraith in
 range, ahead of kiting, dressing and retreat; needs air-heavy games.
 Micro: DT flees guns first (THIS) - visible enemy that can hit the
