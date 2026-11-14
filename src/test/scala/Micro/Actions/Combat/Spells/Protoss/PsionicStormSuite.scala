@@ -16,8 +16,8 @@ class PsionicStormSuite extends AnyFunSuite {
 
   test("Overlords never eat storms off a full battery") {
     assert(PsionicStorm.vetoOverlord(isOverlord = true, energy = 0))
-    assert(PsionicStorm.vetoOverlord(isOverlord = true, energy = 194))
-    assert( ! PsionicStorm.vetoOverlord(isOverlord = true, energy = 195))
+    assert(PsionicStorm.vetoOverlord(isOverlord = true, energy = 189))
+    assert( ! PsionicStorm.vetoOverlord(isOverlord = true, energy = 190))
     assert( ! PsionicStorm.vetoOverlord(isOverlord = false, energy = 0))
   }
 

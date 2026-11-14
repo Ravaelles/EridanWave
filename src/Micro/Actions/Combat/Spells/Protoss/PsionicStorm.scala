@@ -73,7 +73,7 @@ object PsionicStorm extends TargetedSpell {
     * rarely worth energy that could erase a Hydra pack instead. Deliberately
     * above the pack ladder below: a lone Overlord never outranks a lone
     * Hydralisk for the same storm. */
-  val overlordStormEnergy: Int = 195
+  val overlordStormEnergy: Int = 190
 
   def vetoOverlord(isOverlord: Boolean, energy: Int): Boolean =
     isOverlord && energy < overlordStormEnergy
@@ -161,5 +161,11 @@ object PsionicStorm extends TargetedSpell {
   
   override def onCast(caster: FriendlyUnitInfo, target: Pixel): Unit = {
     With.grids.psionicStorm.addPsionicStorm(target)
+  }
+
+  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    if (SuicidePsionic.act(unit)) return
+
+    super.perform(unit)
   }
 }
