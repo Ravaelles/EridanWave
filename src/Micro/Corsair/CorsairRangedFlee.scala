@@ -1,7 +1,7 @@
 package Micro.Corsair
 
 import Lifecycle.With
-import Micro.Actions.Combat.Maneuvering.AsAirAvoidLandUnits
+import Micro.Actions.Combat.Maneuvering.{AsAirAvoidLandUnits, FleeRelocation}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.support.SquadAcePilots
@@ -22,7 +22,13 @@ object CorsairRangedFlee {
 
     val threats = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
-    AsAirAvoidLandUnits.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight).exists(dest => {
+    AsAirAvoidLandUnits.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight).exists(away => {
+      // Aired out: fleeing the same line without getting anywhere means
+      // cornered or herded, so rotate the escape instead of milling.
+      val dest = AsAirAvoidLandUnits.outOfCorner(
+        FleeRelocation.relocate(unit.id, unit.pixel, away, With.frame),
+        With.mapPixelWidth,
+        With.mapPixelHeight)
       unit.intend(squad).setTerminus(dest)
       unit.agent.act("CorsairFleeRanged")
       true
