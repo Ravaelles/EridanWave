@@ -36,7 +36,7 @@ object MarchDress {
 
   private val dressing = new mutable.HashMap[Int, Boolean]()
 
-  def reset(): Unit = { dressing.clear() }
+  def reset(): Unit = { dressing.clear(); pushing.clear() }
 
   def holdDress(unitId: Int, aheadTiles: Double): Boolean = {
     val next =
@@ -81,4 +81,26 @@ object MarchDress {
 
   def shouldPushPastStatics(distTiles: Double): Boolean =
     distTiles <= staticPushTiles
+
+  /**
+   * Latched static push (LoneMarch shape): the gate below flips every
+   * few frames for a unit breathing on exactly ten tiles - a live log
+   * showed StaticPush alternating with Rallying/Marching/Returning
+   * until the zealot died milling instead of attacking. Enter at ten,
+   * rejoin the legs past twelve, hold the side inside the band.
+   * Per-unit state, reset per game like the other march watches.
+   */
+  val staticPushExitTiles: Double = 12.0
+
+  private val pushing = new mutable.HashMap[Int, Boolean]()
+
+  def pushPastStatics(unitId: Int, nearestTiles: Double): Boolean = {
+    val next =
+      if (nearestTiles <= staticPushTiles) true
+      else if (nearestTiles > staticPushExitTiles) false
+      else pushing.getOrElse(unitId, shouldPushPastStatics(nearestTiles))
+    pushing.put(unitId, next)
+
+    next
+  }
 }

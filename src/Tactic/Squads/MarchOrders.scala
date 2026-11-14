@@ -111,14 +111,15 @@ object MarchOrders {
     // Static push: with an enemy static defense that can hit us inside
     // ten tiles there is no pack to rally to and no slot to march to -
     // milling in their reach trades the line for nothing, so the unit
-    // walks straight at the squad goal instead.
+    // walks straight at the squad goal instead. Latched per unit: the
+    // gate itself used to flap with Rallying and Marching on the
+    // boundary until the unit died milling instead of attacking.
     MarchGate("StaticPush", (_, unit) =>
       unit.agent.shouldFight &&
-      unit.matchups.enemies.exists(e =>
+      MarchDress.pushPastStatics(unit.id, Maff.minBy(unit.matchups.enemies.view.filter(e =>
         e.likelyStillThere
         && e.unitClass.isStaticDefense
-        && e.unitClass.canAttack(unit)
-        && MarchDress.shouldPushPastStatics(unit.tileDistanceEdge(e)))))
+        && e.unitClass.canAttack(unit)))(unit.tileDistanceEdge).map(unit.tileDistanceEdge).getOrElse(Double.PositiveInfinity))))
 
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel]): (Pixel, String) = {
     val suicide = SuicideMission.assign(unit)
