@@ -3,31 +3,29 @@ package Micro.Actions.Combat.Decisioning.Actions
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Spells.Protoss._
+import Micro.Actions.Combat.Spells.Spell
 import Micro.Actions.Combat.Spells.Terran._
-import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Cast extends Action {
   override def isContainer: Boolean = true
-  
+
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.energyMax > 0
-  
+
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.cooldownSpell < With.latency.remainingFrames) {
       spells.foreach(_(unit))
     }
-    if (unit.ready && unit.isAny(
-      Terran.ScienceVessel,
-      Protoss.Arbiter,
-      Protoss.DarkArchon,
-      Protoss.HighTemplar,
-      Zerg.Defiler,
-      Zerg.Queen)) {
-      unit.agent.shouldFight &&= unit.unitClass.spells.exists(s => s() && unit.energy >= s.energyCost - 2)
+    // Energy-users fight only while one of our spells can fire: a dry
+    // caster retreats instead of trading its cooldown for nothing. The
+    // gate reads the spells' own caster and energy rules, so a new spell
+    // needs zero edits here.
+    if (unit.ready && spells.exists(_.isCaster(unit))) {
+      unit.agent.decideFight(unit.agent.shouldFight && spells.exists(_.canCast(unit)))
     }
   }
-  
-  val spells: Array[Action] = Array(
+
+  val spells: Array[Action with Spell] = Array(
     Heal,
     WraithCloak,
     WraithUncloak,

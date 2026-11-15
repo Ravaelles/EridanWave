@@ -5,10 +5,15 @@ import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Agency.Commander
 import Micro.Agency.Commander.rightClick
+import Micro.Actions.Combat.Spells.Spell
 import ProxyBwapi.Races.Terran
-import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
-object Heal extends Action {
+object Heal extends Action with Spell {
+
+  def isCaster(unit: UnitInfo): Boolean = Terran.Medic(unit)
+
+  def canCast(unit: UnitInfo): Boolean = Terran.Medic(unit) && unit.energy > 0
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = Terran.Medic(unit) && unit.battle.isDefined
   

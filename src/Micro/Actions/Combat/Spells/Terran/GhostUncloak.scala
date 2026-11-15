@@ -3,10 +3,15 @@ package Micro.Actions.Combat.Spells.Terran
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Agency.Commander
+import Micro.Actions.Combat.Spells.Spell
 import ProxyBwapi.Races.Terran
-import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
-object GhostUncloak extends Action {
+object GhostUncloak extends Action with Spell {
+
+  def isCaster(unit: UnitInfo): Boolean = Terran.Ghost(unit)
+
+  def canCast(unit: UnitInfo): Boolean = Terran.Ghost(unit) && unit.cloaked
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = {
     unit.is(Terran.Ghost)                                     &&

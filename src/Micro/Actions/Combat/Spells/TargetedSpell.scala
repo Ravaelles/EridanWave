@@ -11,11 +11,13 @@ import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
-abstract class TargetedSpell extends Action {
+abstract class TargetedSpell extends Action with Spell {
 
   /** Base for single-target and AoE spell casts: walk into range, commit the intent, fire when the spot reconfirms. Subclasses supply only value and thresholds. */
   protected def casterClass       : UnitClass
   protected def tech              : Tech
+
+  def isCaster(unit: UnitInfo): Boolean = casterClass(unit)
   protected def aoe               : Boolean
   protected def castRangeTiles    : Int
   protected def thresholdValue    : Double
