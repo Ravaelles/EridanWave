@@ -290,9 +290,10 @@ class SquadAttack extends Squad {
   val otherTargets = new ArrayBuffer[UnitInfo]
   private val unassigned = new UnorderedBuffer[FriendlyUnitInfo]()
 
-  // Sim-gated regroup stance (Stardust activity): latched through the per-unit
-  // sim verdicts with hysteresis, so a borderline simulation cannot flap the
-  // whole squad between advance and retreat every few frames. Yolo is an
+  // Sim-gated regroup stance (Stardust activity): every retreat proposal -
+  // the global score as well as the per-unit sim verdicts - needs consecutive
+  // confirmation, so a borderline simulation cannot flap the whole squad
+  // between advance and retreat every few frames. Yolo is an
   // explicit all-in and resets the latch instead of consulting it.
   private def updateStance(): Unit = {
     if (With.yolo.active) {
@@ -314,7 +315,12 @@ class SquadAttack extends Squad {
       ArmyStrength.retreating(
         With.battles.globalAttack.us.skimStrengthTotal,
         With.battles.globalAttack.enemy.skimStrengthTotal)) {
-      stance = RegroupLatch.Regrouping
+      // A bad score proposes Retreat, never orders it: near parity the
+      // score flickers every frame, and each flip swings every terminus
+      // between the goal and home (move-stop-move-stop). Confirm through
+      // the stance filter like every other retreat proposal; re-engage
+      // still passes instantly.
+      stance = stanceFilter.confirm(stance, RegroupLatch.Regrouping)
       Probe.note("Sim", 0, "Regrouping outmatched")
     } else {
       val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
