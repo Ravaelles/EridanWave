@@ -1,6 +1,6 @@
 package Micro.Actions.Combat.Spells.Protoss
 
-import Micro.Actions.Combat.Spells.TargetedSpell
+import Micro.Actions.Combat.Spells.{SpellValue, TargetedSpell}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass
@@ -21,7 +21,7 @@ object DisruptionWeb extends TargetedSpell {
     
     val output = (
       target.subjectiveValue *
-      Math.min(1.0, target.matchups.targets.size          / 3.0)  *
+      SpellValue.crowd(target.matchups.targets.size) *
       Math.min(1.0, target.matchups.framesToLive  / 72.0) *
       (if (target.moving) 0.5 else 1.0) *
       (if (target.isEnemy) 1.0 else -2.0)

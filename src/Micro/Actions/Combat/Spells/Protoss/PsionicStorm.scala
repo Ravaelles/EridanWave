@@ -1,9 +1,8 @@
 package Micro.Actions.Combat.Spells.Protoss
 
 import Lifecycle.With
-import Mathematics.Maff
 import Mathematics.Points.Pixel
-import Micro.Actions.Combat.Spells.TargetedSpell
+import Micro.Actions.Combat.Spells.{SpellValue, TargetedSpell}
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass
@@ -126,8 +125,8 @@ object PsionicStorm extends TargetedSpell {
     if (vetoOverlord(Zerg.Overlord(target), caster.energy)) return 0.0
     if ( ! target.unitClass.canBeStormed) return 0.0
     if (target.underStorm)  return 0.0
-    if (target.stasised)    return 0.0
-    if (target.invincible)  return 0.0
+    // stasised/invincible ride SpellTargets.legal, which filters every
+    // candidate before valueTarget runs - no second copy here.
     if ( ! target.visible)  return 0.0
     if (target.isFriendly && target.isTransport && target.loadedUnitCount == 0) return 0.0 // Dumb hack to ensure our storm drops don't try too hard to avoid the shuttle
     if (target.isAny(Protoss.Interceptor, Zerg.Larva, Zerg.Egg, Zerg.LurkerEgg)) return 0.0
@@ -143,12 +142,12 @@ object PsionicStorm extends TargetedSpell {
       return 0.0
     }
 
-    val multiplierConfidence  = Math.max(1.0, Maff.nanToOne(1 / (1 + caster.confidence11)))
+    val multiplierConfidence  = SpellValue.confidence(caster.confidence11)
     val multiplierPlayer      = if (target.isEnemy) 1.0 else if (target.isFriendly) -2.0 else 0.0
     val multiplierUnit        = target.unitClass.stormValue
-    val multiplierDanger      = 1.0 + 0.5 * (if (caster.matchups.threatsInRange.nonEmpty) caster.unitClass.maxTotalHealth.toDouble / caster.totalHealth else 0.0)
+    val multiplierDanger      = SpellValue.danger(caster.matchups.threatsInRange.nonEmpty, caster.unitClass.maxTotalHealth.toDouble, caster.totalHealth)
     val multiplierRich        = Math.max(1.0, 0.25 * caster.team.map(_.stormCount).getOrElse(1))
-    val output                = multiplierConfidence * multiplierPlayer * multiplierUnit * multiplierDanger * multiplierRich
+    val output                = SpellValue.of(multiplierUnit, multiplierPlayer, multiplierConfidence, multiplierDanger, multiplierRich)
     output
   }
   

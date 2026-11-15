@@ -1,7 +1,7 @@
 package Micro.Actions.Combat.Spells.Protoss
 
 import Lifecycle.With
-import Micro.Actions.Combat.Spells.TargetedSpell
+import Micro.Actions.Combat.Spells.{SpellValue, TargetedSpell}
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass
@@ -21,8 +21,8 @@ object Stasis extends TargetedSpell {
     if (target.unitClass.isSpell)       return 0.0
     if (target.unitClass.isBuilding) return 0.0
     if (target.underStorm) return 0.0
-    if (target.stasised)   return 0.0
-    if (target.invincible) return 0.0
+    // stasised/invincible ride SpellTargets.legal, which filters every
+    // candidate before valueTarget runs - no second copy here.
 
     if (target.isAny(
       Protoss.Interceptor,
@@ -31,7 +31,7 @@ object Stasis extends TargetedSpell {
       Zerg.LurkerEgg)) return 0.0
 
     val teamValue = (
-      Math.min(1.0, target.matchups.targets.size / 3.0)
+      SpellValue.crowd(target.matchups.targets.size)
       * (if (target.team.exists(_.centroidAir.base.exists(_.owner.isEnemy))
         && ! target.unitClass.isWorker
         && target.matchups.targetsInRange.isEmpty) 0.3 else 1.0)

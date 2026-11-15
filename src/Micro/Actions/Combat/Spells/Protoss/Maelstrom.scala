@@ -1,7 +1,6 @@
 package Micro.Actions.Combat.Spells.Protoss
 
-import Mathematics.Maff
-import Micro.Actions.Combat.Spells.TargetedSpell
+import Micro.Actions.Combat.Spells.{SpellValue, TargetedSpell}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitClasses.UnitClass
@@ -23,15 +22,15 @@ object Maelstrom extends TargetedSpell {
   override protected def valueTarget(target: UnitInfo, caster: FriendlyUnitInfo): Double = {
     if ( ! target.unitClass.canBeMaelstrommed) return 0.0
     if ( ! target.visible)  return 0.0
-    if (target.stasised)    return 0.0
-    if (target.invincible)  return 0.0
+    // stasised/invincible ride SpellTargets.legal, which filters every
+    // candidate before valueTarget runs - no second copy here.
 
-    val multiplierConfidence  = Math.max(1.0, Maff.nanToOne(1 / (1 + caster.confidence11)))
+    val multiplierConfidence  = SpellValue.confidence(caster.confidence11)
     val multiplierPlayer      = ?(target.isEnemy, 1.0, ?(target.isFriendly, -1.0, 0.0))
     val multiplierUnit        = target.unitClass.maelstromValue
-    val multiplierDanger      = 1.0 + 0.5 * ?(caster.matchups.threatsInRange.nonEmpty, caster.unitClass.maxTotalHealth.toDouble / caster.totalHealth, 0)
+    val multiplierDanger      = SpellValue.danger(caster.matchups.threatsInRange.nonEmpty, caster.unitClass.maxTotalHealth.toDouble, caster.totalHealth)
     val multiplierRich        = 0.5 + 0.5 * caster.team.map(_.maelstromCount).getOrElse(1)
-    val output                = multiplierConfidence * multiplierPlayer * multiplierUnit * multiplierDanger * multiplierRich
+    val output                = SpellValue.of(multiplierUnit, multiplierPlayer, multiplierConfidence, multiplierDanger, multiplierRich)
     output
   }
 }
