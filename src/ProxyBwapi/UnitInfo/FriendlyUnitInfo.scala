@@ -40,8 +40,13 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
     }
     super.update()
     lazy val tryingToAttackHere = canAttack && target.exists(t => t.player.isEnemy &&   inRangeToAttack(t))
-    lazy val tryingToAttackAway = canAttack && target.exists(t => t.player.isEnemy && ! inRangeToAttack(t))
-    if (flying || unitClass.floats || pixel != previousPixel(1) || ! canMove || ( ! agent.tryingToMove && ! tryingToAttackAway))
+    // A parked unit is not a stuck unit: only count frames with an active
+    // movement order behind them. Counting mere attack intent (a far
+    // assigned target while holding still) let Unstick own the unit
+    // forever: it stopped the line, which kept the line still, which kept
+    // it "stuck" - while the pinned target never released. Movers still
+    // count through tryingToMove, so genuine pathing stalls keep working.
+    if (flying || unitClass.floats || pixel != previousPixel(1) || ! canMove || ! agent.tryingToMove)
       _framesFailingToMove = 0 else _framesFailingToMove += 1
     if (cooldownLeft > 0 || ! tryingToAttackHere) _framesFailingToAttack = 0 else _framesFailingToAttack += 1
     if (remainingOccupationFrames > 0) _lastFrameOccupied = With.frame
