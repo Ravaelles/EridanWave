@@ -87,8 +87,18 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
   private var _intent : Intention  = new Intention
   def client: Any       = _client
   def intent: Intention = _intent
+  /**
+   * Authoring phases: tactics (squads, missions) author intentions; micro
+   * narrows them through destinations and forces but never re-authors them.
+   * Last writer in a frame owns the whole set, so a second author the same
+   * frame overwrites silently - the contest rides the Owner probe instead
+   * of failing loudly.
+   */
   def intend(intendingClient: Any): Intention = {
     val newIntent = ?(intent.frameCreated >= With.frame, intent, new Intention)
+    if (newIntent == intent && _client != intendingClient) {
+      Debugging.Probe.note("Owner", id, f"contested ${_client} vs $intendingClient")
+    }
     _client = intendingClient
     _intent = newIntent
     Debugging.CherryVis.CherryVis.noteOwner(id, intendingClient)
