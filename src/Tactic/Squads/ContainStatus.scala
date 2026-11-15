@@ -1,5 +1,7 @@
 package Tactic.Squads
 
+import Lifecycle.PerGame
+
 import Information.Battles.ArmyStrength
 import Information.Geography.Chokes
 import Lifecycle.With
@@ -16,13 +18,13 @@ import ProxyBwapi.UnitTracking.AliveEnemies
  * layers ask in the same frame, and re-running the scans made the answer
  * depend on who asked first.
  */
-object ContainStatus {
+object ContainStatus extends PerGame {
 
   private var holding: Boolean = false
   private var cachedFrame: Int = Int.MinValue
   private var cached: Boolean = false
 
-  def reset(): Unit = {
+  override def reset(): Unit = {
     holding = false
     cachedFrame = Int.MinValue
     cached = false

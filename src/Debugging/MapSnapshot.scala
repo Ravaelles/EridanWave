@@ -1,5 +1,7 @@
 package Debugging
 
+import Lifecycle.PerGame
+
 import Lifecycle.With
 
 /**
@@ -10,11 +12,11 @@ import Lifecycle.With
  * seed StarEngine scenarios, which must create the fight by playing,
  * not replay it. Mirrors the Atlantis MAP_SNAPSHOT=1 dumper idea.
  */
-object MapSnapshot {
+object MapSnapshot extends PerGame {
 
   private var dumped: Boolean = false
 
-  def reset(): Unit = { dumped = false }
+  override def reset(): Unit = { dumped = false }
 
   def maybeDump(): Unit = {
     if (dumped) return

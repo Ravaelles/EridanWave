@@ -1,5 +1,7 @@
 package Debugging
 
+import Lifecycle.PerGame
+
 import Lifecycle.With
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitClasses.UnitClass
@@ -17,7 +19,7 @@ import scala.collection.mutable
  * on change only, and deaths are rare. To watch more classes, extend
  * the set below.
  */
-object DeathWatch {
+object DeathWatch extends PerGame {
 
   val watched: Set[UnitClass] = Set(
     Protoss.Observer,
@@ -29,7 +31,7 @@ object DeathWatch {
   private val orderRings = new mutable.HashMap[Int, mutable.Queue[(Int, String)]]()
   private val behavedRings = new mutable.HashMap[Int, mutable.Queue[(Int, String)]]()
 
-  def reset(): Unit = {
+  override def reset(): Unit = {
     orderRings.clear()
     behavedRings.clear()
   }

@@ -1,5 +1,7 @@
 package Debugging
 
+import Lifecycle.PerGame
+
 import Lifecycle.With
 
 import scala.collection.mutable
@@ -14,7 +16,7 @@ import scala.collection.mutable.ArrayBuffer
  * land in bwapi-data/write/formation-audit.txt for scripts/formation-audit.py.
  * Zero cost when disarmed: one boolean read per hook.
  */
-object FormationAudit {
+object FormationAudit extends PerGame {
 
   final case class BreakRow(frame: Int, unitId: Int, ownClass: String, targetClass: String, distTiles: Double)
 
@@ -37,7 +39,7 @@ object FormationAudit {
   private val dresses     = new ArrayBuffer[DressRow]
   private val lastBroken  = new mutable.HashMap[Int, Boolean]
 
-  def reset(): Unit = {
+  override def reset(): Unit = {
     tallyCounts.clear()
     verdictCounts.clear()
     modes.clear()

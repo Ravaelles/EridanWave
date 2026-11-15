@@ -1,5 +1,7 @@
 package Debugging
 
+import Lifecycle.PerGame
+
 import Lifecycle.With
 
 import scala.collection.mutable
@@ -16,7 +18,7 @@ import scala.io.Source
  * One line to add a probe point: Probe.note("Act", unit.id, message).
  * Read them back with scripts/probe.py against the debug log.
  */
-object Probe {
+object Probe extends PerGame {
 
   private var enabledKeys = Set.empty[String]
   private var lastRefreshFrame = Int.MinValue
@@ -41,7 +43,7 @@ object Probe {
     With.logger.debug(f"PROBE $key ${With.frame} $unitId $text")
   }
 
-  def reset(): Unit = {
+  override def reset(): Unit = {
     enabledKeys = Set.empty
     lastRefreshFrame = Int.MinValue
     lastByUnitKey.clear()

@@ -1,5 +1,7 @@
 package Debugging
 
+import Lifecycle.PerGame
+
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Agency.OrderContinue
@@ -14,7 +16,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  * ten notes per game; arm the SlowAlone key in probe.txt to collect
  * them, then read back with scripts/probe.py. The cap resets per game.
  */
-object SlowAlone {
+object SlowAlone extends PerGame {
 
   /** Below this fraction of top speed the unit counts as crawling. */
   val slowFraction: Double = 0.5
@@ -27,7 +29,7 @@ object SlowAlone {
 
   private var noted: Int = 0
 
-  def reset(): Unit = { noted = 0 }
+  override def reset(): Unit = { noted = 0 }
 
   def shouldNote(
     moving: Boolean,

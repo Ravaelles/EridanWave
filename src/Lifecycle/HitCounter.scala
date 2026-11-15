@@ -13,12 +13,12 @@ import scala.collection.mutable
  * every frame the shot lands. Only our own hit-point drops count, so our
  * attacks can never double-count. Reset every game; read by GameSummary.
  */
-object HitCounter {
+object HitCounter extends PerGame {
 
   private val lastHp = new mutable.HashMap[Int, Int]
   var total: Int = 0
 
-  def reset(): Unit = {
+  override def reset(): Unit = {
     lastHp.clear()
     total = 0
   }

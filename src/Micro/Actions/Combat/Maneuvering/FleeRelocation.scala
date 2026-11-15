@@ -1,5 +1,7 @@
 package Micro.Actions.Combat.Maneuvering
 
+import Lifecycle.PerGame
+
 import Mathematics.Points.Pixel
 
 import scala.collection.mutable
@@ -13,7 +15,7 @@ import scala.collection.mutable
  * failing line. Legs that make progress re-anchor and keep running
  * straight. Per-unit state, reset per game like the other march watches.
  */
-object FleeRelocation {
+object FleeRelocation extends PerGame {
 
   /** Keep one escape line this long, in frames, before rotating. */
   val stuckFrames: Int = 72
@@ -23,7 +25,7 @@ object FleeRelocation {
 
   private val fleeing = new mutable.HashMap[Int, (Int, Double, Double)]()
 
-  def reset(): Unit = { fleeing.clear() }
+  override def reset(): Unit = { fleeing.clear() }
 
   /**
    * Escape destination, rotated on a stuck escape: unmoved past the

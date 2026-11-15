@@ -38,18 +38,12 @@ class EridanWave extends DefaultBWListener {
         // override before the first frame, Atlantis OnGameStarted parity.
         Tuning.Tuning.install()
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
-        Debugging.ErrorLedger.reset()
-        Debugging.MapSnapshot.reset()
-        Debugging.SlowAlone.reset()
+        // One sweep clears every per-game family: subsystems register
+        // themselves (PerGame, like Latches) instead of adding a line here.
+        PerGame.resetAll()
         // Every hysteresis latch registers itself; unit ids restart each game,
         // so one sweep clears the whole family (no per-latch line to forget).
         Utilities.Latches.resetAll()
-        Micro.Actions.Combat.Maneuvering.FleeRelocation.reset()
-        Lifecycle.HitCounter.reset()
-        Debugging.FormationAudit.reset()
-        Debugging.Probe.reset()
-        Debugging.DeathWatch.reset()
-        Tactic.Squads.ContainStatus.reset()
         Debugging.CherryVis.CherryVis.initialize()
         With.history.onStart()
         With.units.onStart()

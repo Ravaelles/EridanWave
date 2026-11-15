@@ -1,5 +1,7 @@
 package Debugging
 
+import Lifecycle.PerGame
+
 import scala.collection.mutable
 
 /**
@@ -16,7 +18,7 @@ import scala.collection.mutable
  * Pure core (grouping, filtering, rendering) stays testable without a game;
  * only reset/finish touch With.
  */
-object ErrorLedger {
+object ErrorLedger extends PerGame {
 
   object Priority {
     val High    = "high"
@@ -63,7 +65,7 @@ object ErrorLedger {
     "exception." + exception.getClass.getSimpleName + ".at." + top
   }
 
-  def reset(): Unit = entries.clear()
+  override def reset(): Unit = entries.clear()
 
   def notes: Seq[Note] = entries.toSeq.map { case (key, entry) =>
     Note(key, entry.priority, entry.count, entry.firstFrame, entry.lastFrame, entry.samples.toVector)
