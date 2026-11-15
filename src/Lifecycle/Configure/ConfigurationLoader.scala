@@ -227,5 +227,3 @@ object ConfigurationLoader {
 
   private def config: Configuration = With.configuration
 }
-
-
