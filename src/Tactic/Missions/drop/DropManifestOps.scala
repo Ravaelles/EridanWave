@@ -28,7 +28,7 @@ trait DropManifestOps { self: MissionDrop =>
   // Keep Reavers already aboard during assembly, even above the recruitment cap.
   // Any passenger carried into a raid must remain part of the recovery plan.
   // Public: the Transport action also accounts for stray cargo.
-  final def accountForCargo(transport: FriendlyUnitInfo): Unit = {
+  final override def accountForCargo(transport: FriendlyUnitInfo): Unit = {
     if (!transports.contains(transport)) return
 
     val cargo = unassignedCargo(transport).filter(p => state != Assembling || Protoss.Reaver(p)).toVector

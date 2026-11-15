@@ -29,6 +29,8 @@ import Tactic.Squads.Squads
 
 class SquadDefendBase(base: Base) extends Squad {
 
+  override def wantsNewbornReavers: Boolean = true
+
   override def launch(): Unit = { /* This squad is given its recruits externally */ }
 
   private var lastAction = "Def"

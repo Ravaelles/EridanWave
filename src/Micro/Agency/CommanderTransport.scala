@@ -11,12 +11,8 @@ object CommanderTransport {
     // Boarding from either side can pull the Shuttle into range between mission updates.
     val pickup = target.friendly.flatMap(other =>
       if (unit.isTransport) Some((unit, other)) else if (other.isTransport) Some((other, unit)) else None)
-    if (pickup.exists { case (transport, passenger) => transport.squad.exists {
-      case mission: Tactic.Missions.core.MissionDrop if !mission.allowsPickup(transport, passenger) =>
-        mission.abandonUnsafePickups()
-        true
-      case _ => false
-    }}) {
+    if (pickup.exists { case (transport, passenger) => transport.squad.exists(squad =>
+      ! squad.allowsPickup(transport, passenger) && { squad.abandonUnsafePickups(); true }) }) {
       CommanderMove.stop(unit)
 
       return

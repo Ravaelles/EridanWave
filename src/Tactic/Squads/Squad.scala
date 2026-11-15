@@ -19,6 +19,21 @@ import Tactic.Squads.Group.FriendlyUnitGroup
 
 abstract class Squad extends Tactic with FriendlyUnitGroup {
   def fightsIndependently: Boolean = false
+  /**
+   * Drop-mission contract, defaulting to plain-squad behavior: no pickup
+   * gate, no cargo accounting, no unload requests, no newborn claims.
+   * MissionDrop overrides the mission half; army squads override the
+   * newborn half. Units ask the squad instead of pattern-matching it, so
+   * a new squad type satisfies the contract instead of adding an
+   * isInstanceOf case at the bottom of the stack.
+   */
+  def wantsNewbornReavers: Boolean = false
+  def assignedTransport(passenger: FriendlyUnitInfo): Option[FriendlyUnitInfo] = None
+  def allowsPickup(transport: FriendlyUnitInfo, passenger: FriendlyUnitInfo): Boolean = true
+  def accountForCargo(transport: FriendlyUnitInfo): Unit = {}
+  def abandonUnsafePickups(): Unit = {}
+  def requestsUnload(passenger: FriendlyUnitInfo): Boolean = false
+
   // Fight-consensus latch, updated exactly once per frame below: the raw
   // mode vote flickers every few frames (contact-band edge, sim judgments
   // appearing with battle clustering), and each flip swings every terminus

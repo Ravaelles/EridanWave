@@ -28,6 +28,8 @@ import Tactic.Squads.Squads
 
 class SquadAttack extends Squad {
 
+  override def wantsNewbornReavers: Boolean = true
+
   var mode: AttackMode = PushMain
 
   // HuntContact marches to contact: act as if the squad agreed to fight.

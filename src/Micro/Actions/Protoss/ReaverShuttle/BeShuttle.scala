@@ -9,8 +9,6 @@ import Micro.Agency.Commander
 import Macro.Facts.MacroFacts
 import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.attack.SquadAttack
-import Tactic.Squads.defense.SquadDefendBase
 
 /**
  * Shuttle half of the pair doctrine (first claim wins): ditch
@@ -76,7 +74,7 @@ object BeShuttle extends Action {
       acted = true
     })
 
-    if (shuttle.squad.exists(s => s.isInstanceOf[SquadAttack] || s.isInstanceOf[SquadDefendBase])) {
+    if (shuttle.squad.exists(_.wantsNewbornReavers)) {
       val newborns = With.units.ours
         .filter(u => ! u.complete && Protoss.Reaver(u) && u.remainingCompletionFrames < shuttle.framesToTravelTo(u.pixel))
         .toVector
@@ -92,10 +90,7 @@ object BeShuttle extends Action {
 
   private def shouldAdopt(shuttle: FriendlyUnitInfo, passenger: FriendlyUnitInfo): Boolean = (
     shuttle.canTransport(passenger)
-      && shuttle.squad.forall {
-        case drop: Tactic.Missions.core.MissionDrop => drop.assignedTransport(passenger).contains(shuttle)
-        case _ => true
-      }
+      && shuttle.squad.forall(_.assignedTransport(passenger).forall(t => t == shuttle))
       && passenger.transport.isEmpty
       && passenger.agent.ride.forall(shuttle==)
       && passenger.unitClass.spaceRequired + shuttle.agent.passengerSize <= shuttle.unitClass.spaceProvided

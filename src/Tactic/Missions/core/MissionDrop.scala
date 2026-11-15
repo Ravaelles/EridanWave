@@ -59,8 +59,8 @@ abstract class MissionDrop extends Mission
   protected def landingGoal(transport: FriendlyUnitInfo): Pixel = vicinity
   protected def readyToRaid(transport: FriendlyUnitInfo): Boolean = false
   protected def onRaidHandoff(transport: FriendlyUnitInfo): Unit = {}
-  def requestsUnload(passenger: FriendlyUnitInfo): Boolean = false
-  def allowsPickup(transport: FriendlyUnitInfo, passenger: FriendlyUnitInfo): Boolean = true
+  override def requestsUnload(passenger: FriendlyUnitInfo): Boolean = false
+  override def allowsPickup(transport: FriendlyUnitInfo, passenger: FriendlyUnitInfo): Boolean = true
   protected def rejectApproach(transport: FriendlyUnitInfo): Boolean = false
   protected def routeArrivalRange(transport: FriendlyUnitInfo): Double = 0
   protected def routeProximity: Option[Double] = None
@@ -92,11 +92,11 @@ abstract class MissionDrop extends Mission
     With.framesSince(Math.max(launchFrame, itineraryFrame)) > missionTimeout ||
       (With.framesSince(Math.max(launchFrame, destinationFrame)) > approachTimeout && state != Raiding && state != Evacuating)
 
-  final def assignedTransport(passenger: FriendlyUnitInfo): Option[FriendlyUnitInfo] =
+  final override def assignedTransport(passenger: FriendlyUnitInfo): Option[FriendlyUnitInfo] =
     passenger.transport.filter(transports.contains).orElse(passenger.agent.ride.filter(transports.contains))
   protected final def passengersFor(transport: FriendlyUnitInfo): Seq[FriendlyUnitInfo] = passengers.filter(p => assignedTransport(p).contains(transport))
 
-  final def abandonUnsafePickups(): Unit = {
+  final override def abandonUnsafePickups(): Unit = {
     val abandoned = passengers.filter(p => !p.loaded && assignedTransport(p).exists(t => !allowsPickup(t, p))).toSet
     transports.filter(t => abandoned.exists(t.orderTarget.contains)).foreach(Commander.stop)
     releasePassengers(abandoned)
