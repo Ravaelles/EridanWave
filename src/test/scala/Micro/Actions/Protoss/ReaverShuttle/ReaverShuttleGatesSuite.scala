@@ -1,5 +1,7 @@
 package Micro.Actions.Protoss.ReaverShuttle
 
+import Tactic.Squads.Squad
+import org.mockito.Mockito
 import org.scalatest.funsuite.AnyFunSuite
 
 class ReaverShuttleGatesSuite extends AnyFunSuite {
@@ -9,6 +11,15 @@ class ReaverShuttleGatesSuite extends AnyFunSuite {
     assert( ! ReaverShuttleFerry.needsRide(3.0))
     assert(ReaverShuttleFerry.needsRide(3.01))
     assert(ReaverShuttleFerry.needsRide(30.0))
+  }
+
+  test("the squadless ride still sees its mate through restaffing") {
+    val squad = Mockito.mock(classOf[Squad])
+    assert(ReaverShuttlePair.mateInSquad(None, None))
+    assert(ReaverShuttlePair.mateInSquad(None, Some(squad)))
+    assert(ReaverShuttlePair.mateInSquad(Some(squad), Some(squad)))
+    assert( ! ReaverShuttlePair.mateInSquad(Some(squad), None))
+    assert( ! ReaverShuttlePair.mateInSquad(Some(squad), Some(Mockito.mock(classOf[Squad]))))
   }
 
   test("the ride stays with an unloaded mate operating close") {

@@ -5,6 +5,7 @@ import Mathematics.Maff
 import Mathematics.Points.Pixel
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Tactic.Squads.Squad
 import Utilities.Latch
 
 /**
@@ -43,8 +44,20 @@ object ReaverShuttlePair {
    * 64 pixels) has to stay its ride until it boards again.
    */
   def mateOnFoot(shuttle: FriendlyUnitInfo): Option[FriendlyUnitInfo] =
-    Maff.minBy(unloadedReavers().filter(u => shuttle.squad.exists(u.squad.contains)))(
+    Maff.minBy(unloadedReavers().filter(u => mateInSquad(shuttle.squad, u.squad)))(
       _.pixelDistanceCenter(shuttle.pixel))
+
+  /**
+   * Squad gate with a restaffing fallback (pure flags for the suite): the
+   * ride only escorts its own squad's mate, but a squadless ride cannot
+   * evaluate the gate at all - assignments flap through None on
+   * restaffing frames, and a strict gate blinds the mate lookup exactly
+   * then, flipping escort/await every other frame. So None on our side
+   * accepts the nearest hull; a squadded ride stays strict, even against
+   * squadless hulls.
+   */
+  def mateInSquad(shuttleSquad: Option[Squad], mateSquad: Option[Squad]): Boolean =
+    shuttleSquad.forall(mateSquad.contains)
 
   /** Stay with an unloaded mate operating this close, in tiles: the ride the Reaver brain assumes. */
   val mateEscortTiles: Double = 15.0
