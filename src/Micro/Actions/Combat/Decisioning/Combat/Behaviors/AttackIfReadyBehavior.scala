@@ -11,8 +11,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  */
 object AttackIfReadyBehavior {
 
-  def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    if (unit.ready && combat.target.exists(unit.readyForAttackOrder) && combat.distances.readyToApproachTarget) {
+  def run(unit: FriendlyUnitInfo, situation: CombatSituation): Boolean = {
+    if (unit.ready && situation.target.exists(unit.readyForAttackOrder) && situation.distances.readyToApproachTarget) {
       Commander.attack(unit)
     }
     unit.unready

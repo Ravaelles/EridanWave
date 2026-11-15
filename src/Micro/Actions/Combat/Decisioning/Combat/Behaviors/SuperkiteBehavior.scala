@@ -17,8 +17,8 @@ import ProxyBwapi.UnitInfo.UnitInfo
  */
 object SuperkiteBehavior {
 
-  def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    combat.target.foreach(t => cycle(unit, t))
+  def run(unit: FriendlyUnitInfo, situation: CombatSituation): Boolean = {
+    situation.target.foreach(t => cycle(unit, t))
 
     unit.unready
   }

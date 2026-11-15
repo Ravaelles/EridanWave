@@ -16,13 +16,13 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
  */
 object PotshotBehavior {
 
-  def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+  def run(unit: FriendlyUnitInfo, situation: CombatSituation): Boolean = {
     if (unit.ready) {
       if (Protoss.Dragoon(unit) && vulturePotshot(unit)) return unit.unready
 
       val potshotTarget = Maff.orElseFiltered(
           Maff.minBy(unit.matchups.threats)(_.pixelDistanceEdge(unit)).filter(TargetFilterPotshot.legal(unit, _)),
-          combat.target.filter(TargetFilterPotshot.legal(unit, _)),
+          situation.target.filter(TargetFilterPotshot.legal(unit, _)),
           Target.best(unit, TargetFilterPotshot))(unit.canAttack).headOption
       if (potshotTarget.exists(t => unit.readyForAttackOrder(t) && TargetFilterPotshot.legal(unit, t))) {
         unit.agent.toAttack = potshotTarget

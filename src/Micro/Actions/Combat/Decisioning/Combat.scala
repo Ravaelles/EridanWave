@@ -23,7 +23,7 @@ import Tactic.Squads.Group.UnitGroup
 import Utilities.Time.Forever
 import Utilities.?
 
-final class Combat(unit: FriendlyUnitInfo) extends Action {
+final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
 
   var restrained            : Boolean = false
   var restrainedFrames      : Double  = 0.0
