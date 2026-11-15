@@ -29,70 +29,106 @@ object CommanderEngage {
     unit.agent.tryingToMove = unit.pixelsToGetInRange(target) > CommanderCore.tryingToMoveThreshold
     if (unit.unready) return
 
-    if (unit.airlifted && (unit.pixelDistanceCenter(attackFrom) < ?(unit.agent.isPrimaryPassenger, 32, 64) || unit.pixelsToGetInRange(target) <= ?(unit.agent.isPrimaryPassenger, 16, 48))) {
-      if ( ! Protoss.Reaver(unit) || unit.hasScarabPathTo(target, unit.pixel)) CommanderTransport.requestUnload(unit)
-      CommanderCore.sleep(unit) //  Although we're not doing anything, it's important to sleep here so we don't keep executing and change our ride goal
-
-      return
-    }
-
+    if (airliftUnload(unit, target, attackFrom)) return
     if ( ! Zerg.Lurker(unit) && CommanderCore.autoUnburrow(unit)) return
-    // We shouldn't target interceptors anymore, but in case we do:
-    if (Protoss.Interceptor(target)) {
-      CommanderMove.attackMove(unit, attackFrom); return
-    }
-    // When a ground unit attacks a Carrier, have it attack-move when off cooldown to ensure we burn off Interceptors even if we can't find a route to the Carrier
-    if (Protoss.Carrier(target) && unit.readyForAttackOrder(target) && ! unit.inRangeToAttack(target) && ! unit.flying) {
-      CommanderMove.attackMove(unit, attackFrom); return
+    if (interceptorTarget(unit, target, attackFrom)) return
+    if (carrierChase(unit, target, attackFrom)) return
+    if (lurkerSiege(unit, target, attackFrom)) return
+    if (closeIn(unit, target)) return
+    if (issueAttack(unit, target)) return
+
+    CommanderMove.move(unit, attackFrom)
+  }
+
+  // Airlifted cargo landing on its target: board out instead of fighting
+  // from the hall, unless a Reaver has no scarab path to the target.
+  private def airliftUnload(unit: FriendlyUnitInfo, target: UnitInfo, attackFrom: => Pixel): Boolean = {
+    if ( ! unit.airlifted) return false
+    if ( ! (unit.pixelDistanceCenter(attackFrom) < ?(unit.agent.isPrimaryPassenger, 32, 64) || unit.pixelsToGetInRange(target) <= ?(unit.agent.isPrimaryPassenger, 16, 48))) return false
+
+    if ( ! Protoss.Reaver(unit) || unit.hasScarabPathTo(target, unit.pixel)) CommanderTransport.requestUnload(unit)
+    CommanderCore.sleep(unit) //  Although we're not doing anything, it's important to sleep here so we don't keep executing and change our ride goal
+
+    true
+  }
+
+  // Interceptors are not a target: attack-move at the firing position so
+  // the shots catch whatever the Carrier sends out.
+  private def interceptorTarget(unit: FriendlyUnitInfo, target: UnitInfo, attackFrom: => Pixel): Boolean = {
+    if ( ! Protoss.Interceptor(target)) return false
+
+    CommanderMove.attackMove(unit, attackFrom)
+
+    true
+  }
+
+  // Grounded guns on a Carrier attack-move off cooldown: the Interceptors
+  // die on the way in even when no route to the hull exists.
+  private def carrierChase(unit: FriendlyUnitInfo, target: UnitInfo, attackFrom: => Pixel): Boolean = {
+    if ( ! (Protoss.Carrier(target) && unit.readyForAttackOrder(target) && ! unit.inRangeToAttack(target) && ! unit.flying)) return false
+
+    CommanderMove.attackMove(unit, attackFrom)
+
+    true
+  }
+
+  // Burrowed Lurkers hold their spine: burrow in range, walk up otherwise.
+  private def lurkerSiege(unit: FriendlyUnitInfo, target: UnitInfo, attackFrom: => Pixel): Boolean = {
+    if ( ! (Zerg.Lurker(unit) && ! unit.burrowed)) return false
+
+    if (unit.inRangeToAttack(target)) {
+      CommanderAbilities.burrow(unit)
+    } else {
+      CommanderMove.move(unit, attackFrom)
     }
 
-    if (Zerg.Lurker(unit) && ! unit.burrowed) {
-      if (unit.inRangeToAttack(target)) {
-        CommanderAbilities.burrow(unit)
-      } else {
-        CommanderMove.move(unit, attackFrom)
-      }
-      return
-    }
-    // If we should be attack-commanding
-    var useAttackCommand    = unit.readyForAttackOrder(target) || unit.inRangeToAttack(target) // Allow deliberate repositioning between shots
+    true
+  }
+
+  // Closing in: attack-move at a firing position by the target instead
+  // of issuing a raw attack order. A raw order re-issued while walking
+  // resets acceleration to a crawl (the sticking the safe-arrival math
+  // guards against), so a shooter closing twenty tiles never arrives;
+  // attack-move keeps walking and opens fire on arrival. Kiting (in
+  // range but cooling) keeps the move path below untouched.
+  private def closeIn(unit: FriendlyUnitInfo, target: UnitInfo): Boolean = {
+    if ( ! (unit.canMove && ! unit.inRangeToAttack(target))) return false
+
+    CommanderMove.attackMove(unit, unit.pixelToFireAtExhaustive(target))
+
+    true
+  }
+
+  // Attack command only when deliberate: a new target, an overdue shot
+  // while already engaging, or Carrier warmup spam. Anything else keeps
+  // the move path instead of resetting acceleration every frame.
+  private def issueAttack(unit: FriendlyUnitInfo, target: UnitInfo): Boolean = {
+    // Allow deliberate repositioning between shots
+    var useAttackCommand    = unit.readyForAttackOrder(target) || unit.inRangeToAttack(target)
     useAttackCommand      ||= unit.unitClass.melee
     useAttackCommand      ||= ! unit.canMove
     useAttackCommand      ||= unit.flying && unit.readyForAttackOrder(target) // Flying units can attack directly but if repositioning between shots need a move command
     useAttackCommand      ||= unit.framesToGetInRange(target) <= With.latency.latencyFrames + Math.max(unit.cooldownLeft, With.reaction.agencyAverage)
     useAttackCommand      &&= target.visible
-    // Closing in: attack-move at a firing position by the target instead
-    // of issuing a raw attack order. A raw order re-issued while walking
-    // resets acceleration to a crawl (the sticking the safe-arrival math
-    // guards against), so a shooter closing twenty tiles never arrives;
-    // attack-move keeps walking and opens fire on arrival. Kiting (in
-    // range but cooling) keeps the move path below untouched.
-    if (unit.canMove && ! unit.inRangeToAttack(target)) {
-      CommanderMove.attackMove(unit, unit.pixelToFireAtExhaustive(target))
+    if ( ! useAttackCommand) return false
 
-      return
+    lazy val moving           = unit.moving
+    lazy val alreadyInRange   = unit.inRangeToAttack(target)
+    lazy val overdueToAttack  = unit.cooldownLeft == 0 && With.framesSince(unit.lastFrameStartingAttack) > 2.0 * unit.cooldownMaxAirGround
+    lazy val thisIsANewTarget = ! unit.orderTarget.contains(target)
+    val shouldOrder = (
+      thisIsANewTarget
+        || (overdueToAttack && (moving || alreadyInRange))
+        || (target.isFriendly && Protoss.Carrier(unit))) // Carrier warmup; spam attack to avoid actually doing damage
+    if (shouldOrder) {
+      unit.bwapiUnit.attack(target.bwapiUnit)
+      target.addFutureAttack(unit)
+      CommanderCore.sleepAttack(unit)
+    } else {
+      CommanderCore.sleep(unit)
     }
 
-    if (useAttackCommand) {
-      lazy val moving           = unit.moving
-      lazy val alreadyInRange   = unit.inRangeToAttack(target)
-      lazy val overdueToAttack  = unit.cooldownLeft == 0 && With.framesSince(unit.lastFrameStartingAttack) > 2.0 * unit.cooldownMaxAirGround
-      lazy val thisIsANewTarget = ! unit.orderTarget.contains(target)
-      val shouldOrder = (
-        thisIsANewTarget
-          || (overdueToAttack && (moving || alreadyInRange))
-          || (target.isFriendly && Protoss.Carrier(unit))) // Carrier warmup; spam attack to avoid actually doing damage
-      if (shouldOrder) {
-        unit.bwapiUnit.attack(target.bwapiUnit)
-        target.addFutureAttack(unit)
-        CommanderCore.sleepAttack(unit)
-      } else {
-        CommanderCore.sleep(unit)
-      }
-      return
-    }
-
-    CommanderMove.move(unit, attackFrom)
+    true
   }
   // Return the waypoint or a nearby point with collision clearance, or None if none fits.
   // BW treats touching outer collision boxes as a unit destination. Keep a pixel of clearance.
@@ -125,4 +161,5 @@ object CommanderEngage {
     }
   }
 }
+
 
