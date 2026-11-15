@@ -60,4 +60,9 @@ class AirFleeSuite extends AnyFunSuite {
     val out = AirFlee.outOfCorner(Pixel(-50, 2000), mapW, mapH)
     assert(out == Pixel(0, 2000))
   }
+
+  test("a custom corner width keeps clear earlier") {
+    assert(AirFlee.outOfCorner(Pixel(300, 300), mapW, mapH) == Pixel(300, 300))
+    assert(AirFlee.outOfCorner(Pixel(300, 300), mapW, mapH, 15.0) == Pixel(300, 480))
+  }
 }

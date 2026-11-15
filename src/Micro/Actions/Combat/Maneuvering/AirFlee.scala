@@ -9,12 +9,13 @@ import Mathematics.Points.Pixel
  * inside firing range, on a wound-scaled margin - a fresh hull skates, a
  * dying one turns early. The band is the caller's: Corsairs and Shuttles
  * skate at 3->10, eyes hold wider at 6->12. The flee destination never
- * lands in a map corner: the 6x6-tile corner squares are unusable traps, so
- * a destination inside one slides out along the nearest edge instead of
- * diving deeper. Pure pixels in, pixels out; the caller gathers threats
- * (any enemy that can attack the victim), passes map bounds, and issues the
- * order. One home for the rule so air doctrines cannot drift apart on where
- * safety ends.
+ * lands in a map corner: corner squares are unusable traps, so a
+ * destination inside one slides out along the nearest edge instead of
+ * diving deeper. The trap width is the caller's too (Shuttles keep clear
+ * of corners early, eyes only dodge the innermost squares). Pure pixels
+ * in, pixels out; the caller gathers threats (any enemy that can attack
+ * the victim), passes map bounds, and issues the order. One home for the
+ * rule so air doctrines cannot drift apart on where safety ends.
  */
 object AirFlee {
 
@@ -42,12 +43,14 @@ object AirFlee {
     own.project(focus, -marginTiles * 32)
 
   /**
-   * Corner guard (pure map math): a destination inside a 6x6-tile corner
-   * square slides out along the nearest edge - vertically or horizontally
-   * off the trap - instead of diving deeper. Destinations outside the
-   * map clamp to its bounds first. Edges and center pass through untouched.
+   * Corner guard (pure map math): a destination inside a corner square
+   * slides out along the nearest edge - vertically or horizontally off
+   * the trap - instead of diving deeper. Destinations outside the map
+   * clamp to its bounds first. Edges and center pass through untouched.
+   * The trap width rides along so callers with longer flee legs keep
+   * clear earlier; the default is the innermost squares.
    */
-  def outOfCorner(dest: Pixel, mapWpx: Int, mapHpx: Int): Pixel = {
+  def outOfCorner(dest: Pixel, mapWpx: Int, mapHpx: Int, cornerTiles: Double = AirFlee.cornerTiles): Pixel = {
     val c = (cornerTiles * 32).toInt
     val x = Math.max(0, Math.min(mapWpx, dest.x))
     val y = Math.max(0, Math.min(mapHpx, dest.y))
