@@ -134,46 +134,9 @@ class EridanWave extends DefaultBWListener {
 
   override def onEnd(isWinner: Boolean): Unit = {
     tryCatch(() => {
-      With.logger.debug(f"Game ended in ${?(isWinner, "victory", "defeat")}")
-      With.history.onEnd(isWinner)
-      With.missionHistory.onEnd(isWinner)
-      With.gathering.onEnd()
-      With.storyteller.onEnd()
-      With.simulation.onEnd()
-      With.manners.onEnd(isWinner)
-      // Atlantis GameSummary parity: the run ends with a score box on stdout
-      // (the client log tees it to the terminal), not just the launcher line.
-      System.out.println(Lifecycle.GameSummary.box(
-        isWinner,
-        Information.Battles.KillLedger.killed,
-        Information.Battles.KillLedger.lost))
-      System.out.println(Lifecycle.GameSummary.details(
-        With.frame,
-        Information.Battles.KillLedger.killed,
-        Information.Battles.KillLedger.lost,
-        Information.Battles.KillLedger.killedResources,
-        Information.Battles.KillLedger.lostResources,
-        Lifecycle.HitCounter.total))
-      Debugging.FormationAudit.finish(With.mapFileName, With.frame)
-      Debugging.CherryVis.CherryVis.finish(isWinner)
-      // Tuning score row (fixed-name + dated copy) when a strategy is active.
-      Tuning.Tuning.finish(isWinner)
-      // Keyed error counts next to the human log (no-op when nothing failed).
-      Debugging.ErrorLedger.finish()
-      // Terminate the combat visualizer if we launched it at start
-      try { if (With.configuration != null && With.configuration.debugging && With.configuration.simviz) Debugging.CombatVisIO.terminateVisualizer() } catch { case exception: Exception => With.logger.quietlyOnException(exception) }
-      With.logger.flush()
+      EndOfGame.report(isWinner)
     })
-    // Single-match runs: the end of the match is the end of the process.
-    // Wine dev sessions (Atlantis parity: the supervisor waits for this JVM
-    // to die and then tears the session down; without it the script sits in
-    // `while kill -0 CLIENT_PID` until Escape) and one-shot scbw Docker
-    // containers (which scbw tears down after the game; an idling JVM is
-    // reported as a crash after its 70 s container timeout).
-    // Ladder/tournaments keep running: the next match reuses this process.
-    // Guarded by frame count: an onEnd delivered without a game ever running
-    // (stale score screen on attach) must not kill a fresh session.
-    if ((Lifecycle.Launch.GameLauncherFactory.isWineClientJvm() || Lifecycle.Launch.GameLauncherFactory.isScbwMatchContainer()) && With.frame > 120) {
+    if (SessionExit.afterGame()) {
       With.logger.debug(f"Exiting after game end at frame ${With.frame}")
       With.logger.flush()
       System.exit(0)
