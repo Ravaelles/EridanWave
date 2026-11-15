@@ -75,7 +75,7 @@ class Agency extends TimedTask {
         if (With.configuration.enablePerformancePauses && timer.redLight && With.performance.frameBrokeLimit) {
           val timeAfter = With.performance.frameElapsedMs
           val timeDelta = timeAfter - timeBefore
-          With.logger.performance(f"${unit} crossed ${With.configuration.frameLimitMs}ms: ${timeDelta}ms on ${if (agent.actions.isEmpty) agent.lastAction.get else agent.actions.mkString(", ")}")
+          With.logger.performance(f"${unit} crossed ${With.configuration.frameLimitMs}ms: ${timeDelta}ms on ${if (agent.actions.isEmpty) agent.lastAction.getOrElse("-") else agent.actions.mkString(", ")}")
         }
 
         unit.hysteresis.update() // Update hysteresis immediately so combat sim has access to the latest value
