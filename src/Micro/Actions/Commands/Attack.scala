@@ -5,6 +5,7 @@ import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Attack extends Action {
+  override def isContainer: Boolean = true
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canAttack && unit.agent.toAttack.isDefined
   override def perform(unit: FriendlyUnitInfo): Unit = Commander.attack(unit)
 }

@@ -12,6 +12,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.UnitFilters.IsTank
 
 object BeVulture extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     Terran.Vulture(unit)

@@ -18,6 +18,7 @@ import scala.collection.mutable.ArrayBuffer
 import Tactic.Squads.Group.UnitGroup
 
 object Spot extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = {
     var output = unit.canMove && unit.unitClass.isDetector

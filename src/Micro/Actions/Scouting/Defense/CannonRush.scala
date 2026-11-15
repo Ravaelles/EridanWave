@@ -13,6 +13,7 @@ import Utilities.?
 import Utilities.Time.Seconds
 
 object CannonRush extends Action {
+  override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = With.blackboard.cannonRushBase().nonEmpty
 

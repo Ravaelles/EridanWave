@@ -5,6 +5,7 @@ import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Land extends Action {
+  override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.unitClass.isFlyingBuilding

@@ -8,6 +8,7 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Time.Minutes
 
 object Crack extends Action {
+  override def isContainer: Boolean = true
 
   private def egg(unit: FriendlyUnitInfo): Option[UnitInfo] = {
     unit.zone.units.find(u => ! u.flying && u.isNeutral && unit.canAttack(u))

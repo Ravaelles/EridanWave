@@ -8,6 +8,7 @@ import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object Recharge extends Action {
+  override def isContainer: Boolean = true
   
   // Note: Recharge Shields range is 2
 

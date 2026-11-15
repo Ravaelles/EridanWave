@@ -13,6 +13,7 @@ import Utilities.?
 import Utilities.Time.Minutes
 
 object Bust extends Action {
+  override def isContainer: Boolean = true
   
   // TODO:
   // jaj22: quick bunker test, range goon has at least a 33 pixel variation for where it stops on a straight line attack command.

@@ -8,6 +8,7 @@ import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object ReloadScarabs extends Action {
+  override def isContainer: Boolean = true
   
   val maxScarabCount = 5
   

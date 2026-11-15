@@ -8,6 +8,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.Time.Seconds
 
 object Meld extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.intent.shouldMeld

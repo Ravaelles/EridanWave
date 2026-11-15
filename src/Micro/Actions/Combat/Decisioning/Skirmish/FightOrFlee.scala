@@ -13,6 +13,7 @@ import Utilities.Time.Minutes
 import Utilities.UnitFilters.{IsSlowling, IsTank, IsWarrior, IsWorker}
 
 object FightOrFlee extends Action {
+  override def isContainer: Boolean = true
 
   val Reave = "Reave"
 

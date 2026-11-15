@@ -5,6 +5,7 @@ import Micro.Agency.{BuildIntent, Commander}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Addon extends Action {
+  override def isContainer: Boolean = true
 
   def addonIntent(unit: FriendlyUnitInfo): Option[BuildIntent] = unit.intent.toBuild.find(b => b.unitClass.isAddon && b.startNow)
   

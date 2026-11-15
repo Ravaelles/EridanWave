@@ -6,6 +6,7 @@ import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Repair extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = Terran.SCV(unit) && unit.intent.toHeal.exists(t => t.hitPoints < t.unitClass.maxTotalHealth)
   

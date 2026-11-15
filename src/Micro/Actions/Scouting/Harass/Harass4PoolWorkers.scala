@@ -8,6 +8,7 @@ import ProxyBwapi.Races.Zerg
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Harass4PoolWorkers extends Action {
+  override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.agent.isScout

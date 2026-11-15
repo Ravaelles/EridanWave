@@ -17,6 +17,7 @@ import Utilities.?
 import Utilities.Time.{Minutes, Seconds}
 
 object Gather extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.agent.toGather.isDefined
   

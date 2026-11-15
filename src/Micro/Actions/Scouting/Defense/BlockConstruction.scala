@@ -10,6 +10,7 @@ import Utilities.?
 import Utilities.UnitFilters.{IsWarrior, IsWorker}
 
 object BlockConstruction extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     blockableBuilders(unit).nonEmpty

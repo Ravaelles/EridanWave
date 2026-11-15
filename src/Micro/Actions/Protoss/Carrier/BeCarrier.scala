@@ -16,6 +16,7 @@ import Utilities.UnitFilters.IsTank
 
 
 object BeCarrier extends Action {
+  override def isContainer: Boolean = true
   
   // Carriers are really finicky and demand their own micro.
 

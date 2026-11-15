@@ -16,6 +16,7 @@ import Utilities.?
 import Utilities.UnitFilters.IsWorker
 
 object Build extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.intent.toBuild.nonEmpty
   

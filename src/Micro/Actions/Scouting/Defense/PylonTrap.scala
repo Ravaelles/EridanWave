@@ -14,6 +14,7 @@ import Strategery.Strategies.Protoss.PvEProxy2Gate
 import Utilities.?
 
 object PylonTrap extends Action {
+  override def isContainer: Boolean = true
 
   private case class TrapPlan(target: UnitInfo, locations: Vector[PylonTrapSearch.Placement])
   private object TrapPlanKey

@@ -8,6 +8,7 @@ import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object StrategicNuke extends Action {
+  override def isContainer: Boolean = true
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.agent.toNuke.isDefined
   
   override protected def perform(unit: FriendlyUnitInfo): Unit = {

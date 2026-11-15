@@ -11,6 +11,7 @@ import ProxyBwapi.Races.{Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object Root extends Action {
+  override def isContainer: Boolean = true
   
   private class RootAction(unit: FriendlyUnitInfo) extends Action {
     // Be unrooted if there are threats but no targets

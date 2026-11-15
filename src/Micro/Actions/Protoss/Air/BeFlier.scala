@@ -11,6 +11,7 @@ import ProxyBwapi.Races.Zerg
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object BeFlier extends Action {
+  override def isContainer: Boolean = true
 
   /** Flier steering: dodge Scourge toward friendly AA and nearby safety.
     * Transports have their own discipline (Transport -> BeShuttle); steering

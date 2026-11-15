@@ -9,6 +9,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.Time.{Minutes, Seconds}
 
 object Cancel extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = {
     val maximumCannonRushBuilding = With.blackboard.cannonRushMaximum() && unit.isAny(Protoss.Pylon, Protoss.PhotonCannon)

@@ -6,6 +6,7 @@ import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Bunk extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = {
     unit.agent.toBoard.exists(Terran.Bunker)

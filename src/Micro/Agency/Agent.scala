@@ -63,37 +63,19 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   var lastAction  : Option[String]   = None
   val actions     : ArrayBuffer[String] = new ArrayBuffer[String]()
 
-  /**
-   * Chain containers credit themselves every frame via Action.apply, so
-   * their names would drown the trace (half a million Idle rows a game).
-   * Only leaf behaviors report; extend this when adding a chain container.
-   */
-  private val chainActions: Set[String] = Set(
-    "Cancel", "Liftoff", "Land", "Unbunk", "Meld", "Build",
-    "FinishConstruction", "FightOrFlee", "Repair", "GetRepairedMobile", "Gather", "Addon", "Scan", "Unstick", "Produce",
-    "Rally", "ReloadInterceptors", "ReloadScarabs", "Transport", "Scout",
-    "Bunk", "Crack", "Fight", "Attack", "Travel", "Follow", "StrategicNuke",
-    "Cast", "Spot", "Stim", "EmergencyBunk", "Root", "BeFlier",
-    "BeCombatSCV", "BeVulture", "BeRushingZealot", "BeZealotVsZealot",
-    "BeDragoonVsSlowlot", "BeDarkTemplar", "BeCarrier", "BeArbiter",
-    "BeReaver", "BeMutalisk", "Recharge", "Bust", "Stealth", "OccupyBunker",
-    "BeDetector", "Evacuate", "BeShuttle", "CannonRush", "PylonTrap",
-    "FightWithZealot", "DroneWarfare", "Harass4PoolWorkers", "SabotageProxy",
-    "KnockKnock", "PreserveScout", "AttackBuilder", "BlockConstruction",
-    "Search", "SearchWhenBored", "Idle", "DoNothing")
-
   def act(value: String): Unit = {
     actions += value
     lastAction = Some(value)
   }
 
-  // One row per frame: the leaf decisions chained as A/B/C instead of one
-  // value, so the logs show the reasoning path, not just its end. Chain
-  // containers stay out (half a million Idle rows a game); the change-only
-  // channel still dedups steady chains. Probe mirrors the same label for
-  // games without a trace (UMS): arm keys in bwapi-data/write/probe.txt.
+  /**
+   * Chain containers never credit themselves (Action.isContainer): only
+   * leaf behaviors reach this buffer, so the trace shows the reasoning
+   * path, not its end. Adding a container means overriding the flag on
+   * the action itself, never editing a list here.
+   */
   private def flushDecisionChain(): Unit = {
-    val chain = actions.filterNot(chainActions).distinct
+    val chain = actions.distinct
     if (chain.nonEmpty) {
       val label = chain.mkString("/")
       Debugging.CherryVis.CherryVis.decision(unit.id, label)

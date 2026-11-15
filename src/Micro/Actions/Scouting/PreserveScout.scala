@@ -5,6 +5,7 @@ import Micro.Actions.Combat.Maneuvering.Retreat
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object PreserveScout extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     (unit.matchups.framesOfSafety <= 24

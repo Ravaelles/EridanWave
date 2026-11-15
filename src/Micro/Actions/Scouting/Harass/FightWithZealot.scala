@@ -9,6 +9,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.UnitFilters.{IsWarrior, IsWorker}
 
 object FightWithZealot extends Action {
+  override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     Protoss.Probe(unit)

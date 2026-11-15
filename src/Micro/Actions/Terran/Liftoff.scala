@@ -5,6 +5,7 @@ import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Liftoff extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = {
     unit.intent.shouldLiftoff && ! unit.flying

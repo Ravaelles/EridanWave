@@ -6,6 +6,7 @@ import Micro.Coordination.Pathing.MicroPathing
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Travel extends Action {
+  override def isContainer: Boolean = true
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canMove
   override def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.intent.canSneak) return MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getSneakyPath(unit))

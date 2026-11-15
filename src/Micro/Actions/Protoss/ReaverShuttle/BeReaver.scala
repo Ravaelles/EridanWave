@@ -16,6 +16,7 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
  * stays with the generic fighter, which already knows how.
  */
 object BeReaver extends Action {
+  override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Reaver(unit)
 

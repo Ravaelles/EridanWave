@@ -9,6 +9,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.?
 
 object Rally extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     With.framesSince(unit.lastSetRally) > 24 * ?(unit.unitClass.producesLarva, 15, 1)

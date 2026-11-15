@@ -5,5 +5,6 @@ import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object DoNothing extends Action {
+  override def isContainer: Boolean = true
   override protected def perform(unit: FriendlyUnitInfo): Unit = { Commander.sleep(unit, 1) }
 }

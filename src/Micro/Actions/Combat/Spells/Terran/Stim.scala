@@ -6,6 +6,7 @@ import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Stim extends Action {
+  override def isContainer: Boolean = true
 
   val stimHPThreshold = 15
   override def allowed(unit: FriendlyUnitInfo): Boolean = (

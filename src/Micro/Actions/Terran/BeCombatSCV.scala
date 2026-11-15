@@ -16,6 +16,7 @@ import Utilities.LightYear
 import Utilities.UnitFilters.IsTank
 
 object BeCombatSCV extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     Terran.SCV(unit)

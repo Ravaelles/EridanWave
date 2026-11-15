@@ -8,6 +8,7 @@ import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object EmergencyBunk extends Action {
+  override def isContainer: Boolean = true
   
   // Firebats, Medics, and SCVs can enter bunkers too but it's less obvious when they should
   def classAllowedToBunk(unit: FriendlyUnitInfo): Boolean = unit.isAny(Terran.Marine, Terran.Ghost)

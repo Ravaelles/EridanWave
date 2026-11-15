@@ -10,6 +10,7 @@ import Utilities.Time.Minutes
 import scala.language.postfixOps
 
 object BeZealotVsZealot extends Action {
+  override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     With.frame < Minutes(5)()

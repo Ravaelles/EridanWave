@@ -19,6 +19,7 @@ import Tactic.Squads.defense.SquadDefendBase
  * the army - park with passengers, await the next Reaver when empty.
  */
 object BeShuttle extends Action {
+  override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Shuttle(unit)
 

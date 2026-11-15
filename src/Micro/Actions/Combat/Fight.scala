@@ -23,6 +23,7 @@ import Micro.Actions.Zerg.BeMutalisk
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Fight extends Action {
+  override def isContainer: Boolean = true
 
   // Detectors cannot shoot: BeDetector drives them instead of a combat chain.
   override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canAttack || unit.canMove) && ! unit.agent.isScout && ! unit.unitClass.isDetector

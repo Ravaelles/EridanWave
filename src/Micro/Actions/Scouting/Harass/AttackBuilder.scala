@@ -10,6 +10,7 @@ import Utilities.?
 import bwapi.Race
 
 object AttackBuilder extends Action {
+  override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = {
     lazy val scaries = scaryThreats(unit)

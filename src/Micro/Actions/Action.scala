@@ -14,9 +14,16 @@ abstract class Action {
   
   def allowed(unit: FriendlyUnitInfo): Boolean = true
   protected def perform(unit: FriendlyUnitInfo): Unit
-  
+
+  /**
+   * Chain containers report through their leaves, never under their own
+   * name: override this in containers (Fight, Transport, Cast, ...) so
+   * adding one never means editing a trace filter in another package.
+   */
+  def isContainer: Boolean = false
+
   final def apply(unit: FriendlyUnitInfo): Boolean = {
-    act(unit, giveCredit = true)
+    act(unit, giveCredit = ! isContainer)
   }
   
   final def delegate(unit: FriendlyUnitInfo): Boolean = {
@@ -28,7 +35,7 @@ abstract class Action {
     if (( ! requiresReadiness || unit.ready) && allowed(unit)) {
       val previousCredit = unit.agent.lastAction
       if (giveCredit) unit.agent.act(name)
-      if (With.configuration.debugging) {
+      if (With.configuration.debugging && ! isContainer) {
         unit.agent.actions += name
       }
       perform(unit)

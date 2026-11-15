@@ -7,6 +7,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Production.core.Produce
 
 object Produce extends Action {
+  override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     (unit.intent.toTrain.isDefined

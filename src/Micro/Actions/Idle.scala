@@ -14,6 +14,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Production.core.Produce
 
 object Idle extends Action {
+  override def isContainer: Boolean = true
 
   @inline
   final override def allowed(unit: FriendlyUnitInfo): Boolean = true
