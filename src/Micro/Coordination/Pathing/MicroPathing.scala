@@ -19,6 +19,38 @@ import scala.collection.SeqView
 
 object MicroPathing {
 
+  /** Which leg of the waypoint triple won: the callers label it (Retreat
+    * reports Simple/Path/Force), so the leg rides along, not just the pixel. */
+  sealed trait WaypointLeg
+
+  case object WaypointSimple extends WaypointLeg
+
+  case object WaypointPath extends WaypointLeg
+
+  case object WaypointForces extends WaypointLeg
+
+  /**
+   * Ordered waypoint triple, one home for the retreat shape: simple ray,
+   * tile path, then direction with and without the safety demand. Callers
+   * take the head, or filter all three (large fleers skip mineral-bound
+   * spots), and label the winner themselves.
+   */
+  def bestWaypoints(
+    unit: FriendlyUnitInfo,
+    force: Double,
+    simpleGoal: Option[Pixel],
+    simpleSafety: Boolean,
+    tilePath: TilePath,
+    adjustPath: Boolean): Vector[(Pixel, WaypointLeg)] = {
+    val simple = getWaypointInDirection(unit, force, simpleGoal, requireSafety = simpleSafety).map((_, WaypointSimple))
+    val path = getWaypointAlongTilePath(unit, tilePath)
+      .map(p => if (adjustPath) p.add(unit.pixel.offsetFromTileCenter) else p).map((_, WaypointPath))
+    val forces = Seq(true, false).view
+      .map(safety => getWaypointInDirection(unit, force, requireSafety = safety))
+      .find(_.nonEmpty).flatten.map((_, WaypointForces))
+    Vector(simple, path, forces).flatten
+  }
+
   def getSimplePath(unit: FriendlyUnitInfo, to: Option[Tile] = None): TilePath = {
     val pathfindProfile               = new PathfindProfile(unit.tile)
     pathfindProfile.end               = to.orElse(unit.agent.destinationNext.pixel.map(_.tile))
@@ -215,4 +247,5 @@ object MicroPathing {
     output
   }
 }
+
 

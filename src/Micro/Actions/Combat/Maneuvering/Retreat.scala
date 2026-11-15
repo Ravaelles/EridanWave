@@ -122,11 +122,13 @@ object Retreat extends Action {
       return RetreatPlan(unit, away, "Scatter")
     }
 
-    lazy val waypointSimple   = MicroPathing.getWaypointInDirection(unit, force, ?(goalOrigin, Some(unit.agent.safety), None), requireSafety = goalSafety && safetyIsSafe).map((_, "Simple"))
-    lazy val waypointPath     = MicroPathing.getWaypointAlongTilePath(unit, tilePath).map(_.add(unit.pixel.offsetFromTileCenter)).map((_, "Path"))
-    lazy val waypointForces   = Seq(true, false).view.map(safety => MicroPathing.getWaypointInDirection(unit, force, requireSafety = safety)).find(_.nonEmpty).flatten.map((_, "Force"))
-    lazy val waypointOrigin   = (unit.agent.safety, "Origin")
     lazy val tilePath         = MicroPathing.getThreatAwarePath(unit, preferHome = goalOrigin)
+    lazy val waypointOrigin   = (unit.agent.safety, "Origin")
+    def legName(leg: MicroPathing.WaypointLeg): String = leg match {
+      case MicroPathing.WaypointSimple => "Simple"
+      case MicroPathing.WaypointPath   => "Path"
+      case MicroPathing.WaypointForces => "Force"
+    }
     // Large land units wedge between mineral fields and die there, so their
     // flee spots stay over a tile clear of minerals (one shared rule, not
     // a second predicate next to FleeMineralClearance).
@@ -134,8 +136,10 @@ object Retreat extends Action {
       FleeMineralClearance.clearOfMinerals(pixel.tile.adjacent9.exists(_.units.exists(_.unitClass.isMinerals)))
     val largeFleer = FleeMineralClearance.applies(unit.unitClass.size == ProxyBwapi.Size.Large, unit.flying)
     val waypoint = ?(largeFleer,
-      Seq(waypointSimple, waypointPath, waypointForces).flatten.find(w => clearOfMinerals(w._1)).getOrElse(waypointOrigin),
-      waypointSimple.orElse(waypointPath).orElse(waypointForces).getOrElse(waypointOrigin))
+      MicroPathing.bestWaypoints(unit, force, ?(goalOrigin, Some(unit.agent.safety), None), goalSafety && safetyIsSafe, tilePath, adjustPath = true)
+        .find(w => clearOfMinerals(w._1)).map { case (p, leg) => (p, legName(leg)) }.getOrElse(waypointOrigin),
+      MicroPathing.bestWaypoints(unit, force, ?(goalOrigin, Some(unit.agent.safety), None), goalSafety && safetyIsSafe, tilePath, adjustPath = true)
+        .headOption.map { case (p, leg) => (p, legName(leg)) }.getOrElse(waypointOrigin))
     RetreatPlan(unit, waypoint._1, waypoint._2)
   }
 }

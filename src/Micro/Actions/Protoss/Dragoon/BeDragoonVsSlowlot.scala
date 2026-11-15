@@ -57,12 +57,9 @@ object BeDragoonVsSlowlot extends Action {
 
   def retreat(unit: FriendlyUnitInfo): Unit = {
     val force = unit.agent.forces.sum.radians
-
-    lazy val waypointSimple   = MicroPathing.getWaypointInDirection(unit, force, requireSafety = true)
-    lazy val waypointPath     = MicroPathing.getWaypointAlongTilePath(unit, tilePath).map(_.add(unit.pixel.offsetFromTileCenter))
-    lazy val waypointForces   = Seq(true, false).view.map(safety => MicroPathing.getWaypointInDirection(unit, force, requireSafety = safety)).find(_.nonEmpty).flatten
-    lazy val tilePath         = MicroPathing.getThreatAwarePath(unit, preferHome = false)
-    val waypoint              = waypointSimple.orElse(waypointPath).orElse(waypointForces)
+    lazy val tilePath = MicroPathing.getThreatAwarePath(unit, preferHome = false)
+    val waypoint = MicroPathing.bestWaypoints(unit, force, None, simpleSafety = true, tilePath, adjustPath = true)
+      .headOption.map(_._1)
 
     waypoint.foreach(p => {
       unit.agent.decision.set(p)
