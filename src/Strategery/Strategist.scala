@@ -14,21 +14,7 @@ import scala.collection.mutable
 class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatures with Rolling {
 
   lazy val selectedInitially: Set[Strategy] = {
-    // TEMP-TEST-ZEALOTINTOGOON: force every Zerg game onto our opening while
-    // testing it - delete this block to restore normal selection (no later
-    // than the first evaluated mirror: keep while our PvZ record is being
-    // established, remove once the opening graduates to a regular branch).
-    // A branch of only the flag cannot run (a playable branch also needs a
-    // skeleton like PvZ1BaseReactive plus economy and composition picks),
-    // so we keep the branches containing our flag and let match history
-    // choose among the rest.
-    val forced =
-      if (With.enemy.raceCurrent == Race.Zerg)
-        matchBranches(Seq(Strategies.Protoss.PvZ1BaseZealotIntoGoon))
-      else
-        Seq.empty
-    (if (forced.nonEmpty) forced.maxBy(_.winProbability)
-     else With.configuration.playbook.policy.chooseBranch).strategies.toSet
+    With.configuration.playbook.policy.chooseBranch.strategies.toSet
   }
 
   val strategiesSelected      = new mutable.HashSet[Strategy]

@@ -109,6 +109,9 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 
 ## Open: gameplan/economy
 
+- ZealotIntoGoon unforced (TEMP flag removed; it competes as one branch
+  among GateCore/reactives by match history - needs PvZ games, Monster
+  included, to confirm dragoon-first branches get picked).
 - Crona 4-pool overrun (lings arrive before the first Zealot; early-pool
   scout reaction needs gameplan review).
 - March-leg death tails (returning/marching units die mid-leg; probes
