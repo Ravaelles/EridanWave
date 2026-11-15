@@ -2,12 +2,11 @@
 package Micro.Agency
 
 import Lifecycle.With
-import Mathematics.Maff
-import Mathematics.Physics.{ForceMap, ForceMath}
+import Mathematics.Physics.ForceMap
 import Mathematics.Points.Pixel
 import Micro.Actions.Combat.Decisioning.Combat
 import Micro.Coordination.Pushing.{TrafficPriorities, TrafficPriority}
-import Performance.{Cache, KeyedCache}
+import Performance.Cache
 import ProxyBwapi.Techs.Tech
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
@@ -53,7 +52,6 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
     shouldFight = value
     fightReason = reason
   }
-  var priority      : TrafficPriority           = TrafficPriorities.Freedom
   val forces        : ForceMap                  = new ForceMap
   val combat        : Combat                    = new Combat(unit)
 
@@ -127,11 +125,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
     actions.clear()
     unit.orderTarget.foreach(_.removeDamage(unit))
 
-    _rideGoal = None
-    ride.filterNot(_.alive).foreach(_.agent.removePassenger(unit))
-    passengers.view.filter(u => ! u.alive || ! u.isOurs || u.unitClass.isBuilding).foreach(removePassenger)
-    val passengersReserved = reservedPassengers
-    unit.loadedUnits.filterNot(passengersReserved.contains).foreach(addPassenger)
+    ridesharing.reconcileBoarding()
 
     toAttack  = unit.intent.toAttack
     toGather  = unit.intent.toGather
@@ -146,15 +140,13 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   // Pushing //
   /////////////
 
-  def escalatePriority(newPriority: TrafficPriority): Unit = if (priority < newPriority && ! unit.flying) priority = newPriority
-  val receivedPushForces = new Cache(() => With.coordinator.pushes
-    .get(unit)
-    .map(p => (p, p.force(unit)))
-    .filter(_._2.exists(_.lengthSquared > 0))
-    .map(p => (p._1, p._2.get))
-    .toVector)
-  val receivedPushForce = new KeyedCache(() => ForceMath.sum(receivedPushForces().view.filter(_._1.priority >= priority).map(_._2)), () => priority)
-  val receivedPushPriority = new KeyedCache(() => Maff.max(receivedPushForces().view.map(_._1.priority)).getOrElse(TrafficPriorities.Freedom), () => priority)
+  val traffic: Traffic = new Traffic(unit)
+  def priority: TrafficPriority = traffic.priority
+  def priority_=(value: TrafficPriority): Unit = { traffic.priority = value }
+  def escalatePriority(newPriority: TrafficPriority): Unit = traffic.escalatePriority(newPriority)
+  def receivedPushForces = traffic.receivedPushForces
+  def receivedPushForce = traffic.receivedPushForce
+  def receivedPushPriority = traffic.receivedPushPriority
 
   /////////////
   // Leading //
@@ -169,44 +161,19 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   // Ridesharing //
   /////////////////
 
-  private val _passengers : ArrayBuffer[FriendlyUnitInfo] = new ArrayBuffer[FriendlyUnitInfo]
-  private var _ride       : Option[FriendlyUnitInfo]      = None
-  private var _rideGoal   : Option[Pixel]                 = None
-
-  private def reservedPassengers: Vector[FriendlyUnitInfo] = _passengers.synchronized(_passengers.toVector)
-
-  def passengers            : Seq[FriendlyUnitInfo]     = (reservedPassengers ++ unit.loadedUnits).distinct
-  def passengersPrioritized : Seq[FriendlyUnitInfo]     = passengers.sortBy(p => - p.unitClass.subjectiveValue - p.energy / 250.0 + p.frameDiscovered / 1e6)
-  def hailers               : Seq[FriendlyUnitInfo]     = passengers            .filter(p => ! p.loaded && p.agent.wantsPickup)
-  def hailersPrioritized    : Seq[FriendlyUnitInfo]     = passengersPrioritized .filter(p => ! p.loaded && p.agent.wantsPickup)
-  def passengerSize         : Int                       = passengers.view.map(_.unitClass.spaceRequired).sum
-  def ride                  : Option[FriendlyUnitInfo]  = _ride
-  def rideGoal              : Option[Pixel]             = _rideGoal
-  def isPrimaryPassenger    : Boolean                   = ride.exists(_.agent.passengersPrioritized.headOption.contains(unit))
-
-  def addPassenger(passenger: FriendlyUnitInfo): Unit = {
-    if (passengerSize + passenger.unitClass.spaceRequired > 8 && ! passenger.transport.contains(unit)) return
-
-    passenger.agent.ride.foreach(_.agent.removePassenger(passenger))
-    passenger.agent._ride = Some(unit)
-    _passengers.synchronized {
-      _passengers -= passenger
-      _passengers += passenger
-    }
-  }
-  def removePassenger(passenger: FriendlyUnitInfo): Unit = {
-    passenger.agent._ride = passenger.agent._ride.filter(_ != unit)
-    _passengers.synchronized {
-      _passengers -= passenger
-    }
-  }
-  def removeAllPassengers(): Unit = {
-    val all = passengers.toVector
-    all.foreach(removePassenger)
-  }
-  def setRideGoal(to: Pixel): Unit = {
-    _rideGoal = Some(to)
-  }
+  val ridesharing: Ridesharing = new Ridesharing(unit)
+  def passengers: Seq[FriendlyUnitInfo] = ridesharing.passengers
+  def passengersPrioritized: Seq[FriendlyUnitInfo] = ridesharing.passengersPrioritized
+  def hailers: Seq[FriendlyUnitInfo] = ridesharing.hailers
+  def hailersPrioritized: Seq[FriendlyUnitInfo] = ridesharing.hailersPrioritized
+  def passengerSize: Int = ridesharing.passengerSize
+  def ride: Option[FriendlyUnitInfo] = ridesharing.ride
+  def rideGoal: Option[Pixel] = ridesharing.rideGoal
+  def isPrimaryPassenger: Boolean = ridesharing.isPrimaryPassenger
+  def addPassenger(passenger: FriendlyUnitInfo): Unit = ridesharing.addPassenger(passenger)
+  def removePassenger(passenger: FriendlyUnitInfo): Unit = ridesharing.removePassenger(passenger)
+  def removeAllPassengers(): Unit = ridesharing.removeAllPassengers()
+  def setRideGoal(to: Pixel): Unit = ridesharing.setRideGoal(to)
 
   ////////////////
   // Blackboard //
