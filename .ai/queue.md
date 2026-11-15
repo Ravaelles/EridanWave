@@ -121,7 +121,11 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   against the ghost and attacks the pin with a stale perch (Stop/
   AttackUnit flap, zero shots). Hunt now covers useless targets too:
   far pins past the pursuit horizon and ghosts past sight + 1 tile
-  (sight-edge flicker keeps the line). Validating on the hunt jar.
+  (sight-edge flicker keeps the line). Hook rides two paths: engage
+  (Fight-technique target-less) and consensus walk (no battle parks the
+  ignorant technique in formation slots - audit showed Hunt 1172 +
+  Abuse 560 frames then empty chains, +Committed, Contain-on-pylon
+  while the line sits 700px short). Validating on the hunt jar.
 - Re-run remaining Reaver UMS maps with pauses between games (Wine
   box lock aborts concurrent launches): Sunkens3/4, Reaver_v_Sunkens.
 - LoneMarch flap re-run (Reav&Shut; confirm the +-300px terminus flap
