@@ -1,5 +1,7 @@
 package Lifecycle.Keyboard;
 
+import Lifecycle.Launch.LaunchPaths;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,34 +37,17 @@ public final class KeyRelay {
     }
 
     static File file() {
-        String override = System.getProperty("eridanwave.keyRelay");
-        if (override == null || override.trim().isEmpty()) {
-            override = System.getProperty("purplewave.keyRelay");
-        }
-        if (override == null || override.trim().isEmpty()) {
-            override = System.getenv("ERIDANWAVE_KEYRELAY");
-        }
-        if (override == null || override.trim().isEmpty()) {
-            override = System.getenv("PURPLEWAVE_KEYRELAY");
-        }
-        if (override != null && !override.trim().isEmpty()) {
-            return new File(override.trim());
+        String override = LaunchPaths.property("keyRelay");
+        if (override == null) {
+            override = LaunchPaths.env("KEYRELAY");
         }
 
-        File shared = new File(gameRootDir() + "/bwapi-data/write/keys.txt");
-        if (shared.getParentFile().isDirectory()) {
-            return shared;
-        }
+        File resolved = LaunchPaths.keyRelayFile(
+            override,
+            gameRootDir(),
+            System.getProperty("user.dir", "."));
 
-        File direct = new File("out/wine/keys.txt");
-        if (direct.getParentFile().isDirectory()) {
-            return direct;
-        }
-
-        File fallback = new File(System.getProperty("user.dir", ".") + "/out/wine/keys.txt");
-        fallback.getParentFile().mkdirs();
-
-        return fallback;
+        return resolved;
     }
 
     /**
@@ -80,9 +65,9 @@ public final class KeyRelay {
             return gameRoot.trim();
         }
 
-        gameRoot = System.getenv("PURPLEWAVE_GAME_ROOT");
-        if (gameRoot != null && !gameRoot.trim().isEmpty()) {
-            return gameRoot.trim();
+        gameRoot = LaunchPaths.env("GAME_ROOT");
+        if (gameRoot != null) {
+            return gameRoot;
         }
 
         if (winePrefix == null || winePrefix.trim().isEmpty()) {

@@ -23,53 +23,14 @@ public final class BwapiIni {
         return defaultLiveIni(null, null);
     }
 
-    /**
-     * Explicit path wins (the Wine supervisor passes it as
-     * {@code -Deridanwave.bwapiIni=...} because user.home guesses are
-     * unreliable under Wine; the legacy {@code -Dpurplewave.bwapiIni=...}
-     * is still accepted).
-     */
-    private static String explicitIniPath() {
-        String path = System.getProperty("eridanwave.bwapiIni");
-        if (path == null || path.trim().isEmpty()) {
-            path = System.getProperty("purplewave.bwapiIni");
-        }
-        if (path != null && !path.trim().isEmpty()) {
-            return path.trim();
-        }
-
-        return null;
-    }
-
     /** Live game root with explicit Wine layout overrides (null = default). */
     public static String defaultGameRoot(String winePrefix, String gameRoot) {
-        if (gameRoot != null && !gameRoot.trim().isEmpty()) {
-            return gameRoot.trim();
-        }
-
-        if (winePrefix == null || winePrefix.trim().isEmpty()) {
-            winePrefix = defaultWinePrefix();
-        }
-        return winePrefix + "/drive_c/sc";
+        return LaunchPaths.gameRoot(winePrefix, gameRoot);
     }
 
     /** Live bwapi.ini with explicit Wine layout overrides (null = default). */
     public static File defaultLiveIni(String winePrefix, String gameRoot) {
-        String explicit = explicitIniPath();
-        if (explicit != null) {
-            return new File(explicit);
-        }
-
-        return new File(defaultGameRoot(winePrefix, gameRoot) + "/bwapi-data/bwapi.ini");
-    }
-
-    private static String defaultWinePrefix() {
-        String prefix = System.getenv("WINEPREFIX");
-        if (prefix != null && !prefix.trim().isEmpty()) {
-            return prefix.trim();
-        }
-
-        return ProcessHelper.userHome() + ".wine";
+        return LaunchPaths.bwapiIni(LaunchPaths.property("bwapiIni"), winePrefix, gameRoot);
     }
 
     private BwapiIni() {

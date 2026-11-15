@@ -18,12 +18,12 @@ public final class ChaosGameLauncher implements GameLauncher {
         ProcessHelper.killStarcraft();
         ProcessHelper.killChaosLauncher();
 
-        File ini = new File(ProcessHelper.defaultFile(config.getBwapiIni(), "bwapi-data/bwapi.ini"));
+        File ini = new File(LaunchPaths.defaultFile(config.getBwapiIni(), "bwapi-data/bwapi.ini"));
         BwapiIni.patch(ini, config.getMap(), config.getRace(), config.getEnemyRace(),
             config.getGameType(), false);
 
         // IMPORTANT: ChaosLauncher -> Settings -> "Run Starcraft on Startup" must be checked.
-        String chaosLauncher = ProcessHelper.defaultFile(config.getChaosLauncherExe(),
+        String chaosLauncher = LaunchPaths.defaultFile(config.getChaosLauncherExe(),
             "chaoslauncher/Chaoslauncher.exe");
         System.out.println("[launcher] Starting ChaosLauncher: " + chaosLauncher);
         ProcessHelper.startChaosLauncherWindows(chaosLauncher);

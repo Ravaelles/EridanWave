@@ -1,7 +1,5 @@
 package Lifecycle.Launch;
 
-import java.io.File;
-
 /**
  * Kills and starts processes: StarCraft and ChaosLauncher natively on Windows,
  * the same pair under Wine on Linux.
@@ -98,23 +96,6 @@ public final class ProcessHelper {
         } catch (Exception e) {
             return new byte[0];
         }
-    }
-
-    static String defaultFile(String override, String fallback) {
-        if (override != null && !override.trim().isEmpty()) {
-            return override.trim();
-        }
-
-        return fallback;
-    }
-
-    static String userHome() {
-        String home = System.getProperty("user.home", "");
-        if (home.endsWith("/") || home.endsWith(File.separator)) {
-            return home;
-        }
-
-        return home + File.separator;
     }
 }
 
