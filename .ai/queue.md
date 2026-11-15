@@ -109,8 +109,17 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 
 ## Open: viewer check
 
-- CherryVis Task tab lights up (trace proven: 89 tasks, 142/146 units
-  with rows; needs one look at the tab in the viewer).
+- CherryVis Task tab contract verified against the shipped viewer JS
+  (`cvis_dbg_tasks.js` + unitslist: registry {owner,name,upc_id,
+  creation_frame}, numeric per-unit `task` carried forward, None when
+  missing). Task now means the MANAGING class, not the reason: every
+  `intend()` mints/points the per-unit row at the manager task, reasons
+  stay in units_logs. Proven in a traced Benzene VICTORY: 9 manager
+  tasks (SquadAttack crew 36, Gathering 31), 78/78 managed units with
+  rows, zero dangling refs (viewer logic replicated in python). The 13
+  row-less units are unmanaged single-frame ephemera (no first_seen,
+  viewer can't name them anyway) - None is correct there. UMS emits no
+  traces by design; Owner/Action probes cover manager visibility there.
 
 ## Session: UMS Reaver freeze (validating now)
 
