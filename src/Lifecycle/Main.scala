@@ -44,9 +44,8 @@ object Main {
     }
     // Tuning strategy and per-game param overrides travel the same way:
     // system properties in-process, -D flags on the Wine client JVM.
-    if (launch.getTuningStrategy != null && launch.getTuningStrategy.nonEmpty) {
-      System.setProperty("eridanwave.tuningStrategy", launch.getTuningStrategy)
-    }
+    Option(launch.getTuningStrategy).filter(_.nonEmpty).foreach(strategy =>
+      System.setProperty("eridanwave.tuningStrategy", strategy))
     launch.getTuneParams.asScala.foreach { case (key, value) =>
       System.setProperty("eridanwave.tune." + key, value)
     }

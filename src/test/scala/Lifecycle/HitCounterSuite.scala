@@ -23,12 +23,20 @@ class HitCounterSuite extends AnyFunSuite {
     assert(HitCounter.countHits(Map(1 -> 80), Seq((1, 100)))._1 == 0)
   }
 
-  test("each damaged unit counts once, the dead leave the map") {
+  test("each damaged unit counts once, the vanished count their killing blow") {
     val (hits, next) = HitCounter.countHits(
       Map(1 -> 100, 2 -> 100, 3 -> 100),
       Seq((1, 90), (2, 100), (4, 50)))
 
-    assert(hits == 1)
+    assert(hits == 2)
     assert(next == Map(1 -> 90, 2 -> 100, 4 -> 50))
+  }
+
+  test("a one-shot kill from full hp counts once, then leaves the map") {
+    val (hits, next) = HitCounter.countHits(Map(1 -> 100), Seq.empty)
+
+    assert(hits == 1)
+    assert(next.isEmpty)
+    assert(HitCounter.countHits(next, Seq.empty)._1 == 0)
   }
 }

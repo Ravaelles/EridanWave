@@ -1,22 +1,6 @@
 package Lifecycle.Keyboard;
 
 import Lifecycle.Keyboard.actions.ExitGame;
-import Lifecycle.Keyboard.actions.Speed.FasterGame;
-import Lifecycle.Keyboard.actions.PauseGame;
-import Lifecycle.Keyboard.actions.Speed.SlowerGame;
-import Lifecycle.Keyboard.actions.Speed.Speed1;
-import Lifecycle.Keyboard.actions.Speed.Speed2;
-import Lifecycle.Keyboard.actions.Speed.Speed3;
-import Lifecycle.Keyboard.actions.Speed.Speed4;
-import Lifecycle.Keyboard.actions.Speed.Speed5;
-import Lifecycle.Keyboard.actions.Speed.Speed6;
-import Lifecycle.Keyboard.actions.Speed.Speed7;
-import Lifecycle.Keyboard.actions.Speed.Speed8;
-import Lifecycle.Keyboard.actions.Speed.Speed9;
-import Lifecycle.Keyboard.actions.Display.ToggleCamera;
-import Lifecycle.Keyboard.actions.Display.ToggleGui;
-import Lifecycle.Keyboard.actions.Display.TogglePainting;
-import Lifecycle.Keyboard.actions.Display.ToggleVisualization;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
@@ -70,43 +54,43 @@ public final class Keyboard implements NativeKeyListener {
      * One physical press reaches the client twice when both hooks are alive:
      * instantly through the client's own hook and ~a frame later through the
      * supervisor relay. Without dedup every toggle key (pause, camera, GUI)
-     * flips on and straight back off. A relayed press is a duplicate when a
-     * direct press of the same code happened within the window - matching
-     * consumes it, so fast mashing still executes every press.
+     * flips on and straight back off. Matching lives in PressDeduper (with
+     * its own suite); this class only wires the two dispatch paths to it.
      */
-    private static final long DUPLICATE_WINDOW_MS = 2000;
-    private static final int MAX_TRACKED_PER_CODE = 16;
-    private static final Map<Integer, java.util.ArrayDeque<Long>> directPresses = new HashMap<>();
+    private static final PressDeduper deduper = new PressDeduper(2000, 16);
 
     static {
         actions.put(NativeKeyEvent.VC_ESCAPE, new ExitGame());
-        actions.put(NativeKeyEvent.VC_MINUS, new SlowerGame());
-        actions.put(3658, new SlowerGame()); // NumPad "-" reports its own raw code (no VC_ exists)
-        actions.put(NativeKeyEvent.VC_OPEN_BRACKET, new SlowerGame());
-        actions.put(NativeKeyEvent.VC_EQUALS, new FasterGame());
-        actions.put(3662, new FasterGame()); // NumPad "+" reports its own raw code (no VC_ exists)
-        actions.put(NativeKeyEvent.VC_CLOSE_BRACKET, new FasterGame());
-        actions.put(NativeKeyEvent.VC_C, new ToggleCamera());
-        actions.put(NativeKeyEvent.VC_P, new TogglePainting());
-        actions.put(NativeKeyEvent.VC_V, new ToggleVisualization());
-        actions.put(NativeKeyEvent.VC_SPACE, new PauseGame());
-        actions.put(NativeKeyEvent.VC_BACKQUOTE, new PauseGame());
-        actions.put(NativeKeyEvent.VC_PAUSE, new PauseGame());
-        // Both Ctrl keys report VC_CONTROL (left, 29); right Ctrl reports its
-        // own raw code 3665 instead (measured - which is why a location-based
+        actions.put(NativeKeyEvent.VC_MINUS, GameCommands::slower);
+        actions.put(3658, GameCommands::slower); // NumPad "-" reports its own raw code (no VC_ exists)
+        actions.put(NativeKeyEvent.VC_OPEN_BRACKET, GameCommands::slower);
+        actions.put(NativeKeyEvent.VC_EQUALS, GameCommands::faster);
+        actions.put(3662, GameCommands::faster); // NumPad "+" reports its own raw code (no VC_ exists)
+        actions.put(NativeKeyEvent.VC_CLOSE_BRACKET, GameCommands::faster);
+        actions.put(NativeKeyEvent.VC_C, GameCommands::toggleCamera);
+        actions.put(NativeKeyEvent.VC_P, GameCommands::togglePainting);
+        actions.put(NativeKeyEvent.VC_V, GameCommands::toggleVisualization);
+        actions.put(NativeKeyEvent.VC_SPACE, GameCommands::togglePause);
+        actions.put(NativeKeyEvent.VC_BACKQUOTE, GameCommands::togglePause);
+        actions.put(NativeKeyEvent.VC_PAUSE, GameCommands::togglePause);
+        // Both Ctrl keys report VC_CONTROL (left, 29); right Ctrl reports
+        // its own raw code 3665 instead (measured - which is why a location-based
         // gate would kill it). Same shapes as Atlantis dispatches on.
-        actions.put(NativeKeyEvent.VC_CONTROL, new PauseGame());
-        actions.put(3665, new PauseGame());
-        actions.put(NativeKeyEvent.VC_1, new Speed1());
-        actions.put(NativeKeyEvent.VC_2, new Speed2());
-        actions.put(NativeKeyEvent.VC_3, new Speed3());
-        actions.put(NativeKeyEvent.VC_4, new Speed4());
-        actions.put(NativeKeyEvent.VC_5, new Speed5());
-        actions.put(NativeKeyEvent.VC_6, new Speed6());
-        actions.put(NativeKeyEvent.VC_7, new Speed7());
-        actions.put(NativeKeyEvent.VC_8, new Speed8());
-        actions.put(NativeKeyEvent.VC_9, new Speed9());
-        actions.put(NativeKeyEvent.VC_0, new ToggleGui());
+        actions.put(NativeKeyEvent.VC_CONTROL, GameCommands::togglePause);
+        actions.put(3665, GameCommands::togglePause);
+        // Keys "1"-"9" jump straight to speedLadder rungs 0-8 (the pairs the
+        // deleted Speed1..Speed9 classes used to carry one per file).
+        final int[][] presets = {{20, 0}, {0, 0}, {0, 10}, {0, 20}, {0, 40}, {0, 80}, {0, 150}, {0, 250}, {0, 500}};
+        final int[] digits = {
+            NativeKeyEvent.VC_1, NativeKeyEvent.VC_2, NativeKeyEvent.VC_3,
+            NativeKeyEvent.VC_4, NativeKeyEvent.VC_5, NativeKeyEvent.VC_6,
+            NativeKeyEvent.VC_7, NativeKeyEvent.VC_8, NativeKeyEvent.VC_9 };
+        for (int i = 0; i < digits.length; i++) {
+            final int speed = presets[i][0];
+            final int skip = presets[i][1];
+            actions.put(digits[i], () -> GameCommands.setSpeed(speed, skip));
+        }
+        actions.put(NativeKeyEvent.VC_0, GameCommands::toggleGui);
     }
 
     private Keyboard() {
@@ -185,31 +169,11 @@ public final class Keyboard implements NativeKeyListener {
     }
 
     private static void recordDirectPress(int keyCode, long now) {
-        java.util.ArrayDeque<Long> presses = directPresses.get(keyCode);
-        if (presses == null) {
-            presses = new java.util.ArrayDeque<>();
-            directPresses.put(keyCode, presses);
-        }
-        presses.addLast(now);
-        while (presses.size() > MAX_TRACKED_PER_CODE) presses.removeFirst();
+        deduper.recordDirectPress(keyCode, now);
     }
 
     private static boolean consumeDirectTwin(int keyCode, long relayMillis) {
-        java.util.ArrayDeque<Long> presses = directPresses.get(keyCode);
-        if (presses == null) return false;
-
-        java.util.Iterator<Long> it = presses.iterator();
-        while (it.hasNext()) {
-            long directMillis = it.next();
-            if (directMillis < relayMillis - DUPLICATE_WINDOW_MS) {
-                it.remove();
-            } else if (Math.abs(directMillis - relayMillis) <= DUPLICATE_WINDOW_MS) {
-                it.remove();
-
-                return true;
-            }
-        }
-        return false;
+        return deduper.consumeDirectTwin(keyCode, relayMillis);
     }
 
     static void dispatch(int keyCode, int keyLocation) {

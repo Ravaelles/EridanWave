@@ -43,24 +43,6 @@ public final class ProcessHelper {
         }
     }
 
-    public static boolean isProcessRunning(String exactName) {
-        try {
-            Process check = isWindows()
-                ? new ProcessBuilder("cmd", "/c", "tasklist /FI \"IMAGENAME eq " + exactName + "\"").start()
-                : new ProcessBuilder("pgrep", "-x", exactName).start();
-            int exit = check.waitFor();
-            if (isWindows()) {
-                byte[] out = readAll(check);
-
-                return new String(out).contains(exactName);
-            }
-
-            return exit == 0;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     /** Autostart ChaosLauncher on Windows (needs "Run Starcraft on Startup" checked). */
     public static void startChaosLauncherWindows(String chaosLauncherExe) {
         try {
@@ -81,20 +63,6 @@ public final class ProcessHelper {
         try {
             new ProcessBuilder(command).redirectErrorStream(true).start().waitFor();
         } catch (Exception ignored) {
-        }
-    }
-
-    private static byte[] readAll(Process process) {
-        try {
-            java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
-            byte[] chunk = new byte[4096];
-            int read;
-            while ((read = process.getInputStream().read(chunk)) >= 0) {
-                buffer.write(chunk, 0, read);
-            }
-            return buffer.toByteArray();
-        } catch (Exception e) {
-            return new byte[0];
         }
     }
 }

@@ -30,12 +30,6 @@ class Manners extends TimedTask {
     With.game.leaveGame()
   }
 
-  def debugChat(text: String): Unit = {
-    if (With.configuration.debugging) {
-      chat(text)
-    }
-  }
-  
   def chat(text: String): Unit = {
     if (enabled) {
       With.game.sendText(text)

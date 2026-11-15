@@ -4,46 +4,9 @@ package Lifecycle.Launch;
  * Command line configuration for launching a game around the bot.
  *
  * <p>Supported arguments (all optional; bare {@code java -jar bot.jar} keeps
- * today's behaviour of attaching straight to the game):</p>
- * <ul>
- *   <li>{@code --launcher=none|chaos|wine} (default {@code none}).
- *       {@code chaos} = native Windows + ChaosLauncher,
- *       {@code wine} = real StarCraft under Wine on Linux.</li>
- *   <li>{@code --map=&lt;name&gt;} map file name, e.g. {@code (3)TauCross.scx}
- *       or a path relative to the game's {@code maps/} folder.</li>
- *   <li>{@code --race=Protoss|Terran|Zerg|Random} our race (written to bwapi.ini).</li>
- *   <li>{@code --enemy-race=...} enemy race (written to bwapi.ini).</li>
- *   <li>{@code --game-type=MELEE|USE_MAP_SETTINGS} overrides the map-family default.</li>
-  *   <li>{@code --speed=&lt;0-1000&gt;} default game speed (20 if absent; keyboard presets still work).</li>
- *   <li>{@code --cherryvis[=&lt;bool&gt;]} write the CherryVis viewer trace
- *       (default {@code true}). Accepts {@code 1/true/yes} and
- *       {@code 0/false/no} (case-insensitive); {@code --no-cherryvis}
- *       disables it.</li>
- *   <li>{@code --formation-audit[=&lt;bool&gt;]} write the behavior tally
- *       and formation-break distances to
- *       {@code bwapi-data/write/formation-audit.txt} (default {@code false}).</li>
- *   <li>{@code --headless} run the Wine session on Xvfb :99 (nothing on :0).</li>
- *   <li>{@code --visible} run on the current X display instead.
- *       Explicit visibility is forwarded to {@code wine-run.sh}; without an
- *       explicit flag the script default (headless) applies.</li>
- *   <li>{@code --jar=&lt;path&gt;} bot jar for the Wine client (default
- *       {@code target/EridanWave-1.0.jar} under the repo root).</li>
- *   <li>{@code --wine-prefix=&lt;path&gt;} (default {@code ~/.wine}).</li>
- *   <li>{@code --game-root=&lt;path&gt;} StarCraft install (default
- *       {@code $WINEPREFIX/drive_c/sc}).</li>
- *   <li>{@code --java-exe=&lt;path&gt;} Windows JRE under Wine (default
- *       {@code $WINEPREFIX/drive_c/Java/bin/java.exe}).</li>
- *   <li>{@code --bwapi-ini=&lt;path&gt;} live bwapi.ini (default
- *       {@code $GAME_ROOT/bwapi-data/bwapi.ini}).</li>
- *   <li>{@code --chaoslauncher-exe=&lt;path&gt;} ChaosLauncher (Windows backend).</li>
- *   <li>{@code --tuning-strategy=&lt;name&gt;} tuning strategy from
- *       {@code Tuning.Strategies} (or a fully qualified class name), e.g.
- *       {@code KiteAwayDuel}. Absent = default play, no tuning.</li>
- *   <li>{@code --tune-param NAME=VALUE} (repeatable) per-game param override;
- *       absent keys randomize within bounds. Example:
- *       {@code --tune-param KiteAway.seriousCooldown=8}.</li>
- *   <li>{@code --help} print this and exit.</li>
- * </ul>
+ * today's behaviour of attaching straight to the game): see
+ * {@link #printHelp()} for the list - it is the single home for the flag
+ * docs, this comment used to duplicate it in different wording.</p>
  */
 public final class LaunchConfig {
 

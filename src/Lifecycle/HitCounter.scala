@@ -10,7 +10,9 @@ import scala.collection.mutable
  * frame (AUnit.isUnderAttack(2) compares current hp against last frame's).
  * The old rising edge on the engine isUnderAttack flag counted one per
  * engagement, so a lost Dragoon showed a single hit; damage ticks count
- * every frame the shot lands. Only our own hit-point drops count, so our
+ * every frame the shot lands, including the killing blow: a unit that
+ * disappears took its last drop with it, so vanishing counts once and the
+ * corpse leaves the map. Only our own hit-point drops count, so our
  * attacks can never double-count. Reset every game; read by GameSummary.
  */
 object HitCounter extends PerGame {
@@ -31,17 +33,21 @@ object HitCounter extends PerGame {
     lastHp ++= next
   }
 
-  /** Pure kernel: frames with a hit-point drop count once each; newcomers,
-    * healed units and the dead never count. Returns the hits and the map
-    * the next frame compares against.
+  /** Pure kernel: frames with a hit-point drop count once each; newcomers
+    * and healed units count nothing; a vanished unit counts its killing blow
+    * once and leaves the map. Returns the hits and the map the next frame
+    * compares against.
     */
   def countHits(previous: Map[Int, Int], current: Seq[(Int, Int)]): (Int, Map[Int, Int]) = {
     var hits = 0
-    current.foreach({ case (id, hp) =>
+    val seen = current.map { case (id, hp) =>
       if (previous.get(id).exists(_ > hp)) {
         hits += 1
       }
-    })
+
+      id
+    }.toSet
+    previous.keysIterator.filterNot(seen.contains).foreach(_ => hits += 1)
 
     (hits, current.toMap)
   }

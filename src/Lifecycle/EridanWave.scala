@@ -76,11 +76,12 @@ class EridanWave extends DefaultBWListener {
         // onFrame keeps arriving, so tracking, chat commands, camera and
         // visualization keep running and the overlay never vanishes.
         // Decisions, orders and speed tweaks stay parked until resume.
-        if ( ! Keyboard.GameCommands.isBotPaused) MapSpecificCommander.onFrame()
-        if ( ! Keyboard.GameCommands.isBotPaused) UmsMode.onFrame()
+        val parked = ! Keyboard.GameCommands.isBotPaused
+        if (parked) MapSpecificCommander.onFrame()
+        if (parked) UmsMode.onFrame()
         With.gathering.updateAccelerantPixels()
         With.lambdas.onFrame()
-        if ( ! Keyboard.GameCommands.isBotPaused) With.tasks.run(With.performance.msBeforeTarget)
+        if (parked) With.tasks.run(With.performance.msBeforeTarget)
         With.efficiency.update()
         With.storyteller.onFrame()
         With.missionHistory.onFrame()
