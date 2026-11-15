@@ -53,6 +53,23 @@ object CommanderCore {
     CommanderTransport.requestUnload(unit)
     true
   }
+
+  /**
+   * Readiness ladder (one home for the command prologue): readiness,
+   * unburrow, optional unload, in that order. `build` passes unload=false -
+   * loaded Reavers build Scarabs through their own process, never by
+   * stepping out of the Shuttle.
+   */
+  private[Micro] def ready(unit: FriendlyUnitInfo, unload: Boolean = true)(body: => Unit): Unit = {
+    if (unit.unready) return
+
+    if (autoUnburrow(unit)) return
+
+    if (unload && autoUnload(unit)) return
+
+    body
+  }
+
   private[Micro] def autoUnburrowUnlessLurkerInRangeOf(unit: FriendlyUnitInfo, to: Pixel): Boolean = {
     ( ! Zerg.Lurker(unit) || unit.pixelDistanceCenter(to) > unit.pixelRangeGround) && autoUnburrow(unit)
   }

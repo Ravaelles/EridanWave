@@ -13,31 +13,24 @@ object CommanderWork {
   private[Micro] def repair(unit: FriendlyUnitInfo, target: UnitInfo): Unit = {
     target.friendly.foreach(With.coordinator.healing.heal(unit, _))
     unit.agent.setRideGoal(target.pixel)
-    if (unit.unready)       return
-    if (CommanderCore.autoUnburrow(unit)) return
-    if (CommanderCore.autoUnload(unit))   return
-
-    unit.bwapiUnit.repair(target.bwapiUnit)
-    CommanderCore.sleep(unit, 24)
+    CommanderCore.ready(unit) {
+      unit.bwapiUnit.repair(target.bwapiUnit)
+      CommanderCore.sleep(unit, 24)
+    }
   }
   private[Micro] def returnCargo(unit: FriendlyUnitInfo): Unit = {
-    if (unit.unready)       return
-    if (CommanderCore.autoUnburrow(unit)) return
-    if (CommanderCore.autoUnload(unit))   return
-
-    if (unit.carrying) {
-      unit.bwapiUnit.returnCargo()
-      CommanderCore.sleepReturnCargo(unit)
+    CommanderCore.ready(unit) {
+      if (unit.carrying) {
+        unit.bwapiUnit.returnCargo()
+        CommanderCore.sleepReturnCargo(unit)
+      }
     }
   }
   private[Micro] def gather(unit: FriendlyUnitInfo): Unit = unit.agent.toGather.foreach(gather(unit, _))
   private[Micro] def gather(unit: FriendlyUnitInfo, resource: UnitInfo): Unit = {
     unit.agent.setRideGoal(resource.pixel)
-    if (unit.unready)       return
-    if (CommanderCore.autoUnburrow(unit)) return
-    if (CommanderCore.autoUnload(unit))   return
-
-    if (unit.carrying) {
+    CommanderCore.ready(unit) {
+      if (unit.carrying) {
       // Spamming return cargo can cause path wobbling
       if ( ! Vector(Orders.ResetCollision, Orders.ReturnMinerals, Orders.ReturnGas).contains(unit.order)) {
         lazy val nextClosestFrames = Maff.min(With.geography.ourBases.view.flatMap(_.townHall).filter(_.complete).map(h => unit.framesToTravelTo(h.exitTile)))
@@ -102,32 +95,29 @@ object CommanderWork {
       }
     }
     CommanderCore.sleep(unit, 1)
+    }
   }
   private[Micro] def build(unit: FriendlyUnitInfo, unitClass: UnitClass): Unit = {
-    if (unit.unready)       return
-    if (CommanderCore.autoUnburrow(unit)) return
     // Don't auto-unload! We have a separate process for building Scarabs in loaded Reavers
-    unit.bwapiUnit.build(unitClass.bwapiType)
-    CommanderCore.sleepBuild(unit)
+    CommanderCore.ready(unit, unload = false) {
+      unit.bwapiUnit.build(unitClass.bwapiType)
+      CommanderCore.sleepBuild(unit)
+    }
   }
   private[Micro] def build(unit: FriendlyUnitInfo, unitClass: UnitClass, tile: Tile): Unit = {
     unit.agent.setRideGoal(tile.center)
-    if (unit.unready)       return
-    if (CommanderCore.autoUnburrow(unit)) return
-    if (CommanderCore.autoUnload(unit))   return
-
-    if (unit.pixelDistanceSquared(tile.center) > Math.pow(32.0 * 5.0, 2)) {
-      CommanderMove.move(unit, tile.center)
-
-      return
+    CommanderCore.ready(unit) {
+      if (unit.pixelDistanceSquared(tile.center) > Math.pow(32.0 * 5.0, 2)) {
+        CommanderMove.move(unit, tile.center)
+      } else {
+        if (unitClass.isAddon) {
+          unit.bwapiUnit.buildAddon(unitClass.bwapiType)
+        } else {
+          unit.bwapiUnit.build(unitClass.bwapiType, tile.bwapi)
+        }
+        CommanderCore.sleepBuild(unit)
+      }
     }
-
-    if (unitClass.isAddon) {
-      unit.bwapiUnit.buildAddon(unitClass.bwapiType)
-    } else {
-      unit.bwapiUnit.build(unitClass.bwapiType, tile.bwapi)
-    }
-    CommanderCore.sleepBuild(unit)
   }
   private[Micro] def tech(unit: FriendlyUnitInfo, tech: Tech): Unit = {
     if (unit.unready) return

@@ -103,34 +103,26 @@ object CommanderEngage {
       unit.agent.lastStim = With.frame
     }
 
-    if (unit.unready)       return
-    if (CommanderCore.autoUnburrow(unit)) return
-    if (CommanderCore.autoUnload(unit))   return
-
-    unit.bwapiUnit.useTech(tech.bwapiTech)
-    CommanderCore.sleep(unit)
+    CommanderCore.ready(unit) {
+      unit.bwapiUnit.useTech(tech.bwapiTech)
+      CommanderCore.sleep(unit)
+    }
   }
   private[Micro] def useTechOnUnit(unit: FriendlyUnitInfo, tech: Tech, target: UnitInfo): Unit = {
     unit.agent.setRideGoal(target.pixel)
-    if (unit.unready)       return
-    if (CommanderCore.autoUnburrow(unit)) return
-    if (CommanderCore.autoUnload(unit))   return
-
-    unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapiUnit)
-    if (tech == Protoss.ArchonMeld || tech == Protoss.DarkArchonMeld) return CommanderCore.sleep(unit, 48)
-
-    CommanderCore.sleep(unit)
+    CommanderCore.ready(unit) {
+      unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapiUnit)
+      if (tech == Protoss.ArchonMeld || tech == Protoss.DarkArchonMeld) CommanderCore.sleep(unit, 48)
+      else CommanderCore.sleep(unit)
+    }
   }
   private[Micro] def useTechOnPixel(unit: FriendlyUnitInfo, tech: Tech, target: Pixel): Unit = {
     unit.agent.setRideGoal(target)
-    if (unit.unready)       return
-    if (CommanderCore.autoUnburrow(unit)) return
-    if (CommanderCore.autoUnload(unit))   return
-
-    unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapi)
-    if (tech == Terran.SpiderMinePlant) return CommanderCore.sleep(unit, 12)
-
-    CommanderCore.sleepAttack(unit)
+    CommanderCore.ready(unit) {
+      unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapi)
+      if (tech == Terran.SpiderMinePlant) CommanderCore.sleep(unit, 12)
+      else CommanderCore.sleepAttack(unit)
+    }
   }
 }
 
