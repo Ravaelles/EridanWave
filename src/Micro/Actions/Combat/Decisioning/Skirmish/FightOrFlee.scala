@@ -30,8 +30,7 @@ object FightOrFlee extends Action {
   private def applyVerdict(u: FriendlyUnitInfo, facts: FightFacts): Unit = {
     FightRules.decide(facts) match {
       case Some((fight, reason)) =>
-        u.agent.shouldFight = fight
-        u.agent.fightReason = reason
+        u.agent.decideFight(fight, reason)
         Probe.note("Verdict", u.id, ?(fight, "+", "-") + reason)
         if (With.configuration.formationAudit) Debugging.FormationAudit.tallyVerdict(?(fight, "+", "-") + reason)
       case None =>
@@ -102,11 +101,10 @@ object FightOrFlee extends Action {
   private def applyEstimation(unit: FriendlyUnitInfo): Unit = {
     if (unit.combatForecast.isEmpty) {
       // Important for things which care about unit willingness to trot around
-      unit.agent.shouldFight = true
-      unit.agent.fightReason = ""
+      unit.agent.decideFight(true, "")
     } else {
-      unit.agent.shouldFight = unit.combatForecast.get.judgement.get.unitShouldFight(unit)
-      unit.agent.fightReason = ?(unit.agent.shouldFight, "Yes", "No")
+      val simFight = unit.combatForecast.get.judgement.get.unitShouldFight(unit)
+      unit.agent.decideFight(simFight, ?(simFight, "Yes", "No"))
     }
   }
 }

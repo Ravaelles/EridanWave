@@ -45,14 +45,12 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
 
   private[Decisioning] def syncConsensus(): Unit = {
     if (combat.shouldEngage && ! unit.agent.shouldFight) {
-      unit.agent.shouldFight = true
-      unit.agent.fightReason = "Technique"
+      unit.agent.decideFight(true, "Technique")
     }
     if (combat.shouldRetreat) {
       unit.agent.decision.set(unit.agent.safety)
       if (unit.agent.shouldFight) {
-        unit.agent.shouldFight = false
-        unit.agent.fightReason = "Technique"
+        unit.agent.decideFight(false, "Technique")
       }
     }
   }

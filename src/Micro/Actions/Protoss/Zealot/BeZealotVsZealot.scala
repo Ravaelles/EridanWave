@@ -33,26 +33,26 @@ object BeZealotVsZealot extends Action {
           || unit.totalHealth * (1 + unit.confidence11) > enemy.totalHealth)))) match {
       case DuelDecision.Outnumbered =>
         unit.agent.fightReason = "Outnumbered"
-        unit.agent.shouldFight = false
+        unit.agent.decideFight(false)
 
         return
 
       case DuelDecision.Dying =>
         unit.agent.fightReason = "Dying"
-        unit.agent.shouldFight = false
+        unit.agent.decideFight(false)
 
         return
 
       case DuelDecision.Duelling =>
         unit.agent.fightReason = "Duelling"
-        unit.agent.shouldFight = true
+        unit.agent.decideFight(true)
         unit.agent.toAttack    = target
 
         return
 
       case DuelDecision.Outnumbering =>
         unit.agent.fightReason = "Outnumbering"
-        unit.agent.shouldFight = true
+        unit.agent.decideFight(true)
         unit.agent.toAttack    = target
       case DuelDecision.Undecided =>
     }

@@ -69,8 +69,7 @@ object GetRepairedMobile extends Action {
 
     if (repairGoal.isDefined) {
       unit.intent.setCanFight(false)
-      unit.agent.shouldFight = false
-      unit.agent.fightReason = "GetRepaired"
+      unit.agent.decideFight(false, "GetRepaired")
     }
 
     squire.filter(_.inRangeToAttack(unit)).foreach(s => {

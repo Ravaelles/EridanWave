@@ -42,6 +42,17 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   var commit        : Boolean                   = false
   var wantsUnload   : Boolean                   = false
   var wantsPickup   : Boolean                   = false
+  /**
+   * The single writer for the fight verdict: the value and its reason
+   * always travel together, so the trace never shows one without the
+   * other. The reason defaults to sticky: verdicts that only flip the
+   * value (rush assessment, muta recovery) keep whatever reason the
+   * frame already carried, exactly as the direct writes did before.
+   */
+  def decideFight(value: Boolean, reason: String = fightReason): Unit = {
+    shouldFight = value
+    fightReason = reason
+  }
   var priority      : TrafficPriority           = TrafficPriorities.Freedom
   val forces        : ForceMap                  = new ForceMap
   val combat        : Combat                    = new Combat(unit)

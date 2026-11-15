@@ -48,7 +48,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
   }
 
   private[Decisioning] def walk(): Boolean = {
-    unit.agent.shouldFight = true // This encourages the unit to use its forward formation rather than its retreat formation
+    unit.agent.decideFight(true) // This encourages the unit to use its forward formation rather than its retreat formation
     unit.agent.fightReason = "Walking"
 
     unit.agent.perch.clear() // We're not picking a fight just yet
@@ -77,7 +77,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
 
   private[Decisioning] def dodge(): Boolean = {
     if (unit.ready) {
-      unit.agent.shouldFight = false // Emergency movement must not become an attack-move when sluggish.
+      unit.agent.decideFight(false) // Emergency movement must not become an attack-move when sluggish.
       unit.agent.fightReason = "Dodging"
       unit.agent.escalatePriority(TrafficPriorities.Shove) // Just lower than the dodge itself
       unit.agent.forces(Forces.threat) = Potential.followPushes(unit)

@@ -29,7 +29,7 @@ object BeRushingZealot extends Action {
   override protected def perform(zealot: FriendlyUnitInfo): Unit = {
     val fieldScore            = ZealotRushScoring.fieldScore(zealot)
     val battery               = ZealotShieldBattery.best(zealot)
-    zealot.agent.shouldFight  = ZealotRushAssessment.shouldFight(zealot, fieldScore)
+    zealot.agent.decideFight(ZealotRushAssessment.shouldFight(zealot, fieldScore))
     zealot.agent.forceTo(With.scouting.enemyMain.map(_.heart.center).getOrElse(With.scouting.enemyHome.center))
     DrawMap.label(f"$fieldScore%.2f", zealot.pixel.add(0, 24))
 
