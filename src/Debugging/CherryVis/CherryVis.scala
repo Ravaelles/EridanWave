@@ -96,6 +96,9 @@ object CherryVis {
    * Change-only like the owner above.
    */
   def noteBehavior(unitId: Int, behavior: Any): Unit = {
+    // Actions ride the probe too: UMS games emit no trace, so the top-level
+    // intent action would otherwise be invisible there (same as owners).
+    Debugging.Probe.note("Action", unitId, shortName(behavior))
     if ( ! enabled) return
 
     val ref = behavior.asInstanceOf[AnyRef]
