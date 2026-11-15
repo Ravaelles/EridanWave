@@ -27,8 +27,7 @@ object Cast extends Action {
 
   val spells: Array[Action with Spell] = Array(
     Heal,
-    WraithCloak,
-    WraithUncloak,
+    Cloak,
     Yamato,
     Irradiate,
     DefensiveMatrix,
@@ -38,9 +37,7 @@ object Cast extends Action {
     MindControl,
     Maelstrom,
     Feedback,
-    GhostCloak,
     TacticalNuke,
-    GhostUncloak,
     Lockdown
   )
 }
