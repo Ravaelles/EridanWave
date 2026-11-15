@@ -113,7 +113,13 @@ object BeDetector extends Action {
 
     val threats = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
-    AirFlee.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight, marginLowTiles, marginHighTiles).exists(dest => {
+    AirFlee.fleeScored(
+      unit.pixel,
+      threats.map(t => (t, AirFlee.triggerTiles * 32.0 - unit.pixelDistanceCenter(t))),
+      _ > 0.0,
+      AirFlee.marginTiles(unit.woundPercent(), marginLowTiles, marginHighTiles) * 32.0,
+      With.mapPixelWidth,
+      With.mapPixelHeight).exists(dest => {
       unit.cherryVisUnitLog("ObserverFlee")
       unit.agent.forceTo(dest)
       Commander.move(unit)

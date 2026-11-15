@@ -46,9 +46,6 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 ## Open: air/observer validation
 
 - Corsair 14-tile flee trigger (shared AirFlee stays 12).
-- Scored air flee (Shuttle rides fleeScored; CorsairRangedFlee + BeDetector
-  still on fleePixel - migrate to plain-distance scores once a Corsair game
-  proves the worst-focus leg).
 - Shooting Corsairs hold the spread mid-duel.
 - CorsairHunt march gate (macro corsairs vs Overlords).
 - Observer standoff latch inconclusive (eye still flips 2079x with

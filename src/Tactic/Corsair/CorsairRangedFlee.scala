@@ -11,9 +11,9 @@ import Tactic.Squads.support.SquadAcePilots
  * reach of any enemy unit that can hit it breaks off instead of trading
  * hull for nothing - a dying hull turns a full ten tiles out, a fresh
  * one skates at three. Survival outranks hunting, relocating and
- * exploring. Runs on the shared AirFlee rule (centroid of
- * everything that can hit us, corner-guarded) so air doctrines cannot
- * drift apart on where safety ends.
+ * exploring. Runs on the shared scored AirFlee rule (plain-distance
+ * penetration, sharp edge, worst threat sets the focus) so air doctrines
+ * cannot drift apart on where safety ends.
  */
 object CorsairRangedFlee {
 
@@ -29,15 +29,13 @@ object CorsairRangedFlee {
 
     val threats = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
-    AirFlee.fleePixel(
+    AirFlee.fleeScored(
       unit.pixel,
-      threats,
-      unit.woundPercent(),
+      threats.map(t => (t, corsairTriggerTiles * 32.0 - unit.pixelDistanceCenter(t))),
+      _ > 0.0,
+      AirFlee.marginTiles(unit.woundPercent(), AirFlee.marginLowTiles, AirFlee.marginHighTiles) * 32.0,
       With.mapPixelWidth,
       With.mapPixelHeight,
-      AirFlee.marginLowTiles,
-      AirFlee.marginHighTiles,
-      corsairTriggerTiles,
       CornerAntiStuckGuard.corsairTiles).exists(away => {
       // Aired out: fleeing the same line without getting anywhere means
       // cornered or herded, so rotate the escape instead of milling.
