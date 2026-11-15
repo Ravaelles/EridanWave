@@ -8,11 +8,10 @@ object EridanEventListener extends BWEventListener {
 
   private var lastException: Option[Exception] = None
   private var lastStackTrace: Option[String] = None
-  var gameCount: Int = 0
 
   override def onStart(): Unit = {
     try {
-      gameCount += 1
+      With.gameCount += 1
       // Attach signal for scripts/wine-run.sh: printed once the BWAPI game
       // table is live and the first game starts (not just when the JVM is up).
       System.out.println("HELLO_ERIDANWAVE")

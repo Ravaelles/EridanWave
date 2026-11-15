@@ -44,25 +44,48 @@ import scala.collection.JavaConverters._
 object With {
 
   var frame0ms          : Long                = 0
-  var frame             : Int                 = 0
-  var self              : PlayerInfo          = _
-  var neutral           : PlayerInfo          = _
-  var enemies           : Vector[PlayerInfo]  = _
-  var friendlies        : Vector[PlayerInfo]  = _
-  var mapFileName       : String              = _
-  var mapCleanName      : String              = _
-  var mapClock          : String              = _
-  var umsMode           : Boolean             = false
-  var startNanoTime     : Long                = 0
-  var mapTileWidth      : Int                 = 0
-  var mapTileHeight     : Int                 = 0
-  var mapTileArea       : Int                 = 0
-  var mapPixelWidth     : Int                 = 0
-  var mapPixelHeight    : Int                 = 0
-  var mapPixelPerimeter : Int                 = 0
-  var mapWalkWidth      : Int                 = 0
-  var mapWalkHeight     : Int                 = 0
-  var mapWalkArea       : Int                 = 0
+  // Engine-owned world state lives in WorldState; these forwarders keep
+  // every call site compiling while writes stay a Lifecycle affair.
+  def frame             : Int                 = WorldState.frame
+  def frame_=(value     : Int                ): Unit = { WorldState.frame = value }
+  def self              : PlayerInfo          = WorldState.self
+  def self_=(value      : PlayerInfo         ): Unit = { WorldState.self = value }
+  def neutral           : PlayerInfo          = WorldState.neutral
+  def neutral_=(value   : PlayerInfo         ): Unit = { WorldState.neutral = value }
+  def enemies           : Vector[PlayerInfo]  = WorldState.enemies
+  def enemies_=(value   : Vector[PlayerInfo] ): Unit = { WorldState.enemies = value }
+  def friendlies        : Vector[PlayerInfo]  = WorldState.friendlies
+  def friendlies_=(value: Vector[PlayerInfo] ): Unit = { WorldState.friendlies = value }
+  def mapFileName       : String              = WorldState.mapFileName
+  def mapFileName_=(value: String             ): Unit = { WorldState.mapFileName = value }
+  def mapCleanName      : String              = WorldState.mapCleanName
+  def mapCleanName_=(value: String            ): Unit = { WorldState.mapCleanName = value }
+  def mapClock          : String              = WorldState.mapClock
+  def mapClock_=(value  : String              ): Unit = { WorldState.mapClock = value }
+  def umsMode           : Boolean             = WorldState.umsMode
+  def umsMode_=(value   : Boolean             ): Unit = { WorldState.umsMode = value }
+  def startNanoTime     : Long                = WorldState.startNanoTime
+  def startNanoTime_=(value: Long             ): Unit = { WorldState.startNanoTime = value }
+  def mapTileWidth      : Int                 = WorldState.mapTileWidth
+  def mapTileWidth_=(value: Int               ): Unit = { WorldState.mapTileWidth = value }
+  def mapTileHeight     : Int                 = WorldState.mapTileHeight
+  def mapTileHeight_=(value: Int              ): Unit = { WorldState.mapTileHeight = value }
+  def mapTileArea       : Int                 = WorldState.mapTileArea
+  def mapTileArea_=(value: Int                ): Unit = { WorldState.mapTileArea = value }
+  def mapPixelWidth     : Int                 = WorldState.mapPixelWidth
+  def mapPixelWidth_=(value: Int              ): Unit = { WorldState.mapPixelWidth = value }
+  def mapPixelHeight    : Int                 = WorldState.mapPixelHeight
+  def mapPixelHeight_=(value: Int             ): Unit = { WorldState.mapPixelHeight = value }
+  def mapPixelPerimeter : Int                 = WorldState.mapPixelPerimeter
+  def mapPixelPerimeter_=(value: Int          ): Unit = { WorldState.mapPixelPerimeter = value }
+  def mapWalkWidth      : Int                 = WorldState.mapWalkWidth
+  def mapWalkWidth_=(value: Int               ): Unit = { WorldState.mapWalkWidth = value }
+  def mapWalkHeight     : Int                 = WorldState.mapWalkHeight
+  def mapWalkHeight_=(value: Int              ): Unit = { WorldState.mapWalkHeight = value }
+  def mapWalkArea       : Int                 = WorldState.mapWalkArea
+  def mapWalkArea_=(value: Int                ): Unit = { WorldState.mapWalkArea = value }
+  def gameCount         : Int                 = WorldState.gameCount
+  def gameCount_=(value : Int                 ): Unit = { WorldState.gameCount = value }
 
   var game              : bwapi.Game          = _
   var accounting        : Accounting          = _
