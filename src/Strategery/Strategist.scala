@@ -160,9 +160,9 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
     }
     if (matchingBranches.nonEmpty) {
       With.logger.debug("Using fixed build: " + strategyNamesText)
-      With.configuration.forcedPlaybook = Some(new TestingPlaybook {
+      With.configuration = With.configuration.copy(forcedPlaybook = Some(new TestingPlaybook {
         override def policy: StrategySelectionPolicy = StrategySelectionGreedy(Some(matchingBranches.map(_.strategies)))
-      })
+      }))
     }
   }
 }

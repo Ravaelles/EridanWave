@@ -18,7 +18,7 @@ object GameCommands {
   /**
    * Explicit default game speed from --speed= (via ERIDANWAVE_SPEED env;
    * legacy PURPLEWAVE_SPEED is still accepted).
-   * Applied once at game start by MapSpecificCommander, so an explicit
+   * Applied once at game start by EridanWave.onStart, so an explicit
    * choice wins over per-map defaults but later keyboard presets still work.
    */
   lazy val initialSpeed: Option[Int] =
@@ -42,7 +42,7 @@ object GameCommands {
     With.game.setLocalSpeed(speedMs)
     With.game.setFrameSkip(skip)
     With.game.setFrameSkip(skip) // Twice, like Atlantis: a single call is unreliable
-    With.game.setGUI(skip <= 150) // Huge skips turn the GUI off, like Atlantis
+    setGui(skip <= 150) // Huge skips turn the GUI off, like Atlantis
     try { Thread.sleep(SpeedDelayMs) } catch { case _: InterruptedException => }
     speedIndex = nearestIndex(speedMs, skip)
   }
@@ -67,7 +67,7 @@ object GameCommands {
   def speedMs: Int = speedLadder(speedIndex)._1
 
   def setPainting(on: Boolean): Unit = {
-    With.configuration.visualizeDebug = on
+    With.configuration = With.configuration.copy(visualizeDebug = on)
   }
 
   /**
@@ -117,16 +117,23 @@ object GameCommands {
   def toggleGui(): Unit = {
     if ( ! gameAvailable) return
 
-    guiEnabled = ! guiEnabled
-    With.game.setGUI(guiEnabled)
+    setGui(! guiEnabled)
   }
 
   def togglePainting(): Unit = {
-    With.configuration.visualizeDebug = ! With.configuration.visualizeDebug
+    With.configuration = With.configuration.copy(visualizeDebug = ! With.configuration.visualizeDebug)
   }
 
   def toggleCamera(): Unit = {
-    With.configuration.camera = ! With.configuration.camera
+    With.configuration = With.configuration.copy(camera = ! With.configuration.camera)
+  }
+
+  /** One setter owns the GUI flag: the engine quirk (huge skips kill the
+    * GUI) and the headless entry both funnel through here, so the field
+    * never diverges from the engine again. */
+  def setGui(on: Boolean): Unit = {
+    guiEnabled = on
+    if (gameAvailable) With.game.setGUI(on)
   }
 
   def toggleVisualization(): Unit = {

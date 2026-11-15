@@ -28,7 +28,7 @@ object StrategySelectionTournament extends StrategySelectionPolicy {
     }
 
     val policy = opponent.map(_.policy).getOrElse(default)
-    With.configuration.targetWinrate = policy.targetWinrate
+    With.configuration = With.configuration.copy(targetWinrate = policy.targetWinrate)
 
     With.logger.debug(f"Choosing tournament policy $policy")
     policy.chooseBranch

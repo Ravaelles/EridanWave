@@ -3,85 +3,82 @@ package Lifecycle.Configure
 import Strategery.{DefaultPlaybook, Playbook}
 import Utilities.Time.Seconds
 
-class Configuration {
-
+case class Configuration(
   /////////////////////////
   // Tournament settings //
   /////////////////////////
 
-  var enableSurrenders  = false
-  var enableChat        = false
-  var frameTargetMs     = 20
-  var frameLimitMs      = 35
+  enableSurrenders: Boolean = false,
+  enableChat: Boolean = false,
+  frameTargetMs: Int = 20,
+  frameLimitMs: Int = 35,
 
   ///////////////////
   // Mode settings //
   ///////////////////
 
-  var logstd            = false
-  var humanMode         = false
-  var visualizeFun      = false
-  var visualizeDebug    = false
-  var debugging         = false
-  var simviz            = false
-  var cherryVis         = true
-  var auditFormationPaths = false
-  var logCombatForecasts = false
-  var formationAudit = false
-  var detectBreakpoints = false
-  var camera            = false
+  logstd: Boolean = false,
+  humanMode: Boolean = false,
+  visualizeDebug: Boolean = false,
+  debugging: Boolean = false,
+  simviz: Boolean = false,
+  cherryVis: Boolean = true,
+  auditFormationPaths: Boolean = false,
+  logCombatForecasts: Boolean = false,
+  formationAudit: Boolean = false,
+  detectBreakpoints: Boolean = false,
+  camera: Boolean = false,
 
-  //////////////
+  ////////////
   // Strategy //
-  //////////////
+  ////////////
 
-  var targetWinrate       = 0.75
-  var historyHalfLife     = 3.0
-  var recentFingerprints  = 2
-  var fixedBuilds         = ""
-  var forcedStrategy: Option[String] = None
-  var forcedPlaybook: Option[Playbook] = None
-  def playbook: Playbook = forcedPlaybook.getOrElse(DefaultPlaybook)
-  
+  targetWinrate: Double = 0.75,
+  historyHalfLife: Double = 3.0,
+  recentFingerprints: Int = 2,
+  fixedBuilds: String = "",
+  forcedPlaybook: Option[Playbook] = None,
+
   /////////////
   // Battles //
   /////////////
 
-  var simulationAsynchronous        = true
-  var simulationFrames              = Seconds(15)()
-  var simulationProximityFrames     = Seconds(5)() // Stop adding proximity edges; actual damage still joins components.
-  var simulationResolution          = 8
-  var simulationDamageValueRatio    = 0.1
-  var simulationRecordingPeriod     = 240
+  simulationAsynchronous: Boolean = true,
+  simulationFrames: Int = Seconds(15)(),
+  simulationProximityFrames: Int = Seconds(5)(),
+  simulationResolution: Int = 8,
+  simulationDamageValueRatio: Double = 0.1,
+  simulationRecordingPeriod: Int = 240,
 
   /////////////////
   // Performance //
   /////////////////
 
-  var enablePerformancePauses             = true
-  var maximumGamesHistoryPerOpponent      = 1000
-  var logTaskDuration                     = false
-  
+  enablePerformancePauses: Boolean = true,
+  maximumGamesHistoryPerOpponent: Int = 1000,
+
   ///////////////////
   // Visualization //
   ///////////////////
-  
-  var visualizeScreen                     = true
-  var visualizeMap                        = true
-  var visualizationProbabilityHappyVision = 0.0 // 0.05
-  var visualizationProbabilityTextOnly    = 0.0 // 0.01
 
-  var cameraDynamicSpeed          = false
-  var cameraDynamicSpeedSlowest   = 30
-  var cameraDynamicSpeedFastest   = 0
-  var cameraViewportWidth         = 640
-  var cameraViewportHeight        = 362
-  var conservativeViewportWidth   = 640 + cameraViewportWidth
-  var conservativeViewportHeight  = 480 + cameraViewportHeight
+  visualizeScreen: Boolean = true,
+  visualizeMap: Boolean = true,
+  visualizationProbabilityHappyVision: Double = 0.0,
+  visualizationProbabilityTextOnly: Double = 0.0,
+
+  cameraDynamicSpeed: Boolean = false,
+  cameraDynamicSpeedSlowest: Int = 30,
+  cameraDynamicSpeedFastest: Int = 0,
+  cameraViewportWidth: Int = 640,
+  cameraViewportHeight: Int = 362,
+  conservativeViewportWidth: Int = 640 + 640,
+  conservativeViewportHeight: Int = 480 + 362,
 
   ///////////////
   // Debugging //
   ///////////////
 
-  var trackUnit = false
+  trackUnit: Boolean = false) {
+
+  def playbook: Playbook = forcedPlaybook.getOrElse(DefaultPlaybook)
 }

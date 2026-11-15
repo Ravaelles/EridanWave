@@ -95,7 +95,7 @@ object CommanderCore {
       With.frame + With.latency.turnSize,
       unit.sleepUntil)
     if (With.configuration.trackUnit && (unit.selected || unit.transport.exists(_.selected))) {
-      With.configuration.trackUnit = false // This is where you want the trackUnit breakpoint
+      With.configuration = With.configuration.copy(trackUnit = false) // This is where you want the trackUnit breakpoint
     }
   }
   private[Micro] def leadFollower(unit: FriendlyUnitInfo, todo: (FriendlyUnitInfo) => Unit): Unit = {

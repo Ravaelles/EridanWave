@@ -39,9 +39,9 @@ class Camera extends TimedTask {
     // Enable autocamera until we interact with the screen
     val mousePosition = new Pixel(With.game.getMousePosition)
     if (mousePosition.x > 10 && mousePosition.x < 630 && mousePosition.y > 10 && mousePosition.y < 470) {
-      With.configuration.camera = With.configuration.camera && ! With.game.getMouseState(MouseButton.M_LEFT)
-      With.configuration.camera = With.configuration.camera && ! With.game.getMouseState(MouseButton.M_MIDDLE)
-      With.configuration.camera = With.configuration.camera && ! With.game.getMouseState(MouseButton.M_RIGHT)
+      With.configuration = With.configuration.copy(camera = With.configuration.camera && ! With.game.getMouseState(MouseButton.M_LEFT))
+      With.configuration = With.configuration.copy(camera = With.configuration.camera && ! With.game.getMouseState(MouseButton.M_MIDDLE))
+      With.configuration = With.configuration.copy(camera = With.configuration.camera && ! With.game.getMouseState(MouseButton.M_RIGHT))
     }
 
     if ( ! With.configuration.camera) { return }

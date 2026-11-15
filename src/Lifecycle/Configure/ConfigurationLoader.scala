@@ -21,29 +21,112 @@ object ConfigurationLoader {
 
   def getOrDefault[T](json: Json, property: String, default: T): T = {
     val value = json.at(property)
-    if (value == null) {
+    if (value == null || value.isNull) {
       return default
     }
 
-    val attemptedOutput: T = default match {
-      case _: Boolean =>  if (value.isBoolean)  value.asBoolean().asInstanceOf[T] else default
-      case _: Int =>      if (value.isNumber)   value.asInteger().asInstanceOf[T] else default
-      case _: Double =>   if (value.isNumber)   value.asDouble().asInstanceOf[T] else default
-      case _ =>           if (value.isString)   value.asString().asInstanceOf[T] else default
+    val (ok, wanted) = default match {
+      case _: Boolean => (value.isBoolean, "a boolean")
+      case _: Int     => (value.isNumber, "an integer")
+      case _: Double  => (value.isNumber, "a number")
+      case _          => (value.isString, "a string")
     }
-    if (attemptedOutput == null) {
+    if ( ! ok) {
+      With.logger.warn(f"Ignoring $property (want $wanted)")
+
       return default
     }
 
-    attemptedOutput
+    (default match {
+      case _: Boolean => value.asBoolean()
+      case _: Int     => value.asInteger()
+      case _: Double  => value.asDouble()
+      case _          => value.asString()
+    }).asInstanceOf[T]
   }
 
-  def load(): Unit = {
+  /** Every parsed key in one place: name, default, and how it lands. */
+  case class Flags(
+    human: Boolean,
+    ladder: Boolean,
+    livestream: Boolean,
+    tournament: Boolean,
+    roundrobin: Boolean,
+    elimination: Boolean,
+    pretraining: Boolean,
+    debugging: Boolean,
+    debugginglive: Boolean,
+    simviz: Boolean,
+    cherryvis: Boolean,
+    logstd: Boolean,
+    multiCPU: Boolean,
+    randomStrategy: Boolean,
+    frameMsTarget: Int,
+    frameMsLimit: Int,
+    auditFormationPaths: Boolean,
+    logCombatForecasts: Boolean,
+    formationAudit: Boolean,
+    fixedBuilds: String)
+
+  private def flags(config: Json, base: Configuration): Flags = Flags(
+    human          = getOrDefault(config, "human", false),
+    ladder         = getOrDefault(config, "ladder", false),
+    livestream     = getOrDefault(config, "livestream", false),
+    tournament     = getOrDefault(config, "tournament", false),
+    roundrobin     = getOrDefault(config, "roundrobin", false),
+    elimination    = getOrDefault(config, "elimination", false),
+    pretraining    = getOrDefault(config, "pretraining", false),
+    debugging      = getOrDefault(config, "debugging", false),
+    debugginglive  = getOrDefault(config, "debugginglive", false),
+    simviz         = getOrDefault(config, "simviz", false),
+    cherryvis      = getOrDefault(config, "cherryvis", true),
+    logstd         = getOrDefault(config, "logstd", false),
+    multiCPU       = getOrDefault(config, "multiCPU", true),
+    randomStrategy = getOrDefault(config, "strategySelectionRandom", false),
+    frameMsTarget  = getOrDefault(config, "framemstarget", base.frameTargetMs),
+    frameMsLimit   = getOrDefault(config, "framemslimit", base.frameLimitMs),
+    auditFormationPaths = getOrDefault(config, "auditFormationPaths", false),
+    logCombatForecasts  = getOrDefault(config, "logCombatForecasts", false),
+    formationAudit      = getOrDefault(config, "formationAudit", false),
+    fixedBuilds    = opponentFixedBuild(
+      new FileFlag("fixedbuilds-by-opponent.json").contents,
+      With.enemy.name,
+      new FileFlag("fixedbuilds.txt").contents))
+
+  /** Incompatible mode pairs, as data: a warning per true row. */
+  def validate(flags: Flags): Seq[String] = Seq(
+    (flags.tournament && flags.ladder, "Both tournament and ladder modes are enabled"),
+    (flags.tournament && flags.livestream, "Both tournament and livestream modes are enabled"),
+    (flags.tournament && flags.pretraining, "Both tournament and pretraining modes are enabled"),
+    (flags.pretraining && flags.ladder, "Both pretraining and laddermodes are enabled"),
+    (flags.pretraining && flags.livestream, "Both pretraining and livestream modes are enabled"),
+    (flags.roundrobin && flags.elimination, "Both round robin and elimination modes are enabled"),
+    (flags.debugginglive && ! flags.debugging, "debugginglive enabled without debugging enabled"))
+    .collect { case (true, warning) => warning }
+
+  /** Mode rules in application order (later rows win shared fields). */
+  def applyModes(flags: Flags, base: Configuration): Configuration = {
+    val modes: Seq[(Boolean, Configuration => Configuration)] = Seq(
+      flags.livestream    -> (_.copy(enableChat = true, enableSurrenders = true)),
+      flags.human         -> (_.copy(humanMode = true, enableChat = true, enableSurrenders = true, forcedPlaybook = Some(HumanPlaybook))),
+      flags.ladder        -> (_.copy(historyHalfLife = 40, recentFingerprints = 4)),
+      flags.tournament    -> (_.copy(forcedPlaybook = Some(TournamentPlaybook))),
+      flags.roundrobin    -> (_.copy(historyHalfLife = 30, recentFingerprints = 3)),
+      flags.elimination   -> (_.copy(recentFingerprints = 2)),
+      flags.pretraining   -> (_.copy(forcedPlaybook = Some(PretrainingPlaybook))),
+      flags.debugging     -> (_.copy(enableChat = true, enableSurrenders = true, debugging = true)),
+      flags.debugginglive -> (_.copy(enableChat = true, enableSurrenders = true, debugging = true, camera = true, visualizeDebug = true, detectBreakpoints = true, simulationRecordingPeriod = 24 * 3)),
+      flags.logstd        -> (_.copy(logstd = true)),
+      flags.randomStrategy -> (_.copy(forcedPlaybook = Some(new TestingPlaybook))))
+    modes.foldLeft(base) { case (config, (on, apply)) => if (on) apply(config) else config }
+  }
+
+  def findConfigFile(): Option[File] = {
     val aiDir = new File(With.bwapiData.ai)
     if ( ! aiDir.isDirectory) {
       With.logger.debug(f"No bwapi-data/AI directory at ${aiDir.getPath}; using default configuration")
 
-      return
+      return None
     }
 
     val configFiles: Array[File] = Option(aiDir.listFiles).getOrElse(Array.empty)
@@ -52,7 +135,7 @@ object ConfigurationLoader {
     if (configFilesMatching.isEmpty) {
       With.logger.warn("Didn't find any matching configurations")
 
-      return
+      return None
     }
 
     if (configFilesMatching.length > 1) {
@@ -61,92 +144,56 @@ object ConfigurationLoader {
 
     val configFile = configFilesMatching.maxBy(_.lastModified())
     With.logger.debug(f"Using configuration file ${configFile.getName}")
+    Some(configFile)
+  }
+
+  def load(): Unit = {
+    val configFile = findConfigFile().getOrElse(return)
     try {
-      val configSource  = scala.io.Source.fromFile(configFile)
-      val configText    = configSource.mkString
+      val configSource = scala.io.Source.fromFile(configFile)
+      val configText   = configSource.mkString
       configSource.close()
-      val config        = Json.read(configText)
-      val human         = getOrDefault(config, "human",         false)
-      val ladder        = getOrDefault(config, "ladder",        false)
-      val livestream    = getOrDefault(config, "livestream",    false)
-      val tournament    = getOrDefault(config, "tournament",    false)
-      val roundrobin    = getOrDefault(config, "roundrobin",    false)
-      val elimination   = getOrDefault(config, "elimination",   false)
-      val pretraining   = getOrDefault(config, "pretraining",   false)
-      val debugging     = getOrDefault(config, "debugging",     false)
-      val debugginglive = getOrDefault(config, "debugginglive", false)
-      val simviz        = getOrDefault(config, "simviz",        false)
-      val cherryVis       = getOrDefault(config, "cherryvis",       true)
-      val logstd        = getOrDefault(config, "logstd",        false)
-      val multiCPU      = getOrDefault(config, "multiCPU",      true)
-      val randomStrategy = getOrDefault(config, "strategySelectionRandom", false)
-      val frameMsTarget = getOrDefault(config, "framemstarget", With.configuration.frameTargetMs)
-      val frameMsLimit  = getOrDefault(config, "framemslimit",  With.configuration.frameLimitMs)
-
-      With.configuration.fixedBuilds = opponentFixedBuild(
-        new FileFlag("fixedbuilds-by-opponent.json").contents,
-        With.enemy.name,
-        new FileFlag("fixedbuilds.txt").contents)
-      With.configuration.frameTargetMs = frameMsTarget
-      With.configuration.frameLimitMs = frameMsLimit
-      With.configuration.simviz = simviz
-      With.configuration.cherryVis = cherryVis
-      With.configuration.cherryVis = cherryVisFlagOverride().getOrElse(With.configuration.cherryVis)
-      With.configuration.auditFormationPaths = getOrDefault(config, "auditFormationPaths", false)
-      With.configuration.logCombatForecasts = getOrDefault(config, "logCombatForecasts", false)
-      With.configuration.formationAudit = getOrDefault(config, "formationAudit", false)
-      With.configuration.formationAudit = formationAuditFlagOverride().getOrElse(With.configuration.formationAudit)
-
-      if (tournament    && ladder)      With.logger.warn("Both tournament and ladder modes are enabled")
-      if (tournament    && livestream)  With.logger.warn("Both tournament and livestream modes are enabled")
-      if (tournament    && pretraining) With.logger.warn("Both tournament and pretraining modes are enabled")
-      if (pretraining   && ladder)      With.logger.warn("Both pretraining and laddermodes are enabled")
-      if (pretraining   && livestream)  With.logger.warn("Both pretraining and livestream modes are enabled")
-      if (roundrobin    && elimination) With.logger.warn("Both round robin and elimination modes are enabled")
-      if (debugginglive && ! debugging) With.logger.warn("debugginglive enabled without debugging enabled")
-
-      if (livestream)           { setLivestreamMode() }
-      if (human)                { setHumanMode() }
-      if (ladder)               { setLadderMode() }
-      if (tournament)           { setTournamentMode() }
-      if (roundrobin)           { setRoundRobinMode() }
-      if (elimination)          { setEliminationMode() }
-      if (pretraining)          { setPretraining() }
-      if (debugging)            { setDebugMode() }
-      if (debugginglive)        { setDebugLiveMode() }
-      if (logstd)               { With.configuration.logstd = true }
-      if (randomStrategy)       { With.configuration.forcedPlaybook = Some(new TestingPlaybook) }
-      With.configuration.simulationAsynchronous = multiCPU
-
-      Seq(
-        ("Human",           human.toString),
-        ("Ladder",          ladder.toString),
-        ("Livestream",      livestream),
-        ("Tournament",      tournament.toString),
-        ("Round-robin",     roundrobin.toString),
-        ("Elimination",     elimination.toString),
-        ("Pretraining",     pretraining.toString),
-        ("Debugging",       debugging.toString),
-        ("DebuggingLive",   debugginglive.toString),
-        ("SimViz",          simviz.toString),
-        ("CherryVis",       With.configuration.cherryVis.toString),
-        ("Log stdout",      logstd.toString),
-        ("Random strategy", randomStrategy.toString),
-        ("Frame MS target", frameMsTarget),
-        ("Frame MS limit",  frameMsLimit),
-        ("Fixed build",     With.configuration.fixedBuilds)
-      )
-      .foreach(pair => With.logger.debug(pair._1 + ": " + pair._2))
+      val config = Json.read(configText)
+      val parsed = flags(config, With.configuration)
+      var next = With.configuration.copy(
+        fixedBuilds = parsed.fixedBuilds,
+        frameTargetMs = parsed.frameMsTarget,
+        frameLimitMs = parsed.frameMsLimit,
+        simviz = parsed.simviz,
+        auditFormationPaths = parsed.auditFormationPaths,
+        logCombatForecasts = parsed.logCombatForecasts,
+        simulationAsynchronous = parsed.multiCPU,
+        cherryVis = parsed.cherryvis,
+        formationAudit = parsed.formationAudit)
+      next = cherryVisFlagOverride().map(v => next.copy(cherryVis = v)).getOrElse(next)
+      next = formationAuditFlagOverride().map(v => next.copy(formationAudit = v)).getOrElse(next)
+      validate(parsed).foreach(With.logger.warn)
+      next = applyModes(parsed, next)
+      With.configuration = next
+      logSummary(parsed, next)
     } catch { case exception: Exception => With.logger.onException(exception) }
   }
 
-  private def setTournamentMode(): Unit = {
-    config.forcedPlaybook = Some(TournamentPlaybook)
-  }
-
-  private def setLadderMode(): Unit = {
-    config.historyHalfLife    = 40
-    config.recentFingerprints = 4
+  private def logSummary(flags: Flags, config: Configuration): Unit = {
+    Seq(
+      ("Human",           flags.human.toString),
+      ("Ladder",          flags.ladder.toString),
+      ("Livestream",      flags.livestream.toString),
+      ("Tournament",      flags.tournament.toString),
+      ("Round-robin",     flags.roundrobin.toString),
+      ("Elimination",     flags.elimination.toString),
+      ("Pretraining",     flags.pretraining.toString),
+      ("Debugging",       flags.debugging.toString),
+      ("DebuggingLive",   flags.debugginglive.toString),
+      ("SimViz",          flags.simviz.toString),
+      ("CherryVis",       config.cherryVis.toString),
+      ("Log stdout",      flags.logstd.toString),
+      ("Random strategy", flags.randomStrategy.toString),
+      ("Frame MS target", config.frameTargetMs),
+      ("Frame MS limit",  config.frameLimitMs),
+      ("Fixed build",     config.fixedBuilds)
+    )
+    .foreach(pair => With.logger.debug(pair._1 + ": " + pair._2))
   }
 
   /**
@@ -183,47 +230,5 @@ object ConfigurationLoader {
       }
     })
   }
-
-  private def setEliminationMode(): Unit = {
-    config.recentFingerprints = 2
-  }
-
-  private def setRoundRobinMode(): Unit = {
-    config.historyHalfLife    = 30
-    config.recentFingerprints = 3
-  }
-
-  private def setLivestreamMode(): Unit = {
-    config.visualizeFun       = true
-    config.enableChat         = true
-    config.enableSurrenders   = true
-  }
-
-  private def setHumanMode(): Unit = {
-    config.humanMode          = true
-    config.enableChat         = true
-    config.enableSurrenders   = true
-    config.forcedPlaybook     = Some(HumanPlaybook)
-  }
-
-  private def setPretraining(): Unit = {
-    config.forcedPlaybook     = Some(PretrainingPlaybook)
-  }
-
-  private def setDebugMode(): Unit = {
-    config.enableChat         = true
-    config.enableSurrenders   = true
-    config.debugging          = true
-  }
-
-  private def setDebugLiveMode(): Unit = {
-    setDebugMode()
-    config.camera                 = true
-    config.visualizeDebug         = true
-    config.detectBreakpoints      = true
-    config.simulationRecordingPeriod  = 24 * 3
-    //config.forcedPlaybook     = Some(new TestingPlaybook)
-  }
-
-  private def config: Configuration = With.configuration
 }
+

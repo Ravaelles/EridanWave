@@ -76,7 +76,7 @@ class PerformanceMonitor {
     if ( ! value.startsWith("f")) return false
 
     val duration  = """\d+""".r.findFirstIn(value).map(_.toInt)
-    duration.foreach(With.configuration.frameLimitMs = _)
+    duration.foreach(limit => With.configuration = With.configuration.copy(frameLimitMs = limit))
     duration.nonEmpty
   }
 }
