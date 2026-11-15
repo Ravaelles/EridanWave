@@ -5,7 +5,7 @@ import Mathematics.{Maff, Separation}
 import Micro.Actions.Action
 import Micro.Actions.Protoss.Air.BeFlier
 import Micro.Actions.Combat.Maneuvering.AirFlee
-import Micro.Actions.Combat.Maneuvering.CornerGuard
+import Micro.Actions.Combat.Maneuvering.CornerAntiStuckGuard
 import Micro.Actions.Combat.Tactics.{Recharge, Spot}
 import Micro.Agency.Commander
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -72,9 +72,6 @@ object BeDetector extends Action {
   val marginLowTiles: Double = 6.0
   val marginHighTiles: Double = 12.0
 
-  /** Corner trap width for a fleeing eye, in tiles: 10x10 squares. */
-  val cornerGuardTiles: Double = 10.0
-
   /**
    * Fast-hunter early warning: a detector this close, in tiles, means the
    * eye is compromised, so Scourge, Corsairs, Wraiths and Mutalisks -
@@ -100,11 +97,10 @@ object BeDetector extends Action {
       _.pixelDistanceCenter(unit.pixel))
     (for (hunter <- hunterPixel; if shouldFleeHunters(detectorTiles, unit.tileDistanceCenter(hunter.pixel))) yield {
       unit.cherryVisUnitLog("ObserverFleeHunters")
-      unit.agent.destinationNext.set(CornerGuard.guard(
+      unit.agent.destinationNext.set(CornerAntiStuckGuard.guard(
         AirFlee.fleeFrom(unit.pixel, hunter.pixel, AirFlee.marginTiles(unit.woundPercent(), marginLowTiles, marginHighTiles)),
         With.mapPixelWidth,
-        With.mapPixelHeight,
-        cornerGuardTiles))
+        With.mapPixelHeight))
       Commander.move(unit)
       true
     }).getOrElse(false)
@@ -116,7 +112,7 @@ object BeDetector extends Action {
 
     val threats = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
-    AirFlee.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight, marginLowTiles, marginHighTiles, AirFlee.triggerTiles, cornerGuardTiles).exists(dest => {
+    AirFlee.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight, marginLowTiles, marginHighTiles).exists(dest => {
       unit.cherryVisUnitLog("ObserverFlee")
       unit.agent.destinationNext.set(dest)
       Commander.move(unit)

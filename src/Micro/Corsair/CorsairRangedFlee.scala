@@ -1,7 +1,7 @@
 package Micro.Corsair
 
 import Lifecycle.With
-import Micro.Actions.Combat.Maneuvering.{AirFlee, CornerGuard, FleeRelocation}
+import Micro.Actions.Combat.Maneuvering.{AirFlee, CornerAntiStuckGuard, FleeRelocation}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.support.SquadAcePilots
@@ -37,14 +37,15 @@ object CorsairRangedFlee {
       With.mapPixelHeight,
       AirFlee.marginLowTiles,
       AirFlee.marginHighTiles,
-      corsairTriggerTiles).exists(away => {
+      corsairTriggerTiles,
+      CornerAntiStuckGuard.corsairTiles).exists(away => {
       // Aired out: fleeing the same line without getting anywhere means
       // cornered or herded, so rotate the escape instead of milling.
-      val dest = CornerGuard.guard(
+      val dest = CornerAntiStuckGuard.guard(
         FleeRelocation.relocate(unit.id, unit.pixel, away, With.frame),
         With.mapPixelWidth,
         With.mapPixelHeight,
-        AirFlee.cornerTiles)
+        CornerAntiStuckGuard.corsairTiles)
       unit.intend(squad).setTerminus(dest)
       unit.agent.act("CorsairFleeRanged")
       true

@@ -24,13 +24,6 @@ object ReaverShuttleFlight {
   /** Extra preemptive band at full wounds, in tiles (woundBonus(0, 9)). */
   val woundFleeBonusTiles: Double = 9.0
 
-  /**
-   * Corner trap width for a fleeing Shuttle, in tiles: the flee legs run
-   * 4->13 tiles, so a hull running that far must not park in a corner -
-   * keep clear of the 15x15 squares instead of only the innermost 6x6.
-   */
-  val cornerGuardTiles: Double = 15.0
-
   def woundBonusTiles(woundPercent: Double): Double =
     Maff.woundBonus(woundPercent, 0.0, woundFleeBonusTiles)
 

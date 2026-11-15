@@ -1,6 +1,7 @@
 package starengine
 
 import Micro.Actions.Combat.Maneuvering.AirFlee
+import Micro.Actions.Combat.Maneuvering.CornerAntiStuckGuard
 import ProxyBwapi.Races.{Protoss, Zerg}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -23,7 +24,9 @@ class CorsairHuntSuite extends AnyFunSuite with StarEngineSuite {
       AirFlee.fleePixel(
         Mathematics.Points.Pixel(me.x.toInt, me.y.toInt),
         ranged.map(f => Mathematics.Points.Pixel(f.x.toInt, f.y.toInt)),
-        me.lossFraction, 8192, 8192).foreach(dest => {
+        me.lossFraction, 8192, 8192,
+        AirFlee.marginLowTiles, AirFlee.marginHighTiles,
+        AirFlee.triggerTiles, CornerAntiStuckGuard.corsairTiles).foreach(dest => {
         flees += 1
 
         return MoveTo(dest.x, dest.y)

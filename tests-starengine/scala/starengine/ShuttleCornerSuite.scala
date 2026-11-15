@@ -8,8 +8,8 @@ import org.scalatest.funsuite.AnyFunSuite
  * Shuttle corner escape: three Hydralisks press a Shuttle sitting two
  * tiles right and eight down from the top-left corner, and the only way
  * out is up - straight into the corner trap. The pilot flees the
- * centroid on the shipped avoidance rule, so it slides up along the
- * corner square instead of diving in, and never comes within four tiles
+ * centroid on the shipped avoidance rule, so it slides along the corner
+ * square instead of diving in, and never comes within four tiles
  * of the corner. Focused fire can still kill it - this proves the
  * escape line, not invulnerability. Speeds, reaches and damage are
  * the real UnitType numbers; the map is 1024px square.
@@ -53,12 +53,12 @@ class ShuttleCornerSuite extends AnyFunSuite {
     while (world.frame < 1500 && shuttle.alive) {
       world.step()
       minCorner = Math.min(minCorner, Math.hypot(shuttle.x, shuttle.y))
-      flee.lastDest.foreach(d => if (d._1 < 6 * 32 && d._2 < 6 * 32) cornerDest = true)
+      flee.lastDest.foreach(d => if (d._1 < 10 * 32 && d._2 < 10 * 32) cornerDest = true)
     }
 
     println(s"DIAG end=(${shuttle.x.toInt},${shuttle.y.toInt}) minCorner=${minCorner.toInt}px alive=${shuttle.alive} frames=${world.frame} cornerDest=$cornerDest")
     assert(minCorner >= 4 * 32.0, f"shuttle entered the corner: closest ${minCorner.toInt}px")
-    assert( ! cornerDest, "a flee destination landed in the unusable 6x6 corner square")
-    assert(shuttle.y < 8 * 32.0 - 32.0, "shuttle did not flee upward")
+    assert( ! cornerDest, "a flee destination landed in the unusable 10x10 corner square")
+    assert(shuttle.x > 2 * 32.0 + 32.0, "shuttle did not slide along the corner edge")
   }
 }

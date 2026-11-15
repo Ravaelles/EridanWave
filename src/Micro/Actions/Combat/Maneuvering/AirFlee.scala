@@ -9,9 +9,8 @@ import Mathematics.Points.Pixel
  * inside firing range, on a wound-scaled margin - a fresh hull skates, a
  * dying one turns early. The band is the caller's: Corsairs and Shuttles
  * skate at 3->10, eyes hold wider at 6->12. The flee destination never
- * lands in a map corner: CornerGuard slides a destination out of the
- * caller's trap squares instead of diving deeper. Pure pixels in, pixels
- * out; the caller gathers threats (any enemy that can attack the victim),
+ * lands in a map corner: CornerAntiStuckGuard slides a destination out of
+ * the trap squares instead of diving deeper. Pure pixels in, pixels out; the caller gathers threats (any enemy that can attack the victim),
  * passes map bounds, and issues the order. One home for the flee rule so
  * air doctrines cannot drift apart on where safety ends.
  */
@@ -25,9 +24,6 @@ object AirFlee {
 
   /** Safe margin, in tiles, for a dying hull. */
   val marginHighTiles: Double = 10.0
-
-  /** Corner squares this wide, in tiles, are unusable: never flee into them. */
-  val cornerTiles: Double = 6.0
 
   def marginTiles(wound01: Double, lowTiles: Double, highTiles: Double): Double =
     Maff.woundBonus(wound01, lowTiles, highTiles)
@@ -57,9 +53,9 @@ object AirFlee {
     marginLowTiles: Double,
     marginHighTiles: Double,
     triggerTiles: Double = AirFlee.triggerTiles,
-    cornerTiles: Double = AirFlee.cornerTiles): Option[Pixel] = {
+    cornerTiles: Double = CornerAntiStuckGuard.defaultTiles): Option[Pixel] = {
     val near = threats.filter(t => own.pixelDistance(t) <= triggerTiles * 32.0)
     focus(near).map(focus =>
-      CornerGuard.guard(fleeFrom(own, focus, marginTiles(wound01, marginLowTiles, marginHighTiles)), mapWpx, mapHpx, cornerTiles))
+      CornerAntiStuckGuard.guard(fleeFrom(own, focus, marginTiles(wound01, marginLowTiles, marginHighTiles)), mapWpx, mapHpx, cornerTiles))
   }
 }
