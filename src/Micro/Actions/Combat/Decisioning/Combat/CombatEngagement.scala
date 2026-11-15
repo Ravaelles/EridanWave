@@ -100,8 +100,6 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     combat.breakFormationToAttack  = unit.formationEngage.isEmpty
     combat.breakFormationToAttack ||= pursuing()
     combat.breakFormationToAttack ||= combat.target.exists(targ =>
-      unit.pixelsToGetInRange(targ) > FormationHold.holdPursuitTiles * 32.0)
-    combat.breakFormationToAttack ||= combat.target.exists(targ =>
       // Maintain formation if we're not ready to attack yet
       combat.distances.readyToApproachTarget
       // Maintain formation until arriving at a fight or the destinatation

@@ -168,7 +168,7 @@ object BeReaver extends Action {
   }
 
   private def duelWalk(unit: FriendlyUnitInfo): Unit = {
-    Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere))(_.pixelDistanceCenter(unit.pixel)).foreach(foe => {
+    Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && ! e.flying && unit.canAttack(e)))(_.pixelDistanceCenter(unit.pixel)).foreach(foe => {
       unit.agent.act("DuelWalk")
       unit.agent.destinationNext.set(foe.pixel)
       Commander.move(unit)
