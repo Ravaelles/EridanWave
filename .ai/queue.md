@@ -64,6 +64,7 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Retreating warriors never rally or close ranks.
 - Engage never overwrites a march home (frame-fresh intention flag).
 - MarchDressSuite (StarEngine): scattered 4 dragoons + 4 zealots march dressed at an enemy 30 tiles out, modes March>Dress>Engage with no flap, reissues 14, pack tightens - green.
+- PressedRideSuite (StarEngine): hydras press the line while scourge dive the ride - shuttle flees on the shipped penetration/latch/guard rule (1 clean latch cycle, 3 redirects), holds 15-tile corners, never takes a hit; reaver never leaves its anchor; pack dies - green.
 - Expo punish vs Zerg at 140 (units-strength only).
 - TankHug (cooling warriors close sieged tanks to 0.2 tiles).
 - StaticDefense overwhelm (12 of ours push one static).
