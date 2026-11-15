@@ -17,6 +17,16 @@ class ReaverShuttleGatesSuite extends AnyFunSuite {
     assert( ! ReaverShuttlePair.shouldEscort(15.01))
   }
 
+  test("the escort latch enters sharp and releases two tiles past escort range") {
+    ReaverShuttlePair.reset()
+    assert(ReaverShuttlePair.escortLatched(1, 0.0))
+    assert(ReaverShuttlePair.escortLatched(1, 14.9))
+    assert(ReaverShuttlePair.escortLatched(1, 16.9))
+    assert( ! ReaverShuttlePair.escortLatched(1, 17.01))
+    assert( ! ReaverShuttlePair.escortLatched(1, 16.0))
+    assert(ReaverShuttlePair.escortLatched(1, 14.9))
+  }
+
   test("a threatened landing aborts the static attack") {
     assert(ReaverShuttleStaticAttack.shouldLand(distTiles = 11.9, attackedAtLanding = false, threatDistTiles = 99.0, wound01 = 0.0))
     assert( ! ReaverShuttleStaticAttack.shouldLand(distTiles = 12.0, attackedAtLanding = false, threatDistTiles = 99.0, wound01 = 0.0))

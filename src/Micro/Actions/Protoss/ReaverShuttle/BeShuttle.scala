@@ -272,11 +272,16 @@ object BeShuttle extends Action {
    * no bond in code (passengerOf reads loaded hulls only), so the empty
    * ride awaited at the army goal while its Reaver died alone. Hover the
    * fighting mate at board reach instead, off the threat - the rescue
-   * and reboard below it assume the ride inside 64 pixels.
+   * and reboard below it assume the ride inside 64 pixels. The hold is
+   * latched in the pair (escortLatched): the escort/await choice flapped
+   * every other frame, so once the ride commits to its mate it holds
+   * until the mate is gone or walks out of board reach plus a margin.
    */
   private def escort(shuttle: FriendlyUnitInfo): Boolean = {
     ReaverShuttlePair.mateOnFoot(shuttle)
-      .filter(mate => ReaverShuttlePair.shouldEscort(mate.pixelDistanceCenter(shuttle.pixel) * Maff.inv32))
+      .filter(mate => ReaverShuttlePair.escortLatched(
+        shuttle.id,
+        mate.pixelDistanceCenter(shuttle.pixel) * Maff.inv32))
       .map(mate => {
         shuttle.agent.act("EscortRide")
         shuttle.agent.destinationNext.set(standoff(shuttle, mate.pixel))

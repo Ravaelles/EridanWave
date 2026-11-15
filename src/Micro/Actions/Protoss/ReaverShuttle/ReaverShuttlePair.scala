@@ -5,6 +5,7 @@ import Mathematics.Maff
 import Mathematics.Points.Pixel
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Utilities.Latch
 
 /**
  * The pair as one addressable thing (no game decisions here, just
@@ -50,6 +51,28 @@ object ReaverShuttlePair {
 
   def shouldEscort(distTiles: Double): Boolean =
     distTiles <= mateEscortTiles
+
+  /**
+   * Escort release range, in tiles: once committed the ride holds station
+   * until the mate walks out past escort range plus this margin, so the
+   * escort/await choice cannot flap every other frame on the boundary.
+   */
+  val escortReleaseTiles: Double = mateEscortTiles + 2.0
+
+  private val escorting = new Latch
+
+  def reset(): Unit = { escorting.reset() }
+
+  /**
+   * Latched escort hold: fires sharp inside escort range, releases past
+   * the release margin. A mate blinking across the edge no longer flips
+   * the ride between escorting and awaiting every other frame.
+   */
+  def escortLatched(shuttleId: Int, distTiles: Double): Boolean =
+    escorting(
+      shuttleId,
+      fires   = shouldEscort(distTiles),
+      releases = distTiles > escortReleaseTiles)
 
   /**
    * An idle pair on a baseless map: the Reaver is on foot with nothing
