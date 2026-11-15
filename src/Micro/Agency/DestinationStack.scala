@@ -32,7 +32,30 @@ trait DestinationStack {
   def destinationsDefined : Seq[Destination]  = destinations.view.filter(_.pixel.isDefined)
   def origin              : Destination       = destinationsDefined.reverseIterator.find(_.level < 0).getOrElse(home)
   def destinationFinal    : Destination       = Maff.minBy(destinationsDefined)(d => ?(d.level < 0, 100, 0) + d.level).getOrElse(terminus)
+  // Computed winner, read-only outside Agency: doctrines override through
+  // forceTo/forceAway/forceWaypoint below, never by writing this - it
+  // addresses whichever level currently wins, so the same line edits a
+  // different slot depending on what ran earlier in the frame.
   def destinationNext     : Destination       = Maff.minBy(destinationsDefined)(d => ?(d.level < 0, 100, 0) - d.level).getOrElse(terminus)
+
+  /**
+   * Doctrine override (the only destination write outside Agency): a
+   * locally-known point that outranks squad routing but yields to the
+   * final decision. Sites with their own back-off math keep it and pass
+   * the computed point here instead of addressing the winner.
+   */
+  def forceTo(p: Pixel): Unit = { forced.set(p) }
+  def forceTo(p: Option[Pixel]): Unit = { forced.set(p) }
+  def forceWaypoint(p: Pixel): Unit = { forced.setWaypoint(p) }
+  def forceWaypoint(p: Option[Pixel]): Unit = { forced.setWaypoint(p) }
+
+  /**
+   * Doctrine retreat from a threat through the shared separation rule.
+   * Only for sites that already used it; everything else keeps its own
+   * math and routes the result through forceTo.
+   */
+  def forceAway(from: Pixel, threat: Pixel, tiles: Double): Unit =
+    forceTo(Mathematics.Separation.awayFrom(from, threat, tiles))
 
   def resetDestinations(): Unit = {
     destinations.foreach(_.clear())

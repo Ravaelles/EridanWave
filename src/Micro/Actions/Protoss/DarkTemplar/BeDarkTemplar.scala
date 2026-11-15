@@ -71,7 +71,7 @@ object BeDarkTemplar extends Action {
     unit.agent.toAttack = None
     unit.agent.act(label)
     val away = unit.pixel.project(threatPixel, -4.0 * 32.0)
-    unit.agent.destinationNext.set(?(away.walkable, away, away.walkablePixel))
+    unit.agent.forceTo(?(away.walkable, away, away.walkablePixel))
     Commander.move(unit)
     true
   }
@@ -115,7 +115,7 @@ object BeDarkTemplar extends Action {
         unit.agent.act("DarkTemplarHunt")
         if (unit.inRangeToAttack(t)) Commander.attack(unit)
         else {
-          unit.agent.destinationNext.set(t.pixel)
+          unit.agent.forceTo(t.pixel)
           Commander.move(unit)
         }
       case None =>

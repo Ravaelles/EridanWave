@@ -30,7 +30,7 @@ object BeRushingZealot extends Action {
     val fieldScore            = ZealotRushScoring.fieldScore(zealot)
     val battery               = ZealotShieldBattery.best(zealot)
     zealot.agent.shouldFight  = ZealotRushAssessment.shouldFight(zealot, fieldScore)
-    zealot.agent.destinationNext.set(With.scouting.enemyMain.map(_.heart.center).getOrElse(With.scouting.enemyHome.center))
+    zealot.agent.forceTo(With.scouting.enemyMain.map(_.heart.center).getOrElse(With.scouting.enemyHome.center))
     DrawMap.label(f"$fieldScore%.2f", zealot.pixel.add(0, 24))
 
     if (onlyAirIsOnUs(zealot) && battery.isDefined) {
@@ -69,7 +69,7 @@ object BeRushingZealot extends Action {
     } else if (target.isAny(Protoss.Zealot, Zerg.Zergling, IsWorker) && target.presumptiveTarget.contains(zealot) && target.inRangeToAttack(zealot)) {
       retreat(zealot)
     } else if (target.speedApproaching(zealot) < 0) {
-      zealot.agent.destinationNext.set(target.projectFrames(zealot.cooldownLeft))
+      zealot.agent.forceTo(target.projectFrames(zealot.cooldownLeft))
       Commander.move(zealot)
     } else {
       attack(zealot, target)
@@ -89,7 +89,7 @@ object BeRushingZealot extends Action {
     val allies = zealot.matchups.allies.filter(IsWarrior).flatMap(a => a.matchups.pixelsToThreatRange.map(d => (a.pixel, d)))
     val home = Withdraw.toAllies(zealot.matchups.pixelsToThreatRange, allies, With.geography.home.center)
 
-    zealot.agent.destinationNext.set(home)
+    zealot.agent.forceTo(home)
     Commander.move(zealot)
   }
 }

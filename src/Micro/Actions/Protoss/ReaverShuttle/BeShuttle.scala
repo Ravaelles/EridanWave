@@ -70,7 +70,7 @@ object BeShuttle extends Action {
       c => pickupNeed(shuttle, c) / (1.0 + c.pixelDistanceSquared(shuttle))).foreach(passenger => {
       shuttle.agent.addPassenger(passenger)
       shuttle.agent.act("FetchPassenger")
-      shuttle.agent.destinationNext.set(passenger.pixel)
+      shuttle.agent.forceTo(passenger.pixel)
       Commander.move(shuttle)
       acted = true
     })
@@ -173,7 +173,7 @@ object BeShuttle extends Action {
       val home = if (With.geography.ourBases.isEmpty) With.geography.home.center else With.geography.ourMain.heart.center
       val rear = ReaverShuttleFlight.rearOfCluster(members, home)
       shuttle.agent.act("FleeScourge")
-      shuttle.agent.destinationNext.set(CornerAntiStuckGuard.guard(
+      shuttle.agent.forceTo(CornerAntiStuckGuard.guard(
         rear,
         With.mapPixelWidth,
         With.mapPixelHeight,
@@ -214,7 +214,7 @@ object BeShuttle extends Action {
       With.mapPixelWidth,
       With.mapPixelHeight,
       CornerAntiStuckGuard.shuttleTiles)
-    shuttle.agent.destinationNext.set(away)
+    shuttle.agent.forceTo(away)
     Commander.move(shuttle)
 
     true
@@ -226,7 +226,7 @@ object BeShuttle extends Action {
 
     val goal = ReaverShuttlePair.raidGoal(shuttle)
     shuttle.agent.act("RaidFerry")
-    shuttle.agent.destinationNext.set(goal)
+    shuttle.agent.forceTo(goal)
     Commander.move(shuttle)
 
     true
@@ -241,7 +241,7 @@ object BeShuttle extends Action {
       bait(shuttle)
     } else {
       shuttle.agent.act("AwaitRide")
-      shuttle.agent.destinationNext.set(ReaverShuttlePair.armyGoal)
+      shuttle.agent.forceTo(ReaverShuttlePair.armyGoal)
       Commander.move(shuttle)
     }
   }
@@ -251,7 +251,7 @@ object BeShuttle extends Action {
     * over our own army. */
   private def bait(shuttle: FriendlyUnitInfo): Unit = {
     shuttle.agent.act("BaitRide")
-    shuttle.agent.destinationNext.set(ReaverShuttlePair.baitGoal)
+    shuttle.agent.forceTo(ReaverShuttlePair.baitGoal)
     Commander.move(shuttle)
   }
 
@@ -263,7 +263,7 @@ object BeShuttle extends Action {
     val cargo = shuttle.loadedUnits.view.filterNot(_.airborne)
     val centroid = Maff.centroid(Maff.orElse(cargo.map(_.pixel), Seq(shuttle.pixel)))
     shuttle.agent.act("ParkRide")
-    shuttle.agent.destinationNext.set(standoff(shuttle, centroid))
+    shuttle.agent.forceTo(standoff(shuttle, centroid))
     Commander.move(shuttle)
   }
 
@@ -284,7 +284,7 @@ object BeShuttle extends Action {
         mate.pixelDistanceCenter(shuttle.pixel) * Maff.inv32))
       .map(mate => {
         shuttle.agent.act("EscortRide")
-        shuttle.agent.destinationNext.set(standoff(shuttle, mate.pixel))
+        shuttle.agent.forceTo(standoff(shuttle, mate.pixel))
         Commander.move(shuttle)
         true
       }).getOrElse(false)
@@ -307,7 +307,7 @@ object BeShuttle extends Action {
   private def duel(shuttle: FriendlyUnitInfo): Unit = {
     ReaverShuttlePair.duelTarget(shuttle.pixel).map(target => {
       shuttle.agent.act("DuelFerry")
-      shuttle.agent.destinationNext.set(target)
+      shuttle.agent.forceTo(target)
       Commander.move(shuttle)
     }).getOrElse(park(shuttle))
   }

@@ -35,7 +35,7 @@ object BeFlier extends Action {
 
       val waypoint = MicroPathing.getWaypointInDirection(unit, unit.agent.forces.sum.radians)
       if (waypoint.isDefined) {
-        unit.agent.destinationNext.set(waypoint)
+        unit.agent.forceTo(waypoint)
         Commander.move(unit)
       }
     }

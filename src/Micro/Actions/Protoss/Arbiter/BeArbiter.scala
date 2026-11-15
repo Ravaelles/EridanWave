@@ -47,7 +47,7 @@ object BeArbiter extends Action {
     Separation.partner(arbiter.id, others).exists(older => {
       if (Separation.shouldSpread(arbiter.id, older.id, older.distTiles, DetectorSpread.minDistTiles)) {
         arbiter.cherryVisUnitLog("ArbiterSpread")
-        arbiter.agent.destinationNext.set(Separation.awayFrom(arbiter.pixel, older.pixel, DetectorSpread.minDistTiles))
+        arbiter.agent.forceAway(arbiter.pixel, older.pixel, DetectorSpread.minDistTiles)
         Commander.move(arbiter)
         true
       } else false

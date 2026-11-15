@@ -39,7 +39,7 @@ object AvoidUnseenKillers {
     if (unit.flying || ! unit.unitClass.isWarrior) return false
     if ( ! shouldAvoid(unit.tileDistanceEdge(killer), radiusTiles)) return false
 
-    unit.agent.destinationNext.set(awayFrom(unit.pixel, killer.pixel, fleeTiles).walkablePixel)
+    unit.agent.forceTo(awayFrom(unit.pixel, killer.pixel, fleeTiles).walkablePixel)
     unit.agent.escalatePriority(TrafficPriorities.Dodge)
     Commander.move(unit)
     unit.agent.act(label)

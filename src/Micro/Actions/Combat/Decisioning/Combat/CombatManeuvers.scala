@@ -29,7 +29,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     applySeparationForces()
     val radians   = unit.agent.forces.sum.radians
     val forceGoal = MicroPathing.getWaypointInDirection(unit, radians).orElse(unit.agent.destinationNext.pixel)
-    unit.agent.forced.set(forceGoal)
+    unit.agent.forceTo(forceGoal)
     move()
   }
 

@@ -78,7 +78,7 @@ object BeReaver extends Action {
     backOff.foreach(t => {
       context.unit.agent.act("BackOffStatic")
       val gap = context.unit.pixelRangeAgainst(t) + 8.0 - context.unit.pixelDistanceEdge(t)
-      context.unit.agent.destinationNext.set(context.unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
+      context.unit.agent.forceTo(context.unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
       Commander.move(context.unit)
     })
     backOff.isDefined
@@ -112,7 +112,7 @@ object BeReaver extends Action {
       && ! outranges(t, context.unit))
     close.foreach(t => {
       context.unit.agent.act("CloseStatic")
-      context.unit.agent.destinationNext.set(t.pixel)
+      context.unit.agent.forceTo(t.pixel)
       Commander.move(context.unit)
     })
     close.isDefined
@@ -125,7 +125,7 @@ object BeReaver extends Action {
     backOff.foreach(t => {
       context.unit.agent.act("BackOffStatic")
       val gap = context.unit.pixelRangeAgainst(t) + 32.0 - context.unit.pixelDistanceEdge(t)
-      context.unit.agent.destinationNext.set(context.unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
+      context.unit.agent.forceTo(context.unit.pixel.project(t.pixel, -Math.max(0.0, gap)).walkablePixel)
       Commander.move(context.unit)
     })
     backOff.isDefined
@@ -170,7 +170,7 @@ object BeReaver extends Action {
   private def duelWalk(unit: FriendlyUnitInfo): Unit = {
     Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && ! e.flying && unit.canAttack(e)))(_.pixelDistanceCenter(unit.pixel)).foreach(foe => {
       unit.agent.act("DuelWalk")
-      unit.agent.destinationNext.set(foe.pixel)
+      unit.agent.forceTo(foe.pixel)
       Commander.move(unit)
     })
   }

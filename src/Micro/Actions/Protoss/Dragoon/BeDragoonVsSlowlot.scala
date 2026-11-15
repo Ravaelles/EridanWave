@@ -40,7 +40,7 @@ object BeDragoonVsSlowlot extends Action {
           Commander.attack(unit)
         } else if (marginDelta > 32 && ! unit.matchups.threatsInPixels(160).exists(_.presumptiveTarget.contains(unit))) {
           unit.agent.forces.put(Forces.target, Potential.towards(unit, unit.pixelToFireAtExhaustive(unit.agent.toAttack.get)))
-          unit.agent.forced.set(MicroPathing.getWaypointInDirection(unit, unit.agent.forces.sum.radians).orElse(unit.agent.destinationNext.pixel))
+          unit.agent.forceTo(MicroPathing.getWaypointInDirection(unit, unit.agent.forces.sum.radians).orElse(unit.agent.destinationNext.pixel))
           Commander.move(unit)
         } else if (unit.pixelsToGetInRange(unit.agent.toAttack.get) < -32) {
           retreat(unit)

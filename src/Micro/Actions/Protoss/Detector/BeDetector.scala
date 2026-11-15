@@ -57,7 +57,7 @@ object BeDetector extends Action {
     Separation.partner(unit.id, others).exists(older => {
       if (Separation.shouldSpread(unit.id, older.id, older.distTiles, DetectorSpread.minDistTiles)) {
         unit.cherryVisUnitLog("DetectorSpread")
-        unit.agent.destinationNext.set(Separation.awayFrom(unit.pixel, older.pixel, DetectorSpread.minDistTiles))
+        unit.agent.forceAway(unit.pixel, older.pixel, DetectorSpread.minDistTiles)
         Commander.move(unit)
         true
       } else false
@@ -97,7 +97,7 @@ object BeDetector extends Action {
       _.pixelDistanceCenter(unit.pixel))
     (for (hunter <- hunterPixel; if shouldFleeHunters(detectorTiles, unit.tileDistanceCenter(hunter.pixel))) yield {
       unit.cherryVisUnitLog("ObserverFleeHunters")
-      unit.agent.destinationNext.set(CornerAntiStuckGuard.guard(
+      unit.agent.forceTo(CornerAntiStuckGuard.guard(
         AirFlee.fleeFrom(unit.pixel, hunter.pixel, AirFlee.marginTiles(unit.woundPercent(), marginLowTiles, marginHighTiles)),
         With.mapPixelWidth,
         With.mapPixelHeight))
@@ -114,7 +114,7 @@ object BeDetector extends Action {
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
     AirFlee.fleePixel(unit.pixel, threats, unit.woundPercent(), With.mapPixelWidth, With.mapPixelHeight, marginLowTiles, marginHighTiles).exists(dest => {
       unit.cherryVisUnitLog("ObserverFlee")
-      unit.agent.destinationNext.set(dest)
+      unit.agent.forceTo(dest)
       Commander.move(unit)
       true
     })
@@ -129,7 +129,7 @@ object BeDetector extends Action {
     nearest.exists(foe => {
       if (DetectorSpread.standOffLatched(unit.id, unit.tileDistanceEdge(foe) * Maff.inv32)) {
         unit.cherryVisUnitLog("ObserverStandOff")
-        unit.agent.destinationNext.set(DetectorSpread.standOff(unit.pixel, foe.pixel))
+        unit.agent.forceTo(DetectorSpread.standOff(unit.pixel, foe.pixel))
         Commander.move(unit)
         true
       } else false
