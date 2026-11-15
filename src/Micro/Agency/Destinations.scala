@@ -24,4 +24,9 @@ object Destinations {
     Station,
     Forced,
     Decision)
+  // DestinationStack indexes All by level offset, so the levels must stay
+  // contiguous from Home: a gap or reorder silently shifts every lookup.
+  require(
+    All.map(_.level) == ((-2) to 4).toVector,
+    "Destination levels must be contiguous from Home(-2) to Decision(4)")
 }
