@@ -78,7 +78,10 @@ object MarchOrders {
   private def readFacts(): MarchFacts = {
     val home = if (With.geography.ourBases.isEmpty) None else Some(With.geography.ourMain.heart.center)
     MarchFacts(
-      enemyIsTerran    = With.enemies.exists(_.isTerran),
+      // Races from units on the board, not lobby slots: UMS maps field
+      // several enemy races at once while only one ever shows up, and a
+      // phantom race flips every race-gated march rule for the whole game.
+      enemyIsTerran    = With.units.enemy.exists(_.unitClass.isTerran),
       enemyHasTanks    = With.units.enemy.exists(t => Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t)),
       enemyHasVultures = With.units.enemy.exists(Terran.Vulture(_)),
       bankedMinerals   = With.self.minerals,
