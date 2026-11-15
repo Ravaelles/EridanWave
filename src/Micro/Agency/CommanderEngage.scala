@@ -133,11 +133,9 @@ object CommanderEngage {
   // Return the waypoint or a nearby point with collision clearance, or None if none fits.
   // BW treats touching outer collision boxes as a unit destination. Keep a pixel of clearance.
   private[Micro] def useTech(unit: FriendlyUnitInfo, tech: Tech): Unit = {
-    if (tech == Terran.Stim) {
-      if (With.framesSince(unit.agent.lastStim) < 24) return
+    if (With.framesSince(unit.agent.lastStim) < TechCooldowns.recastFrames(tech)) return
 
-      unit.agent.lastStim = With.frame
-    }
+    if (TechCooldowns.recastFrames(tech) > 0) unit.agent.lastStim = With.frame
 
     CommanderCore.ready(unit) {
       unit.bwapiUnit.useTech(tech.bwapiTech)
@@ -148,18 +146,17 @@ object CommanderEngage {
     unit.agent.setRideGoal(target.pixel)
     CommanderCore.ready(unit) {
       unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapiUnit)
-      if (tech == Protoss.ArchonMeld || tech == Protoss.DarkArchonMeld) CommanderCore.sleep(unit, 48)
-      else CommanderCore.sleep(unit)
+      TechCooldowns.after(tech).map(CommanderCore.sleep(unit, _)).getOrElse(CommanderCore.sleep(unit))
     }
   }
   private[Micro] def useTechOnPixel(unit: FriendlyUnitInfo, tech: Tech, target: Pixel): Unit = {
     unit.agent.setRideGoal(target)
     CommanderCore.ready(unit) {
       unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapi)
-      if (tech == Terran.SpiderMinePlant) CommanderCore.sleep(unit, 12)
-      else CommanderCore.sleepAttack(unit)
+      TechCooldowns.after(tech).map(CommanderCore.sleep(unit, _)).getOrElse(CommanderCore.sleepAttack(unit))
     }
   }
 }
+
 
 
