@@ -44,25 +44,4 @@ class AirFleeSuite extends AnyFunSuite {
     val away = AirFlee.fleePixel(Pixel(2160, 2320), Seq(Pixel(2000, 2000), Pixel(2320, 2000)), wound01 = 0.0, mapW, mapH)
     assert(away.exists(p => p.y > 2320 && p.x == 2160))
   }
-
-  test("a corner destination slides out along the shallower penetration") {
-    assert(AirFlee.outOfCorner(Pixel(10, 10), mapW, mapH) == Pixel(10, 192))
-    assert(AirFlee.outOfCorner(Pixel(4086, 10), mapW, mapH) == Pixel(4086, 192))
-    assert(AirFlee.outOfCorner(Pixel(10, 4086), mapW, mapH) == Pixel(10, mapH - 192))
-  }
-
-  test("edges and center pass through untouched") {
-    assert(AirFlee.outOfCorner(Pixel(2000, 10), mapW, mapH) == Pixel(2000, 10))
-    assert(AirFlee.outOfCorner(Pixel(2000, 2000), mapW, mapH) == Pixel(2000, 2000))
-  }
-
-  test("an overshooting flee clamps to the map") {
-    val out = AirFlee.outOfCorner(Pixel(-50, 2000), mapW, mapH)
-    assert(out == Pixel(0, 2000))
-  }
-
-  test("a custom corner width keeps clear earlier") {
-    assert(AirFlee.outOfCorner(Pixel(300, 300), mapW, mapH) == Pixel(300, 300))
-    assert(AirFlee.outOfCorner(Pixel(300, 300), mapW, mapH, 15.0) == Pixel(300, 480))
-  }
 }

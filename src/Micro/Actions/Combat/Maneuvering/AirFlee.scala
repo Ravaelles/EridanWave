@@ -9,13 +9,11 @@ import Mathematics.Points.Pixel
  * inside firing range, on a wound-scaled margin - a fresh hull skates, a
  * dying one turns early. The band is the caller's: Corsairs and Shuttles
  * skate at 3->10, eyes hold wider at 6->12. The flee destination never
- * lands in a map corner: corner squares are unusable traps, so a
- * destination inside one slides out along the nearest edge instead of
- * diving deeper. The trap width is the caller's too (Shuttles keep clear
- * of corners early, eyes only dodge the innermost squares). Pure pixels
- * in, pixels out; the caller gathers threats (any enemy that can attack
- * the victim), passes map bounds, and issues the order. One home for the
- * rule so air doctrines cannot drift apart on where safety ends.
+ * lands in a map corner: CornerGuard slides a destination out of the
+ * caller's trap squares instead of diving deeper. Pure pixels in, pixels
+ * out; the caller gathers threats (any enemy that can attack the victim),
+ * passes map bounds, and issues the order. One home for the flee rule so
+ * air doctrines cannot drift apart on where safety ends.
  */
 object AirFlee {
 
@@ -43,33 +41,9 @@ object AirFlee {
     own.project(focus, -marginTiles * 32)
 
   /**
-   * Corner guard (pure map math): a destination inside a corner square
-   * slides out along the nearest edge - vertically or horizontally off
-   * the trap - instead of diving deeper. Destinations outside the map
-   * clamp to its bounds first. Edges and center pass through untouched.
-   * The trap width rides along so callers with longer flee legs keep
-   * clear earlier; the default is the innermost squares.
-   */
-  def outOfCorner(dest: Pixel, mapWpx: Int, mapHpx: Int, cornerTiles: Double = AirFlee.cornerTiles): Pixel = {
-    val c = (cornerTiles * 32).toInt
-    val x = Math.max(0, Math.min(mapWpx, dest.x))
-    val y = Math.max(0, Math.min(mapHpx, dest.y))
-    val inLeft = x < c
-    val inRight = x > mapWpx - c
-    val inTop = y < c
-    val inBottom = y > mapHpx - c
-    if ((inLeft || inRight) && (inTop || inBottom)) {
-      val penX = Math.min(x, mapWpx - x)
-      val penY = Math.min(y, mapHpx - y)
-      if (penX < penY) Pixel(if (x * 2 < mapWpx) c else mapWpx - c, y)
-      else Pixel(x, if (y * 2 < mapHpx) c else mapHpx - c)
-    } else Pixel(x, y)
-  }
-
-  /**
    * Flee destination, if any threat is inside the trigger: centroid,
    * wound-scaled margin (custom bounds for eyes that never shoot back),
-   * corner-guarded. Nothing in range means nothing.
+   * corner-guarded on the caller's trap width. Nothing in range means nothing.
    */
   def fleePixel(own: Pixel, threats: Seq[Pixel], wound01: Double, mapWpx: Int, mapHpx: Int): Option[Pixel] =
     fleePixel(own, threats, wound01, mapWpx, mapHpx, marginLowTiles, marginHighTiles)
@@ -82,9 +56,10 @@ object AirFlee {
     mapHpx: Int,
     marginLowTiles: Double,
     marginHighTiles: Double,
-    triggerTiles: Double = AirFlee.triggerTiles): Option[Pixel] = {
+    triggerTiles: Double = AirFlee.triggerTiles,
+    cornerTiles: Double = AirFlee.cornerTiles): Option[Pixel] = {
     val near = threats.filter(t => own.pixelDistance(t) <= triggerTiles * 32.0)
     focus(near).map(focus =>
-      outOfCorner(fleeFrom(own, focus, marginTiles(wound01, marginLowTiles, marginHighTiles)), mapWpx, mapHpx))
+      CornerGuard.guard(fleeFrom(own, focus, marginTiles(wound01, marginLowTiles, marginHighTiles)), mapWpx, mapHpx, cornerTiles))
   }
 }
