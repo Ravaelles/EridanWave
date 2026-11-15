@@ -74,6 +74,10 @@ object CherryVis {
    * (same client object short-circuits before any string is built).
    */
   def noteOwner(unitId: Int, owner: Any): Unit = {
+    // Manager changes ride the probe too: UMS games emit no trace, so
+    // the active intend-client would otherwise be invisible there.
+    // Change-only like the trace channel below (the probe dedups).
+    Debugging.Probe.note("Owner", unitId, shortName(owner))
     if ( ! enabled) return
 
     val ref = owner.asInstanceOf[AnyRef]
