@@ -6,8 +6,8 @@ object EridanEventListener extends BWEventListener {
 
   var bot: Option[BWEventListener] = None
 
-  var lastException: Option[Exception] = None
-  var lastStackTrace: Option[String] = None
+  private var lastException: Option[Exception] = None
+  private var lastStackTrace: Option[String] = None
   var gameCount: Int = 0
 
   override def onStart(): Unit = {
@@ -22,6 +22,11 @@ object EridanEventListener extends BWEventListener {
     catch { case exception: Exception =>
       lastException = Some(exception)
       lastStackTrace = Some(exception.getStackTrace.mkString(System.lineSeparator()))
+      // A failed onStart used to sit silent in the fields above while the
+      // process hung in a dead game. Shout it like every other launcher
+      // failure instead; the fields stay for post-mortem, now private.
+      System.err.println("[launcher] Startup failed: " + exception)
+      exception.getStackTrace.foreach(ste => System.err.println("[launcher] \tat " + ste))
     }
   }
 

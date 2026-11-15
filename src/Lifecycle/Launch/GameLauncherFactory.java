@@ -86,15 +86,18 @@ public final class GameLauncherFactory {
     }
 
     /**
-     * True when this JVM itself is a Windows process running under Wine -
-     * detected via the env markers Wine sets for its child processes.
+     * True when this JVM was started as the Wine game client (explicit
+     * {@code -Deridanwave.wineClient}, always passed by wine-run.sh).
+     * The old environment sniffing (WINEDEBUG/WINEDLLOVERRIDES/WINEPREFIX)
+     * is gone on purpose: Wine strips its own markers before the Windows
+     * process sees them, so it never fired where intended and only ever
+     * misfired - a Linux supervisor JVM with WINEPREFIX exported was
+     * routed to the do-nothing client backend and looped on "Game table
+     * mapping not found" forever. Native Windows without the flag keeps
+     * the configured backend (chaos included).
      */
     static boolean runningUnderWine() {
-        boolean wineMarkers = System.getenv("WINEDEBUG") != null
-            || System.getenv("WINEDLLOVERRIDES") != null
-            || System.getenv("WINEPREFIX") != null;
-
-        return wineMarkers;
+        return isWineClientJvm();
     }
 }
 

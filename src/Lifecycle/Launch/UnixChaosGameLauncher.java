@@ -12,32 +12,11 @@ import java.util.List;
  * {@code scripts/wine-run.sh} with inherited I/O so the owner sees
  * everything in the IDE console, and exits with the script's exit code.
  * The real bot is the Windows-JRE JVM the script starts under Wine.
- *
- * <p>When this JVM itself already runs under Wine (Windows process), the game
- * host is already up and this process is a client that only attaches: patch
- * bwapi.ini and return, without starting anything or killing anything.</p>
  */
 public final class UnixChaosGameLauncher implements GameLauncher {
 
     @Override
     public void launch(LaunchConfig config) {
-        if (GameLauncherFactory.runningUnderWine()) {
-            System.out.println("===============================================");
-            System.out.println("[launcher] Wine client (JVM under Wine, attaching to the game).");
-            System.out.println("===============================================");
-
-            if ( ! GameLauncherFactory.isHeadlessRun()) {
-                Lifecycle.Keyboard.Keyboard.listen(Lifecycle.Keyboard.Keyboard.Mode.BOT);
-            }
-
-            File ini = defaultWineIni(config);
-            BwapiIni.patch(ini, config.getMap(), config.getRace(), config.getEnemyRace(),
-                config.getGameType(), true);
-            // Do NOT start ChaosLauncher, do NOT pkill: the game is already up.
-
-            return;
-        }
-
         System.out.println("===============================================");
         System.out.println("[launcher] Backend: Wine + StarCraft + ChaosLauncher (Linux).");
         System.out.println("===============================================");
