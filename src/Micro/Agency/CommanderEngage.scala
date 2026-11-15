@@ -132,6 +132,18 @@ object CommanderEngage {
 
     useAttackCommand      &&= target.visible
 
+    // Closing in: attack-move at a firing position by the target instead
+    // of issuing a raw attack order. A raw order re-issued while walking
+    // resets acceleration to a crawl (the sticking the safe-arrival math
+    // guards against), so a shooter closing twenty tiles never arrives;
+    // attack-move keeps walking and opens fire on arrival. Kiting (in
+    // range but cooling) keeps the move path below untouched.
+    if (unit.canMove && ! unit.inRangeToAttack(target)) {
+      CommanderMove.attackMove(unit, unit.pixelToFireAtExhaustive(target))
+
+      return
+    }
+
     if (useAttackCommand) {
 
       lazy val moving           = unit.moving
