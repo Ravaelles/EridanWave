@@ -52,14 +52,11 @@ object CommanderWork {
       } else {
         lazy val coworkers            = With.gathering.getWorkersByResource(resource)
         lazy val accelerantFrame      = 11 + With.latency.remainingFrames
-        lazy val accelerantMineral    = With.gathering.getAccelerantMineral(resource)
         lazy val accelerantPixel      = With.gathering.getAccelerantPixelSteady(resource)
         lazy val distance             = unit.pixelDistanceEdge(resource)
         lazy val projectedFrames      = Maff.nanToZero(Math.max(0, distance - unit.unitClass.haltPixels) / unit.topSpeed + 2 * Math.min(distance, unit.unitClass.haltPixels) / unit.topSpeed)
         lazy val onAccelerantPixel    = With.gathering.onAccelerant(unit, resource)
         lazy val onTargetMineral      = unit.orderTarget.contains(resource)
-        lazy val onAccelerantMineral  = accelerantMineral.exists(unit.orderTarget.contains)
-        def doGatherFromAccelerant(): Unit = { unit.bwapiUnit.gather(accelerantMineral.get.bwapiUnit) }
         if (unit.order == Orders.MiningMinerals) {
           // Leave well alone!
         // Reduce delay after returning cargo. Cargo-culted from Stardust: https://github.com/bmnielsen/Stardust/commit/1f303c8735aac2de348a8528b7e42fb75de3d96b
@@ -74,18 +71,9 @@ object CommanderWork {
           doGather()
         } else if (projectedFrames == accelerantFrame) {
           doGather()
-        } else if (accelerantMineral.isDefined && false) { // TODO: Need to filter accelerant minerals before relying on them; they need to pull the worker across their face relative to the town hall or at least be a straight horizontal shot
-          if (onTargetMineral) {
-            if (projectedFrames > accelerantFrame) {
-              doGatherFromAccelerant()
-            }
-          } else if (onAccelerantMineral) {
-            if (distance < 32 || unit.pixelDistanceEdge(accelerantMineral.get) < 32) {
-              doGather()
-            }
-          } else if (projectedFrames > accelerantFrame) {
-            doGatherFromAccelerant()
-          }
+          // TODO: accelerant minerals need filtering before relying on them;
+          // they must pull the worker across their face relative to the town
+          // hall or at least be a straight horizontal shot.
         } else if ( ! onTargetMineral && ! unit.orderTarget.contains(resource)) {
           // Like gas above: never re-issue an identical gather - reorders
           // reset acceleration, so a cross-map trip crawls to a stop

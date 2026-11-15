@@ -154,33 +154,5 @@ object Tickle extends Action {
     tickler.agent.forces.put(Forces.spacing, Potential.preferSpacing(tickler))
     MicroPathing.moveForcefully(tickler)
   }
-
-  def repair(tickler: FriendlyUnitInfo): Unit = {
-    if (Terran.SCV(tickler)) {
-      val medics = tickler.matchups.allies.filter(_.orderTarget.contains(tickler))
-      if (medics.nonEmpty) {
-        val repairables = tickler.matchups.allies.filter(a => Terran.SCV(a) && a.totalHealth < 60 && tickler.inRangeToAttack(a))
-        val mostInjured = Maff.minBy(repairables)(_.totalHealth)
-        val attacker    = tickler.matchups.allies.exists(_.friendly.exists(_.agent.toAttack.isDefined))
-        if (attacker && mostInjured.exists(_.totalHealth < 35)) {
-          Commander.rightClick(tickler, mostInjured.get)
-        } else if (tickler.matchups.targetsInRange.nonEmpty) {
-          tickler.agent.toAttack = Maff.minBy(tickler.matchups.targetsInRange)(_.totalHealth)
-          Commander.attack(tickler)
-        } else {
-          val medic = medics.minBy(_.totalHealth)
-          if (medic.totalHealth < 60) {
-            Commander.rightClick(tickler, medics.minBy(_.totalHealth))
-          } else {
-            Commander.stop(tickler)
-          }
-        }
-      } else if (With.self.minerals > 10) {
-        val repairables = tickler.matchups.allies.filter(a => Terran.SCV(a) && a.totalHealth < 32 && (tickler.pixelsToGetInRange(a) < 12 || tickler.matchups.pixelsToThreatRange.forall(p => a.matchups.pixelsToThreatRange.forall(_ < p))) && a.totalHealth <= tickler.totalHealth)
-        val repairable = Maff.minBy(repairables)(_.pixelDistanceEdge(tickler))
-        repairable.foreach(Commander.rightClick(tickler, _))
-      }
-    }
-  }
 }
 

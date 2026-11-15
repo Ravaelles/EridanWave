@@ -20,7 +20,7 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Tactic.Squads.Group.GenericFriendlyUnitGroup
 import Tactic.Squads.Group.TFriendlyUnitGroup
 import Tactic.Squads.Group.UnitGroup
-import Utilities.Time.{Forever, Seconds}
+import Utilities.Time.Forever
 import Utilities.?
 
 final class Combat(unit: FriendlyUnitInfo) extends Action {
@@ -45,7 +45,6 @@ final class Combat(unit: FriendlyUnitInfo) extends Action {
   private[Decisioning] def squadEngagedUpon      : Boolean = unit.squad.map(_.engagedUpon).getOrElse(unit.matchups.engagedUpon)
   private[Decisioning] def squadEngagingOn       : Boolean = unit.squad.map(_.engagingOn).getOrElse(unit.matchups.engagingOn)
   private[Decisioning] def fightConsensus        : Boolean = unit.squad.map(_.fightConsensus).getOrElse(unit.agent.shouldFight)
-  private[Decisioning] def assembling            : Boolean = false && unit.formationEngage.isDefined && ! group.engagedUpon && Math.max(0.25, group.confidence11) < 0.95 - group.restrainedFrames / Seconds(10)()
   private[Decisioning] def targetFleeing         : Boolean = target.exists(t => t.canMove && Maff.isTowards(unit.pixel, t.pixel, t.angleRadians))
   private[Decisioning] def targetDistanceHere    : Double  = target.map(unit.pixelDistanceEdge).getOrElse(0d)
   private[Decisioning] def targetDistanceThere   : Double  = target.map(unit.pixelDistanceEdgeFrom(_, unit.agent.destinationNext())).getOrElse(0d)

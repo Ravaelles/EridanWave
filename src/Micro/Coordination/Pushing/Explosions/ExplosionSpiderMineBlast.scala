@@ -43,11 +43,7 @@ class ExplosionSpiderMineBlast(mine: UnitInfo) extends CircularPush(TrafficPrior
       && recipient.readyForAttackOrder(mine)
       && recipient.pixelRangeAgainst(mine) > SpiderMineMath.radius) {
       None
-    } else if(
-      // TODO: We are mine dragging
-      false
-    ) {
-      None
+    // TODO: mine dragging - defuse the mine when we are dragging it.
     } else {
       super.force(recipient)
     }

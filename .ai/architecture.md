@@ -57,12 +57,15 @@ holds/loads/unloads via `Commander`).
 ## 5. Layer guide (which architecture for what)
 
 - **Gameplan/strategy**: what tech and army (`Gameplans`, `Strategery`).
-- **Squad activity**: where the cluster goes (`Tactic.Squads`).
-- **Unit behavior**: how in contact (`Micro.Corsair`, Reaver chain).
+- **Squad activity**: where the cluster goes (`Tactic.Squads`, `Tactic.Corsair`).
+- **Unit behavior**: how in contact (`Micro.Actions`, Reaver chain).
 - **Mission**: coordinated multi-unit jobs with locks/itineraries
   (`Tactic.Missions`, drops only). No new state machines elsewhere.
 - **Shared combat pipeline** (`Combat` facade + grouped delegates in
   `Decisioning/Combat/`): vocabulary and dispatch, never unit specifics.
+- **Naming**: `Be*` are `Action`s dispatched from `Fight.perform`,
+  `*Behavior` are helpers called by `CombatEngagement`, `*Brain` is a
+  first-claims chain - pick the one that matches the layer above.
 
 ## 6. From Atlantis: port decisions, not plumbing
 

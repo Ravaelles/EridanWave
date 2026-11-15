@@ -1,8 +1,7 @@
 package Micro.Targeting.FiltersRequired
 
-import Lifecycle.With
 import Micro.Targeting.TargetFilter
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object TargetFilterReaver extends TargetFilter {
@@ -22,22 +21,9 @@ object TargetFilterReaver extends TargetFilter {
       // Problems with the "don't get shot by a siege tank" filter
       // - risk is predicated on firing pixel which we don't have yet
       // - we can be shot by targets other than the tank
+      // so it stays off until the firing pixel is known.
+
       return true
-
-      // Don't try to snipe tanks that will kill us first
-      if (actor.loaded
-        && Terran.SiegeTankSieged(target)
-        && target.cooldownLeft < Math.max(actor.cooldownLeft, With.game.getRemainingLatencyFrames)
-        && target.matchups.targetsInRange.forall(actor==)) {
-        return false
-      }
-
-      val safeToAttack = (
-        ! target.canAttack(actor)
-        || target.pixelRangeAgainst(actor) < actor.pixelRangeAgainst(target)
-        || ( ! actor.loaded && actor.inRangeToAttack(target)))
-
-      if ( ! safeToAttack) return false
     }
 
     if (actor.inRangeToAttack(target))                      return true

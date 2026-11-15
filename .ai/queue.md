@@ -76,6 +76,12 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 
 ## Open: micro validation (needs games that reach it)
 
+- Spot retreat logic (sloppy catch-all today; doesn't handle the observer/
+  detector/caster cases separately - needs a game per case).
+- Carrier stop-hold micro (SH doubles Carrier DPS; needs a Carrier test
+  map + visualizations first - links live in BeCarrier).
+- Carrier post-attack answer (24f placeholder; needs a better answer
+  than the flat wait).
 - DT hunt bravery concept NOT BUILT (dither fixed, but 6 DTs died
   1-7 HP unconnected hunting alone - no duel without local edge).
 - Dying Templars suicide-storm the median pack.
