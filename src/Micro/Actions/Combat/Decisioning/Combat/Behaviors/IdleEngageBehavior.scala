@@ -1,8 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
 import Lifecycle.With
-import Mathematics.Maff
-import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
@@ -27,12 +25,6 @@ object IdleEngageBehavior {
       shouldFight       = unit.agent.shouldFight,
       locallyAhead      = unit.matchups.threatsInRange.isEmpty)) return false
 
-    val target = Maff.minBy(hittable)(unit.pixelDistanceEdge(_)).get
-    if ( ! unit.orderTarget.contains(target)) {
-      unit.agent.act("IdleEngage")
-      Commander.attack(unit, target)
-    }
-
-    true
+    NearestShot.take(unit, "IdleEngage", hittable)
   }
 }

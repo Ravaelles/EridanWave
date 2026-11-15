@@ -2,7 +2,6 @@ package Micro.Actions.Combat.Decisioning
 
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.CrucialAirSnipe._
-import Micro.Agency.Commander
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
@@ -36,12 +35,8 @@ object CrucialAirSnipeBehavior {
       distTiles = unit.pixelDistanceEdge(t) * Maff.inv32,
       kind = kindOf(t).get,
       totalHealth = t.totalHealth))
-    CrucialAirSnipe.pick(marks.toSeq).foreach(i => {
-      if ( ! unit.orderTarget.contains(victims(i))) {
-        unit.agent.act("CrucialSnipe")
-        Commander.attack(unit, victims(i))
-      }
-    })
+    CrucialAirSnipe.pick(marks.toSeq).foreach(i =>
+      NearestShot.take(unit, "CrucialSnipe", Seq(victims(i))))
 
     true
   }

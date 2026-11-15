@@ -2,7 +2,6 @@ package Micro.Actions.Combat.Decisioning
 
 import Lifecycle.With
 import Mathematics.Maff
-import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
@@ -22,12 +21,6 @@ object SuicideEngageBehavior {
     val enemy = Maff.minBy(unit.matchups.enemies.filter(_.alive))(_.pixelDistanceEdge(unit))
     if ( ! SuicideEngage.shouldForceAttack(With.framesSince(unit.lastFrameStartingAttack), enemy.isDefined)) return false
 
-    val target = enemy.get
-    if ( ! unit.orderTarget.contains(target)) {
-      unit.agent.act("SuicideEngage")
-      Commander.attack(unit, target)
-    }
-
-    true
+    NearestShot.take(unit, "SuicideEngage", enemy.toSeq)
   }
 }

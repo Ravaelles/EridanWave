@@ -1,7 +1,5 @@
 package Micro.Actions.Combat.Decisioning
 
-import Mathematics.Maff
-import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.ContainStatus
 
@@ -23,12 +21,6 @@ object ContainFireBehavior {
 
     if ( ! ContainFire.shouldShoot(cooldownLeft = unit.cooldownLeft, hasHittableTarget = hittable.nonEmpty)) return false
 
-    val target = Maff.minBy(hittable)(unit.pixelDistanceCenter(_)).get
-    if ( ! unit.orderTarget.contains(target)) {
-      unit.agent.act("ContainFire")
-      Commander.attack(unit, target)
-    }
-
-    true
+    NearestShot.take(unit, "ContainFire", hittable, unit.pixelDistanceCenter(_))
   }
 }
