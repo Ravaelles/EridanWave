@@ -101,10 +101,16 @@ object BeShuttle extends Action {
       // A healthy Reaver holding its ground is not a pickup: adopting it
       // glues the ride to a hull that will never board, and the chase
       // claims every frame below, starving escort, park and await. Fetch
-      // only hailing, endangered, travelling or Scarab-targeted Reavers.
+      // only hailing, endangered, travelling or Scarab-targeted Reavers -
+      // and never one already fighting something hittable unless it is
+      // explicitly hailing: a fighting hull holds its ground instead of
+      // boarding, so the ride escorts (hovering boardable) instead of
+      // fetching past it forever.
       && (passenger.matchups.targetedByScarab
         || passenger.agent.wantsPickup
-        || (Protoss.Reaver(passenger) && (endangered(shuttle, passenger) || travelsFar(passenger) || ReaverShuttlePair.pairIdle(shuttle, passenger) || strandedFetch(shuttle, passenger) || shuttle.agent.passengers.contains(passenger)))
+        || (Protoss.Reaver(passenger)
+          && passenger.matchups.targetsInRange.isEmpty
+          && (endangered(shuttle, passenger) || travelsFar(passenger) || ReaverShuttlePair.pairIdle(shuttle, passenger) || strandedFetch(shuttle, passenger) || shuttle.agent.passengers.contains(passenger)))
         || (Protoss.HighTemplar(passenger) && MacroFacts.techStarted(Protoss.PsionicStorm)))
       && (shuttle.agent.passengers.isEmpty || shuttle.agent.passengers.headOption.map(_.squad).getOrElse(shuttle.squad).forall(passenger.squad.contains))
     )
