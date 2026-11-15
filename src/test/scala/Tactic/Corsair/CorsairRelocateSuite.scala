@@ -1,4 +1,4 @@
-package Micro.Corsair
+package Tactic.Corsair
 
 import org.scalatest.funsuite.AnyFunSuite
 

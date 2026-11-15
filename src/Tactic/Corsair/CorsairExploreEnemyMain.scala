@@ -1,4 +1,4 @@
-package Micro.Corsair
+package Tactic.Corsair
 
 import Lifecycle.With
 import ProxyBwapi.Races.Protoss

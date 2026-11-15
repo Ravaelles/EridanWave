@@ -47,7 +47,7 @@ class SquadAcePilots extends Squad {
       With.logger.debug(f"Pilots switch from $lastActivity to $activity")
     }
     holdFreshAttackers()
-    Micro.Corsair.CorsairBrain.act(this)
+    Tactic.Corsair.CorsairBrain.act(this)
   }
 
   /**
