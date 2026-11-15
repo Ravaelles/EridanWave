@@ -39,8 +39,8 @@ case class MatchupAnalysis(me: UnitInfo) {
   def enemies                     : Seq[UnitInfo]     = battleEnemies.map(withEntrants(_, _.isEnemyOf(me))).getOrElse(groupVs.groupUnits.view)
   def others                      : Seq[UnitInfo]     = enemies ++ allies
   def allUnits                    : Seq[UnitInfo]     = others :+ me
-  def threats                     : Seq[UnitInfo]     = enemies.filter(threatens(_, me)).filterNot(Protoss.Interceptor)
-  def targets                     : Seq[UnitInfo]     = ?(me.unitClass.canAttack || me.unitClass.isTransport, enemies.filter(threatens(me, _)), Seq.empty)
+  def threats                     : Seq[UnitInfo]     = enemies.filter(threatens(_, me, ownSide = false)).filterNot(Protoss.Interceptor)
+  def targets                     : Seq[UnitInfo]     = ?(me.unitClass.canAttack || me.unitClass.isTransport, enemies.filter(threatens(me, _, ownSide = true)), Seq.empty)
   def threatsInRange              : Seq[UnitInfo]     = threats.filter(threat => threat.pixelRangeAgainst(me) >= threat.pixelDistanceEdge(me))
   def threatsInPixels(p: Double)  : Seq[UnitInfo]     = threats.filter(_.pixelsToGetInRange(me) <= p)
   /**
@@ -91,7 +91,16 @@ case class MatchupAnalysis(me: UnitInfo) {
   private val _inTankRange          = new Cache(() => threatsInRange.exists(Terran.SiegeTankSieged))
   private val _inRangeOfTank        = new Cache(() => targetsInRange.exists(Terran.SiegeTankSieged))
   private val _withinSafetyMargin   = new Cache(() => pixelsEntangled <= ?(me.flying && me.topSpeed > groupVs.maxAttackerSpeedVsAir, -64, -safetyMargin))
-  private val _threateningMiners    = new Cache(() => me.metro.exists(m => m.owner != me.player && m.units.exists(t => t.isEnemyOf(me) && IsWorker(t) && t.friendly.flatMap(_.intent.toGather).orElse(t.orderTarget).exists(r => r.unitClass.isResource && r.base.exists(t.base.contains) && me.pixelDistanceEdge(r) + me.pixelDistanceEdge(t) < 96 + 2 * me.pixelRangeGround))))
+  private val _threateningMiners    = new Cache(() => me.metro.exists(m => m.units.exists(t =>
+    t.isEnemyOf(me) && IsWorker(t) && {
+      val gathered = t.friendly.flatMap(_.intent.toGather).orElse(t.orderTarget)
+        .filter(r => r.unitClass.isResource && r.base.exists(t.base.contains))
+      MinerThreat.threatened(
+        metroOurs         = m.owner == me.player,
+        gathering         = gathered.isDefined,
+        approachPixels    = gathered.map(r => me.pixelDistanceEdge(r)).getOrElse(Double.PositiveInfinity) + me.pixelDistanceEdge(t),
+        rangeGroundPixels = me.pixelRangeGround)
+    })))
   private val _targetedByScarab     = new Cache(() => me.battle.exists(_.scarabTargets.exists(_._2 == me)))
   private val _framesToLive         = new Cache(() => me.likelyDoomedInFrames)
   private val _wantsToVolley        = new Cache(() => ?(
@@ -100,25 +109,22 @@ case class MatchupAnalysis(me: UnitInfo) {
     targetNearest.flatMap(target =>
       threatDeepest.flatMap(deepest =>
         threatNearest.flatMap(nearest =>
-          threatSoonest
-            .map(soonest =>
-              // Volleying must not decrease our DPS relative to theirs.
-              // Dragoon vs. anyone: Yes
-              // Corsair vs. Mutalisk: No
-              (me.cooldownMaxAgainst(target) > me.unitClass.framesToPotshot
-                // Speed Hydra vs. Slow Zealot: Yes
-                // Slow Hydra vs. Slow Zealot: No
-                || (me.pixelRangeAgainst(target) > deepest.pixelRangeAgainst(me) && me.topSpeed > deepest.topSpeed)
-              // Volleying must not let them open a gap against us
-              // Dragoon vs. Cannon: Yes
-              // Rangeless Dragoon vs. Ranged Dragoon: No
-              && (me.pixelRangeAgainst(target) >= deepest.pixelRangeAgainst(me)
-                || me.pixelRangeAgainst(target) >= nearest.pixelRangeAgainst(me)
-                || me.topSpeed > deepest.topSpeed))))))))
+          threatSoonest.map(_ =>
+            VolleyDiscipline.wants(
+              me.cooldownMaxAgainst(target),
+              me.unitClass.framesToPotshot,
+              me.pixelRangeAgainst(target),
+              deepest.pixelRangeAgainst(me),
+              nearest.pixelRangeAgainst(me),
+              me.topSpeed,
+              deepest.topSpeed)))))))
 
-  protected def threatens(shooter: UnitInfo, victim: UnitInfo): Boolean = (
-    victim.friendly.exists(_.transport.exists(threatens(shooter, _)))
-    || shooter.canAttack(victim, assumeDetection = victim.effectivelyCloaked && ?(shooter == me, groupOf, groupVs).detectionAvailable)
+  // Whose detection the shooter leans on rides in as a flag: our own
+  // group when we shoot, the enemy group when they shoot at us. Same
+  // meaning at both call sites, spelled out instead of (shooter == me).
+  protected def threatens(shooter: UnitInfo, victim: UnitInfo, ownSide: Boolean): Boolean = (
+    victim.friendly.exists(_.transport.exists(threatens(shooter, _, ownSide)))
+    || shooter.canAttack(victim, assumeDetection = victim.effectivelyCloaked && ?(ownSide, groupOf, groupVs).detectionAvailable)
     || (shooter.unitClass.canAttack(victim) && ( ! shooter.complete && shooter.remainingCompletionFrames < 72)))
 
   def healers: Seq[UnitInfo] = {
