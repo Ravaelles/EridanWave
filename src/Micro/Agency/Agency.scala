@@ -21,6 +21,18 @@ class Agency extends TimedTask {
   val cycleLengths        = new mutable.Queue[Int]
   val actionPerformance   = new mutable.HashMap[String, ActionPerformance]()
 
+  /** Times one action invocation (Action delegates here so the decision
+    * chain stays free of timing state; the map dies with the game). */
+  def timeAction[T](name: String)(body: => T): T = {
+    val performance = actionPerformance.getOrElseUpdate(name, new ActionPerformance)
+    val nanosBefore = System.nanoTime()
+    try body finally {
+      val nanosAfter = System.nanoTime()
+      performance.durationNanos += Math.max(0, nanosAfter - nanosBefore)
+      performance.invocations += 1
+    }
+  }
+
   override def isComplete: Boolean = agents.isEmpty
 
   override def onRun(budgetMs: Long): Unit = {
