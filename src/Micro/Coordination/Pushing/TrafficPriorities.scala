@@ -4,17 +4,13 @@ import Debugging.Visualizations.Colors
 import bwapi.Color
 
 object TrafficPriorities {
-  private var nextValue: Int = 0
-  private def next: Int = {
-    nextValue += 1
-    nextValue - 1
-  }
-
-  val Freedom = TrafficPriority(next, Color.Black,          "Freedom")  // No push
-  val Pardon  = TrafficPriority(next, Colors.DarkBlue,      "Pardon")   // Trying to walk here
-  val Nudge   = TrafficPriority(next, Colors.DarkGreen,     "Nudge")    // Trying to get into the fight
-  val Bump    = TrafficPriority(next, Colors.BrightGreen,   "Bump")     // Trying to retreat
-  val Shove   = TrafficPriority(next, Colors.BrightYellow,  "Shove")    // Trying to do something mission-critical (like construct a building)
-  val Dodge   = TrafficPriority(next, Colors.BrightOrange,  "Dodge")    // Trying to dodge explosion
-  val Dive    = TrafficPriority(next, Colors.BrightRed,     "Dive")     // Trying to dodge NUCLEAR EXPLOSION
+  // Explicit ladder, lowest first: inserting a rung anywhere but the end
+  // used to renumber everything below it. The order is the documentation.
+  val Freedom = TrafficPriority(0, Color.Black,          "Freedom")  // No push
+  val Pardon  = TrafficPriority(1, Colors.DarkBlue,      "Pardon")   // Trying to walk here
+  val Nudge   = TrafficPriority(2, Colors.DarkGreen,     "Nudge")    // Trying to get into the fight
+  val Bump    = TrafficPriority(3, Colors.BrightGreen,   "Bump")     // Trying to retreat
+  val Shove   = TrafficPriority(4, Colors.BrightYellow,  "Shove")    // Trying to do something mission-critical (like construct a building)
+  val Dodge   = TrafficPriority(5, Colors.BrightOrange,  "Dodge")    // Trying to dodge explosion
+  val Dive    = TrafficPriority(6, Colors.BrightRed,     "Dive")     // Trying to dodge NUCLEAR EXPLOSION
 }
