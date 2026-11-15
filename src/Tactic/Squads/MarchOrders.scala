@@ -109,6 +109,8 @@ object MarchOrders {
     val (terminus, marchLabel) = marchTerminus(squad, unit, meanDistToGoalTiles, defaultReturn, facts)
     Debugging.CherryVis.CherryVis.decision(unit.id,
       ?(squad.fightConsensus || assault || toothless, marchLabel, MarchLabel.ReturningToSlot).label)
+    Debugging.Probe.note("March", unit.id,
+      f"${?(squad.fightConsensus || assault || toothless, marchLabel, MarchLabel.ReturningToSlot)} terminus=${terminus.tx},${terminus.ty}")
     unit.intend(squad)
       .setTerminus(?(squad.fightConsensus || assault || toothless, terminus, finalReturn))
       .setRedoubt(finalReturn)
