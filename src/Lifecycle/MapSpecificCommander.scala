@@ -6,10 +6,17 @@ import Lifecycle.Keyboard.GameCommands
  * Per-map development tweaks, ported from Atlantis' MapSpecificCommander.
  *
  * Only runs on local dev runs (global keyboard hook active - never on ladder),
- * so tournament games are untouched. Branches Atlasitque used only for camera
- * work and advanced painting are kept as commented code, marked
- * TODO(EridanWave painter), until the AAdvancedPainter equivalent exists.
- * Speed/frame-skip branches are live through [[GameCommands]].
+ * so tournament games are untouched. Speed/frame-skip branches are live through
+ * [[GameCommands]] and applied once from EridanWave.onStart (never inside the
+ * frame budget); the two dynamic pacings below keep running per frame.
+ *
+ * Painter backlog (one list instead of a TODO per family; git has the
+ * commented bodies): focus the camera on interesting combat units (most
+ * families), center on our bases first (T_rebasing, TBall, TauCross),
+ * camera on the first combat unit for the first 3 seconds (Wraith),
+ * camera on our unit nearest to the enemy for the first 3 seconds
+ * (Lings), leave the game at 32 kills (marines_v_zerglings),
+ * CenterCamera.onFirstCombatUnit (vsGosu), vsGosuRav centers on our main.
  */
 object MapSpecificCommander {
 
@@ -20,297 +27,96 @@ object MapSpecificCommander {
   }
 
   /** UMS maps that play like normal games (same list as Atlantis). */
-  def shouldTreatAsNormalMap(): Boolean = {
-    val umsMapsTreatedAsNormal = Seq(
-      "ums/vsGosuComputer.scx",
-      "ums/rav/vsGosuRav.scx"
-    )
-    // Atlantis compared for equality against its ActiveMap.name(); our
-    // With.mapFileName carries the maps/ prefix the game reports, so
-    // containment matches exactly the same games.
-    val name = With.mapFileName
-    name != null && umsMapsTreatedAsNormal.exists(name.contains)
-  }
+  def shouldTreatAsNormalMap(): Boolean =
+    MapCatalog.isNormalMapException(With.mapFileName)
 
   private def isMap(substrings: String*): Boolean = {
     val name = With.mapFileName
     name != null && substrings.exists(name.contains)
   }
 
+  /** One row of static per-map tuning: the first matching family wins. */
+  private case class MapTuning(
+    markers: Seq[String],
+    speedMs: Option[Int] = None,
+    frameSkip: Option[Int] = None,
+    painting: Option[Boolean] = None,
+    maxFrame: Int = 1)
+
+  private val tunings: Seq[MapTuning] = Seq(
+    MapTuning(Seq("Bullet"), painting = Some(true)),
+    MapTuning(Seq("M_v_", "Tanks_v_", "inCorner"), speedMs = Some(20), painting = Some(true)),
+    MapTuning(Seq("ZealDrag_v_", "Drag_run", "Probe_run", "Reav_v_"), speedMs = Some(20), painting = Some(true)),
+    MapTuning(Seq("v_Sunkens"), speedMs = Some(20), painting = Some(true)),
+    MapTuning(Seq("1DragWounded_v_1Zeal"), speedMs = Some(20), painting = Some(true)),
+    MapTuning(Seq("DragWounded_v_Zeal"), speedMs = Some(20), painting = Some(true)),
+    MapTuning(Seq("1Drag_v_1Zeal.", "2Drag_v_3Zeal", "Drag_v_3Drag", "Drag_v_4Drag", "Drag_v_8Drag", "Goon_v_", "Dragoons_v_"), painting = Some(true), speedMs = Some(20)),
+    MapTuning(Seq("1Drag_v_1Drag"), painting = Some(true), speedMs = Some(20)),
+    MapTuning(Seq("Drag_v_", "DragUpg_v_", "Zeal_v_"), painting = Some(true), speedMs = Some(20)),
+    MapTuning(Seq("Dragoons_v_Zealots"), speedMs = Some(20)),
+    MapTuning(Seq("Wraith_v_Wraith"), speedMs = Some(20)),
+    MapTuning(Seq("Lings_v_Zealots"), speedMs = Some(30), frameSkip = Some(0)),
+    MapTuning(Seq("rav/Dragoon_v_Zealot", "rav/Dragoons_v_Zealots"), speedMs = Some(50), frameSkip = Some(0)),
+    MapTuning(Seq("marines_v_zerglings"), speedMs = Some(20), frameSkip = Some(0)),
+    MapTuning(Seq("Jim_v_Lurker"), speedMs = Some(1), frameSkip = Some(0)),
+    MapTuning(Seq("T_rebasing"), speedMs = Some(0), frameSkip = Some(0), maxFrame = 3),
+    MapTuning(Seq("TBall_v_HydraLings"), speedMs = Some(1), frameSkip = Some(0), maxFrame = 3),
+    MapTuning(Seq("TauCross", "Tau Cross"), speedMs = Some(20), painting = Some(true)),
+    MapTuning(Seq("M&M_v_Zealots"), painting = Some(true)))
+
   private def ourCombatUnits: Int = With.units.ours.count(_.unitClass.isWarrior)
   private def enemyCombatUnitsVisible: Int =
     With.units.enemy.count(e => e.unitClass.isWarrior && e.visible)
+
+  /** Static per-map tuning, applied once from onStart (never in the frame budget). */
+  def applyStaticTuning(): Unit = {
+    tunings.view.filter(t => With.frame <= t.maxFrame && isMap(t.markers: _*)).headOption.foreach(tuning => {
+      (tuning.speedMs, tuning.frameSkip) match {
+        case (Some(speed), Some(skip)) => GameCommands.setSpeed(speed, skip)
+        case (Some(speed), None)        => GameCommands.setSpeedOnly(speed)
+        case (None, Some(skip))         => GameCommands.setFrameSkipOnly(skip)
+        case _                          =>
+      }
+      tuning.painting.foreach(GameCommands.setPainting)
+    })
+  }
 
   def onFrame(): Unit = {
     if (With.game == null || With.units == null) return
     if ( ! Lifecycle.Keyboard.Keyboard.isActive()) return
 
-    // =========================================================
-    // Marines & Medics v. Zealots
+    if (isMap("vsGosuComputer", "vsGosuRav", "exp_skilltest", "7th")) paceGosu()
+    else if (isMap("mar_v_zea")) paceMarVZea()
+  }
 
-    // if (isMap("minimaps/")) {
-    //   if (With.frame <= 1) {
-    //     GameCommands.setSpeed(30, 0)
-    //     // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-    //   }
-    // }
+  // v. ZERG / PROTOSS / Gosu maps: pace the first combat unit, then run free.
+  private def paceGosu(): Unit = {
+    if (firstSettings && ourCombatUnits == 1 && enemyCombatUnitsVisible > 0) {
+      GameCommands.setFrameSkipOnly(0)
+      GameCommands.setSpeedOnly(0)
+      // TODO(EridanWave painter): CenterCamera.onFirstCombatUnit()
+      firstSettings = false
+    }
+    if (firstSettings && With.frame <= 0) {
+      GameCommands.setPainting(false)
+      GameCommands.setSpeedOnly(0)
+      GameCommands.setFrameSkipOnly(1000)
+      // TODO(EridanWave painter): vsGosuRav centers on our main base here
+    }
+  }
 
-    // =========================================================
-
-    if (isMap("Bullet")) {
-      // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      if (With.frame <= 1) {
-        GameCommands.setPainting(true)
-      }
-
-      // if (ourCombatUnit.lastUnderAttackLessThanAgo(2)) {
-      //   GameCommands.setSpeedOnly(GameSpeed.NORMAL_SPEED)
-      // }
-
-      // TODO(EridanWave painter): needs last-under-attack tracking per unit
-      // if (underAttackRecently) {
-      //   GameCommands.setSpeedOnly(20)
-      // }
+  // Marines v. ZEALOTS: run fast until the armies meet, then slow down.
+  private def paceMarVZea(): Unit = {
+    if (enemyCombatUnitsVisible == 0) {
+      GameCommands.setSpeed(0, 70)
     }
 
-    // =========================================================
-
-    else if (
-      isMap("M_v_", "Tanks_v_", "inCorner")
-    ) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeedOnly(20)
-        GameCommands.setPainting(true)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-
-    else if (isMap("ZealDrag_v_", "Drag_run", "Probe_run", "Reav_v_")) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeedOnly(20)
-        GameCommands.setPainting(true)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-
-    else if (isMap("v_Sunkens")) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeedOnly(20)
-        GameCommands.setPainting(true)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-
-    else if (isMap("1DragWounded_v_1Zeal")) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeedOnly(20)
-        GameCommands.setPainting(true)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-
-    else if (isMap("DragWounded_v_Zeal")) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeedOnly(20)
-        GameCommands.setPainting(true)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-
-    else if (
-      isMap("1Drag_v_1Zeal.", "2Drag_v_3Zeal", "Drag_v_3Drag", "Drag_v_4Drag",
-        "Drag_v_8Drag", "Goon_v_", "Dragoons_v_")
-    ) {
-      if (With.frame <= 1) {
-        GameCommands.setPainting(true)
-        GameCommands.setSpeedOnly(20)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-
-    else if (isMap("1Drag_v_1Drag")) {
-      if (With.frame <= 1) {
-        GameCommands.setPainting(true)
-        GameCommands.setSpeedOnly(20)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-
-    else if (
-      isMap("Drag_v_", "DragUpg_v_", "Zeal_v_")
-    ) {
-      if (With.frame <= 1) {
-        GameCommands.setPainting(true)
-        GameCommands.setSpeedOnly(20)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-
-    else if (isMap("Dragoons_v_Zealots")) {
-      if (With.frame <= 1) GameCommands.setSpeedOnly(20)
-    }
-
-    // =========================================================
-
-    else if (isMap("Wraith_v_Wraith")) {
-      if (With.frame <= 1) GameCommands.setSpeedOnly(20)
-      // TODO(EridanWave painter): camera on first combat unit for the first 3 seconds
-      // if (With.frame <= 3 * 24) CameraCommander.centerCameraOn(ourCombatUnits.first)
-    }
-
-    // =========================================================
-
-    else if (isMap("Lings_v_Zealots")) {
-      if (With.frame <= 1) GameCommands.setSpeed(30, 0)
-      // TODO(EridanWave painter): camera on our unit nearest to the enemy for the first 3 seconds
-    }
-
-    // =========================================================
-
-    else if (
-      isMap("rav/Dragoon_v_Zealot", "rav/Dragoons_v_Zealots")
-    ) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeed(50, 0)
-      }
-    }
-
-    // =========================================================
-    // v. ZERG / PROTOSS / Gosu maps
-
-    else if (
-      isMap("vsGosuComputer", "vsGosuRav", "exp_skilltest", "7th")
-    ) {
-      if (firstSettings && ourCombatUnits == 1 && enemyCombatUnitsVisible > 0) {
-        // TODO(EridanWave painter): AAdvancedPainter.enablePainting()
-        GameCommands.setFrameSkipOnly(0)
-        GameCommands.setSpeedOnly(0)
-        // TODO(EridanWave painter): CenterCamera.onFirstCombatUnit()
-        firstSettings = false
-      }
-      if (firstSettings && With.frame <= 0) {
-        GameCommands.setPainting(false)
-        // TODO(EridanWave painter): AAdvancedPainter.enablePainting()
-        GameCommands.setSpeedOnly(0)
-        GameCommands.setFrameSkipOnly(1000)
-
-        // TODO(EridanWave painter): vsGosuRav centers on our main base here
-        // if (isMap("vsGosuRav")) {
-        //   CameraCommander.centerCameraOn(mainOrAnyBuilding)
-        // }
-      }
-
-      // if (With.frame == 120 * 30) {
-      //   GameCommands.setFrameSkipOnly(0)
-      //   GameCommands.setSpeedOnly(20)
-      // }
-
-      // if (isMap("exp_skilltest") && !Have.controlTower()) {
-      //   GameCommands.setFrameSkipOnly(2000)
-      // }
-    }
-
-    // =========================================================
-    // Marines v. ZERGLINGS
-
-    else if (isMap("marines_v_zerglings")) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeed(20, 0)
-      }
-      // TODO(EridanWave painter): Atlantis ended the game at 32 kills here
-      // if (kills >= 32) { With.game.leaveGame() }
-    }
-
-    // =========================================================
-    // Marines v. LURKER
-
-    else if (isMap("Jim_v_Lurker")) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeed(1, 0)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // =========================================================
-    // Marines v. ZEALOTS
-
-    else if (isMap("mar_v_zea")) {
-      if (enemyCombatUnitsVisible == 0) {
-        GameCommands.setSpeed(0, 70)
-      }
-
-      if (
-        With.frame > 60
-          && GameCommands.frameSkip >= 30
-          && ourCombatUnits >= 5
-          // && Select.ourOfType(Terran_Science_Vessel).atLeast(1)
-          && enemyCombatUnitsVisible >= 2
-      ) {
-        // GameSpeed.pauseGame()
-        GameCommands.setPainting(false)
-        GameCommands.setSpeed(30, 0)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-        // GameSpeed.unpauseGame()
-      }
-    }
-
-    // =========================================================
-    // Rebasing
-
-    else if (isMap("T_rebasing")) {
-      if (With.frame <= 3) {
-        // TODO(EridanWave painter): CameraCommander.centerCameraOn(ourBases.first)
-        GameCommands.setSpeed(0, 0)
-      }
-    }
-
-    else if (isMap("TBall_v_HydraLings")) {
-      if (With.frame <= 3) {
-        // TODO(EridanWave painter): CameraCommander.centerCameraOn(ourBases.first)
-        GameCommands.setSpeed(1, 0)
-      }
-    }
-
-    // =========================================================
-    // Ladder TauCross: the pre-planned layout is only visible in full painting.
-
-    else if (isMap("TauCross", "Tau Cross")) {
-      if (With.frame <= 1) {
-        GameCommands.setSpeedOnly(20)
-        GameCommands.setPainting(true)
-        // TODO(EridanWave painter): CameraCommander.centerCameraOn(ourBases.first)
-      }
-    }
-
-    // =========================================================
-
-    else if (isMap("M&M_v_Zealots")) {
-      if (With.frame <= 1) {
-        GameCommands.setPainting(true)
-        // TODO(EridanWave painter): CameraCommander.focusCameraOnInterestingCombatUnit()
-      }
-    }
-
-    // Explicit --speed= wins over the per-map defaults above (and only there:
-    // keyboard presets pressed later still take effect).
-    if (With.frame <= 1) {
-      GameCommands.initialSpeed.foreach(GameCommands.setSpeedOnly)
+    if (With.frame > 60
+      && GameCommands.frameSkip >= 30
+      && ourCombatUnits >= 5
+      && enemyCombatUnitsVisible >= 2) {
+      GameCommands.setPainting(false)
+      GameCommands.setSpeed(30, 0)
     }
   }
 }

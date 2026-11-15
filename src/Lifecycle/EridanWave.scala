@@ -37,6 +37,13 @@ class EridanWave extends DefaultBWListener {
         // Tuning params (if --tuning-strategy= was passed): randomize or
         // override before the first frame, Atlantis OnGameStarted parity.
         Tuning.Tuning.install()
+        // Static per-map pacing and an explicit --speed= live here, not in
+        // the first onFrame: the speed setter sleeps for the engine, which
+        // is fine before the frame budget starts ticking.
+        if (Lifecycle.Keyboard.Keyboard.isActive()) {
+          MapSpecificCommander.applyStaticTuning()
+          Keyboard.GameCommands.initialSpeed.foreach(Keyboard.GameCommands.setSpeedOnly)
+        }
         With.logger.debug(f"[keyboard] ${Lifecycle.Keyboard.Keyboard.status()}")
         // One sweep clears every per-game family: subsystems register
         // themselves (PerGame, like Latches) instead of adding a line here.

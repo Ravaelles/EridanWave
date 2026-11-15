@@ -352,7 +352,7 @@ if [ -n "$MAP" ]; then
     ESCAPED_MAP=$(printf '%s' "$RESOLVED_MAP" | sed 's/[&\|]/\\&/g')
     sed -i -E "s|^map *=.*|map=$ESCAPED_MAP|" "$INI"
     if [ -z "$GAME_TYPE" ]; then
-      # Keep in sync with BwapiIni.java UMS_MARKERS: scenario content plays
+      # Keep in sync with MapCatalog.scala umsMarkers: scenario content plays
       # USE_MAP_SETTINGS, everything else defaults to MELEE. Explicit
       # --game-type always wins.
       MAP_LOWER=$(echo "$RESOLVED_MAP" | tr '[:upper:]' '[:lower:]')

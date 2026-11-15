@@ -38,32 +38,11 @@ public final class BwapiIni {
 
     /**
      * Default game type for a map: MELEE unless the path shows scenario
-     * content. Ladder packs (sscai/, BroodWar/) are melee; anything under a
-     * ums/ folder or with a micro-map name fragment plays USE_MAP_SETTINGS.
-     * Keep in sync with the marker list in scripts/wine-run.sh.
-     * An explicit --game-type= always wins over this default.
+     * content (MapCatalog.umsMarkers). An explicit --game-type= always
+     * wins over this default.
      */
-    private static final String[] UMS_MARKERS = {
-        "ums", "micro", "minimap", "defense", "defence", "scenario", "bullet",
-        "_v_", "vsgosu", "exp_skilltest", "dragoon_v", "zeal_v", "goon_v",
-        "wraith_v", "lings_v", "marines_v", "jim_v_", "mar_v_", "rebas",
-        "hydraling", "m&m", "sunken", "reav_v", "probe_run", "drag_run",
-        "zealdrag", "wounded", "incorner", "tanks_v", "gosu", "7th"
-    };
-
-    /** True for maps that play USE_MAP_SETTINGS (scenario content). */
     public static boolean isUmsMap(String resolvedMapPath) {
-        if (resolvedMapPath == null) {
-            return false;
-        }
-
-        String lower = resolvedMapPath.toLowerCase(java.util.Locale.ROOT);
-        for (String marker : UMS_MARKERS) {
-            if (lower.contains(marker)) {
-                return true;
-            }
-        }
-        return false;
+        return Lifecycle.MapCatalog.isUmsMap(resolvedMapPath);
     }
 
     public static String defaultGameTypeForMap(String resolvedMapPath) {
