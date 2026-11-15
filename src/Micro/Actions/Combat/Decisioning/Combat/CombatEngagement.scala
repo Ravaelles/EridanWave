@@ -50,9 +50,9 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       return true
     }
 
-    // No target, nowhere to dress: attack-move toward the nearest known
-    // enemy instead of posing in formation slots until the timeout.
-    if (combat.target.isEmpty && HuntBehavior.run(unit)) return true
+    // No target, or a target the line would only pose at: hunt the
+    // nearest known enemy instead of dressing until the timeout.
+    if (HuntBehavior.run(unit)) return true
 
     if (unit.ready) {
       resolveBreakFormation()
@@ -135,7 +135,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         unitEngaged       = unit.matchups.engagedUpon,
         enemyFired        = unit.matchups.threatsInRange.exists(_.cooldownLeft > 0),
         targetHoldable    = t.unitClass.isWarrior && t.unitClass.canAttack && (! t.unitClass.isBuilding || t.unitClass.isCombatBuilding)))
-    combat.target.foreach(t => Probe.note("Hold", unit.id, f"form=${unit.formationEngage.isDefined} flank=${unit.formationEngage.exists(_.flanking)} me=${unit.matchups.engagedUpon} fired=${unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)} beyond=${unit.pixelsToGetInRange(t) / 32.0}%.1f hold=$hold"))
+    combat.target.foreach(t => Probe.note("Hold", unit.id, f"form=${unit.formationEngage.isDefined} flank=${unit.formationEngage.exists(_.flanking)} me=${unit.matchups.engagedUpon} fired=${unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)} beyond=${unit.pixelsToGetInRange(t) / 32.0}%.1f hold=$hold target=${t.id}"))
     if ( ! OverwhelminglyStronger.skipFormation(unit) && ! With.yolo.active && hold) {
       combat.breakFormationToAttack = false
     }
