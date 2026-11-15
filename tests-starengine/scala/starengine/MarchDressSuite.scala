@@ -20,7 +20,7 @@ import scala.collection.mutable
  * March never comes back after Engage (no retreat to slotting), and the
  * engine's own reissue counter stays flat (marching is not stop-and-go).
  */
-class MarchDressSuite extends AnyFunSuite {
+class MarchDressSuite extends AnyFunSuite with StarEngineSuite {
 
   /** March at the pack, dress inside the horizon, fight on contact. */
   private class DressMarchPilot extends Pilot {
