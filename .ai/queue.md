@@ -131,5 +131,8 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   Validating on the hunt jar.
 - Re-run remaining Reaver UMS maps with pauses between games (Wine
   box lock aborts concurrent launches): Sunkens3/4, Reaver_v_Sunkens.
+- Owner probe (intend-client changes ride `Probe Owner`, traces or not -
+  UMS manager tracking per unit). Pair batch running on it: Shuttle
+  must flee properly, Reaver must attack and fight most frames.
 - LoneMarch flap re-run (Reav&Shut; confirm the +-300px terminus flap
   is gone on the latched jar).
