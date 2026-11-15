@@ -53,10 +53,15 @@ object SquadTargeting {
     combatEnemiesInRoute ++ around
   }
 
+  // Larva and Eggs are never squad targets: they cannot fight, so putting
+  // them on the shared list peels fighters off real targets (a Reaver even
+  // prefers them through the ladder fallback). Target owns the same rule
+  // per unit; the squad list applies it for the whole cluster, no exceptions.
   def unrankedAround(group: FriendlyUnitGroup, to: Pixel): Vector[UnitInfo] = {
     to.base.getOrElse(to.zone).enemies
       .filter(_.likelyStillThere)
       .filter(group.canAttack)
+      .filter(_.isNone(Zerg.Larva, Zerg.Egg))
       .toVector
   }
 
