@@ -195,30 +195,33 @@ object BeShuttle extends Action {
     val attackers = shuttle.matchups.threats.view.filter(t => t.canAttack(shuttle) && t.likelyStillThere).toVector
     val scored = attackers.view.flatMap(t =>
       if (Zerg.Scourge(t))
-        Some((ReaverShuttleFlight.penetrationPixels(t.pixelDistanceEdge(shuttle), ReaverShuttleFlight.scourgeDistTiles * 32.0), t.pixel))
+        Some((t.pixel, ReaverShuttleFlight.penetrationPixels(t.pixelDistanceEdge(shuttle), ReaverShuttleFlight.scourgeDistTiles * 32.0)))
       else {
         val reach = t.pixelRangeAgainst(shuttle)
         if (Micro.Actions.Combat.Maneuvering.RangedReach.isRanged(reach))
-          Some((ReaverShuttleFlight.penetrationPixels(t.pixelDistanceEdge(shuttle), reach + preemptPixels), t.pixel))
+          Some((t.pixel, ReaverShuttleFlight.penetrationPixels(t.pixelDistanceEdge(shuttle), reach + preemptPixels)))
         else None
       }).toVector
-    val worstValue = ReaverShuttleFlight.worstPenetration(scored.map(_._1))
-    if ( ! ReaverShuttleFlight.fleeLatched(shuttle.id, worstValue)) return false
-
-    val focus = scored.reduceOption((a, b) => if (a._1 >= b._1) a else b).map(_._2).getOrElse(shuttle.pixel)
-    shuttle.agent.act("AirFlee")
     // Corner-guarded on the Shuttle width: a 4->13-tile flee leg ending
     // in a corner trap strands the hull until something kills it, so a
     // destination inside the 15x15 squares slides along the nearest edge.
-    val away = CornerAntiStuckGuard.guard(
-      shuttle.pixel.project(focus, -preemptPixels).walkablePixel,
+    // One mechanism for every air doctrine (AirFlee.fleeScored): the scores
+    // above ride the exit latch, the worst threat sets the focus.
+    AirFlee.fleeScored(
+      shuttle.pixel,
+      scored,
+      ReaverShuttleFlight.fleeLatched(shuttle.id, _),
+      preemptPixels,
       With.mapPixelWidth,
       With.mapPixelHeight,
-      CornerAntiStuckGuard.shuttleTiles)
-    shuttle.agent.forceTo(away)
-    Commander.move(shuttle)
+      CornerAntiStuckGuard.shuttleTiles,
+      _.walkablePixel).map(away => {
+      shuttle.agent.act("AirFlee")
+      shuttle.agent.forceTo(away)
+      Commander.move(shuttle)
 
-    true
+      true
+    }).getOrElse(false)
   }
 
   /** Raid status with a loaded hull: fly the pair at the enemy base. */

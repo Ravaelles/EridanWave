@@ -44,4 +44,18 @@ class AirFleeSuite extends AnyFunSuite {
     val away = AirFlee.fleePixel(Pixel(2160, 2320), Seq(Pixel(2000, 2000), Pixel(2320, 2000)), wound01 = 0.0, mapW, mapH)
     assert(away.exists(p => p.y > 2320 && p.x == 2160))
   }
+
+  test("no score or no latch means no scored flee") {
+    assert(AirFlee.fleeScored(Pixel(2000, 2000), Seq.empty, _ => true, 128.0, mapW, mapH).isEmpty)
+    assert(AirFlee.fleeScored(Pixel(2000, 2000), Seq((Pixel(2100, 2000), 5.0)), _ => false, 128.0, mapW, mapH).isEmpty)
+  }
+
+  test("a scored flee runs straight away from the worst threat") {
+    val away = AirFlee.fleeScored(
+      Pixel(2000, 2000),
+      Seq((Pixel(2100, 2000), 5.0), (Pixel(2000, 2100), 9.0)),
+      _ => true,
+      128.0, mapW, mapH)
+    assert(away.contains(Pixel(2000, 2000 - 128)))
+  }
 }

@@ -58,4 +58,28 @@ object AirFlee {
     focus(near).map(focus =>
       CornerAntiStuckGuard.guard(fleeFrom(own, focus, marginTiles(wound01, marginLowTiles, marginHighTiles)), mapWpx, mapHpx, cornerTiles))
   }
+
+  /**
+   * Scored flee, one mechanism for every air doctrine: the caller scores
+   * each threat (penetration past its trigger, or plain distance) and owns
+   * the latch, AirFlee runs from the worst one with corner-guarded legs.
+   * The Shuttle passes penetration scores through its exit latch; a plain
+   * distance score with a sharp edge keeps the old unlatched behavior.
+   * `snap` adapts the projected leg (the Shuttle snaps it walkable);
+   * suites pass identity and pin exact pixels.
+   */
+  def fleeScored(
+    own: Pixel,
+    scored: Seq[(Pixel, Double)],
+    fires: Double => Boolean,
+    marginPixels: Double,
+    mapWpx: Int,
+    mapHpx: Int,
+    cornerTiles: Double = CornerAntiStuckGuard.defaultTiles,
+    snap: Pixel => Pixel = identity): Option[Pixel] = {
+    val worst = scored.view.map(_._2).reduceOption(_ max _).getOrElse(Double.NegativeInfinity)
+    if ( ! fires(worst)) None
+    else scored.reduceOption((a, b) => if (a._2 >= b._2) a else b)
+      .map(focus => CornerAntiStuckGuard.guard(snap(own.project(focus._1, -marginPixels)), mapWpx, mapHpx, cornerTiles))
+  }
 }
