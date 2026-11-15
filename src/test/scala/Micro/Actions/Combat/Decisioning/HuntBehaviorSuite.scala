@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Utilities.Time.Minutes
 import org.scalatest.funsuite.AnyFunSuite
 
 class HuntBehaviorSuite extends AnyFunSuite {
@@ -57,5 +58,13 @@ class HuntBehaviorSuite extends AnyFunSuite {
 
   test("sight-edge flicker keeps the line steady instead of flapping") {
     assert( ! hunt(hasTarget = true, targetVisible = false, targetBeyondSight = false))
+  }
+
+  test("a fresh mobile contact is remembered") {
+    assert(HuntBehavior.remembersMobile(Minutes(3)() - 1))
+  }
+
+  test("a three-minute-old mobile contact is forgotten") {
+    assert( ! HuntBehavior.remembersMobile(Minutes(3)()))
   }
 }

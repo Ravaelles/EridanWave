@@ -6,6 +6,7 @@ import Micro.Actions.Combat.Decisioning.Formation.FormationHold
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Utilities.Time.Minutes
 
 /**
  * Target-less hunt: a warrior with fight consensus but no useful target
@@ -49,8 +50,19 @@ object HuntBehavior {
   def huntables(unit: FriendlyUnitInfo): Seq[UnitInfo] =
     With.units.enemy.view.filter(e =>
       e.alive
-      && e.likelyStillThere
-      && unit.canAttack(e)).toSeq
+      && unit.canAttack(e)
+      && (e.likelyStillThere
+        || remembersMobile(With.framesSince(e.lastSeen))
+        || (e.unitClass.isBuilding && e.lastSeen > 0))).toSeq
+
+  /**
+   * Memory horizon (pure frames for the suite): mobiles go stale three
+   * minutes after contact (squad HuntContact parity) - they walk away.
+   * Buildings never move, so a seen-once hall stays huntable until it
+   * dies instead of stranding the line on a forgotten pin.
+   */
+  def remembersMobile(framesSinceSeen: Int): Boolean =
+    framesSinceSeen < Minutes(3)()
 
   /**
    * Hunt gate (pure booleans for the suite): dueling walkers with no
