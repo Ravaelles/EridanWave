@@ -114,7 +114,14 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 
 - DragC hunt step (target-less duelists attack-move toward the nearest
   known foe; hold-cap + pursuit latch already proven - do NOT
-  re-litigate; one DragC cycle running on the hunt jar).
+  re-litigate). Mechanism pinned by Path + Engage probes (since
+  reverted): paths exist, no wall - the line holds vs an invisible
+  remembered ghost 6-8 tiles out (hold=true, never approaches, never
+  fires) while toAttack sits pinned on the far pylon, then dresses
+  against the ghost and attacks the pin with a stale perch (Stop/
+  AttackUnit flap, zero shots). Hunt now covers useless targets too:
+  far pins past the pursuit horizon and ghosts past sight + 1 tile
+  (sight-edge flicker keeps the line). Validating on the hunt jar.
 - Re-run remaining Reaver UMS maps with pauses between games (Wine
   box lock aborts concurrent launches): Sunkens3/4, Reaver_v_Sunkens.
 - LoneMarch flap re-run (Reav&Shut; confirm the +-300px terminus flap
