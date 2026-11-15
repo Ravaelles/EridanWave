@@ -177,11 +177,13 @@ public class GameTrace {
     }
 
     /**
-     * Current task of one unit (the viewer Task tab reads this): the owner
-     * is whoever claimed the unit, the name is what it is doing. Task ids
-     * are sequential in first-logged order and shared by every unit on the
-     * same owner + name, so tracking a task lists the whole crew on it.
-     * Change-only per unit: repeat logs of the running task land once.
+     * Current task of one unit (the viewer Task tab reads this): the
+     * managing class that claimed the unit, as both owner and name, so the
+     * tab lists managers and their crews. Task ids are sequential in
+     * first-logged order and shared by every unit on the same manager, so
+     * tracking a task lists the whole crew on it. Change-only per unit:
+     * repeat logs of the running task land once. Reasons ride the unit
+     * log lines instead - the tab answers who controls the unit.
      */
     public void logTask(int frame, int unitId, String owner, String task) {
         if (task == null) task = "";

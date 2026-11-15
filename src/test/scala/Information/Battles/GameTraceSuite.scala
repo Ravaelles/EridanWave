@@ -103,22 +103,25 @@ class GameTraceSuite extends AnyFunSuite {
     assert(updates.indexOf("\"5\"") < updates.indexOf("\"30\""), updates)
   }
 
-  test("tasks register owner and name once, units point at the id") {
+  test("tasks register the managing class once, its crew points at the id") {
     val trace = new GameTrace
-    trace.logTask(10, 1, "SquadAttack", "Engage/Approach")
-    trace.logTask(20, 2, "SquadAttack", "Engage/Approach")
-    assert(trace.buildTasks() == "\"0\":{\"owner\":\"SquadAttack\",\"name\":\"Engage/Approach\",\"upc_id\":0,\"creation_frame\":10}", trace.buildTasks())
+    trace.logTask(10, 1, "SquadAttack", "SquadAttack")
+    trace.logTask(20, 2, "SquadAttack", "SquadAttack")
+    trace.logTask(30, 3, "Gathering", "Gathering")
+    assert(trace.buildTasks() == "\"0\":{\"owner\":\"SquadAttack\",\"name\":\"SquadAttack\",\"upc_id\":0,\"creation_frame\":10}," +
+      "\"1\":{\"owner\":\"Gathering\",\"name\":\"Gathering\",\"upc_id\":0,\"creation_frame\":30}", trace.buildTasks())
     val table = new StringTable
     val updates = trace.buildUnitsUpdates(table, false)
     assert(updates.contains("\"1\":{\"10\":{\"task\":0}}"), updates)
     assert(updates.contains("\"2\":{\"20\":{\"task\":0}}"), updates)
+    assert(updates.contains("\"3\":{\"30\":{\"task\":1}}"), updates)
   }
 
-  test("repeat task logs land once, flips land per transition") {
+  test("repeat task logs land once, manager changes flip the pointer") {
     val trace = new GameTrace
-    trace.logTask(10, 1, "SquadAttack", "Engage/Approach")
-    trace.logTask(20, 1, "SquadAttack", "Engage/Approach")
-    trace.logTask(30, 1, "SquadAttack", "Retreat")
+    trace.logTask(10, 1, "SquadAttack", "SquadAttack")
+    trace.logTask(20, 1, "SquadAttack", "SquadAttack")
+    trace.logTask(30, 1, "Gathering", "Gathering")
     val table = new StringTable
     val updates = trace.buildUnitsUpdates(table, false)
     assert(updates == "\"1\":{\"10\":{\"task\":0},\"30\":{\"task\":1}}", updates)
