@@ -50,6 +50,10 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       return true
     }
 
+    // No target, nowhere to dress: attack-move toward the nearest known
+    // enemy instead of posing in formation slots until the timeout.
+    if (combat.target.isEmpty && HuntBehavior.run(unit)) return true
+
     if (unit.ready) {
       resolveBreakFormation()
       // A pursuit in progress is never re-dressed: the hold would re-arm
