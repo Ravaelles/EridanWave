@@ -37,7 +37,6 @@ import Tactic.Tactician
 import _root_.Performance.{Latency, PerformanceMonitor, ReactionTimes}
 import _root_.Placement.Architecture.Architecture
 import bwapi.Flag
-import bwta.BWTA
 
 import scala.collection.JavaConverters._
 
@@ -200,99 +199,11 @@ object With {
       }
     } catch { case exception: Exception => With.logger.quietlyOnException(exception) }
 
-    ////////////////////
-    // Normal systems //
-    ////////////////////
-
-    analyzeTerrain()
-
-    // Order-dependent initialization:
-    // PerformanceMonitor must exist when creating any task
-    performance       = new PerformanceMonitor
-    agents            = new Agency
-    animations        = new Animations
-    architecture      = new Architecture
-    bank              = new Bank
-    battles           = new Battles
-    blackboard        = new Blackboard
-    productionHistory = new ProductionHistory
-    bullets           = new Bullets
-    camera            = new Camera
-    coordinator       = new Coordinator
-    accounting        = new Accounting
-    efficiency        = new Efficiency
-    fingerprints      = new Fingerprints
-    groundskeeper     = new Groundskeeper
-    gathering         = new Gathering
-    geography         = new Geography
-    grids             = new Grids
-    history           = new History
-    lambdas           = new LambdaQueue
-    latency           = new Latency
-    macroCounts       = new MacroCounts
-    macroSim          = new MacroSim
-    manners           = new Manners
-    missionHistory      = new MissionHistory
-    matchups          = new MatchupGraph
-    microSlush        = new MicroSlush
-    paths             = new Paths
-    placement         = new Placement
-    priorities        = new Priorities
-    projections       = new Projections
-    proxies           = new Proxies
-    reaction          = new ReactionTimes
-    recruiter         = new Recruiter
-    sense             = new GameSensor
-    scheduler         = new Scheduler
-    scouting          = new Scouting
-    simulation        = new Simulation
-    squads            = new Squads
-    strategy          = new Strategist
-    storyteller       = new Storyteller
-    tactics           = new Tactician
-    units             = new UnitTracker
-    unitsShown        = new UnitsShown
-    viewport          = new Viewport
-    visualization     = new Visualization
-    yolo              = new Yolo
-
-    // Order-dependent initialization:
-    // TaskQueue comes last because it references other systems
-    tasks             = new TaskQueueGlobal
+    Bootstrap.init()
 
     With.logger.debug(f"${game.getGameType.toString.replace("_", " ")} on ${game.mapName} at ${game.mapFileName()} as ${self.fullDescription} with ${(self.allies ++ self.enemies).map(_.fullDescription).mkString(", ")}")
   }
-  
-  private def analyzeTerrain(): Unit = {
-    // UMS micro maps have no bases by design, so BWTA can never finish on them.
-    // Skip the doomed analysis outright instead of flooding the log with stacks.
-    if (mapFileName != null && Lifecycle.Launch.BwapiIni.isUmsMap(mapFileName)) {
-      With.logger.debug("Skipping terrain analysis (UMS map).")
-      System.out.println("[launcher] Skipping terrain analysis (UMS map).")
-
-      return
-    }
-
-    try {
-      BWTA.readMap(game)
-      BWTA.analyze()
-    } catch { case exception: Exception =>
-      With.logger.quietlyOnException(exception)
-      With.logger.debug("Retrying terrain analysis with assertions disabled.")
-
-      // A failed retry must not abort the start: play without analyzed
-      // terrain instead of dying on frame zero. Only a one-liner is logged;
-      // the first attempt's stack stays in the log buffer for forensics.
-      try {
-        BWTA.readMap(game)
-        BWTA.setFailOnError(false)
-        BWTA.analyze()
-      } catch { case retryException: Exception =>
-        With.logger.debug("Terrain analysis unavailable on this map; continuing without it.")
-        System.out.println("[launcher] Terrain analysis unavailable on this map; continuing without it.")
-      }
-    }
-  }
 }
+
 
 
