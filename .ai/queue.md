@@ -63,6 +63,7 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - StrongMarch (banked stock or maxed army skips rally/slots).
 - Retreating warriors never rally or close ranks.
 - Engage never overwrites a march home (frame-fresh intention flag).
+- MarchDressSuite (StarEngine): scattered 4 dragoons + 4 zealots march dressed at an enemy 30 tiles out, modes March>Dress>Engage with no flap, reissues 14, pack tightens - green.
 - Expo punish vs Zerg at 140 (units-strength only).
 - TankHug (cooling warriors close sieged tanks to 0.2 tiles).
 - StaticDefense overwhelm (12 of ours push one static).
