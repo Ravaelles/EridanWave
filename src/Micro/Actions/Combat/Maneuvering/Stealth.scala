@@ -1,6 +1,7 @@
 package Micro.Actions.Combat.Maneuvering
 
 import Lifecycle.With
+import Mathematics.WoundMargin
 import Micro.Actions.Action
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import ProxyBwapi.Races.Protoss
@@ -29,7 +30,7 @@ object Stealth extends Action {
     // Wounded Templars give mobile detectors extra room: a revealed healthy
     // hull can tank the escape, a bleeding one dies, so the berth grows to
     // eight tiles at full wounds.
-    lazy val woundBerthPixels = ?(Protoss.DarkTemplar(unit), unit.woundPercentBonus(0.0, 8.0) * 32.0, 0.0)
+    lazy val woundBerthPixels = ?(Protoss.DarkTemplar(unit), WoundMargin(0.0, 8.0).pixels(unit.woundPercent()), 0.0)
     lazy val nearMobileDetector = unit.matchups.groupVs.detectors.exists(u =>
       u.pixelDistanceEdge(unit) < u.sightPixels + u.topSpeed * Seconds(8)() + woundBerthPixels)
     if ( ! unit.effectivelyCloaked || nearDetectionRange || nearMobileDetector || impendingTurret) {

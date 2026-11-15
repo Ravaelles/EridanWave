@@ -1,6 +1,6 @@
 package Micro.Actions.Combat.Decisioning.Kiting
 
-import Mathematics.Maff
+import Mathematics.{Maff, WoundMargin}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -27,5 +27,5 @@ object CorsairSafety {
     baseMarginTiles + woundBonusTiles * Maff.clamp(wound01, 0.0, 1.0)
 
   def avoidanceMarginPixels(unit: FriendlyUnitInfo): Double =
-    if (Protoss.Corsair(unit)) unit.woundPercentBonus(baseMarginTiles, baseMarginTiles + woundBonusTiles) * 32.0 else 32.0
+    if (Protoss.Corsair(unit)) WoundMargin(baseMarginTiles, baseMarginTiles + woundBonusTiles).pixels(unit.woundPercent()) else 32.0
 }

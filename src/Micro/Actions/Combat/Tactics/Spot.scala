@@ -1,7 +1,7 @@
 package Micro.Actions.Combat.Tactics
 
 import Lifecycle.With
-import Mathematics.Maff
+import Mathematics.{Maff, WoundMargin}
 import Mathematics.Points.Pixel
 import Mathematics.Shapes.Circle
 import Micro.Actions.Action
@@ -83,7 +83,7 @@ object Spot extends Action {
   private[Micro] def shouldRetreatFrom(unit: FriendlyUnitInfo, threat: UnitInfo): Boolean = {
     // Wounded eyes keep a wider berth: up to +4 tiles on top of the base
     // margins (an Observer has almost no hit points to trade).
-    val woundBonus = ?(unit.unitClass.isDetector, unit.woundPercentBonus(0.0, 4.0) * 32.0, 0.0)
+    val woundBonus = ?(unit.unitClass.isDetector, WoundMargin(0.0, 4.0).pixels(unit.woundPercent()), 0.0)
     // Only detection justifies closing inside the normal safety buffer.
     if (unit.unitClass.isDetector && threat.cloakedOrBurrowed) {
       unit.pixelDistanceCenter(threat) < Math.min(unit.detectionRangePixels - 32, threat.pixelRangeAgainst(unit) + 96) + woundBonus

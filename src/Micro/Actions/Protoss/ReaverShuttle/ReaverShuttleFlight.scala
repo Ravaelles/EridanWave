@@ -1,6 +1,6 @@
 package Micro.Actions.Protoss.ReaverShuttle
 
-import Mathematics.Maff
+import Mathematics.{Maff, WoundMargin}
 import Mathematics.Points.Pixel
 import Utilities.Latch
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
@@ -25,7 +25,7 @@ object ReaverShuttleFlight {
   val woundFleeBonusTiles: Double = 9.0
 
   def woundBonusTiles(woundPercent: Double): Double =
-    Maff.woundBonus(woundPercent, 0.0, woundFleeBonusTiles)
+    WoundMargin(0.0, woundFleeBonusTiles).tiles(woundPercent)
 
   /** Loaded Shuttle margin over the threat, in pixels: skate fresh, run hurt. */
   def safetyMarginPixels(woundPercent: Double, fasterFlyer: Boolean): Double =

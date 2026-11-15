@@ -1,7 +1,7 @@
 package Micro.Actions.Protoss.ReaverShuttle
 
 import Lifecycle.With
-import Mathematics.Maff
+import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.AirFlee
 import Micro.Actions.Combat.Maneuvering.CornerAntiStuckGuard
@@ -186,8 +186,8 @@ object BeShuttle extends Action {
 
     // Bait rides flee shorter when hurt (they are the provocation, not the
     // cargo): a wound-scaled 4-to-9 band instead of the pair's 4-to-13.
-    val preemptPixels = (if (ReaverShuttlePair.isBaitRide(shuttle)) shuttle.woundPercentBonus(4.0, 9.0)
-      else ReaverShuttleFlight.baseFleeMarginTiles + shuttle.woundPercentBonus(0.0, ReaverShuttleFlight.woundFleeBonusTiles)) * 32.0
+    val preemptPixels = (if (ReaverShuttlePair.isBaitRide(shuttle)) WoundMargin(4.0, 9.0).tiles(shuttle.woundPercent())
+      else ReaverShuttleFlight.baseFleeMarginTiles + WoundMargin(0.0, ReaverShuttleFlight.woundFleeBonusTiles).tiles(shuttle.woundPercent())) * 32.0
     // Latched on the worst penetration across every attacker: a sharp
     // per-threat edge flips each time the pack breathes, so the ferry
     // never delivers. Melee that cannot reach still counts nothing, and

@@ -2,7 +2,7 @@ package Micro.Actions.Protoss.Arbiter
 
 import Debugging.Visualizations.Forces
 import Lifecycle.With
-import Mathematics.{Maff, Separation}
+import Mathematics.{Maff, Separation, WoundMargin}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
@@ -33,7 +33,7 @@ object BeArbiter extends Action {
    * which still catches long-range threats the margin cannot see.
    */
   def fleeMarginTiles(wound01: Double): Double =
-    2.0 + Maff.woundBonus(wound01, 4.0, 9.0)
+    2.0 + WoundMargin(4.0, 9.0).tiles(wound01)
 
   /**
    * Separation, exactly the Observer rule: same-type Arbiters keep nine

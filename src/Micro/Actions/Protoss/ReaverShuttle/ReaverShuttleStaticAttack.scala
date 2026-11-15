@@ -1,6 +1,6 @@
 package Micro.Actions.Protoss.ReaverShuttle
 
-import Mathematics.Maff
+import Mathematics.WoundMargin
 
 /**
  * Static-attack gate vs Zerg (no game access): inside twelve tiles of a
@@ -21,7 +21,7 @@ object ReaverShuttleStaticAttack {
   val woundMarginTiles: Double = 6.0
 
   def marginTiles(wound01: Double): Double =
-    baseMarginTiles + Maff.woundBonus(wound01, 0.0, woundMarginTiles)
+    WoundMargin(baseMarginTiles, baseMarginTiles + woundMarginTiles).tiles(wound01)
 
   def shouldLand(distTiles: Double, attackedAtLanding: Boolean, threatDistTiles: Double, wound01: Double): Boolean =
     distTiles < engageTiles && ! attackedAtLanding && threatDistTiles > marginTiles(wound01)

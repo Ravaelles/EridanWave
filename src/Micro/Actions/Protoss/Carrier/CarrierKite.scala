@@ -12,7 +12,7 @@ import Micro.Actions.Combat.Maneuvering.RangedReach
  */
 object CarrierKite {
 
-  /** Wound margin at full wounds, in tiles (woundPercentBonus(0, 15)). */
+  /** Wound margin at full wounds, in tiles (WoundMargin(0, 15)). */
   val maxMarginTiles: Double = 15.0
 
   def isRanged(rangePixels: Double): Boolean =

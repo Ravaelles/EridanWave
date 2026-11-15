@@ -1,7 +1,7 @@
 package Micro.Actions.Combat.Decisioning
 
 import Lifecycle.With
-import Mathematics.Maff
+import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldToShoot, KiteAway}
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Terran
@@ -105,7 +105,7 @@ object KiteAwayBehavior {
 
   private def kiteAway(unit: FriendlyUnitInfo, combat: Combat): Unit = {
     unit.agent.act("KiteAway")
-    val offsetPixels = unit.woundPercentBonus(0.0, KiteAway.maxOffsetTiles) * 32
+    val offsetPixels = WoundMargin(0.0, KiteAway.maxOffsetTiles).pixels(unit.woundPercent())
     unit.agent.decision.set(unit.pixel.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
     combat.maneuvers.move()
   }

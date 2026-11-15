@@ -1,6 +1,6 @@
 package Micro.Actions.Protoss.ReaverShuttle
 
-import Mathematics.Maff
+import Mathematics.WoundMargin
 
 /**
  * Reboard gate (no game access): a landed Reaver stays grounded and
@@ -38,5 +38,5 @@ object ReaverShuttleReboard {
   val woundFleeTiles: Double = 8.0
 
   def mayReboard(threatDistTiles: Double, wound01: Double): Boolean =
-    threatDistTiles < Maff.woundBonus(wound01, baseBoardTiles, woundFleeTiles)
+    threatDistTiles < WoundMargin(baseBoardTiles, woundFleeTiles).tiles(wound01)
 }

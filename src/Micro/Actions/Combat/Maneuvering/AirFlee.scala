@@ -1,6 +1,6 @@
 package Micro.Actions.Combat.Maneuvering
 
-import Mathematics.Maff
+import Mathematics.{Maff, WoundMargin}
 import Mathematics.Points.Pixel
 
 /**
@@ -26,7 +26,7 @@ object AirFlee {
   val marginHighTiles: Double = 10.0
 
   def marginTiles(wound01: Double, lowTiles: Double, highTiles: Double): Double =
-    Maff.woundBonus(wound01, lowTiles, highTiles)
+    WoundMargin(lowTiles, highTiles).tiles(wound01)
 
   /** Centroid of the threats, single or many: one answer, no convergence split. */
   def focus(threats: Seq[Pixel]): Option[Pixel] =

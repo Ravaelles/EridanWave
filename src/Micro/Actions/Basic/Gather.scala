@@ -1,7 +1,7 @@
 package Micro.Actions.Basic
 
 import Lifecycle.With
-import Mathematics.Maff
+import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Maneuvering.WorkerThreatFlee
@@ -168,7 +168,7 @@ object Gather extends Action {
       lazy val threatened     = unit.battle.isDefined && unit.matchups.framesOfSafety < combatWindow && ! unit.matchups.threats.forall(IsWorker)
       // Wounded miners give threats a wider berth: anybody able to hit us
       // within 2.5 tiles fresh, up to 6.5 dying.
-      lazy val threatenedWounded = unit.woundPercent() > 0 && ! unit.matchups.enemiesCanAttackUs(unit.woundPercentBonus(2.5, 6.5)).forall(IsWorker)
+      lazy val threatenedWounded = unit.woundPercent() > 0 && ! unit.matchups.enemiesCanAttackUs(WoundMargin(2.5, 6.5).tiles(unit.woundPercent())).forall(IsWorker)
       lazy val threatCloser   = unit.matchups.threats.exists(_.pixelDistanceCenter(resource.pixel) < unit.pixelDistanceCenter(resource.pixel))
       if (transferring
         && (threatened || threatenedWounded)

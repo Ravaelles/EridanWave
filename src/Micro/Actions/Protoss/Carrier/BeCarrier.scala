@@ -1,6 +1,6 @@
 package Micro.Actions.Protoss.Carrier
 
-import Mathematics.Maff
+import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Protoss.Carrier._
@@ -45,7 +45,7 @@ object BeCarrier extends Action {
 
     // Linear wound berth: fresh scratches hold close, a bleeding hull
     // keeps fifteen tiles from anything that can answer.
-    val marginTiles = unit.woundPercentBonus(0.0, CarrierKite.maxMarginTiles)
+    val marginTiles = WoundMargin(0.0, CarrierKite.maxMarginTiles).tiles(unit.woundPercent())
     Maff.minBy(unit.matchups.threats.filter(t =>
       t.canAttack(unit) && CarrierKite.isRanged(t.pixelRangeAgainst(unit))))(
       unit.pixelDistanceEdge(_)).exists(threat => {
