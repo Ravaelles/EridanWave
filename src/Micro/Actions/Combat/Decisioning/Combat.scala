@@ -11,6 +11,7 @@ import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Agency.Commander
 import Micro.Coordination.Pushing.TrafficPriorities
+import Micro.Targeting.BreakTerranWallIn
 import Micro.Targeting.Target
 import Micro.Targeting.WallBreach
 import Micro.Targeting.WallBreachTarget
@@ -107,6 +108,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     }
 
     WallBreachTarget.run(unit)
+    BreakTerranWallIn.run(unit)
     Probe.note("Target", unit.id, unit.agent.toAttack.map(_.id.toString).getOrElse("-"))
     unit.agent.choosePerch()
     Commander.defaultEscalation(unit)

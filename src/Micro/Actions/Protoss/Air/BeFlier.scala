@@ -4,6 +4,7 @@ import Debugging.Visualizations.Forces
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Combat.Maneuvering.AirStaticStandoff
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Heuristics.Potential
@@ -19,6 +20,10 @@ object BeFlier extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.airborne && unit.canMove && ! unit.unitClass.isBuilding && ! unit.isTransport
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    // Static guns first, always: no flyer ever trades inside a gun
+    // building's keep-off, and the jittered leg breaks shared-ray mills.
+    if (AirStaticStandoff.act(unit)) return
+
     val scourge = unit.matchups.threats
       .filter(Zerg.Scourge)
       .filter(_.pixelDistanceEdge(unit) < Math.max(96, if (unit.canAttackAir) 32 + unit.pixelRangeAir else 9))
