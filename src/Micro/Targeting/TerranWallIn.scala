@@ -56,7 +56,7 @@ object TerranWallIn {
    * reach of the choke, and the lane verified sealed. No shield term:
    * a battered column at a sealed wall has nothing else to fight.
    */
-  def shouldBreakSealed(
+  def shouldBreakWallIn(
     unitToPieceTiles: Double,
     framesSinceAttack: Int,
     pieceToChokeTiles: Double,

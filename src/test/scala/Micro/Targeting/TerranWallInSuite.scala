@@ -34,7 +34,7 @@ class TerranWallInSuite extends AnyFunSuite {
     framesSinceAttack: Int = TerranWallIn.quietSealedFrames + 1,
     pieceToChokeTiles: Double = 3.0,
     sealedWall: Boolean = true): Boolean =
-    TerranWallIn.shouldBreakSealed(unitToPieceTiles, framesSinceAttack, pieceToChokeTiles, sealedWall)
+    TerranWallIn.shouldBreakWallIn(unitToPieceTiles, framesSinceAttack, pieceToChokeTiles, sealedWall)
 
   test("the user rule: close, quiet past three seconds, sealed") {
     assert(breached())
