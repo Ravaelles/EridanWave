@@ -28,6 +28,11 @@ object BeReaver extends Action {
       return
     }
 
+    // Arbiter owns the what, claims own the how: the order gates which
+    // family runs, so boarding and fighting never negotiate mid-frame.
+    // A locked ride (ReaverBoardGate) fights instead of freezing, and a
+    // walking hull walks instead of dueling past its ride.
+    val order = PairArbiter.reaverOrder(unit)
     val context = GroundContext(
       unit       = unit,
       foe        = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit)),
@@ -35,7 +40,24 @@ object BeReaver extends Action {
       // TEMP (ReaverBoardGate): a quiet crowded hull never boards - the
       // pair dance is broken, so the boarding claims below go blind.
       boardLocked = ReaverBoardGate.denyBoard(unit))
-    if (groundClaims.exists(_.apply(context))) return
+    val acted = order match {
+      case PairArbiter.RideAlong  => true
+      case PairArbiter.BoardRide  =>
+        if (context.boardLocked) combatClaims.exists(_.apply(context))
+        else boardingClaims.exists(_.apply(context)) || walkToRide(unit)
+      case PairArbiter.FightOnFoot => combatClaims.exists(_.apply(context))
+      case PairArbiter.HoldShoot   =>
+        if (standShoot(context)) true
+        else {
+          unit.agent.act("PairShoot")
+          Commander.hold(unit)
+
+          true
+        }
+      case PairArbiter.WalkToRide => walkToRide(unit)
+      case PairArbiter.WalkToArmy => walkToArmy(unit)
+    }
+    if (acted) return
 
     // Duelist walk (baseless maps, shuttle-less pairs only): with no contacts
     // the squad march stalls, so a Reaver with no ride at all walks at the
@@ -52,9 +74,35 @@ object BeReaver extends Action {
     def ride: Option[FriendlyUnitInfo] = unit.agent.ride
   }
 
-  /** First claim wins, in order; a claim that acts owns the frame. */
-  private val groundClaims: Seq[GroundContext => Boolean] = Seq(
-    rescueScarab, backOffOutrangedStatic, boardShotless, backOffSiegedTanks, standShoot, closeStatic, backOffOutrangedInRange, boardRide, boardIdle)
+  /** Boarding family, in order; the arbiter gates it behind BoardRide. */
+  private val boardingClaims: Seq[GroundContext => Boolean] = Seq(
+    rescueScarab, boardShotless, backOffSiegedTanks, boardRide, boardIdle)
+
+  /** Combat family, in order; the arbiter gates it behind the fight. */
+  private val combatClaims: Seq[GroundContext => Boolean] = Seq(
+    backOffOutrangedStatic, standShoot, closeStatic, backOffOutrangedInRange)
+
+  /** Walk to the ride instead of waiting for it: the anti-paralysis leg. */
+  private def walkToRide(unit: FriendlyUnitInfo): Boolean = {
+    unit.agent.ride.orElse(ReaverShuttlePair.rideOf(unit)) match {
+      case Some(ride) =>
+        unit.agent.act("PairWalkRide")
+        unit.agent.forceTo(ride.pixel)
+        Commander.move(unit)
+
+        true
+      case None => false
+    }
+  }
+
+  /** No ride anywhere: walk to the army, never hold for a pickup that is not coming. */
+  private def walkToArmy(unit: FriendlyUnitInfo): Boolean = {
+    unit.agent.act("PairWalkArmy")
+    unit.agent.forceTo(ReaverShuttlePair.armyGoal)
+    Commander.move(unit)
+
+    true
+  }
 
   /** Pressured mid-shot with the ride at hand: the flying Scarab lands on its own, the hull does not need to tank for it. */
   private def rescueScarab(context: GroundContext): Boolean = {

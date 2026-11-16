@@ -13,7 +13,8 @@ class PairArbiterSuite extends AnyFunSuite {
     reaverShotReady: Boolean = false,
     shuttlePressured: Boolean = false,
     reaverDoomed: Boolean = false,
-    raid: Boolean = false): PairArbiter.PairDirective =
+    raid: Boolean = false,
+    baitRide: Boolean = false): PairArbiter.PairDirective =
     PairArbiter.decide(
       loaded,
       mateOnFoot,
@@ -23,7 +24,8 @@ class PairArbiterSuite extends AnyFunSuite {
       reaverShotReady,
       shuttlePressured,
       reaverDoomed,
-      raid)
+      raid,
+      baitRide)
 
   test("a pressured loaded pair flees with the hull aboard") {
     val out = decide(loaded = true, shuttlePressured = true, raid = true)
@@ -84,5 +86,10 @@ class PairArbiterSuite extends AnyFunSuite {
     val out = decide(mateOnFoot = false)
     assert(out.shuttle == PairArbiter.AwaitPost)
     assert(out.reaver == PairArbiter.WalkToArmy)
+  }
+
+  test("no pair cargo anywhere means bait, not hover") {
+    val out = decide(mateOnFoot = false, baitRide = true)
+    assert(out.shuttle == PairArbiter.Bait)
   }
 }

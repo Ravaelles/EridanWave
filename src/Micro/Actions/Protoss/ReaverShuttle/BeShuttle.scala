@@ -11,11 +11,12 @@ import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
- * Shuttle half of the pair doctrine (first claim wins): ditch
- * hitchhikers, adopt the neediest hailer, run from what can hit the
- * hull, raid the enemy base on a RaidBase status, otherwise stick with
- * the army - park with passengers, escort the unloaded mate, rejoin a
- * mate left on foot, or await the next one when nobody is out.
+ * Shuttle half of the pair doctrine: the arbiter picks one order per
+ * frame, this brain executes it. Hitchhiker ditch stays first (cargo
+ * safety is orthogonal); every other leg below is an executor, never
+ * a decider - fetch/guards no longer compete with await each frame,
+ * which was the every-other-frame flap. Leg labels stay granular so
+ * the probe log keeps its vocabulary; the order gated them here.
  */
 object BeShuttle extends Action {
   override def isContainer: Boolean = true
@@ -24,15 +25,16 @@ object BeShuttle extends Action {
 
   override protected def perform(shuttle: FriendlyUnitInfo): Unit = {
     if (ditch(shuttle)) return
-    if (adopt(shuttle)) return
-    if (flee(shuttle)) return
 
-    val status = ReaverShuttlePair.statusOfShuttle(shuttle)
-    if (status == ReaverShuttleStatus.RaidBase) {
-      if (raid(shuttle)) return
+    PairArbiter.shuttleOrder(shuttle) match {
+      case PairArbiter.Flee       => if ( ! flee(shuttle)) support(shuttle)
+      case PairArbiter.FetchMate  => if ( ! adopt(shuttle) && ! rejoin(shuttle)) support(shuttle)
+      case PairArbiter.GuardMate  => if ( ! escort(shuttle) && ! rejoin(shuttle)) support(shuttle)
+      case PairArbiter.RaidCarry  => if ( ! raid(shuttle)) support(shuttle)
+      case PairArbiter.FollowArmy => support(shuttle)
+      case PairArbiter.Bait       => bait(shuttle)
+      case PairArbiter.AwaitPost  => awaitPost(shuttle)
     }
-
-    support(shuttle)
   }
 
   /** Drop passengers that are not ours to ferry. */
@@ -246,10 +248,15 @@ object BeShuttle extends Action {
       bait(shuttle)
     } else if (rejoin(shuttle)) {
     } else {
-      shuttle.agent.act("AwaitRide")
-      shuttle.agent.forceTo(ReaverShuttlePair.armyGoal)
-      Commander.move(shuttle)
+      awaitPost(shuttle)
     }
+  }
+
+  /** Hold the post for the next mate: the army goal, never a drift. */
+  private def awaitPost(shuttle: FriendlyUnitInfo): Unit = {
+    shuttle.agent.act("AwaitRide")
+    shuttle.agent.forceTo(ReaverShuttlePair.armyGoal)
+    Commander.move(shuttle)
   }
 
   /** Bait: no pair cargo exists anywhere, so the empty hull flies at the

@@ -1,5 +1,9 @@
 package Micro.Actions.Protoss.ReaverShuttle
 
+import Lifecycle.With
+import Mathematics.Maff
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+
 /**
  * Pair arbiter (pure game-free kernel plus a thin game seam): one decider
  * for two hulls. The Shuttle and the Reaver used to decide alone every
@@ -33,6 +37,9 @@ object PairArbiter {
 
   /** Wait at the named post for the next mate, never drift. */
   case object AwaitPost extends ShuttleOrder { val label = "AwaitPost" }
+
+  /** No pair cargo anywhere: provoke the enemy instead of hovering. */
+  case object Bait extends ShuttleOrder { val label = "BaitRide" }
 
   /** The Reaver's state: never Wait - without a ride or a fight it walks. */
   sealed trait ReaverOrder { def label: String }
@@ -76,7 +83,8 @@ object PairArbiter {
     reaverShotReady: Boolean,
     shuttlePressured: Boolean,
     reaverDoomed: Boolean,
-    raid: Boolean): PairDirective = {
+    raid: Boolean,
+    baitRide: Boolean): PairDirective = {
 
     if (shuttlePressured && loaded) {
       return PairDirective(Flee, RideAlong)
@@ -115,6 +123,71 @@ object PairArbiter {
 
     }
 
+    if (baitRide) {
+      return PairDirective(Bait, WalkToArmy)
+    }
+
     PairDirective(AwaitPost, WalkToArmy)
   }
+
+  /**
+   * Game seam, Shuttle view: the pair snapshot behind one order. Facts
+   * reuse the pair reads (mate bond, status) and the matchup sets; the
+   * foe scan is one pass over known enemies per hull per frame, which
+   * the pair count (hulls, not armies) keeps cheap.
+   */
+  def shuttleOrder(shuttle: FriendlyUnitInfo): ShuttleOrder = {
+    val passenger = ReaverShuttlePair.passengerOf(shuttle)
+    val mate = ReaverShuttlePair.mateOnFoot(shuttle)
+    val reaver = passenger.orElse(mate)
+    val foe = reaver.flatMap(nearestFoe)
+    decide(
+      loaded            = passenger.isDefined,
+      mateOnFoot        = mate.isDefined,
+      mateDistTiles     = mate.map(shuttle.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      reaverFoeTiles    = foe.map(f => reaver.get.pixelDistanceEdge(f) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      reaverGunTiles    = foe.map(f => reaver.get.pixelRangeAgainst(f) * Maff.inv32).getOrElse(0.0),
+      reaverShotReady   = reaver.exists(shotReady),
+      shuttlePressured  = pressured(shuttle),
+      reaverDoomed      = reaver.exists(doomed),
+      raid              = ReaverShuttlePair.statusOfShuttle(shuttle) == ReaverShuttleStatus.RaidBase,
+      baitRide          = ReaverShuttlePair.isBaitRide(shuttle)).shuttle
+  }
+
+  /**
+   * Game seam, Reaver view: the same snapshot from the hull's side. The
+   * ride is the reservation first (it is the bond until boarding
+   * completes), the live ride second; a hull with neither walks to
+   * the army instead of holding for a pickup that is not coming.
+   */
+  def reaverOrder(reaver: FriendlyUnitInfo): ReaverOrder = {
+    if (reaver.loaded) return RideAlong
+
+    val ride = reaver.agent.ride.orElse(ReaverShuttlePair.rideOf(reaver))
+    val foe = nearestFoe(reaver)
+    decide(
+      loaded            = false,
+      mateOnFoot        = ride.isDefined,
+      mateDistTiles     = ride.map(reaver.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      reaverFoeTiles    = foe.map(reaver.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      reaverGunTiles    = foe.map(reaver.pixelRangeAgainst(_) * Maff.inv32).getOrElse(0.0),
+      reaverShotReady   = shotReady(reaver),
+      shuttlePressured  = ride.exists(pressured),
+      reaverDoomed      = doomed(reaver),
+      raid              = ReaverShuttlePair.statusOfReaver(reaver) == ReaverShuttleStatus.RaidBase,
+      baitRide          = false).reaver
+  }
+
+  private def nearestFoe(unit: FriendlyUnitInfo): Option[UnitInfo] =
+    Maff.minBy(unit.matchups.targets)(_.pixelDistanceEdge(unit))
+
+  private def shotReady(reaver: FriendlyUnitInfo): Boolean =
+    reaver.scarabs > 0 && ! reaver.hasActiveScarab && reaver.cooldownLeft <= 0
+
+  private def pressured(hull: FriendlyUnitInfo): Boolean =
+    hull.matchups.threats.exists(t => t.likelyStillThere && t.canAttack(hull))
+
+  /** A hull dies if it stays: guns already in range on a broken shield. */
+  private def doomed(reaver: FriendlyUnitInfo): Boolean =
+    reaver.matchups.threatsInRange.nonEmpty && reaver.woundPercent() > 0.5
 }

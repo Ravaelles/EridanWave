@@ -38,7 +38,8 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
         reaverShotReady  = false,
         shuttlePressured = pressured,
         reaverDoomed     = false,
-        raid             = false)
+        raid             = false,
+        baitRide         = false)
       out.shuttle match {
         case PairArbiter.FetchMate =>
           fetches += 1
@@ -88,7 +89,8 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
         reaverShotReady  = me.cooldownLeft <= 0,
         shuttlePressured = false,
         reaverDoomed     = me.lossFraction > 0.75,
-        raid             = false)
+        raid             = false,
+        baitRide         = false)
       out.reaver match {
         case PairArbiter.BoardRide =>
           ride match {
