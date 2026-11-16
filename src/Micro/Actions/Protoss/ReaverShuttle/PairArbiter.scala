@@ -2,6 +2,7 @@ package Micro.Actions.Protoss.ReaverShuttle
 
 import Lifecycle.With
 import Mathematics.Maff
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
@@ -163,7 +164,9 @@ object PairArbiter {
   def reaverOrder(reaver: FriendlyUnitInfo): ReaverOrder = {
     if (reaver.loaded) return RideAlong
 
-    val ride = reaver.agent.ride.orElse(ReaverShuttlePair.rideOf(reaver))
+    val ride = reaver.agent.ride
+      .orElse(ReaverShuttlePair.rideOf(reaver))
+      .orElse(nearestFreeRide(reaver))
     val foe = nearestFoe(reaver)
     decide(
       loaded            = false,
@@ -180,6 +183,22 @@ object PairArbiter {
 
   private def nearestFoe(unit: FriendlyUnitInfo): Option[UnitInfo] =
     Maff.minBy(unit.matchups.targets)(_.pixelDistanceEdge(unit))
+
+  /**
+   * A free ride for an unbonded hull: live Shuttle, no Reaver aboard,
+   * squad-scoped like the mate bond (a squadded hull never chases a
+   * raid across the map that was never coming for it), squadless
+   * accepts the nearest. Without this the hull cannot see a ride that
+   * has no reservation yet and walks to the army while its Shuttle
+   * escorts the empty air where it stood.
+   */
+  private def nearestFreeRide(reaver: FriendlyUnitInfo): Option[FriendlyUnitInfo] =
+    Maff.minBy(With.units.ours.view.filter(u =>
+      u.alive
+        && u.isTransport
+        && Protoss.Shuttle(u)
+        && ! ReaverShuttlePair.passengerOf(u).isDefined
+        && ReaverShuttlePair.mateInSquad(reaver.squad, u.squad)))(_.pixelDistanceCenter(reaver.pixel))
 
   private def shotReady(reaver: FriendlyUnitInfo): Boolean =
     reaver.scarabs > 0 && ! reaver.hasActiveScarab && reaver.cooldownLeft <= 0
