@@ -15,7 +15,9 @@ import Micro.Coordination.Pushing.TrafficPriorities
 import Tactic.Squads.Decisions.ClusterPosture
 import Micro.Targeting.BreakTerranWallIn
 import Micro.Targeting.Target
+import Micro.Targeting.TargetChaff
 import Micro.Targeting.WallBreachTarget
+import Micro.Targeting.WorkerSpread
 import Micro.Actions.Combat.Decisioning.Formation.FormationHold
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
@@ -96,11 +98,31 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
   private def releaseStaleTarget(): Unit =
     if (unit.agent.toAttack.exists(t =>
       ! t.alive
+      || TargetChaff.isChaff(t.unitClass)
       || Target.shouldDropLifted(t.unitClass.isFlyingBuilding, unit.canAttackAir)
       || Target.shouldDropMemory(
         targetVisible = t.visible,
         otherHittableInRange = unit.matchups.targetsInRange.exists(o =>
           o.visible && o.id != t.id && unit.canAttack(o))))) unit.agent.toAttack = None
+
+  /**
+   * Worker spread (unit-owned claim): when the ladder picked a worker and
+   * more are hittable, deal by attacker id instead of queuing the whole
+   * line on the weakest one. Only re-points worker picks - combat targets
+   * keep the ladder's word untouched, and a lone worker keeps its duel.
+   */
+  private def spreadWorkers(): Unit = {
+    if ( ! unit.agent.toAttack.exists(_.unitClass.isWorker)) return
+
+    val hittable = unit.matchups.targetsInRange.filter(_.unitClass.isWorker).sortBy(_.id).toVector
+    if (hittable.size < 2) return
+
+    val pick = hittable(WorkerSpread.pickSlot(unit.id, hittable.size))
+    if ( ! unit.agent.toAttack.contains(pick)) {
+      unit.agent.act("SpreadWorkers")
+      unit.agent.toAttack = Some(pick)
+    }
+  }
 
   private def acquireTarget(): Unit = {
     releaseStaleTarget()
@@ -110,6 +132,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
 
     WallBreachTarget.run(unit)
     BreakTerranWallIn.run(unit)
+    spreadWorkers()
     Probe.note("Target", unit.id, unit.agent.toAttack.map(_.id.toString).getOrElse("-"))
     unit.agent.choosePerch()
     Commander.defaultEscalation(unit)
