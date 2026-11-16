@@ -75,7 +75,7 @@ class ReaverTankKeepOffSuite extends AnyFunSuite with StarEngineSuite {
     (reaver, marine1, tank, marine2, world.frame, minDist / 32.0)
   }
 
-  test("a plain hunter clears its side, walks at the tank and dies") {
+  test("a plain hunter clears its side, walks at the tank and dies", StarEngineTags.Reaver) {
     val (reaver, marine1, tank, _, frames, minTiles) = runReaver(new HuntAllPilot)
     println(s"DIAG hunt frames=$frames reaver=${reaver.hp.toInt} marine1=${marine1.hp.toInt} tank=${tank.hp.toInt} minTiles=$minTiles")
     assert( ! marine1.alive, "hunter never cleared its side")
@@ -83,7 +83,7 @@ class ReaverTankKeepOffSuite extends AnyFunSuite with StarEngineSuite {
     assert(tank.alive, "reaver traded up into the gun it must never approach")
   }
 
-  test("a keep-off hunter clears its side, holds the line and lives") {
+  test("a keep-off hunter clears its side, holds the line and lives", StarEngineTags.Reaver) {
     val pilot = new HuntOthersPilot
     val (reaver, marine1, tank, _, frames, minTiles) = runReaver(pilot)
     println(s"DIAG keepline frames=$frames yields=${pilot.yields} reaver=${reaver.hp.toInt} marine1=${marine1.hp.toInt} minTiles=$minTiles")

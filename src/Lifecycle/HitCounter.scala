@@ -13,7 +13,10 @@ import scala.collection.mutable
  * every frame the shot lands, including the killing blow: a unit that
  * disappears took its last drop with it, so vanishing counts once and the
  * corpse leaves the map. Only our own hit-point drops count, so our
- * attacks can never double-count. Reset every game; read by GameSummary.
+ * attacks can never double-count - with one blind spot: a bloodless
+ * vanish (Archon merge, morph) counts the same as a kill, since the
+ * previous map cannot tell them apart. Reset every game; the counts
+ * feed GameSummary only.
  */
 object HitCounter extends PerGame {
 

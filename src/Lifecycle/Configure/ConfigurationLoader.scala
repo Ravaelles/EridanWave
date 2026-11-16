@@ -98,7 +98,7 @@ object ConfigurationLoader {
     (flags.tournament && flags.ladder, "Both tournament and ladder modes are enabled"),
     (flags.tournament && flags.livestream, "Both tournament and livestream modes are enabled"),
     (flags.tournament && flags.pretraining, "Both tournament and pretraining modes are enabled"),
-    (flags.pretraining && flags.ladder, "Both pretraining and laddermodes are enabled"),
+    (flags.pretraining && flags.ladder, "Both pretraining and ladder modes are enabled"),
     (flags.pretraining && flags.livestream, "Both pretraining and livestream modes are enabled"),
     (flags.roundrobin && flags.elimination, "Both round robin and elimination modes are enabled"),
     (flags.debugginglive && ! flags.debugging, "debugginglive enabled without debugging enabled"))

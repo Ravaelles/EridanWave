@@ -112,6 +112,8 @@ final class World(
 
   private def moveBody(body: Body, order: Directive): Unit = {
     order match {
+        // Casts resolve in the cast phase from post-move positions, never here.
+        case CastStorm(_, _) => ()
         case Unload =>
           body.transport = None
         case _ if body.transport.isDefined =>
@@ -170,7 +172,7 @@ final class World(
    * cast frame; the orders map carries who cast into the gun phase.
    */
   private def castSide(side: Seq[Body], orders: Map[Body, Directive]): Unit = {
-    side.filter(_.alive).foreach(body => {
+    side.filter(b => b.alive && b.transport.isEmpty).foreach(body => {
       orders.get(body).foreach {
         case CastStorm(x, y) if body.energy >= World.StormCostEnergy =>
           body.energy -= World.StormCostEnergy
@@ -181,12 +183,12 @@ final class World(
     })
   }
 
-  /** Storms due this frame land on post-move positions. */
+  /** Storms due this frame land on post-move positions. Loaded cargo rides through: guns cannot hit it, storms neither. */
   private def landStorms(): Unit = {
     val due = pendingStorms.filter(_._1 <= frame)
     pendingStorms --= due
     due.foreach { case (_, x, y) =>
-      (ours ++ foes).filter(_.alive).foreach(victim => {
+      (ours ++ foes).filter(b => b.alive && b.transport.isEmpty).foreach(victim => {
         if (Math.abs(victim.x - x) <= World.StormBoxHalfPx && Math.abs(victim.y - y) <= World.StormBoxHalfPx) {
           victim.hp = Math.max(0, victim.hp - World.StormDamage)
         }

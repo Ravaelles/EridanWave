@@ -12,9 +12,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Global keyboard shortcuts for local development games. One class per button:
- * each key maps to exactly one {@link KeyAction}; this class only wires keys
- * to actions and routes them to the JVM that owns the game.
+ * Global keyboard shortcuts for local development games. Each key maps to
+ * exactly one {@link KeyAction} (a GameCommands method reference or ExitGame);
+ * this class only wires keys to actions and routes them to the JVM that
+ * owns the game.
  *
  * <p>Two JVMs see different keys: the Linux supervisor hook sees every global
  * keystroke but has no game, so it forwards everything (except Escape, which

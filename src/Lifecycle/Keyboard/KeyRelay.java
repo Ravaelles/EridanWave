@@ -51,13 +51,16 @@ public final class KeyRelay {
     }
 
     /**
-     * Unix side of the live game root ({@code null}/blank {@code gameRoot} =
-     * default layout). Custom roots reach the supervisor through
-     * {@code ERIDANWAVE_GAME_ROOT}; the client always gets its absolute
-     * Windows path via {@code -Deridanwave.keyRelay}, so it never needs this.
+     * Unix side of the live game root. Custom roots reach the supervisor
+     * through {@code ERIDANWAVE_GAME_ROOT} (legacy {@code PURPLEWAVE_GAME_ROOT}
+     * also read); the client always gets its absolute Windows path via
+     * {@code -Deridanwave.keyRelay}, so it never needs this. The layout
+     * itself lives in {@link LaunchPaths#gameRoot}, shared with the
+     * bwapi.ini path - only the env chain stays here, since the relay
+     * file must resolve with no CLI flags on either side.
      */
     static String gameRootDir() {
-        return gameRootDir(System.getenv("ERIDANWAVE_GAME_ROOT"), System.getenv("WINEPREFIX"));
+        return gameRootDir(LaunchPaths.env("GAME_ROOT"), System.getenv("WINEPREFIX"));
     }
 
     static String gameRootDir(String gameRoot, String winePrefix) {
@@ -65,17 +68,7 @@ public final class KeyRelay {
             return gameRoot.trim();
         }
 
-        gameRoot = LaunchPaths.env("GAME_ROOT");
-        if (gameRoot != null) {
-            return gameRoot;
-        }
-
-        if (winePrefix == null || winePrefix.trim().isEmpty()) {
-            winePrefix = System.getProperty("user.home", ".") + "/.wine";
-        } else {
-            winePrefix = winePrefix.trim();
-        }
-        return winePrefix + "/drive_c/sc";
+        return LaunchPaths.gameRoot(winePrefix, null);
     }
 
     /** Absolute path of the relay file, for startup diagnostics on both sides. */

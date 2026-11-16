@@ -16,7 +16,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * trigger. Speeds, reaches and margins are the real UnitType numbers;
  * both pilots call the shipped kernels, the engine owns the loop only.
  */
-class ShuttleFerryLatchSuite extends AnyFunSuite {
+class ShuttleFerryLatchSuite extends AnyFunSuite with StarEngineSuite {
 
   private class FerryPilot(id: Int, latched: Boolean) extends Pilot {
     val fled = new scala.collection.mutable.ListBuffer[Boolean]()

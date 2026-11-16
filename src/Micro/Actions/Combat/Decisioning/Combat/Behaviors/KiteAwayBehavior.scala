@@ -118,10 +118,13 @@ object KiteAwayBehavior {
   private def staticStandoff(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! standoffHot(unit)) return false
 
-    val gap = standoffGap(unit)
+    val threat = Maff.minBy(unit.matchups.threats.filter(_.unitClass.isStaticDefense))(_.pixelDistanceEdge(unit))
+    if (threat.isEmpty) return false
+
+    val gap = standoffGap(unit, threat.get)
     if (gap <= 0) return false
 
-    stepOut(unit, combat, gap)
+    stepOut(unit, combat, threat.get, gap)
 
     true
   }
@@ -138,19 +141,16 @@ object KiteAwayBehavior {
     true
   }
 
-  private def standoffGap(unit: FriendlyUnitInfo): Double = {
-    val threat = Maff.minBy(unit.matchups.threats.filter(_.unitClass.isStaticDefense))(_.pixelDistanceEdge(unit))
-    threat.map(t => ClusterSafety.standoffGapPixels(
-      unit.pixelDistanceEdge(t),
-      t.pixelRangeAgainst(unit),
+  private def standoffGap(unit: FriendlyUnitInfo, threat: UnitInfo): Double =
+    ClusterSafety.standoffGapPixels(
+      unit.pixelDistanceEdge(threat),
+      threat.pixelRangeAgainst(unit),
       KiteAway.enemyMarginTiles,
-      clusterAttacked = true)).getOrElse(0.0)
-  }
+      clusterAttacked = true)
 
-  private def stepOut(unit: FriendlyUnitInfo, combat: Combat, gap: Double): Unit = {
-    val threat = Maff.minBy(unit.matchups.threats.filter(_.unitClass.isStaticDefense))(_.pixelDistanceEdge(unit))
+  private def stepOut(unit: FriendlyUnitInfo, combat: Combat, threat: UnitInfo, gap: Double): Unit = {
     unit.agent.act("StaticStandoff")
-    unit.agent.decision.set(unit.pixel.project(threat.get.pixel, -gap).walkablePixel)
+    unit.agent.decision.set(unit.pixel.project(threat.pixel, -gap).walkablePixel)
     combat.maneuvers.move()
   }
 }

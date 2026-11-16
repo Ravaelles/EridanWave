@@ -113,9 +113,9 @@ object Pilots {
 
   object ZombieAttack {
 
-    /** Nearest live foe, most wounded wins ties; nothing when nobody lives. */
+    /** Nearest live unloaded foe, most wounded wins ties; nothing when nobody lives. */
     def pick(me: Body, foes: Seq[Body]): Option[Body] = {
-      val live = foes.filter(_.alive)
+      val live = foes.filter(f => f.alive && f.transport.isEmpty)
       if (live.isEmpty) None else Some(live.minBy(f => (me.dist(f), - f.lossFraction)))
     }
   }

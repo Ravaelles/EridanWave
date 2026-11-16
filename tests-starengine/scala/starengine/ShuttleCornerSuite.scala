@@ -14,7 +14,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * escape line, not invulnerability. Speeds, reaches and damage are
  * the real UnitType numbers; the map is 1024px square.
  */
-class ShuttleCornerSuite extends AnyFunSuite {
+class ShuttleCornerSuite extends AnyFunSuite with StarEngineSuite {
 
   private val mapPx = 1024
 

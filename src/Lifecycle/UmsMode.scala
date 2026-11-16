@@ -22,7 +22,6 @@ object UmsMode {
 
   def detectAndApply(): Unit = {
     With.umsMode = false
-    MapSpecificCommander.reset()
     try {
       detectAndApplyInner()
     } catch {

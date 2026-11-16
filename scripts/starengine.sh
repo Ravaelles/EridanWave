@@ -6,7 +6,9 @@
 #   scripts/starengine.sh --filter reaver          # every scenario tagged reaver
 #   scripts/starengine.sh --filter reaver,shuttle  # scenarios tagged either
 # Suite names take an optional starengine. prefix. Tags take an optional
-# starengine. prefix too (reaver == starengine.reaver); topics live in
+# starengine. prefix too (reaver == starengine.reaver); matching is
+# case-insensitive and an unknown tag is an error, never a silent
+# zero-test pass. Topics live in
 # tests-starengine/scala/starengine/StarEngineTags.scala. Suites and the
 # filter intersect when both are given.
 # Sources live in tests-starengine/scala; the default mvn test tree never sees them.
@@ -16,15 +18,18 @@ cd "$(dirname "$0")/.."
 export MAVEN_OPTS="--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED -Xms2g -Xmx4g"
 
 filter=""
+filter_given=0
 suites=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --filter=*)
       filter="${1#--filter=}"
+      filter_given=1
       shift
       ;;
     --filter)
       filter="${2:?--filter needs a value}"
+      filter_given=1
       shift 2
       ;;
     --*)
@@ -38,6 +43,21 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+# Tags are lowercase by convention (see StarEngineTags); normalize the
+# filter early so casing and stray whitespace can never silently match
+# nothing. Empty segments are rejected for the same reason.
+if [ "$filter_given" -eq 1 ]; then
+  filter="$(printf '%s' "$filter" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+  if [ -z "$filter" ]; then
+    echo "--filter needs a non-empty value" >&2
+    exit 2
+  fi
+  if [[ "$filter" == *",,"* || "$filter" == ","* || "$filter" == *"," ]]; then
+    echo "--filter has an empty tag (check the commas): $filter" >&2
+    exit 2
+  fi
+fi
 
 qualify() {
   local out=""
@@ -82,12 +102,14 @@ args=()
 if [ "${#suites[@]}" -gt 0 ]; then
   args+=("-Dsuites=$(IFS=,; echo "${suites[*]}")")
 fi
-if [ -n "$filter" ]; then
+if [ "$filter_given" -eq 1 ]; then
   if [ "${#suites[@]}" -eq 0 ]; then
     tagged="$(suites_for_tags "$filter")"
-    if [ -n "$tagged" ]; then
-      args+=("-Dsuites=$tagged")
+    if [ -z "$tagged" ]; then
+      echo "no suites declare tag(s): $filter" >&2
+      exit 2
     fi
+    args+=("-Dsuites=$tagged")
   fi
   args+=("-DtagsToInclude=$(qualify "$filter")")
 fi

@@ -15,14 +15,14 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  */
 object DragoonStandBehavior {
 
-  def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+  def run(unit: FriendlyUnitInfo, situation: CombatSituation): Boolean = {
     if ( ! Protoss.Dragoon(unit)) return false
-    if ( ! combat.shouldRetreat) return false
-    if (unit.shieldWound > DragoonTerranStand.maxShieldWound) return false
-    if (unit.cooldownLeft > DragoonTerranStand.readyCooldownFrames) return false
+    if ( ! situation.shouldRetreat) return false
 
+    // Warriors only: retreating means dueling mobiles, never chewing
+    // masonry while the real fight closes in.
     val prey = Maff.minBy(unit.matchups.targetsInRange.view.filter(e =>
-      e.alive && e.unitClass.isTerran))(
+      e.alive && e.unitClass.isTerran && e.unitClass.isWarrior))(
       unit.pixelDistanceEdge(_))
     if (prey.isEmpty) return false
     if ( ! DragoonTerranStand.shouldStand(unit.shieldWound, unit.cooldownLeft, terranInRange = true)) return false

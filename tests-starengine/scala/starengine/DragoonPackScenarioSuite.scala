@@ -51,7 +51,7 @@ class DragoonPackScenarioSuite extends AnyFunSuite with StarEngineSuite {
   }
 
   private def runPack(
-    pilot: Pilot,
+    pilot: PackPilot,
     dragoonHp: Double,
     dragoonCount: Int,
     foes: Seq[Body],
@@ -66,14 +66,13 @@ class DragoonPackScenarioSuite extends AnyFunSuite with StarEngineSuite {
       world.step()
     }
 
-    (dragoons, foes, world.frame, pilot.asInstanceOf[PackPilot].stands)
+    (dragoons, foes, world.frame, pilot.stands)
   }
 
   private def vultures(n: Int): Seq[Body] =
     (0 until n).map(i => new Body(Terran.Vulture, 600.0 + 60.0 * i, 500.0, Terran.Vulture.maxTotalHealth)).toSeq
 
   test("a retreating pack abandons the line it could hold") {
-    val foePilots = new scala.collection.mutable.HashMap[Body, Pilot]()
     val (dragoons, foes, frames, _) = runPack(new PackPilot {
       override def direct(me: Body, world: World): Directive = MoveTo(goal._1, goal._2)
     }, Protoss.Dragoon.maxTotalHealth, 3, vultures(2), f => new Pilots.ZombieAttack(_.ours, (0.0, 500.0)))
@@ -110,7 +109,7 @@ class DragoonPackScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert(stands == 0, "a pair stood anyway")
   }
 
-  test("shells in contact break the stand") {
+  test("heavy iron breaks the stand even far outside shell range") {
     val pilot = new PackPilot
     val tank = new Body(Terran.SiegeTankSieged, 700.0, 500.0, Terran.SiegeTankSieged.maxTotalHealth)
     val foes = vultures(2) :+ tank
@@ -120,6 +119,6 @@ class DragoonPackScenarioSuite extends AnyFunSuite with StarEngineSuite {
         case _ => new Pilots.ZombieAttack(_.ours, (0.0, 500.0))
       })
     println(s"DIAG heavy frames=$frames stands=$stands dragoons=${dragoons.count(_.alive)}/3 tank=${tank.hp.toInt}")
-    assert(stands == 0, "pack stood with shells in contact")
+    assert(stands == 0, "pack stood with heavy iron on the field")
   }
 }

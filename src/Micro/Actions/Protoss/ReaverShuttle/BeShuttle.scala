@@ -14,7 +14,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  * Shuttle half of the pair doctrine (first claim wins): ditch
  * hitchhikers, adopt the neediest hailer, run from what can hit the
  * hull, raid the enemy base on a RaidBase status, otherwise stick with
- * the army - park with passengers, await the next Reaver when empty.
+ * the army - park with passengers, escort the unloaded mate, rejoin a
+ * mate left on foot, or await the next one when nobody is out.
  */
 object BeShuttle extends Action {
   override def isContainer: Boolean = true

@@ -7,11 +7,12 @@ import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
- * Cloak policy (one table for both hulls, no game access in the table
- * itself): which tech each hull decloaks with, how much energy it keeps
- * in reserve, and the full cloak/uncloak gates. The Wraith used to pass
- * the Ghost's tech to decloak - the parameter was ignored, so the bug
- * was invisible; the table makes the pairing checkable.
+ * Cloak policy (one table for both hulls): which tech each hull decloaks
+ * with, how much energy it keeps in reserve, and the full cloak/uncloak
+ * gates. Only the pairing table itself is game-free; the gates read game
+ * state (detection grids, reaction timing). The Wraith used to pass the
+ * Ghost's tech to decloak - the parameter was ignored, so the bug was
+ * invisible; the table makes the pairing checkable.
  */
 object CloakPolicy {
 

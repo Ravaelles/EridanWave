@@ -2,9 +2,9 @@ package Lifecycle.Keyboard
 
 import Lifecycle.With
 
-/** Scala facade for global keyboard shortcuts. All game access stays here;
-  * Java action classes are one-line delegates, so there is exactly one place
-  * where shortcut behavior is defined.
+/** Scala facade for global keyboard shortcuts. All shortcut behavior lives
+  * here; keys bind to these methods directly (only ExitGame remains a
+  * Java delegate).
   */
 object GameCommands {
 
@@ -12,7 +12,7 @@ object GameCommands {
     (20, 0), (0, 0), (0, 10), (0, 20), (0, 40), (0, 80), (0, 150), (0, 250), (0, 500))
 
   @volatile private var speedIndex  : Int     = 0
-  private var guiEnabled  : Boolean = true
+  @volatile private var guiEnabled  : Boolean = true
   @volatile private var botPaused   : Boolean = false
 
   /**

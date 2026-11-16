@@ -36,4 +36,10 @@ class AirStaticStandoffSuite extends AnyFunSuite {
       assert(math.abs(j) <= AirStaticStandoff.jitterTiles * 32.0, f"jitter $j%.1fpx escapes +-2 tiles")
     })
   }
+
+  test("an injected draw pins the jitter exactly") {
+    assert(AirStaticStandoff.randomJitterPx(() => 0.0) == -2.0 * 32.0)
+    assert(AirStaticStandoff.randomJitterPx(() => 0.5) == 0.0)
+    assert(AirStaticStandoff.randomJitterPx(() => 1.0) == 2.0 * 32.0)
+  }
 }

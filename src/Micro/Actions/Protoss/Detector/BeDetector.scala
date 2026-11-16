@@ -26,15 +26,19 @@ object BeDetector extends Action {
     unit.unitClass.isDetector && unit.canMove
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
-    BeFlier(unit)
-    // Survival first: a defenseless eye never trades with guns that can
-    // hit it - outrun any enemy ranged unit on the wound-scaled margin.
+    // Genuine threats first: a flee order sticks in the engine while a
+    // later one is suppressed, so the widest flee must claim before the
+    // narrower steering below overwrites its destination.
     if (fleeAttackers(unit)) return
-
     // Compromised eyes run from fast hunters early: with a detector
     // inside eleven tiles the eye is seen, and Scourge, Corsairs,
     // Wraiths and Mutalisks close too fast to outrun once committed.
     if (fleeFastHunters(unit)) return
+
+    BeFlier(unit)
+    // Survival owns the frame: once anything above moved, later claims
+    // must not overwrite its destination with a suppressed order.
+    if (unit.unready) return
 
     // Spread outranks everything but survival: stacked eyes die together,
     // and every Spot/combat step after this one walks them back into the

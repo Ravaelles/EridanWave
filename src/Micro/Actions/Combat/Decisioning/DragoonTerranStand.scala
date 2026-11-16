@@ -5,7 +5,8 @@ package Micro.Actions.Combat.Decisioning
  * fresh shields and a hot gun shoots the Terran in range instead of
  * running from it. Sixteen shields is a quarter of the blue bar - a
  * chewed hull still runs; six frames is a fifth of the cycle - a cold
- * gun still kites. Distances in tiles.
+ * gun still kites. The caller feeds wound, cooldown and contact; the
+ * race gate lives in the caller.
  */
 object DragoonTerranStand {
 

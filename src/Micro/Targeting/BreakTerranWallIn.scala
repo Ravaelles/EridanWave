@@ -41,9 +41,15 @@ object BreakTerranWallIn {
       distBuildingToChokeTiles <= chokeRadiusTiles
 
   def run(unit: FriendlyUnitInfo): Unit = {
+    if ( ! unit.unitClass.isWarrior || unit.flying || unit.loaded || ! unit.tile.valid) return
     if (unit.shieldWound > maxShieldWound) return
     if (With.framesSince(unit.lastFrameStartingAttack) <= quietFrames) return
     if (With.units.enemy.exists(e => e.alive && Terran.SiegeTankSieged(e))) return
+    // A visible reachable duel still outranks masonry: a flanker behind us
+    // is the fight, the wall is not.
+    val dueling = unit.agent.toAttack.exists(t =>
+      t.visible && t.tile.valid && With.paths.groundPathExists(unit.tile, t.tile))
+    if (dueling) return
 
     val walls = With.units.enemy.view.filter(e =>
       e.alive

@@ -39,8 +39,9 @@ object AirStaticStandoff {
   def fallback(own: Pixel, threat: Pixel, jitterXpx: Double, jitterYpx: Double): Pixel =
     own.project(threat, -fallbackTiles * 32.0).add(jitterXpx.toInt, jitterYpx.toInt)
 
-  def randomJitterPx(): Double =
-    (Math.random() * 2 - 1) * jitterTiles * 32.0
+  /** Jitter draw, injectable for suites: production rolls Math.random. */
+  def randomJitterPx(rand: () => Double = Math.random): Double =
+    (rand() * 2 - 1) * jitterTiles * 32.0
 
   def act(unit: FriendlyUnitInfo): Boolean = {
     if ( ! unit.flying || unit.unitClass.isBuilding) return false

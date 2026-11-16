@@ -13,8 +13,8 @@ import java.util.List;
  *
  * <p>Both spellings are matched ({@code key=value} and {@code key = value});
  * missing keys are appended. The map family decides the default game type
- * (sscai/... maps play MELEE, everything else USE_MAP_SETTINGS); an explicit
- * {@code --game-type=} always wins.</p>
+ * (MELEE unless the path shows scenario content - see MapCatalog.umsMarkers;
+ * an explicit {@code --game-type=} always wins).</p>
  */
 public final class BwapiIni {
 

@@ -83,6 +83,8 @@ object FightRules {
     else if (f.tankHunt)     Some((true,  "TankHunt"))
     else if (f.carrierBrawl) Some((true,  "CarrierBrawl"))
     else if (f.dragoonBrave) Some((true,  "DragoonBrave"))
+    // Overlaps dragoonBrave on all-Marine contact (both true); first wins,
+    // same verdict either way - the pack rule only widens the conditions.
     else if (f.dragoonPack) Some((true,  "DragoonPack"))
     else if (f.homeStand)   Some((true,  "HomeStand"))
     else if (f.tanksAtNatural) Some((true,  "TanksAtNatural"))

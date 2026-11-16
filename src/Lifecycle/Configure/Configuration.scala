@@ -71,6 +71,8 @@ case class Configuration(
   cameraDynamicSpeedFastest: Int = 0,
   cameraViewportWidth: Int = 640,
   cameraViewportHeight: Int = 362,
+  // Deliberately not derived from the viewport above: copy() with a new
+  // viewport size does not follow, so keep both in sync by hand.
   conservativeViewportWidth: Int = 640 + 640,
   conservativeViewportHeight: Int = 480 + 362,
 

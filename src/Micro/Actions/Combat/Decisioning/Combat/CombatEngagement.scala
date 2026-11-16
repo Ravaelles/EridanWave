@@ -86,7 +86,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
-      } else if ( ! SuicideEngageBehavior.run(unit, combat) && ! IdleEngageBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
+      } else if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit)) RepositionBehavior.run(unit, combat)
   }
 
   // Formation resolution: break for the attack once no formation exists,

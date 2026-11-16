@@ -18,11 +18,11 @@ import Lifecycle.Keyboard.GameCommands
  * (Lings), leave the game at 32 kills (marines_v_zerglings),
  * CenterCamera.onFirstCombatUnit (vsGosu), vsGosuRav centers on our main.
  */
-object MapSpecificCommander {
+object MapSpecificCommander extends PerGame {
 
   private var firstSettings = true
 
-  def reset(): Unit = {
+  override def reset(): Unit = {
     firstSettings = true
   }
 

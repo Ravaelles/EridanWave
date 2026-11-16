@@ -1,9 +1,10 @@
 package Lifecycle.Keyboard;
 
 import java.util.ArrayDeque;
-import java.util.HashMap;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Direct-vs-relayed press dedup (pure timestamps in, boolean out): one
@@ -13,20 +14,22 @@ import java.util.Map;
  * of the same code happened within the window - matching consumes it, so
  * fast mashing still executes every press. Extracted from Keyboard so the
  * 2000 ms window and the 16-entry ring have a suite instead of a comment.
+ * Thread-safe by contract: the hook thread records, the drain thread
+ * consumes, and the map never tears under either.
  */
 public final class PressDeduper {
 
     private final long windowMs;
     private final int maxTrackedPerCode;
-    private final Map<Integer, ArrayDeque<Long>> directPresses = new HashMap<>();
+    private final Map<Integer, Deque<Long>> directPresses = new ConcurrentHashMap<>();
 
     public PressDeduper(long windowMs, int maxTrackedPerCode) {
         this.windowMs = windowMs;
         this.maxTrackedPerCode = maxTrackedPerCode;
     }
 
-    public void recordDirectPress(int keyCode, long now) {
-        ArrayDeque<Long> presses = directPresses.get(keyCode);
+    public synchronized void recordDirectPress(int keyCode, long now) {
+        Deque<Long> presses = directPresses.get(keyCode);
         if (presses == null) {
             presses = new ArrayDeque<>();
             directPresses.put(keyCode, presses);
@@ -35,8 +38,8 @@ public final class PressDeduper {
         while (presses.size() > maxTrackedPerCode) presses.removeFirst();
     }
 
-    public boolean consumeDirectTwin(int keyCode, long relayMillis) {
-        ArrayDeque<Long> presses = directPresses.get(keyCode);
+    public synchronized boolean consumeDirectTwin(int keyCode, long relayMillis) {
+        Deque<Long> presses = directPresses.get(keyCode);
         if (presses == null) return false;
 
         Iterator<Long> it = presses.iterator();

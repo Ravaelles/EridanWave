@@ -90,19 +90,26 @@ class DragoonStandScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert( ! dragoon.alive, "chewed dragoon survived without orders")
   }
 
-  test("a cold gun keeps no orders past the ready threshold") {
+  test("a cold gun keeps no orders until it goes hot") {
     val pilot = new StandPilot
     val dragoon = new Body(Protoss.Dragoon, 400.0, 500.0, Protoss.Dragoon.maxTotalHealth)
     dragoon.cooldownLeft = DragoonTerranStand.readyCooldownFrames + 24
-    val marine = new Body(Terran.Marine, 700.0, 500.0, Terran.Marine.maxTotalHealth)
+    val marine = new Body(Terran.Marine, 450.0, 500.0, Terran.Marine.maxTotalHealth)
     val world = new World(Seq(dragoon), Seq(marine),
       Map(dragoon -> pilot, marine -> new Pilots.ZombieAttack(_.ours, (400.0, 500.0))), Seq.empty)
 
+    // In range from frame zero, so only the cooldown can be holding the stand back.
     while (world.frame < DragoonTerranStand.readyCooldownFrames && dragoon.alive && marine.alive) {
       world.step()
     }
 
     println(s"DIAG cold frames=${world.frame} stands=${pilot.stands} dragoon=${dragoon.hp.toInt}")
     assert(pilot.stands == 0, "cold gun stood before going hot")
+
+    while (world.frame < 40 && dragoon.alive && marine.alive) {
+      world.step()
+    }
+
+    assert(pilot.stands > 0, "gun never stood after going hot")
   }
 }

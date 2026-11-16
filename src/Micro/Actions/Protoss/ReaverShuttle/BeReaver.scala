@@ -102,12 +102,12 @@ object BeReaver extends Action {
   }
 
   /**
-   * Siege line, after the rescue boardings, before every shooting claim:
-   * a Reaver never closes inside 12.5 tiles of a sieged tank, even to
-   * shoot - the hull only hunts other units. Boarding rescues above keep
-   * their precedence (an escaping hull boards instead of walking); with
-   * no siege on the map this claim never fires, so the order below is
-   * untouched.
+   * Siege line, after the rescue boardings and the outranged-static
+   * step-back, before every shooting hold or close: a Reaver never
+   * closes inside 12.5 tiles of a sieged tank, even to shoot - the hull
+   * only hunts other units. Boarding rescues above keep their precedence
+   * (an escaping hull boards instead of walking); with no siege on the
+   * map this claim never fires, so the order below is untouched.
    */
   private def backOffSiegedTanks(context: GroundContext): Boolean =
     ReaverTankKeepOff.act(context.unit)

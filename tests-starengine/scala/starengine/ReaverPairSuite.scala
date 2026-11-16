@@ -11,7 +11,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * Shuttle holds far behind, untouched. The bar from the field: the
  * Reaver and the ride both finish above 90% hull.
  */
-class ReaverPairSuite extends AnyFunSuite {
+class ReaverPairSuite extends AnyFunSuite with StarEngineSuite {
 
   /** Reaver discipline: shoot from the anchor, never chase; walk statics down to max range minus a margin. */
   private class StandPilot(anchor: (Double, Double)) extends Pilot {

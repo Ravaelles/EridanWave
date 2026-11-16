@@ -30,13 +30,7 @@ object CorsairBrain {
     claimed
   }
 
-  /**
-   * Wing separation: stacked Corsairs eat the same Scourge, so the newer
-   * hull of a too-close pair slides off the ray while the older holds
-   * the hunt. Runs after flee (survival first) and before every other
-   * claim, since spacing constrains all of them equally.
-   */
-  /** Corsairs mass for Mutalisks, but wings this close turn as one wide target. */
+  /** Corsairs mass for Mutalisks, but wings this close turn as one wide target: stacked Corsairs eat the same Scourge, so the newer hull of a too-close pair slides off the ray while the older holds the hunt. Runs after flee (survival first) and before every other claim, since spacing constrains all of them equally. */
   val minSpreadTiles: Double = 5.0
 
   private def spreadOut(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {

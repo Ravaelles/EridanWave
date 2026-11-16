@@ -13,7 +13,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  */
 object IdleEngageBehavior {
 
-  def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+  def run(unit: FriendlyUnitInfo): Boolean = {
     if ( ! unit.agent.shouldFight) return false
 
     if ( ! unit.unitClass.isWarrior) return false

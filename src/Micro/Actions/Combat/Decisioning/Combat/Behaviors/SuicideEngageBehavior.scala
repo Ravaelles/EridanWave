@@ -13,7 +13,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  */
 object SuicideEngageBehavior {
 
-  def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+  def run(unit: FriendlyUnitInfo): Boolean = {
     if ( ! unit.isSuicideMission) return false
 
     if ( ! unit.agent.shouldFight) return false

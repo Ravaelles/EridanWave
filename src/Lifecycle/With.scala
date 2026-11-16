@@ -21,7 +21,7 @@ import Mathematics.Points.Tile
 import Micro.Agency.Agency
 import Micro.Coordination.Coordinator
 import Micro.Matchups.MatchupGraph
-import Performance.TaskQueue.{TaskQueueGlobal, TaskQueueParallel}
+import Performance.TaskQueue.TaskQueueParallel
 import Placement.Placement
 import Planning.Proxy.Proxies
 import Planning.{Blackboard, Yolo}

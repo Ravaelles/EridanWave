@@ -4,7 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Micro.Agency.Commander
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
@@ -19,7 +19,12 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  */
 object ReaverTankKeepOff {
 
-  /** Never closer than this to a sieged tank, in tiles: range plus margin. */
+  /**
+   * Never closer than this to a sieged tank, in tiles: range plus margin.
+   * Deliberately 0.3 inside ArtilleryKeepOff's fresh line: this one is
+   * absolute (even a fighting hull holds it), the other scales with
+   * wounds and yields to a battle verdict.
+   */
   val keepOffTiles: Double = 12.5
 
   /** Step past the line, in tiles: the fallback lands outside, not on it. */
@@ -36,7 +41,7 @@ object ReaverTankKeepOff {
     if ( ! unit.canMove) return false
 
     val shells = With.units.enemy.view.filter(e =>
-      e.alive && e.likelyStillThere && Terran.SiegeTankSieged(e))
+      e.alive && e.likelyStillThere && ArtilleryKeepOff.isArtillery(e))
     Maff.minBy(shells)(_.pixelDistanceEdge(unit)).exists(tank => {
       if (shouldYield(unit.pixelDistanceEdge(tank) * Maff.inv32)) {
         unit.cherryVisUnitLog("ReaverTankKeepOff")

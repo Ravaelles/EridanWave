@@ -66,9 +66,9 @@ class WalkTerrain(boxes: Vector[Box], bounds: Box, walkable: (Int, Int) => Boole
     result.toVector
   }
 
-  private val navigations = new HashMap[Body, WallGapNavigation]
+  private val navigations = new HashMap[(Body, Pixel), WallGapNavigation]
   def navigationFor(body: Body, inside: Pixel): WallGapNavigation =
-    navigations.getOrElseUpdate(body,
+    navigations.getOrElseUpdate((body, inside),
       new WallGapNavigation(body, minX * 8, minY * 8, width, height, fits(_, _, _), inside))
 }
 

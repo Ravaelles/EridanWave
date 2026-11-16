@@ -18,7 +18,7 @@ object NearestShot {
     take(unit, label, candidates, unit.pixelDistanceEdge(_))
 
   def take(unit: FriendlyUnitInfo, label: String, candidates: Iterable[UnitInfo], rankBy: UnitInfo => Double): Boolean = {
-    Maff.minBy(candidates)(rankBy).map(target => {
+    pick(candidates, rankBy).map(target => {
       if ( ! unit.orderTarget.contains(target)) {
         unit.agent.act(label)
         Commander.attack(unit, target)
@@ -27,4 +27,8 @@ object NearestShot {
       true
     }).getOrElse(false)
   }
+
+  /** Pure pick behind the shared tail: the best-ranked candidate, if any. Pinned; take adds the order. */
+  def pick(candidates: Iterable[UnitInfo], rankBy: UnitInfo => Double): Option[UnitInfo] =
+    Maff.minBy(candidates)(rankBy)
 }

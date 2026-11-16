@@ -8,26 +8,21 @@ import Information.Counting._
 import Information.Fingerprinting.Fingerprints
 import Information.GameSense.GameSensor
 import Information.Geography.Geography
-import Information.Geography.NeoGeo.MapIdentifier
 import Information.Geography.Pathfinding.Paths
 import Information.Grids.Grids
 import Information.Scouting.{Scouting, UnitsShown}
-import Lifecycle.Configure.{BwapiData, Configuration, ConfigurationLoader}
 import Macro.Allocation._
 import Macro.Gathering.Gathering
 import Macro.Scheduling.Scheduler
 import Macro.Scheduling.Simulation.MacroSim
-import Mathematics.Points.Tile
 import Micro.Agency.Agency
 import Micro.Coordination.Coordinator
 import Micro.Matchups.MatchupGraph
-import Performance.TaskQueue.{TaskQueueGlobal, TaskQueueParallel}
+import Performance.TaskQueue.TaskQueueGlobal
 import Placement.Placement
 import Planning.Proxy.Proxies
 import Planning.{Blackboard, Yolo}
 import ProxyBwapi.Bullets.Bullets
-import ProxyBwapi.Players.{PlayerInfo, Players}
-import ProxyBwapi.ProxyBWAPI
 import ProxyBwapi.UnitTracking.UnitTracker
 import Strategery.History.History
 import Tactic.Missions.evaluation.MissionHistory
@@ -36,7 +31,6 @@ import Tactic.Squads.Squads
 import Tactic.Tactician
 import _root_.Performance.{Latency, PerformanceMonitor, ReactionTimes}
 import _root_.Placement.Architecture.Architecture
-import bwapi.Flag
 import scala.collection.JavaConverters._
 
 

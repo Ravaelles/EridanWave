@@ -26,6 +26,8 @@ object Transport extends Action {
     })
 
     Evacuate(transport)
+    if (transport.unready) return
+
     BeShuttle(transport)
   }
 }

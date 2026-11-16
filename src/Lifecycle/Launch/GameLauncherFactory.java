@@ -10,11 +10,12 @@ package Lifecycle.Launch;
  *   <li>{@code wine} - Linux, real StarCraft + ChaosLauncher under Wine.</li>
  * </ul>
  *
- * <p>The Wine environment wins over the flag: the bot client JVM under Wine is
- * started bare (no CLI args carry over from {@code wine-run.sh}), so the flag
- * alone can never route it - but the Wine markers in its environment can.
- * Without this the client falls through to the no-op backend and its global
- * hook (and key relay drain) never starts.</p>
+ * <p>The explicit {@code -Deridanwave.wineClient} flag wins over
+ * {@code --launcher=}: the bot client JVM under Wine is started bare
+ * (no CLI args carry over from {@code wine-run.sh}), so the flag alone
+ * can never route it - but this marker can. Without this the client
+ * falls through to the no-op backend and its global hook (and key
+ * relay drain) never starts.</p>
  */
 public final class GameLauncherFactory {
 
@@ -22,7 +23,7 @@ public final class GameLauncherFactory {
     }
 
     public static GameLauncher forConfig(LaunchConfig config) {
-        if (isWineClientJvm() || runningUnderWine()) {
+        if (isWineClientJvm()) {
             return new WineClientGameLauncher();
         }
 
@@ -83,21 +84,6 @@ public final class GameLauncherFactory {
         String gameName = System.getenv("GAME_NAME");
 
         return gameName != null && gameName.startsWith("GAME_");
-    }
-
-    /**
-     * True when this JVM was started as the Wine game client (explicit
-     * {@code -Deridanwave.wineClient}, always passed by wine-run.sh).
-     * The old environment sniffing (WINEDEBUG/WINEDLLOVERRIDES/WINEPREFIX)
-     * is gone on purpose: Wine strips its own markers before the Windows
-     * process sees them, so it never fired where intended and only ever
-     * misfired - a Linux supervisor JVM with WINEPREFIX exported was
-     * routed to the do-nothing client backend and looped on "Game table
-     * mapping not found" forever. Native Windows without the flag keeps
-     * the configured backend (chaos included).
-     */
-    static boolean runningUnderWine() {
-        return isWineClientJvm();
     }
 }
 

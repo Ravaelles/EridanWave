@@ -27,7 +27,7 @@ object BeArbiter extends Action {
   val cloakRadiusPixels: Int = 64
 
   /**
-   * Flee margin, in tiles: bold fresh hulls hold until two tiles, battered
+   * Flee margin, in tiles: bold fresh hulls hold until six tiles, battered
    * ones break off up to eleven out - Corsair-style wound scaling for a
    * hull that must never trade. Applies on top of the entanglement check,
    * which still catches long-range threats the margin cannot see.

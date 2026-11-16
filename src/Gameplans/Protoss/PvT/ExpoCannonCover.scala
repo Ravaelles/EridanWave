@@ -2,7 +2,8 @@ package Gameplans.Protoss.PvT
 
 /**
  * Expo cannon cover (pure numbers, no game access): weak against Terran
- * means every expansion holds at least one Cannon. Weak is mobile army
+ * means every expansion beyond main and natural holds at least one
+ * Cannon (those two ride the gameplans' fixed counts). Weak is mobile army
  * strength at or below 300 - static turtle score fakes the punch, so
  * the mobile-only read decides. One Cannon per expo rides the hall-side
  * template spots (DefendHall, between hall and minerals); the gameplans'

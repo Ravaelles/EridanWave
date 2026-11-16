@@ -16,7 +16,7 @@ object SpellValue {
 
   /** Danger pay: casting while threatened must be worth the caster's own hull. */
   def danger(threatened: Boolean, maxTotalHealth: Double, totalHealth: Double): Double =
-    1.0 + 0.5 * (if (threatened) maxTotalHealth / totalHealth else 0.0)
+    1.0 + 0.5 * (if (threatened) maxTotalHealth / math.max(1.0, totalHealth) else 0.0)
 
   /** Crowd factor: a spell that can only catch part of a pack scales down. */
   def crowd(targetCount: Int): Double =

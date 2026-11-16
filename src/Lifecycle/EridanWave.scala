@@ -1,7 +1,6 @@
 package Lifecycle
 
 import Debugging._
-import Utilities.?
 import bwapi.{DefaultBWListener, Player}
 
 class EridanWave extends DefaultBWListener {
@@ -16,10 +15,6 @@ class EridanWave extends DefaultBWListener {
 
   override def onStart(): Unit = {
     With.frame0ms = 0
-    // A game that ended while paused from outside leaves the flag true;
-    // the next game would ignore its first foreign pause instead of
-    // resuming (the exact bug the flag exists to prevent).
-    enginePauseNoticed = false
     timeFrameZero(() => {
       tryCatch(() => {
         With.onStart()
