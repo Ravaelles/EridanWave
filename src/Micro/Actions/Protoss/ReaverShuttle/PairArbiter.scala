@@ -101,7 +101,10 @@ object PairArbiter {
     baitRide: Boolean,
     unloadOrdered: Boolean = false,
     unloadSpotReady: Boolean = false,
-    boardLocked: Boolean = false): PairDirective = {
+    boardLocked: Boolean = false,
+    threatTiles: Double = Double.PositiveInfinity,
+    longTrip: Boolean = false,
+    wound01: Double = 0.0): PairDirective = {
 
     if (shuttlePressured && loaded) {
       return PairDirective(Flee, RideAlong)
@@ -134,7 +137,11 @@ object PairArbiter {
         return PairDirective(AwaitPost, FightOnFoot)
       }
 
-      if (ReaverShuttleReboard.rideInReach(mateDistTiles)) {
+      // Board for a real trip, a lost position, or a rescue - never for
+      // a short hop under guns the hull could walk: the old reboard band
+      // and the ferry trip rule, now one gate instead of two claims.
+      if (ReaverShuttleReboard.rideInReach(mateDistTiles)
+        && (ReaverShuttleReboard.mayReboard(threatTiles, wound01) || reaverDoomed || longTrip)) {
         return PairDirective(GuardMate, BoardRide)
       }
 
@@ -189,6 +196,8 @@ object PairArbiter {
     unloadOrdered: Boolean,
     unloadSpotReady: Boolean,
     boardLocked: Boolean,
+    threatTiles: Double,
+    longTrip: Boolean,
     foes: Seq[FoeView])
 
   private def distTiles(a: (Double, Double), b: (Double, Double)): Double = {
@@ -236,7 +245,10 @@ object PairArbiter {
       reaverDoomed      = mate.exists(m => doomed(m.wound01, m.foes)),
       raid              = raid,
       baitRide          = baitRide,
-      boardLocked       = mate.exists(_.boardLocked))
+      boardLocked       = mate.exists(_.boardLocked),
+      threatTiles       = mate.flatMap(m => Maff.minBy(m.foes)(_.distTiles)).map(_.distTiles).getOrElse(Double.PositiveInfinity),
+      longTrip          = false,
+      wound01           = mate.map(_.wound01).getOrElse(0.0))
   }
 
   /**
@@ -278,7 +290,10 @@ object PairArbiter {
       reaverDoomed      = doomed(reaver.wound01, reaver.foes),
       raid              = raid,
       baitRide          = false,
-      boardLocked       = reaver.boardLocked)
+      boardLocked       = reaver.boardLocked,
+      threatTiles       = reaver.threatTiles,
+      longTrip          = reaver.longTrip,
+      wound01           = reaver.wound01)
   }
 
   /** Game mapper: one Shuttle, plain data out. */
@@ -345,6 +360,9 @@ object PairArbiter {
       reaver.agent.fightReason == FightOrFlee.Reave,
       landingReady(reaver),
       ReaverBoardGate.denyBoard(reaver),
+      Maff.minBy(reaver.matchups.threats.view.filter(t => t.likelyStillThere && t.canAttack(reaver)))(reaver.pixelDistanceEdge(_))
+        .map(reaver.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      ReaverShuttleFerry.needsRide(reaver.pixelDistanceCenter(reaver.agent.destinationNext()) * Maff.inv32),
       reaver.matchups.targets.map(t =>
         FoeView(
           reaver.pixelDistanceEdge(t) * Maff.inv32,

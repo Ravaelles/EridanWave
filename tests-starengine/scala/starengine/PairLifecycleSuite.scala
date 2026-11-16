@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate}
+import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate, ReaverShuttleFerry}
 import ProxyBwapi.Races.{Protoss, Zerg}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -63,6 +63,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       unloadOrdered = false,
       unloadSpotReady = false,
       boardLocked(r, foes, frame),
+      Double.PositiveInfinity,
+      false,
       foeViews(r, foes))
 
   /** Shuttle executor, production order: resolve, then the legs. */
@@ -109,10 +111,16 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
    * Counts paralyzed frames - a Hold with no foe inside the gun is the
    * wait the arbiter was built to ban.
    */
-  private class ReaverExecutor(unloadTiles: Double = 8.0) extends Pilot {
+  private class ReaverExecutor(unloadTiles: Double = 8.0, objective: (Double, Double) = army) extends Pilot {
     var boards = 0
     var unloads = 0
     var paralyzed = 0
+
+    private def tripTiles(me: Body): Double = Math.hypot(me.x - objective._1, me.y - objective._2) / 32.0
+
+    private def threatTiles(me: Body, foes: Seq[Body]): Double =
+      foes.filter(f => f.alive && f.canHit(me)).sortBy(me.dist).headOption
+        .map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
 
     override def direct(me: Body, world: World): Directive = {
       val foes = world.foes.filter(_.alive)
@@ -140,6 +148,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             false,
             band,
             boardLocked(me, foes, world.frame),
+            Double.PositiveInfinity,
+            false,
             foeViews(me, foes)),
           Seq.empty,
           raid = false).reaver
@@ -173,6 +183,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             unloadOrdered = false,
             unloadSpotReady = false,
             boardLocked(me, foes, world.frame),
+            threatTiles(me, foes),
+            ReaverShuttleFerry.needsRide(tripTiles(me)),
             foeViews(me, foes)),
           rides,
           raid = false).reaver
@@ -210,7 +222,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
 
   test("bond: an adjacent on-foot hull boards the ride", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val (reaver, shuttle) = pair(0.0)
-    val hull = new ReaverExecutor
+    val hull = new ReaverExecutor(objective = (1700.0, 500.0))
     val world = new World(Seq(reaver, shuttle), Seq.empty, Map(reaver -> hull, shuttle -> new ShuttleExecutor((1700.0, 500.0))), Seq.empty)
 
     while (world.frame < 500 && reaver.transport.isEmpty) {
@@ -288,10 +300,13 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     val (reaver, shuttle) = pair(1500.0)
     shuttle.x = 1510.0
     reaver.hp = (Protoss.Reaver.maxTotalHealth * 0.4).toInt
+    // Pressure on the ride: the sunken cannot hit air, so a Hydralisk
+    // presses the evacuation - without it the quiet-crowd pin holds.
+    val hydra = new Body(Zerg.Hydralisk, 1560.0, 500.0, Zerg.Hydralisk.maxTotalHealth)
     val colony = sunken(1700.0, 500.0)
     val hull = new ReaverExecutor
-    val world = new World(Seq(reaver, shuttle), Seq(colony),
-      Map(reaver -> hull, shuttle -> new ShuttleExecutor((1700.0, 500.0))), Seq.empty)
+    val world = new World(Seq(reaver, shuttle), Seq(colony, hydra),
+      Map(reaver -> hull, shuttle -> new ShuttleExecutor((1700.0, 500.0)), hydra -> new Pilots.Hold), Seq.empty)
 
     while (world.frame < 500 && reaver.transport.isEmpty && reaver.alive) {
       world.step()
@@ -322,7 +337,10 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     val (reaver, shuttle) = pair(0.0)
     shuttle.x = 900.0
     val colony = sunken(200.0, 500.0)
-    val hull = new ReaverExecutor
+    // The pair has somewhere to go after the duel: without a trip an
+    // adjacent ride is correctly never boarded, so the hull walks its
+    // ferry leg here instead of milling by the kill.
+    val hull = new ReaverExecutor(objective = (1700.0, 500.0))
     val world = new World(Seq(reaver, shuttle), Seq(colony),
       Map(reaver -> hull, shuttle -> new ShuttleExecutor((200.0, 500.0))), Seq.empty)
 
@@ -350,6 +368,24 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG walk frames=${world.frame} loaded=${reaver.transport.isDefined} paralyzed=${hull.paralyzed}")
     assert(reaver.transport.isDefined, "quiet hull never walked to its ride")
     assert(hull.paralyzed == 0, "walking hull held without a foe inside the gun")
+  }
+
+  test("meet: without a trip the pair stands together on foot", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
+    val (reaver, shuttle) = pair(0.0)
+    shuttle.x = 900.0
+    // The objective is the rendezvous itself: once together there is
+    // nowhere to fly, so no pointless embark - the ride stands guard.
+    val hull = new ReaverExecutor(objective = (900.0, 500.0))
+    val world = new World(Seq(reaver, shuttle), Seq.empty,
+      Map(reaver -> hull, shuttle -> new ShuttleExecutor((900.0, 500.0))), Seq.empty)
+
+    while (world.frame < 2000 && (reaver.transport.isDefined || reaver.dist(shuttle) > 200.0)) {
+      world.step()
+    }
+
+    println(s"DIAG meet frames=${world.frame} dist=${reaver.dist(shuttle).toInt} loaded=${reaver.transport.isDefined}")
+    assert(reaver.dist(shuttle) <= 200.0, "pair never met at the rendezvous")
+    assert(reaver.transport.isEmpty, "hull boarded with nowhere to fly")
   }
 
   test("alone: a rideless hull walks to the army, never waits", StarEngineTags.Reaver, StarEngineTags.Shuttle) {

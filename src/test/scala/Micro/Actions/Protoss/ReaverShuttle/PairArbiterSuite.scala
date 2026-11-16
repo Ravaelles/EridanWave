@@ -16,7 +16,11 @@ class PairArbiterSuite extends AnyFunSuite {
     raid: Boolean = false,
     baitRide: Boolean = false,
     unloadOrdered: Boolean = false,
-    unloadSpotReady: Boolean = false): PairArbiter.PairDirective =
+    unloadSpotReady: Boolean = false,
+    boardLocked: Boolean = false,
+    threatTiles: Double = Double.PositiveInfinity,
+    longTrip: Boolean = false,
+    wound01: Double = 0.0): PairArbiter.PairDirective =
     PairArbiter.decide(
       loaded,
       mateOnFoot,
@@ -29,7 +33,11 @@ class PairArbiterSuite extends AnyFunSuite {
       raid,
       baitRide,
       unloadOrdered,
-      unloadSpotReady)
+      unloadSpotReady,
+      boardLocked,
+      threatTiles,
+      longTrip,
+      wound01)
 
   test("a pressured loaded pair flees with the hull aboard") {
     val out = decide(loaded = true, shuttlePressured = true, raid = true)
@@ -68,8 +76,8 @@ class PairArbiterSuite extends AnyFunSuite {
     assert(out.reaver == PairArbiter.FightOnFoot)
   }
 
-  test("a ride in reach is guarded while the hull boards") {
-    val out = decide(mateDistTiles = 1.0, reaverFoeTiles = 20.0)
+  test("a ride in reach is guarded while the hull boards for its trip") {
+    val out = decide(mateDistTiles = 1.0, reaverFoeTiles = 20.0, longTrip = true)
     assert(out.shuttle == PairArbiter.GuardMate)
     assert(out.reaver == PairArbiter.BoardRide)
   }
@@ -78,6 +86,17 @@ class PairArbiterSuite extends AnyFunSuite {
     val out = decide(mateDistTiles = 30.0, reaverFoeTiles = 20.0)
     assert(out.shuttle == PairArbiter.FetchMate)
     assert(out.reaver == PairArbiter.WalkToRide)
+  }
+
+  test("an adjacent ride is not boarded for a short hop") {
+    val out = decide(mateDistTiles = 1.0)
+    assert(out.shuttle == PairArbiter.FetchMate)
+    assert(out.reaver == PairArbiter.WalkToRide)
+  }
+
+  test("a real trip boards the adjacent ride") {
+    val out = decide(mateDistTiles = 1.0, longTrip = true)
+    assert(out.reaver == PairArbiter.BoardRide)
   }
 
   test("a loaded pair follows its status") {
@@ -133,8 +152,10 @@ class PairArbiterSuite extends AnyFunSuite {
     unloadOrdered: Boolean = false,
     unloadSpotReady: Boolean = false,
     boardLocked: Boolean = false,
+    threatTiles: Double = Double.PositiveInfinity,
+    longTrip: Boolean = false,
     foes: Seq[PairArbiter.FoeView] = Seq.empty): PairArbiter.ReaverView =
-    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, wound01, unloadOrdered, unloadSpotReady, boardLocked, foes)
+    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, wound01, unloadOrdered, unloadSpotReady, boardLocked, threatTiles, longTrip, foes)
 
   test("resolve: an unbonded hull sees the free same-squad ride") {
     val ride = shuttleView()
@@ -221,6 +242,30 @@ class PairArbiterSuite extends AnyFunSuite {
         boardLocked = true,
         foes = Seq(foe)),
       Seq(shuttleView(pos = (1.0, 0.0), threats = Seq(threat))),
+      raid = false)
+    assert(out.reaver == PairArbiter.BoardRide)
+  }
+
+  test("resolve: a quiet adjacent ride is not boarded for a short hop") {
+    val out = PairArbiter.resolveReaver(
+      reaverView(pos = (0.0, 0.0), bond = Some(shuttleView(pos = (1.0, 0.0)))),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(out.reaver == PairArbiter.WalkToRide)
+  }
+
+  test("resolve: a real trip boards the adjacent ride") {
+    val out = PairArbiter.resolveReaver(
+      reaverView(pos = (0.0, 0.0), bond = Some(shuttleView(pos = (1.0, 0.0))), longTrip = true),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(out.reaver == PairArbiter.BoardRide)
+  }
+
+  test("resolve: a threat at the hull boards it out") {
+    val out = PairArbiter.resolveReaver(
+      reaverView(pos = (0.0, 0.0), bond = Some(shuttleView(pos = (1.0, 0.0))), threatTiles = 1.0),
+      Seq(shuttleView(pos = (1.0, 0.0))),
       raid = false)
     assert(out.reaver == PairArbiter.BoardRide)
   }

@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate}
+import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate, ReaverShuttleFerry}
 import ProxyBwapi.Races.{Protoss, Terran}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -67,6 +67,8 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           unloadOrdered = false,
           unloadSpotReady = false,
           boardLocked(r, foes, world.frame),
+          Double.PositiveInfinity,
+          false,
           foeViews(r, foes))).toSeq
       val out = PairArbiter.resolveShuttle(
         PairArbiter.ShuttleView(
@@ -144,6 +146,8 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           unloadOrdered = false,
           unloadSpotReady = false,
           boardLocked(me, foes, world.frame),
+          foes.filter(_.canHit(me)).sortBy(me.dist).headOption.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity),
+          ReaverShuttleFerry.needsRide(Math.hypot(me.x - army._1, me.y - army._2) / 32.0),
           foeViews(me, foes)),
         rides,
         raid = false).reaver
