@@ -75,14 +75,13 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
   )
 
   private[Decisioning] def syncConsensus(): Unit = {
-    if (combat.shouldEngage && ! unit.agent.shouldFight) {
-      unit.agent.decideFight(true, "Technique")
-    }
+    // The skirmish verdict owns shouldFight: FightOrFlee runs before Fight
+    // in Idle, so it already spoke this frame and the technique must not
+    // talk over it - that overwrite is exactly the verdict flap the audit
+    // measures. A retreat technique still walks the safety destination;
+    // it only lost the right to flip the vote.
     if (combat.shouldRetreat) {
       unit.agent.decision.set(unit.agent.safety)
-      if (unit.agent.shouldFight) {
-        unit.agent.decideFight(false, "Technique")
-      }
     }
   }
 }

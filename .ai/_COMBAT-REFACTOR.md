@@ -82,6 +82,48 @@ Changed seams (thin, game-coupled, reviewed by reading):
 
 ## 4. Migration phases (each step useful alone)
 
+Phases 1-3 are DONE (audit script + baseline 47-88% SquadAttack split;
+RetreatDiscipline/Posture/Roles/Slot kernels with suites; SquadAttack
+publishes posture+roles in shadow mode with the Posture probe and the
+AttackPosture board).
+Phase 3 validated live (Benzene PvT VICTORY 96/27): shadow ran crash-free,
+posture flipped 20 times in 19594 frames (stable), and disagreed with the
+live stance in 21.1% of joint board moments - 526x Engaged/Withdraw (the
+piecemeal-feeding direction phase 4 must fix) vs 70x the cautious way.
+
+### Phase 4 edit list (concrete, in order)
+
+1. `CombatTechniques.syncConsensus`: delete the `decideFight` overrides
+   (`CombatTechniques.scala:77-87`). Rationale: `Idle` runs `FightOrFlee`
+   before `Fight` (`Idle.scala:39,55`), so the technique phase currently
+   overwrites the skirmish verdict - the exact last-writer-wins the audit
+   measures. After this, `shouldFight` is written once (FightOrFlee).
+2. `CombatManeuvers.walk` (`CombatManeuvers.scala:52-53`): stop setting
+   `decideFight(true)`. The forward-vs-retreat formation pick must follow
+   (posture, role), not the verdict - today `walk()` re-arms fighting on
+   the no-consensus path that just stood down.
+3. `CombatManeuvers.dodge` (`:82`): keep `decideFight(false)` - emergency
+   movement is the sanctioned escalation, not a verdict competitor.
+4. `CombatEngagement.engage` (`CombatEngagement.scala:66`): replace the
+   `(!fightConsensus || marchHome)` gate with posture consumption:
+   Withdraw/Regroup -> `maneuvers.move()` (unchanged behavior path);
+   Fight/HoldLine -> the duel below. `preyDrive` stays as the exception.
+5. `Combat.dispatchByTechnique` (`Combat.scala:146-158`): gate the
+   Retreat/Brawl/Abuse/SuperKite claims on posture+role instead of the
+   technique alone; technique becomes the how, posture the whether.
+6. `MarchOrders.sendUnit` (`MarchOrders.scala:112-125`): route legs
+   through `SlotDiscipline.maySlot` (no target, cold weapon, 60 silent
+   frames, no threat in range); split the lying `ReturningToSlot` label
+   into "marching" (no fight) vs a real return.
+7. `FightOrFlee.applyEstimation` (`FightOrFlee.scala:114-122`): aggregate
+   per-unit sims into posture facts instead of answering per unit
+   (median/percentile into `ClusterPosture.next` inputs). Last step on
+   purpose: until then the shadow posture disagrees loudly and measurably.
+
+Validate each edit with a live game: disagreement rate first (must fall
+toward zero), results second. Revert any single edit that regresses the
+rate - they are independent by construction.
+
 1. Disagreement audit (metric, no game change): on finished traces count
    frames where one cluster's units held different verdicts. Baseline and
    later proof.
