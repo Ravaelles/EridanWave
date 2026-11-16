@@ -29,10 +29,22 @@ object ZealotIntoGoon extends MacroActions {
 
   private val compositor = new Compositor
 
+  /** Order gas and the Core once the line stands: Dragoons flow from the
+   * first completion instead of waiting for the ten-warrior generic
+   * floor. That wait plus uncapped banked pumping is how the column
+   * floods to eighteen Zealots before the first Dragoon; teching at the
+   * line puts the first Dragoon around a dozen hulls. */
+  def shouldTechUp(zealots: Int, target: Int, hasCore: Boolean): Boolean =
+    ! hasCore && zealots >= target
+
   def produce(): Unit = {
     compositor.reset()
     queueZealots()
     queueDragoons()
+    if (shouldTechUp(units(Protoss.Zealot), zealotTarget, have(Protoss.CyberneticsCore))) {
+      get(Protoss.Assimilator)
+      get(Protoss.CyberneticsCore)
+    }
     if (supplyUsed200 >= 85) {
       produceAdvanced()
     }

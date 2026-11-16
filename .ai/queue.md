@@ -121,6 +121,10 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - ZealotIntoGoon unforced (TEMP flag removed; it competes as one branch
   among GateCore/reactives by match history - needs PvZ games, Monster
   included, to confirm dragoon-first branches get picked).
+- ZealotIntoGoon early tech (deliberate, 2026-11-16): gas + Core ordered
+  once the line stands (was: ten-warrior generic floor, flooding to ~18
+  Zealots first) - needs PvZ games to confirm first Dragoon lands
+  around a dozen hulls without breaking the ling hold.
 - Crona 4-pool overrun (lings arrive before the first Zealot; early-pool
   scout reaction needs gameplan review).
 - March-leg death tails (returning/marching units die mid-leg; probes
