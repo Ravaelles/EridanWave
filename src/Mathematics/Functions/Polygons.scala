@@ -73,10 +73,10 @@ trait Polygons {
         i += 1
       }
     }
-    val output = new mutable.Stack[T]
+    var output: List[T] = List.empty
     sortedPoints.foreach(point => {
-      while (output.size > 1 && clockDirection(extract(point._1), extract(output.head), extract(output(1))) < 0) { output.pop() }
-      output.push(point._1)
+      while (output.size > 1 && clockDirection(extract(point._1), extract(output.head), extract(output(1))) < 0) { output = output.tail }
+      output ::= point._1
     })
     output
   }

@@ -47,7 +47,10 @@ object BeReaver extends Action {
       foe        = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit)),
       rideNearby = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0))
     val acted = order match {
+      // Aboard the ride the loaded branch above owns the frame; the
+      // order only opens landings, it never moves a loaded hull.
       case PairArbiter.RideAlong  => true
+      case PairArbiter.UnloadHere => true
       case PairArbiter.BoardRide  => boardingClaims.exists(_.apply(context)) || walkToRide(unit)
       case PairArbiter.FightOnFoot => combatClaims.exists(_.apply(context))
       case PairArbiter.HoldShoot   =>

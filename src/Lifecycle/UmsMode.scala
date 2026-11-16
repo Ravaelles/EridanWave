@@ -45,7 +45,11 @@ object UmsMode {
 
     // Persist the correction for the next game; no-op when already correct.
     val ini = BwapiIni.defaultLiveIni()
-    if (ini.isFile) return BwapiIni.patch(ini, null, null, null, "USE_MAP_SETTINGS", false)
+    if (ini.isFile) {
+      BwapiIni.patch(ini, null, null, null, "USE_MAP_SETTINGS", false)
+
+      return
+    }
 
     With.logger.debug(f"Skipping bwapi.ini game_type patch; not found at ${ini.getPath}")
   }

@@ -1,6 +1,6 @@
 package Information.Battles.Prediction
 
-import Information.Battles.Prediction.Simulation.{Simulacrum, Simulation}
+import Information.Battles.Prediction.Simulation.{Simulacrum, Simulation => Sim}
 import Lifecycle.With
 import Mathematics.Maff
 import ProxyBwapi.UnitInfo.UnitInfo
@@ -10,7 +10,7 @@ object SimulationCheckpoint {
   // Immutable because each UnitInfo's simulacrum is reused by subsequent forecasts.
   private case class Snapshot(valueMax: Double, valueLeft: Double, healthMax: Double, healthLeft: Double, dead: Boolean)
   private val emptySnapshot = Snapshot(0.0, 0.0, 0.0, 0.0, dead = false)
-  private def capture(simulation: Simulation): Map[UnitInfo, Snapshot] = simulation.realUnits.map { unit =>
+  private def capture(simulation: Sim): Map[UnitInfo, Snapshot] = simulation.realUnits.map { unit =>
     val s = unit.simulacrum
     val value = if (s.shouldScoreIfOurs || s.isEnemy) s.subjectiveValue else 0.0
     val healthMax = if (s.measureHealth) value * (s.hitPointsInitial + s.shieldPointsInitial) / Math.max(1, s.unitClass.maxTotalHealth) else 0.0
@@ -24,7 +24,7 @@ class SimulationCheckpoint private (
   us: Seq[UnitInfo], foe: Seq[UnitInfo],
   val framesIn: Int, val aggression: Double) {
 
-  def this(simulation: Simulation, previous: Option[SimulationCheckpoint]) = this(
+  def this(simulation: Sim, previous: Option[SimulationCheckpoint]) = this(
     SimulationCheckpoint.capture(simulation), simulation.realUnitsOurs, simulation.realUnitsEnemy,
     simulation.battle.simulationFrames, With.blackboard.aggressionRatio())
 

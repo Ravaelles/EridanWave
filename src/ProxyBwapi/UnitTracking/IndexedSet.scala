@@ -18,5 +18,5 @@ final class IndexedSet[T: ClassTag] extends IndexedSeq[T]  {
 
   override def length: Int = _seq.length
   override def apply(idx: Int): T = _seq(idx)
-  override def contains[Supertype >: T](elem: Supertype): Boolean = elem.isInstanceOf[T] && _set.contains(elem.asInstanceOf[T])
+  override def contains[Supertype >: T](elem: Supertype): Boolean = _set.exists(_ == elem)
 }
