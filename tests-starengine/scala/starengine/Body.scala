@@ -27,6 +27,16 @@ final class Body(val kind: UnitClass, var x: Double, var y: Double, var hp: Doub
    */
   var passive: Boolean = false
 
+  /**
+   * Transport carrying this body (loaded cargo rides, never shoots and
+   * cannot be hit - BW-faithful, like the engine's other documented
+   * simplifications). Point bodies board by center distance; see
+   * World.BoardRangePx.
+   */
+  var transport: Option[Body] = None
+
+  def loaded: Boolean = transport.isDefined
+
   def alive: Boolean = hp > 0
 
   def maxHp: Double = kind.maxTotalHealth

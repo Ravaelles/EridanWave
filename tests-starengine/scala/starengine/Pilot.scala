@@ -23,6 +23,16 @@ final case class MoveTo(x: Double, y: Double) extends Directive
 
 final case class Chase(target: Body) extends Directive
 
+/**
+ * Board a transport: walk to its hull and embark once inside pickup
+ * reach. Loaded cargo rides the transport, never shoots and cannot be
+ * hit. Capacity follows the shipped UnitType slots.
+ */
+final case class Board(transport: Body) extends Directive
+
+/** Leave the transport at its current position. */
+case object Unload extends Directive
+
 /** Storm cast at a point: resolves in the cast phase, never moves the caster that frame. */
 final case class CastStorm(x: Double, y: Double) extends Directive
 

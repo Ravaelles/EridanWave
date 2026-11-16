@@ -43,6 +43,8 @@ final class World(
     case (None, _) => true
     case (Some(Hold), Hold) => true
     case (Some(Chase(a)), Chase(c)) => (a eq c) || a.dist(c) <= 32.0
+    case (Some(Board(a)), Board(b)) => a eq b
+    case (Some(Unload), Unload) => true
     case (Some(CastStorm(x1, y1)), CastStorm(x2, y2)) =>
       val dx = x1 - x2
       val dy = y1 - y2
@@ -55,9 +57,13 @@ final class World(
   }
 
   def nearestFoeOf(me: Body, among: Seq[Body], valid: (Body, Body) => Boolean): Option[Body] = {
-    val live = among.view.filter(b => b.alive && valid(me, b))
+    val live = among.view.filter(b => b.alive && b.transport.isEmpty && valid(me, b))
     if (live.isEmpty) None else Some(live.minBy(me.dist))
   }
+
+  /** Cargo slots taken aboard a transport, in BW slots. */
+  def cargoSpaceUsed(transport: Body): Int =
+    (ours ++ foes).view.filter(b => b.alive && b.transport.contains(transport)).map(_.kind.spaceRequired).sum
 
   def step(): Unit = {
     val orders = (ours ++ foes).view.filter(_.alive)
@@ -65,6 +71,7 @@ final class World(
     landStorms()
     moveSide(ours, orders)
     moveSide(foes, orders)
+    syncCargo()
     constraints.foreach(_.apply(this))
     castSide(ours, orders)
     shootSide(foes, ours, orders)
@@ -105,6 +112,20 @@ final class World(
 
   private def moveBody(body: Body, order: Directive): Unit = {
     order match {
+        case Unload =>
+          body.transport = None
+        case _ if body.transport.isDefined =>
+          // Loaded cargo rides: boarding twice is a no-op, other orders
+          // wait for the disembark - the sync pass moves the hull.
+          ()
+        case Board(t) =>
+          if (t.alive && t.transport.isEmpty
+            && cargoSpaceUsed(t) + body.kind.spaceRequired <= t.kind.spaceProvided
+            && body.dist(t) <= World.BoardRangePx) {
+            body.transport = Some(t)
+          } else if (t.alive) {
+            body.stepToward(t.x, t.y)
+          }
         case Hold => ()
         case MoveTo(x, y) => body.stepToward(x, y)
         case Chase(target) =>
@@ -124,6 +145,15 @@ final class World(
           }
       }
   }
+
+  /**
+   * Loaded cargo rides its transport: after every move, each boarded
+   * body snaps to its hull. Transports moved this same frame already,
+   * so one sync after both sides keeps the pair pixel-exact.
+   */
+  private def syncCargo(): Unit =
+    (ours ++ foes).filter(_.alive).foreach(cargo =>
+      cargo.transport.foreach(hull => { cargo.x = hull.x; cargo.y = hull.y }))
 
   /**
    * Storm casts, ours only (no foe caster exists in these scenarios).
@@ -163,13 +193,16 @@ final class World(
     side.filter(b => b.alive && ! b.passive).foreach(body => {
       if (body.cooldownLeft > 0) {
         body.cooldownLeft -= 1
+      } else if (body.transport.isDefined) {
+        // Loaded cargo rides: no guns from inside the hull.
       } else if (orders.get(body).exists(_.isInstanceOf[CastStorm])) {
         // Cast this frame: the energy is already spent, the guns stay silent.
       } else {
         // The chase target is the committed pick (mirrors toAttack): shoot
         // it while it holds, otherwise fall back to the nearest hittable.
+        // Loaded bodies are not on the field: neither committed nor found.
         val committed = orders.get(body).collect {
-          case Chase(target) if target.alive && body.canHit(target) && body.dist(target) <= body.rangeAgainst(target) => target
+          case Chase(target) if target.alive && target.transport.isEmpty && body.canHit(target) && body.dist(target) <= body.rangeAgainst(target) => target
         }
         val victim = committed.orElse(nearestFoeOf(body, victims, (me, foe) => me.canHit(foe) && me.dist(foe) <= me.rangeAgainst(foe)))
         victim.foreach(v => {
@@ -177,9 +210,9 @@ final class World(
           // Radial splash approximation (no divisors, no scarab flight):
           // the primary takes the full shot, every other live enemy in
           // the outer radius takes half. Scarabs are enemy-splash, so
-          // our own bodies never catch it.
+          // our own bodies never catch it. Loaded cargo never catches it.
           if (body.splashOuterPx > 0) {
-            victims.filter(o => o.alive && (o ne v) && o.dist(v) <= body.splashOuterPx).foreach(o => {
+            victims.filter(o => o.alive && o.transport.isEmpty && (o ne v) && o.dist(v) <= body.splashOuterPx).foreach(o => {
               o.hp = Math.max(0, o.hp - body.damageAgainst(o) / 2)
             })
           }
@@ -207,4 +240,11 @@ object World {
   val StormBoxHalfPx: Double = 48.0
   val StormCastRangePx: Double = 9 * 32.0
   val StormCastFrames: Int = 4
+
+  /**
+   * Pickup reach, in pixels: boarding needs the hulls side by side,
+   * the engine's point-body stand-in for the 32px edge-to-edge pickup
+   * radius the shipped reboard rule quotes.
+   */
+  val BoardRangePx: Double = 32.0
 }
