@@ -21,4 +21,15 @@ class TankHugSuite extends AnyFunSuite {
     assert(TankHug.closeEnough(0.0))
     assert( ! TankHug.closeEnough(0.21))
   }
+
+  test("fresh shells outside the hug break the duel off") {
+    assert(TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.3))
+    assert(TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 12.0))
+  }
+
+  test("stale shells and the hug itself hold the line") {
+    assert( ! TankHug.shouldWithdraw(shelledRecently = false, nearestSiegedTiles = 12.0))
+    assert( ! TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.2))
+    assert( ! TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.0))
+  }
 }

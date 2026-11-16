@@ -1,5 +1,7 @@
 package Micro.Actions.Combat.Decisioning
 
+import Lifecycle.With
+import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Coordination.Pushing.TrafficPriorities
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -11,6 +13,15 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
   private[Decisioning] def selectBaseTechnique(safePassage: Boolean): Unit = {
     combat.technique =
             if ( ! unit.canMove)                                    Fight
+      // Latched retreat: once falling back, hold Flee until clear of the
+      // deepest threat with margin and the verdict says fight (or the
+      // duel is confident enough to turn inside contact). Units that may
+      // not flee keep the old ladder untouched below.
+      else  if (unit.intent.canFlee && ReengageLatch.shouldHoldRetreat(
+        combat.techniqueIs(Fallback, Flee, Excuse),
+        unit.matchups.pixelsEntangled * Maff.inv32,
+        unit.agent.shouldFight,
+        unit.confidence11))                                         Flee
       else  if (unit.agent.shouldFight && combat.target.isDefined)   Fight
       else  if (safePassage && combat.target.exists(unit.inRangeToAttack)) Fight
       else  if (safePassage)                                        Walk
@@ -24,6 +35,11 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     combat.transition(Abuse,     unit.unitClass.abuseAllowed && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && (combat.shouldRetreat || combat.framesUntilShot < unit.cooldownMaxAirGround))
     combat.transition(SuperKite, unit.isAny(Terran.Wraith, Zerg.Mutalisk))
     combat.transition(Scavenge,  outmatchedPrey)
+    combat.transition(Fallback,  unit.matchups.inRangeOfTank && TankHug.shouldWithdraw(
+      With.framesSince(unit.lastFrameTakingDamage) < TankHug.shellShockFrames,
+      Maff.minBy(unit.matchups.threats.view.filter(Terran.SiegeTankSieged))(_.pixelDistanceEdge(unit))
+        .map(unit.pixelDistanceEdge(_) * Maff.inv32)
+        .getOrElse(Double.PositiveInfinity)))
     combat.transition(Fallback,  unit.isAny(Terran.SiegeTankUnsieged, Terran.Goliath, Protoss.Reaver) && ! unit.airborne)
     // Unit-owned claims (the predicates live with their units; the order
     // lives here because the technique state machine constrains it).

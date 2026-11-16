@@ -1,5 +1,7 @@
 package Micro.Actions.Combat.Decisioning
 
+import Utilities.Time.Seconds
+
 /**
  * Pure siege-hug decision (no game access): a ground warrior with a hot
  * gun walks onto the nearest sieged tank instead of kiting around it.
@@ -19,6 +21,9 @@ object TankHug {
   /** Hug while the weapon still needs this many frames. */
   val coolingFrames: Int = 8
 
+  /** Shells landing this recently still count as incoming fire, in frames. */
+  val shellShockFrames: Int = Seconds(2)()
+
   def shouldHug(
     siegedTankTiles: Double,
     cooldownLeft: Int,
@@ -28,4 +33,14 @@ object TankHug {
 
   def closeEnough(distTiles: Double): Boolean =
     distTiles <= hugGapTiles
+
+  /**
+   * Shell shock (no game access): a hull taking siege fire outside hugging
+   * range breaks off instead of trading volleys it cannot win. The latch
+   * on the retreat (ReengageLatch) decides when it may come back; this
+   * only starts the withdrawal, on the first shells, never inside the
+   * hug where the tank cannot answer.
+   */
+  def shouldWithdraw(shelledRecently: Boolean, nearestSiegedTiles: Double): Boolean =
+    shelledRecently && nearestSiegedTiles > hugGapTiles
 }
