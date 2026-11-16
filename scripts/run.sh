@@ -41,6 +41,15 @@ if [ -z "$MAP" ]; then
   exit 2
 fi
 
+# Human-only maps (need a human player; idle forever headless) - keep in
+# sync with the HUMAN_ONLY list in scripts/list-maps.sh.
+case "$(basename "$MAP")" in
+  *dragoons_v_map*)
+    echo "[run] REFUSED: $MAP is human-only (see scripts/list-maps.sh)." >&2
+    exit 2
+    ;;
+esac
+
 JAR="$REPO/target/EridanWave-1.0.jar"
 if [ ! -f "$JAR" ]; then
   echo "[run] No bot jar at $JAR - building it first (once)."

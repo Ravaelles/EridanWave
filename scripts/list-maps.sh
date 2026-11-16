@@ -29,11 +29,16 @@ for arg in "$@"; do
   esac
 done
 if [ "$EXPECT_VALUE" = 1 ]; then echo "--filter needs a value" >&2; exit 2; fi
+# Human-only maps: present on disk but never launchable by the bot
+# (dragoons_v_map needs a human player; it idles forever headless).
+HUMAN_ONLY="dragoons_v_map"
 TOTAL=0
 CURRENT_DIR=""
 
 while IFS= read -r map; do
   rel="${map#$GAME_ROOT/}"
+  base=$(basename "$rel")
+  if echo "$base" | grep -qi "$HUMAN_ONLY"; then continue; fi
   if [ -n "$FILTER" ] && ! echo "$rel" | grep -qi "$FILTER"; then
     continue
   fi
