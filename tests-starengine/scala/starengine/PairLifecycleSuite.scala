@@ -91,6 +91,20 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
           mate.map(m => MoveTo(m.x, m.y)).getOrElse(Hold)
         case PairArbiter.GuardMate =>
           mate.map(m => MoveTo(m.x, m.y)).getOrElse(Hold)
+        case PairArbiter.FleeToMate =>
+          // Glued retreat, production order: hold the mate first, flee
+          // away only with no mate lock left.
+          mate.map(m => MoveTo(m.x, m.y)).getOrElse({
+            foes.sortBy(me.dist).headOption match {
+              case Some(t) =>
+                val dx = me.x - t.x
+                val dy = me.y - t.y
+                val dist = Math.sqrt(dx * dx + dy * dy)
+                if (dist > 0) MoveTo(me.x + dx / dist * 256.0, me.y + dy / dist * 256.0)
+                else Hold
+              case None => Hold
+            }
+          })
         case PairArbiter.Flee =>
           foes.sortBy(me.dist).headOption match {
             case Some(t) =>

@@ -32,6 +32,14 @@ object PairArbiter {
   /** Run from what can hit the hull, cargo or none. */
   case object Flee extends ShuttleOrder { val label = "PairFlee" }
 
+  /**
+   * Run from what can hit the hull, but TO the on-foot mate, never away:
+   * a glued retreat ends in a pickup and a joint flight, never in an
+   * abandoned hull. The executor holds the mate first and only flees
+   * outright with no mate lock left.
+   */
+  case object FleeToMate extends ShuttleOrder { val label = "FleeToMate" }
+
   /** Carry the loaded pair at the enemy base. */
   case object RaidCarry extends ShuttleOrder { val label = "RaidCarry" }
 
@@ -120,6 +128,13 @@ object PairArbiter {
         if (reaverDoomed && ReaverShuttleReboard.rideInReach(mateDistTiles)) BoardRide
         else if (reaverFoeTiles <= fightTiles) FightOnFoot
         else WalkToRide
+
+      // Glued retreat: with the mate on foot inside the band the ride
+      // retreats TO it (pickup on arrival, then both fly) instead of away
+      // from it - never abandon the hull to save the hull.
+      if (PairGlue.fleeToMate(mateOnFoot, mateDistTiles)) {
+        return PairDirective(FleeToMate, reaver)
+      }
 
       return PairDirective(Flee, reaver)
     }

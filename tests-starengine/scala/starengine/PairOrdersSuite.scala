@@ -92,6 +92,9 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           mate.map(m => MoveTo(m.x, m.y)).getOrElse(Hold)
         case PairArbiter.GuardMate =>
           mate.map(m => MoveTo(m.x, m.y)).getOrElse(Hold)
+        case PairArbiter.FleeToMate =>
+          flees += 1
+          mate.map(m => MoveTo(m.x, m.y)).getOrElse(Hold)
         case PairArbiter.Flee =>
           flees += 1
           foes.sortBy(me.dist).headOption match {

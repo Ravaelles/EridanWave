@@ -45,14 +45,34 @@ class PairArbiterSuite extends AnyFunSuite {
     assert(out.reaver == PairArbiter.RideAlong)
   }
 
-  test("a doomed hull boards a close ride while the empty hull flees") {
+  test("a doomed hull boards a close ride while the empty hull holds for the pickup") {
     val out = decide(
       mateOnFoot = true,
       mateDistTiles = 1.0,
       shuttlePressured = true,
       reaverDoomed = true)
-    assert(out.shuttle == PairArbiter.Flee)
+    assert(out.shuttle == PairArbiter.FleeToMate)
     assert(out.reaver == PairArbiter.BoardRide)
+  }
+
+  test("a pressured ride retreats to its fighting mate instead of away") {
+    val out = decide(
+      mateOnFoot = true,
+      mateDistTiles = 5.0,
+      shuttlePressured = true,
+      reaverFoeTiles = 5.0)
+    assert(out.shuttle == PairArbiter.FleeToMate)
+    assert(out.reaver == PairArbiter.FightOnFoot)
+  }
+
+  test("past the glue band a pressured ride saves itself alone") {
+    val out = decide(
+      mateOnFoot = true,
+      mateDistTiles = 30.0,
+      shuttlePressured = true,
+      reaverFoeTiles = 20.0)
+    assert(out.shuttle == PairArbiter.Flee)
+    assert(out.reaver == PairArbiter.WalkToRide)
   }
 
   test("a fighting mate is fetched, and fights until the ride arrives") {

@@ -1,6 +1,7 @@
 package Micro.Actions.Protoss.ReaverShuttle
 
 import Lifecycle.With
+import Mathematics.Points.Pixel
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.AirFlee
@@ -28,6 +29,9 @@ object BeShuttle extends Action {
 
     PairArbiter.shuttleOrder(shuttle) match {
       case PairArbiter.Flee       => if ( ! flee(shuttle)) support(shuttle)
+      // Glued retreat: hold the mate first (escort/rejoin fly it back
+      // into board reach); flee away only with no mate lock left.
+      case PairArbiter.FleeToMate => if ( ! escort(shuttle) && ! rejoin(shuttle) && ! flee(shuttle)) support(shuttle)
       case PairArbiter.FetchMate  => if ( ! adopt(shuttle) && ! rejoin(shuttle)) support(shuttle)
       case PairArbiter.GuardMate  => if ( ! escort(shuttle) && ! rejoin(shuttle)) support(shuttle)
       case PairArbiter.RaidCarry  => if ( ! raid(shuttle)) support(shuttle)
@@ -284,10 +288,12 @@ object BeShuttle extends Action {
    * no bond in code (passengerOf reads loaded hulls only), so the empty
    * ride awaited at the army goal while its Reaver died alone. Hover the
    * fighting mate at board reach instead, off the threat - the rescue
-   * and reboard below it assume the ride inside 64 pixels. The hold is
-   * latched in the pair (escortLatched): the escort/await choice flapped
-   * every other frame, so once the ride commits to its mate it holds
-   * until the mate is gone or walks out of board reach plus a margin.
+   * and reboard below it assume the ride inside 64 pixels. The hover is
+   * capped at the glue band (PairGlue.hoverCapTiles): with no threats it
+   * is the mate itself, under fire it never drifts past board reach. The
+   * hold is latched in the pair (escortLatched): the escort/await choice
+   * flapped every other frame, so once the ride commits to its mate it
+   * holds until the mate is gone or walks out of board reach plus a margin.
    */
   private def escort(shuttle: FriendlyUnitInfo): Boolean = {
     ReaverShuttlePair.mateOnFoot(shuttle)
@@ -296,7 +302,11 @@ object BeShuttle extends Action {
         mate.pixelDistanceCenter(shuttle.pixel) * Maff.inv32))
       .map(mate => {
         shuttle.agent.act("EscortRide")
-        shuttle.agent.forceTo(standoff(shuttle, mate.pixel))
+        val hover = standoff(shuttle, mate.pixel)
+        val (hx, hy) = PairGlue.capHover(
+          mate.pixel.x * Maff.inv32, mate.pixel.y * Maff.inv32,
+          hover.x * Maff.inv32, hover.y * Maff.inv32)
+        shuttle.agent.forceTo(Pixel((hx * 32).toInt, (hy * 32).toInt))
         Commander.move(shuttle)
         true
       }).getOrElse(false)
