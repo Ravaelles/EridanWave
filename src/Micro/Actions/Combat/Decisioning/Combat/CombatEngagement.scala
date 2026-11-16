@@ -29,6 +29,21 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         || unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)
         || unit.matchups.engagedUpon)
 
+  /**
+   * Helpless prey, unit-level read for the engage gate and the formation
+   * break below: workers-only contacts, or a three-to-one local skim
+   * from the forecast the dressing already trusts.
+   */
+  private def preyDrive: Boolean = {
+    val targets = unit.matchups.targets
+    val workersOnly = targets.nonEmpty && targets.forall(_.unitClass.isWorker)
+    val (usSkim, foeSkim) = unit.combatForecast
+      .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
+      .getOrElse((0.0, 0.0))
+
+    PreyDrive.shouldHunt(workersOnly, usSkim, foeSkim)
+  }
+
   private[Decisioning] def engage(): Boolean = {
     // Crucial air victims outrank everything: a grounded anti-air warrior
     // shoots Scourge, Carriers, Vessels, Battlecruisers and Wraiths in
@@ -44,7 +59,11 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // March-home counts too: the verdict rides the frame-fresh intention,
     // so a unit the march sent home never re-engages in this phase even
     // when the consensus changed hands between the phases.
-    if ( ! combat.fightConsensus || unit.intent.marchHome) {
+    // Helpless prey is the exception: workers-only contacts or a
+    // three-to-one local skim hunt instead of posing, or the column
+    // mills against miners until they leave, then walks home and poses
+    // again. The duel logic keeps it safe; this only opens the attempt.
+    if ((! combat.fightConsensus || unit.intent.marchHome) && ! preyDrive) {
       combat.maneuvers.move()
 
       return true
@@ -109,6 +128,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       && ( ! combat.formationHelpsEngage || combat.squadEngagedUpon))
     combat.breakFormationToAttack ||= ! unit.formationEngage.exists(_.flanking) && combat.target.exists(unit.pixelsToGetInRange(_) < Math.max(0, 128 * unit.confidence11))
     combat.breakFormationToAttack ||= With.yolo.active
+    combat.breakFormationToAttack ||= preyDrive
   }
 
   // Hold the line while a ranged armed combat target is well beyond our
