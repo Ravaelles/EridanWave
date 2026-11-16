@@ -7,6 +7,7 @@ import Mathematics.Maff
 import Mathematics.Points.{Pixel, Tile}
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Utilities.Time.Seconds
 
 /**
  * Terran wall-in detector (pure gate plus game-aware read): a Terran
@@ -24,6 +25,17 @@ object TerranWallIn {
   /** Wall pieces this close to the choke count as the blockade, in tiles. */
   val chokeRadiusTiles: Double = 2.0
 
+  /**
+   * Sealed-breach reach, in tiles: the user's wall rule chews a piece
+   * this close to the enemy natural choke when the hull stands this
+   * close to the piece itself - a battered column still knocks, because
+   * a sealed wall leaves nothing else to fight.
+   */
+  val sealedBreachTiles: Double = 6.0
+
+  /** Quiet gun on the sealed path, in frames: three seconds without a swing. */
+  val quietSealedFrames: Int = Seconds(3)()
+
   /** Both halves must sit in the lane: a lone depot is a depot, not a wall. */
   def hasWallPair(depotNear: Boolean, raxNear: Boolean): Boolean =
     depotNear && raxNear
@@ -37,6 +49,22 @@ object TerranWallIn {
 
   def shouldTreatAsWall(depotNearChoke: Boolean, raxNearChoke: Boolean, pathExists: Boolean): Boolean =
     hasWallPair(depotNearChoke, raxNearChoke) && sealedOff(pathExists)
+
+  /**
+   * The user's wall rule (pure numbers, no game access): close to the
+   * piece, quiet gun past three seconds, the piece inside the breach
+   * reach of the choke, and the lane verified sealed. No shield term:
+   * a battered column at a sealed wall has nothing else to fight.
+   */
+  def shouldBreakSealed(
+    unitToPieceTiles: Double,
+    framesSinceAttack: Int,
+    pieceToChokeTiles: Double,
+    sealedWall: Boolean): Boolean =
+    unitToPieceTiles <= sealedBreachTiles &&
+      framesSinceAttack > quietSealedFrames &&
+      pieceToChokeTiles <= sealedBreachTiles &&
+      sealedWall
 
   /** A wall piece: Terran depot or rax, alive and standing. */
   def isWallPiece(enemy: UnitInfo): Boolean =
@@ -55,13 +83,17 @@ object TerranWallIn {
   }
 
   /** Suspected wall pieces at the enemy natural choke, if we have the read. */
-  def wallPieces: Seq[UnitInfo] = {
+  def wallPieces: Seq[UnitInfo] =
+    wallPiecesNear(chokeRadiusTiles)
+
+  /** Wall pieces inside the given reach of the enemy natural choke, in tiles. */
+  def wallPiecesNear(reachTiles: Double): Seq[UnitInfo] = {
     Chokes.enemyNaturalChoke.toSeq.flatMap(choke =>
       With.units.enemy.view.filter(e =>
         e.alive
           && e.likelyStillThere
           && isWallPiece(e)
-          && nearChoke(distToChokeTiles(e.pixel, choke))).toSeq)
+          && distToChokeTiles(e.pixel, choke) <= reachTiles).toSeq)
   }
 
   /** Trigger only: both halves sit in the lane. */
@@ -78,6 +110,20 @@ object TerranWallIn {
   def isSealed(from: Tile): Boolean = {
     if ( ! from.valid) return false
     if ( ! blocked) return false
+
+    With.scouting.enemyNatural.exists(base =>
+      ! With.paths.groundPathExists(from, base.townHallTile))
+  }
+
+  /**
+   * Seal verification without the tight trigger: no ground path from
+   * the given tile to their natural. The user's rule calls this only
+   * while wall pieces already sit inside the breach reach, so the pair
+   * gates itself - a sealed lane with masonry on it is a wall-in no
+   * matter how the pieces were first noticed.
+   */
+  def isSealedBreach(from: Tile): Boolean = {
+    if ( ! from.valid) return false
 
     With.scouting.enemyNatural.exists(base =>
       ! With.paths.groundPathExists(from, base.townHallTile))

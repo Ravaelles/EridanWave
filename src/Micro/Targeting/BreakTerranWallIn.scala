@@ -42,6 +42,26 @@ object BreakTerranWallIn {
 
   def run(unit: FriendlyUnitInfo): Unit = {
     if ( ! unit.unitClass.isWarrior || unit.flying || unit.loaded || ! unit.tile.valid) return
+    // The user's wall rule first: close, quiet past three seconds, the
+    // piece inside the breach reach of the choke, and the lane verified
+    // sealed from our own tile. No shield term: a battered column at a
+    // sealed wall has nothing else to fight, and milling in front of it
+    // is how hulls die for nothing. Dragoons read the same gate - it
+    // keys on warriors, not on Zealots. Priced for the common case: the
+    // quiet read first, the enemy scan next, the path check last and
+    // only while suspected pieces exist.
+    if (With.framesSince(unit.lastFrameStartingAttack) > TerranWallIn.quietSealedFrames) {
+      val near = TerranWallIn.wallPiecesNear(TerranWallIn.sealedBreachTiles)
+      if (near.nonEmpty && TerranWallIn.isSealedBreach(unit.tile)) {
+        Maff.minBy(near)(_.pixelDistanceEdge(unit)).filter(wall =>
+          unit.tileDistanceEdge(wall) <= TerranWallIn.sealedBreachTiles).foreach(wall => {
+          unit.agent.toAttack = Some(wall)
+        })
+
+        return
+      }
+    }
+
     if (unit.shieldWound > maxShieldWound) return
     if (With.framesSince(unit.lastFrameStartingAttack) <= quietFrames) return
     if (With.units.enemy.exists(e => e.alive && Terran.SiegeTankSieged(e))) return

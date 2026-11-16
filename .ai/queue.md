@@ -67,6 +67,9 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - PressedRideSuite (StarEngine): hydras press the line while scourge dive the ride - shuttle flees on the shipped penetration/latch/guard rule (1 clean latch cycle, 3 redirects), holds 15-tile corners, never takes a hit; reaver never leaves its anchor; pack dies - green.
 - Expo punish vs Zerg at 140 (units-strength only).
 - TankHug (cooling warriors close sieged tanks to 0.2 tiles).
+- Sealed-breach wall chew (quiet 3s + sealed + 6-tile lane and reach, no
+  shield term): needs a live PvT wall-in, zealots and dragoons both read
+  it via BreakTerranWallIn.
 - StaticDefense overwhelm (12 of ours push one static).
 - Crowded leaders skip the dress wait (6 friendlies in 4 tiles).
 - Lurker/DT avoid radii (8/4 tiles, above every formation and duel).
