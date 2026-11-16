@@ -2,6 +2,7 @@ package Micro.Actions.Combat.Decisioning.Skirmish
 
 import Information.Battles.ArmyStrength
 import Information.Geography.Chokes
+import Lifecycle.Enemy
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Protoss.Dragoon.DragoonBrave
@@ -27,7 +28,7 @@ object NoRetreat {
   /** Early shielded Dragoons trade Marines instead of kiting them. */
   def dragoonBrave(unit: FriendlyUnitInfo): Boolean =
     DragoonBrave.applies(
-      Protoss.Dragoon(unit) && With.enemies.exists(_.isTerran),
+      Protoss.Dragoon(unit) && Enemy.terran(),
       unit.shieldPoints,
       unit.cooldownLeft,
       With.self.supplyUsed200,
@@ -42,6 +43,7 @@ object NoRetreat {
    */
   def dragoonPack(unit: FriendlyUnitInfo): Boolean =
     Protoss.Dragoon(unit) && DragoonPackStand.shouldStand(
+      enemyIsTerran = Enemy.terran(),
       dragoonCount = unit.matchups.allies.count(Protoss.Dragoon) + 1,
       lightOnly = unit.matchups.threats.nonEmpty && unit.matchups.threats.forall(DragoonPackStand.isLightTerran),
       totalHp = unit.totalHealth)

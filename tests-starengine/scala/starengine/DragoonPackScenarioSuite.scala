@@ -39,7 +39,7 @@ class DragoonPackScenarioSuite extends AnyFunSuite with StarEngineSuite {
       val foes = world.foes.filter(_.alive)
       val lightOnly = foes.nonEmpty && foes.forall(f =>
         f.kind == Terran.Vulture || f.kind == Terran.Marine || f.kind == Terran.Medic || f.kind == Terran.Firebat)
-      if (DragoonPackStand.shouldStand(pack, lightOnly, me.hp.toInt)) {
+      if (DragoonPackStand.shouldStand(foes.exists(_.kind.isTerran), pack, lightOnly, me.hp.toInt)) {
         stands += 1
 
         world.nearestFoeOf(me, world.foes, (m, f) => m.canHit(f)) match {

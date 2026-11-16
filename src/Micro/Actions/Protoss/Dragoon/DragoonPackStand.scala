@@ -23,6 +23,18 @@ object DragoonPackStand {
   def isLightTerran(enemy: UnitInfo): Boolean =
     enemy.isAny(Terran.Vulture, Terran.Marine, Terran.Medic, Terran.Firebat)
 
-  def shouldStand(dragoonCount: Int, lightOnly: Boolean, totalHp: Int): Boolean =
+  /**
+   * Race gate first: the pack doctrine exists against Terran today.
+   * Protoss and Zerg doctrines arrive as siblings behind this gate -
+   * the caller reads the race once, each race owns its numbers.
+   */
+  def shouldStand(
+    enemyIsTerran: Boolean,
+    dragoonCount: Int,
+    lightOnly: Boolean,
+    totalHp: Int): Boolean =
+    enemyIsTerran && shouldStandVsTerran(dragoonCount, lightOnly, totalHp)
+
+  def shouldStandVsTerran(dragoonCount: Int, lightOnly: Boolean, totalHp: Int): Boolean =
     dragoonCount > packDragoons && lightOnly && totalHp > retreatHp
 }

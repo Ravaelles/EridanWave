@@ -5,13 +5,19 @@ import org.scalatest.funsuite.AnyFunSuite
 class DragoonPackStandSuite extends AnyFunSuite {
 
   private def stands(
+    enemyIsTerran: Boolean = true,
     dragoonCount: Int = 3,
     lightOnly: Boolean = true,
     totalHp: Int = DragoonPackStand.retreatHp + 1): Boolean =
-    DragoonPackStand.shouldStand(dragoonCount, lightOnly, totalHp)
+    DragoonPackStand.shouldStand(enemyIsTerran, dragoonCount, lightOnly, totalHp)
 
   test("a pack against light Terran holds the line") {
     assert(stands())
+    assert(DragoonPackStand.shouldStandVsTerran(3, lightOnly = true, DragoonPackStand.retreatHp + 1))
+  }
+
+  test("another race is another doctrine: the Terran gate stays shut") {
+    assert( ! stands(enemyIsTerran = false))
   }
 
   test("a pair is no pack") {
