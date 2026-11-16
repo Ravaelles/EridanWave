@@ -18,7 +18,10 @@ import Utilities.UnitFilters.{IsBuilding, IsWorker}
 import scala.collection.mutable.ArrayBuffer
 import Tactic.Squads.Decisions.HuntLogic
 import Tactic.Squads.Decisions.AttackModes
+import Tactic.Squads.Decisions.ClusterPosture
+import Tactic.Squads.Decisions.ClusterRoles
 import Tactic.Squads.Decisions.RegroupLatch
+import Tactic.Squads.Decisions.RetreatDiscipline
 import Tactic.Squads.ContainStatus
 import Tactic.Squads.Decisions.VoteConfirmation
 import Tactic.Squads.Decisions.SuicideMission
@@ -38,6 +41,12 @@ class SquadAttack extends Squad {
   // A latched regroup overrules even this: a clear sim verdict to break off
   // beats marching blind into contact.
   var stance: RegroupLatch.Stance = RegroupLatch.Engaged
+  // Cluster posture shadow (phase 3 of _COMBAT-REFACTOR.md): the shared
+  // verdict beside the live stance. Published for the future rewire and
+  // logged where they disagree, but changes no behavior yet.
+  var posture: ClusterPosture.Posture = ClusterPosture.Regroup
+  var roles: Map[Int, ClusterRoles.Role] = Map.empty
+  private var withdrawStartFrame: Int = 0
   // Retreat proposals need consecutive confirmation (sim flicker must not
   // swing the squad); re-engage passes through. Yolo/UMS set stance directly.
   private val stanceFilter = new VoteConfirmation[RegroupLatch.Stance](RegroupLatch.Engaged, RegroupLatch.Regrouping)
@@ -332,6 +341,45 @@ class SquadAttack extends Squad {
       Probe.note("Sim", 0, f"$stance fighting=$fighting%.2f coverage=$coverage%.2f")
     }
     Debugging.CherryVis.CherryVis.board("AttackStance", stance.toString)
+    updatePostureShadow()
+  }
+
+  // Cluster-posture shadow (phase 3 of _COMBAT-REFACTOR.md): computes the
+  // shared verdict beside the live stance and logs where they disagree -
+  // but changes no behavior. Both read the same per-unit sim verdicts, so
+  // any disagreement is the verdict logic itself, never the inputs.
+  private def updatePostureShadow(): Unit = {
+    val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
+    val coverage = verdicts.size.toDouble / Math.max(1, units.size)
+    val fighting = if (verdicts.isEmpty) 1.0 else verdicts.count(identity).toDouble / verdicts.size
+    val rawAdvantage = ArmyStrength.score(
+      With.battles.globalAttack.us.skimStrengthTotal,
+      With.battles.globalAttack.enemy.skimStrengthTotal) / 100.0
+    val advantage = rawAdvantage * RetreatDiscipline.advantageMultiplier(With.frame - withdrawStartFrame)
+    val contact = battleEnemies.nonEmpty
+    val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame)
+    if (next == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
+    posture = next
+    roles = assignRolesShadow()
+    Probe.note("Posture", 0, f"$posture fighting=$fighting%.2f coverage=$coverage%.2f adv=$advantage%.2f contact=$contact disagree=${disagreesWithStance}")
+    Debugging.CherryVis.CherryVis.board("AttackPosture", posture.toString)
+  }
+
+  private def disagreesWithStance: Boolean =
+    (posture == ClusterPosture.Withdraw) != (stance == RegroupLatch.Regrouping)
+
+  private def assignRolesShadow(): Map[Int, ClusterRoles.Role] = {
+    val warriors = units.filter(_.unitClass.isWarrior).toVector
+    if (warriors.isEmpty) return Map.empty
+
+    val meanSpeed = warriors.map(_.topSpeed).sum / warriors.size
+    val foes = battleEnemies.toVector
+    val seekers = warriors.map(u => ClusterRoles.Seeker(
+      fast = u.topSpeed >= meanSpeed,
+      ranged = ! u.unitClass.melee,
+      healthy = u.totalHealth * 2 >= u.unitClass.maxTotalHealth,
+      distToEnemy = foes.map(e => u.pixelDistanceCenter(e.pixel)).reduceOption(_ min _).getOrElse(Double.PositiveInfinity)))
+    warriors.map(_.id).zip(ClusterRoles.assign(posture, seekers)).toMap
   }
 
   // UMS maps have no economy: warriors exist only to fight, so the squad
