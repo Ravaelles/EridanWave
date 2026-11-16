@@ -31,11 +31,16 @@ object BeReaver extends Action {
       return
     }
 
+    // Survival first, always: a hull inside a static's reach steps
+    // out before any order moves or shoots it deeper in. WalkArmy
+    // marched a fresh hull straight into a Sunken without firing.
+    if (staticKeepOff(unit)) return
+
     // Arbiter owns the what, claims own the how: the order gates which
     // family runs, so boarding and fighting never negotiate mid-frame.
     // A quiet crowded hull (ReaverBoardGate vocabulary, now an arbiter
-    // fact) fights instead of freezing, and a walking hull walks
-    // instead of dueling past its ride.
+    // fact) fights instead of freezing, and a walking hull shoots its
+    // way to the ride instead of marching past the guns.
     val order = PairArbiter.reaverOrder(unit)
     val context = GroundContext(
       unit       = unit,
@@ -53,8 +58,8 @@ object BeReaver extends Action {
 
           true
         }
-      case PairArbiter.WalkToRide => walkToRide(unit)
-      case PairArbiter.WalkToArmy => walkToArmy(unit)
+      case PairArbiter.WalkToRide => combatClaims.exists(_.apply(context)) || walkToRide(unit)
+      case PairArbiter.WalkToArmy => combatClaims.exists(_.apply(context)) || walkToArmy(unit)
     }
     if (acted) return
 
@@ -101,6 +106,25 @@ object BeReaver extends Action {
     Commander.move(unit)
 
     true
+  }
+
+  /**
+   * Static keep-off (always, every on-foot order): the nearest defensive
+   * static that can hit the hull inside the floor costs one step out,
+   * away from its pixel, onto a walkable tile. One step per frame keeps
+   * a hull sliding along the band instead of diving in or routing out.
+   */
+  private def staticKeepOff(unit: FriendlyUnitInfo): Boolean = {
+    Maff.minBy(unit.matchups.enemies.view.filter(e =>
+      e.unitClass.isStaticDefense && e.likelyStillThere && e.canAttack(unit)))(unit.pixelDistanceEdge(_))
+      .filter(t => ReaverShuttleStaticAttack.shouldStepOut(unit.tileDistanceEdge(t)))
+      .exists(t => {
+        unit.agent.act("StaticKeepOff")
+        unit.agent.forceTo(unit.pixel.project(t.pixel, -32.0 * ReaverShuttleStaticAttack.stepTiles).walkablePixel)
+        Commander.move(unit)
+
+        true
+      })
   }
 
   /** Pressured mid-shot with the ride at hand: the flying Scarab lands on its own, the hull does not need to tank for it. */

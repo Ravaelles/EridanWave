@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate, ReaverShuttleFerry}
+import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate, ReaverShuttleFerry, ReaverShuttleStaticAttack}
 import ProxyBwapi.Races.{Protoss, Zerg}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -119,6 +119,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     var boards = 0
     var unloads = 0
     var paralyzed = 0
+    var keepOffs = 0
+    var minStaticTiles = Double.PositiveInfinity
 
     private def tripTiles(me: Body): Double = Math.hypot(me.x - objective._1, me.y - objective._2) / 32.0
 
@@ -134,7 +136,19 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       val foes = world.foes.filter(_.alive)
       val nearest = foes.sortBy(me.dist).headOption
       val foeTiles = nearest.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
-      val gunTiles = nearest.map(me.rangeAgainst(_) / 32.0).getOrElse(Double.PositiveInfinity)
+      val gunTiles = nearest.map(me.rangeAgainst(_) / 32.0).getOrElse(0.0)
+      // Survival first, production order: a hull inside a static's
+      // reach steps out before any order moves or shoots it deeper.
+      foes.filter(f => f.kind.isBuilding).sortBy(me.dist).headOption.foreach(s => {
+        minStaticTiles = Math.min(minStaticTiles, me.dist(s) / 32.0)
+        if (ReaverShuttleStaticAttack.shouldStepOut(me.dist(s) / 32.0)) {
+          keepOffs += 1
+          val dx = me.x - s.x
+          val dy = me.y - s.y
+          val dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist > 0) return MoveTo(me.x + dx / dist * 32.0 * ReaverShuttleStaticAttack.stepTiles, me.y + dy / dist * 32.0 * ReaverShuttleStaticAttack.stepTiles)
+        }
+      })
       if (me.loaded) {
         val rideBody = world.ours.find(o => o.alive && o.kind == Protoss.Shuttle)
         val out = PairArbiter.resolveReaver(
@@ -212,9 +226,16 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             if (foeTiles > gunTiles) paralyzed += 1
 
             Hold
+          // A marching hull shoots its way forward, production order:
+          // hold inside the gun, chase inside the fight, otherwise walk.
           case PairArbiter.WalkToRide =>
-            rideBody.map(r => MoveTo(r.x, r.y)).getOrElse(Hold)
-          case PairArbiter.WalkToArmy => MoveTo(army._1, army._2)
+            if (foeTiles <= gunTiles) Hold
+            else if (foeTiles <= PairArbiter.fightTiles) nearest.map(Chase).getOrElse(Hold)
+            else rideBody.map(r => MoveTo(r.x, r.y)).getOrElse(Hold)
+          case PairArbiter.WalkToArmy =>
+            if (foeTiles <= gunTiles) Hold
+            else if (foeTiles <= PairArbiter.fightTiles) nearest.map(Chase).getOrElse(Hold)
+            else MoveTo(objective._1, objective._2)
           case PairArbiter.RideAlong  => Hold
         }
       }
@@ -386,7 +407,9 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
   test("walk: a quiet hull walks to a far ride instead of waiting", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val (reaver, shuttle) = pair(0.0)
     shuttle.x = 900.0
-    val hull = new ReaverExecutor
+    // A real trip: without somewhere to fly the pair correctly stays
+    // together on foot instead of boarding for nothing.
+    val hull = new ReaverExecutor(objective = (900.0, 500.0))
     val world = new World(Seq(reaver, shuttle), Seq.empty,
       Map(reaver -> hull, shuttle -> new ShuttleExecutor((0.0, 500.0))), Seq.empty)
 
@@ -415,6 +438,45 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG meet frames=${world.frame} dist=${reaver.dist(shuttle).toInt} loaded=${reaver.transport.isDefined}")
     assert(reaver.dist(shuttle) <= 200.0, "pair never met at the rendezvous")
     assert(reaver.transport.isEmpty, "hull boarded with nowhere to fly")
+  }
+
+  test("march: a hull walking at the army shoots its way past statics", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
+    // The reported live failure: a WalkArmy hull marched straight into
+    // a Sunken without firing. The march shoots first and never enters
+    // the guns - the keep-off floor stops the dive, the gun does the rest.
+    val reaver = new Body(Protoss.Reaver, 1000.0, 500.0, Protoss.Reaver.maxTotalHealth)
+    val colony = sunken(1400.0, 500.0)
+    val hull = new ReaverExecutor(objective = (1800.0, 500.0))
+    val world = new World(Seq(reaver), Seq(colony),
+      Map(reaver -> hull), Seq.empty)
+
+    while (world.frame < 3000 && colony.alive && reaver.alive) {
+      world.step()
+    }
+
+    println(s"DIAG march frames=${world.frame} sunken=${colony.hp.toInt} reaver=${reaver.hp.toInt} minStatic=${hull.minStaticTiles} keepOffs=${hull.keepOffs}")
+    assert( ! colony.alive, "marching hull never killed the static on its road")
+    assert(reaver.alive, "marching hull died walking at the army")
+    assert(hull.minStaticTiles > 7.0, f"hull entered the static guns at ${hull.minStaticTiles}%.1f tiles")
+  }
+
+  test("keepoff: a hull inside the floor steps out", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
+    // Dropped (or drifted) inside 7.3 tiles of a static: one step per
+    // frame out, then the duel resumes from outside the guns.
+    val reaver = new Body(Protoss.Reaver, 1500.0, 500.0, Protoss.Reaver.maxTotalHealth)
+    val colony = sunken(1700.0, 500.0)
+    val hull = new ReaverExecutor(objective = (2100.0, 500.0))
+    val world = new World(Seq(reaver), Seq(colony),
+      Map(reaver -> hull), Seq.empty)
+
+    while (world.frame < 3000 && colony.alive && reaver.alive) {
+      world.step()
+    }
+
+    println(s"DIAG keepoff frames=${world.frame} sunken=${colony.hp.toInt} reaver=${reaver.hp.toInt} keepOffs=${hull.keepOffs}")
+    assert(hull.keepOffs > 0, "floor never fired inside static reach")
+    assert(reaver.alive, "hull died inside the floor")
+    assert( ! colony.alive, "hull never cleared the static after stepping out")
   }
 
   test("alone: a rideless hull walks to the army, never waits", StarEngineTags.Reaver, StarEngineTags.Shuttle) {

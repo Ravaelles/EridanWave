@@ -36,4 +36,21 @@ object ReaverShuttleStaticAttack {
    */
   def advantageBackoff(ourRangeTiles: Double, staticRangeTiles: Double, distTiles: Double): Boolean =
     ourRangeTiles > staticRangeTiles && distTiles <= staticRangeTiles
+
+  /**
+   * Hard floor vs any defensive static (no game access, tiles): inside
+   * this the hull steps out, no matter the order. Guns outrange us or
+   * not, trading inside their reach mills the hull - a live game walked
+   * a fresh Reaver straight into a Sunken on a WalkArmy order without
+   * firing a shot. The band sits just past the longest static reach;
+   * the step is one frame of breathing room, not a full retreat, so a
+   * hull holding its gun line outside the band never trips it.
+   */
+  val keepOffTiles: Double = 7.3
+
+  /** Nudge step out of the floor, in tiles. */
+  val stepTiles: Double = 0.5
+
+  def shouldStepOut(distTiles: Double): Boolean =
+    distTiles <= keepOffTiles
 }
