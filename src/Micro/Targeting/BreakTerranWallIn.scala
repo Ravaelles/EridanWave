@@ -59,13 +59,27 @@ object BreakTerranWallIn {
     if (walls.isEmpty) return
     if (With.geography.edges.isEmpty) return
 
-    val breaching = walls.view.map(wall =>
+    // A verified sealed wall-in counts even past the lane radius: wide
+    // chokes and rebuilt pieces sit further out than the trigger, but
+    // the seal check already proved they plug the lane. Priced only for
+    // the miss: the lane test below stays the hot path.
+    val breaching5 = walls.view.map(wall =>
       (wall, Maff.minBy(With.geography.edges)(_.pixelCenter.pixelDistance(wall.pixel))
         .map(edge => edge.pixelCenter.pixelDistance(wall.pixel) * Maff.inv32)
         .getOrElse(Double.PositiveInfinity)))
       .filter(_._2 <= chokeRadiusTiles).toSeq
-    Maff.minBy(breaching)(_._1.pixelDistanceEdge(unit)).foreach(breach => {
-      unit.agent.toAttack = Some(breach._1)
-    })
+    if (breaching5.nonEmpty) {
+      Maff.minBy(breaching5)(_._1.pixelDistanceEdge(unit)).foreach(breach => {
+        unit.agent.toAttack = Some(breach._1)
+      })
+
+      return
+    }
+
+    if (TerranWallIn.isSealed(unit.tile)) {
+      Maff.minBy(TerranWallIn.wallPieces)(_.pixelDistanceEdge(unit)).foreach(wall => {
+        unit.agent.toAttack = Some(wall)
+      })
+    }
   }
 }
