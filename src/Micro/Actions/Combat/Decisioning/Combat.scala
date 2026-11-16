@@ -8,6 +8,7 @@ import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Maneuvering.AvoidDarkTemplar
 import Micro.Actions.Combat.Maneuvering.AvoidLurkers
 import Micro.Actions.Combat.Maneuvering.Retreat
+import Micro.Actions.Combat.Maneuvering.SiegeKeepOff
 import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Agency.Commander
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -141,6 +142,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     if (technique == Aim        && AimBehavior.run(unit, this))        return
     if (technique == Dodge      && maneuvers.dodge())       return
     if (technique == Fallback   && PotshotBehavior.run(unit, this))    return
+    // Siege shells outrank every retreat-line decision below: a detected
+    // ground unit that does not want the tank battle steps past the shell
+    // line before any stand or retreat plan runs.
+    if (SiegeKeepOff.act(unit)) return
+    // A fresh hot Dragoon shoots the Terran in range instead of running
+    // from it - but never under siege, the line above already claimed it.
+    if (DragoonStandBehavior.run(unit, this)) return
     if (shouldRetreat           && Retreat(unit)) return
     if (shouldEngage            && Brawl(unit))   return
     if (technique == Abuse      && AbuseBehavior.run(unit, this))      return
