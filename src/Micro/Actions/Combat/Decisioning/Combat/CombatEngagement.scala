@@ -61,7 +61,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // to the march it just overruled. Helpless prey still hunts: workers-
     // only contacts or a three-to-one local skim hunt instead of posing.
     val advance = unit.squad.flatMap(_.battlePosture) match {
-      case Some(posture) => posture == ClusterPosture.Fight || posture == ClusterPosture.HoldLine
+      case Some(posture) => ClusterPosture.advances(posture)
       case None          => combat.fightConsensus && ! unit.intent.marchHome
     }
     if ( ! advance && ! preyDrive) {

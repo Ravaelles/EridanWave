@@ -53,4 +53,11 @@ class ClusterPostureSuite extends AnyFunSuite {
     assert(next(Fight, fighting = 0.8, advantage = 1.2) == HoldLine)
     assert(next(HoldLine, fighting = 0.8, advantage = 1.4) == HoldLine)
   }
+
+  test("only Fight and HoldLine duel") {
+    assert(ClusterPosture.advances(Fight))
+    assert(ClusterPosture.advances(HoldLine))
+    assert( ! ClusterPosture.advances(Withdraw))
+    assert( ! ClusterPosture.advances(Regroup))
+  }
 }

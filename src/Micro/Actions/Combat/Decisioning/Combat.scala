@@ -12,6 +12,7 @@ import Micro.Actions.Combat.Maneuvering.ArtilleryKeepOff
 import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Agency.Commander
 import Micro.Coordination.Pushing.TrafficPriorities
+import Tactic.Squads.Decisions.ClusterPosture
 import Micro.Targeting.BreakTerranWallIn
 import Micro.Targeting.Target
 import Micro.Targeting.WallBreachTarget
@@ -132,6 +133,11 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
 
   private def dispatchByTechnique(): Unit = {
 
+    // The cluster posture bounds the duel claims: Withdraw/Regroup never
+    // brawl, abuse, stand or chase - the technique only picks how inside
+    // Fight/HoldLine. Squads without a posture keep the full dispatch.
+    val advance = unit.squad.flatMap(_.battlePosture).forall(ClusterPosture.advances)
+
     // Unseen killers outrank every formation and duel: a remembered Lurker
     // or cloaked Templar kills the line that rallies or engages through
     // its memory, so the dodge claims before Walk, Aim, retreat and fight.
@@ -149,13 +155,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     if (technique == Fallback   && PotshotBehavior.run(unit, this))    return
     // A fresh hot Dragoon shoots the Terran in range instead of running
     // from it - but never under siege, the line above already claimed it.
-    if (DragoonStandBehavior.run(unit, this)) return
+    if (advance && DragoonStandBehavior.run(unit, this)) return
     if (shouldRetreat           && Retreat(unit)) return
-    if (shouldEngage            && Brawl(unit))   return
-    if (technique == Abuse      && AbuseBehavior.run(unit, this))      return
-    if (technique == SuperKite  && SuperkiteBehavior.run(unit, this))  return
+    if (shouldEngage && advance && Brawl(unit))   return
+    if (technique == Abuse && advance && AbuseBehavior.run(unit, this))      return
+    if (technique == SuperKite && advance && SuperkiteBehavior.run(unit, this))  return
 
-    if (shouldEngage            && engagement.engage())      {}
+    if (shouldEngage && advance && engagement.engage())      {}
   }
 
   private[Decisioning] def techniqueIs(candidates: Technique*): Boolean = candidates.contains(technique)

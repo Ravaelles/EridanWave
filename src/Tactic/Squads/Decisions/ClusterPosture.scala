@@ -25,6 +25,11 @@ object ClusterPosture {
   /** No battle yet or reforming; march dressed, never pose. */
   case object Regroup extends Posture
 
+  /** Duel permission: Fight and HoldLine duel, Withdraw and Regroup
+    * walk the march. One predicate so the engage gate and the technique
+    * dispatch never disagree on what the posture allows. */
+  def advances(posture: Posture): Boolean = posture == Fight || posture == HoldLine
+
   /** Penalized advantage below parity argues for leaving. */
   val withdrawBelowAdvantage: Double = 1.0
 
