@@ -73,6 +73,10 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - StaticDefense overwhelm (12 of ours push one static).
 - Crowded leaders skip the dress wait (6 friendlies in 4 tiles).
 - Lurker/DT avoid radii (8/4 tiles, above every formation and duel).
+- HoldLine creep (from _COMBAT-REFACTOR.md, after the posture rewire):
+  while attacking, hold formation and close the distance gradually (~0.1
+  tile steps) instead of breaking or standing; needs per-unit hold
+  positions advancing with the enemy + suite first.
 
 ## Open: micro validation (needs games that reach it)
 
