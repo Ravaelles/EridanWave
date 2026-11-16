@@ -13,7 +13,6 @@ class DragoonPackStandSuite extends AnyFunSuite {
 
   test("a pack against light Terran holds the line") {
     assert(stands())
-    assert(DragoonPackStand.shouldStandVsTerran(3, lightOnly = true, DragoonPackStand.retreatHp + 1))
   }
 
   test("another race is another doctrine: the Terran gate stays shut") {
