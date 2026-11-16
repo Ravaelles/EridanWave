@@ -362,7 +362,7 @@ class SquadAttack extends Squad {
       With.battles.globalAttack.enemy.skimStrengthTotal) / 100.0
     val advantage = rawAdvantage * RetreatDiscipline.advantageMultiplier(With.frame - withdrawStartFrame)
     val contact = battleEnemies.nonEmpty
-    val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame)
+    val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame, ! With.umsMode)
     if (next == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
     posture = next
     roles = assignRolesShadow()

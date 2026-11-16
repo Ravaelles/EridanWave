@@ -52,6 +52,8 @@ object ClusterPosture {
    * Next posture (pure numbers for the suite): the caller penalizes the
    * advantage through RetreatDiscipline first, so a fresh wound reads
    * weaker than the sim claims without this kernel knowing about frames.
+   * Baseless maps never withdraw: with nowhere to regroup to, contact
+   * means closing, not holding - mirroring the stance's ums-duel rule.
    */
   def next(
     current: Posture,
@@ -59,8 +61,11 @@ object ClusterPosture {
     coverageFraction: Double,
     advantageRatio: Double,
     inContact: Boolean,
-    framesSinceWithdraw: Int): Posture = {
+    framesSinceWithdraw: Int,
+    canWithdraw: Boolean = true): Posture = {
     if (coverageFraction < minimumCoverage) return current
+
+    if ( ! canWithdraw) return if (inContact) Fight else Regroup
 
     if (current == Withdraw) {
       if (RetreatDiscipline.shouldHoldWithdraw(framesSinceWithdraw)) return Withdraw

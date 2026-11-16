@@ -54,6 +54,13 @@ class ClusterPostureSuite extends AnyFunSuite {
     assert(next(HoldLine, fighting = 0.8, advantage = 1.4) == HoldLine)
   }
 
+  test("baseless maps never withdraw: contact closes, calm regroups") {
+    assert(ClusterPosture.next(Withdraw, 0.0, 1.0, 0.5, inContact = true, 0, canWithdraw = false) == Fight)
+    assert(ClusterPosture.next(Fight, 0.0, 1.0, 0.5, inContact = true, 500, canWithdraw = false) == Fight)
+    assert(ClusterPosture.next(Fight, 0.8, 1.0, 2.0, inContact = false, 500, canWithdraw = false) == Regroup)
+    assert(ClusterPosture.next(Regroup, 0.0, 1.0, 0.5, inContact = true, 0, canWithdraw = false) == Fight)
+  }
+
   test("only Fight and HoldLine duel") {
     assert(ClusterPosture.advances(Fight))
     assert(ClusterPosture.advances(HoldLine))
