@@ -8,7 +8,7 @@ import Utilities.?
 import Utilities.Time.{GameTime, Minutes, Seconds}
 import Utilities.UnitCounters.CountOne
 import Utilities.UnitFilters._
-import Utilities.UnitPreferences.PreferClose
+import Utilities.UnitPreferences.{PreferAll, PreferClose, PreferIf}
 import Tactic.Squads.Squad
 import Tactic.Squads.SquadAutomation
 import Tactic.Squads.Squads
@@ -73,15 +73,19 @@ class SquadScoutExpansions extends Squad {
   def launch(): Unit = {
     if ( ! With.blackboard.scoutExpansions()) return
 
+    // User rule: from eighty supply a Dragoon keeps the enemy third and
+    // fourth scouted, even while the army regroups - blind guesses mill
+    // the game away the same way blind pushes do.
+    val dragoonScout = With.self.isProtoss && ExpansionScout.wantsDragoonScout(With.self.supplyUsed200)
     if ( ! scoutZergThird) {
-      if (With.frame < frameToScout()) return
-      if ( ! With.blackboard.wantToAttack() && ! With.blackboard.wantToHarass()) return
+      if (With.frame < frameToScout() && ! dragoonScout) return
+      if ( ! With.blackboard.wantToAttack() && ! With.blackboard.wantToHarass() && ! dragoonScout) return
     }
 
     if (scoutableBases().isEmpty) return
 
     val toScoutBases = Maff.orElse(
-      scoutableBases().filter(b => With.framesSince(b.lastFrameScoutedByUs) > Seconds(90)()),
+      scoutableBases().filter(b => With.framesSince(b.lastFrameScoutedByUs) > ExpansionScout.revisitFrames),
       scoutableBases().filter(b => With.framesSince(b.lastFrameScoutedByUs) > Seconds(30)()),
       scoutableBases())
     val toScoutBaseSorted = toScoutBases.toVector.sortBy(b =>
@@ -91,8 +95,10 @@ class SquadScoutExpansions extends Squad {
     vicinity        = toScoutBaseSorted.head.heart.center
     lock
       .setCounter(CountOne)
-      .setMatcher(?(With.blackboard.wantToAttack() && With.scouting.enemyProximity < 0.65, matchAll, matchFlying))
-      .setPreference(PreferClose(vicinity))
+      .setMatcher(?(dragoonScout || (With.blackboard.wantToAttack() && With.scouting.enemyProximity < 0.65), matchAll, matchFlying))
+      .setPreference(?(dragoonScout,
+        PreferAll(PreferIf(Protoss.Dragoon(_)), PreferClose(vicinity)),
+        PreferClose(vicinity)))
       .acquire()
   }
 
