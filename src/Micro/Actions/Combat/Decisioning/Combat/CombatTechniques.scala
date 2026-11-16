@@ -3,6 +3,7 @@ package Micro.Actions.Combat.Decisioning
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
+import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
 import Micro.Coordination.Pushing.TrafficPriorities
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -25,6 +26,19 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       else  if (unit.agent.shouldFight && combat.target.isDefined)   Fight
       else  if (safePassage && combat.target.exists(unit.inRangeToAttack)) Fight
       else  if (safePassage)                                        Walk
+      // Templar storm stand: a loaded hull walks into cast range instead
+      // of retreating out of it - the cast itself already fired first in
+      // the chain, so holding here only keeps it in reach for the next
+      // volley. Gated on Zerg: walking hydras down is the doctrine's
+      // home ground, other matchups keep the old retreat.
+      else  if (StormStand.shouldHold(
+        Protoss.HighTemplar(unit),
+        With.enemies.exists(_.isZerg),
+        PsionicStorm.canCast(unit),
+        Maff.minBy(unit.matchups.enemies.view.filter(_.alive))(_.pixelDistanceEdge(unit))
+          .map(unit.pixelDistanceEdge(_) * Maff.inv32)
+          .getOrElse(Double.PositiveInfinity),
+        unit.squad.exists(_.fightConsensus)))                       Fight
       else  if ( ! unit.intent.canFlee)                             Walk
       else                                                          Flee
   }
