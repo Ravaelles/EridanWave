@@ -62,11 +62,16 @@ object SquadRazeExpansion {
     if (mine + need >= 2) need else 0
   }
 
-  /** Enemy expansion with a live town hall, nearest the main army. */
+  /** Enemy expansion with a live town hall, nearest the main army. A
+    * natural is not an expansion: it is the enemy's second base, defended
+    * like a main, and raiding it with a four-warrior detail only feeds. */
   def expansionTarget: Option[Information.Geography.Types.Base] = {
     val main = With.scouting.enemyMain
+    val natural = With.scouting.enemyNatural
     val expansions = With.geography.enemyBases.view.filter(b =>
-      main.forall(_ != b) && b.townHall.exists(t => t.isEnemy && t.likelyStillThere)).toVector
+      ! b.isMain && b.naturalOf.isEmpty &&
+      main.forall(_ != b) && natural.forall(_ != b) &&
+      b.townHall.exists(t => t.isEnemy && t.likelyStillThere)).toVector
     if (expansions.isEmpty) None
     else Maff.minBy(expansions)(_.heart.center.pixelDistanceSquared(With.tactics.attackSquad.centroidGround))
   }

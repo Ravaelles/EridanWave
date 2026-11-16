@@ -10,6 +10,14 @@ package Tactic
  */
 object ClusterSplit {
 
+  /** Below this many warriors the army never splits: no raze detail, no
+    * backstab, no standing-guard split - and a threatened base pulls the
+    * whole army home instead of a detachment. Small clusters fight and
+    * flee as one, or they feed piecemeal. */
+  val minSplitArmy: Int = 20
+
+  def keepTogether(totalWarriors: Int): Boolean = totalWarriors < minSplitArmy
+
   /** Percent of warriors that must stay with the main cluster. */
   val mainPercent: Int = 55
 

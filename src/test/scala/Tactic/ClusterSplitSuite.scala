@@ -15,4 +15,12 @@ class ClusterSplitSuite extends AnyFunSuite {
     assert( ! ClusterSplit.overDelegated(totalWarriors = 100, delegated = 45))
     assert( ! ClusterSplit.overDelegated(totalWarriors = 10, delegated = 4))
   }
+
+  test("below twenty warriors the army never splits") {
+    assert(ClusterSplit.minSplitArmy == 20)
+    assert(ClusterSplit.keepTogether(0))
+    assert(ClusterSplit.keepTogether(19))
+    assert( ! ClusterSplit.keepTogether(20))
+    assert( ! ClusterSplit.keepTogether(100))
+  }
 }

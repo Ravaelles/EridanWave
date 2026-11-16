@@ -3,6 +3,7 @@ package Tactic.Squads.attack
 import Lifecycle.With
 import Macro.Facts.MacroFacts
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
+import Tactic.ClusterSplit
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters.{IsAny, IsWarrior, IsWorker}
 import Utilities.UnitPreferences.PreferClose
@@ -28,7 +29,10 @@ class SquadBackstabProxy extends Squad {
 
     if (lock.units.isEmpty) {
       if ( ! With.blackboard.wantToAttack()) return
-      if (MacroFacts.unitsComplete(IsWarrior) < 7) return
+      // No backstab below twenty warriors: two raiders abroad while the
+      // main cluster is still small splits exactly what must stay whole.
+      // Leftover riders walk home through the Tactician recall instead.
+      if (ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))) return
     }
 
     vicinity = base.heart.center

@@ -138,7 +138,12 @@ final class Tactician extends TimedTask {
     defendVsDrops(freelancers, freelancerCountInitial)
     defendVsBreach(freelancers)
     staffBaseGuards(freelancers)
-    enforceClusterSplit()
+    // A threatened base with a small army owns every warrior: the cluster
+    // consolidates home instead of trimming defenders back out, so the
+    // split-trim below stays out of the way while consolidation runs.
+    val smallHold = squadsDefending.nonEmpty &&
+      ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))
+    if ( ! smallHold) enforceClusterSplit()
     fillAttackSquad(freelancers, squadsDefending)
     staffRazeSquad()
     attachLoneDarkTemplar()
@@ -326,6 +331,14 @@ final class Tactician extends TimedTask {
   }
 
   private def fillAttackSquad(freelancers: ListBuffer[FriendlyUnitInfo], squadsDefending: Seq[(DefenseDivision, SquadDefendBase)]): Unit = {
+    val smallArmy = ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))
+    if (smallArmy && squadsDefending.nonEmpty) {
+      consolidateSmallArmy(squadsDefending, freelancers)
+
+      return
+    }
+
+    if (smallArmy) recallSplinters()
     if (shouldStaffAttackSquad(freelancers)) {
       primeAttackSquadQualities()
       Assignment.unitsPick(freelancers, Seq(attackSquad))
@@ -336,12 +349,40 @@ final class Tactician extends TimedTask {
     }
   }
 
+  // Small army never splits: details raised earlier walk home while the
+  // cluster is still whole, so no two-unit raid dies abroad alone. Runs
+  // only with nobody to defend; a threatened base absorbs the splinters
+  // directly through consolidation instead.
+  private def recallSplinters(): Unit = {
+    (razeSquad.units ++ backstabProxy.units).toVector.foreach(u => {
+      attackSquad.addUnit(u)
+      With.recruiter.lockTo(attackSquad.lock, u)
+    })
+  }
+
+  // Small army under attack defends as one: every warrior - the main
+  // cluster, the raze detail, the backstab - joins the most threatened
+  // base, and every freelancer follows. Nothing stays out to die free.
+  private def consolidateSmallArmy(squadsDefending: Seq[(DefenseDivision, SquadDefendBase)], freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
+    val home = squadsDefending.head._2
+    (attackSquad.units ++ razeSquad.units ++ backstabProxy.units).toVector.foreach(u => {
+      home.addUnit(u)
+      With.recruiter.lockTo(home.lock, u)
+    })
+    Assignment.unitsPick(freelancers, defenseSquadsFor(squadsDefending))
+  }
+
   // Raze split: while the main army contains, a live enemy expansion pays
   // for their whole war - peel ten warriors off the attack squad to raze
   // it. The detail walks home on its own once the town hall falls, so the
   // contain never bleeds out through an open tab.
   private def staffRazeSquad(): Unit = {
-    if (SquadRazeExpansion.expansionTarget.isEmpty) {
+    // No detail below twenty warriors even at a real expansion: the raid
+    // would meet a defended base with a handful, and a threatened home
+    // needs those bodies worse. The merge below walks any raised detail
+    // back into the main army instead of leaving it abroad.
+    if (SquadRazeExpansion.expansionTarget.isEmpty ||
+      ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))) {
       razeSquad.units.foreach(u => {
         attackSquad.addUnit(u)
         With.recruiter.lockTo(attackSquad.lock, u)
