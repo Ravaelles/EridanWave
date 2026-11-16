@@ -44,7 +44,7 @@ class SquadAttack extends Squad {
   // Cluster posture shadow (phase 3 of _COMBAT-REFACTOR.md): the shared
   // verdict beside the live stance. Published for the future rewire and
   // logged where they disagree, but changes no behavior yet.
-  var posture: ClusterPosture.Posture = ClusterPosture.Regroup
+  var posture: ClusterPosture.Posture = ClusterPosture.Fight
   var roles: Map[Int, ClusterRoles.Role] = Map.empty
   private var withdrawStartFrame: Int = 0
   // Retreat proposals need consecutive confirmation (sim flicker must not
@@ -61,6 +61,11 @@ class SquadAttack extends Squad {
 
     super.fightConsensus || mode == HuntContact
   }
+
+  // Phase 4 of _COMBAT-REFACTOR.md: the attack squad duels on the shared
+  // posture, not the stale consensus. Squads without a posture keep None
+  // and the old gate.
+  override def battlePosture: Option[ClusterPosture.Posture] = Some(posture)
 
   // Hunt latch (UMS contact loss): a steady destination instead of a target
   // recomputed every frame. Without it the squad - observers first - darts

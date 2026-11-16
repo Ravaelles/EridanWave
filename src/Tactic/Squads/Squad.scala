@@ -14,11 +14,19 @@ import Tactic.Tactics.Tactic
 import Utilities.?
 
 import scala.collection.mutable.ArrayBuffer
+import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.VoteConfirmation
 import Tactic.Squads.Group.FriendlyUnitGroup
 
 abstract class Squad extends Tactic with FriendlyUnitGroup {
   def fightsIndependently: Boolean = false
+  /**
+   * Cluster verdict for the duel phase (phase 4 of _COMBAT-REFACTOR.md):
+   * squads that compute a posture publish it here so unit behaviors duel
+   * on the shared verdict instead of the stale consensus. Squads without
+   * one report None and keep the old consensus gate untouched.
+   */
+  def battlePosture: Option[ClusterPosture.Posture] = None
   /**
    * Drop-mission contract, defaulting to plain-squad behavior: no pickup
    * gate, no cargo accounting, no unload requests, no newborn claims.

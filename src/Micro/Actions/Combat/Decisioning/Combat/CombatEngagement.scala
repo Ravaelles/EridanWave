@@ -6,6 +6,7 @@ import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Tactic.Squads.Decisions.ClusterPosture
 import Utilities.Latch
 
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
@@ -53,17 +54,17 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // Contain fire: a ready weapon shoots instead of dressing past the kill.
     if (ContainFireBehavior.run(unit)) return unit.unready
 
-    // No consensus: the squad is leaving, so walk its march instead of
-    // dueling. Lone counterattacks while regrouping feed the enemy piecemeal;
-    // the contain roster and mode latch still hold, so the squad reforms.
-    // March-home counts too: the verdict rides the frame-fresh intention,
-    // so a unit the march sent home never re-engages in this phase even
-    // when the consensus changed hands between the phases.
-    // Helpless prey is the exception: workers-only contacts or a
-    // three-to-one local skim hunt instead of posing, or the column
-    // mills against miners until they leave, then walks home and poses
-    // again. The duel logic keeps it safe; this only opens the attempt.
-    if ((! combat.fightConsensus || unit.intent.marchHome) && ! preyDrive) {
+    // Cluster posture owns the duel (phase 4 of _COMBAT-REFACTOR.md):
+    // Withdraw/Regroup walk the march, Fight/HoldLine duel. Squads without
+    // a posture keep the old consensus gate untouched; the attack squad
+    // reports its posture, so a stale consensus never pins a Fight window
+    // to the march it just overruled. Helpless prey still hunts: workers-
+    // only contacts or a three-to-one local skim hunt instead of posing.
+    val advance = unit.squad.flatMap(_.battlePosture) match {
+      case Some(posture) => posture == ClusterPosture.Fight || posture == ClusterPosture.HoldLine
+      case None          => combat.fightConsensus && ! unit.intent.marchHome
+    }
+    if ( ! advance && ! preyDrive) {
       combat.maneuvers.move()
 
       return true
