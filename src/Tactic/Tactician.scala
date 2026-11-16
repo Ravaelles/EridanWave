@@ -150,6 +150,7 @@ final class Tactician extends TimedTask {
     pullDefenseWorkers(squadsDefending)
     attachSCVs()
     publishSquadBoards()
+    publishEnemyBoards()
   }
 
   // Squad census for the trace: Alpha and Beta attack squads plus every
@@ -168,6 +169,19 @@ final class Tactician extends TimedTask {
     }.sortBy(_._1)
     Debugging.CherryVis.CherryVis.board("SquadsBase", guarding.map { case (number, count) => f"$number($count)" }.mkString(", "))
     Debugging.CherryVis.CherryVis.board("Contain", ContainStatus.now().toString)
+  }
+
+  // Enemy picture for the trace: what we believe the enemy is doing, plus
+  // the hard intel that changes rarely. Boards are change-only, so a
+  // steady picture costs nothing and every recognition lands on the frame
+  // it happened: unknown at the start, guesses in the middle, the real
+  // thing once the fingerprints confirm it.
+  private def publishEnemyBoards(): Unit = {
+    val strategy = With.fingerprints.status.mkString(" ")
+    Debugging.CherryVis.CherryVis.board("EnemyStrategy", if (strategy.isEmpty) "Unknown" else strategy)
+
+    val intel = f"dt=${MacroFacts.enemyDarkTemplarLikely} lurkers=${MacroFacts.enemyLurkersLikely} bases=${With.geography.enemyBases.size}"
+    Debugging.CherryVis.CherryVis.board("EnemyIntel", intel)
   }
 
   private def defendDivisions(): Seq[(DefenseDivision, SquadDefendBase)] = {
