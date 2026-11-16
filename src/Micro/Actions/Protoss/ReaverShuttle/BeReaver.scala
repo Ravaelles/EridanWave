@@ -152,7 +152,12 @@ object BeReaver extends Action {
   /** Board for a real trip, or when the position is lost and the ride is the way out. */
   private def boardRide(context: GroundContext): Boolean = {
     if (context.boardLocked) return false
-    if ( ! context.rideNearby) return false
+    // Rejoin reach, not pickup radius: a pressured hull walks to a ride
+    // hovering just past the engine pickup radius instead of standing
+    // under fire while it breathes at the edge. Rescue and shotless
+    // boarding keep the immediate radius; this is the deliberate reboard.
+    val ride = context.ride.getOrElse(return false)
+    if ( ! ReaverShuttleReboard.rideInReach(context.unit.pixelDistanceEdge(ride) * Maff.inv32)) return false
 
     if ( ! ReaverShuttleReboard.mayReboard(threatDist(context.unit), context.unit.woundPercent()) && ! needsRide(context.unit)) return false
 

@@ -39,4 +39,15 @@ object ReaverShuttleReboard {
 
   def mayReboard(threatDistTiles: Double, wound01: Double): Boolean =
     threatDistTiles < WoundMargin(baseBoardTiles, woundFleeTiles).tiles(wound01)
+
+  /**
+   * Rejoin reach, in tiles: a pressured hull walks to a ride this close
+   * instead of standing under fire while it hovers just past the
+   * pickup radius. The escort hovers at the same order of distance, so
+   * the pickup completes on the way in instead of milling at the edge.
+   */
+  val rejoinTiles: Double = 5.0
+
+  def rideInReach(distTiles: Double): Boolean =
+    distTiles <= rejoinTiles
 }

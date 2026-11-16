@@ -236,13 +236,14 @@ object BeShuttle extends Action {
     true
   }
 
-  /** Otherwise stick with the army: park with passengers, escort the unloaded mate, await the next one. */
+  /** Otherwise stick with the army: park with passengers, escort the unloaded mate, rejoin a mate left on foot, or await the next one. */
   private def support(shuttle: FriendlyUnitInfo): Unit = {
     if (ReaverShuttlePair.passengerOf(shuttle).isDefined) {
       if (With.geography.ourBases.isEmpty) duel(shuttle) else park(shuttle)
     } else if (escort(shuttle)) {
     } else if (ReaverShuttlePair.isBaitRide(shuttle)) {
       bait(shuttle)
+    } else if (rejoin(shuttle)) {
     } else {
       shuttle.agent.act("AwaitRide")
       shuttle.agent.forceTo(ReaverShuttlePair.armyGoal)
@@ -292,6 +293,22 @@ object BeShuttle extends Action {
         Commander.move(shuttle)
         true
       }).getOrElse(false)
+  }
+
+  /**
+   * Rejoin a mate left on foot: an empty ride with an unboarded mate
+   * elsewhere awaits forward alone while the mate dies alone - the
+   * Sunkens game watched exactly that. Close with the mate instead;
+   * the escort above takes over at board reach, boarding completes on
+   * the way in. Never fires without a mate (that is what await is for).
+   */
+  private def rejoin(shuttle: FriendlyUnitInfo): Boolean = {
+    ReaverShuttlePair.mateOnFoot(shuttle).exists(mate => {
+      shuttle.agent.act("RejoinRide")
+      shuttle.agent.forceTo(mate.pixel)
+      Commander.move(shuttle)
+      true
+    })
   }
 
   /** Board-reach hover off the threat: stand off past pickup reach so the ride stays boardable under fire. */

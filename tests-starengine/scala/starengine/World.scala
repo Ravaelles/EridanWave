@@ -149,11 +149,16 @@ final class World(
   /**
    * Loaded cargo rides its transport: after every move, each boarded
    * body snaps to its hull. Transports moved this same frame already,
-   * so one sync after both sides keeps the pair pixel-exact.
+   * so one sync after both sides keeps the pair pixel-exact. Cargo goes
+   * down with a dying hull (BW-faithful: no bailing out of a kill).
    */
-  private def syncCargo(): Unit =
+  private def syncCargo(): Unit = {
     (ours ++ foes).filter(_.alive).foreach(cargo =>
-      cargo.transport.foreach(hull => { cargo.x = hull.x; cargo.y = hull.y }))
+      cargo.transport.foreach(hull => {
+        if (hull.alive) { cargo.x = hull.x; cargo.y = hull.y }
+        else { cargo.hp = 0; cargo.transport = None }
+      }))
+  }
 
   /**
    * Storm casts, ours only (no foe caster exists in these scenarios).
