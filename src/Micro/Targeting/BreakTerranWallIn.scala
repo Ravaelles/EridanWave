@@ -52,9 +52,9 @@ object BreakTerranWallIn {
     // only while suspected pieces exist.
     if (With.framesSince(unit.lastFrameStartingAttack) > TerranWallIn.quietSealedFrames) {
       val near = TerranWallIn.wallPiecesNear(TerranWallIn.sealedBreachTiles)
+        .filter(wall => unit.tileDistanceEdge(wall) <= TerranWallIn.sealedBreachTiles)
       if (near.nonEmpty && TerranWallIn.isSealedBreach(unit.tile)) {
-        Maff.minBy(near)(_.pixelDistanceEdge(unit)).filter(wall =>
-          unit.tileDistanceEdge(wall) <= TerranWallIn.sealedBreachTiles).foreach(wall => {
+        Maff.minBy(near)(_.pixelDistanceEdge(unit)).foreach(wall => {
           unit.agent.toAttack = Some(wall)
         })
 
