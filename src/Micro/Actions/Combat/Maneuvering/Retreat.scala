@@ -47,7 +47,7 @@ object Retreat extends Action {
     // that does not want the tank battle steps past the shell line
     // first, waypoints second. Hulls with a battle verdict keep the
     // TankHug discipline below instead.
-    if (SiegeKeepOff.act(unit)) return
+    if (ArtilleryKeepOff.act(unit)) return
 
     getRetreat(unit)(unit)
   }

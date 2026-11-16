@@ -4,8 +4,9 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
+import Micro.Actions.Combat.Maneuvering.ReaverTankKeepOff
 import Micro.Agency.Commander
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
@@ -50,7 +51,7 @@ object BeReaver extends Action {
 
   /** First claim wins, in order; a claim that acts owns the frame. */
   private val groundClaims: Seq[GroundContext => Boolean] = Seq(
-    rescueScarab, backOffOutrangedStatic, boardShotless, standShoot, closeStatic, backOffOutrangedInRange, boardRide, boardIdle)
+    rescueScarab, backOffOutrangedStatic, boardShotless, backOffSiegedTanks, standShoot, closeStatic, backOffOutrangedInRange, boardRide, boardIdle)
 
   /** Pressured mid-shot with the ride at hand: the flying Scarab lands on its own, the hull does not need to tank for it. */
   private def rescueScarab(context: GroundContext): Boolean = {
@@ -86,14 +87,24 @@ object BeReaver extends Action {
   }
 
   /** Dry under guns with the ride at hand: posing holds nothing, the shot is already spent - board now. */
-  private def boardShotless(context: GroundContext): Boolean = {
-    if ( ! context.rideNearby || ! shotlessPressured(context.unit)) return false
+  private def boardShotless(context: GroundContext): Boolean = {    if ( ! context.rideNearby || ! shotlessPressured(context.unit)) return false
 
     context.unit.agent.act("BoardShotless")
     Commander.rightClick(context.unit, context.ride.get)
 
     true
   }
+
+  /**
+   * Siege line, after the rescue boardings, before every shooting claim:
+   * a Reaver never closes inside 12.5 tiles of a sieged tank, even to
+   * shoot - the hull only hunts other units. Boarding rescues above keep
+   * their precedence (an escaping hull boards instead of walking); with
+   * no siege on the map this claim never fires, so the order below is
+   * untouched.
+   */
+  private def backOffSiegedTanks(context: GroundContext): Boolean =
+    ReaverTankKeepOff.act(context.unit)
 
   /** Anything the scarab can reach dies from where we stand: holding is the whole plan. */
   private def standShoot(context: GroundContext): Boolean = {
@@ -169,7 +180,10 @@ object BeReaver extends Action {
   }
 
   private def duelWalk(unit: FriendlyUnitInfo): Unit = {
-    Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && ! e.flying && unit.canAttack(e)))(_.pixelDistanceCenter(unit.pixel)).foreach(foe => {
+    // Siege tanks are never the walk: the hull only hunts other units,
+    // the keep-off above holds the line when the road leads past guns.
+    Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && ! e.flying && unit.canAttack(e) && ! Terran.SiegeTankSieged(e)))(_.pixelDistanceCenter(unit.pixel)).foreach(foe => {
       unit.agent.act("DuelWalk")
       unit.agent.forceTo(foe.pixel)
       Commander.move(unit)

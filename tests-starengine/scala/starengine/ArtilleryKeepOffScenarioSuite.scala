@@ -1,7 +1,7 @@
 package starengine
 
 import Mathematics.Points.Pixel
-import Micro.Actions.Combat.Maneuvering.SiegeKeepOff
+import Micro.Actions.Combat.Maneuvering.ArtilleryKeepOff
 import ProxyBwapi.Races.{Protoss, Terran}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -10,7 +10,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * that crosses a sieged tank's fire zone. The plain retreat walks the
  * line into gun reach and dies there (the field report: Retreat-mission
  * Dragoons entering siege fire). The keep-off pilot calls the shipped
- * SiegeKeepOff gate - inside 12.8 plus wound tiles, without a battle
+ * ArtilleryKeepOff gate - inside 12.8 plus wound tiles, without a battle
  * verdict, it steps one tile past the line; outside it walks the
  * retreat. The survivor never enters shell reach although the waypoint
  * pulls it back in every frame; a hull with a battle verdict ignores
@@ -19,7 +19,7 @@ import org.scalatest.funsuite.AnyFunSuite
  * no engine model - every body reads as detected, the production gate
  * for cloaked hulls is covered by the base suite contract.
  */
-class SiegeKeepOffScenarioSuite extends AnyFunSuite with StarEngineSuite {
+class ArtilleryKeepOffScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
   private val goal = (1600.0, 500.0)
 
@@ -40,12 +40,12 @@ class SiegeKeepOffScenarioSuite extends AnyFunSuite with StarEngineSuite {
     override def direct(me: Body, world: World): Directive = {
       val tank = world.foes.filter(f => f.alive && f.kind == Terran.SiegeTankSieged).sortBy(me.dist).headOption
       tank match {
-        case Some(t) if ! wantBattle && SiegeKeepOff.shouldYield(me.dist(t) / 32.0, me.lossFraction) =>
+        case Some(t) if ! wantBattle && ArtilleryKeepOff.shouldYield(me.dist(t) / 32.0, me.lossFraction) =>
           yields += 1
-          val dest = SiegeKeepOff.fallback(
+          val dest = ArtilleryKeepOff.fallback(
             Pixel(me.x.toInt, me.y.toInt),
             Pixel(t.x.toInt, t.y.toInt),
-            SiegeKeepOff.keepOffTiles(me.lossFraction))
+            ArtilleryKeepOff.keepOffTiles(me.lossFraction))
 
           MoveTo(dest.x, dest.y)
         case _ => MoveTo(goal._1, goal._2)
