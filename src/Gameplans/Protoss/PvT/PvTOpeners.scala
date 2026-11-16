@@ -32,6 +32,15 @@ abstract class PvTOpeners extends GameplanImperative
   override def executeBuild(): Unit = {
     open()
     PvTFerry.ensureFerry()
+    // Weak against Terran means every expansion holds a Cannon: vultures
+    // and bio run over naked mineral lines while the army is still small.
+    // Hall-side template spots (between hall and minerals); fixed
+    // gameplan counts still apply on top.
+    if (ExpoCannonCover.shouldCover(
+      Lifecycle.Enemy.terran(),
+      With.battles.globalAttack.us.skimStrengthUnits)) {
+      buildCannonsAtExpansions(ExpoCannonCover.cannonsPerExpo, PlaceLabels.DefendHall)
+    }
   }
 
   def open(): Unit = {
