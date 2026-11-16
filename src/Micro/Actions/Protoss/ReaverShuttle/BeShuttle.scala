@@ -94,6 +94,11 @@ object BeShuttle extends Action {
       && passenger.transport.isEmpty
       && passenger.agent.ride.forall(shuttle==)
       && passenger.unitClass.spaceRequired + shuttle.agent.passengerSize <= shuttle.unitClass.spaceProvided
+      // TEMP (ReaverBoardGate): never fetch a hull that refuses to board -
+      // adopting it glues the ride to a hull that will never embark, and
+      // the chase starves escort, park and await exactly like the stale
+      // reservation below used to.
+      && ! ReaverBoardGate.denyBoard(passenger)
       // A healthy Reaver holding its ground is not a pickup: adopting it
       // glues the ride to a hull that will never board, and the chase
       // claims every frame below, starving escort, park and await. Fetch

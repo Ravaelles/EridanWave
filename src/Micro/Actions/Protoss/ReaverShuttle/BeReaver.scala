@@ -31,7 +31,10 @@ object BeReaver extends Action {
     val context = GroundContext(
       unit       = unit,
       foe        = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit)),
-      rideNearby = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0))
+      rideNearby = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0),
+      // TEMP (ReaverBoardGate): a quiet crowded hull never boards - the
+      // pair dance is broken, so the boarding claims below go blind.
+      boardLocked = ReaverBoardGate.denyBoard(unit))
     if (groundClaims.exists(_.apply(context))) return
 
     // Duelist walk (baseless maps, shuttle-less pairs only): with no contacts
@@ -45,7 +48,7 @@ object BeReaver extends Action {
   }
 
   /** One frame of context for the ground claims: the ride and the nearest reachable foe, measured once. */
-  private final case class GroundContext(unit: FriendlyUnitInfo, foe: Option[UnitInfo], rideNearby: Boolean) {
+  private final case class GroundContext(unit: FriendlyUnitInfo, foe: Option[UnitInfo], rideNearby: Boolean, boardLocked: Boolean) {
     def ride: Option[FriendlyUnitInfo] = unit.agent.ride
   }
 
@@ -55,6 +58,7 @@ object BeReaver extends Action {
 
   /** Pressured mid-shot with the ride at hand: the flying Scarab lands on its own, the hull does not need to tank for it. */
   private def rescueScarab(context: GroundContext): Boolean = {
+    if (context.boardLocked) return false
     if ( ! context.rideNearby) return false
 
     if ( ! ReaverShuttleReboard.rescueScarab(
@@ -87,7 +91,9 @@ object BeReaver extends Action {
   }
 
   /** Dry under guns with the ride at hand: posing holds nothing, the shot is already spent - board now. */
-  private def boardShotless(context: GroundContext): Boolean = {    if ( ! context.rideNearby || ! shotlessPressured(context.unit)) return false
+  private def boardShotless(context: GroundContext): Boolean = {
+    if (context.boardLocked) return false
+    if ( ! context.rideNearby || ! shotlessPressured(context.unit)) return false
 
     context.unit.agent.act("BoardShotless")
     Commander.rightClick(context.unit, context.ride.get)
@@ -145,6 +151,7 @@ object BeReaver extends Action {
 
   /** Board for a real trip, or when the position is lost and the ride is the way out. */
   private def boardRide(context: GroundContext): Boolean = {
+    if (context.boardLocked) return false
     if ( ! context.rideNearby) return false
 
     if ( ! ReaverShuttleReboard.mayReboard(threatDist(context.unit), context.unit.woundPercent()) && ! needsRide(context.unit)) return false
@@ -157,6 +164,8 @@ object BeReaver extends Action {
 
   /** Idle pair on a baseless map: the ride came for us, board it even with nowhere urgent to go. */
   private def boardIdle(context: GroundContext): Boolean = {
+    if (context.boardLocked) return false
+
     val idle = ReaverShuttlePair.rideOf(context.unit).filter(r =>
       r.pixelDistanceEdge(context.unit) <= 64.0 && ReaverShuttlePair.pairIdle(r, context.unit))
     if (idle.isEmpty) return false
