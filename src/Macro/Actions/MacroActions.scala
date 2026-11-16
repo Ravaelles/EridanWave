@@ -1,5 +1,7 @@
 package Macro.Actions
 
+import Debugging.Probe
+import Information.Battles.ArmyStrength
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Macro.Actions.Rounding.Rounding
@@ -47,7 +49,11 @@ trait MacroActions extends MacroCounting {
   def gasLimitFloor   (value: Int): Unit = With.blackboard.gasLimitFloor    .set(value)
   def gasLimitCeiling (value: Int): Unit = With.blackboard.gasLimitCeiling  .set(value)
 
-  def get(item: RequestBuildable): Unit = With.scheduler.request(this, item)
+  def get(item: RequestBuildable): Unit = {
+    if (item.unit.exists(_ == Protoss.Shuttle) && ! canProduceShuttle()) return
+
+    With.scheduler.request(this, item)
+  }
   def get(units: UnitClass*)                                              : Unit = units.foreach(get(1, _))
   def get(unit: UnitClass, placementQuery: PlacementQuery)                : Unit = get(1, unit, placementQuery)
   def get(unit: UnitClass, base: Base)                                    : Unit = get(1, unit, base)
@@ -63,13 +69,19 @@ trait MacroActions extends MacroCounting {
   def once(upgrade: Upgrade)              : Unit = get(upgrade)
   def once(upgrade: Upgrade, level: Int)  : Unit = get(upgrade, level)
   def once(tech: Tech)                    : Unit = get(tech)
-  def once(quantity: Int, unit: UnitClass): Unit = BuildOnce(this, Get(quantity, unit))
+  def once(quantity: Int, unit: UnitClass): Unit = {
+    if (unit == Protoss.Shuttle && ! canProduceShuttle()) return
+
+    BuildOnce(this, Get(quantity, unit))
+  }
   def once(units: UnitClass*)             : Unit = units.foreach(once(1, _))
 
   def autosupply(): Unit = {
     With.scheduler.request(this, RequestAutosupply)
   }
   def pump(unitClass: UnitClass, maximumTotal: Int = 400, maximumConcurrently : Int = 400): Unit = {
+    if (unitClass == Protoss.Shuttle && ! canProduceShuttle()) return
+
     Pump(unitClass, maximumTotal, maximumConcurrently)
   }
   def pumpWorkers(oversaturate: Boolean = false, maximumTotal: Int = 75, maximumConcurrently: Int = 2): Unit = {
@@ -86,6 +98,26 @@ trait MacroActions extends MacroCounting {
   }
   def pumpRatio(unitClass: UnitClass, minimum: Int, maximum: Int, ratios: Seq[MatchingRatio], round: Rounding = Rounding.Up): Unit = {
     PumpRatio(unitClass, minimum, maximum, ratios, round)
+  }
+  /**
+   * Shuttle veto (CanProduceShuttle seam): one home for every "should we
+   * even queue a Shuttle" question, so gameplans stop re-deciding it.
+   * Observers demanded (ever ordered, or queued this frame), a short
+   * Dragoon line vs Protoss, or a non-crushing units score all hold it.
+   * Vetoes ride the ShuttleVeto probe so a missing Shuttle is answerable.
+   */
+  def canProduceShuttle(): Boolean = {
+    val observerDemanded = unitsEver(Protoss.Observatory) > 0 || unitsEver(Protoss.Observer) > 0 ||
+      With.scheduler.requests.exists(_.request.unit.exists(u => u == Protoss.Observatory || u == Protoss.Observer))
+    val enemyIsProtoss = With.enemies.exists(_.isProtoss)
+    val dragoons = units(Protoss.Dragoon)
+    val unitsScore = ArmyStrength.score(
+      With.battles.globalAttack.us.skimStrengthUnits,
+      With.battles.globalAttack.enemy.skimStrengthUnits)
+    val produce = CanProduceShuttle.canProduce(observerDemanded, enemyIsProtoss, dragoons, unitsScore)
+    if ( ! produce) Probe.note("ShuttleVeto", 0, f"obs=$observerDemanded p=$enemyIsProtoss dragoons=$dragoons score=$unitsScore%.0f")
+
+    produce
   }
   def pumpShuttleAndReavers(reavers: Int = 50, shuttleFirst: Boolean = true): Unit = {
     if (shuttleFirst && ! have(Protoss.RoboticsSupportBay)) {

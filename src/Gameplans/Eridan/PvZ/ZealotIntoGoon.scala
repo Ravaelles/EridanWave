@@ -117,7 +117,7 @@ object ZealotIntoGoon extends MacroActions {
       compositor.setGoal(Protoss.Reaver, 6)
     }
     // A Shuttle for the ferry always queues; one only for Reavers waits on gas.
-    if (have(Protoss.RoboticsSupportBay) && (With.blackboard.ferry() || Gameplans.Protoss.PvZ.policy.ReaverGas.allowsReaver(units(Protoss.Reaver), gas))) {
+    if (canProduceShuttle() && have(Protoss.RoboticsSupportBay) && (With.blackboard.ferry() || Gameplans.Protoss.PvZ.policy.ReaverGas.allowsReaver(units(Protoss.Reaver), gas))) {
       compositor.setNeed(Protoss.Shuttle, 3.0)
       compositor.capGoal(Protoss.Shuttle, units(Protoss.Reaver) / 2)
     }
