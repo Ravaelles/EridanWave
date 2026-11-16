@@ -2,11 +2,16 @@ package Micro.Actions.Combat.Decisioning
 
 import Debugging.Probe
 import Lifecycle.With
+import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
+import Micro.Actions.Protoss.Zealot.ZealotLeash
+import Micro.Agency.Commander
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Decisions.ClusterPosture
+import Tactic.Squads.Decisions.SuicideMission
 import Utilities.Latch
 
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
@@ -45,6 +50,21 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     PreyDrive.shouldHunt(workersOnly, usSkim, foeSkim)
   }
 
+  private def leashZealot(): Boolean = {
+    if ( ! Protoss.Zealot(unit)) return false
+    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
+
+    val anchor = Maff.minBy(With.units.ours.view.filter(u => u != unit && u.alive && Protoss.Dragoon(u)))(
+      _.pixelDistanceCenter(unit.pixel))
+    if (anchor.isEmpty) return false
+    if ( ! ZealotLeash.shouldRejoin(anchor.get.pixelDistanceCenter(unit.pixel) * Maff.inv32)) return false
+
+    unit.agent.act("ZealotLeash")
+    unit.agent.forceTo(anchor.get.pixel)
+    Commander.move(unit)
+    true
+  }
+
   private[Decisioning] def engage(): Boolean = {
     // Crucial air victims outrank everything: a grounded anti-air warrior
     // shoots Scourge, Carriers, Vessels, Battlecruisers and Wraiths in
@@ -69,6 +89,13 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
       return true
     }
+
+    // Zealot leash: a Zealot never operates past 5.5 tiles from our
+    // Dragoons - a lone charge into their guns while ours fall back is a
+    // donation, not pressure. Scouts, committed rushers, suicides and yolo
+    // pushes keep their explicit orders; with no Dragoons mustered there
+    // is nothing to leash to. Rejoins the line instead of dueling alone.
+    if (leashZealot()) return true
 
     // No target, or a target the line would only pose at: hunt the
     // nearest known enemy instead of dressing until the timeout.
