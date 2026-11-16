@@ -36,4 +36,21 @@ class SpiderMineSnipingSuite extends AnyFunSuite {
     assert( ! shouldSnipe(sighting(targetedUs = true, visible = false)))
     assert( ! shouldSnipe(sighting(targetedUs = true, cloaked = true)))
   }
+
+  test("the sidestep goes lateral, never radial") {
+    val dt = new Mathematics.Points.Pixel(100, 100)
+    val centroid = new Mathematics.Points.Pixel(100, 200)
+    val left = sidestepPixel(dt, centroid, stepTiles = 4.0, goLeft = true)
+    val right = sidestepPixel(dt, centroid, stepTiles = 4.0, goLeft = false)
+    // Ray points north (away from the centroid below); lateral means east-west.
+    assert(left.x < dt.x && math.abs(left.y - dt.y) < 4.0)
+    assert(right.x > dt.x && math.abs(right.y - dt.y) < 4.0)
+    // Full stride, not a nudge.
+    assert(math.abs(left.x - dt.x) > 100)
+  }
+
+  test("coincident points hold instead of dividing by zero") {
+    val dt = new Mathematics.Points.Pixel(100, 100)
+    assert(sidestepPixel(dt, dt, stepTiles = 4.0, goLeft = true) == dt)
+  }
 }

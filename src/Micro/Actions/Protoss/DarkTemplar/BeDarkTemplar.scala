@@ -34,6 +34,13 @@ object BeDarkTemplar extends Action {
     if (revealedHide(unit)) return
 
     snipeSpiders(unit)
+
+    // Minefield sidestep: known mines (seen or remembered) bend the
+    // path sideways around their centroid instead of through it. Radial
+    // flee walks into the mine behind; a lateral step slips the field.
+    // Sniping owns the frame when it answered a lone mine above.
+    if (mineSidestep(unit)) return
+
     if (unit.agent.toAttack.isEmpty) hunt(unit)
   }
 
@@ -57,7 +64,11 @@ object BeDarkTemplar extends Action {
     // call per frame keeps it consistent - a second call for a farther
     // detector would overwrite the hold. Fleeing the nearest is the
     // right move in the common single-Overlord case anyway.
-    Maff.minBy(unit.matchups.groupVs.detectors.filter(_.likelyStillThere))(
+    // Mines are not eyes: their trigger radius, not their sight, sets
+    // the rule - they get their own sidestep below instead of the
+    // nine-tile detector evade that pinned hulls off the hunt.
+    Maff.minBy(unit.matchups.groupVs.detectors.filter(d =>
+      d.likelyStillThere && ! Terran.SpiderMine(d)))(
       unit.pixelDistanceEdge(_)).exists(detector =>
       DarkTemplarEvade.evadeLatched(unit.id, unit.pixelDistanceEdge(detector), detector.sightPixels)
         && fleeAway(unit, detector.pixel, "DarkTemplarEvade"))
@@ -87,6 +98,27 @@ object BeDarkTemplar extends Action {
       // No re-attack while hiding: the guns that just found the Templar
       // outrange patience, so the slot stays empty until the band clears.
       fleeAway(unit, threat.pixel, "DarkTemplarHide"))
+  }
+
+  private def mineSidestep(unit: FriendlyUnitInfo): Boolean = {
+    if (unit.agent.toAttack.isDefined) return false
+
+    val mines = With.units.enemy.view.filter(e =>
+      Terran.SpiderMine(e)
+        && e.likelyStillThere
+        && unit.pixelDistanceEdge(e) <= SpiderMineSniping.sidestepTiles * 32.0).toSeq
+    if (mines.isEmpty) return false
+
+    val step = SpiderMineSniping.sidestepPixel(
+      unit.pixel,
+      Maff.centroid(mines.map(_.pixel)),
+      SpiderMineSniping.sidestepStepTiles,
+      goLeft = unit.id % 2 == 0)
+    unit.agent.act("MineSidestep")
+    unit.agent.forceTo(?(step.walkable, step, step.walkablePixel))
+    Commander.move(unit)
+
+    true
   }
 
   private def snipeSpiders(unit: FriendlyUnitInfo): Unit = {
@@ -132,7 +164,7 @@ object BeDarkTemplar extends Action {
     // detector re-arms the evade on arrival, so the hunt holds instead
     // of feeding the approach/evade loop the latch just broke.
     val open = unit.matchups.targets.filter(t =>
-      t.visible && unit.canAttack(t) && ! coveredByDetector(unit, t))
+      t.visible && unit.canAttack(t) && DarkTemplarTargets.isPrey(t.unitClass) && ! coveredByDetector(unit, t))
     val close = open.filter(t =>
       unit.tileDistanceEdge(t) <= DarkTemplarTargets.closeTiles).toVector
     if (unit.cooldownLeft <= 0 && close.nonEmpty) {
@@ -140,8 +172,7 @@ object BeDarkTemplar extends Action {
         unit.tileDistanceEdge(t),
         t.totalHealth,
         Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t),
-        t.unitClass.isWarrior,
-        t.unitClass.isWorker))
+        t.unitClass.isWarrior))
       DarkTemplarTargets.pick(marks).map(close)
     } else {
       Maff.minBy(open)(_.pixelDistanceEdge(unit))
@@ -151,12 +182,15 @@ object BeDarkTemplar extends Action {
   private def coveredByDetector(unit: FriendlyUnitInfo, target: UnitInfo): Boolean =
     DarkTemplarEvade.underDetection(
       target.pixel,
-      unit.matchups.groupVs.detectors.view.filter(_.likelyStillThere).map(d => (d.pixel, d.sightPixels.toDouble)).toSeq)
+      unit.matchups.groupVs.detectors.view
+        .filter(d => d.likelyStillThere && ! Terran.SpiderMine(d))
+        .map(d => (d.pixel, d.sightPixels.toDouble)).toSeq)
 
   private def rememberedContact(unit: FriendlyUnitInfo): Option[UnitInfo] =
     Maff.maxBy(With.units.enemy.filter(e =>
       ! e.visible
       && unit.canAttack(e)
+      && DarkTemplarTargets.isPrey(e.unitClass)
       && ! coveredByDetector(unit, e)
       && With.framesSince(e.lastSeen) < Minutes(3)()))(_.lastSeen)
 }

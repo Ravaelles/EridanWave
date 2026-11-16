@@ -1,5 +1,8 @@
 package Micro.Targeting
 
+import ProxyBwapi.Races.Terran
+import ProxyBwapi.UnitClasses.UnitClass
+
 /**
  * Pure Dark Templar target priority (no game access) - a pre-`Target`
  * doctrine pick, not a second scoring ladder (conventions rule 15):
@@ -22,14 +25,26 @@ object DarkTemplarTargets {
   /** Only real units this close, in tiles, enter the tiered pick. */
   val closeTiles: Double = 0.9
 
-  final case class Mark(distTiles: Double, totalHealth: Int, isTank: Boolean, isWarrior: Boolean, isWorker: Boolean)
+  /**
+   * Prey only (UnitClass-level, no game access): combat buildings,
+   * combat units and bases - never plain masonry or workers. A Templar
+   * chewing a depot next to a tank wastes the cloak where the tank
+   * answers for free. Bunkers count even though the concrete itself
+   * has no gun: the marines inside are the fight.
+   */
+  def isPrey(unitClass: UnitClass): Boolean =
+    unitClass.isCombatBuilding ||
+      unitClass.isTownHall ||
+      unitClass.isWarrior ||
+      unitClass == Terran.Bunker
+
+  final case class Mark(distTiles: Double, totalHealth: Int, isTank: Boolean, isWarrior: Boolean)
 
   def tier(mark: Mark): Int =
     if (mark.totalHealth <= weakHp) 0
     else if (mark.isTank) 1
     else if (mark.isWarrior) 2
-    else if (mark.isWorker) 3
-    else 4
+    else 3
 
   /** Nearest inside the best non-empty tier; nothing when nobody qualifies. */
   def pick(marks: Seq[Mark]): Option[Int] =

@@ -6,10 +6,10 @@ import org.scalatest.funsuite.AnyFunSuite
 
 /**
  * Dark Templar target priority, real numbers: with no cooldown the
- * Templar kills the weakest in reach first (a 35hp Zergling dies to one
- * swipe), then warriors, then workers - nearest inside each tier. The
- * pilot calls the shipped kernel, so the kill order proves the shipped
- * rule, not a copy: the SCV starts closest but dies last.
+ * Templar kills the weakest prey in reach first (a 35hp Zergling dies
+ * to one swipe), then warriors. Workers and plain buildings are not
+ * prey: the SCV starts closest and is ignored the whole duel, proving
+ * the shipped rule instead of a copy.
  */
 class DarkTemplarRazeSuite extends AnyFunSuite with StarEngineSuite {
 
@@ -20,14 +20,13 @@ class DarkTemplarRazeSuite extends AnyFunSuite with StarEngineSuite {
       if (live.isEmpty) return MoveTo(fallback._1, fallback._2)
 
       if (me.cooldownLeft <= 0) {
-        val near = live.filter(f => me.canHit(f) && me.dist(f) <= DarkTemplarTargets.closeTiles * 32.0)
+        val near = live.filter(f => me.canHit(f) && DarkTemplarTargets.isPrey(f.kind) && me.dist(f) <= DarkTemplarTargets.closeTiles * 32.0)
         if (near.nonEmpty) {
           val marks = near.map(f => DarkTemplarTargets.Mark(
             distTiles = me.dist(f) / 32.0,
             totalHealth = f.hp.toInt,
             isTank = f.kind == Terran.SiegeTankSieged || f.kind == Terran.SiegeTankUnsieged,
-            isWarrior = f.kind.isWarrior,
-            isWorker = f.kind.isWorker))
+            isWarrior = f.kind.isWarrior))
           DarkTemplarTargets.pick(marks) match {
             case Some(i) => return Chase(near(i))
             case None    =>
@@ -35,7 +34,10 @@ class DarkTemplarRazeSuite extends AnyFunSuite with StarEngineSuite {
         }
       }
 
-      Chase(live.minBy(me.dist))
+      val prey = live.filter(f => DarkTemplarTargets.isPrey(f.kind))
+      if (prey.isEmpty) return MoveTo(fallback._1, fallback._2)
+
+      Chase(prey.minBy(me.dist))
     }
   }
 
@@ -57,7 +59,7 @@ class DarkTemplarRazeSuite extends AnyFunSuite with StarEngineSuite {
     var lingDeadFrame: Option[Int] = None
     var zealotDeadFrame: Option[Int] = None
     var scvDeadFrame: Option[Int] = None
-    while (world.frame < 2000 && (ling.alive || zealot.alive || scv.alive) && templar.alive) {
+    while (world.frame < 2000 && (ling.alive || zealot.alive) && templar.alive) {
       world.step()
       if (lingDeadFrame.isEmpty && ! ling.alive) lingDeadFrame = Some(world.frame)
       if (zealotDeadFrame.isEmpty && ! zealot.alive) zealotDeadFrame = Some(world.frame)
@@ -66,9 +68,8 @@ class DarkTemplarRazeSuite extends AnyFunSuite with StarEngineSuite {
 
     assert(lingDeadFrame.isDefined, "templar never swiped the weak ling in reach")
     assert(zealotDeadFrame.isDefined, "templar never dueled the warrior")
-    assert(scvDeadFrame.isDefined, "templar never finished the worker")
+    assert(scv.alive, "templar wasted swings on a worker")
     assert(lingDeadFrame.get < zealotDeadFrame.get, "templar shot the warrior before the weaker ling")
-    assert(zealotDeadFrame.get < scvDeadFrame.get, "templar shot the worker before the warrior")
     assert(templar.alive, "templar died to unanswered miners")
   }
 }
