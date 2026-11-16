@@ -100,7 +100,8 @@ object PairArbiter {
     raid: Boolean,
     baitRide: Boolean,
     unloadOrdered: Boolean = false,
-    unloadSpotReady: Boolean = false): PairDirective = {
+    unloadSpotReady: Boolean = false,
+    boardLocked: Boolean = false): PairDirective = {
 
     if (shuttlePressured && loaded) {
       return PairDirective(Flee, RideAlong)
@@ -129,6 +130,10 @@ object PairArbiter {
     }
 
     if (mateOnFoot) {
+      if (boardLocked) {
+        return PairDirective(AwaitPost, FightOnFoot)
+      }
+
       if (ReaverShuttleReboard.rideInReach(mateDistTiles)) {
         return PairDirective(GuardMate, BoardRide)
       }
@@ -183,6 +188,7 @@ object PairArbiter {
     wound01: Double,
     unloadOrdered: Boolean,
     unloadSpotReady: Boolean,
+    boardLocked: Boolean,
     foes: Seq[FoeView])
 
   private def distTiles(a: (Double, Double), b: (Double, Double)): Double = {
@@ -229,7 +235,8 @@ object PairArbiter {
       shuttlePressured  = pressured(shuttle.threats),
       reaverDoomed      = mate.exists(m => doomed(m.wound01, m.foes)),
       raid              = raid,
-      baitRide          = baitRide)
+      baitRide          = baitRide,
+      boardLocked       = mate.exists(_.boardLocked))
   }
 
   /**
@@ -270,7 +277,8 @@ object PairArbiter {
       shuttlePressured  = ride.exists(r => pressured(r.threats)),
       reaverDoomed      = doomed(reaver.wound01, reaver.foes),
       raid              = raid,
-      baitRide          = false)
+      baitRide          = false,
+      boardLocked       = reaver.boardLocked)
   }
 
   /** Game mapper: one Shuttle, plain data out. */
@@ -336,6 +344,7 @@ object PairArbiter {
       reaver.woundPercent(),
       reaver.agent.fightReason == FightOrFlee.Reave,
       landingReady(reaver),
+      ReaverBoardGate.denyBoard(reaver),
       reaver.matchups.targets.map(t =>
         FoeView(
           reaver.pixelDistanceEdge(t) * Maff.inv32,

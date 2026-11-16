@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Protoss.ReaverShuttle.PairArbiter
+import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate}
 import ProxyBwapi.Races.{Protoss, Terran}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -27,6 +27,21 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
       me.rangeAgainst(f) / 32.0))
 
   /**
+   * Inferred shot clock, production order: the engine never tells the
+   * pilot it fired, so a foe inside the gun means the clock resets.
+   */
+  private val lastShot = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(-100000)
+
+  private def boardLocked(me: Body, foes: Seq[Body], frame: Int): Boolean = {
+    val live = foes.filter(_.alive)
+    if (live.exists(f => me.dist(f) <= me.rangeAgainst(f))) lastShot(me) = frame
+    val crowd = live.filter(_.canHit(me)).sortBy(me.dist).headOption
+      .map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
+
+    ReaverBoardGate.locked(frame - lastShot(me), crowd)
+  }
+
+  /**
    * Shuttle executor, production path: bodies become the same plain
    * views the game seam builds, then the shipped resolve runs. Any
    * drift between the test and the game lives in the view mapping,
@@ -51,6 +66,7 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           r.lossFraction,
           unloadOrdered = false,
           unloadSpotReady = false,
+          boardLocked(r, foes, world.frame),
           foeViews(r, foes))).toSeq
       val out = PairArbiter.resolveShuttle(
         PairArbiter.ShuttleView(
@@ -127,6 +143,7 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           me.lossFraction,
           unloadOrdered = false,
           unloadSpotReady = false,
+          boardLocked(me, foes, world.frame),
           foeViews(me, foes)),
         rides,
         raid = false).reaver

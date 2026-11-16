@@ -33,21 +33,17 @@ object BeReaver extends Action {
 
     // Arbiter owns the what, claims own the how: the order gates which
     // family runs, so boarding and fighting never negotiate mid-frame.
-    // A locked ride (ReaverBoardGate) fights instead of freezing, and a
-    // walking hull walks instead of dueling past its ride.
+    // A quiet crowded hull (ReaverBoardGate vocabulary, now an arbiter
+    // fact) fights instead of freezing, and a walking hull walks
+    // instead of dueling past its ride.
     val order = PairArbiter.reaverOrder(unit)
     val context = GroundContext(
       unit       = unit,
       foe        = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit)),
-      rideNearby = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0),
-      // TEMP (ReaverBoardGate): a quiet crowded hull never boards - the
-      // pair dance is broken, so the boarding claims below go blind.
-      boardLocked = ReaverBoardGate.denyBoard(unit))
+      rideNearby = unit.agent.ride.exists(r => r.pixelDistanceEdge(unit) <= 64.0))
     val acted = order match {
       case PairArbiter.RideAlong  => true
-      case PairArbiter.BoardRide  =>
-        if (context.boardLocked) combatClaims.exists(_.apply(context))
-        else boardingClaims.exists(_.apply(context)) || walkToRide(unit)
+      case PairArbiter.BoardRide  => boardingClaims.exists(_.apply(context)) || walkToRide(unit)
       case PairArbiter.FightOnFoot => combatClaims.exists(_.apply(context))
       case PairArbiter.HoldShoot   =>
         if (standShoot(context)) true
@@ -73,7 +69,7 @@ object BeReaver extends Action {
   }
 
   /** One frame of context for the ground claims: the ride and the nearest reachable foe, measured once. */
-  private final case class GroundContext(unit: FriendlyUnitInfo, foe: Option[UnitInfo], rideNearby: Boolean, boardLocked: Boolean) {
+  private final case class GroundContext(unit: FriendlyUnitInfo, foe: Option[UnitInfo], rideNearby: Boolean) {
     def ride: Option[FriendlyUnitInfo] = unit.agent.ride
   }
 
@@ -109,7 +105,6 @@ object BeReaver extends Action {
 
   /** Pressured mid-shot with the ride at hand: the flying Scarab lands on its own, the hull does not need to tank for it. */
   private def rescueScarab(context: GroundContext): Boolean = {
-    if (context.boardLocked) return false
     if ( ! context.rideNearby) return false
 
     if ( ! ReaverShuttleReboard.rescueScarab(
@@ -143,7 +138,6 @@ object BeReaver extends Action {
 
   /** Dry under guns with the ride at hand: posing holds nothing, the shot is already spent - board now. */
   private def boardShotless(context: GroundContext): Boolean = {
-    if (context.boardLocked) return false
     if ( ! context.rideNearby || ! shotlessPressured(context.unit)) return false
 
     context.unit.agent.act("BoardShotless")
@@ -202,7 +196,6 @@ object BeReaver extends Action {
 
   /** Board for a real trip, or when the position is lost and the ride is the way out. */
   private def boardRide(context: GroundContext): Boolean = {
-    if (context.boardLocked) return false
     // Rejoin reach, not pickup radius: a pressured hull walks to a ride
     // hovering just past the engine pickup radius instead of standing
     // under fire while it breathes at the edge. Rescue and shotless
@@ -220,7 +213,6 @@ object BeReaver extends Action {
 
   /** Idle pair on a baseless map: the ride came for us, board it even with nowhere urgent to go. */
   private def boardIdle(context: GroundContext): Boolean = {
-    if (context.boardLocked) return false
 
     val idle = ReaverShuttlePair.rideOf(context.unit).filter(r =>
       r.pixelDistanceEdge(context.unit) <= 64.0 && ReaverShuttlePair.pairIdle(r, context.unit))

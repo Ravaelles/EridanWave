@@ -7,15 +7,13 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.Time.Seconds
 
 /**
- * TEMPORARY boarding lock (no game in the kernel): a Reaver that has not
- * shot in ten seconds with a threat inside twenty tiles does not board,
- * and no Shuttle fetches it. Only threats count, never scenery: an
- * Overlord or a far worker is not danger, and locking on it would pin a
- * hull next to its ride forever. The pair dance is broken - hulls board
- * into dead rides, rides chase hulls that never embark - and the repair
- * takes a while; until then a quiet crowded hull stays on the ground and
- * fights on foot instead of feeding the mill. Remove entirely when the
- * Shuttle/Reaver doctrine is repaired.
+ * Quiet-crowd vocabulary (no game in the kernel): a Reaver that has not
+ * shot in ten seconds with a threat inside twenty tiles mills instead
+ * of fighting. The arbiter turns it into orders - no fetch chase and
+ * no boarding until the hull shoots - so the brains never gate on it
+ * directly. Only threats count, never scenery: an Overlord or a far
+ * worker is not danger, and locking on it would pin a hull next to its
+ * ride forever.
  */
 object ReaverBoardGate {
 

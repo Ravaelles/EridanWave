@@ -129,10 +129,12 @@ class PairArbiterSuite extends AnyFunSuite {
     squad: Option[Int] = Some(1),
     loaded: Boolean = false,
     bond: Option[PairArbiter.ShuttleView] = None,
+    wound01: Double = 0.0,
     unloadOrdered: Boolean = false,
     unloadSpotReady: Boolean = false,
+    boardLocked: Boolean = false,
     foes: Seq[PairArbiter.FoeView] = Seq.empty): PairArbiter.ReaverView =
-    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, 0.0, unloadOrdered, unloadSpotReady, foes)
+    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, wound01, unloadOrdered, unloadSpotReady, boardLocked, foes)
 
   test("resolve: an unbonded hull sees the free same-squad ride") {
     val ride = shuttleView()
@@ -192,5 +194,34 @@ class PairArbiterSuite extends AnyFunSuite {
       Seq(shuttleView()),
       raid = false)
     assert(out.reaver == PairArbiter.UnloadHere)
+  }
+
+  test("resolve: a quiet crowded mill is not fetched and never boards") {
+    val out = PairArbiter.resolveReaver(
+      reaverView(boardLocked = true),
+      Seq(shuttleView()),
+      raid = false)
+    assert(out.reaver == PairArbiter.FightOnFoot)
+    val shuttle = PairArbiter.resolveShuttle(
+      shuttleView(),
+      Seq(reaverView(boardLocked = true)),
+      raid = false,
+      baitRide = false)
+    assert(shuttle.shuttle == PairArbiter.AwaitPost)
+  }
+
+  test("resolve: doom rescue still boards past the quiet-crowd pin") {
+    val foe = PairArbiter.FoeView(distTiles = 1.0, foeGunTiles = 5.0, reaverGunTiles = 8.0)
+    val threat = PairArbiter.ThreatView(distTiles = 3.0, rangeTiles = 5.0)
+    val out = PairArbiter.resolveReaver(
+      reaverView(
+        pos = (0.0, 0.0),
+        bond = Some(shuttleView(pos = (1.0, 0.0), threats = Seq(threat))),
+        wound01 = 0.8,
+        boardLocked = true,
+        foes = Seq(foe)),
+      Seq(shuttleView(pos = (1.0, 0.0), threats = Seq(threat))),
+      raid = false)
+    assert(out.reaver == PairArbiter.BoardRide)
   }
 }

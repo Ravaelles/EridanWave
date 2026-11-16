@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Protoss.ReaverShuttle.PairArbiter
+import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate}
 import ProxyBwapi.Races.{Protoss, Zerg}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -29,11 +29,28 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       f.rangeAgainst(me) / 32.0,
       me.rangeAgainst(f) / 32.0))
 
+  /**
+   * Inferred shot clock, production order: the engine never tells the
+   * pilot it fired, so a foe inside the gun means the clock resets -
+   * the same inference the boarding gate pilot uses. A hull that never
+   * closes starts quiet, exactly like a fresh hull in the game.
+   */
+  private val lastShot = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(-100000)
+
+  private def boardLocked(me: Body, foes: Seq[Body], frame: Int): Boolean = {
+    val live = foes.filter(_.alive)
+    if (live.exists(f => me.dist(f) <= me.rangeAgainst(f))) lastShot(me) = frame
+    val crowd = live.filter(_.canHit(me)).sortBy(me.dist).headOption
+      .map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
+
+    ReaverBoardGate.locked(frame - lastShot(me), crowd)
+  }
+
   private def threatViews(me: Body, foes: Seq[Body]): Seq[PairArbiter.ThreatView] =
     foes.filter(f => f.alive && f.canHit(me)).map(f =>
       PairArbiter.ThreatView(me.dist(f) / 32.0, f.rangeAgainst(me) / 32.0))
 
-  private def reaverViewOf(r: Body, foes: Seq[Body]): PairArbiter.ReaverView =
+  private def reaverViewOf(r: Body, foes: Seq[Body], frame: Int): PairArbiter.ReaverView =
     PairArbiter.ReaverView(
       tilePos(r),
       Some(1),
@@ -45,6 +62,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       r.lossFraction,
       unloadOrdered = false,
       unloadSpotReady = false,
+      boardLocked(r, foes, frame),
       foeViews(r, foes))
 
   /** Shuttle executor, production order: resolve, then the legs. */
@@ -54,7 +72,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
 
     override def direct(me: Body, world: World): Directive = {
       val foes = world.foes.filter(_.alive)
-      val mates = world.ours.view.filter(o => o.alive && o.kind == Protoss.Reaver).map(reaverViewOf(_, foes)).toSeq
+      val mates = world.ours.view.filter(o => o.alive && o.kind == Protoss.Reaver).map(reaverViewOf(_, foes, world.frame)).toSeq
       val out = PairArbiter.resolveShuttle(
         PairArbiter.ShuttleView(tilePos(me), Some(1), mates.exists(_.loaded), threatViews(me, foes)),
         mates,
@@ -121,6 +139,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             me.lossFraction,
             false,
             band,
+            boardLocked(me, foes, world.frame),
             foeViews(me, foes)),
           Seq.empty,
           raid = false).reaver
@@ -153,6 +172,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             me.lossFraction,
             unloadOrdered = false,
             unloadSpotReady = false,
+            boardLocked(me, foes, world.frame),
             foeViews(me, foes)),
           rides,
           raid = false).reaver
