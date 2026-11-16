@@ -92,4 +92,74 @@ class PairArbiterSuite extends AnyFunSuite {
     val out = decide(mateOnFoot = false, baitRide = true)
     assert(out.shuttle == PairArbiter.Bait)
   }
+
+  private def shuttleView(
+    pos: (Double, Double) = (0.0, 0.0),
+    squad: Option[Int] = Some(1),
+    aboard: Boolean = false,
+    threats: Seq[PairArbiter.ThreatView] = Seq.empty): PairArbiter.ShuttleView =
+    PairArbiter.ShuttleView(pos, squad, aboard, threats)
+
+  private def threat(dist: Double, range: Double = 5.0): PairArbiter.ThreatView =
+    PairArbiter.ThreatView(dist, range)
+
+  private def reaverView(
+    pos: (Double, Double) = (30.0, 0.0),
+    squad: Option[Int] = Some(1),
+    loaded: Boolean = false,
+    bond: Option[PairArbiter.ShuttleView] = None,
+    foes: Seq[PairArbiter.FoeView] = Seq.empty): PairArbiter.ReaverView =
+    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, 0.0, foes)
+
+  test("resolve: an unbonded hull sees the free same-squad ride") {
+    val ride = shuttleView()
+    val out = PairArbiter.resolveReaver(reaverView(), Seq(ride), raid = false)
+    assert(out.reaver == PairArbiter.WalkToRide)
+    assert(out.shuttle == PairArbiter.FetchMate)
+  }
+
+  test("resolve: the live regression - no WalkToArmy while a free ride exists") {
+    val ride = shuttleView(pos = (100.0, 0.0))
+    val out = PairArbiter.resolveReaver(reaverView(pos = (0.0, 0.0)), Seq(ride), raid = false)
+    assert(out.reaver != PairArbiter.WalkToArmy)
+  }
+
+  test("resolve: a ride of another squad is not ours to chase") {
+    val ride = shuttleView(squad = Some(2))
+    val out = PairArbiter.resolveReaver(reaverView(squad = Some(1)), Seq(ride), raid = false)
+    assert(out.reaver == PairArbiter.WalkToArmy)
+  }
+
+  test("resolve: a loaded ride is not free") {
+    val ride = shuttleView(aboard = true)
+    val out = PairArbiter.resolveReaver(reaverView(), Seq(ride), raid = false)
+    assert(out.reaver == PairArbiter.WalkToArmy)
+  }
+
+  test("resolve: the reservation wins over a nearer free ride") {
+    val bonded = shuttleView(pos = (40.0, 0.0))
+    val nearer = shuttleView(pos = (3.0, 0.0))
+    val reaver = reaverView(bond = Some(bonded))
+    val out = PairArbiter.resolveReaver(reaver, Seq(nearer, bonded), raid = false)
+    // The nearer ride is inside rejoin reach: taking it would board.
+    // The bond holds the hull on its own ride instead.
+    assert(out.reaver == PairArbiter.WalkToRide)
+  }
+
+  test("resolve: a gun across the map is not pressure") {
+    val ride = shuttleView(threats = Seq(threat(dist = 40.0)))
+    val out = PairArbiter.resolveShuttle(ride, Seq.empty, raid = false, baitRide = true)
+    assert(out.shuttle == PairArbiter.Bait)
+  }
+
+  test("resolve: a gun inside the band routs the pair") {
+    val ride = shuttleView(threats = Seq(threat(dist = 10.0)), aboard = true)
+    val out = PairArbiter.resolveShuttle(ride, Seq.empty, raid = false, baitRide = false)
+    assert(out.shuttle == PairArbiter.Flee)
+  }
+
+  test("resolve: shuttle side fetches the unloaded mate") {
+    val out = PairArbiter.resolveShuttle(shuttleView(), Seq(reaverView()), raid = false, baitRide = false)
+    assert(out.shuttle == PairArbiter.FetchMate)
+  }
 }

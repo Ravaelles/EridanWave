@@ -18,29 +18,50 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
 
   private val army = (100.0, 500.0)
 
-  /** Shuttle executor: the arbiter's order, nothing else. */
+  private def tilePos(b: Body): (Double, Double) = (b.x / 32.0, b.y / 32.0)
+
+  private def foeViews(me: Body, foes: Seq[Body]): Seq[PairArbiter.FoeView] =
+    foes.filter(_.alive).map(f => PairArbiter.FoeView(
+      me.dist(f) / 32.0,
+      f.rangeAgainst(me) / 32.0,
+      me.rangeAgainst(f) / 32.0))
+
+  /**
+   * Shuttle executor, production path: bodies become the same plain
+   * views the game seam builds, then the shipped resolve runs. Any
+   * drift between the test and the game lives in the view mapping,
+   * never in the decision.
+   */
   private class ShuttlePilot extends Pilot {
     var fetches = 0
     var flees = 0
     var idles = 0
 
     override def direct(me: Body, world: World): Directive = {
-      val mate = world.ours.find(o => o.alive && o.kind == Protoss.Reaver && o.transport.isEmpty)
       val foes = world.foes.filter(_.alive)
-      val pressured = foes.exists(f =>
-        f.canHit(me) && me.dist(f) <= f.rangeAgainst(me) + 5.0 * 32.0)
-      val out = PairArbiter.decide(
-        loaded           = world.ours.exists(o => o.alive && o.kind == Protoss.Reaver && o.loaded),
-        mateOnFoot       = mate.exists(m => ! m.loaded),
-        mateDistTiles    = mate.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity),
-        reaverFoeTiles   = Double.PositiveInfinity,
-        reaverGunTiles   = Double.PositiveInfinity,
-        reaverShotReady  = false,
-        shuttlePressured = pressured,
-        reaverDoomed     = false,
-        raid             = false,
-        baitRide         = false)
-      out.shuttle match {
+      val mates = world.ours.view.filter(o => o.alive && o.kind == Protoss.Reaver).map(r =>
+        PairArbiter.ReaverView(
+          tilePos(r),
+          Some(1),
+          r.loaded,
+          None,
+          1,
+          activeScarab = false,
+          r.cooldownLeft,
+          r.lossFraction,
+          foeViews(r, foes))).toSeq
+      val out = PairArbiter.resolveShuttle(
+        PairArbiter.ShuttleView(
+          tilePos(me),
+          Some(1),
+          mates.exists(_.loaded),
+          foes.filter(f => f.canHit(me)).map(f =>
+            PairArbiter.ThreatView(me.dist(f) / 32.0, f.rangeAgainst(me) / 32.0))),
+        mates,
+        raid = false,
+        baitRide = false).shuttle
+      val mate = world.ours.find(o => o.alive && o.kind == Protoss.Reaver && o.transport.isEmpty)
+      out match {
         case PairArbiter.FetchMate =>
           fetches += 1
           mate.map(m => MoveTo(m.x, m.y)).getOrElse(Hold)
@@ -75,25 +96,39 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
     var paralyzed = 0
 
     override def direct(me: Body, world: World): Directive = {
-      val ride = world.ours.find(o => o.alive && o.kind == Protoss.Shuttle)
       val foes = world.foes.filter(_.alive)
       val nearest = foes.sortBy(me.dist).headOption
       val foeTiles = nearest.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
       val gunTiles = nearest.map(me.rangeAgainst(_) / 32.0).getOrElse(Double.PositiveInfinity)
-      val out = PairArbiter.decide(
-        loaded           = me.loaded,
-        mateOnFoot       = ! me.loaded,
-        mateDistTiles    = ride.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity),
-        reaverFoeTiles   = foeTiles,
-        reaverGunTiles   = gunTiles,
-        reaverShotReady  = me.cooldownLeft <= 0,
-        shuttlePressured = false,
-        reaverDoomed     = me.lossFraction > 0.75,
-        raid             = false,
-        baitRide         = false)
-      out.reaver match {
+      val rides = world.ours.view.filter(o => o.alive && o.kind == Protoss.Shuttle).map(s =>
+        PairArbiter.ShuttleView(
+          tilePos(s),
+          Some(1),
+          world.ours.exists(o => o.alive && o.kind == Protoss.Reaver && o.loaded && o.transport.contains(s)),
+          world.foes.view.filter(f => f.alive && f.canHit(s)).map(f =>
+            PairArbiter.ThreatView(s.dist(f) / 32.0, f.rangeAgainst(s) / 32.0)).toSeq)).toSeq
+      val rideBody = world.ours.find(o => o.alive && o.kind == Protoss.Shuttle)
+      val out = PairArbiter.resolveReaver(
+        PairArbiter.ReaverView(
+          tilePos(me),
+          Some(1),
+          me.loaded,
+          rideBody.map(r => PairArbiter.ShuttleView(
+            tilePos(r),
+            Some(1),
+            me.loaded,
+            world.foes.view.filter(f => f.alive && f.canHit(r)).map(f =>
+              PairArbiter.ThreatView(r.dist(f) / 32.0, f.rangeAgainst(r) / 32.0)).toSeq)),
+          1,
+          activeScarab = false,
+          me.cooldownLeft,
+          me.lossFraction,
+          foeViews(me, foes)),
+        rides,
+        raid = false).reaver
+      out match {
         case PairArbiter.BoardRide =>
-          ride match {
+          rideBody match {
             case Some(r) if me.dist(r) <= World.BoardRangePx =>
               boards += 1
 
@@ -108,7 +143,7 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
 
           Hold
         case PairArbiter.WalkToRide =>
-          ride.map(r => MoveTo(r.x, r.y)).getOrElse(Hold)
+          rideBody.map(r => MoveTo(r.x, r.y)).getOrElse(Hold)
         case PairArbiter.WalkToArmy => MoveTo(army._1, army._2)
         case PairArbiter.RideAlong  => Hold
       }
