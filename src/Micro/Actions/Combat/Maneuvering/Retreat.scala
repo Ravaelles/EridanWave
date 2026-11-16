@@ -43,6 +43,12 @@ object Retreat extends Action {
   }
 
   override def perform(unit: FriendlyUnitInfo): Unit = {
+    // Siege shells outrank every retreat plan: a detected ground unit
+    // that does not want the tank battle steps past the shell line
+    // first, waypoints second. Hulls with a battle verdict keep the
+    // TankHug discipline below instead.
+    if (SiegeKeepOff.act(unit)) return
+
     getRetreat(unit)(unit)
   }
 
