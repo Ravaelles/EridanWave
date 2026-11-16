@@ -11,7 +11,7 @@ import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Defense.{DefenseDivision, GetDefenseBase}
 import Tactic.Missions.core.Mission
-import Tactic.Missions.drops.{MissionAssaultFerry, MissionDTDrop, MissionSpeedlotDrop, MissionStormDrop}
+import Tactic.Missions.drops.{MissionAssaultFerry, MissionDTDrop, MissionDarkTemplarFerry, MissionSpeedlotDrop, MissionStormDrop}
 import Tactic.Missions.ground.MissionKillExpansion
 import Tactic.Missions.reaver.MissionReaverDrop
 import Tactic.Production.core.Produce
@@ -58,6 +58,7 @@ final class Tactician extends TimedTask {
 
   private val missionKillExpansion      = addMission(new MissionKillExpansion)
   private val missionDTDrop             = addMission(new MissionDTDrop)
+  private val missionDarkTemplarFerry   = addMission(new MissionDarkTemplarFerry)
   private val missionStormDrop          = addMission(new MissionStormDrop)
   // The independent Shuttle-Reaver cluster picks transports first while
   // skies are safe; SpeedlotDrop takes leftovers or a second Shuttle.

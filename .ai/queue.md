@@ -187,3 +187,40 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Wired: `BeShuttle`/`BeReaver` execute arbiter orders (incl.
   UnloadHere through the existing landing gates); `landingReady`
   moved to the arbiter so order and executor share one read.
+
+## Session: warnings + DT + rally + storm + ferry (2026-11-16, open)
+
+- Warnings triage: fix `SimulationCheckpoint` hidden import (alias),
+  `UmsMode`/`SpinWait` discarded returns, `IndexedSet` erasure
+  (exists instead of cast), `BeReaver` non-exhaustive match
+  (UnloadHere arm), `Polygons` Stack->List. LEFT AS-IS: pom
+  `classpath` deprecation (offline build risk, revisit with vendor
+  refresh), BWTA `readMap` deprecation (vendored lib), and the
+  pre-existing launcher/IDE warnings the suite never sees.
+- DT prey: `DarkTemplarTargets.isPrey` (combat buildings, combat
+  units, bases - no masonry/workers) wired into hunt + remembered
+  contacts; tier list dropped the worker tier. Needs: live PvT
+  confirm (no depots chewed next to tanks).
+- DT mine sidestep: `SpiderMineSniping.sidestepPixel` (lateral,
+  fixed side per unit) + `BeDarkTemplar` leg after snipe; mines
+  out of the detector evade. Needs: live minefield confirm.
+- Rally latch: `SquadRally.isRallyingLatched` wired in
+  `MarchOrders.rallyLeg` (+ base rows incl. hold-through-flap).
+  StarEngine leg-level repro pending (march machinery is out of
+  the engine); live mop-up confirm still wanted (Hao Pan f15721
+  pattern).
+- Storm stand: `StormStand.shouldHold` wired in
+  `CombatTechniques`; `StormStandSuite` proves the cast under the
+  retreat verdict. Needs: live PvZ storm confirm.
+- DT ferry: `MissionDarkTemplarFerry` (pair straight to enemy main,
+  ASAP drop, single trip) registered in Tactician. Needs: live
+  game with DT+Shuttle (formation + drop + raid).
+- Carrier AA ladder: `CarrierTargets` + BeCarrier pre-pick;
+  `CarrierDoctrineSuite` proves turret-first. Needs: live PvT
+  confirm (unconditional tank attack).
+- OPEN question (owner, asked 2x): Carrier vs sieged tank with no
+  other AA - "upewnijmy się ..." sentence cuts off. Implemented
+  as unconditional attack via the ladder; confirm or restate.
+- OPEN investigation: NoTankMarch-vs-Retreat flap (Hao Pan
+  f6666) - march terminus vs combat retreat writers; unresolved,
+  needs the exact game or a squad-level repro the engine lacks.
