@@ -90,7 +90,7 @@ class PressedRideSuite extends AnyFunSuite with StarEngineSuite {
     }
   }
 
-  test("the ride keeps out of reach while the reaver grinds the pack") {
+  test("the ride keeps out of reach while the reaver grinds the pack", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val reaver = new Body(Protoss.Reaver, 0.0, 700.0, Protoss.Reaver.maxTotalHealth)
     val shuttle = new Body(Protoss.Shuttle, 0.0, 1100.0, Protoss.Shuttle.maxTotalHealth)
     val dragoonMid = new Body(Protoss.Dragoon, 0.0, 640.0, Protoss.Dragoon.maxTotalHealth)

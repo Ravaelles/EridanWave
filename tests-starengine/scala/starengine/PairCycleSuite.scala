@@ -78,7 +78,7 @@ class PairCycleSuite extends AnyFunSuite with StarEngineSuite {
         val threat = world.foes.filter(f => f.alive && f.canHit(me)).sortBy(me.dist).headOption
         val band = threat.exists(t =>
           ReaverShuttleReboard.mayReboard(me.dist(t) / 32.0, me.lossFraction))
-        (ride.filter(r => me.dist(r) <= 64.0 && band), threat) match {
+        (ride.filter(r => ReaverShuttleReboard.rideInReach(me.dist(r) / 32.0) && band), threat) match {
           case (Some(r), _) =>
             boards += 1
 
@@ -112,7 +112,7 @@ class PairCycleSuite extends AnyFunSuite with StarEngineSuite {
       }
   }
 
-  test("ferry, drop, clear, reboard, extract") {
+  test("ferry, drop, clear, reboard, extract", StarEngineTags.Reaver, StarEngineTags.Shuttle, StarEngineTags.Board, StarEngineTags.Drop) {
     val shuttle = new Body(Protoss.Shuttle, home._1, home._2, Protoss.Shuttle.maxTotalHealth)
     val reaver = new Body(Protoss.Reaver, home._1, home._2, Protoss.Reaver.maxTotalHealth)
     reaver.transport = Some(shuttle)

@@ -119,14 +119,14 @@ class PairRejoinSuite extends AnyFunSuite with StarEngineSuite {
     (reaver, shuttle, foot, world.frame)
   }
 
-  test("an awaiting ride watches its mate die alone") {
+  test("an awaiting ride watches its mate die alone", StarEngineTags.Reaver, StarEngineTags.Shuttle, StarEngineTags.Board) {
     val (reaver, shuttle, foot, frames) = runPair(new AwaitPilot, waitForRide = false, home)
     println(s"DIAG abandon frames=$frames boards=${foot.boards} reaver=${reaver.hp.toInt} loaded=${reaver.transport.isDefined}")
     assert( ! reaver.alive, "abandoned hull survived - no problem to fix")
     assert(foot.boards == 0, "abandoned hull embarked with no ride around")
   }
 
-  test("a rejoining ride is there when the hull boards pressured") {
+  test("a rejoining ride is there when the hull boards pressured", StarEngineTags.Reaver, StarEngineTags.Shuttle, StarEngineTags.Board) {
     val (reaver, shuttle, foot, frames) = runPair(new RejoinPilot, waitForRide = true, (-800.0, 500.0))
     println(s"DIAG rejoin frames=$frames boards=${foot.boards} reaver=${reaver.hp.toInt} loaded=${reaver.transport.isDefined} shuttle=${shuttle.hp.toInt}")
     assert(foot.boards > 0, "rejoined hull never boarded under pressure")

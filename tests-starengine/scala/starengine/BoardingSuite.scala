@@ -77,7 +77,7 @@ class BoardingSuite extends AnyFunSuite with StarEngineSuite {
     (reaver, marine1, marine2, pilot, world.frame)
   }
 
-  test("a quiet crowded hull fights on foot and never embarks") {
+  test("a quiet crowded hull fights on foot and never embarks", StarEngineTags.Reaver, StarEngineTags.Shuttle, StarEngineTags.Board) {
     val (reaver, marine1, marine2, pilot, frames) = runGate((m1, _) => ! m1.alive)
     println(s"DIAG locked frames=$frames boards=${pilot.boards} reaver=${reaver.hp.toInt} marine1=${marine1.hp.toInt} loaded=${reaver.transport.isDefined}")
     assert( ! marine1.alive, "locked hull never cleared its side")
@@ -87,7 +87,7 @@ class BoardingSuite extends AnyFunSuite with StarEngineSuite {
     assert(marine2.alive, "locked hull chased past its side")
   }
 
-  test("after the shot the same hull boards the adjacent ride") {
+  test("after the shot the same hull boards the adjacent ride", StarEngineTags.Reaver, StarEngineTags.Shuttle, StarEngineTags.Board) {
     val (reaver, marine1, marine2, pilot, frames) = runGate((_, r) => r.transport.isDefined)
     println(s"DIAG released frames=$frames boards=${pilot.boards} loaded=${reaver.transport.isDefined} reaver=${reaver.hp.toInt}")
     assert(reaver.transport.isDefined, "recently-fired hull never boarded the adjacent ride")
@@ -95,7 +95,7 @@ class BoardingSuite extends AnyFunSuite with StarEngineSuite {
     assert(marine2.alive, "released hull kept fighting instead of embarking")
   }
 
-  test("a hull with nowhere to go unloads where the ride floats") {
+  test("a hull with nowhere to go unloads where the ride floats", StarEngineTags.Reaver, StarEngineTags.Shuttle, StarEngineTags.Board, StarEngineTags.Drop) {
     val reaver = new Body(Protoss.Reaver, 0.0, 500.0, Protoss.Reaver.maxTotalHealth)
     val shuttle = new Body(Protoss.Shuttle, 32.0, 500.0, Protoss.Shuttle.maxTotalHealth)
     val pilot = new Pilot {

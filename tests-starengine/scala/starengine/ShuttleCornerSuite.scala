@@ -36,7 +36,7 @@ class ShuttleCornerSuite extends AnyFunSuite {
     }
   }
 
-  test("a pressed shuttle flees up without entering the corner") {
+  test("a pressed shuttle flees up without entering the corner", StarEngineTags.Shuttle) {
     val shuttle = new Body(Protoss.Shuttle, 2 * 32.0, 8 * 32.0, Protoss.Shuttle.maxTotalHealth)
     val hydras = Seq(
       new Body(Zerg.Hydralisk, 2 * 32.0, 10 * 32.0, Zerg.Hydralisk.maxTotalHealth),

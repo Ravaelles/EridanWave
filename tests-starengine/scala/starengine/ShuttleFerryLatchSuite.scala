@@ -83,7 +83,7 @@ class ShuttleFerryLatchSuite extends AnyFunSuite {
     Outcome(flips, pilot.maxRun, closest)
   }
 
-  test("a sharp edge flips ferry and flee every breath") {
+  test("a sharp edge flips ferry and flee every breath", StarEngineTags.Shuttle) {
     val ride = new Body(Protoss.Shuttle, 0.0, 0.0, 1.0)
     println(s"DIAG ride speed=${ride.speed}")
     val sharp = runFerry(latched = false)
@@ -92,7 +92,7 @@ class ShuttleFerryLatchSuite extends AnyFunSuite {
     assert(sharp.maxRun <= 12, s"sharp held a course: ${sharp.maxRun}f")
   }
 
-  test("a latched ferry holds through the breathing") {
+  test("a latched ferry holds through the breathing", StarEngineTags.Shuttle) {
     val fixed = runFerry(latched = true)
     println(s"DIAG fixed flips=${fixed.flips} maxRun=${fixed.maxRun}f closest=${fixed.closestGoal.toInt}px")
     assert(fixed.flips <= 120, s"still flapping: ${fixed.flips} flips")

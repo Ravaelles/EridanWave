@@ -28,7 +28,7 @@ class ReaverZombieSuite extends AnyFunSuite with StarEngineSuite {
     (new Body(Protoss.Reaver, reaverPos._1, reaverPos._2, Protoss.Reaver.maxTotalHealth),
       new Body(Protoss.Shuttle, reaverPos._1, reaverPos._2, Protoss.Shuttle.maxTotalHealth))
 
-  test("a reaver eats a small zombie pack alone, the ride untouched") {
+  test("a reaver eats a small zombie pack alone, the ride untouched", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val (reaver, shuttle) = pair((0.0, 600.0))
     val pack = lings(2, 0.0, 200.0)
     val pilots: Map[Body, Pilot] = Map(
@@ -47,7 +47,7 @@ class ReaverZombieSuite extends AnyFunSuite with StarEngineSuite {
     assert(shuttle.hp == shuttle.maxHp, "shuttle took hits holding behind the reaver")
   }
 
-  test("a large zombie pack needs dragoon escorts, the pair alone is teeth food") {
+  test("a large zombie pack needs dragoon escorts, the pair alone is teeth food", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val (reaver, shuttle) = pair((0.0, 600.0))
     // Spread past splash overlap: twelve lings converge faster than one
     // scarab per minute clears them, so the lone hull dies chewing.
@@ -66,7 +66,7 @@ class ReaverZombieSuite extends AnyFunSuite with StarEngineSuite {
     assert( ! reaver.alive, "lone reaver should not survive sixteen hungry lings - the escort rule exists for this")
   }
 
-  test("dragoon escorts carry the pair through the large pack") {
+  test("dragoon escorts carry the pair through the large pack", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val (reaver, shuttle) = pair((0.0, 600.0))
     val dragoons = Seq(
       new Body(Protoss.Dragoon, -80.0, 620.0, Protoss.Dragoon.maxTotalHealth),

@@ -36,7 +36,7 @@ class ReaverSplashSuite extends AnyFunSuite with StarEngineSuite {
     (cleared, shots)
   }
 
-  test("a packed escort dies to splash, a spread one costs scarabs") {
+  test("a packed escort dies to splash, a spread one costs scarabs", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val reaver = new Body(Protoss.Reaver, 0.0, 0.0, Protoss.Reaver.maxTotalHealth)
     println(s"DIAG splash=${reaver.splashOuterPx}px dmg=${reaver.damageAgainst(pack(30.0).head)} " +
       s"cd=${reaver.cooldownAgainst(pack(30.0).head)} lingHp=${Zerg.Zergling.maxTotalHealth}")

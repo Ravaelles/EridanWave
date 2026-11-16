@@ -22,7 +22,7 @@ class SunkensScenarioSuite extends AnyFunSuite with StarEngineSuite {
       isStaticDefense = f.kind.isStaticDefense,
       isSuicideMission = false)
 
-  test("a reaver clears its ling escort before the sunken") {
+  test("a reaver clears its ling escort before the sunken", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val sunken = new Body(Zerg.SunkenColony, 0.0, 0.0, Zerg.SunkenColony.maxTotalHealth)
     val ling1 = new Body(Zerg.Zergling, 0.0, 480.0, Zerg.Zergling.maxTotalHealth)
     val ling2 = new Body(Zerg.Zergling, 96.0, 576.0, Zerg.Zergling.maxTotalHealth)

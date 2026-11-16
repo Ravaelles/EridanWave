@@ -86,7 +86,7 @@ class ReaverPairSuite extends AnyFunSuite {
     assert(o.shuttleHp >= 0.9 * Protoss.Shuttle.maxTotalHealth, "shuttle finished below 90%")
   }
 
-  test("close pack, no statics: the reaver mulches it from the anchor") {
+  test("close pack, no statics: the reaver mulches it from the anchor", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val foes = (0 until 4).map(i => new Body(Zerg.Hydralisk, -60.0 + (i % 2) * 120.0, 300.0 + (i / 2) * 40.0, Zerg.Hydralisk.maxTotalHealth)) ++
       (0 until 4).map(i => new Body(Zerg.Zergling, -90.0 + (i % 2) * 180.0, 340.0 + (i / 2) * 40.0, Zerg.Zergling.maxTotalHealth))
     val decoys = Seq(
@@ -96,7 +96,7 @@ class ReaverPairSuite extends AnyFunSuite {
     check(runPack(foes, decoys, (0.0, 700.0), (0.0, 1100.0)), "close")
   }
 
-  test("mid pack under two sunkens: escort-first, then the statics from max range") {
+  test("mid pack under two sunkens: escort-first, then the statics from max range", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val foes = Seq(
       new Body(Zerg.SunkenColony, -150.0, 0.0, Zerg.SunkenColony.maxTotalHealth),
       new Body(Zerg.SunkenColony, 150.0, 0.0, Zerg.SunkenColony.maxTotalHealth)) ++
@@ -110,7 +110,7 @@ class ReaverPairSuite extends AnyFunSuite {
     check(runPack(foes, decoys, (0.0, 700.0), (0.0, 1100.0)), "sunkens")
   }
 
-  test("far hydra army, no statics: the line absorbs while the reaver grinds") {
+  test("far hydra army, no statics: the line absorbs while the reaver grinds", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
     val foes = (0 until 5).map(i => new Body(Zerg.Hydralisk, -100.0 + (i % 3) * 100.0, 100.0 + (i / 3) * 40.0, Zerg.Hydralisk.maxTotalHealth)) ++
       (0 until 4).map(i => new Body(Zerg.Zergling, -75.0 + (i % 2) * 150.0, 140.0 + (i / 2) * 40.0, Zerg.Zergling.maxTotalHealth))
     val decoys = Seq(
