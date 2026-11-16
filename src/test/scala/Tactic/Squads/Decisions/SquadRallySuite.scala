@@ -52,4 +52,15 @@ class SquadRallySuite extends AnyFunSuite {
     assert( ! SquadRally.mayRally(isWarrior = true, wantsFight = false))
     assert(SquadRally.mayRally(isWarrior = false, wantsFight = false))
   }
+
+  test("the rally latch holds through the boundary breathing") {
+    val id = 424242
+    assert( ! SquadRally.isRallyingLatched(id, 3.0, 4.0))
+    assert(SquadRally.isRallyingLatched(id, 5.0, 4.0))
+    assert(SquadRally.isRallyingLatched(id, 4.2, 4.0))
+    assert(SquadRally.isRallyingLatched(id, 3.8, 4.0))
+    assert( ! SquadRally.isRallyingLatched(id, 3.4, 4.0))
+    assert( ! SquadRally.isRallyingLatched(id, 4.2, 4.0))
+    assert(SquadRally.isRallyingLatched(id, 4.6, 4.0))
+  }
 }

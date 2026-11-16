@@ -47,6 +47,29 @@ object MarchDress {
   def enemyNear(distTiles: Double): Boolean =
     distTiles <= dressEnemyRadiusTiles
 
+  /**
+   * The dress wait itself (pure flags for the suite): leaders hold for
+   * the pack only while the squad fights, contact is near, nothing
+   * skips the wait, and - never while the hull has a shot right now.
+   * A Dragoon holding its slot instead of firing the Vulture in reach
+   * mills the whole column: the shot outranks the line, always.
+   */
+  def shouldHoldForPack(
+    fightConsensus: Boolean,
+    enemyNear: Boolean,
+    skipCompactStrong: Boolean,
+    staticNear: Boolean,
+    massed: Boolean,
+    holdDress: Boolean,
+    targetsInRange: Boolean): Boolean =
+    fightConsensus &&
+      enemyNear &&
+      ! skipCompactStrong &&
+      ! staticNear &&
+      ! massed &&
+      holdDress &&
+      ! targetsInRange
+
   /** A pack this strong marches through instead of dressing, in value. */
   val strongArmyStrength: Double = 150.0
 
@@ -65,7 +88,6 @@ object MarchDress {
 
   /** A crowd this big never waits for a line that already stands. */
   val massedFriendlies: Int = 6
-
   /** The radius that counts as company, in tiles. */
   val massedTiles: Double = 4.0
 

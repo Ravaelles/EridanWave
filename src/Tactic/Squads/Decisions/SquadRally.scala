@@ -2,6 +2,7 @@ package Tactic.Squads.Decisions
 
 import Mathematics.Points.Pixel
 import Utilities.?
+import Utilities.Latch
 
 /**
  * Straggler rally (Stardust UnitCluster.move): units lagging far behind the
@@ -42,6 +43,25 @@ object SquadRally {
   def isRallying(unitPixel: Pixel, centroid: Pixel, radiusPixels: Double): Boolean = {
     unitPixel.pixelDistance(centroid) > radiusPixels
   }
+
+  /** Rally hysteresis band, in tiles: enter past the radius, release a tile inside it. */
+  val rallyBandTiles: Double = 1.0
+
+  private val rallying = new Utilities.Latch
+
+  /**
+   * Latched rally (per-unit state, same band shape as the LoneMarch
+   * latch): a straggler breathing on the rally radius holds its side
+   * instead of flip-flopping between rejoining and marching every time
+   * the pack centroid breathes. The pure gate above stays for callers
+   * that decide, not hold.
+   */
+  def isRallyingLatched(unitId: Int, distTiles: Double, radiusTiles: Double): Boolean =
+    rallying(
+      unitId,
+      fires    = distTiles > radiusTiles + rallyBandTiles / 2,
+      releases = distTiles < radiusTiles - rallyBandTiles / 2,
+      initial  = distTiles > radiusTiles)
 
   /** Marching units this far from their nearest ally close ranks instead of milling. */
   val allyJoinTiles: Double = 0.6

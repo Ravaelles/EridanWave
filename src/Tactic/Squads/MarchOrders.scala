@@ -242,7 +242,10 @@ object MarchOrders {
   private def rallyLeg(squad: Squad, unit: FriendlyUnitInfo, finalTravel: Pixel, suicide: Boolean): (Pixel, Boolean) = {
     val pack     = ?(unit.flying, squad.centroidAir, squad.centroidGround)
     val leash    = SquadRally.rallyRadiusFor(Protoss.Reaver(unit))
-    val rallying = ! suicide && squad.fightConsensus && SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) && SquadRally.isRallying(unit.pixel, pack, leash)
+    val rallying = ! suicide && squad.fightConsensus && SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) && SquadRally.isRallyingLatched(
+      unit.id,
+      unit.pixelDistanceCenter(pack) * Maff.inv32,
+      leash * Maff.inv32)
     (?(rallying, pack, finalTravel), rallying)
   }
 
@@ -278,7 +281,14 @@ object MarchOrders {
     // for stragglers that are not straggling.
     val massed = MarchDress.isMassed(squad.units.count(u =>
       u != unit && unit.pixelDistanceCenter(u.pixel) <= MarchDress.massedTiles * 32.0))
-    val waiting      = ! suicide && squad.fightConsensus && enemyNear && ! skipCompactStrong && ! staticNear && ! massed && MarchDress.holdDress(unit.id, meanDistToGoalTiles - unit.tileDistanceCenter(squad.vicinity))
+    val waiting      = ! suicide && MarchDress.shouldHoldForPack(
+      squad.fightConsensus,
+      enemyNear,
+      skipCompactStrong,
+      staticNear,
+      massed,
+      MarchDress.holdDress(unit.id, meanDistToGoalTiles - unit.tileDistanceCenter(squad.vicinity)),
+      unit.matchups.targetsInRange.nonEmpty)
     val reaverToArmy = Protoss.Reaver(unit) && MarchDress.holdDress(unit.id, meanDistToGoalTiles - unit.tileDistanceCenter(squad.vicinity))
     (waiting && ! reaverToArmy, reaverToArmy)
   }

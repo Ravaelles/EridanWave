@@ -66,4 +66,15 @@ class MarchDressSuite extends AnyFunSuite {
     assert(MarchDress.holdDress(424243, 2.2))
     assert( ! MarchDress.holdDress(424244, 1.8))
   }
+
+  test("a hull with a shot holds nothing") {
+    assert(MarchDress.shouldHoldForPack(true, true, false, false, false, holdDress = true, targetsInRange = false))
+    assert( ! MarchDress.shouldHoldForPack(true, true, false, false, false, holdDress = true, targetsInRange = true))
+    assert( ! MarchDress.shouldHoldForPack(false, true, false, false, false, holdDress = true, targetsInRange = false))
+    assert( ! MarchDress.shouldHoldForPack(true, false, false, false, false, holdDress = true, targetsInRange = false))
+    assert( ! MarchDress.shouldHoldForPack(true, true, true, false, false, holdDress = true, targetsInRange = false))
+    assert( ! MarchDress.shouldHoldForPack(true, true, false, true, false, holdDress = true, targetsInRange = false))
+    assert( ! MarchDress.shouldHoldForPack(true, true, false, false, true, holdDress = true, targetsInRange = false))
+    assert( ! MarchDress.shouldHoldForPack(true, true, false, false, false, holdDress = false, targetsInRange = false))
+  }
 }
