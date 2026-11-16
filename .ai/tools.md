@@ -55,6 +55,7 @@ engine advances, constraints adjust).
 ## Gotchas that already burned us
 - Never edit `scripts/wine-run.sh` mid-run (bash reparses, kills teardown).- New Scala = CRLF, scripts = LF; blank line after `return`.
 - Human-only UMS maps (e.g. `dragoons_v_map`) idle forever headless: `list-maps.sh` hides them and `run.sh` refuses them - do not force-launch.
+- Box stuck in NOATTACH ("Game table mapping not found" every run): kill leftovers, `wineserver -k`, retry; still dead, launch one manual game (Chaoslauncher by hand) plus one manual client attach to prove game vs table side, then resume `run.sh`.
 - Distances are tiles unless the name says pixels (rule 12).
 - `scripts/verify-drop.sh` (micro gate), `scripts/smoke.sh` (melee gate).
 - Full docs: `.ai/conventions.md` (rules), `.ai/architecture.md` (levels),
