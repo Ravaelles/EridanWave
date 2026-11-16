@@ -33,7 +33,11 @@ object BeShuttle extends Action {
       case PairArbiter.RaidCarry  => if ( ! raid(shuttle)) support(shuttle)
       case PairArbiter.FollowArmy => support(shuttle)
       case PairArbiter.Bait       => bait(shuttle)
-      case PairArbiter.AwaitPost  => awaitPost(shuttle)
+      case PairArbiter.AwaitPost  =>
+        // No mate, but someone else may hail (a storm-ready Templar):
+        // the old chain adopted every frame, so the post keeps one
+        // opportunistic adopt before holding.
+        if ( ! adopt(shuttle)) awaitPost(shuttle)
     }
   }
 
