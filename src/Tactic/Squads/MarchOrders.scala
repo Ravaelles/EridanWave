@@ -1,12 +1,13 @@
 package Tactic.Squads
 
 import Lifecycle.With
+import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{LoneMarch, MainMarch, MarchDress, NoTankMarch, SquadRally, StrongMarch, SuicideMission, ToothlessMarch}
+import Tactic.Squads.Decisions.{DragoonRoaming, LoneMarch, MainMarch, MarchDress, NoTankMarch, SquadRally, StrongMarch, SuicideMission, ToothlessMarch}
 import Utilities.?
 
 /**
@@ -44,6 +45,8 @@ object MarchOrders {
 
     case object ToothlessMarch extends MarchLabel("ToothlessMarch")
 
+    case object DragoonRoam extends MarchLabel("DragoonRoam")
+
     case object LoneMarch extends MarchLabel("LoneMarch")
 
     case object StaticPush extends MarchLabel("StaticPush")
@@ -64,8 +67,10 @@ object MarchOrders {
    */
   private final case class MarchFacts(
     enemyIsTerran    : Boolean,
+    enemyIsProtoss   : Boolean,
     enemyHasTanks    : Boolean,
     enemyHasVultures : Boolean,
+    enemyDragoonSeen : Boolean,
     bankedMinerals   : Int,
     armyStrength     : Double,
     supplyUsed       : Int,
@@ -81,9 +86,13 @@ object MarchOrders {
       // Races from units on the board, not lobby slots: UMS maps field
       // several enemy races at once while only one ever shows up, and a
       // phantom race flips every race-gated march rule for the whole game.
+      // Dragoon recognition is memory, not board: a scouted Dragoon stays
+      // scouted, so the roaming permission closes once and for all.
       enemyIsTerran    = With.units.enemy.exists(_.unitClass.isTerran),
+      enemyIsProtoss   = With.units.enemy.exists(_.unitClass.isProtoss),
       enemyHasTanks    = With.units.enemy.exists(t => Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t)),
       enemyHasVultures = With.units.enemy.exists(Terran.Vulture(_)),
+      enemyDragoonSeen = MacroFacts.enemyHasShown(Protoss.Dragoon),
       bankedMinerals   = With.self.minerals,
       armyStrength     = With.battles.globalAttack.us.skimStrengthTotal,
       supplyUsed       = With.self.supplyUsed200,
@@ -110,19 +119,24 @@ object MarchOrders {
       facts.enemyHasTanks,
       facts.enemyHasVultures)
     val (terminus, marchLabel) = marchTerminus(squad, unit, meanDistToGoalTiles, defaultReturn, facts)
+    // Roaming Dragoons march like the toothless columns: with no enemy
+    // Dragoon scouted there is nothing to dress against, so they walk at
+    // the goal instead of posing, rallying or returning - and the march
+    // never sends them home for lack of a consensus they do not need.
+    val roam = marchLabel == MarchLabel.DragoonRoam
     Debugging.CherryVis.CherryVis.decision(unit.id,
-      ?(squad.fightConsensus || assault || toothless, marchLabel, MarchLabel.ReturningToSlot).label)
+      ?(squad.fightConsensus || assault || toothless || roam, marchLabel, MarchLabel.ReturningToSlot).label)
     Debugging.Probe.note("March", unit.id,
-      f"${?(squad.fightConsensus || assault || toothless, marchLabel, MarchLabel.ReturningToSlot)} terminus=${terminus.tx},${terminus.ty}")
+      f"${?(squad.fightConsensus || assault || toothless || roam, marchLabel, MarchLabel.ReturningToSlot)} terminus=${terminus.tx},${terminus.ty}")
     unit.intend(squad)
-      .setTerminus(?(squad.fightConsensus || assault || toothless, terminus, finalReturn))
+      .setTerminus(?(squad.fightConsensus || assault || toothless || roam, terminus, finalReturn))
       .setRedoubt(finalReturn)
       // The march-home verdict rides the frame-fresh intention: a unit the
       // march sent home must not re-engage in the unit phase. Consensus
       // reads agree within a frame, but the verdict can change hands
       // between the phases (re-squadding, HuntContact mode), and one
       // overwrite frame is enough to feed a charge into a retreat.
-      .setMarchHome( ! (squad.fightConsensus || assault || toothless))
+      .setMarchHome( ! (squad.fightConsensus || assault || toothless || roam))
   }
 
   // The march rules, innermost first: rallying stragglers beat slots,
@@ -183,6 +197,14 @@ object MarchOrders {
       facts.enemyIsTerran,
       facts.enemyHasTanks,
       facts.enemyHasVultures)),
+    // Early Dragoon roam: our Dragoons in a mirror with no enemy Dragoon
+    // scouted skip every march leg, including the trip home - there is
+    // nothing ranged to dress against, so they roam the map instead of
+    // posing at the spawn. The permission closes on first recognition.
+    MarchGate(MarchLabel.DragoonRoam, (facts, _, unit) => DragoonRoaming.mayRoam(
+      Protoss.Dragoon(unit),
+      facts.enemyIsProtoss,
+      facts.enemyDragoonSeen)),
     // Lone march: with no friendly warrior inside ten tiles there is no
     // line to pose in, so the unit skips rallying to the pack centroid
     // and slot-marching and walks straight at the squad goal instead of
