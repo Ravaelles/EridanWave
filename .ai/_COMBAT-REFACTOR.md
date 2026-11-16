@@ -72,68 +72,78 @@ Changed seams (thin, game-coupled, reviewed by reading):
 
 | Class | Change |
 |---|---|
-| `Squad.run` / `SquadAttack` | Publish `(posture, roles)` beside `targets`/`formations`/`vicinity`; `fightConsensus` stays as compat during migration, later derived from posture |
-| `MarchOrders` | Legs read posture + `SlotDiscipline`; fix the lying `ReturningToSlot` label (separate "no fight, marching" from a real return) |
-| `CombatEngagement.engage` + `Combat.dispatchByTechnique` | Consume `(posture, role)`; stop deciding. `syncConsensus` loses the `shouldFight` override; `decideFight` gets one writer |
-| `Retreat` maneuver | Executes `Withdraw`: safety now, middle choke later; honors the 96-frame floor |
+| `Squad.run` / `SquadAttack` | DONE: publishes `(posture, roles)` + `battlePosture` query; `fightConsensus` stays as compat until the stance retires |
+| `MarchOrders` | OPEN (#6): legs read posture + `SlotDiscipline`; fix the lying `ReturningToSlot` label |
+| `CombatEngagement.engage` + `Combat.dispatchByTechnique` | DONE: consume `(posture, advances)`; `syncConsensus` lost the vote; `decideFight` has one writer |
+| `Retreat` maneuver | OPEN: honor the 96-frame floor + rearguard role on Withdraw |
 | `FormationHold` | Keeps today's line-hold semantics under `HoldLine`; the gradual-advance creep is QUEUED (section 5), not this refactor |
-| `RegroupLatch` / `ReengageLatch` | Fold into the posture latch or keep as executor detail; decide at implementation time (likely the posture latch supersedes `RegroupLatch.stance`, per-unit `ReengageLatch` stays as the duel-level hold) |
-| `FightOrFlee` / `FightRules` | Verdict becomes cluster input: per-unit sims aggregate (median/percentile) into the posture facts instead of answering per unit |
+| `RegroupLatch` / `ReengageLatch` | DECIDED: posture latch supersedes `RegroupLatch.stance` (retire after #6); per-unit `ReengageLatch` stays as the duel-level hold |
+| `FightOrFlee` / `FightRules` | DONE (validating): fallback obeys the posture; `committed` still fires first, so explicit orders bypass the vote by construction |
 
-## 4. Migration phases (each step useful alone)
+## 4. Migration: status and remaining work
 
-Phases 1-3 are DONE (audit script + baseline 47-88% SquadAttack split;
-RetreatDiscipline/Posture/Roles/Slot kernels with suites; SquadAttack
-publishes posture+roles in shadow mode with the Posture probe and the
-AttackPosture board).
-Phase 3 validated live (Benzene PvT VICTORY 96/27): shadow ran crash-free,
-posture flipped 20 times in 19594 frames (stable), and disagreed with the
-live stance in 21.1% of joint board moments - 526x Engaged/Withdraw (the
-piecemeal-feeding direction phase 4 must fix) vs 70x the cautious way.
+Phases 1-3 DONE. Phase 4 in progress, one validated game per edit
+(Benzene PvP every time for comparability: 71/74 -> 83/3 -> 80/9 ->
+79/9 -> 84/11; losses collapsed, wins held):
 
-### Phase 4 edit list (concrete, in order)
+- DONE #1 `syncConsensus`: technique lost the `shouldFight` vote; the
+  skirmish verdict is the single writer. Readers (`Root`, `KiteAway`
+  standoff, `IdleEngage`, formations, squad consensus) follow one writer.
+- DONE #2 `walk()`: safe passage no longer re-arms fighting; a unit
+  walking home keeps its disengage formation.
+- DONE #4 `engage()` gate: `battlePosture` squad query (L4-clean, no
+  type test; `None` keeps the old gate). Attack squad duels on
+  Fight/HoldLine, walks the march otherwise - a stale regroup consensus
+  no longer pins posture Fight windows to the march.
+- DONE #5 `dispatchByTechnique`: `ClusterPosture.advances` bounds Brawl,
+  Abuse, DragoonStand, SuperKite and `engage()`; Withdraw/Regroup walk.
+- IMPL #7 `applyEstimation`: no-rule fallback obeys the squad posture
+  (`Posture`/`PostureHold` reasons) instead of re-asking each sim.
+  Game #6 validating now. Commit on green.
+- OPEN #6 `MarchOrders` legs + label (last rewire piece, see below).
+- OPEN stance retirement: `fightConsensus` derived from posture, then
+  `RegroupLatch.stance` removed (see findings).
 
-1. `CombatTechniques.syncConsensus`: delete the `decideFight` overrides
-   (`CombatTechniques.scala:77-87`). Rationale: `Idle` runs `FightOrFlee`
-   before `Fight` (`Idle.scala:39,55`), so the technique phase currently
-   overwrites the skirmish verdict - the exact last-writer-wins the audit
-   measures. After this, `shouldFight` is written once (FightOrFlee).
-2. `CombatManeuvers.walk` (`CombatManeuvers.scala:52-53`): stop setting
-   `decideFight(true)`. The forward-vs-retreat formation pick must follow
-   (posture, role), not the verdict - today `walk()` re-arms fighting on
-   the no-consensus path that just stood down.
-3. `CombatManeuvers.dodge` (`:82`): keep `decideFight(false)` - emergency
-   movement is the sanctioned escalation, not a verdict competitor.
-4. `CombatEngagement.engage` (`CombatEngagement.scala:66`): replace the
-   `(!fightConsensus || marchHome)` gate with posture consumption:
-   Withdraw/Regroup -> `maneuvers.move()` (unchanged behavior path);
-   Fight/HoldLine -> the duel below. `preyDrive` stays as the exception.
-5. `Combat.dispatchByTechnique` (`Combat.scala:146-158`): gate the
-   Retreat/Brawl/Abuse/SuperKite claims on posture+role instead of the
-   technique alone; technique becomes the how, posture the whether.
+### Findings that reshaped the endgame
+
+- Verdict audit (`scripts/verdict-audit.py`, PROBE Verdict + trace tasks):
+  game 4 split 79.6% = ~4/5 `+Committed vs -OutOfContact/-Sim` (the PvP
+  zealot-rush commit, BY DESIGN with its own off-ramps) + ~1/8 pure
+  `+Sim vs -Sim`. The posture subsumes the sim part; commit stays an
+  explicit order - `FightRules.committed` fires before the fallback, so
+  committed units never reach the posture vote (no code needed, by
+  construction).
+- Stuck `RegroupLatch`: stance latched Regrouping ~frame 4300 in games
+  2-4 and never released (release needs fighting > 0.65 while split
+  sims hover ~0.5). The posture voted Fight 7x through it. This is the
+  old latch's asymmetry, exposed - not caused - by the rewire, and the
+  reason stance must retire into the posture (floor + agreement +
+  parity) rather than be tuned.
+- The act-level audit stays noisy by nature (cooldowns/positions differ):
+  the verdict audit is the ruler from here on. Per-act mixing during a
+  shared Fight verdict is execution, not dissent.
+
+### Remaining: #6 march legs + label, then stance retirement
+
 6. `MarchOrders.sendUnit` (`MarchOrders.scala:112-125`): route legs
    through `SlotDiscipline.maySlot` (no target, cold weapon, 60 silent
    frames, no threat in range); split the lying `ReturningToSlot` label
-   into "marching" (no fight) vs a real return.
-7. `FightOrFlee.applyEstimation` (`FightOrFlee.scala:114-122`): aggregate
-   per-unit sims into posture facts instead of answering per unit
-   (median/percentile into `ClusterPosture.next` inputs). Last step on
-   purpose: until then the shadow posture disagrees loudly and measurably.
+   into "marching" (no fight) vs a real return. Needs its own game:
+   legs move the terminus, the most visible change of the set.
+7. Derive `fightConsensus` from posture (`advances(posture)`), keep the
+   `HuntContact` OR and the UMS/suicide overrides; validate that the
+   march follows posture windows 1:1 in the trace boards. Then delete
+   `RegroupLatch.stance` + `stanceFilter` - the posture latch
+   (floor + sim agreement + parity + deadband) is strictly more
+   informative, and two latches would flap against each other.
+8. `Retreat` maneuver: honor the 96-frame floor + rearguard role when
+   posture says Withdraw (middle choke anchor stays queued - it needs
+   posture-owned destinations first, section 5).
 
-Validate each edit with a live game: disagreement rate first (must fall
-toward zero), results second. Revert any single edit that regresses the
-rate - they are independent by construction.
-
-1. Disagreement audit (metric, no game change): on finished traces count
-   frames where one cluster's units held different verdicts. Baseline and
-   later proof.
-2. Kernels first: `ClusterPosture.decide` + `ClusterRoles.assign` +
-   `SlotDiscipline.maySlot`, each with a suite (TDD per convention 9).
-3. Squad seam: publish posture + roles; old paths untouched, shadow mode
-   (log disagreements between posture and what units actually did).
-4. Behavior rewire: `engage()`/`dispatchByTechnique` consume the verdict;
-   remove `syncConsensus` override; single `decideFight` writer.
-5. Live validation: disagreement rate to zero first, then game results.
+Validate each edit with a live game: verdict split first (sim-driven
+part must fall toward zero; committed-vs-rest stays by design and is
+reported separately), results second. Revert any single edit that
+regresses - they are independent by construction.
 
 ## 5. Queued follow-ups (not this refactor)
 

@@ -7,6 +7,7 @@ import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Protoss.Dragoon.DragoonPvpRetreat
 import Micro.Targeting.CarrierTankHuntSeam
+import Tactic.Squads.Decisions.ClusterPosture
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.?
@@ -37,7 +38,7 @@ object FightOrFlee extends Action {
         if (With.configuration.formationAudit) Debugging.FormationAudit.tallyVerdict(?(fight, "+", "-") + reason)
       case None =>
         applyEstimation(u)
-        Probe.note("Verdict", u.id, ?(u.agent.shouldFight, "+Sim", "-Sim"))
+        Probe.note("Verdict", u.id, ?(u.agent.shouldFight, "+Sim", "-Sim") + ":" + u.agent.fightReason)
         if (With.configuration.formationAudit) Debugging.FormationAudit.tallyVerdict(?(u.agent.shouldFight, "+Sim", "-Sim"))
     }
   }
@@ -112,12 +113,24 @@ object FightOrFlee extends Action {
         && ally.pixelDistanceEdge(u, u.presumptiveTarget.map(u.pixelToFireAtSimple).getOrElse(u.pixel)) < 72))
 
   private def applyEstimation(unit: FriendlyUnitInfo): Unit = {
-    if (unit.combatForecast.isEmpty) {
-      // Important for things which care about unit willingness to trot around
-      unit.agent.decideFight(true, "")
-    } else {
-      val simFight = unit.combatForecast.get.judgement.get.unitShouldFight(unit)
-      unit.agent.decideFight(simFight, ?(simFight, "Yes", "No"))
+    unit.squad.flatMap(_.battlePosture) match {
+      case Some(posture) =>
+        // The cluster already voted from these same sims: SquadAttack feeds
+        // the fighting fraction and the penalized advantage into
+        // ClusterPosture.next, so re-asking each sim here would only
+        // re-split the vote it just settled. Obey the posture instead.
+        // Explicit rules above (commitments first) already spoke for units
+        // with their own orders; this fallback serves the line.
+        val fight = ClusterPosture.advances(posture)
+        unit.agent.decideFight(fight, ?(fight, "Posture", "PostureHold"))
+      case None =>
+        if (unit.combatForecast.isEmpty) {
+          // Important for things which care about unit willingness to trot around
+          unit.agent.decideFight(true, "")
+        } else {
+          val simFight = unit.combatForecast.get.judgement.get.unitShouldFight(unit)
+          unit.agent.decideFight(simFight, ?(simFight, "Yes", "No"))
+        }
     }
   }
 }
