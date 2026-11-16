@@ -7,7 +7,7 @@ import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Protoss.Carrier._
 import Micro.Agency.Commander
 import Micro.Targeting.FiltersSituational.{TargetFilterCombatants, TargetFilterVisibleInRange}
-import Micro.Targeting.{CarrierBrawl, CarrierTankHuntSeam, Target}
+import Micro.Targeting.{CarrierBrawl, CarrierTankHuntSeam, CarrierTargets, Target}
 import ProxyBwapi.Orders
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
@@ -91,10 +91,19 @@ object BeCarrier extends Action {
         _.pixelDistanceEdge(unit))
       // Avoid changing targets (causes interceptors to not attack)
       // Avoid targeting something leaving leash range
+      // Carrier doctrine first: AA, then the guns that can answer, then
+      // builders and workers - the generic ladder scores whatever it
+      // sees, interceptors need the fixed order.
+      val doctrineTarget: Option[UnitInfo] = {
+        val candidates = unit.matchups.targets.view.filter(t =>
+          t.isEnemy && t.visible && unit.canAttack(t) && unit.pixelDistanceEdge(t) <= 32.0 * CarrierBrawl.leashTiles).toSeq
+        CarrierTargets.pick(candidates.map(CarrierTargets.mark(unit, _))).map(candidates(_))
+      }
       unit.agent.toAttack = ?(brawling, brawlTarget, None)
         .orElse(unit
         .orderTarget
         .filter(t => t.alive && t.visible && t.isEnemy && unit.pixelDistanceEdge(t) <= 32.0 * CarrierBrawl.leashTiles)
+        .orElse(doctrineTarget)
         .orElse(Target.choose(unit, TargetFilterCombatants, TargetFilterVisibleInRange))
         .orElse(Target.choose(unit)))
 
