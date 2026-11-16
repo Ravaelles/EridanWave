@@ -139,9 +139,13 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       val gunTiles = nearest.map(me.rangeAgainst(_) / 32.0).getOrElse(0.0)
       // Survival first, production order: a hull inside a static's
       // reach steps out before any order moves or shoots it deeper.
+      // The engine lumps shields into one pool, so the floor breathes
+      // on the total wound here and on the shield wound in production -
+      // same direction, same kernel, same step.
+      val floorTiles = ReaverShuttleStaticAttack.keepOffTiles + 0.8 * me.lossFraction
       foes.filter(f => f.kind.isBuilding).sortBy(me.dist).headOption.foreach(s => {
         minStaticTiles = Math.min(minStaticTiles, me.dist(s) / 32.0)
-        if (ReaverShuttleStaticAttack.shouldStepOut(me.dist(s) / 32.0)) {
+        if (ReaverShuttleStaticAttack.shouldStepOut(me.dist(s) / 32.0, floorTiles)) {
           keepOffs += 1
           val dx = me.x - s.x
           val dy = me.y - s.y

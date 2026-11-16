@@ -115,9 +115,12 @@ object BeReaver extends Action {
    * a hull sliding along the band instead of diving in or routing out.
    */
   private def staticKeepOff(unit: FriendlyUnitInfo): Boolean = {
+    // The floor breathes with the shields: fresh hulls hold 7.05, holed
+    // ones back out up to 0.8 tiles earlier.
+    val floorTiles = ReaverShuttleStaticAttack.keepOffTiles + unit.shieldWoundBonus(0.0, 0.8)
     Maff.minBy(unit.matchups.enemies.view.filter(e =>
       e.unitClass.isStaticDefense && e.likelyStillThere && e.canAttack(unit)))(unit.pixelDistanceEdge(_))
-      .filter(t => ReaverShuttleStaticAttack.shouldStepOut(unit.tileDistanceEdge(t)))
+      .filter(t => ReaverShuttleStaticAttack.shouldStepOut(unit.tileDistanceEdge(t), floorTiles))
       .exists(t => {
         unit.agent.act("StaticKeepOff")
         unit.agent.forceTo(unit.pixel.project(t.pixel, -32.0 * ReaverShuttleStaticAttack.stepTiles).walkablePixel)

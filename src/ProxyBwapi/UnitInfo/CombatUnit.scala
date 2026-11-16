@@ -62,6 +62,18 @@ trait CombatUnit {
   // shield still closes on what cannot hit it back; a holed one keeps range.
   def shieldWound               : Int = unitClass.maxShields - shieldPoints
 
+  /** Shield wound fraction, 0..1: shieldless units read zero, never NaN. */
+  def shieldWoundPercent: Double =
+    if (unitClass.maxShields > 0) shieldWound.toDouble / unitClass.maxShields else 0.0
+
+  /** Linear low..high band on the shield wound, in the caller's units. */
+  def shieldWoundBonus(low: Double, high: Double): Double =
+    Maff.woundBonus(shieldWoundPercent, low, high)
+
+  /** Linear low..high band on the total wound, in the caller's units. */
+  def woundBonus(low: Double, high: Double): Double =
+    Maff.woundBonus(woundPercent(), low, high)
+
   def canMove: Boolean
   def canAttack(other: CombatUnit): Boolean
 

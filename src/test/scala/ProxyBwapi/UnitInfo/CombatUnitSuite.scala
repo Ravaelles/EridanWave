@@ -26,4 +26,23 @@ class CombatUnitSuite extends AnyFunSuite {
     assert( ! ProxyBwapi.Races.Protoss.Zealot(unit))
     assert( ! unit.unitClass.isBuilding)
   }
+
+  test("shield wound fraction reads zero without shields, never NaN") {
+    TestKit.seedWorld()
+    // Zerg grows no shields: the zero-max guard must answer 0.0, not NaN.
+    val zergling = TestKit.friendly(UnitType.Zerg_Zergling, id = 10)
+    assert(zergling.shieldWoundPercent == 0.0)
+  }
+
+  test("shield and total wound bonuses scale linearly") {
+    TestKit.seedWorld()
+    // A fresh mock never ran update(), so its shields read full wound:
+    // the bonus then sits exactly on the high end of the band.
+    val dragoon = TestKit.friendly(UnitType.Protoss_Dragoon, id = 11)
+    assert(dragoon.shieldWoundPercent == 1.0)
+    assert(dragoon.shieldWoundBonus(0.0, 0.8) == 0.8)
+    assert(dragoon.shieldWoundBonus(7.05, 7.85) == 7.85)
+    // Fresh hull, full wound: the bonus band collapses onto the wound.
+    assert(dragoon.woundBonus(0.0, 1.0) == dragoon.woundPercent())
+  }
 }
