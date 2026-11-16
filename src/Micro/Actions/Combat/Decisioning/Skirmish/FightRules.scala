@@ -43,6 +43,7 @@ final case class FightFacts(
   reave       : Boolean = false,
   energized   : Boolean = false,
   dragoonBrave: Boolean = false,
+  dragoonPack: Boolean = false,
   homeStand   : Boolean = false,
   tanksAtNatural : Boolean = false,
   reaverBrave : Boolean = false)
@@ -82,6 +83,7 @@ object FightRules {
     else if (f.tankHunt)     Some((true,  "TankHunt"))
     else if (f.carrierBrawl) Some((true,  "CarrierBrawl"))
     else if (f.dragoonBrave) Some((true,  "DragoonBrave"))
+    else if (f.dragoonPack) Some((true,  "DragoonPack"))
     else if (f.homeStand)   Some((true,  "HomeStand"))
     else if (f.tanksAtNatural) Some((true,  "TanksAtNatural"))
     else if (f.reaverBrave) Some((true,  "ReaverBrave"))

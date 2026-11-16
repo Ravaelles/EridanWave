@@ -5,6 +5,7 @@ import Information.Geography.Chokes
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Protoss.Dragoon.DragoonBrave
+import Micro.Actions.Protoss.Dragoon.DragoonPackStand
 import Micro.Actions.Protoss.ReaverShuttle.ReaverBrave
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -32,6 +33,18 @@ object NoRetreat {
       With.self.supplyUsed200,
       ArmyStrength.score(With.battles.globalAttack.us.skimStrengthTotal, With.battles.globalAttack.enemy.skimStrengthTotal),
       unit.matchups.threats.nonEmpty && unit.matchups.threats.forall(Terran.Marine))
+
+  /**
+   * A Dragoon pack against light Terran holds the line: three Dragoons
+   * outtrade Vultures and infantry, so only a dying hull runs. Applies to
+   * Dragoons only - a worker caught in the same contact keeps its own
+   * verdict instead of standing into Marines.
+   */
+  def dragoonPack(unit: FriendlyUnitInfo): Boolean =
+    Protoss.Dragoon(unit) && DragoonPackStand.shouldStand(
+      dragoonCount = unit.matchups.allies.count(Protoss.Dragoon) + 1,
+      lightOnly = unit.matchups.threats.nonEmpty && unit.matchups.threats.forall(DragoonPackStand.isLightTerran),
+      totalHp = unit.totalHealth)
 
   /**
    * A healthy escorted Reaver is a firing platform: the sim's blanket

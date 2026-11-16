@@ -56,6 +56,7 @@ object FightOrFlee extends Action {
     yolo        = With.yolo.active && IsWarrior(u),
     irradiated  = u.painfullyIrradiated,
     dragoonBrave  = NoRetreat.dragoonBrave(u),
+    dragoonPack   = NoRetreat.dragoonPack(u),
     homeStand     = NoRetreat.homeStand(u),
     tanksAtNatural = NoRetreat.tanksAtNatural(u),
     reaverBrave   = NoRetreat.reaverBrave(u))
