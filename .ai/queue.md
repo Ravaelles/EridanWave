@@ -166,3 +166,21 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   must flee properly, Reaver must attack and fight most frames.
 - LoneMarch flap re-run (Reav&Shut; confirm the +-300px terminus flap
   is gone on the latched jar).
+
+## Session: PairArbiter (one decider per pair, 2026-11-16)
+
+- Kernel (`PairArbiter.decide`) + game-free bond resolution over
+  plain views (`resolveShuttle`/`resolveReaver`) + `PairArbiterSuite`
+  (decide rows, resolve rows, WalkToArmy regression, landing band).
+  Same resolve path runs in production and in StarEngine pilots.
+- `PairOrdersSuite` (fetch-the-fighting, pressured flee) +
+  `PairLifecycleSuite` (12 Sunkens3 stages: bond, ferry, unload,
+  shoot, fight, reboard, evacuate, fetch, walk, alone, retarget,
+  full run). Pair UMS iteration replaced by these; live games stay
+  for what the engine lacks (squad march, fog).
+- Live reads: Sunkens 11/6 (Bait fired on first contact), Sunkens3
+  2/1 (LoneMarch terminus still flaps +-300px to f4810, army never
+  arrives - squad level, not pair; needs its own repro).
+- Wired: `BeShuttle`/`BeReaver` execute arbiter orders (incl.
+  UnloadHere through the existing landing gates); `landingReady`
+  moved to the arbiter so order and executor share one read.

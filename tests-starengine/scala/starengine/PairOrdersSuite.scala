@@ -49,6 +49,8 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           activeScarab = false,
           r.cooldownLeft,
           r.lossFraction,
+          unloadOrdered = false,
+          unloadSpotReady = false,
           foeViews(r, foes))).toSeq
       val out = PairArbiter.resolveShuttle(
         PairArbiter.ShuttleView(
@@ -123,6 +125,8 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           activeScarab = false,
           me.cooldownLeft,
           me.lossFraction,
+          unloadOrdered = false,
+          unloadSpotReady = false,
           foeViews(me, foes)),
         rides,
         raid = false).reaver

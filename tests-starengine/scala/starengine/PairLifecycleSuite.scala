@@ -43,6 +43,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       activeScarab = false,
       r.cooldownLeft,
       r.lossFraction,
+      unloadOrdered = false,
+      unloadSpotReady = false,
       foeViews(r, foes))
 
   /** Shuttle executor, production order: resolve, then the legs. */
@@ -100,14 +102,35 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       val foeTiles = nearest.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
       val gunTiles = nearest.map(me.rangeAgainst(_) / 32.0).getOrElse(Double.PositiveInfinity)
       if (me.loaded) {
-        val ride = world.ours.find(o => o.alive && o.kind == Protoss.Shuttle)
-        val inBand = ride.exists(r =>
+        val rideBody = world.ours.find(o => o.alive && o.kind == Protoss.Shuttle)
+        val band = rideBody.exists(r =>
           foes.exists(f => f.alive && f.kind.isBuilding && r.dist(f) / 32.0 <= unloadTiles))
-        if (inBand) {
-          unloads += 1
+        val out = PairArbiter.resolveReaver(
+          PairArbiter.ReaverView(
+            tilePos(me),
+            Some(1),
+            true,
+            rideBody.map(r => PairArbiter.ShuttleView(
+              tilePos(r),
+              Some(1),
+              true,
+              threatViews(r, foes))),
+            1,
+            false,
+            me.cooldownLeft,
+            me.lossFraction,
+            false,
+            band,
+            foeViews(me, foes)),
+          Seq.empty,
+          raid = false).reaver
+        out match {
+          case PairArbiter.UnloadHere =>
+            unloads += 1
 
-          Unload
-        } else Hold
+            Unload
+          case _ => Hold
+        }
       } else {
         val rides = world.ours.view.filter(o => o.alive && o.kind == Protoss.Shuttle).map(s =>
           PairArbiter.ShuttleView(tilePos(s), Some(1),
@@ -128,6 +151,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             activeScarab = false,
             me.cooldownLeft,
             me.lossFraction,
+            unloadOrdered = false,
+            unloadSpotReady = false,
             foeViews(me, foes)),
           rides,
           raid = false).reaver

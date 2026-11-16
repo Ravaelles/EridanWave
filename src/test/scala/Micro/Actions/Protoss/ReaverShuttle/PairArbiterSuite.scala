@@ -14,7 +14,9 @@ class PairArbiterSuite extends AnyFunSuite {
     shuttlePressured: Boolean = false,
     reaverDoomed: Boolean = false,
     raid: Boolean = false,
-    baitRide: Boolean = false): PairArbiter.PairDirective =
+    baitRide: Boolean = false,
+    unloadOrdered: Boolean = false,
+    unloadSpotReady: Boolean = false): PairArbiter.PairDirective =
     PairArbiter.decide(
       loaded,
       mateOnFoot,
@@ -25,7 +27,9 @@ class PairArbiterSuite extends AnyFunSuite {
       shuttlePressured,
       reaverDoomed,
       raid,
-      baitRide)
+      baitRide,
+      unloadOrdered,
+      unloadSpotReady)
 
   test("a pressured loaded pair flees with the hull aboard") {
     val out = decide(loaded = true, shuttlePressured = true, raid = true)
@@ -82,6 +86,23 @@ class PairArbiterSuite extends AnyFunSuite {
     assert(decide(loaded = true).reaver == PairArbiter.RideAlong)
   }
 
+  test("landing is an order: the band ready or the mission word puts the hull out") {
+    assert(decide(loaded = true, unloadSpotReady = true).reaver == PairArbiter.UnloadHere)
+    assert(decide(loaded = true, unloadOrdered = true).reaver == PairArbiter.UnloadHere)
+    assert(decide(loaded = true, unloadOrdered = true).shuttle == PairArbiter.FollowArmy)
+  }
+
+  test("pressure keeps a ready hull aboard") {
+    val out = decide(loaded = true, shuttlePressured = true, unloadSpotReady = true)
+    assert(out.shuttle == PairArbiter.Flee)
+    assert(out.reaver == PairArbiter.RideAlong)
+  }
+
+  test("landing flags mean nothing on foot") {
+    val out = decide(unloadSpotReady = true, unloadOrdered = true)
+    assert(out.reaver == PairArbiter.WalkToRide)
+  }
+
   test("no mate means a post for the ride and the army for the hull") {
     val out = decide(mateOnFoot = false)
     assert(out.shuttle == PairArbiter.AwaitPost)
@@ -108,8 +129,10 @@ class PairArbiterSuite extends AnyFunSuite {
     squad: Option[Int] = Some(1),
     loaded: Boolean = false,
     bond: Option[PairArbiter.ShuttleView] = None,
+    unloadOrdered: Boolean = false,
+    unloadSpotReady: Boolean = false,
     foes: Seq[PairArbiter.FoeView] = Seq.empty): PairArbiter.ReaverView =
-    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, 0.0, foes)
+    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, 0.0, unloadOrdered, unloadSpotReady, foes)
 
   test("resolve: an unbonded hull sees the free same-squad ride") {
     val ride = shuttleView()
@@ -161,5 +184,13 @@ class PairArbiterSuite extends AnyFunSuite {
   test("resolve: shuttle side fetches the unloaded mate") {
     val out = PairArbiter.resolveShuttle(shuttleView(), Seq(reaverView()), raid = false, baitRide = false)
     assert(out.shuttle == PairArbiter.FetchMate)
+  }
+
+  test("resolve: a loaded hull leaves on the landing band") {
+    val out = PairArbiter.resolveReaver(
+      reaverView(loaded = true, unloadSpotReady = true),
+      Seq(shuttleView()),
+      raid = false)
+    assert(out.reaver == PairArbiter.UnloadHere)
   }
 }

@@ -2,6 +2,7 @@ package Micro.Actions.Protoss.ReaverShuttle
 
 import Lifecycle.With
 import Mathematics.Maff
+import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -63,6 +64,9 @@ object PairArbiter {
   /** Stay aboard, the Shuttle owns the frame. */
   case object RideAlong extends ReaverOrder { val label = "PairRide" }
 
+  /** Leave the ride on this frame: the landing band is ready or ordered. */
+  case object UnloadHere extends ReaverOrder { val label = "PairUnload" }
+
   /** A foe this close to the Reaver means a fight, not a walk. */
   val fightTiles: Double = 8.5
 
@@ -94,7 +98,13 @@ object PairArbiter {
     shuttlePressured: Boolean,
     reaverDoomed: Boolean,
     raid: Boolean,
-    baitRide: Boolean): PairDirective = {
+    baitRide: Boolean,
+    unloadOrdered: Boolean = false,
+    unloadSpotReady: Boolean = false): PairDirective = {
+
+    if (shuttlePressured && loaded) {
+      return PairDirective(Flee, RideAlong)
+    }
 
     if (shuttlePressured && loaded) {
       return PairDirective(Flee, RideAlong)
@@ -110,7 +120,12 @@ object PairArbiter {
     }
 
     if (loaded) {
-      return PairDirective(if (raid) RaidCarry else FollowArmy, RideAlong)
+      // Landing is an order like any other: the band ready or the
+      // mission ordering it puts the hull out, pressure keeps it in.
+      val reaver =
+        if (unloadOrdered || unloadSpotReady) UnloadHere else RideAlong
+
+      return PairDirective(if (raid) RaidCarry else FollowArmy, reaver)
     }
 
     if (mateOnFoot) {
@@ -166,6 +181,8 @@ object PairArbiter {
     activeScarab: Boolean,
     cooldownLeft: Int,
     wound01: Double,
+    unloadOrdered: Boolean,
+    unloadSpotReady: Boolean,
     foes: Seq[FoeView])
 
   private def distTiles(a: (Double, Double), b: (Double, Double)): Double = {
@@ -223,7 +240,21 @@ object PairArbiter {
    */
   def resolveReaver(reaver: ReaverView, shuttles: Seq[ShuttleView], raid: Boolean): PairDirective = {
     if (reaver.loaded) {
-      return PairDirective(AwaitPost, RideAlong)
+      val out = decide(
+        loaded            = true,
+        mateOnFoot        = false,
+        mateDistTiles     = Double.PositiveInfinity,
+        reaverFoeTiles    = Double.PositiveInfinity,
+        reaverGunTiles    = 0.0,
+        reaverShotReady   = false,
+        shuttlePressured  = reaver.bond.exists(b => pressured(b.threats)),
+        reaverDoomed      = false,
+        raid              = raid,
+        baitRide          = false,
+        unloadOrdered     = reaver.unloadOrdered,
+        unloadSpotReady   = reaver.unloadSpotReady)
+
+      return out
     }
 
     val ride = reaver.bond.orElse(Maff.minBy(shuttles.view.filter(s =>
@@ -254,14 +285,27 @@ object PairArbiter {
 
   /** Game mapper: one Reaver, plain data out. */
   def reaverOrder(reaver: FriendlyUnitInfo): ReaverOrder = {
-    if (reaver.loaded) return RideAlong
-
     val bond = reaver.agent.ride.orElse(ReaverShuttlePair.rideOf(reaver)).map(shuttleView)
     val rides = With.units.ours.view.filter(u => u.alive && Protoss.Shuttle(u)).map(shuttleView).toSeq
     resolveReaver(
       reaverView(reaver, bond),
       rides,
       ReaverShuttlePair.statusOfReaver(reaver) == ReaverShuttleStatus.RaidBase).reaver
+  }
+
+  /**
+   * Landing band (game read, shared by the order and its executor):
+   * Zerg static in kill reach, unfired for a while, nothing inside
+   * the wound-scaled margin. The executor re-checks this before the
+   * unload goes out; the order only opens the attempt.
+   */
+  def landingReady(reaver: FriendlyUnitInfo): Boolean = {
+    val statics = reaver.matchups.enemies.filter(e =>
+      e.unitClass.isStaticDefense && e.player.isZerg && e.likelyStillThere && reaver.tileDistanceEdge(e) < ReaverShuttleStaticAttack.engageTiles)
+    statics.nonEmpty &&
+      With.framesSince(reaver.lastFrameTakingDamage) > 72 &&
+      Maff.minBy(reaver.matchups.threats)(_.pixelDistanceEdge(reaver))
+        .forall(t => reaver.tileDistanceEdge(t) > ReaverShuttleStaticAttack.marginTiles(reaver.woundPercent()))
   }
 
   private def squadKey(unit: FriendlyUnitInfo): Option[Int] =
@@ -290,6 +334,8 @@ object PairArbiter {
       reaver.hasActiveScarab,
       reaver.cooldownLeft,
       reaver.woundPercent(),
+      reaver.agent.fightReason == FightOrFlee.Reave,
+      landingReady(reaver),
       reaver.matchups.targets.map(t =>
         FoeView(
           reaver.pixelDistanceEdge(t) * Maff.inv32,

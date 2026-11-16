@@ -10,11 +10,12 @@ import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
- * Reaver half of the pair doctrine (first claim wins, then generic combat
- * duels): unload onto Zerg statics to kill them on the ground, hold and
- * shoot what the scarab can reach, board only under direct threat or for
- * a real trip - never circle. Anything else (kiting, chasing, marching)
- * stays with the generic fighter, which already knows how.
+ * Reaver half of the pair doctrine: the arbiter picks one order per
+ * frame, this brain executes it. Boarding, fighting, holding, walking
+ * and landing are families now, never negotiating claims - the order
+ * gates which family runs, each claim keeps its own trigger. Anything
+ * else (kiting, chasing, marching) stays with the generic fighter,
+ * which already knows how.
  */
 object BeReaver extends Action {
   override def isContainer: Boolean = true
@@ -23,7 +24,9 @@ object BeReaver extends Action {
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
     if (unit.loaded) {
-      unload(unit)
+      // Landing is an order: the arbiter opens the attempt on the band
+      // or the mission word, unload() refines it the way it always did.
+      if (PairArbiter.reaverOrder(unit) == PairArbiter.UnloadHere) unload(unit)
 
       return
     }
@@ -230,7 +233,7 @@ object BeReaver extends Action {
   }
 
   private def unload(unit: FriendlyUnitInfo): Unit = {
-    if (shouldLand(unit)) {
+    if (PairArbiter.landingReady(unit)) {
       Commander.requestUnload(unit)
       unit.agent.act("UnloadStatic")
     } else if (unit.agent.fightReason == FightOrFlee.Reave) {
@@ -250,16 +253,6 @@ object BeReaver extends Action {
       unit.agent.forceTo(foe.pixel)
       Commander.move(unit)
     })
-  }
-
-  /** Land on Zerg defense to kill it: close, undamaged on the way in, nothing inside the wound-scaled margin. */
-  private def shouldLand(unit: FriendlyUnitInfo): Boolean = {
-    val statics = unit.matchups.enemies.filter(e =>
-      e.unitClass.isStaticDefense && e.player.isZerg && e.likelyStillThere && unit.tileDistanceEdge(e) < ReaverShuttleStaticAttack.engageTiles)
-    statics.nonEmpty &&
-      With.framesSince(unit.lastFrameTakingDamage) > 72 &&
-      Maff.minBy(unit.matchups.threats)(_.pixelDistanceEdge(unit))
-        .forall(t => unit.tileDistanceEdge(t) > ReaverShuttleStaticAttack.marginTiles(unit.woundPercent()))
   }
 
   /** Never walk onto guns that outrange us: the Reaver or the squad assignment handles those. */
