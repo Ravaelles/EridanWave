@@ -3,6 +3,7 @@ package Micro.Actions.Protoss.ReaverShuttle
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
+import Micro.Actions.Transportation.DropSafety
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -133,8 +134,25 @@ object PairArbiter {
     }
 
     if (mateOnFoot) {
+      // Doom boards through everything below, pin included: a dying
+      // hull takes the ride even mid-duel. The pressured branch above
+      // already rescued it under fire; this is the calm-ride twin.
+      if (reaverDoomed && ReaverShuttleReboard.rideInReach(mateDistTiles)) {
+        return PairDirective(GuardMate, BoardRide)
+      }
+
       if (boardLocked) {
         return PairDirective(AwaitPost, FightOnFoot)
+      }
+
+      // An engaged hull finishes its duel first: boarding mid-duel for
+      // a trip strands the pair when the landing is vetoed, and the
+      // ride already holds overhead for the reboard after the kill.
+      if (reaverFoeTiles <= reaverGunTiles) {
+        val reaver =
+          if (reaverShotReady) HoldShoot else FightOnFoot
+
+        return PairDirective(FetchMate, reaver)
       }
 
       // Board for a real trip, a lost position, or a rescue - never for
@@ -194,7 +212,8 @@ object PairArbiter {
     cooldownLeft: Int,
     wound01: Double,
     unloadOrdered: Boolean,
-    unloadSpotReady: Boolean,
+    nearestStaticTiles: Option[Double],
+    attackedRecently: Boolean,
     boardLocked: Boolean,
     threatTiles: Double,
     longTrip: Boolean,
@@ -213,6 +232,17 @@ object PairArbiter {
 
   private def nearestFoe(foes: Seq[FoeView]): Option[FoeView] =
     Maff.minBy(foes)(_.distTiles)
+
+  /**
+   * Landing spot, pure: the nearest static inside the kill band, quiet
+   * hull, no threat inside the wound margin - and past the transport
+   * berth, which vetoes the unload itself. The berth reaches further
+   * than the gun, so the window is land-outside plus one step in.
+   */
+  private def spotReady(view: ReaverView): Boolean =
+    view.nearestStaticTiles.exists(s =>
+      ReaverShuttleStaticAttack.shouldLand(s, view.attackedRecently, view.threatTiles, view.wound01)
+        && ! DropSafety.vetoLanding(Some(s)))
 
   private def shotReady(scarabs: Int, activeScarab: Boolean, cooldownLeft: Int): Boolean =
     scarabs > 0 && ! activeScarab && cooldownLeft <= 0
@@ -271,7 +301,7 @@ object PairArbiter {
         raid              = raid,
         baitRide          = false,
         unloadOrdered     = reaver.unloadOrdered,
-        unloadSpotReady   = reaver.unloadSpotReady)
+        unloadSpotReady   = spotReady(reaver))
 
       return out
     }
@@ -318,17 +348,13 @@ object PairArbiter {
 
   /**
    * Landing band (game read, shared by the order and its executor):
-   * Zerg static in kill reach, unfired for a while, nothing inside
-   * the wound-scaled margin. The executor re-checks this before the
-   * unload goes out; the order only opens the attempt.
+   * the order opens the attempt on the band or the mission word, the
+   * executor re-checks it before the unload goes out.
    */
   def landingReady(reaver: FriendlyUnitInfo): Boolean = {
-    val statics = reaver.matchups.enemies.filter(e =>
-      e.unitClass.isStaticDefense && e.player.isZerg && e.likelyStillThere && reaver.tileDistanceEdge(e) < ReaverShuttleStaticAttack.engageTiles)
-    statics.nonEmpty &&
-      With.framesSince(reaver.lastFrameTakingDamage) > 72 &&
-      Maff.minBy(reaver.matchups.threats)(_.pixelDistanceEdge(reaver))
-        .forall(t => reaver.tileDistanceEdge(t) > ReaverShuttleStaticAttack.marginTiles(reaver.woundPercent()))
+    val bond = reaver.agent.ride.orElse(ReaverShuttlePair.rideOf(reaver)).map(shuttleView)
+
+    spotReady(reaverView(reaver, bond))
   }
 
   private def squadKey(unit: FriendlyUnitInfo): Option[Int] =
@@ -358,7 +384,10 @@ object PairArbiter {
       reaver.cooldownLeft,
       reaver.woundPercent(),
       reaver.agent.fightReason == FightOrFlee.Reave,
-      landingReady(reaver),
+      Maff.minBy(With.units.enemy.view.filter(e =>
+        e.unitClass.isCombatBuilding && e.canAttackGround && e.likelyStillThere))(reaver.pixelDistanceEdge(_))
+        .map(reaver.tileDistanceEdge(_)),
+      With.framesSince(reaver.lastFrameTakingDamage) <= 72,
       ReaverBoardGate.denyBoard(reaver),
       Maff.minBy(reaver.matchups.threats.view.filter(t => t.likelyStillThere && t.canAttack(reaver)))(reaver.pixelDistanceEdge(_))
         .map(reaver.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity),

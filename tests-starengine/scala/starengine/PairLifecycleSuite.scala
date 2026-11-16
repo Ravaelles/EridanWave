@@ -37,14 +37,17 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
    */
   private val lastShot = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(-100000)
 
-  private def boardLocked(me: Body, foes: Seq[Body], frame: Int): Boolean = {
-    val live = foes.filter(_.alive)
+  private def boardLocked(me: Body, foes: Seq[Body], frame: Int): Boolean = {    val live = foes.filter(_.alive)
     if (live.exists(f => me.dist(f) <= me.rangeAgainst(f))) lastShot(me) = frame
     val crowd = live.filter(_.canHit(me)).sortBy(me.dist).headOption
       .map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
 
     ReaverBoardGate.locked(frame - lastShot(me), crowd)
   }
+
+  private def staticTiles(me: Body, foes: Seq[Body]): Option[Double] =
+    foes.filter(f => f.alive && f.kind.isBuilding).sortBy(me.dist).headOption
+      .map(me.dist(_) / 32.0)
 
   private def threatViews(me: Body, foes: Seq[Body]): Seq[PairArbiter.ThreatView] =
     foes.filter(f => f.alive && f.canHit(me)).map(f =>
@@ -61,7 +64,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       r.cooldownLeft,
       r.lossFraction,
       unloadOrdered = false,
-      unloadSpotReady = false,
+      staticTiles(r, foes),
+      r.lossFraction > 0,
       boardLocked(r, foes, frame),
       Double.PositiveInfinity,
       false,
@@ -122,6 +126,10 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       foes.filter(f => f.alive && f.canHit(me)).sortBy(me.dist).headOption
         .map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
 
+    private def staticTiles(me: Body, foes: Seq[Body]): Option[Double] =
+      foes.filter(f => f.alive && f.kind.isBuilding).sortBy(me.dist).headOption
+        .map(me.dist(_) / 32.0)
+
     override def direct(me: Body, world: World): Directive = {
       val foes = world.foes.filter(_.alive)
       val nearest = foes.sortBy(me.dist).headOption
@@ -129,8 +137,6 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       val gunTiles = nearest.map(me.rangeAgainst(_) / 32.0).getOrElse(Double.PositiveInfinity)
       if (me.loaded) {
         val rideBody = world.ours.find(o => o.alive && o.kind == Protoss.Shuttle)
-        val band = rideBody.exists(r =>
-          foes.exists(f => f.alive && f.kind.isBuilding && r.dist(f) / 32.0 <= unloadTiles))
         val out = PairArbiter.resolveReaver(
           PairArbiter.ReaverView(
             tilePos(me),
@@ -146,7 +152,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             me.cooldownLeft,
             me.lossFraction,
             false,
-            band,
+            staticTiles(me, foes),
+            me.lossFraction > 0,
             boardLocked(me, foes, world.frame),
             Double.PositiveInfinity,
             false,
@@ -181,7 +188,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             me.cooldownLeft,
             me.lossFraction,
             unloadOrdered = false,
-            unloadSpotReady = false,
+            staticTiles(me, foes),
+            me.lossFraction > 0,
             boardLocked(me, foes, world.frame),
             threatTiles(me, foes),
             ReaverShuttleFerry.needsRide(tripTiles(me)),
@@ -248,8 +256,10 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     assert(reaver.transport.isDefined, "hull left the ride mid-ferry")
   }
 
-  test("unload: the ride puts the hull down inside the landing band", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
-    val (reaver, shuttle) = pair(1460.0)
+  test("unload: the ride puts the hull down past the transport berth", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
+    // The berth vetoes everything inside 8.1 tiles of a static, so the
+    // landing sits outside it and the hull takes one step into its gun.
+    val (reaver, shuttle) = pair(1390.0)
     reaver.transport = Some(shuttle)
     val hull = new ReaverExecutor
     val world = new World(Seq(shuttle, reaver), Seq(sunken(1700.0, 500.0)),
@@ -261,6 +271,25 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
 
     println(s"DIAG unload frames=${world.frame} unloads=${hull.unloads} loaded=${reaver.transport.isDefined}")
     assert(reaver.transport.isEmpty, "ride never unloaded inside the band")
+  }
+
+  test("vetoed: inside the berth the hull stays aboard", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
+    // The transport veto covers the unload point itself: the order
+    // never opens, the hull rides instead of feeding the static.
+    val (reaver, shuttle) = pair(1500.0)
+    reaver.transport = Some(shuttle)
+    val colony = sunken(1700.0, 500.0)
+    val hull = new ReaverExecutor
+    val world = new World(Seq(shuttle, reaver), Seq(colony),
+      Map(reaver -> hull, shuttle -> new ShuttleExecutor((1700.0, 500.0))), Seq.empty)
+
+    while (world.frame < 500 && reaver.transport.isDefined) {
+      world.step()
+    }
+
+    println(s"DIAG vetoed frames=${world.frame} unloads=${hull.unloads} loaded=${reaver.transport.isDefined}")
+    assert(reaver.transport.isDefined, "hull unloaded into the vetoed berth")
+    assert(hull.unloads == 0, "unload fired inside the berth")
   }
 
   test("shoot: a hull in gun reach holds and kills untouched", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
@@ -403,20 +432,22 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     assert(hull.paralyzed == 0, "rideless hull held with nothing to shoot")
   }
 
-  test("retarget: after a kill the pair ferries at the next static", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
+  test("retarget: after a kill the hull takes the next static", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
+    // Both statics sit inside one landing: the hull works them in turn
+    // while the ride holds overhead, no ferry leg between the kills.
     val (reaver, shuttle) = pair(1460.0)
     val first = sunken(1700.0, 500.0)
-    val second = sunken(1700.0, 900.0)
+    val second = sunken(1700.0, 700.0)
     val world = new World(Seq(shuttle, reaver), Seq(first, second),
-      Map(reaver -> new ReaverExecutor, shuttle -> new ShuttleExecutor((1700.0, 900.0))), Seq.empty)
+      Map(reaver -> new ReaverExecutor, shuttle -> new ShuttleExecutor((1700.0, 600.0))), Seq.empty)
 
-    while (world.frame < 4000 && (first.alive || shuttle.y < 700.0)) {
+    while (world.frame < 6000 && (first.alive || second.alive)) {
       world.step()
     }
 
-    println(s"DIAG retarget frames=${world.frame} first=${first.hp.toInt} y=${shuttle.y.toInt}")
+    println(s"DIAG retarget frames=${world.frame} first=${first.hp.toInt} second=${second.hp.toInt}")
     assert( ! first.alive, "pair never cleared the first static")
-    assert(shuttle.y > 700.0, "pair never ferried at the next static")
+    assert( ! second.alive, "pair never cleared the next static")
   }
 
   test("full run: bond, ferry, unload, two kills, reboard, evacuate", StarEngineTags.Reaver, StarEngineTags.Shuttle) {

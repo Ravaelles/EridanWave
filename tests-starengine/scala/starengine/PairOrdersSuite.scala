@@ -26,6 +26,10 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
       f.rangeAgainst(me) / 32.0,
       me.rangeAgainst(f) / 32.0))
 
+  private def staticTiles(me: Body, foes: Seq[Body]): Option[Double] =
+    foes.filter(f => f.alive && f.kind.isBuilding).sortBy(me.dist).headOption
+      .map(me.dist(_) / 32.0)
+
   /**
    * Inferred shot clock, production order: the engine never tells the
    * pilot it fired, so a foe inside the gun means the clock resets.
@@ -65,7 +69,8 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           r.cooldownLeft,
           r.lossFraction,
           unloadOrdered = false,
-          unloadSpotReady = false,
+          staticTiles(r, foes),
+          r.lossFraction > 0,
           boardLocked(r, foes, world.frame),
           Double.PositiveInfinity,
           false,
@@ -144,7 +149,8 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           me.cooldownLeft,
           me.lossFraction,
           unloadOrdered = false,
-          unloadSpotReady = false,
+          staticTiles(me, foes),
+          me.lossFraction > 0,
           boardLocked(me, foes, world.frame),
           foes.filter(_.canHit(me)).sortBy(me.dist).headOption.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity),
           ReaverShuttleFerry.needsRide(Math.hypot(me.x - army._1, me.y - army._2) / 32.0),

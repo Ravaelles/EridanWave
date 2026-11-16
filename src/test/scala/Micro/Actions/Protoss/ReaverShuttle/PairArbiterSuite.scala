@@ -150,12 +150,13 @@ class PairArbiterSuite extends AnyFunSuite {
     bond: Option[PairArbiter.ShuttleView] = None,
     wound01: Double = 0.0,
     unloadOrdered: Boolean = false,
-    unloadSpotReady: Boolean = false,
+    nearestStaticTiles: Option[Double] = None,
+    attackedRecently: Boolean = false,
     boardLocked: Boolean = false,
     threatTiles: Double = Double.PositiveInfinity,
     longTrip: Boolean = false,
     foes: Seq[PairArbiter.FoeView] = Seq.empty): PairArbiter.ReaverView =
-    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, wound01, unloadOrdered, unloadSpotReady, boardLocked, threatTiles, longTrip, foes)
+    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, wound01, unloadOrdered, nearestStaticTiles, attackedRecently, boardLocked, threatTiles, longTrip, foes)
 
   test("resolve: an unbonded hull sees the free same-squad ride") {
     val ride = shuttleView()
@@ -211,10 +212,26 @@ class PairArbiterSuite extends AnyFunSuite {
 
   test("resolve: a loaded hull leaves on the landing band") {
     val out = PairArbiter.resolveReaver(
-      reaverView(loaded = true, unloadSpotReady = true),
+      reaverView(loaded = true, nearestStaticTiles = Some(9.0)),
       Seq(shuttleView()),
       raid = false)
     assert(out.reaver == PairArbiter.UnloadHere)
+  }
+
+  test("resolve: inside the transport berth the hull stays aboard") {
+    val out = PairArbiter.resolveReaver(
+      reaverView(loaded = true, nearestStaticTiles = Some(7.5)),
+      Seq(shuttleView()),
+      raid = false)
+    assert(out.reaver == PairArbiter.RideAlong)
+  }
+
+  test("resolve: past the kill band there is no landing") {
+    val out = PairArbiter.resolveReaver(
+      reaverView(loaded = true, nearestStaticTiles = Some(20.0)),
+      Seq(shuttleView()),
+      raid = false)
+    assert(out.reaver == PairArbiter.RideAlong)
   }
 
   test("resolve: a quiet crowded mill is not fetched and never boards") {
@@ -244,6 +261,34 @@ class PairArbiterSuite extends AnyFunSuite {
       Seq(shuttleView(pos = (1.0, 0.0), threats = Seq(threat))),
       raid = false)
     assert(out.reaver == PairArbiter.BoardRide)
+  }
+
+  test("resolve: a calm-ride doom boards through the pin too") {
+    val foe = PairArbiter.FoeView(distTiles = 1.0, foeGunTiles = 5.0, reaverGunTiles = 8.0)
+    val out = PairArbiter.resolveReaver(
+      reaverView(
+        pos = (0.0, 0.0),
+        bond = Some(shuttleView(pos = (1.0, 0.0))),
+        wound01 = 0.8,
+        boardLocked = true,
+        foes = Seq(foe)),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(out.reaver == PairArbiter.BoardRide)
+  }
+
+  test("resolve: an engaged hull finishes its duel before any trip") {
+    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0)
+    val out = PairArbiter.resolveReaver(
+      reaverView(
+        pos = (0.0, 0.0),
+        bond = Some(shuttleView(pos = (1.0, 0.0))),
+        longTrip = true,
+        foes = Seq(foe)),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(out.reaver == PairArbiter.HoldShoot)
+    assert(out.shuttle == PairArbiter.FetchMate)
   }
 
   test("resolve: a quiet adjacent ride is not boarded for a short hop") {
