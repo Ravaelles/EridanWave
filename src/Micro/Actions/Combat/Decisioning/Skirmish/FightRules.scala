@@ -44,6 +44,7 @@ final case class FightFacts(
   energized   : Boolean = false,
   dragoonBrave: Boolean = false,
   dragoonPack: Boolean = false,
+  outmatchedGoon: Boolean = false,
   homeStand   : Boolean = false,
   tanksAtNatural : Boolean = false,
   reaverBrave : Boolean = false)
@@ -62,6 +63,7 @@ object FightRules {
   def decide(f: FightFacts): Option[(Boolean, String)] =
     cannotFight(f)
       .orElse(willToFight(f))
+      .orElse(outmatched(f))
       .orElse(contactState(f))
       .orElse(cloakAndTricks(f))
       .orElse(noAmmunition(f))
@@ -92,8 +94,17 @@ object FightRules {
     else None
   }
 
-  private def contactState(f: FightFacts): Option[(Boolean, String)] = {
-    // Ordered onto the enemy hall, the fight is not over just because
+  /**
+   * Outmatched early mirrors stand down: an outnumbered handful of
+   * Dragoons facing enemy Dragoons breaks off instead of trading into
+   * a superior line. Sits below the will-to-fight ladder on purpose -
+   * explicit fight reasons (commitments, home ground, tank hunts) keep
+   * their say; this only stops the anonymous advance.
+   */
+  private def outmatched(f: FightFacts): Option[(Boolean, String)] =
+    if (f.outmatchedGoon) Some((false, "OutmatchedGoon")) else None
+
+  private def contactState(f: FightFacts): Option[(Boolean, String)] = {    // Ordered onto the enemy hall, the fight is not over just because
     // nothing can hit us: walk the hall down instead of reforming.
     if (f.outOfContact && ! f.hallTargeted) Some((false, "OutOfContact"))
     else if (f.detonated)   Some((true,  "Detonated"))

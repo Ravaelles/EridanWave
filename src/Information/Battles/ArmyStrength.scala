@@ -23,6 +23,17 @@ object ArmyStrength {
     foe > 0.0 && score(ours, foe) < retreatBelowStrength
 
   /**
+   * Early-mirror parity floor, in percent: below this unit-count ratio
+   * the attack breaks off, whatever the skim says. Skim blurs early
+   * mirrors (upgrades unresearched, hulls identical), but hulls do not.
+   */
+  val retreatBelowUnits: Double = 140.0
+
+  /** Unit-count parity (pure numbers): the same ratio as score, but on
+   * raw hulls instead of skim strength. */
+  def units(oursUnits: Double, foeUnits: Double): Double =
+    score(oursUnits, foeUnits)
+  /**
    * Expo punish, in mobile score: a discovered Zerg expansion dies to the
    * main force once our mobile strength clearly outscales theirs. Counted
    * on units alone - a static turtle score must not fake the punch, and a

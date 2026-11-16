@@ -34,4 +34,10 @@ class ArmyStrengthSuite extends AnyFunSuite {
     assert( ! ArmyStrength.shouldPunishExpo(isZerg = true, expoKnown = false, oursUnits = 500.0, foeUnits = 100.0))
     assert( ! ArmyStrength.shouldPunishExpo(isZerg = false, expoKnown = true, oursUnits = 500.0, foeUnits = 100.0))
   }
+
+  test("unit counts score like skim, with a one-forty floor of their own") {
+    assert(ArmyStrength.units(100.0, 100.0) == 100.0)
+    assert(ArmyStrength.units(70.0, 50.0) == 140.0)
+    assert(ArmyStrength.retreatBelowUnits == 140.0)
+  }
 }

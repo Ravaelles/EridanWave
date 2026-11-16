@@ -2,9 +2,10 @@
 package Micro.Actions.Combat.Decisioning.Skirmish
 
 import Debugging.Probe
-import Lifecycle.With
+import Lifecycle.{Enemy, With}
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Protoss.Dragoon.DragoonPvpRetreat
 import Micro.Targeting.CarrierTankHuntSeam
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -51,6 +52,16 @@ object FightOrFlee extends Action {
     static      = ! u.canMove,
     committed   = u.agent.commit,
     hallTargeted = u.agent.toAttack.exists(_.unitClass.isTownHall),
+    outmatchedGoon = Protoss.Dragoon(u) && Enemy.protoss() && {
+      val global = With.battles.globalAttack
+      DragoonPvpRetreat.shouldRetreat(
+        true,
+        true,
+        With.units.ours.count(o => o.alive && Protoss.Dragoon(o)),
+        With.units.enemy.exists(e => e.alive && Protoss.Dragoon(e)),
+        global.us.units.count(_.unitClass.isWarrior).toDouble,
+        global.enemy.units.count(_.unitClass.isWarrior).toDouble)
+    },
     tankHunt    = Protoss.Carrier(u) && CarrierTankHuntSeam.huntFor(u),
     carrierBrawl = Protoss.Carrier(u) && CarrierTankHuntSeam.brawlingFor(u),
     yolo        = With.yolo.active && IsWarrior(u),

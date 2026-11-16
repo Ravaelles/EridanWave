@@ -27,6 +27,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(tankHunt = true),    (true,  "TankHunt")),
       (off.copy(carrierBrawl = true), (true,  "CarrierBrawl")),
       (off.copy(dragoonPack = true), (true,  "DragoonPack")),
+      (off.copy(outmatchedGoon = true), (false, "OutmatchedGoon")),
       (off.copy(outOfContact = true), (false, "OutOfContact")),
       (off.copy(detonated = true),   (true,  "Detonated")),
       (off.copy(hugTank = true),     (true,  "HugTank")),
@@ -48,7 +49,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(miners = true),      (true,  "Miners")),
       (off.copy(reave = true),       (true,  "Reave")),
       (off.copy(energized = true),   (true,  "Energized")))
-    assert(cases.size == 32)
+    assert(cases.size == 33)
     cases.foreach { case (facts, expected) =>
       assert(FightRules.decide(facts).contains(expected), expected)
     }
