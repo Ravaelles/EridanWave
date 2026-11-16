@@ -50,7 +50,10 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
   }
 
   private[Decisioning] def walk(): Boolean = {
-    unit.agent.decideFight(true) // This encourages the unit to use its forward formation rather than its retreat formation
+    // No vote here: the skirmish verdict already spoke (FightOrFlee runs
+    // first), and safe passage inherits it - usually willingness to trot,
+    // but a unit walking home from contact keeps its disengage formation
+    // instead of being re-armed by the march it just left.
     unit.agent.fightReason = "Walking"
 
     unit.agent.perch.clear() // We're not picking a fight just yet
