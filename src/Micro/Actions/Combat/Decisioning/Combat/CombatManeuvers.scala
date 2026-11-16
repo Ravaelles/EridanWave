@@ -1,6 +1,8 @@
 package Micro.Actions.Combat.Decisioning
 
 import Debugging.Visualizations.{ForceLabel, Forces}
+import Lifecycle.With
+import Mathematics.Maff
 import Mathematics.Physics.Force
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
@@ -135,10 +137,41 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
   private def breakToAttack(): Unit = {
     if (combat.shouldChase && combat.idealDistanceForward >= 32) {
       chase()
+    } else if (regroupWithPack()) {
+      // Acted and moved inside: the pack recenters instead of charging.
     } else {
       unit.agent.act("Approach")
       Commander.attack(unit)
     }
+  }
+
+  /**
+   * Zealot pack regroup (unit-owned claim): a lone hull of a small
+   * zealots-only force returns to the centroid instead of approaching
+   * alone - unless the local skim runs two-to-one or better. Feeding
+   * piecemeal loses the ball fight before it starts.
+   */
+  private def regroupWithPack(): Boolean = {
+    if ( ! Protoss.Zealot(unit)) return false
+
+    val warriors = With.units.ours.view.filter(u => u.alive && u.unitClass.isWarrior).take(ZealotPack.packSize + 1).toSeq
+    if (warriors.size >= ZealotPack.packSize || ! warriors.forall(Protoss.Zealot(_))) return false
+
+    val centroid = unit.squad.map(_.centroidGround).getOrElse(return false)
+    val mateTiles = Maff.minBy(With.units.ours.view.filter(o =>
+      o.id != unit.id && o.alive && Protoss.Zealot(o)))(_.pixelDistanceCenter(unit.pixel))
+      .map(_.pixelDistanceCenter(unit.pixel) * Maff.inv32)
+      .getOrElse(Double.PositiveInfinity)
+    val (usSkim, foeSkim) = unit.combatForecast
+      .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
+      .getOrElse((0.0, 0.0))
+    if ( ! ZealotPack.shouldRegroup(onlyZealots = true, warriors.size, mateTiles, usSkim, foeSkim)) return false
+
+    unit.agent.act("PackRegroup")
+    unit.agent.forceTo(centroid)
+    Commander.move(unit)
+
+    true
   }
 
   private def moveToSlot(): Unit = {
