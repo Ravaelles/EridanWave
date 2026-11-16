@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Carrier
 
+import Lifecycle.With
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
@@ -61,6 +62,20 @@ object BeCarrier extends Action {
   }
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    // Beat hull, empty shields: fly home to a battery instead of trading
+    // the wing away. Recharge covers the last mile once it shares the
+    // battery's metro; this opens the trip. No battery, no trip.
+    if (CarrierRecharge.shouldRetreat(unit.totalHealth * 1.0 / unit.unitClass.maxTotalHealth, unit.shieldPoints)) {
+      Maff.minBy(With.units.ours.view.filter(b =>
+        b.alive && b.complete && Protoss.ShieldBattery(b) && b.energy > 0))(_.pixelDistanceEdge(unit)).foreach(battery => {
+        unit.agent.act("CarrierRecharge")
+        unit.agent.forceTo(battery.pixel)
+        Commander.move(unit)
+      })
+
+      return
+    }
+
     // Dying carriers kite: below 100 HP a ranged attacker inside fourteen
     // tiles pushes the hull straight out instead of trading the game away.
     if (carrierKite(unit)) return

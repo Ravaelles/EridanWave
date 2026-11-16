@@ -22,6 +22,7 @@ object GlobalTech extends MacroActions {
 
     stormForTemplars()
     cannonsVsMutalisks()
+    batteriesForCarriers()
   }
 
   private def stormForTemplars(): Unit = {
@@ -47,6 +48,26 @@ object GlobalTech extends MacroActions {
     if ( ! enemyHasShown(Zerg.Mutalisk)) return
 
     buildCannonsAtBases(Maff.clamp(1 + enemies(Zerg.Mutalisk) / 3, 2, 5), PlaceLabels.DefendAir)
+  }
+
+  // Carrier wings recharge at home: eight interceptors earn a battery,
+  // twenty earn a second. First ideally at a third mining base, else at
+  // the main; the second takes the main when the third already holds one.
+  // Prerequisites and repeat requests dedup in production.
+  private def batteriesForCarriers(): Unit = {
+    if ( ! With.self.isProtoss) return
+
+    val want = CarrierBatteryDemand.wantBatteries(units(Protoss.Interceptor))
+    if (want == 0) return
+
+    val main = With.geography.ourMain
+    val third = With.geography.ourMiningBases.find(b => ! b.isOurMain && ! b.isOurNatural)
+    val spots = third.toSeq :+ main
+    val have = With.units.ours.count(u => u.alive && Protoss.ShieldBattery(u) && u.base.exists(spots.contains))
+    spots
+      .find(spot => With.units.ours.count(u => u.alive && Protoss.ShieldBattery(u) && u.base.contains(spot)) == 0)
+      .takeWhile(_ => have < want)
+      .foreach(spot => buildDefensesAt(1, Protoss.ShieldBattery, Seq(PlaceLabels.DefendHall), Seq(spot)))
   }
 
 }
