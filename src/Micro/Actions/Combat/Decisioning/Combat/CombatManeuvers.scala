@@ -75,6 +75,13 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
   private[Decisioning] def tryDodge(): Boolean = {
     if ( ! unit.ready || ! unit.canMove || unit.loaded || unit.agent.receivedPushPriority() < TrafficPriorities.Dodge) return false
 
+    // Same gate as the technique transition above: a suppressed label
+    // with a live dodge (or the reverse) reads as flapping, not doctrine.
+    if ( ! Micro.Actions.Combat.Maneuvering.DOdge.shouldDodge(
+      Information.Geography.BaseLocations.main.map(base => unit.pixelDistanceCenter(base.heart.center) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      Information.Geography.Distances.naturalChokeToMainBase(),
+      unit.cooldownLeft)) return false
+
     combat.technique = Dodge
     unit.agent.act(combat.technique.toString)
     dodge()

@@ -56,9 +56,20 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       else                                                          Flee
   }
 
+  /**
+   * Dodge discipline: close to our own main a nearly-ready gun holds
+   * instead of shuffling - same gate as the execution below, so the
+   * label and the move can never disagree.
+   */
+  private def shouldDodge: Boolean =
+    Micro.Actions.Combat.Maneuvering.DOdge.shouldDodge(
+      distMainTiles   = Information.Geography.BaseLocations.main.map(base => unit.pixelDistanceCenter(base.heart.center) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      homeRadiusTiles = Information.Geography.Distances.naturalChokeToMainBase(),
+      cooldownLeft    = unit.cooldownLeft)
+
   private[Decisioning] def applyTransitions(): Unit = {
     combat.transition(Aim,       ! unit.canMove)
-    combat.transition(Dodge,     unit.agent.receivedPushPriority() >= TrafficPriorities.Dodge)
+    combat.transition(Dodge,     unit.agent.receivedPushPriority() >= TrafficPriorities.Dodge && shouldDodge)
     combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && (combat.shouldRetreat || combat.framesUntilShot < unit.cooldownMaxAirGround))
     combat.transition(SuperKite, unit.isAny(Terran.Wraith, Zerg.Mutalisk))
     combat.transition(Scavenge,  outmatchedPrey)
