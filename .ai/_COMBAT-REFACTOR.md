@@ -169,3 +169,51 @@ regresses - they are independent by construction.
   contradict (single chain, no squad/unit split). Our payoff must come
   from coordination only a cluster authority can deliver: shared targets,
   contains, surrounds. This refactor is that precondition, not a bonus.
+
+## 7. Session log 2026-11-16/17 (what landed, what proved it)
+
+All commits on `f/phase-f`; every one green on the full base suite
+(919 tests) before commit; jar synced every time.
+
+- Disagreement audit (`scripts/disagreement-audit.py`): SquadAttack
+  split 47-88% across TauCross traces; Benzene PvP baselines 82.9%.
+- Kernels: RetreatDiscipline (96f floor, 40/30/20/15 decay),
+  ClusterPosture (Fight/HoldLine/Withdraw/Regroup + deadband),
+  ClusterRoles, SlotDiscipline - all suite-pinned.
+- Shadow posture in SquadAttack + AttackPosture board: 20 flips/19k
+  frames, 21.1% disagreement vs stance (526x Engaged/Withdraw).
+- Phase 4 rewire, one validated game each (Benzene PvP):
+  #1 syncConsensus loses the vote (83/3), #2 walk stops re-arming
+  (80/9), #4 engage gate on battlePosture (79/9, kills spread
+  mid-game), #5 dispatch bounded by advances (84/11), #7 fallback
+  obeys posture (80/25). Split fell 82.9% -> 74.8%; verdict audit
+  (`scripts/verdict-audit.py`) shows ~4/5 of the rest is
+  +Committed-vs-contact BY DESIGN (PvP zealot rush), ~1/8 pure sim.
+- Small armies never split (<20 warriors consolidate, Raze needs a real
+  expansion - naturals excluded, no backstab).
+- Pair glue (FleeToMate, 15-tile band, 2-tile hover cap) + raid-status
+  deadband (0.5 out / 0.65 back) for the PairRide/RaidFerry flap.
+  Engine pair suites 24/24 green.
+- Targeting: WorkerSpread (id-dealt draw of 3), TargetChaff (Larva/Egg
+  out of AliveEnemies, the type filter and stale release), Scout
+  discipline (PvP: Carriers only, wingmate in 5, LoneScout verdict),
+  AlwaysAttackInRange (rename + Observer/Reaver/DT/HT ladder),
+  Dragoon carrier hunt (20+ shields, in-range shot, 11-tile pathed
+  close), Scout static keep-off, ForceGlobalAttack (first DT + no
+  detection forces the attack; covered statics wait for 140),
+  CanProduceShuttle veto (observers eat the gas; <7 dragoons or <12
+  without 250 score hold the ferry in PvP), DragoonPvP retreat +
+  early-mirror 20% pressure penalty below 7 hulls vs Dragoons.
+- March: DragoonRoam (unseen mirror roams, closes on first recognition),
+  ZealotLeash (5.5 tiles to Dragoons), ClusterCohesion (14-tile drift
+  band, battle-gated, UMS-exempt).
+- Trace: EnemyStrategy + EnemyIntel boards (change-only), Posture +
+  ShuttleVeto + reason-tagged Verdict probes.
+- UMS batch 0/4 exposed the baseless hole (Withdraw on maps with
+  nowhere to regroup to); fixed via canWithdraw=false, needs re-run.
+
+OPEN, in order: #6 march legs through SlotDiscipline + honest labels;
+stance retirement (fightConsensus from posture, delete RegroupLatch);
+Retreat floor + rearguard execution; HoldLine creep (queued);
+Withdraw-to-middle-choke anchor (queued); live validation of every
+unproven rule above on raid/PvP/PvT/PvZ games.

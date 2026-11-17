@@ -10,9 +10,11 @@ import Micro.Actions.Protoss.Zealot.ZealotLeash
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Tactic.Squads.Decisions.ClusterCohesion
 import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.SuicideMission
 import Utilities.Latch
+import Utilities.?
 
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
@@ -65,6 +67,29 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     true
   }
 
+  private def rejoinCluster(): Boolean = {
+    val squad = unit.squad.getOrElse(return false)
+    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
+    if (unit.loaded) return false
+
+    val centroid = ?(unit.flying, squad.centroidAir, squad.centroidGround)
+    val contactTiles = 2.0
+    if ( ! ClusterCohesion.shouldRejoin(
+      isWarrior         = unit.unitClass.isWarrior,
+      hasTarget         = unit.agent.toAttack.isDefined,
+      retreating        = combat.shouldRetreat,
+      coolingUnderFire  = unit.cooldownLeft > 0 && unit.matchups.threatsInRange.nonEmpty,
+      inBattle          = unit.battle.isDefined,
+      macroGame         = ! With.umsMode,
+      hasLocalContact   = unit.matchups.enemies.exists(e => unit.pixelDistanceEdge(e) < unit.pixelRangeMax + contactTiles * 32.0),
+      distTiles         = unit.pixelDistanceCenter(centroid) * Maff.inv32)) return false
+
+    unit.agent.act("ClusterRejoin")
+    unit.agent.forceTo(centroid)
+    Commander.move(unit)
+    true
+  }
+
   private[Decisioning] def engage(): Boolean = {
     // Crucial air victims outrank everything: a grounded anti-air warrior
     // shoots Scourge, Carriers, Vessels, Battlecruisers and Wraiths in
@@ -96,6 +121,13 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // pushes keep their explicit orders; with no Dragoons mustered there
     // is nothing to leash to. Rejoins the line instead of dueling alone.
     if (leashZealot()) return true
+
+    // Cluster cohesion: a warrior moving without a victim, neither
+    // retreating nor cooling under fire, never drifts past fourteen tiles
+    // from its cluster's centroid. Inside a battle that unit is lost -
+    // walking at ghosts, stale slots or old orders - while the cluster
+    // fights without it. Rejoins instead of hunting the map.
+    if (rejoinCluster()) return true
 
     // No target, or a target the line would only pose at: hunt the
     // nearest known enemy instead of dressing until the timeout.
