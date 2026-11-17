@@ -75,16 +75,17 @@ Changed seams (thin, game-coupled, reviewed by reading):
 | `Squad.run` / `SquadAttack` | DONE: publishes `(posture, roles)` + `battlePosture` query; `fightConsensus` follows `advances(posture)` (yolo/suicide keep explicit outs) |
 | `MarchOrders` | DONE: legs read posture + `SlotDiscipline`; Retreat outranks formation unconditionally (march-home bypass); honest `Marching home` vs `Returning to slot` split |
 | `CombatEngagement.engage` + `Combat.dispatchByTechnique` | DONE: consume `(posture, advances)`; `syncConsensus` lost the vote; `decideFight` has one writer |
-| `Retreat` maneuver | OPEN: honor the 96-frame floor + rearguard role on Withdraw |
+| `Retreat` maneuver | DONE: 96-frame floor lives in the posture (pinned); rearguard role wired via `coversRetreat` |
 | `FormationHold` | Keeps today's line-hold semantics under `HoldLine`; the gradual-advance creep is QUEUED (section 5), not this refactor |
 | `RegroupLatch` / `ReengageLatch` | DONE: `RegroupLatch.stance` deleted with its suite (VoteConfirmationSuite votes postures now); per-unit `ReengageLatch` stays as the duel-level hold |
 | `FightOrFlee` / `FightRules` | DONE (validating): fallback obeys the posture; `committed` still fires first, so explicit orders bypass the vote by construction |
 
 ## 4. Migration: status and remaining work
 
-Phases 1-3 DONE. Phase 4 in progress, one validated game per edit
-(Benzene PvP every time for comparability: 71/74 -> 83/3 -> 80/9 ->
-79/9 -> 84/11; losses collapsed, wins held):
+Phases 1-4 DONE (Benzene PvP every time for comparability: 71/74 ->
+83/3 -> 80/9 -> 79/9 -> 84/11; losses collapsed, wins held), followed
+by the unified-verdict migration and the dispatch pipelines (see
+`.ai/retreat-verdict.md`; all CLOSED 2026-11-17):
 
 - DONE #1 `syncConsensus`: technique lost the `shouldFight` vote; the
   skirmish verdict is the single writer. Readers (`Root`, `KiteAway`
@@ -97,12 +98,12 @@ Phases 1-3 DONE. Phase 4 in progress, one validated game per edit
   no longer pins posture Fight windows to the march.
 - DONE #5 `dispatchByTechnique`: `ClusterPosture.advances` bounds Brawl,
   Abuse, DragoonStand, SuperKite and `engage()`; Withdraw/Regroup walk.
-- IMPL #7 `applyEstimation`: no-rule fallback obeys the squad posture
+- DONE #7 `applyEstimation`: no-rule fallback obeys the squad posture
   (`Posture`/`PostureHold` reasons) instead of re-asking each sim.
-  Game #6 validating now. Commit on green.
-- OPEN #6 `MarchOrders` legs + label (last rewire piece, see below).
-- OPEN stance retirement: `fightConsensus` derived from posture, then
-  `RegroupLatch.stance` removed (see findings).
+- DONE #6 `MarchOrders` legs + label: SlotDiscipline gates + honest
+  Marching-home split, then the verdict bus (see findings / §8).
+- DONE stance retirement: `fightConsensus` derived from posture, no
+  stance code remains.
 
 ### Findings that reshaped the endgame
 
@@ -212,10 +213,13 @@ All commits on `f/phase-f`; every one green on the full base suite
 - UMS batch 0/4 exposed the baseless hole (Withdraw on maps with
   nowhere to regroup to); fixed via canWithdraw=false, needs re-run.
 
-OPEN, in order: HoldLine creep (queued); Withdraw-to-middle-choke
-anchor (queued); rearguard covers validated in one more grind;
-live validation of every unproven rule above on raid/PvP/PvT/PvZ games.
-DONE since: march legs gated by SlotDiscipline + honest Marching-home
+OPEN, in order: HoldLine creep (kernel + behavior + suite exist;
+needs per-unit hold positions, then a game); rearguard covers
+validated live (role wired, needs a Withdraw-with-rearguard grind);
+live validation of every unproven rule above on raid/PvP/PvT/PvZ
+games. DONE since: Withdraw-to-middle-choke anchor
+(`withdrawAnchor`); march legs gated by SlotDiscipline + honest
+Marching-home
 vs Returning-to-slot split (validated: Waiting x1, Rallying dozens,
 no more mill-flap); roam suspends Abuse (verified live: 0 Abuse in
 3308 roam frames) while duelling on contact stays; defense triggers only on anti-ground weapons

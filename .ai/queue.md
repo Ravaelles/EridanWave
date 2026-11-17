@@ -6,63 +6,14 @@ trace/`probe.txt`/`errors.json`, delete the line.
 Conventions: docs stay English; `.ai/conventions.md` (tests +
 blank-line gate per change, commit per unit).
 
-## NEXT UP (highest priority, agreed 2026-11-17)
+## NEXT UP (closed 2026-11-17; history in git, live contract below)
 
-Unified retreat verdict (`RetreatVerdict`) - one verdict object per
-unit per frame with hysteresis, read by the march arm, the technique
-selection and the duel dispatch gates instead of re-deriving retreat
-from stale/fresh/faction-split inputs in each place. Full write-up,
-evidence (144 -> 8 -> 3 mixed frames per game, duplicates at 0),
-rejected alternatives (god-object, capability types) and migration
-contract live in `.ai/retreat-verdict.md` - this entry is only the
-pointer. Steps, each a green unit on its own:
-
-1. Shadow (DONE): verdict computed alongside the old readers, probe
-   only the disagreements; two validation games measured the
-   migration, then the probes were removed.
-2. Switch readers one by one behind the shadow data (DONE: shared
-   ticked bus with 24f hold + PerGame sweep, march arm, technique arm,
-   dispatch advance, verdict arm above the fresh-fight arm;
-   `MarchRetreat` + suite deleted, `RetreatAllowed` stays as verdict
-   input; the hold scenario pins the temporal contract).
-   StarEngine-first per owner 2026-11-17: each switch landed behind a
-   scenario pinning the temporal guarantee plus the base suite, each
-   step its own revertable commit; validation games closed the
-   migration, not the debugging loop.
-3. Delete the old predicates only after step 2 holds a full game
-   with zero mixed frames (`scripts/retreat-audit.py`).
-   (DONE: `MarchRetreat` + suite deleted with the switches;
-   `RetreatShadow` and `Technique` probes removed after final game #2
-   (VICTORY 142/25) showed zero same-tick contradictions - the 16
-   residual audit rows are all sleep-merged windows with technique
-   Flee throughout, proven per row. Migration CLOSED.)
-
-4. Dispatch order as pipeline registries (DONE 2026-11-17:
-   `DispatchBand` shared vocabulary; `TechniquePipeline`,
-   `EngagePipeline` (engage + duel lists), `MarchGates.order`, each
-   pinned by its order suite (`TechniqueDispatchOrderSuite`,
-   `EngageDispatchOrderSuite`, `MarchGateOrderSuite` + literal order
-   row); `Fight.perform` stays grandfathered, march legs need no
-   registry - parallel facts, combined, no order question exists.
-   Reorder by moving a line, disable by commenting one out; a new
-   behavior lands with an explicit registry entry plus a suite row,
-   red until placed. Full engine regression 1124 green. Closing game
-   (VICTORY 107/17, Benzene PvP): 21 audit rows, 0 Abuse, 18 with
-   flee verdicts + retreat tails (proven sleep-merge smear), 3 fresh-
-   fight races on stale march ticks - no same-tick contradiction, no
-   observable behavior change vs the pre-pipeline jar. Migration +
-   pipelines CLOSED.)
-
-Open question the shadow data must answer: is a 24f unit-level hold
-enough, or take the 96-frame cluster floor for the verdict too.
-Answer it in StarEngine, not in games: a hold-calibration scenario
-jitters the raw inputs at the measured flip rate and pins the mixed
-frame count at zero for the chosen hold (plus clean release).
-ANSWERED 2026-11-17 in-engine (`RetreatVerdictHoldSuite`): under
-7-frame jitter with 6-frame reader skew, 24f holds unanimous
-(flips 89 -> 5, release 22f after the facts clear), 96f equally
-calm but releases 72f later. Decision: 24-frame unit hold; the
-cluster keeps its own 96f posture floor as a separate layer.
+Unified retreat verdict + dispatch pipelines. Shipped: `RetreatVerdict`
+bus with 24f hold (all readers), `DispatchBand` + `TechniquePipeline` /
+`EngagePipeline` / `MarchGates.order` (each order-suited). Residual
+audit rows are measurement smear (terminus re-notes + sleep-merged
+windows) - read them with shadow-join.py. Next order question starts
+at the registries.
 
 ## Parked (explicit orders, do not touch)
 
@@ -118,7 +69,6 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Toothless march (PvT columns walk with no tanks/vultures).
 - StrongMarch (banked stock or maxed army skips rally/slots).
 - Retreating warriors never rally or close ranks.
-- Engage never overwrites a march home (frame-fresh intention flag).
 - MarchDressSuite (StarEngine): scattered 4 dragoons + 4 zealots march dressed at an enemy 30 tiles out, modes March>Dress>Engage with no flap, reissues 14, pack tightens - green.
 - PressedRideSuite (StarEngine): hydras press the line while scourge dive the ride - shuttle flees on the shipped penetration/latch/guard rule (1 clean latch cycle, 3 redirects), holds 15-tile corners, never takes a hit; reaver never leaves its anchor; pack dies - green.
 - Expo punish vs Zerg at 140 (units-strength only).
@@ -133,10 +83,8 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   vicinity alternates between hunt points every ~10 frames; the latched
   lone-march boundary is innocent - the *input* flaps. Reaver duels
   through it; ClusterCohesion rejoin runs before Hunt).
-- HoldLine creep (from _COMBAT-REFACTOR.md, after the posture rewire):
-  while attacking, hold formation and close the distance gradually (~0.1
-  tile steps) instead of breaking or standing; needs per-unit hold
-  positions advancing with the enemy + suite first.
+- HoldLine creep (kernel + behavior + suite exist; needs per-unit
+  hold positions advancing with the enemy, then a game).
 
 ## Open: posture-era validation (needs games that reach each rule)
 
@@ -236,19 +184,12 @@ New kernels ride suites; these need a live game that reaches them
   ~9f later under fire, jamming shuttle/reaver production; gate
   retraining when trainings die instantly).
 
-## Open: viewer check
+## Open: viewer check (verified - contract proven, record kept short)
 
-- CherryVis Task tab contract verified against the shipped viewer JS
-  (`cvis_dbg_tasks.js` + unitslist: registry {owner,name,upc_id,
-  creation_frame}, numeric per-unit `task` carried forward, None when
-  missing). Task now means the MANAGING class, not the reason: every
-  `intend()` mints/points the per-unit row at the manager task, reasons
-  stay in units_logs. Proven in a traced Benzene VICTORY: 9 manager
-  tasks (SquadAttack crew 36, Gathering 31), 78/78 managed units with
-  rows, zero dangling refs (viewer logic replicated in python). The 13
-  row-less units are unmanaged single-frame ephemera (no first_seen,
-  viewer can't name them anyway) - None is correct there. UMS emits no
-  traces by design; Owner/Action probes cover manager visibility there.
+- CherryVis Task tab contract verified against the shipped viewer JS:
+  9 manager tasks, 78/78 managed units with rows, zero dangling refs
+  (Benzene VICTORY trace). Row-less units are unmanaged single-frame
+  ephemera - None is correct. UMS emits no traces by design.
 
 ## Session: warnings + DT + rally + storm + ferry (2026-11-16, open)
 
@@ -271,9 +212,8 @@ New kernels ride suites; these need a live game that reaches them
   StarEngine leg-level repro pending (march machinery is out of
   the engine); live mop-up confirm still wanted (Hao Pan f15721
   pattern).
-- Storm stand: `StormStand.shouldHold` wired in
-  `CombatTechniques`; `StormStandSuite` proves the cast under the
-  retreat verdict. Needs: live PvZ storm confirm.
+- Storm stand (CLOSED 2026-11-17, PvZ storm game: 44 HTs, 1243
+  casts incl. cast-while-retreating chains, 0 HT deaths).
 - DT ferry: `MissionDarkTemplarFerry` (pair straight to enemy main,
   ASAP drop, single trip) registered in Tactician. Needs: live
   game with DT+Shuttle (formation + drop + raid).
