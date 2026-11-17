@@ -8,7 +8,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{MarchDress, MarchFacts, MarchGates, MarchLabel, MarchRetreat, MarchUnit, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.Decisions.{MarchDress, MarchFacts, MarchGates, MarchLabel, MarchRetreat, MarchUnit, RetreatAllowed, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -34,7 +34,11 @@ object MarchOrders {
       enemyDragoonSeen = MacroFacts.enemyHasShown(Protoss.Dragoon),
       bankedMinerals   = With.self.minerals,
       armyStrength     = With.battles.globalAttack.us.skimStrengthTotal,
+      armyUnitsScore   = Information.Battles.ArmyStrength.score(
+        With.battles.globalAttack.us.skimStrengthUnits,
+        With.battles.globalAttack.enemy.skimStrengthUnits),
       supplyUsed       = With.self.supplyUsed200,
+      proxyRush        = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax(),
       home             = home)
   }
 
@@ -97,12 +101,17 @@ object MarchOrders {
   // pins the sequence row by row.
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): (Pixel, MarchLabel) = {
     val suicide = SuicideMission.assign(unit)
-    MarchGates.select(facts, MarchUnit.read(squad, unit, facts.home)) match {
+    val marchUnit = MarchUnit.read(squad, unit, facts.home)
+    MarchGates.select(facts, marchUnit) match {
       case Some(label) => (squad.vicinity, label)
-      case None if MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight) =>
+      case None if MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight)
+        && RetreatAllowed.forUnit(unit.totalHealth, facts.armyUnitsScore, marchUnit.nearestArmedTiles, facts.proxyRush) =>
         // Retreat outranks every formation rule below: the verdict already
         // sent this hull home, so no gate and no leg gets asked - the line
-        // to the Guard slot is the whole order for this frame.
+        // to the Guard slot is the whole order for this frame. A forbidden
+        // retreat (strong and clear, or proxy answered, unless dying)
+        // falls through to the legs instead, so the line marches instead
+        // of milling home.
         (getReturn(unit, squad, defaultReturn), MarchLabel.Retreating)
       case None =>
         val finalTravel = getTravel(unit, squad, defaultReturn)

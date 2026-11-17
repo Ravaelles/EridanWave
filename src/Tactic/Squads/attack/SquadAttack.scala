@@ -21,6 +21,7 @@ import Tactic.Squads.Decisions.AttackModes
 import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.ClusterRoles
 import Tactic.Squads.Decisions.RetreatDiscipline
+import Tactic.Squads.Decisions.RetreatAllowed
 import Tactic.Squads.ContainStatus
 import Tactic.Squads.Decisions.VoteConfirmation
 import Tactic.Squads.Decisions.SuicideMission
@@ -319,7 +320,15 @@ class SquadAttack extends Squad {
       With.battles.globalAttack.enemy.skimStrengthTotal) / 100.0
     val advantage = rawAdvantage * RetreatDiscipline.advantageMultiplier(With.frame - withdrawStartFrame)
     val contact = battleEnemies.nonEmpty
-    val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame, ! With.umsMode)
+    val unitsAdvantage = ArmyStrength.score(
+      With.battles.globalAttack.us.skimStrengthUnits,
+      With.battles.globalAttack.enemy.skimStrengthUnits)
+    val nearestArmed = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(centroidGround))
+      .map(e => e.pixelDistanceCenter(centroidGround) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
+    val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame, ! With.umsMode,
+      RetreatAllowed.forCluster(unitsAdvantage, nearestArmed, proxyRush))
     if (next == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
     posture = next
     roles = assignRolesShadow()

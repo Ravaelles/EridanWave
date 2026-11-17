@@ -1,5 +1,6 @@
 package Tactic.Squads.Decisions
 
+import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Pixel
 import ProxyBwapi.Races.Protoss
@@ -25,6 +26,7 @@ final case class MarchUnit(
   shouldFight         : Boolean,
   nearestWarriorTiles : Option[Double],
   distHomeTiles       : Option[Double],
+  nearestArmedTiles   : Double,
   nearestStaticTiles  : Option[Double])
 
 object MarchUnit {
@@ -42,6 +44,9 @@ object MarchUnit {
       nearestWarriorTiles = Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
         .map(a => unit.pixelDistanceCenter(a.pixel) * Maff.inv32),
       distHomeTiles       = home.map(h => unit.pixel.groundPixels(h) * Maff.inv32),
+      nearestArmedTiles   = Maff.minBy(With.units.enemy.view.filter(e =>
+        e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
+        .map(e => e.pixelDistanceCenter(unit.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
       nearestStaticTiles  = Maff.minBy(unit.matchups.enemies.view.filter(e =>
         e.likelyStillThere
         && e.unitClass.isStaticDefense

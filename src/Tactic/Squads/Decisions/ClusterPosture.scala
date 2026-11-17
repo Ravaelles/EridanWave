@@ -54,6 +54,8 @@ object ClusterPosture {
    * weaker than the sim claims without this kernel knowing about frames.
    * Baseless maps never withdraw: with nowhere to regroup to, contact
    * means closing, not holding - mirroring the stance's ums-duel rule.
+   * A forbidden retreat (RetreatAllowed) skips everything and reads the
+   * band straight away: no floor to sit, no agreement to wait for.
    */
   def next(
     current: Posture,
@@ -62,7 +64,10 @@ object ClusterPosture {
     advantageRatio: Double,
     inContact: Boolean,
     framesSinceWithdraw: Int,
-    canWithdraw: Boolean = true): Posture = {
+    canWithdraw: Boolean = true,
+    retreatAllowed: Boolean = true): Posture = {
+    if ( ! retreatAllowed) return band(current, advantageRatio, inContact)
+
     if (coverageFraction < minimumCoverage) return current
 
     if ( ! canWithdraw) return if (inContact) Fight else Regroup

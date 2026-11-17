@@ -20,11 +20,13 @@ class MarchGateOrderSuite extends AnyFunSuite {
     enemyDragoonSeen : Boolean = false,
     bankedMinerals   : Int = 0,
     armyStrength     : Double = 0.0,
+    armyUnitsScore   : Double = 0.0,
     supplyUsed       : Int = 100,
+    proxyRush        : Boolean = false,
     home             : Boolean = true): MarchFacts =
     MarchFacts(
       enemyIsTerran, enemyIsProtoss, enemyHasTanks, enemyHasVultures, enemyDragoonSeen,
-      bankedMinerals, armyStrength, supplyUsed,
+      bankedMinerals, armyStrength, armyUnitsScore, supplyUsed, proxyRush,
       home = if (home) Some(null) else None)
 
   private var nextId: Int = 1000
@@ -39,11 +41,12 @@ class MarchGateOrderSuite extends AnyFunSuite {
     shouldFight         : Boolean = false,
     nearestWarriorTiles : Option[Double] = None,
     distHomeTiles       : Option[Double] = None,
+    nearestArmedTiles   : Double = Double.PositiveInfinity,
     nearestStaticTiles  : Option[Double] = None): MarchUnit = {
     nextId += 1
     MarchUnit(
       nextId, isDarkTemplar, isCorsair, isDragoon, isWarrior, isLoadedShuttle,
-      isSuicide, shouldFight, nearestWarriorTiles, distHomeTiles, nearestStaticTiles)
+      isSuicide, shouldFight, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles)
   }
 
   private def check(name: String, f: MarchFacts, u: MarchUnit, want: Option[MarchLabel]): Unit =

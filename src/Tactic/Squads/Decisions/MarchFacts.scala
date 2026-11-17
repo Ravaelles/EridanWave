@@ -13,7 +13,9 @@ final case class MarchFacts(
   enemyDragoonSeen : Boolean,
   bankedMinerals   : Int,
   armyStrength     : Double,
+  armyUnitsScore   : Double,
   supplyUsed       : Int,
+  proxyRush        : Boolean,
   home             : Option[Mathematics.Points.Pixel]) {
 
   /** A toothless Terran fields nothing worth forming up against. */

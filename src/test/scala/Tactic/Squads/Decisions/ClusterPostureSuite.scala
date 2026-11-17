@@ -11,8 +11,9 @@ class ClusterPostureSuite extends AnyFunSuite {
     coverage: Double = 1.0,
     advantage: Double = 2.0,
     inContact: Boolean = true,
-    sinceWithdraw: Int = 1000): Posture =
-    ClusterPosture.next(current, fighting, coverage, advantage, inContact, sinceWithdraw)
+    sinceWithdraw: Int = 1000,
+    retreatAllowed: Boolean = true): Posture =
+    ClusterPosture.next(current, fighting, coverage, advantage, inContact, sinceWithdraw, retreatAllowed = retreatAllowed)
 
   test("no forecast never flips anything") {
     assert(next(Fight, coverage = 0.4) == Fight)
@@ -66,5 +67,13 @@ class ClusterPostureSuite extends AnyFunSuite {
     assert(ClusterPosture.advances(HoldLine))
     assert( ! ClusterPosture.advances(Withdraw))
     assert( ! ClusterPosture.advances(Regroup))
+  }
+
+  test("a forbidden retreat reads the band instead of withdrawing") {
+    assert(next(Fight, fighting = 0.2, retreatAllowed = false) == Fight)
+    assert(next(HoldLine, fighting = 0.0, advantage = 1.2, retreatAllowed = false) == HoldLine)
+    assert(next(Regroup, fighting = 0.0, advantage = 1.2, inContact = false, retreatAllowed = false) == Regroup)
+    assert(next(Withdraw, fighting = 0.0, advantage = 1.2, sinceWithdraw = 0, retreatAllowed = false) == HoldLine)
+    assert(next(Withdraw, fighting = 1.0, advantage = 10.0, sinceWithdraw = 0, retreatAllowed = false) == Fight)
   }
 }
