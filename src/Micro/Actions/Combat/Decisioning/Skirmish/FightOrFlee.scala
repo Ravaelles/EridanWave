@@ -7,6 +7,7 @@ import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Protoss.Dragoon.DragoonPvpRetreat
 import Micro.Targeting.CarrierTankHuntSeam
+import Micro.Targeting.FiltersRequired.TargetFilterScout
 import Tactic.Squads.Decisions.ClusterPosture
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -53,6 +54,7 @@ object FightOrFlee extends Action {
     static      = ! u.canMove,
     committed   = u.agent.commit,
     hallTargeted = u.agent.toAttack.exists(_.unitClass.isTownHall),
+    loneScout = Protoss.Scout(u) && Enemy.protoss() && ! TargetFilterScout.hasWingmate(u),
     outmatchedGoon = Protoss.Dragoon(u) && Enemy.protoss() && {
       val global = With.battles.globalAttack
       DragoonPvpRetreat.shouldRetreat(

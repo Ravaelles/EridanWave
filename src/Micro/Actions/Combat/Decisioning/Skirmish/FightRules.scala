@@ -45,6 +45,7 @@ final case class FightFacts(
   dragoonBrave: Boolean = false,
   dragoonPack: Boolean = false,
   outmatchedGoon: Boolean = false,
+  loneScout     : Boolean = false,
   homeStand   : Boolean = false,
   tanksAtNatural : Boolean = false,
   reaverBrave : Boolean = false)
@@ -97,12 +98,16 @@ object FightRules {
   /**
    * Outmatched early mirrors stand down: an outnumbered handful of
    * Dragoons facing enemy Dragoons breaks off instead of trading into
-   * a superior line. Sits below the will-to-fight ladder on purpose -
-   * explicit fight reasons (commitments, home ground, tank hunts) keep
-   * their say; this only stops the anonymous advance.
+   * a superior line; a lone Scout in a Protoss mirror holds with the
+   * line instead of feeding a Carrier alone. Both sit below the
+   * will-to-fight ladder on purpose - explicit fight reasons
+   * (commitments, home ground, tank hunts) keep their say; this only
+   * stops the anonymous advance.
    */
   private def outmatched(f: FightFacts): Option[(Boolean, String)] =
-    if (f.outmatchedGoon) Some((false, "OutmatchedGoon")) else None
+    if (f.outmatchedGoon) Some((false, "OutmatchedGoon"))
+    else if (f.loneScout) Some((false, "LoneScout"))
+    else None
 
   private def contactState(f: FightFacts): Option[(Boolean, String)] = {    // Ordered onto the enemy hall, the fight is not over just because
     // nothing can hit us: walk the hall down instead of reforming.
