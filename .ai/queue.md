@@ -46,7 +46,12 @@ pointer. Steps, each a green unit on its own:
    registry - parallel facts, combined, no order question exists.
    Reorder by moving a line, disable by commenting one out; a new
    behavior lands with an explicit registry entry plus a suite row,
-   red until placed. Full engine regression 1124 green.)
+   red until placed. Full engine regression 1124 green. Closing game
+   (VICTORY 107/17, Benzene PvP): 21 audit rows, 0 Abuse, 18 with
+   flee verdicts + retreat tails (proven sleep-merge smear), 3 fresh-
+   fight races on stale march ticks - no same-tick contradiction, no
+   observable behavior change vs the pre-pipeline jar. Migration +
+   pipelines CLOSED.)
 
 Open question the shadow data must answer: is a 24f unit-level hold
 enough, or take the 96-frame cluster floor for the verdict too.

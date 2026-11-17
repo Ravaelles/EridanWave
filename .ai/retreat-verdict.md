@@ -128,5 +128,8 @@ vocabulary); `TechniquePipeline.stages` (14 stages),
 (11 labels) - each pinned by its order suite. A new behavior means an
 explicit registry entry plus a suite row, red until placed. `Fight.
 perform` stays grandfathered; march legs need no registry (parallel
-facts, combined). Full base suite (980) + full engine (1124) green;
-one validation game closes the step.
+facts, combined). Full base suite (980) + full engine (1124) green.
+Closing game (VICTORY 107/17): 21 audit rows with the proven smear
+signature (0 Abuse, flee verdicts + retreat tails, 3 stale-march
+fresh-fight races) - no same-tick contradiction, pipelines change
+nothing observable. Step 4 CLOSED with steps 1-3.
