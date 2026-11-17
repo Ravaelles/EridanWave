@@ -59,4 +59,39 @@ class RetreatVerdictSuite extends AnyFunSuite {
     assert(hold(totalHp = 35, unitsScore = 866.0, nearestArmedTiles = 40.0, proxyRush = true))
     assert( ! hold(totalHp = 36, unitsScore = 866.0, nearestArmedTiles = 40.0, proxyRush = true))
   }
+
+  test("an unknown unit holds no retreat") {
+    RetreatVerdict.reset()
+    assert( ! RetreatVerdict.held(id = 7, frame = 100))
+  }
+
+  test("the shared bus enters sharp and releases past the hold") {
+    RetreatVerdict.reset()
+    RetreatVerdict.update(id = 7, rawHold = true, frame = 100)
+    assert(RetreatVerdict.held(id = 7, frame = 100))
+    RetreatVerdict.update(id = 7, rawHold = false, frame = 110)
+    assert(RetreatVerdict.held(id = 7, frame = 110))
+    assert(RetreatVerdict.held(id = 7, frame = 110 + RetreatVerdict.holdFrames - 1))
+    assert( ! RetreatVerdict.held(id = 7, frame = 110 + RetreatVerdict.holdFrames))
+  }
+
+  test("re-entering re-arms the window") {
+    RetreatVerdict.reset()
+    RetreatVerdict.update(id = 7, rawHold = true, frame = 100)
+    RetreatVerdict.update(id = 7, rawHold = false, frame = 110)
+    RetreatVerdict.update(id = 7, rawHold = true, frame = 115)
+    assert(RetreatVerdict.held(id = 7, frame = 200))
+  }
+
+  test("units do not share a bus") {
+    RetreatVerdict.reset()
+    RetreatVerdict.update(id = 7, rawHold = true, frame = 100)
+    assert( ! RetreatVerdict.held(id = 8, frame = 100))
+  }
+
+  test("reset clears the bus for the next game") {
+    RetreatVerdict.update(id = 7, rawHold = true, frame = 100)
+    RetreatVerdict.reset()
+    assert( ! RetreatVerdict.held(id = 7, frame = 100))
+  }
 }
