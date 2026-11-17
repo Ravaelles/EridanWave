@@ -2,7 +2,7 @@ package Micro.Targeting
 
 import Lifecycle.With
 import Mathematics.Maff
-import Micro.Targeting.FiltersRequired.{TargetFilterAntiAir, TargetFilterCanAttack, TargetFilterEnemy, TargetFilterFocus, TargetFilterHallCleanup, TargetFilterMissing, TargetFilterOverlord, TargetFilterPointBlank, TargetFilterReaver, TargetFilterRush, TargetFilterScout, TargetFilterScourge, TargetFilterStayCloaked, TargetFilterType, TargetFilterVsTank, TargetFilterVulture, TargetFilterWallBust}
+import Micro.Targeting.FiltersRequired.{TargetFilterAntiAir, TargetFilterCanAttack, TargetFilterEnemy, TargetFilterFocus, TargetFilterForceStatic, TargetFilterHallCleanup, TargetFilterMissing, TargetFilterOverlord, TargetFilterPointBlank, TargetFilterReaver, TargetFilterRush, TargetFilterScout, TargetFilterScourge, TargetFilterStayCloaked, TargetFilterType, TargetFilterVsTank, TargetFilterVulture, TargetFilterWallBust}
 import Micro.Targeting.FiltersSituational.TargetFilterWhitelist
 import ProxyBwapi.Orders
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
@@ -18,6 +18,7 @@ object Target {
     TargetFilterMissing,
     TargetFilterType,
     TargetFilterScout,
+    TargetFilterForceStatic,
     TargetFilterFocus,
     TargetFilterHallCleanup,
     TargetFilterPointBlank,

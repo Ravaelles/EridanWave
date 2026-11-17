@@ -123,6 +123,7 @@ final class Tactician extends TimedTask {
   }
 
   private def runCoreTactics(): Unit = {
+    forceDarkTemplarAttack()
     val squadsDefending = defendDivisions()
 
     // Proactive DT defense
@@ -203,6 +204,25 @@ final class Tactician extends TimedTask {
       p._2.vicinity = p._1.attackCentroidKey
     })
     squadsDefending
+  }
+
+  /**
+   * Unseen-blade window (ForceGlobalAttack seam): with our first Dark
+   * Templar alive in a Protoss or Terran macro game and no mobile
+   * detection on the enemy, the fire support decides the game now - set
+   * the global attack whatever the score says instead of sitting home.
+   * Latches like every attack decision: gameplans that re-decide every
+   * frame keep their own say.
+   */
+  private def forceDarkTemplarAttack(): Unit = {
+    if (ForceGlobalAttack.shouldForce(
+      enemyIsProtoss     = With.enemies.exists(_.isProtoss),
+      enemyIsTerran      = With.enemies.exists(_.isTerran),
+      haveDarkTemplar    = MacroFacts.have(Protoss.DarkTemplar),
+      enemyHasDetection  = With.units.enemy.exists(e => e.alive && e.isAny(Protoss.Observer, Terran.ScienceVessel)),
+      macroGame          = ! With.umsMode)) {
+      With.blackboard.wantToAttack.set(true)
+    }
   }
 
   private def fillDefenseSquads(squadsDefending: Seq[(DefenseDivision, SquadDefendBase)], freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
