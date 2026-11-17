@@ -91,6 +91,15 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 New kernels ride suites; these need a live game that reaches them
 (scout the named behavior in trace/probe/errors.json, delete the line):
 
+- Main-choke hold (2026-11-17: vs Zerg with <=5 warriors and score
+  <=160 the base guard posts the main choke; needs an early PvZ).
+- Middle-choke guard (2026-11-17: past 13 warriors the standing guard
+  moves to the middle choke; needs a mid-size army game).
+- Reaver leash (2026-11-17: foot reaver past 3 tiles from its squad
+  centroid walks back when walking with people; needs an army game).
+- No reavers in the PvP goon mirror (2026-11-17: three-/four-gate
+  goons no longer force the Bay/Reaver detour; needs a PvP mirror).
+
 - Scout static keep-off (ScoutStandoffScenarioSuite green; needs our
   Scouts vs enemy AA: hold outside reach+margin, shoot from the hold,
   never pose inside).
