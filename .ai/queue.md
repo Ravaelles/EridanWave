@@ -88,15 +88,18 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   lone-march boundary is innocent - the *input* flaps. Reaver duels
   through it; ClusterCohesion rejoin runs before Hunt).
 - HoldLine creep (per-unit advancing anchors landed + scenario;
-  needs a live game with a dressed holding line).
+  0 fires in 3 macro games - the gate (Fight posture + dressed +
+  !broken + beyond range) may never hold; needs a game that reaches
+  it or a gate review).
 
 ## Open: posture-era validation (needs games that reach each rule)
 
 New kernels ride suites; these need a live game that reaches them
 (scout the named behavior in trace/probe/errors.json, delete the line):
 
-- Main-choke hold (2026-11-17: vs Zerg with <=5 warriors and score
-  <=160 the base guard posts the main choke; needs an early PvZ).
+- Main-choke hold (CLOSED 2026-11-17, PvZ Fighting Spirit: 1
+  ChokeHold act + hold-gap moves at 2:24, zealot posted on the choke;
+  fires only pre-threat with a handful, as designed).
 - Middle-choke guard (2026-11-17: past 13 warriors the standing guard
   moves to the middle choke; needs a mid-size army game).
 - Reaver leash (2026-11-17: foot reaver past 3 tiles from its squad
