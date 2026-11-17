@@ -240,6 +240,11 @@ final class Tactician extends TimedTask {
   }
 
   private def defendVsMutas(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
+    // No proactive split below twenty warriors: a real muta attack raises
+    // defense divisions and the consolidation owns it; a mere showing does
+    // not peel the main cluster apart.
+    if (ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))) return
+
     // Proactive Muta defense with Archon
     if (With.scouting.enemyProximity < 0.5 && MacroFacts.enemyHasShown(Zerg.Mutalisk) && ( ! With.blackboard.wantToAttack() || ! acePilots.hasFleet)) {
       Assignment.unitsPick(
@@ -250,6 +255,10 @@ final class Tactician extends TimedTask {
   }
 
   private def defendVsDrops(freelancers: ListBuffer[FriendlyUnitInfo], freelancerCountInitial: Int): Unit = {
+    // No proactive split below twenty warriors: drop guards staff only
+    // when the army can spare bodies without breaking apart.
+    if (ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))) return
+
     // Proactive drop/harassment defense
     if (With.scouting.enemyProximity < 0.5 && (
       (With.geography.ourBases.map(_.metro).distinct.size > 1 && With.frame > Minutes(10)())
@@ -284,6 +293,11 @@ final class Tactician extends TimedTask {
   // or natural pull a full wing (ten-plus interceptors) off the line to the
   // breached base. Single raiders are left to static defense and workers.
   private def defendVsBreach(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
+    // No lone carrier answer below twenty warriors: a real breach raises
+    // defense divisions and the consolidation brings the whole cluster -
+    // carriers alone would split exactly what must stay whole.
+    if (ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))) return
+
     val carriers = freelancers.filter(Protoss.Carrier).toVector
     if (carriers.isEmpty) return
     if (carriers.view.flatMap(_.interceptors).count(_.complete) < CarrierBrawl.minInterceptors) return
