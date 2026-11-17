@@ -213,10 +213,12 @@ All commits on `f/phase-f`; every one green on the full base suite
   nowhere to regroup to); fixed via canWithdraw=false, needs re-run.
 
 OPEN, in order: #6 march legs through SlotDiscipline + honest labels
-(landed, validating); stance retirement (landed with #6, validating);
-Retreat floor + rearguard execution; HoldLine creep (queued);
-Withdraw-to-middle-choke anchor (queued); live validation of every
-unproven rule above on raid/PvP/PvT/PvZ games.
+(done, validated: Waiting 1/frame, Rallying ~50, honest Marching-home
+vs Returning-to-slot split); stance retirement (done, validated:
+no stuck regroups, posture cycles Withdraw/HoldLine/Fight);
+Retreat floor (structural via posture, verified) + rearguard cover
+(done, validated); HoldLine creep (queued);
+Withdraw-to-middle-choke anchor (queued).
 
 ## 8. Live validation log (2026-11-16/17, all on f/phase-f)
 

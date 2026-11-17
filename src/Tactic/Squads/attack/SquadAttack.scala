@@ -61,6 +61,11 @@ class SquadAttack extends Squad {
   // and the old gate.
   override def battlePosture: Option[ClusterPosture.Posture] = Some(posture)
 
+  // Rearguard cover: the role table names the covering hulls while the
+  // posture says Withdraw; everyone else walks the march.
+  override def coversRetreat(unitId: Int): Boolean =
+    battlePosture.contains(ClusterPosture.Withdraw) && roles.get(unitId).contains(ClusterRoles.Rearguard)
+
   // Hunt latch (UMS contact loss): a steady destination instead of a target
   // recomputed every frame. Without it the squad - observers first - darts
   // between places nobody ever reaches.

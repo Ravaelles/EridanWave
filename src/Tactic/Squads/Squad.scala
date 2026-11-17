@@ -21,6 +21,12 @@ import Tactic.Squads.Group.FriendlyUnitGroup
 abstract class Squad extends Tactic with FriendlyUnitGroup {
   def fightsIndependently: Boolean = false
   /**
+   * Rearguard cover (phase 4 of _COMBAT-REFACTOR.md): while the cluster
+   * withdraws, covering units hold the line and shoot instead of turning
+   * with it. Squads without assigned roles never cover.
+   */
+  def coversRetreat(unitId: Int): Boolean = false
+  /**
    * Cluster verdict for the duel phase (phase 4 of _COMBAT-REFACTOR.md):
    * squads that compute a posture publish it here so unit behaviors duel
    * on the shared verdict instead of the stale consensus. Squads without
