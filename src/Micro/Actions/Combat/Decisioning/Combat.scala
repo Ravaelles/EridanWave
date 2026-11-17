@@ -13,6 +13,7 @@ import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Agency.Commander
 import Micro.Coordination.Pushing.TrafficPriorities
 import Tactic.Squads.Decisions.ClusterPosture
+import Tactic.Squads.Decisions.RetreatVerdict
 import Micro.Targeting.BreakTerranWallIn
 import Micro.Targeting.Target
 import Micro.Targeting.TargetChaff
@@ -170,7 +171,12 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // The cluster posture bounds the duel claims: Withdraw/Regroup never
     // brawl, abuse, stand or chase - the technique only picks how inside
     // Fight/HoldLine. Squads without a posture keep the full dispatch.
-    val advance = unit.squad.flatMap(_.battlePosture).forall(ClusterPosture.advances)
+    // The held verdict bounds the duel from below too: posture opens it,
+    // the verdict closes it. While held, the advance-gated lines (stands,
+    // brawls, abuses, kites, the engage below) do not run and the unit
+    // coasts on the march home order, shooting only through the
+    // always-attack ladder and the retreat potshot above.
+    val advance = unit.squad.flatMap(_.battlePosture).forall(ClusterPosture.advances) && ! RetreatVerdict.held(unit.id, With.frame)
 
     // Unseen killers outrank every formation and duel: a remembered Lurker
     // or cloaked Templar kills the line that rallies or engages through
