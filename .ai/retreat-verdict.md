@@ -116,16 +116,17 @@ Residual audit counts are measurement smear (terminus re-notes +
 sleep-merged windows), not behavior - read them with shadow-join.py,
 not raw.
 
-## Step 4 (agreed, starts after steps 1-3 close): order as pipeline
+## Step 4 (DONE 2026-11-17): order as pipeline
 
-Owner direction 2026-11-17: every dispatch chain becomes one explicit
-list of behavior classes in one place - pipeline style, reorder by
-moving a line, disable by commenting one out. One canonical place to
-start every future order question instead of ten scattered ladders.
-Each behavior declares its band (typed High/Medium/Low + named slots);
-each chain exposes its order as data; an order suite pins the exact
-sequence per chain (`MarchGateOrderSuite` is the precedent). This
-generalizes what the verdict bus did for one question (retreat
-outranks duel) to every arbitration question. Chains one by one:
-dispatchByTechnique, dispatchEngage, march legs; `Fight.perform`
-stays grandfathered.
+Owner direction: every dispatch chain becomes one explicit list of
+behavior classes in one place - pipeline style, reorder by moving a
+line, disable by commenting one out. One canonical place to start
+every future order question instead of ten scattered ladders. Landed:
+`Utilities.DispatchBand` (High/Medium/Low, one home for the
+vocabulary); `TechniquePipeline.stages` (14 stages),
+`EngagePipeline.stages` + `.duelStages` (5 + 4), `MarchGates.order`
+(11 labels) - each pinned by its order suite. A new behavior means an
+explicit registry entry plus a suite row, red until placed. `Fight.
+perform` stays grandfathered; march legs need no registry (parallel
+facts, combined). Full base suite (980) + full engine (1124) green;
+one validation game closes the step.
