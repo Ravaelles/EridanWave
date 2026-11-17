@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Debugging.Probe
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
@@ -125,5 +126,6 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     if (combat.shouldRetreat) {
       unit.agent.decision.set(unit.agent.safety)
     }
+    Debugging.Probe.note("Technique", unit.id, combat.technique.toString)
   }
 }
