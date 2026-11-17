@@ -1,7 +1,7 @@
 package Lifecycle
 
 import Performance.Tasks.TimedTask
-import Utilities.UnitFilters.IsWorker
+import Utilities.UnitFilters.{IsWarrior, IsWorker}
 import Utilities.Time.Seconds
 
 class Manners extends TimedTask {
@@ -14,6 +14,16 @@ class Manners extends TimedTask {
       && With.self.minerals < 50
       && With.units.existsEnemy(IsWorker)
       && With.units.existsEnemy(_.unitClass.isResourceDepot)) {
+      surrender()
+    } else if (With.configuration.enableSurrenders
+      && HopelessGame.shouldConcede(
+        frame = With.frame,
+        ourWorkers = With.units.countOurs(IsWorker),
+        ourCombatUnits = With.units.countOurs(IsWarrior),
+        enemyCombatUnits = With.units.countEnemy(IsWarrior),
+        relativeStrengthPct = Information.Battles.ArmyStrength.score(
+          With.battles.globalAttack.us.skimStrengthUnits,
+          With.battles.globalAttack.enemy.skimStrengthUnits))) {
       surrender()
     }
     if (With.frame == Seconds(5)()) {
