@@ -182,7 +182,29 @@ object BeDarkTemplar extends Action {
         }
       case None =>
         unit.agent.act("DarkTemplarHold")
+        rejoinSquad(unit)
     }
+  }
+
+  /**
+   * Back to a fighting squad: the hunt holds nothing, the hull stands
+   * contactless past the drift band while the squad fights without it.
+   * The cluster cohesion leg owns this on macro maps; the hunt owns it
+   * here (UMS, lone squads) - same band, same label.
+   */
+  private def rejoinSquad(unit: FriendlyUnitInfo): Boolean = {
+    val squad = unit.squad.getOrElse(return false)
+    val centroid = ?(unit.flying, squad.centroidAir, squad.centroidGround)
+    val contactTiles = 2.0
+    if ( ! DarkTemplarPursuit.shouldRejoinSquad(
+      distTilesToSquad  = unit.pixelDistanceCenter(centroid) * Maff.inv32,
+      squadFighting     = squad.units.exists(u => u != unit && u.unitClass.isWarrior && u.battle.isDefined),
+      hasLocalContact   = unit.matchups.enemies.exists(e => unit.pixelDistanceEdge(e) < unit.pixelRangeMax + contactTiles * 32.0))) return false
+
+    unit.agent.act("ClusterRejoin")
+    unit.agent.forceTo(centroid)
+    Commander.move(unit)
+    true
   }
 
   private def visibleHittable(unit: FriendlyUnitInfo): Option[UnitInfo] = {
@@ -221,5 +243,9 @@ object BeDarkTemplar extends Action {
       && unit.canAttack(e)
       && DarkTemplarTargets.isPrey(e.unitClass)
       && ! coveredByDetector(unit, e)
+      && ! DarkTemplarPursuit.ghostDropped(
+        unit.id, e.id,
+        arrivedUnseen = DarkTemplarPursuit.shouldDropGhost(unit.tileDistanceEdge(e), e.visible),
+        recentlySeen  = With.framesSince(e.lastSeen) <= DarkTemplarPursuit.recentSeenFrames)
       && With.framesSince(e.lastSeen) < Minutes(3)()))(_.lastSeen)
 }
