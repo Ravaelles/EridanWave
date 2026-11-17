@@ -293,17 +293,9 @@ New kernels ride suites; these need a live game that reaches them
   squad changes under it. Post-migration the dispatch reads the bus,
   so the stale label cannot dispatch - the twin cost 4 smear frames.
 
-## Deferred: unified retreat verdict (no rewrite now)
+## Deferred: unified retreat verdict (CLOSED 2026-11-17)
 
-- Full write-up lives in `.ai/retreat-verdict.md` (this entry is only
-  the pointer). Problem: the retreat verdict is re-derived per phase
-  (march reads stale `shouldFight`, combat reads fresh verdict plus
-  posture, technique latches its own) so mixed march/retreat frames
-  keep recurring per pair of readers - audited 144 -> 8 -> 7 mixed
-  frames per game as each pair got its own gate. Proposal: one
-  `RetreatVerdict` per unit per frame with hysteresis, read by the
-  march arm, the technique arm and the duel dispatch gates; migrate
-  behind a shadow probe like the posture rewire. Rejected: a
-  god-object decider (kills the squad/unit split and OCP) and
-  capability-typed permits (ceremony over readable ifs).
-  Owner decision 2026-11-17: park it, keep per-site fixes coming.
+- Migrated, not parked: `RetreatVerdict` bus with 24f hold, all readers
+  switched, `MarchRetreat` deleted, probes removed after validation.
+  Full write-up, evidence, rejected alternatives and the follow-up
+  Step 4 (dispatch pipelines) live in `.ai/retreat-verdict.md`.
