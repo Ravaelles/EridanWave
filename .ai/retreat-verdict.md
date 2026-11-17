@@ -70,3 +70,10 @@ Explicitly rejected alternatives:
 Owner decision 2026-11-17: do NOT rewrite now. The incremental series
 lands first with live validation per fix; this file keeps the design
 from being lost and the evidence from being re-gathered.
+
+## Agreed next step (owner confirmed 2026-11-17, work starts on context refresh)
+
+The rewrite above is approved in the stepped form: shadow verdict +
+per-reader switch behind shadow data (plan steps 1-2 in
+`.ai/queue.md` under NEXT UP). Open question for the shadow data:
+24-frame unit-level hold vs the 96-frame cluster floor.

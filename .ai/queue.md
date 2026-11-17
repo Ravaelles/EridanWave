@@ -6,6 +6,30 @@ trace/`probe.txt`/`errors.json`, delete the line.
 Conventions: docs stay English; `.ai/conventions.md` (tests +
 blank-line gate per change, commit per unit).
 
+## NEXT UP (highest priority, agreed 2026-11-17)
+
+Unified retreat verdict (`RetreatVerdict`) - one verdict object per
+unit per frame with hysteresis, read by the march arm, the technique
+selection and the duel dispatch gates instead of re-deriving retreat
+from stale/fresh/faction-split inputs in each place. Full write-up,
+evidence (144 -> 8 -> 3 mixed frames per game, duplicates at 0),
+rejected alternatives (god-object, capability types) and migration
+contract live in `.ai/retreat-verdict.md` - this entry is only the
+pointer. Steps, each a green unit on its own:
+
+1. Shadow: compute the verdict alongside the current code, probe only
+   the disagreements vs today's decisions (same pattern as the old
+   shadow posture). No behavior change. Run a game, read the probe.
+2. Switch readers one by one behind the shadow data: march retreat
+   arm, then `selectBaseTechnique` march arm, then the engage
+   `advance` gate, then Abuse/dispatch gates. Each step its own
+   commit, each revertable; full suite + one validation game each.
+3. Delete the old predicates only after step 2 holds a full game
+   with zero mixed frames (`scripts/retreat-audit.py`).
+
+Open question the shadow data must answer: is a 24f unit-level hold
+enough, or take the 96-frame cluster floor for the verdict too.
+
 ## Parked (explicit orders, do not touch)
 
 - Sunkens2 baseless mission fallback (pair stalls after the first pack
