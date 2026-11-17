@@ -150,7 +150,9 @@ trait PvPOpeningReactions { self: PvPOpening =>
       getReavers        = PvPReaver()
       getReavers      ||= reaverAllIn
       getReavers      ||= have(Protoss.RoboticsSupportBay, Protoss.Reaver, Protoss.Shuttle)
-      getReavers      ||= enemyStrategy(With.fingerprints.fourGateGoon)
+      // No reaver detour in a goon mirror: gas stays on gates, goons
+      // and range (see MirrorGoonTech). Committed reaver play above
+      // keeps its say; this only closes the reactive tech reaction.
 
       // Look for reasons to avoid making an Observer.
       // It's okay to switch even if we already started an Observatory or Observers,
@@ -178,7 +180,9 @@ trait PvPOpeningReactions { self: PvPOpening =>
       val dtSmell = enemyCitadel || enemyHasShown(Protoss.Forge, Protoss.PhotonCannon) || With.sense.netDamage > 2 * Protoss.Dragoon.subjectiveValue
       getObservatory  ||= dtSmell
       getObservers    ||= dtSmell
-      getReavers      ||= ! getObservatory && ! have(Protoss.Observatory)
+      getReavers      ||= ! getObservatory && ! have(Protoss.Observatory) && ! Gameplans.Protoss.PvP.MirrorGoonTech.skipReavers(
+        enemyStrategy(With.fingerprints.fourGateGoon),
+        enemyStrategy(With.fingerprints.threeGateGoon))
       if ( ! have(Protoss.Shuttle, Protoss.RoboticsSupportBay, Protoss.Observatory)) {
         shuttleFirst = getReavers && ! enemyCitadel && ! With.fingerprints.cannonRush()
       }
