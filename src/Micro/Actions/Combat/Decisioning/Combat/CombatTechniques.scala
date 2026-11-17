@@ -11,6 +11,19 @@ import Utilities.UnitFilters.{IsSpeedling, IsSpeedlot}
 
 class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
 
+  /**
+   * Roaming Dragoons belong to the march: the roam gate already walks
+   * them at the squad goal, and any duel - even a poke - breaks the roam.
+   * Suspended here (Fight base and Abuse), so the hull trots through;
+   * retreat still works, so pressure still answers. Same facts as the
+   * march gate, or the two phases would disagree on what roaming is.
+   */
+  private def roaming(unit: FriendlyUnitInfo): Boolean =
+    Tactic.Squads.Decisions.DragoonRoaming.mayRoam(
+      Protoss.Dragoon(unit),
+      With.units.enemy.exists(_.unitClass.isProtoss),
+      Macro.Facts.MacroFacts.enemyHasShown(Protoss.Dragoon))
+
   private[Decisioning] def selectBaseTechnique(safePassage: Boolean): Unit = {
     combat.technique =
             if ( ! unit.canMove)                                    Fight
@@ -46,7 +59,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
   private[Decisioning] def applyTransitions(): Unit = {
     combat.transition(Aim,       ! unit.canMove)
     combat.transition(Dodge,     unit.agent.receivedPushPriority() >= TrafficPriorities.Dodge)
-    combat.transition(Abuse,     unit.unitClass.abuseAllowed && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && (combat.shouldRetreat || combat.framesUntilShot < unit.cooldownMaxAirGround))
+    combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && (combat.shouldRetreat || combat.framesUntilShot < unit.cooldownMaxAirGround))
     combat.transition(SuperKite, unit.isAny(Terran.Wraith, Zerg.Mutalisk))
     combat.transition(Scavenge,  outmatchedPrey)
     combat.transition(Fallback,  unit.matchups.inRangeOfTank && TankHug.shouldWithdraw(
