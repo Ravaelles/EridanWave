@@ -8,7 +8,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{DragoonRoaming, LoneMarch, MainMarch, MarchDress, MarchRetreat, NoTankMarch, SlotDiscipline, SquadRally, StrongMarch, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.Decisions.{MarchDress, MarchFacts, MarchGates, MarchLabel, MarchRetreat, MarchUnit, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -18,72 +18,6 @@ import Utilities.?
  * Targeting stays in SquadAutomation, formations in Micro.Formation.
  */
 object MarchOrders {
-
-  /**
-   * March labels, one per decision (gates, legs, trip home): a sealed
-   * family instead of string literals, so a typo cannot silently fork
-   * the trace. The rendered strings stay byte-for-byte identical.
-   */
-  sealed abstract class MarchLabel(val label: String) {
-    override def toString: String = label
-  }
-
-  object MarchLabel {
-
-    case object DarkTemplarHunt extends MarchLabel("DarkTemplarHunt")
-
-    case object CorsairHunt extends MarchLabel("CorsairHunt")
-
-    case object MainMarch extends MarchLabel("MainMarch")
-
-    case object SuicideMission extends MarchLabel("SuicideMission")
-
-    case object PairRide extends MarchLabel("PairRide")
-
-    case object StrongMarch extends MarchLabel("StrongMarch")
-
-    case object NoTankMarch extends MarchLabel("NoTankMarch")
-
-    case object ToothlessMarch extends MarchLabel("ToothlessMarch")
-
-    case object DragoonRoam extends MarchLabel("DragoonRoam")
-
-    case object Retreating extends MarchLabel("Retreating")
-
-    case object MarchingHome extends MarchLabel("Marching home")
-
-    case object LoneMarch extends MarchLabel("LoneMarch")
-
-    case object StaticPush extends MarchLabel("StaticPush")
-
-    case object WaitingForPack extends MarchLabel("Waiting for pack")
-
-    case object RallyingToPack extends MarchLabel("Rallying to pack centroid")
-
-    case object MarchingToSlot extends MarchLabel("Marching to formation slot")
-
-    case object ReturningToSlot extends MarchLabel("Returning to slot")
-  }
-
-  /**
-   * World facts the gates read, measured once per `sendUnits` instead of once
-   * per gate per unit: ten gates over forty units used to mean hundreds of
-   * full enemy-list scans a frame on the march path.
-   */
-  private final case class MarchFacts(
-    enemyIsTerran    : Boolean,
-    enemyIsProtoss   : Boolean,
-    enemyHasTanks    : Boolean,
-    enemyHasVultures : Boolean,
-    enemyDragoonSeen : Boolean,
-    bankedMinerals   : Int,
-    armyStrength     : Double,
-    supplyUsed       : Int,
-    home             : Option[Pixel]) {
-
-    /** A toothless Terran fields nothing worth forming up against. */
-    def enemyIsToothless: Boolean = enemyIsTerran && ! enemyHasTanks && ! enemyHasVultures
-  }
 
   private def readFacts(): MarchFacts = {
     val home = if (With.geography.ourBases.isEmpty) None else Some(With.geography.ourMain.heart.center)
@@ -158,97 +92,12 @@ object MarchOrders {
   // skip-formation gate below walks straight at the goal instead of
   // milling - retune by moving whole gates, never by tweaking one
   // gate's thresholds against another's.
-  // Dark Templars run their own hunt (visible or remembered contacts only):
-  // they never dress, rally, or take formation slots, so they march
-  // straight at the squad goal instead of posing with the line.
-  private case class MarchGate(label: MarchLabel, applies: (MarchFacts, Squad, FriendlyUnitInfo) => Boolean)
-
-  // First claim wins, in order; every gate marches straight at the squad
-  // goal, so the terminus needs no per-gate branch. Suicide units commit
-  // above (every unit, every frame) before the gates are even asked.
-  private val marchGates: Seq[MarchGate] = Seq(
-    // Dark Templars run their own hunt (visible or remembered contacts
-    // only): they never dress, rally, or take formation slots.
-    MarchGate(MarchLabel.DarkTemplarHunt, (_, _, unit) => Protoss.DarkTemplar(unit)),
-
-    // Corsairs run their own hunt (flee, spread, dance, snipe): they
-    // never dress, rally, or take formation slots, or they mill in
-    // place instead of killing Overlords.
-    MarchGate(MarchLabel.CorsairHunt, (_, _, unit) => Protoss.Corsair(unit)),
-    // Main march: past 90 supply a unit sitting on our doorstep never
-    // poses, rallies or walks to a slot - the column just walks out, so
-    // the base stops choking on its own formation dance. No bases (UMS
-    // micro maps) means no doorstep: skip quietly instead of asking
-    // geography for a main that isn't there.
-    MarchGate(MarchLabel.MainMarch, (facts, _, unit) => facts.home.exists(home => MainMarch.shouldSkip(
-      facts.supplyUsed,
-      unit.pixel.groundPixels(home) * Maff.inv32))),
-    // Suicide mission: a ground warrior inside the enemy main never poses,
-    // rallies or walks home - it commits (no retreat, attack only) and
-    // marches straight at the squad goal past every formation leg below.
-    MarchGate(MarchLabel.SuicideMission, (_, _, unit) => SuicideMission.isActive(unit)),
-    // Pair ride: a loaded Shuttle belongs to its pair, never to the pack -
-    // routing cargo to a rally slot or a formation slot strands it while
-    // the park/raid brains wait for a march that never comes. Empty hulls
-    // still march the legs (they await the next ride, nothing to strand).
-    MarchGate(MarchLabel.PairRide, (_, _, unit) => Protoss.Shuttle(unit) && unit.loadedUnitCount > 0),
-    // Strong march: a banked stock or a maxed strong army never poses -
-    // it walks straight at the squad goal instead of rallying to the pack
-    // centroid or marching to a formation slot.
-    MarchGate(MarchLabel.StrongMarch, (facts, _, unit) => StrongMarch.shouldMarchDirectly(
-      facts.bankedMinerals,
-      facts.armyStrength,
-      facts.supplyUsed)),
-    // No tanks, no dressing: Dragoons walk straight at a Terran without
-    // siege lines instead of posing for guns that are not there.
-    MarchGate(MarchLabel.NoTankMarch, (facts, _, unit) => NoTankMarch.shouldMarchDirectly(
-      Protoss.Dragoon(unit),
-      facts.enemyIsTerran,
-      facts.enemyHasTanks)),
-    // Toothless Terran, no formations at all: without Vultures or Tanks
-    // combat units skip every march leg, including the trip home - the
-    // pack just walks at the goal.
-    MarchGate(MarchLabel.ToothlessMarch, (facts, _, unit) => ToothlessMarch.shouldMarchDirectly(
-      unit.unitClass.isWarrior,
-      facts.enemyIsTerran,
-      facts.enemyHasTanks,
-      facts.enemyHasVultures)),
-    // Early Dragoon roam: our Dragoons in a mirror with no enemy Dragoon
-    // scouted skip every march leg, including the trip home - there is
-    // nothing ranged to dress against, so they roam the map instead of
-    // posing at the spawn. The permission closes on first recognition.
-    MarchGate(MarchLabel.DragoonRoam, (facts, _, unit) => DragoonRoaming.mayRoam(
-      Protoss.Dragoon(unit),
-      facts.enemyIsProtoss,
-      facts.enemyDragoonSeen)),
-    // Lone march: with no friendly warrior inside ten tiles there is no
-    // line to pose in, so the unit skips rallying to the pack centroid
-    // and slot-marching and walks straight at the squad goal instead of
-    // milling alone, and never while retreating (a falling-back unit
-    // walks home, not at the squad goal). Latched (10.5 out, 9.5 back): the terminus on
-    // either side lives hundreds of pixels apart, so a sharp gate jerks
-    // the destination for units breathing on the boundary.
-    MarchGate(MarchLabel.LoneMarch, (_, squad, unit) =>
-      unit.agent.shouldFight &&
-      Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
-        .map(a => LoneMarch.marchAlone(unit.id, unit.pixelDistanceCenter(a.pixel) * Maff.inv32))
-        .getOrElse(true)),
-    // Static push: with an enemy static defense that can hit us inside
-    // ten tiles there is no pack to rally to and no slot to march to -
-    // milling in their reach trades the line for nothing, so the unit
-    // walks straight at the squad goal instead. Latched per unit: the
-    // gate itself used to flap with Rallying and Marching on the
-    // boundary until the unit died milling instead of attacking.
-    MarchGate(MarchLabel.StaticPush, (_, _, unit) =>
-      unit.agent.shouldFight &&
-      MarchDress.pushPastStatics(unit.id, Maff.minBy(unit.matchups.enemies.view.filter(e =>
-        e.likelyStillThere
-        && e.unitClass.isStaticDefense
-        && e.unitClass.canAttack(unit)))(unit.tileDistanceEdge).map(unit.tileDistanceEdge).getOrElse(Double.PositiveInfinity))))
-
+  // The gate table lives in Decisions.MarchGates (pure predicates over
+  // MarchFacts + MarchUnit, first claim wins); the order table suite
+  // pins the sequence row by row.
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): (Pixel, MarchLabel) = {
     val suicide = SuicideMission.assign(unit)
-    marchGates.collectFirst { case gate if gate.applies(facts, squad, unit) => gate.label } match {
+    MarchGates.select(facts, MarchUnit.read(squad, unit, facts.home)) match {
       case Some(label) => (squad.vicinity, label)
       case None if MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight) =>
         // Retreat outranks every formation rule below: the verdict already
