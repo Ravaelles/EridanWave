@@ -17,22 +17,33 @@ import Tactic.Squads.Decisions.ClusterPosture
 object HoldLineCreepBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    if (unit.squad.flatMap(_.battlePosture).exists(_ != ClusterPosture.Fight)) return false
-    if (combat.breakFormationToAttack) return false
-
     val target = combat.target
-    if (target.isEmpty) return false
+    val beyondTiles = target.map(t => unit.pixelsToGetInRange(t) * Maff.inv32).getOrElse(-1.0)
+    val creeping =
+      ! unit.squad.flatMap(_.battlePosture).exists(_ != ClusterPosture.Fight) &&
+      ! combat.breakFormationToAttack &&
+      target.nonEmpty &&
+      HoldLineCreep.shouldCreep(
+        hasFormation    = unit.formationEngage.isDefined,
+        melee           = unit.unitClass.melee,
+        weaponReady     = unit.cooldownLeft <= 0,
+        fractionInSlot  = combat.formationReadiness,
+        beyondRangeTiles = beyondTiles)
+    if ( ! creeping) {
+      unit.agent.creepAnchor = None
 
-    val beyondTiles = unit.pixelsToGetInRange(target.get) * Maff.inv32
-    if ( ! HoldLineCreep.shouldCreep(
-      hasFormation    = unit.formationEngage.isDefined,
-      melee           = unit.unitClass.melee,
-      weaponReady     = unit.cooldownLeft <= 0,
-      fractionInSlot  = combat.formationReadiness,
-      beyondRangeTiles = beyondTiles)) return false
+      return false
+    }
+
+    // The anchor walks the formation at the enemy instead of re-aiming
+    // from wherever each hull drifted; cleared above the moment the
+    // line stops creeping, so it never drags the unit back.
+    val anchor = unit.agent.creepAnchor.getOrElse(unit.pixel)
+    val stepped = anchor.project(target.get.pixel, HoldLineCreep.stepTiles(beyondTiles) * 32.0).walkablePixel
+    unit.agent.creepAnchor = Some(stepped)
 
     unit.agent.act("HoldCreep")
-    unit.agent.decision.set(unit.pixel.project(target.get.pixel, HoldLineCreep.stepTiles(beyondTiles) * 32.0).walkablePixel)
+    unit.agent.decision.set(stepped)
     Commander.move(unit)
 
     true

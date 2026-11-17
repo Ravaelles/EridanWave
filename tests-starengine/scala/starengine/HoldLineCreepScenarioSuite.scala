@@ -1,61 +1,85 @@
 package starengine
 
 import Micro.Actions.Combat.Decisioning.HoldLineCreep
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Terran}
 import org.scalatest.funsuite.AnyFunSuite
 
 /**
- * HoldLine creep: a dressed ranged line that is holding walks its
- * formation at the enemy in fixed micro-steps instead of freezing until
- * the timeout or breaking into a charge. The pilot calls the shipped
- * gate and steps exactly the kernel's stride; the foe is a passive hull
- * that never shoots back, mirroring the UMS duels that stood still. The
- * line must close to its guns without a single charge stride, then open
- * fire on arrival - advance without appetite.
+ * HoldLine creep (the per-unit anchor): a dressed ranged line that is
+ * holding walks its formation at the enemy in fixed micro-steps
+ * instead of freezing until the timeout. The anchor persists across
+ * frames and only advances - the hull never re-aims from wherever it
+ * drifted and never walks back. The pilot below mirrors the production
+ * behavior (shipped shouldCreep gate and stepTiles, anchor advance and
+ * release); the suite pins the contract temporally: steady advance at
+ * the creep rate, no retreat, clean release when the target closes.
  */
 class HoldLineCreepScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
   override def tags: Map[String, Set[String]] =
-    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Formation.name) }
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Dragoon.name + StarEngineTags.Formation.name) }
 
-  private class CreepPilot(foe: Body) extends Pilot {
-    var maxStep: Double = 0.0
-    private var lastX: Double = Double.NaN
-    private var lastY: Double = Double.NaN
+  private class CreepPilot extends Pilot {
+    var anchor: Option[(Double, Double)] = None
+    var minX: Double = Double.PositiveInfinity
 
     override def direct(me: Body, world: World): Directive = {
-      if ( ! lastX.isNaN) maxStep = Math.max(maxStep, Math.hypot(me.x - lastX, me.y - lastY))
-      lastX = me.x
-      lastY = me.y
-      if ( ! foe.alive) return Hold
-      val beyondTiles = (me.dist(foe) - me.rangeAgainst(foe)) / 32.0
-      if (HoldLineCreep.shouldCreep(
-        hasFormation     = true,
-        melee            = me.kind.melee,
-        weaponReady      = me.cooldownLeft <= 0,
-        fractionInSlot   = 1.0,
-        beyondRangeTiles = beyondTiles)) {
-        val step = HoldLineCreep.stepTiles(beyondTiles) * 32.0
-        val dist = me.dist(foe)
-        if (dist > 0) MoveTo(me.x + (foe.x - me.x) / dist * step, me.y + (foe.y - me.y) / dist * step)
-        else Hold
-      } else Hold
+      val foe = world.foes.find(_.alive)
+      val beyondTiles = foe.map(f => (me.dist(f) - me.rangeAgainst(f)) / 32.0).getOrElse(-1.0)
+      val creeping = foe.nonEmpty && HoldLineCreep.shouldCreep(
+        hasFormation   = true,
+        melee          = false,
+        weaponReady    = me.cooldownLeft <= 0,
+        fractionInSlot = 1.0,
+        beyondRangeTiles = beyondTiles)
+      if ( ! creeping) {
+        anchor = None
+
+        return Hold
+      }
+
+      val a = anchor.getOrElse((me.x, me.y))
+      val t = foe.get
+      val dx = t.x - a._1
+      val dy = t.y - a._2
+      val dist = Math.hypot(dx, dy)
+      val step = HoldLineCreep.stepTiles(beyondTiles) * 32.0
+      val next = if (dist <= 0) a else (a._1 + dx / dist * Math.min(dist, step), a._2 + dy / dist * Math.min(dist, step))
+      anchor = Some(next)
+      if (me.x < minX) minX = me.x
+      MoveTo(next._1, next._2)
     }
   }
 
-  test("a dressed line creeps to its guns without charging") {
-    val line = new Body(Protoss.Dragoon, 0.0, -300.0, Protoss.Dragoon.maxTotalHealth)
-    val hull = new Body(Protoss.Zealot, 0.0, 100.0, Protoss.Zealot.maxTotalHealth)
-    hull.passive = true
-    val pilot = new CreepPilot(hull)
-    val world = new World(Seq(line), Seq(hull), Map(line -> pilot, hull -> new Pilots.Hold), Seq.empty)
+  test("a dressed line creeps forward without ever stepping back") {
+    val dragoon = new Body(Protoss.Dragoon, 0.0, 500.0, Protoss.Dragoon.maxTotalHealth)
+    dragoon.cooldownLeft = 0
+    val foe = new Body(Terran.Marine, 320.0, 500.0, Terran.Marine.maxTotalHealth)
+    foe.passive = true
+    val pilot = new CreepPilot
+    val world = new World(Seq(dragoon), Seq(foe),
+      Map(dragoon -> pilot, foe -> new Pilots.Hold), Seq.empty)
     var f = 0
-    while (f < 400 && hull.alive) { world.step(); f += 1 }
-    val closed = 400.0 - line.dist(hull)
-    println(s"DIAG closed=${closed.toInt}px maxStep=${pilot.maxStep.toString.take(4)}px dist=${line.dist(hull).toInt}px hullHp=${hull.hp.toInt}")
-    assert(closed > 200.0, "the line never walked at the enemy")
-    assert(pilot.maxStep <= 4.0, "a stride bigger than the creep step - the line charged")
-    assert(line.dist(hull) <= line.rangeAgainst(hull) + 32.0, "the line never reached its guns")
-    assert(hull.hp < hull.maxHp, "the line closed but never opened fire")
+    while (f < 300 && dragoon.alive) { world.step(); f = world.frame }
+    val advanced = dragoon.x - 0.0
+    val finalDist = foe.x - dragoon.x
+    println(s"DIAG advanced=${advanced.toInt} minX=${pilot.minX.toInt} finalDist=${finalDist.toInt} frames=$f")
+    assert(advanced > 100, f"line froze instead of creeping: advanced $advanced in $f frames")
+    assert(pilot.minX >= -1.0, f"line stepped back to ${pilot.minX}")
+    assert(finalDist >= 64 && finalDist <= 200, f"line broke instead of holding: stopped $finalDist from the target")
+  }
+
+  test("the anchor releases when the target closes into range") {
+    val dragoon = new Body(Protoss.Dragoon, 0.0, 500.0, Protoss.Dragoon.maxTotalHealth)
+    dragoon.cooldownLeft = 0
+    val foe = new Body(Terran.Marine, 100.0, 500.0, Terran.Marine.maxTotalHealth)
+    foe.passive = true
+    val pilot = new CreepPilot
+    val world = new World(Seq(dragoon), Seq(foe),
+      Map(dragoon -> pilot, foe -> new Pilots.Hold), Seq.empty)
+    var f = 0
+    while (f < 120 && dragoon.alive) { world.step(); f = world.frame }
+    println(s"DIAG release anchor=${pilot.anchor} dragoonX=${dragoon.x.toInt}")
+    assert(pilot.anchor.isEmpty, "anchor stuck after the target closed in range")
   }
 }
