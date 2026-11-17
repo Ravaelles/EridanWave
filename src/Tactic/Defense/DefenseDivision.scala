@@ -4,7 +4,6 @@ import Information.Battles.Types.{Division, DivisionRadius}
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Mathematics.Maff
-import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.UnitInfo
 
 import Utilities.UnitFilters.IsWorker
@@ -35,15 +34,12 @@ class DefenseDivision(val division: Division) extends UnitGroup {
   }
 
   private def defenseDanger(e: UnitInfo): Double = {
-    if (IsWorker(e))
-      0.35
-    else if (Protoss.Observer(e) && e.matchups.groupVs.mobileDetectors.isEmpty)
-      0.0
-    else if (e.flying && (Zerg.Overlord(e) || e.unitClass.isFlyingBuilding) && ! e.matchups.groupVs.attacksAir)
-      0.0
-    else if (e.unitClass.attacksOrCastsOrDetectsOrTransports)
-      1.0
-    else
-      0.0
+    // Only hulls that can hit the ground count: detectors, casters and
+    // transports passing through must not raise a base squad - the
+    // standing false alarm was an enemy Observer tripping the detector
+    // clause. Workers scout at a discount, everything else needs a gun.
+    if (IsWorker(e)) 0.35
+    else if (e.unitClass.attacksGround) 1.0
+    else 0.0
   }
 }

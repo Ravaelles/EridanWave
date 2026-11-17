@@ -8,7 +8,7 @@ import Mathematics.Maff
 import Micro.Targeting.CarrierBrawl
 import Performance.Tasks.TimedTask
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
-import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Tactic.Defense.{DefenseDivision, GetDefenseBase}
 import Tactic.Missions.core.Mission
 import Tactic.Missions.drops.{MissionAssaultFerry, MissionDTDrop, MissionDarkTemplarFerry, MissionSpeedlotDrop, MissionStormDrop}
@@ -122,7 +122,23 @@ final class Tactician extends TimedTask {
     With.squads.run(budgetMs)
   }
 
+  // Defense census for the trace: why each base squad got bodies this
+  // frame - the reason, the triggering enemies by class, and how many
+  // warriors the cluster holds altogether. Change-only, so a quiet map
+  // costs nothing and every staffing lands on its frame.
+  private val defenseReasons = new ListBuffer[String]
+
+  private def enemyCensus(enemies: Iterable[UnitInfo]): String =
+    enemies.toSeq.groupBy(_.unitClass.toString).toSeq.sortBy(-_._2.size).map { case (c, us) => f"$c(${us.size})" }.mkString(" ")
+
+  private def armyWarriors: Int = With.units.ours.count(_.unitClass.isWarrior)
+
+  private def noteDefenseStaffed(reason: String, units: Int, enemies: String): Unit = {
+    if (units > 0) defenseReasons += f"$reason:${units}war $enemies [army $armyWarriors]"
+  }
+
   private def runCoreTactics(): Unit = {
+    defenseReasons.clear()
     forceDarkTemplarAttack()
     val squadsDefending = defendDivisions()
 
@@ -170,6 +186,7 @@ final class Tactician extends TimedTask {
     }.sortBy(_._1)
     Debugging.CherryVis.CherryVis.board("SquadsBase", guarding.map { case (number, count) => f"$number($count)" }.mkString(", "))
     Debugging.CherryVis.CherryVis.board("Contain", ContainStatus.now().toString)
+    Debugging.CherryVis.CherryVis.board("DefenseWhy", defenseReasons.mkString(" + "))
   }
 
   // Enemy picture for the trace: what we believe the enemy is doing, plus
@@ -226,6 +243,7 @@ final class Tactician extends TimedTask {
   }
 
   private def fillDefenseSquads(squadsDefending: Seq[(DefenseDivision, SquadDefendBase)], freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
+    val before = freelancers.size
     // First satisfy each defense squad
     // First pass gets essential defenders
     // Second pass gets additional defenders to be sure
@@ -237,28 +255,22 @@ final class Tactician extends TimedTask {
         Seq(squad),
         filter = (f, s) => f.unitClass.isWarrior && s.unitsNext.count(_.unitClass.isWarrior) < ClusterSplit.minDetachment)
     }
+    noteDefenseStaffed("division", before - freelancers.size, enemyCensus(squadsDefending.flatMap(_._2.enemies).distinct))
   }
 
   private def defendVsMutas(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
-    // No proactive split below twenty warriors: a real muta attack raises
-    // defense divisions and the consolidation owns it; a mere showing does
-    // not peel the main cluster apart.
-    if (ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))) return
-
     // Proactive Muta defense with Archon
     if (With.scouting.enemyProximity < 0.5 && MacroFacts.enemyHasShown(Zerg.Mutalisk) && ( ! With.blackboard.wantToAttack() || ! acePilots.hasFleet)) {
+      val before = freelancers.size
       Assignment.unitsPick(
         freelancers,
         With.geography.ourBases.filter(MacroFacts.isMiningBase).map(defenseSquads(_)),
         filter = (f, s) => Protoss.Archon(f) && s.unitsNext.isEmpty)
+      noteDefenseStaffed("mutas", before - freelancers.size, f"Mutalisk(${MacroFacts.enemiesShown(Zerg.Mutalisk)})")
     }
   }
 
   private def defendVsDrops(freelancers: ListBuffer[FriendlyUnitInfo], freelancerCountInitial: Int): Unit = {
-    // No proactive split below twenty warriors: drop guards staff only
-    // when the army can spare bodies without breaking apart.
-    if (ClusterSplit.keepTogether(With.units.ours.count(_.unitClass.isWarrior))) return
-
     // Proactive drop/harassment defense
     if (With.scouting.enemyProximity < 0.5 && (
       (With.geography.ourBases.map(_.metro).distinct.size > 1 && With.frame > Minutes(10)())
@@ -278,10 +290,13 @@ final class Tactician extends TimedTask {
         Seq(Terran.Marine, Terran.Vulture, Terran.Goliath, Protoss.Dragoon, Protoss.Archon, Zerg.Hydralisk, Zerg.Lurker),
         Seq(Terran.Marine, Terran.Firebat, Terran.Vulture, Terran.Goliath, Protoss.Zealot, Protoss.Dragoon, Protoss.Archon, Zerg.Zergling, Zerg.Hydralisk, Zerg.Lurker))
 
+      val before = freelancers.size
       Assignment.unitsPick(
         freelancers,
         dropVulnerableBases.map(defenseSquads(_)),
         filter = (f, s) => qualifiedClasses.exists(_(f)) && s.unitsNext.size < Math.min(3, freelancerCountInitial / 12))
+      noteDefenseStaffed("drops", before - freelancers.size,
+        f"Vulture(${MacroFacts.enemiesShown(Terran.Vulture)}) Dropship(${MacroFacts.enemiesShown(Terran.Dropship)})")
     }
   }
 
@@ -311,12 +326,16 @@ final class Tactician extends TimedTask {
     if (breached.isEmpty) return
 
     With.logger.debug(f"Carriers answering breach: ${carriers.size} to ${breached.size} base(s)")
+    val before = freelancers.size
+    var intruders = 0
     carriers.foreach(c => {
       val home = Maff.minBy(breached)(_.heart.center.pixelDistanceSquared(c.pixel)).getOrElse(breached.head)
-      val intruders = With.units.enemy.filter(e => ! e.flying && home.heart.center.tile.tileDistanceFast(e.tile) <= OurBaseUnderAttack.breachRadiusTiles)
-      c.intend(this).setTerminus(home.heart.center).setTargets(intruders)
+      val raiders = With.units.enemy.filter(e => ! e.flying && home.heart.center.tile.tileDistanceFast(e.tile) <= OurBaseUnderAttack.breachRadiusTiles)
+      intruders += raiders.size
+      c.intend(this).setTerminus(home.heart.center).setTargets(raiders)
       freelancers -= c
     })
+    noteDefenseStaffed("breach", before - freelancers.size, f"ground($intruders)")
   }
 
   private def staffBaseGuards(freelancers: ListBuffer[FriendlyUnitInfo]): Unit = {
@@ -324,6 +343,7 @@ final class Tactician extends TimedTask {
     baseGuards.lock.setCounter(CountUpTo(wanted))
     if (wanted > 0) {
       baseGuards.vicinity = BaseGuardPost()
+      val before = freelancers.size
       Assignment.unitsPick(
         freelancers,
         Seq(baseGuards),
@@ -332,6 +352,7 @@ final class Tactician extends TimedTask {
         freelancers,
         Seq(baseGuards),
         filter = (f, s) => Protoss.Zealot(f) && s.unitsNext.size < wanted)
+      noteDefenseStaffed("guards", before - freelancers.size, "standing")
     }
   }
 
