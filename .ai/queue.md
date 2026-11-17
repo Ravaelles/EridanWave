@@ -212,7 +212,9 @@ New kernels ride suites; these need a live game that reaches them
 - Rich bank skips kiting (minerals >= 1000, expendables hold DPS).
 - Dragoon closes fleeing workers (StarEngine ChaseAndKillSuite green;
   needs one live confirm).
-- Vulture duels (PotshotVulture rows).
+- Vulture duels (CLOSED 2026-11-17, PvT 194253: 9 PotshotVulture
+  rows, Fallback+Retreat chains = shooting while leaving per doctrine;
+  0 vulture kills - the duel is proven, the body count is not).
 - Carrier berth (scratched shields vs ranged, CarrierKite rows).
 - Screened static +50% (statics covered by 2+ defenders).
 - Slow-alone watch (log stutter with no units nearby, max 10/game).
@@ -284,6 +286,12 @@ New kernels ride suites; these need a live game that reaches them
 - OPEN investigation: NoTankMarch-vs-Retreat flap (Hao Pan
   f6666) - march terminus vs combat retreat writers; unresolved,
   needs the exact game or a squad-level repro the engine lacks.
+  TWIN seen live 2026-11-17 (Benzene PvT 194253, u=179 f7353-7391):
+  six-squad bounce (Attack/Ferry/Defend/Scout/ClearBlockers) with a
+  stale NoTankMarch label while technique retreated on a fresh
+  -OutOfContact; single-writer skips leave the label behind when the
+  squad changes under it. Post-migration the dispatch reads the bus,
+  so the stale label cannot dispatch - the twin cost 4 smear frames.
 
 ## Deferred: unified retreat verdict (no rewrite now)
 
