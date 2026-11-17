@@ -117,7 +117,8 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       Protoss.Dragoon(unit),
       unit.agent.receivedPushPriority(),
       unit.matchups.targetNearest.exists(unit.inRangeToAttack),
-      unit.matchups.threatsInFrames(unit.unitClass.framesToPotshot + 9).forall(_.isAny(Terran.Vulture, IsSpeedlot, Zerg.Zergling))))
+      unit.matchups.threatsInFrames(unit.unitClass.framesToPotshot + 9).forall(_.isAny(Terran.Vulture, IsSpeedlot, Zerg.Zergling)),
+      unit.matchups.threatsInFrames(unit.unitClass.framesToPotshot + 9).exists(_.unitClass.ranged)))
     combat.transition(Fallback,  Micro.Actions.Protoss.Zealot.ZealotFallback.outnumberedBySpeedlings(
       unit.isAny(Protoss.Archon, Protoss.Zealot),
       unit.matchups.targetsInRange.exists(IsSpeedling)))
