@@ -7,7 +7,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{DragoonRoaming, LoneMarch, MainMarch, MarchDress, NoTankMarch, SlotDiscipline, SquadRally, StrongMarch, SuicideMission, ToothlessMarch}
+import Tactic.Squads.Decisions.{DragoonRoaming, LoneMarch, MainMarch, MarchDress, MarchRetreat, NoTankMarch, SlotDiscipline, SquadRally, StrongMarch, SuicideMission, ToothlessMarch}
 import Utilities.?
 
 /**
@@ -46,6 +46,8 @@ object MarchOrders {
     case object ToothlessMarch extends MarchLabel("ToothlessMarch")
 
     case object DragoonRoam extends MarchLabel("DragoonRoam")
+
+    case object Retreating extends MarchLabel("Retreating")
 
     case object MarchingHome extends MarchLabel("Marching home")
 
@@ -241,6 +243,11 @@ object MarchOrders {
     val suicide = SuicideMission.assign(unit)
     marchGates.collectFirst { case gate if gate.applies(facts, squad, unit) => gate.label } match {
       case Some(label) => (squad.vicinity, label)
+      case None if MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight) =>
+        // Retreat outranks every formation rule below: the verdict already
+        // sent this hull home, so no gate and no leg gets asked - the line
+        // to the Guard slot is the whole order for this frame.
+        (getReturn(unit, squad, defaultReturn), MarchLabel.Retreating)
       case None =>
         val finalTravel = getTravel(unit, squad, defaultReturn)
         marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide)
