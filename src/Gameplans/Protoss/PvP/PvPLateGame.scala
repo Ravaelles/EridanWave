@@ -127,6 +127,7 @@ class PvPLateGame extends GameplanImperative {
     ///////////////////////////
 
     PvPIdeas.requireTimelyDetection()
+    PvPIdeas.cancelBaseVsDarkTemplar()
 
     if (riskingFirstExpansion) {
       if (PvPCoreExpand()) {

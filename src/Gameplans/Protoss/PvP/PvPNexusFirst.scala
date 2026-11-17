@@ -4,7 +4,7 @@ import Gameplans.All.GameplanImperative
 import Lifecycle.With
 import Placement.Access.PlaceLabels.DefendEntrance
 import Placement.Access.PlacementQuery
-import PvPIdeas.requireTimelyDetection
+import PvPIdeas.{cancelBaseVsDarkTemplar, requireTimelyDetection}
 import ProxyBwapi.Races.Protoss
 import Strategery.Strategies.Protoss.PvPNexusFirst
 
@@ -51,6 +51,7 @@ class PvPNexusFirst extends GameplanImperative {
     if (fearDT) {
       get(Protoss.Forge)
       requireTimelyDetection()
+      cancelBaseVsDarkTemplar()
     }
     pump(Protoss.Dragoon)
     if ( ! fearMuscle) {

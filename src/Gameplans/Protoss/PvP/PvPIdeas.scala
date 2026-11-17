@@ -3,6 +3,7 @@ package Gameplans.Protoss.PvP
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Macro.Actions.MacroActions
+import Macro.Actions.ShouldCancelBase
 import Macro.Requests.RequestUnit
 import Mathematics.Maff
 import Placement.Access.PlaceLabels._
@@ -67,6 +68,21 @@ object PvPIdeas extends MacroActions {
 
   def preferObserverForDetection  : Boolean = detectWithObserverOrCannon(auditing = true)
   def requireTimelyDetection()    : Boolean = detectWithObserverOrCannon(auditing = false)
+
+  /**
+   * Shown DT plus a morphing base plus no Forge money: cancel the Nexus
+   * so the refund funds detection instead of donating 400 minerals to
+   * the first swipe. Runs where the expanding gameplans run DT defense.
+   */
+  def cancelBaseVsDarkTemplar(): Unit = {
+    if (ShouldCancelBase.shouldCancel(
+      enemyDarkTemplarShown = enemyHasShown(Protoss.DarkTemplar),
+      baseInProduction      = With.units.ours.exists(u => Protoss.Nexus(u) && ! u.complete),
+      forgeAffordable       = With.self.minerals >= Protoss.Forge.mineralPrice)) {
+      status("DTCancelBase")
+      cancel(Protoss.Nexus)
+    }
+  }
 
   def enemyDarkTemplarPossible: Boolean = enemyDarkTemplarLikely || ( ! enemyRobo && ! With.fingerprints.fourGateGoon())
 
