@@ -26,6 +26,29 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       Macro.Facts.MacroFacts.enemyHasShown(Protoss.Dragoon))
 
   private[Decisioning] def selectBaseTechnique(safePassage: Boolean): Unit = {
+    // Second verdict reader (step 2): the technique ticks the shared bus
+    // with frame-fresh inputs and obeys the held verdict. The raw inputs
+    // match the old arm one for one; the only behavior change is the hold
+    // - a verdict that flickered fight for a frame or two, or a march
+    // tick still arriving on the last frame's news, no longer flips the
+    // technique out from under the retreat.
+    Tactic.Squads.Decisions.RetreatVerdict.update(
+      unit.id,
+      Tactic.Squads.Decisions.RetreatVerdict.shouldHold(
+        unit.unitClass.isWarrior,
+        Protoss.Reaver(unit),
+        unit.intent.canFlee,
+        Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit),
+        unit.agent.shouldFight,
+        unit.totalHealth,
+        Information.Battles.ArmyStrength.score(
+          With.battles.globalAttack.us.skimStrengthUnits,
+          With.battles.globalAttack.enemy.skimStrengthUnits),
+        Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
+          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+        With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()),
+      With.frame)
+    val verdictRetreat = Tactic.Squads.Decisions.RetreatVerdict.held(unit.id, With.frame)
     combat.technique =
             if ( ! unit.canMove)                                    Fight
       // Latched retreat: once falling back, hold Flee until clear of the
@@ -45,14 +68,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // below); defenders that may not flee hold their ground; Reavers
       // keep their own brain. Forbidden retreats fall through like the
       // march does, so the line advances as one.
-      else  if (unit.intent.canFlee && Tactic.Squads.Decisions.MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight) && ! (Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit)) && Tactic.Squads.Decisions.RetreatAllowed.forUnit(
-        unit.totalHealth,
-        Information.Battles.ArmyStrength.score(
-          With.battles.globalAttack.us.skimStrengthUnits,
-          With.battles.globalAttack.enemy.skimStrengthUnits),
-        Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
-          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
-        With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax())) Flee
+      else  if (verdictRetreat)                                      Flee
       else  if (safePassage && combat.target.exists(unit.inRangeToAttack)) Fight
       else  if (safePassage)                                        Walk
       // Templar storm stand: a loaded hull walks into cast range instead
