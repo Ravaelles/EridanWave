@@ -144,7 +144,7 @@ object BeDetector extends Action {
     // read the flicker off the log instead of guessing.
     nearest match {
       case Some(foe) =>
-        val distTiles = unit.tileDistanceEdge(foe) * Maff.inv32
+        val distTiles = unit.tileDistanceEdge(foe)
         val latched = DetectorSpread.standOffLatched(unit.id, distTiles)
         Debugging.Probe.note("StandOff", unit.id, f"det=${foe.id} dist=$distTiles%.1f vis=${foe.visible} latched=$latched")
         if (latched) {
