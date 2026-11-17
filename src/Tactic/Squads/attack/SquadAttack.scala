@@ -1,14 +1,13 @@
 package Tactic.Squads.attack
 
 import Debugging.Probe
-import Information.Battles.{ApplyEarlyGamePressurePenalty, ArmyStrength}
-import Lifecycle.{Enemy, With}
+import Information.Battles.ArmyStrength
+import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.{Pixel, Points, Tile}
 import Mathematics.Shapes.Spiral
 import Performance.Cache
-import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import ProxyBwapi.UnitTracking.UnorderedBuffer
 import Tactic.Squads.Decisions.AttackModes._
@@ -21,7 +20,6 @@ import Tactic.Squads.Decisions.HuntLogic
 import Tactic.Squads.Decisions.AttackModes
 import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.ClusterRoles
-import Tactic.Squads.Decisions.RegroupLatch
 import Tactic.Squads.Decisions.RetreatDiscipline
 import Tactic.Squads.ContainStatus
 import Tactic.Squads.Decisions.VoteConfirmation
@@ -37,20 +35,14 @@ class SquadAttack extends Squad {
   var mode: AttackMode = PushMain
 
   // HuntContact marches to contact: act as if the squad agreed to fight.
-  // Without this, movement (terminus, formations, targets) falls back to
-  // retreat while the mode says advance - and the squad shudders in place.
-  // A latched regroup overrules even this: a clear sim verdict to break off
-  // beats marching blind into contact.
-  var stance: RegroupLatch.Stance = RegroupLatch.Engaged
-  // Cluster posture shadow (phase 3 of _COMBAT-REFACTOR.md): the shared
-  // verdict beside the live stance. Published for the future rewire and
-  // logged where they disagree, but changes no behavior yet.
+  // Cluster posture (phase 4 of _COMBAT-REFACTOR.md): one verdict per
+  // cluster per frame, latched. The RegroupLatch stance retired here: the
+  // posture latch (floor + sim agreement + parity + deadband) owns both
+  // the duel gate and the consensus, so two latches can never flap
+  // against each other again.
   var posture: ClusterPosture.Posture = ClusterPosture.Fight
   var roles: Map[Int, ClusterRoles.Role] = Map.empty
   private var withdrawStartFrame: Int = 0
-  // Retreat proposals need consecutive confirmation (sim flicker must not
-  // swing the squad); re-engage passes through. Yolo/UMS set stance directly.
-  private val stanceFilter = new VoteConfirmation[RegroupLatch.Stance](RegroupLatch.Engaged, RegroupLatch.Regrouping)
   // Contain-leave proposals need consecutive confirmation (the contain
   // verdict flickers on its static-count boundary); re-entering passes
   // through. Yolo/UMS never contain, so the filter idles off the path.
@@ -58,9 +50,10 @@ class SquadAttack extends Squad {
   private var proposedModeThisFrame = false
 
   override def fightConsensus: Boolean = {
-    if (stance == RegroupLatch.Regrouping) return false
+    if (With.yolo.active) return true
+    if (SuicideMission.squadInZone(this)) return true
 
-    super.fightConsensus || mode == HuntContact
+    ClusterPosture.advances(posture) && (super.fightConsensus || mode == HuntContact)
   }
 
   // Phase 4 of _COMBAT-REFACTOR.md: the attack squad duels on the shared
@@ -307,58 +300,12 @@ class SquadAttack extends Squad {
   val otherTargets = new ArrayBuffer[UnitInfo]
   private val unassigned = new UnorderedBuffer[FriendlyUnitInfo]()
 
-  // Sim-gated regroup stance (Stardust activity): every retreat proposal -
-  // the global score as well as the per-unit sim verdicts - needs consecutive
-  // confirmation, so a borderline simulation cannot flap the whole squad
-  // between advance and retreat every few frames. Yolo is an
-  // explicit all-in and resets the latch instead of consulting it.
-  private def updateStance(): Unit = {
-    if (With.yolo.active) {
-      stance = RegroupLatch.Engaged
-      Probe.note("Sim", 0, "Engaged yolo")
-    } else if (With.umsMode) {
-      // UMS duels have no economy and nowhere to regroup to: the squad
-      // stays Engaged so consensus (dress, rally, close-ranks) holds through
-      // sim-vote oscillation. Micro commitment already decides the fighting.
-      stance = RegroupLatch.Engaged
-      Probe.note("Sim", 0, "Engaged ums-duel")
-    } else if (SuicideMission.squadInZone(this)) {
-      // Suicide charge: this close to the Zerg main the squad only attacks,
-      // so the stance never breaks off into a regroup.
-      stance = RegroupLatch.Engaged
-      Probe.note("Sim", 0, "Engaged suicide")
-    } else if (
-      units.count(_.unitClass.isWarrior) >= ArmyStrength.retreatMinWarriors &&
-      ArmyStrength.retreating(
-        ApplyEarlyGamePressurePenalty.adjust(
-          With.battles.globalAttack.us.skimStrengthTotal,
-          units.count(_.unitClass.isWarrior),
-          Enemy.protoss(),
-          With.units.enemy.exists(e => e.alive && Protoss.Dragoon(e))),
-        With.battles.globalAttack.enemy.skimStrengthTotal)) {
-      // A bad score proposes Retreat, never orders it: near parity the
-      // score flickers every frame, and each flip swings every terminus
-      // between the goal and home (move-stop-move-stop). Confirm through
-      // the stance filter like every other retreat proposal; re-engage
-      // still passes instantly.
-      stance = stanceFilter.confirm(stance, RegroupLatch.Regrouping)
-      Probe.note("Sim", 0, "Regrouping outmatched")
-    } else {
-      val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
-      val coverage = verdicts.size.toDouble / units.size
-      val fighting = if (verdicts.isEmpty) 1.0 else verdicts.count(identity).toDouble / verdicts.size
-      stance = stanceFilter.confirm(stance, RegroupLatch.nextStance(stance, fighting, coverage))
-      Probe.note("Sim", 0, f"$stance fighting=$fighting%.2f coverage=$coverage%.2f")
-    }
-    Debugging.CherryVis.CherryVis.board("AttackStance", stance.toString)
-    updatePostureShadow()
-  }
-
-  // Cluster-posture shadow (phase 3 of _COMBAT-REFACTOR.md): computes the
-  // shared verdict beside the live stance and logs where they disagree -
-  // but changes no behavior. Both read the same per-unit sim verdicts, so
-  // any disagreement is the verdict logic itself, never the inputs.
-  private def updatePostureShadow(): Unit = {
+  // Cluster posture (phase 4 of _COMBAT-REFACTOR.md): one verdict per
+  // cluster per frame from the same sims the stance read - fighting
+  // fraction, coverage, penalized advantage, contact - through the
+  // posture latch (floor + sim agreement + parity + deadband). Published
+  // beside targets/formations/vicinity for the duel gate and the march.
+  private def updatePosture(): Unit = {
     val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
     val coverage = verdicts.size.toDouble / Math.max(1, units.size)
     val fighting = if (verdicts.isEmpty) 1.0 else verdicts.count(identity).toDouble / verdicts.size
@@ -371,12 +318,9 @@ class SquadAttack extends Squad {
     if (next == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
     posture = next
     roles = assignRolesShadow()
-    Probe.note("Posture", 0, f"$posture fighting=$fighting%.2f coverage=$coverage%.2f adv=$advantage%.2f contact=$contact disagree=${disagreesWithStance}")
+    Probe.note("Sim", 0, f"$posture fighting=$fighting%.2f coverage=$coverage%.2f adv=$advantage%.2f")
     Debugging.CherryVis.CherryVis.board("AttackPosture", posture.toString)
   }
-
-  private def disagreesWithStance: Boolean =
-    (posture == ClusterPosture.Withdraw) != (stance == RegroupLatch.Regrouping)
 
   private def assignRolesShadow(): Map[Int, ClusterRoles.Role] = {
     val warriors = units.filter(_.unitClass.isWarrior).toVector
@@ -415,7 +359,7 @@ class SquadAttack extends Squad {
     if (With.configuration.formationAudit) {
       Debugging.FormationAudit.noteMode(With.frame, mode.toString, vicinity.x, vicinity.y, With.units.enemy.count(_.visible))
     }
-    updateStance()
+    updatePosture()
     commitUmsDuelists()
 
     if (

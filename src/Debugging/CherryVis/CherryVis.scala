@@ -56,8 +56,8 @@ object CherryVis {
       lastStrategy = strategy
       trace.logState(With.frame, "Strategy", strategy)
     }
-    // Global strength next to the AttackStance row: display only, the
-    // withdraw decision itself runs on per-unit sim verdicts.
+    // Global strength next to the AttackPosture row: display only, the
+    // withdraw decision itself runs on the posture latch.
     board("ArmyStrength", ArmyStrength.score(
       With.battles.globalAttack.us.skimStrengthTotal,
       With.battles.globalAttack.enemy.skimStrengthTotal).toInt.toString)

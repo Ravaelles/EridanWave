@@ -100,13 +100,12 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     if (ContainFireBehavior.run(unit)) return unit.unready
 
     // Cluster posture owns the duel (phase 4 of _COMBAT-REFACTOR.md):
-    // Withdraw/Regroup walk the march, Fight/HoldLine duel. Squads without
-    // a posture keep the old consensus gate untouched; the attack squad
-    // reports its posture, so a stale consensus never pins a Fight window
-    // to the march it just overruled. Helpless prey still hunts: workers-
-    // only contacts or a three-to-one local skim hunt instead of posing.
+    // Withdraw/Regroup walk the march, Fight/HoldLine duel. Explicit
+    // all-ins bypass the cluster vote the way prey does: a suicide
+    // mission or a yolo charge never walks home on a forecast.
+    // Squads without a posture keep the old consensus gate untouched.
     val advance = unit.squad.flatMap(_.battlePosture) match {
-      case Some(posture) => ClusterPosture.advances(posture)
+      case Some(posture) => ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active
       case None          => combat.fightConsensus && ! unit.intent.marchHome
     }
     if ( ! advance && ! preyDrive) {

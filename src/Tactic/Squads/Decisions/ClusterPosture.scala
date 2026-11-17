@@ -39,10 +39,10 @@ object ClusterPosture {
   /** Leaving Fight takes a clear drop, not the edge itself. */
   val fightHoldDeadband: Double = 0.2
 
-  /** Sim agreement mirrors RegroupLatch: flee below, rejoin above. */
+  /** Sim agreement, asymmetric: flee below, rejoin above. */
   val startWithdrawBelow: Double = 0.35
 
-  /** Sim agreement mirrors RegroupLatch: flee below, rejoin above. */
+  /** Sim agreement, asymmetric: flee below, rejoin above. */
   val stopWithdrawAbove: Double = 0.65
 
   /** Without this much of the squad judged, no forecast flips anything. */

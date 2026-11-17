@@ -72,12 +72,12 @@ Changed seams (thin, game-coupled, reviewed by reading):
 
 | Class | Change |
 |---|---|
-| `Squad.run` / `SquadAttack` | DONE: publishes `(posture, roles)` + `battlePosture` query; `fightConsensus` stays as compat until the stance retires |
+| `Squad.run` / `SquadAttack` | DONE: publishes `(posture, roles)` + `battlePosture` query; `fightConsensus` follows `advances(posture)` (yolo/suicide keep explicit outs) |
 | `MarchOrders` | OPEN (#6): legs read posture + `SlotDiscipline`; fix the lying `ReturningToSlot` label |
 | `CombatEngagement.engage` + `Combat.dispatchByTechnique` | DONE: consume `(posture, advances)`; `syncConsensus` lost the vote; `decideFight` has one writer |
 | `Retreat` maneuver | OPEN: honor the 96-frame floor + rearguard role on Withdraw |
 | `FormationHold` | Keeps today's line-hold semantics under `HoldLine`; the gradual-advance creep is QUEUED (section 5), not this refactor |
-| `RegroupLatch` / `ReengageLatch` | DECIDED: posture latch supersedes `RegroupLatch.stance` (retire after #6); per-unit `ReengageLatch` stays as the duel-level hold |
+| `RegroupLatch` / `ReengageLatch` | DONE: `RegroupLatch.stance` deleted with its suite (VoteConfirmationSuite votes postures now); per-unit `ReengageLatch` stays as the duel-level hold |
 | `FightOrFlee` / `FightRules` | DONE (validating): fallback obeys the posture; `committed` still fires first, so explicit orders bypass the vote by construction |
 
 ## 4. Migration: status and remaining work
@@ -212,8 +212,8 @@ All commits on `f/phase-f`; every one green on the full base suite
 - UMS batch 0/4 exposed the baseless hole (Withdraw on maps with
   nowhere to regroup to); fixed via canWithdraw=false, needs re-run.
 
-OPEN, in order: #6 march legs through SlotDiscipline + honest labels;
-stance retirement (fightConsensus from posture, delete RegroupLatch);
+OPEN, in order: #6 march legs through SlotDiscipline + honest labels
+(landed, validating); stance retirement (landed with #6, validating);
 Retreat floor + rearguard execution; HoldLine creep (queued);
 Withdraw-to-middle-choke anchor (queued); live validation of every
 unproven rule above on raid/PvP/PvT/PvZ games.

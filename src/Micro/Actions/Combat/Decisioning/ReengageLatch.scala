@@ -8,7 +8,7 @@ package Micro.Actions.Combat.Decisioning
  * the unit is clear of the deepest threat range with margin AND the
  * verdict says fight - withdrawing past the guns before turning is the
  * whole point - or the duel is confident enough to turn inside contact
- * anyway. Mirrors the squad-level RegroupLatch deadband at unit scale.
+ * anyway. Mirrors the squad-level posture deadband at unit scale.
  */
 object ReengageLatch {
 
