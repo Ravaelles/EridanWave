@@ -5,10 +5,11 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.Pixel
+import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{MarchDress, MarchFacts, MarchGates, MarchLabel, MarchRetreat, MarchUnit, RetreatAllowed, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.Decisions.{MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -117,10 +118,29 @@ object MarchOrders {
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): (Pixel, MarchLabel) = {
     val suicide = SuicideMission.assign(unit)
     val marchUnit = MarchUnit.read(squad, unit, facts.home)
+    // First verdict reader (step 2): the march ticks the shared bus with
+    // the unified raw inputs and obeys the held verdict instead of
+    // re-deriving retreat. Same vintage as before (shouldFight arrives
+    // from the unit phase); only the inputs unify - a committed hull or
+    // a storm-holding Templar no longer marches home under a technique
+    // that walks or duels beside it.
+    RetreatVerdict.update(
+      unit.id,
+      RetreatVerdict.shouldHold(
+        unit.unitClass.isWarrior,
+        Protoss.Reaver(unit),
+        unit.intent.canFlee,
+        Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit),
+        unit.agent.shouldFight,
+        unit.totalHealth,
+        facts.armyUnitsScore,
+        marchUnit.nearestArmedTiles,
+        facts.proxyRush),
+      With.frame)
+    val verdictRetreat = RetreatVerdict.held(unit.id, With.frame)
     MarchGates.select(facts, marchUnit) match {
       case Some(label) => (squad.vicinity, label)
-      case None if MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight)
-        && RetreatAllowed.forUnit(unit.totalHealth, facts.armyUnitsScore, marchUnit.nearestArmedTiles, facts.proxyRush) =>
+      case None if verdictRetreat =>
         // Retreat outranks every formation rule below: the verdict already
         // sent this hull home, so no gate and no leg gets asked - the line
         // to the Guard slot is the whole order for this frame. A forbidden
