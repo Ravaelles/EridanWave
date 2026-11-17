@@ -55,6 +55,10 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 
 ## Open: air/observer validation
 
+- Corsair dance latch (2026-11-17: dance holds only under spore
+  cover, per-corsair Latch spans the cooldown cycle; needs a live
+  overlord hunt confirming no Hunt/Dance flap).
+
 - Corsair 14-tile flee trigger (shared AirFlee stays 12).
 - Shooting Corsairs hold the spread mid-duel.
 - CorsairHunt march gate (macro corsairs vs Overlords).
