@@ -101,3 +101,15 @@ hold=24: mixed 0, 5 flips, resume 22 frames after the facts clear;
 hold=96: mixed 0, 5 flips, resume 94 frames after. Decision: the
 24-frame unit hold; the 96-frame floor stays at the cluster posture
 layer where it belongs.
+
+## Status (2026-11-17): readers switched, final game pending
+
+Step 2 landed in four slices: shared ticked bus with the calibrated
+24f hold (`RetreatVerdict` memory + `PerGame` sweep), march arm,
+technique arm and dispatch advance all on the bus; `MarchRetreat` +
+suite deleted, `RetreatAllowed` stays as a verdict input.
+`RetreatShadow` and `Technique` probes stay until the final validation
+game measures the migration, then go with it. Engage keeps its own
+marchHome gate as defense in depth; engage() is only reachable through
+the gated dispatch. Abuse-while-held is unreachable (selectBase forces
+Flee before transitions run).

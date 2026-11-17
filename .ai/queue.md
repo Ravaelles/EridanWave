@@ -22,9 +22,11 @@ pointer. Steps, each a green unit on its own:
    shadow posture). No behavior change. Run a game, read the probe.
    (LANDED c44df2aa8: `RetreatVerdict.shouldHold` + `RetreatVerdictSuite`
    + `RetreatShadow` probe in `syncConsensus`; validating in Benzene PvP.)
-2. Switch readers one by one behind the shadow data: march retreat
-   arm, then `selectBaseTechnique` march arm, then the engage
-   `advance` gate, then Abuse/dispatch gates. StarEngine-first per
+2. Switch readers one by one behind the shadow data (LANDED:
+   shared ticked bus with 24f hold + PerGame sweep, march arm,
+   technique arm, dispatch advance; `MarchRetreat` + suite deleted,
+   `RetreatAllowed` stays as verdict input; the hold scenario pins
+   the temporal contract). StarEngine-first per
    owner 2026-11-17: each switch lands behind a scenario pinning the
    temporal guarantee (no mixed frames under jittered inputs, clean
    release when inputs clear) plus the base suite; each step its own
@@ -33,6 +35,9 @@ pointer. Steps, each a green unit on its own:
    the debugging loop.
 3. Delete the old predicates only after step 2 holds a full game
    with zero mixed frames (`scripts/retreat-audit.py`).
+   (`MarchRetreat` + suite deleted with the switches; `RetreatShadow`
+   and `Technique` probes stay until the final game measures the
+   migration, then go.)
 
 Open question the shadow data must answer: is a 24f unit-level hold
 enough, or take the 96-frame cluster floor for the verdict too.
