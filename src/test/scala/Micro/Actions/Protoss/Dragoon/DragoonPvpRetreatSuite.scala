@@ -20,6 +20,12 @@ class DragoonPvpRetreatSuite extends AnyFunSuite {
     assert( ! retreat(usUnits = 20.0, foeUnits = 10.0))
   }
 
+  test("a small line under Dragoon pressure reads twenty percent weaker") {
+    assert(retreat(usUnits = 6.0, foeUnits = 4.0))
+    assert( ! retreat(usUnits = 6.0, foeUnits = 3.0))
+    assert( ! retreat(usUnits = 7.0, foeUnits = 5.0))
+  }
+
   test("only early Protoss mirrors with enemy Dragoons retreat") {
     assert( ! retreat(isDragoon = false))
     assert( ! retreat(enemyIsProtoss = false))

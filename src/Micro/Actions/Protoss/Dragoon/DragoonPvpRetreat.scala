@@ -1,6 +1,6 @@
 package Micro.Actions.Protoss.Dragoon
 
-import Information.Battles.ArmyStrength
+import Information.Battles.{ApplyEarlyGamePressurePenalty, ArmyStrength}
 
 /**
  * Early PvP retreat (pure numbers, no game access): an attacking handful
@@ -27,5 +27,7 @@ object DragoonPvpRetreat {
       oursDragoons < maxDragoons &&
       enemyHasDragoons &&
       foeUnits > 0 &&
-      ArmyStrength.units(usUnits, foeUnits) < ArmyStrength.retreatBelowUnits
+      ArmyStrength.units(
+        ApplyEarlyGamePressurePenalty.adjust(usUnits, usUnits.toInt, enemyIsProtoss, enemyHasDragoons),
+        foeUnits) < ArmyStrength.retreatBelowUnits
 }

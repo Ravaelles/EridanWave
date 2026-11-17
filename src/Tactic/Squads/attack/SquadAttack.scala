@@ -1,13 +1,14 @@
 package Tactic.Squads.attack
 
 import Debugging.Probe
-import Information.Battles.ArmyStrength
-import Lifecycle.With
+import Information.Battles.{ApplyEarlyGamePressurePenalty, ArmyStrength}
+import Lifecycle.{Enemy, With}
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.{Pixel, Points, Tile}
 import Mathematics.Shapes.Spiral
 import Performance.Cache
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import ProxyBwapi.UnitTracking.UnorderedBuffer
 import Tactic.Squads.Decisions.AttackModes._
@@ -329,7 +330,11 @@ class SquadAttack extends Squad {
     } else if (
       units.count(_.unitClass.isWarrior) >= ArmyStrength.retreatMinWarriors &&
       ArmyStrength.retreating(
-        With.battles.globalAttack.us.skimStrengthTotal,
+        ApplyEarlyGamePressurePenalty.adjust(
+          With.battles.globalAttack.us.skimStrengthTotal,
+          units.count(_.unitClass.isWarrior),
+          Enemy.protoss(),
+          With.units.enemy.exists(e => e.alive && Protoss.Dragoon(e))),
         With.battles.globalAttack.enemy.skimStrengthTotal)) {
       // A bad score proposes Retreat, never orders it: near parity the
       // score flickers every frame, and each flip swings every terminus
