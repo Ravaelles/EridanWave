@@ -20,6 +20,8 @@ pointer. Steps, each a green unit on its own:
 1. Shadow: compute the verdict alongside the current code, probe only
    the disagreements vs today's decisions (same pattern as the old
    shadow posture). No behavior change. Run a game, read the probe.
+   (LANDED c44df2aa8: `RetreatVerdict.shouldHold` + `RetreatVerdictSuite`
+   + `RetreatShadow` probe in `syncConsensus`; validating in Benzene PvP.)
 2. Switch readers one by one behind the shadow data: march retreat
    arm, then `selectBaseTechnique` march arm, then the engage
    `advance` gate, then Abuse/dispatch gates. Each step its own

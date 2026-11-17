@@ -1,10 +1,9 @@
 # Unified retreat verdict (deferred rewrite)
 
 Tracked in: `.ai/queue.md` (last section, "Unified retreat verdict (deferred)").
-Status: NOT STARTED - deliberate decision, do not implement without
-re-reading this file and confirming with the owner. Per-site fixes
-continue in the meantime; each closes one pair of disagreeing readers
-(see Evidence).
+Status: STEP 1 LANDED (c44df2aa8) - shadow kernel + suite + probe live,
+validating in game; no reader switched yet, no behavior change. Do not
+start step 2 without reading the shadow data with the owner.
 
 ## Problem
 
