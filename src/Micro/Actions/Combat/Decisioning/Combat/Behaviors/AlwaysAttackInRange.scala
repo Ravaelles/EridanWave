@@ -27,7 +27,14 @@ object AlwaysAttackInRange {
         unit.inRangeToAttack(t),
         Zerg.Scourge(t),
         unit.isOtherUnitFacingUs(t),
-        unit.pixelsToGetInRange(t) * Maff.inv32)).toVector
+        unit.pixelsToGetInRange(t) * Maff.inv32))
+      // Dark Templars duel on terms: a nearly-ready gun, and room to
+      // stand for ranged hulls - planting feet on top of the swipe
+      // trades the volley for DT hits. Melee answers whenever warm.
+      .filterNot(t => Protoss.DarkTemplar(t) && ! CrucialAirSnipe.duelsDarkTemplar(
+        unit.cooldownLeft,
+        unit.unitClass.melee,
+        unit.pixelDistanceEdge(t) * Maff.inv32)).toVector
     if (victims.isEmpty) return false
 
     val marks = victims.map(t => Mark(

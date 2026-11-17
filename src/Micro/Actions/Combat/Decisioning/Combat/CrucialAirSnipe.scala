@@ -40,6 +40,20 @@ object CrucialAirSnipe {
   val scourgeReachBonusTiles: Double = 1.5
 
   /**
+   * Dark Templar duel terms, in frames and tiles: answer the swipe only
+   * with a nearly-ready gun, and as a ranged hull only with room to
+   * spare - planting feet inside 2.6 tiles trades the volley for DT
+   * swipes on the stop-fire frames. Melee hulls have no kite to protect,
+   * so they answer whenever the gun is warm.
+   */
+  val dtCooldownFrames: Int = 4
+
+  val dtRangedStandTiles: Double = 2.6
+
+  def duelsDarkTemplar(cooldownLeft: Int, melee: Boolean, distTiles: Double): Boolean =
+    cooldownLeft <= dtCooldownFrames && (melee || distTiles >= dtRangedStandTiles)
+
+  /**
    * Snipe reach (pure flags for the suite): in range always counts; past
    * the range an incoming Scourge still counts inside the bonus, a
    * leaving one never does, and capitals never get the bonus.

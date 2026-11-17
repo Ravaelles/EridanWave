@@ -59,6 +59,15 @@ class CrucialAirSnipeSuite extends AnyFunSuite {
     assert( ! CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = true, beyondTiles = 1.51))
   }
 
+  test("a Dark Templar is dueled on terms: warm gun, room for ranged hulls") {
+    assert(CrucialAirSnipe.duelsDarkTemplar(cooldownLeft = 0, melee = false, distTiles = 2.6))
+    assert(CrucialAirSnipe.duelsDarkTemplar(cooldownLeft = 4, melee = false, distTiles = 10.0))
+    assert(CrucialAirSnipe.duelsDarkTemplar(cooldownLeft = 4, melee = true, distTiles = 0.5))
+    assert( ! CrucialAirSnipe.duelsDarkTemplar(cooldownLeft = 5, melee = false, distTiles = 10.0))
+    assert( ! CrucialAirSnipe.duelsDarkTemplar(cooldownLeft = 5, melee = true, distTiles = 0.5))
+    assert( ! CrucialAirSnipe.duelsDarkTemplar(cooldownLeft = 0, melee = false, distTiles = 2.59))
+  }
+
   test("the snipe covers every grounded anti-air warrior") {
     testkit.TestKit.seedWorld()
     val covered = ProxyBwapi.UnitClasses.UnitClasses.all
