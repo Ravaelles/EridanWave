@@ -113,3 +113,17 @@ game measures the migration, then go with it. Engage keeps its own
 marchHome gate as defense in depth; engage() is only reachable through
 the gated dispatch. Abuse-while-held is unreachable (selectBase forces
 Flee before transitions run).
+
+## Step 4 (agreed, starts after steps 1-3 close): order as pipeline
+
+Owner direction 2026-11-17: every dispatch chain becomes one explicit
+list of behavior classes in one place - pipeline style, reorder by
+moving a line, disable by commenting one out. One canonical place to
+start every future order question instead of ten scattered ladders.
+Each behavior declares its band (typed High/Medium/Low + named slots);
+each chain exposes its order as data; an order suite pins the exact
+sequence per chain (`MarchGateOrderSuite` is the precedent). This
+generalizes what the verdict bus did for one question (retreat
+outranks duel) to every arbitration question. Chains one by one:
+dispatchByTechnique, dispatchEngage, march legs; `Fight.perform`
+stays grandfathered.

@@ -43,6 +43,20 @@ pointer. Steps, each a green unit on its own:
    pending to confirm zero mixed frames, then probes go and the
    migration closes.
 
+4. Dispatch order as pipeline registries (agreed 2026-11-17, starts
+   after steps 1-3 close). Every dispatch chain becomes one explicit
+   list of behavior classes in one place - reorder by moving a line,
+   disable by commenting it out. Each behavior declares its band
+   (typed: High/Medium/Low plus named slots where needed); each chain
+   exposes its order as data; an order suite pins the exact sequence
+   per chain (precedent: `MarchGateOrderSuite`). A new behavior means
+   a registry entry plus a suite update - red until placed, so order
+   is always an explicit, reviewable decision. Chains, one by one:
+   `dispatchByTechnique`, `dispatchEngage`, march legs (`MarchGates`
+   already table-driven - align it); `Fight.perform` (`Be*` list)
+   stays grandfathered. Full write-up goes to `.ai/retreat-verdict.md`
+   (or a dispatch-order doc) when the step starts.
+
 Open question the shadow data must answer: is a 24f unit-level hold
 enough, or take the 96-frame cluster floor for the verdict too.
 Answer it in StarEngine, not in games: a hold-calibration scenario
