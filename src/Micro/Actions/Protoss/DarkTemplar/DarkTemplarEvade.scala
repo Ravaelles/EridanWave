@@ -23,6 +23,17 @@ object DarkTemplarEvade {
    */
   val holdVsDetectorTiles: Double = 10.0
 
+  /**
+    * Revealed withdraw (pure flags for the suite): the tile sits under
+    * enemy detection, or shots have already landed - either way the hide
+    * is blown, whether the eyes are seen or not. An Observer outranges
+    * the Templar by two tiles, so waiting to see the detector means
+    * standing revealed under closing guns; withdrawing on the tile flag
+    * instead keeps the decision on ground truth, not on eyesight.
+    */
+  def shouldWithdrawRevealed(enemyDetected: Boolean, underAttack: Boolean): Boolean =
+    enemyDetected || underAttack
+
   /** Hold-the-hide band beyond a ranged threat's own reach, in tiles. */
   val hideBandTiles: Double = 2.0
 

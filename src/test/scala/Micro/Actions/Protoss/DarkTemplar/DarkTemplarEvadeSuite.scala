@@ -39,6 +39,13 @@ class DarkTemplarEvadeSuite extends AnyFunSuite {
     assert( ! DarkTemplarEvade.shouldFleeAttacker(distTiles = 13.01))
   }
 
+  test("a revealed or shot Templar withdraws, a hidden one hunts on") {
+    assert(DarkTemplarEvade.shouldWithdrawRevealed(enemyDetected = true, underAttack = false))
+    assert(DarkTemplarEvade.shouldWithdrawRevealed(enemyDetected = false, underAttack = true))
+    assert(DarkTemplarEvade.shouldWithdrawRevealed(enemyDetected = true, underAttack = true))
+    assert( ! DarkTemplarEvade.shouldWithdrawRevealed(enemyDetected = false, underAttack = false))
+  }
+
   test("the latch enters sharp and releases past the margin") {
     DarkTemplarEvade.reset()
     val sight = 256.0

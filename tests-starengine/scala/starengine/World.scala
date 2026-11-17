@@ -61,6 +61,27 @@ final class World(
     if (live.isEmpty) None else Some(live.minBy(me.dist))
   }
 
+  /**
+   * Ground-truth detection (mirrors tile.enemyDetected, not knowledge):
+   * live foe detectors whose sight reaches the body. Pilots use this
+   * ONLY for the revealed flag - hunting and evading steer on what the
+   * body itself sees, which is exactly the gap the sight-disadvantage
+   * scenarios isolate (an Observer outranges the Templar, so the tile
+   * burns before the eye is known).
+   */
+  def detectorsRevealing(me: Body): Seq[Body] = {
+    val foesOf = if (ours.contains(me)) foes else ours
+    foesOf.filter(f => f.alive && f.kind.isDetector && me.dist(f) < f.kind.sightPixels)
+  }
+
+  /**
+   * Under-attack flag (mirrors isUnderAttack, windowed): true while
+   * damage landed within the sticky window - BWAPI's flag outlives the
+   * exact damage frame too, so a single pooled window stands in for it.
+   */
+  def underAttack(me: Body): Boolean =
+    me.lastDamageFrame >= 0 && frame - me.lastDamageFrame <= World.UnderAttackWindowFrames
+
   /** Cargo slots taken aboard a transport, in BW slots. */
   def cargoSpaceUsed(transport: Body): Int =
     (ours ++ foes).view.filter(b => b.alive && b.transport.contains(transport)).map(_.kind.spaceRequired).sum
@@ -208,12 +229,17 @@ final class World(
         // The chase target is the committed pick (mirrors toAttack): shoot
         // it while it holds, otherwise fall back to the nearest hittable.
         // Loaded bodies are not on the field: neither committed nor found.
+        // Cloaked bodies are not on the field either without detection
+        // (mirrors cloak + detector coverage): guns skip them unless a
+        // live foe detector's sight reaches them. Nothing is cloaked by
+        // default, so scenarios without the concept read exactly as before.
         val committed = orders.get(body).collect {
-          case Chase(target) if target.alive && target.transport.isEmpty && body.canHit(target) && body.dist(target) <= body.rangeAgainst(target) => target
+          case Chase(target) if target.alive && target.transport.isEmpty && body.canHit(target) && body.dist(target) <= body.rangeAgainst(target) && ( ! target.cloaked || detectorsRevealing(target).nonEmpty) => target
         }
-        val victim = committed.orElse(nearestFoeOf(body, victims, (me, foe) => me.canHit(foe) && me.dist(foe) <= me.rangeAgainst(foe)))
+        val victim = committed.orElse(nearestFoeOf(body, victims, (me, foe) => me.canHit(foe) && me.dist(foe) <= me.rangeAgainst(foe) && ( ! foe.cloaked || detectorsRevealing(foe).nonEmpty)))
         victim.foreach(v => {
           v.hp = Math.max(0, v.hp - body.damageAgainst(v))
+          v.lastDamageFrame = frame
           // Radial splash approximation (no divisors, no scarab flight):
           // the primary takes the full shot, every other live enemy in
           // the outer radius takes half. Scarabs are enemy-splash, so
@@ -221,6 +247,7 @@ final class World(
           if (body.splashOuterPx > 0) {
             victims.filter(o => o.alive && o.transport.isEmpty && (o ne v) && o.dist(v) <= body.splashOuterPx).foreach(o => {
               o.hp = Math.max(0, o.hp - body.damageAgainst(o) / 2)
+              o.lastDamageFrame = frame
             })
           }
           body.cooldownLeft = body.cooldownAgainst(v)
@@ -254,4 +281,13 @@ object World {
    * radius the shipped reboard rule quotes.
    */
   val BoardRangePx: Double = 32.0
+
+  /**
+   * Sticky under-attack window, in frames: damage inside the window
+   * reads as under attack, the stand-in for BWAPI's isUnderAttack flag
+   * outliving the exact damage frame. Short enough that a duel gone
+   * quiet re-arms the hunt, long enough to bridge one cooldown between
+   * volleys so incoming fire keeps the withdraw standing.
+   */
+  val UnderAttackWindowFrames: Int = 12
 }

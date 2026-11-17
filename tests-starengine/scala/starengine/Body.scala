@@ -17,6 +17,14 @@ final class Body(val kind: UnitClass, var x: Double, var y: Double, var hp: Doub
 
   var cooldownLeft: Int = 0
 
+  /**
+   * Last frame this body took damage (-1 when never hit): the engine
+   * stamps it in the gun phase, pilots read it through World's
+   * underAttack query - the stand-in for BWAPI's sticky isUnderAttack
+   * flag, which outlives the exact damage frame too.
+   */
+  var lastDamageFrame: Int = -1
+
   /** Spell energy (High Templars start scenarios charged, everyone else at zero). */
   var energy: Int = 0
 
@@ -26,6 +34,14 @@ final class Body(val kind: UnitClass, var x: Double, var y: Double, var hp: Doub
    * and count as targets.
    */
   var passive: Boolean = false
+
+  /**
+   * Cloaked hulls cannot be shot without detection (mirrors cloak plus
+   * detector coverage): guns skip them unless a live foe detector's
+   * sight reaches them (see World's detectorsRevealing). Off by default,
+   * so scenarios without the concept behave exactly as before.
+   */
+  var cloaked: Boolean = false
 
   /**
    * Transport carrying this body (loaded cargo rides, never shoots and

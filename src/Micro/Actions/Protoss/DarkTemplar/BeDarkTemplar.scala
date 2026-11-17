@@ -33,6 +33,14 @@ object BeDarkTemplar extends Action {
     // touches the Templar, no re-attack - run first, hunt later.
     if (revealedHide(unit)) return
 
+    // Revealed is revealed: the tile sits under enemy detection, or
+    // shots have landed - the hide is blown whether the eyes are seen
+    // or not (an Observer outranges the Templar, so the detector arm
+    // above never fires on an unseen eye). Flee the fix if there is
+    // one, else fall back to safety - standing revealed is how
+    // Templars die. The hide above owns close guns; this owns the rest.
+    if (revealedWithdraw(unit)) return
+
     snipeSpiders(unit)
 
     // Minefield sidestep: known mines (seen or remembered) bend the
@@ -98,6 +106,27 @@ object BeDarkTemplar extends Action {
       // No re-attack while hiding: the guns that just found the Templar
       // outrange patience, so the slot stays empty until the band clears.
       fleeAway(unit, threat.pixel, "DarkTemplarHide"))
+  }
+
+  private def revealedWithdraw(unit: FriendlyUnitInfo): Boolean = {
+    if ( ! DarkTemplarEvade.shouldWithdrawRevealed(unit.tile.enemyDetected, unit.underAttack)) return false
+    // The eyes that burn, nearest first: a remembered fix is enough to
+    // run from - the evade band already held the approach loop, this
+    // only picks the direction.
+    Maff.minBy(unit.matchups.groupVs.detectors.filter(d =>
+      d.likelyStillThere && ! Terran.SpiderMine(d)))(
+      unit.pixelDistanceEdge(_)) match {
+      case Some(detector) => fleeAway(unit, detector.pixel, "DarkTemplarReveal")
+      case None =>
+        // No fix at all: revealed by unseen eyes or shot from the fog.
+        // Fall back to safety instead of holding revealed ground.
+        unit.agent.toAttack = None
+        unit.agent.act("DarkTemplarReveal")
+        val safety = unit.agent.safety
+        unit.agent.forceTo(?(safety.walkable, safety, safety.walkablePixel))
+        Commander.move(unit)
+        true
+    }
   }
 
   private def mineSidestep(unit: FriendlyUnitInfo): Boolean = {
