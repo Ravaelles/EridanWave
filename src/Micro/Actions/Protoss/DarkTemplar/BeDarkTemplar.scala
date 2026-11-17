@@ -6,6 +6,7 @@ import Micro.Actions.Action
 import Micro.Agency.Commander
 import Micro.Targeting.DarkTemplarTargets
 import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Time.Minutes
 import Utilities.?
@@ -214,9 +215,13 @@ object BeDarkTemplar extends Action {
     // Covered contacts are skipped: a target standing under a likely
     // detector re-arms the evade on arrival, so the hunt holds instead
     // of feeding the approach/evade loop the latch just broke.
+    // No duel without a local edge: a lone hull walking into a pack that
+    // outguns it dies unconnected, so each pick's local pack must lose
+    // the power comparison first. An unseen Templar answers everything.
     val open = unit.matchups.targets.filter(t =>
       t.visible && unit.canAttack(t) && DarkTemplarTargets.isPrey(t.unitClass) && ! coveredByDetector(unit, t))
-    val close = open.filter(t =>
+    val brave = open.filter(t => packDuelWorthIt(unit, t, open))
+    val close = brave.filter(t =>
       unit.tileDistanceEdge(t) <= DarkTemplarTargets.closeTiles).toVector
     if (unit.cooldownLeft <= 0 && close.nonEmpty) {
       val marks = close.map(t => DarkTemplarTargets.Mark(
@@ -226,9 +231,30 @@ object BeDarkTemplar extends Action {
         t.unitClass.isWarrior))
       DarkTemplarTargets.pick(marks).map(close)
     } else {
-      Maff.minBy(open)(_.pixelDistanceEdge(unit))
+      Maff.minBy(brave)(_.pixelDistanceEdge(unit))
     }
   }
+
+  /**
+   * Duel the pack around this pick (thin game seam over the bravery
+   * kernel): my hull plus nearby warrior friends vs the local guns.
+   * Armor reads at class level - wounds and numbers move the sums, not
+   * the per-shot price. Cloaked means unanswerable, so the incoming
+   * side reads zero and the duel is free.
+   */
+  private def packDuelWorthIt(unit: FriendlyUnitInfo, pick: UnitInfo, candidates: Seq[UnitInfo]): Boolean = {
+    val pack = candidates.filter(c => pick.pixelDistanceEdge(c) * Maff.inv32 <= DarkTemplarBravery.packTiles)
+    val ourDps = groundDps(unit.unitClass) + unit.squad.toSeq.flatMap(_.units)
+      .filter(u => u != unit && u.alive && u.unitClass.isWarrior && pick.pixelDistanceEdge(u) * Maff.inv32 <= DarkTemplarBravery.packTiles)
+      .map(u => groundDps(u.unitClass)).sum
+    val foeDps = ?(unit.effectivelyCloaked, 0.0, pack.map(f => groundDps(f.unitClass)).sum)
+    DarkTemplarBravery.shouldDuel(
+      unit.totalHealth, ourDps,
+      pack.map(_.totalHealth).sum, foeDps)
+  }
+
+  private def groundDps(unitClass: UnitClass): Double =
+    unitClass.effectiveGroundDamage.toDouble / unitClass.groundDamageCooldown.max(1)
 
   private def coveredByDetector(unit: FriendlyUnitInfo, target: UnitInfo): Boolean =
     DarkTemplarEvade.underDetection(
