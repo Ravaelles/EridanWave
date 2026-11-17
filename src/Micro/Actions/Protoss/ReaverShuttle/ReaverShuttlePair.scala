@@ -73,9 +73,8 @@ object ReaverShuttlePair {
   val escortReleaseTiles: Double = mateEscortTiles + 2.0
 
   private val escorting = new Latch
-  private val raiding = new Latch
 
-  def reset(): Unit = { escorting.reset(); raiding.reset() }
+  def reset(): Unit = { escorting.reset(); PairRaidStatus.reset() }
 
   /**
    * Latched escort hold: fires sharp inside escort range, releases past
@@ -149,13 +148,8 @@ object ReaverShuttlePair {
    * assignment instead - start raiding past the return line, stop below
    * the retreat line, hold steady inside.
    */
-  private def latchedStatus(unitId: Int, isOldestReaver: Boolean, ownHealth01: Double, mateHealth01: Double): ReaverShuttleStatus.PairStatus = {
-    val raid = raiding(
-      unitId,
-      fires    = ReaverShuttleStatus.shouldRaid(isOldestReaver, ownHealth01, mateHealth01),
-      releases = ReaverShuttleStatus.shouldSupport(isOldestReaver, ownHealth01, mateHealth01))
-    status(if (raid) ReaverShuttleStatus.RaidBase else ReaverShuttleStatus.SupportArmy)
-  }
+  private def latchedStatus(unitId: Int, isOldestReaver: Boolean, ownHealth01: Double, mateHealth01: Double): ReaverShuttleStatus.PairStatus =
+    status(PairRaidStatus.update(unitId, isOldestReaver, ownHealth01, mateHealth01))
 
   /** The army to follow: the attack squad's goal, or home. */
   def armyGoal: Pixel =
