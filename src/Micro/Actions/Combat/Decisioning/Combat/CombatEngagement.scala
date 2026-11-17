@@ -100,8 +100,13 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // all-ins bypass the cluster vote the way prey does: a suicide
     // mission or a yolo charge never walks home on a forecast.
     // Squads without a posture keep the old consensus gate untouched.
+    // A unit the march sent home does not duel on the way out even
+    // when the cluster advances: its destination is home, the
+    // rearguard and the Retreat maneuver above already spoke for it,
+    // and dispatching it back into the fight is exactly the mixed
+    // frame the retreat discipline exists to kill.
     val advance = unit.squad.flatMap(_.battlePosture) match {
-      case Some(posture) => ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active
+      case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active) && ! unit.intent.marchHome
       case None          => combat.fightConsensus && ! unit.intent.marchHome
     }
     if ( ! advance && ! preyDrive) {
