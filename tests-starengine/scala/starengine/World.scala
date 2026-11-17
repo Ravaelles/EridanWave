@@ -32,6 +32,44 @@ final class World(
   /** Storms cast per body, in order. */
   val stormsCast = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
 
+  /**
+   * Blocked rectangles, in pixels (x1, y1, x2, y2, any corner order):
+   * unwalkable ground - seals, walls, map edges the scenario models.
+   * Empty by default, so scenarios without terrain read exactly as before.
+   */
+  var blockedRects: Seq[(Double, Double, Double, Double)] = Seq.empty
+
+  /**
+   * Straight-line ground path (mirrors groundPathExists, approximated):
+   * true unless the segment crosses a blocked rect. The engine walks
+   * straight lines, so a blocked segment reads as no path - no
+   * triangulation is modeled, and scenarios document the rects they assume.
+   */
+  def groundPathExists(ax: Double, ay: Double, bx: Double, by: Double): Boolean =
+    blockedRects.forall { case (x1, y1, x2, y2) => ! segmentHitsRect(ax, ay, bx, by, x1, y1, x2, y2) }
+
+  private def segmentHitsRect(
+    ax: Double, ay: Double, bx: Double, by: Double,
+    x1: Double, y1: Double, x2: Double, y2: Double): Boolean = {
+    val (lox, hix) = if (x1 < x2) (x1, x2) else (x2, x1)
+    val (loy, hiy) = if (y1 < y2) (y1, y2) else (y2, y1)
+    // Endpoint inside reads as blocked: sealed in means reforming inside.
+    if (ax >= lox && ax <= hix && ay >= loy && ay <= hiy) return true
+    if (bx >= lox && bx <= hix && by >= loy && by <= hiy) return true
+    def cross(px: Double, py: Double, qx: Double, qy: Double, rx: Double, ry: Double): Double =
+      (qx - px) * (ry - py) - (qy - py) * (rx - px)
+    val edges = Seq(
+      (lox, loy, hix, loy), (hix, loy, hix, hiy),
+      (hix, hiy, lox, hiy), (lox, hiy, lox, loy))
+    edges.exists { case (ex1, ey1, ex2, ey2) =>
+      val d1 = cross(ex1, ey1, ex2, ey2, ax, ay)
+      val d2 = cross(ex1, ey1, ex2, ey2, bx, by)
+      val d3 = cross(ax, ay, bx, by, ex1, ey1)
+      val d4 = cross(ax, ay, bx, by, ex2, ey2)
+      ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
+    }
+  }
+
   /** Attack lock, in frames: a body that just dealt damage holds still (no re-aiming mid-swing). */
   val attackLock = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
 

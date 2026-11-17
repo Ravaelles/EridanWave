@@ -1,5 +1,6 @@
 package Tactic.Squads
 
+import Information.Geography.Chokes
 import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
@@ -7,7 +8,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{DragoonRoaming, LoneMarch, MainMarch, MarchDress, MarchRetreat, NoTankMarch, SlotDiscipline, SquadRally, StrongMarch, SuicideMission, ToothlessMarch}
+import Tactic.Squads.Decisions.{DragoonRoaming, LoneMarch, MainMarch, MarchDress, MarchRetreat, NoTankMarch, SlotDiscipline, SquadRally, StrongMarch, SuicideMission, ToothlessMarch, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -349,7 +350,21 @@ object MarchOrders {
     .filter(_.placements.contains(unit))
     .map(_.placements(unit))
     .orElse(defaultReturn)
-    .getOrElse(squad.homeConsensus)
+    // No slot and no override: the middle choke anchors the withdrawal
+    // instead of bleeding home through the open map - the choke narrows
+    // what can chase, and the march back out is short. Home when the
+    // choke is unknown or the ground path there does not exist.
+    .getOrElse(withdrawAnchor(unit, squad))
+
+  private def withdrawAnchor(unit: FriendlyUnitInfo, squad: Squad): Pixel = {
+    val home = squad.homeConsensus
+    val choke = Chokes.middleChoke.map(_.pixelCenter)
+    val (ax, ay) = WithdrawAnchor.anchor(
+      home.x.toDouble, home.y.toDouble,
+      choke.map(c => (c.x.toDouble, c.y.toDouble)),
+      choke.exists(c => With.paths.groundPathExists(unit.tile, c.tile)))
+    new Pixel(ax.toInt, ay.toInt).walkablePixel
+  }
 
   def getTravel(unit: FriendlyUnitInfo, squad: Squad, defaultReturn: Option[Pixel] = None): Pixel =
     ?(squad.hasGround, None, Some(squad.vicinity))

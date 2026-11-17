@@ -6,6 +6,7 @@ import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
+import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineCreepBehavior
 import Micro.Actions.Protoss.Zealot.ZealotLeash
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
@@ -165,7 +166,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
-      } else if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit)) RepositionBehavior.run(unit, combat)
+      } else if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineCreepBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
   }
 
   // Formation resolution: break for the attack once no formation exists,
