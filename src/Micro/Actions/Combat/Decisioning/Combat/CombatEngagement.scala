@@ -158,11 +158,15 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // beats repositioning, and the hold/approach/kite trio runs before the
     // raw charge. Never reorder without reading every leg - the push
     // claim, the volley gate and the chase override each read the same
-    // target, and the first match owns the frame.
+    // target, and the first match owns the frame. No closing or charging
+    // while retreating: the march goes home and the technique walks away,
+    // so approaching the guns (or charging them outright) is exactly the
+    // flap. KiteAway keeps its fighting withdrawal and TankHug keeps its
+    // own tank logic - only the closing leg and the raw charge yield.
     if (combat.pushThrough) PushBehavior.run(unit, combat)
       else if (combat.techniqueIs(Scavenge)) ScavengeBehavior.run(unit, combat)
       else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {
-        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! ApproachBehavior.run(unit, combat)) {
+        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! combat.shouldRetreat && ! ApproachBehavior.run(unit, combat)) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
