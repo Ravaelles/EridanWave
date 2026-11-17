@@ -96,7 +96,10 @@ object MarchOrders {
       // reads agree within a frame, but the verdict can change hands
       // between the phases (re-squadding, HuntContact mode), and one
       // overwrite frame is enough to feed a charge into a retreat.
-      .setMarchHome( ! marching)
+      // Retreating counts as marching home even when the consensus
+      // marches on: the label already says home, so the flag must agree
+      // with it instead of opening the duel dispatch behind its back.
+      .setMarchHome( ! marching || marchLabel == MarchLabel.Retreating)
   }
 
   // The march rules, innermost first: rallying stragglers beat slots,
