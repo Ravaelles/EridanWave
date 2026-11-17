@@ -38,6 +38,21 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         unit.confidence11))                                         Flee
       else  if (unit.agent.shouldFight && combat.target.isDefined)   Fight
       else  if (safePassage && combat.target.exists(unit.inRangeToAttack)) Fight
+      // March verdict owns the duel: a warrior the retreat sent home
+      // flees instead of strolling through safe passage, so the two
+      // phases can never claim opposite frames. Storm-ready Templars
+      // keep their deliberate cast-hold below; defenders that may not
+      // flee hold their ground; Reavers keep their own brain; forbidden
+      // retreats fall through like the march does, so the line advances
+      // as one.
+      else  if (unit.intent.canFlee && Tactic.Squads.Decisions.MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight) && ! (Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit)) && Tactic.Squads.Decisions.RetreatAllowed.forUnit(
+        unit.totalHealth,
+        Information.Battles.ArmyStrength.score(
+          With.battles.globalAttack.us.skimStrengthUnits,
+          With.battles.globalAttack.enemy.skimStrengthUnits),
+        Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
+          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+        With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax())) Flee
       else  if (safePassage)                                        Walk
       // Templar storm stand: a loaded hull walks into cast range instead
       // of retreating out of it - the cast itself already fired first in
@@ -52,12 +67,6 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
           .map(unit.pixelDistanceEdge(_) * Maff.inv32)
           .getOrElse(Double.PositiveInfinity),
         unit.squad.exists(_.fightConsensus)))                       Fight
-      // March verdict owns the duel: a warrior the retreat sent home
-      // retreats here too, on the same predicate the march reads, so the
-      // two phases can never claim opposite frames. (Storm stand above
-      // keeps its deliberate cast-hold; defenders that may not flee hold
-      // their ground; Reavers keep their own brain.)
-      else  if (unit.intent.canFlee && Tactic.Squads.Decisions.MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight)) Flee
       else  if ( ! unit.intent.canFlee)                             Walk
       else                                                          Flee
   }
