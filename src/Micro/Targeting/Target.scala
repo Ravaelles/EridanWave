@@ -178,8 +178,33 @@ object Target {
       if (output.isDefined) return output
     }
 
-    bestInStratum(attacker, matchups, allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+    // Remembered-base fallback: the live sources above are assigned
+    // targets plus zone-scoped matchups, so a tracked base across a
+    // choke is in neither and the line dresses instead of shooting.
+    // AliveEnemies is the global registry (BeMutalisk already hunts
+    // off it); the recall horizon keeps the fallback local - a fogged
+    // contact never outranks a live one (releaseStaleTarget drops the
+    // memory the moment anything hittable shows, and every live stratum
+    // above already spoke), and past the horizon the march owns movement,
+    // never the duel.
+    output = bestInStratum(attacker, matchups, allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
+    if (output.isDefined) return output
+
+    bestInStratum(attacker, rememberedNear(attacker), allFilters, rankByScore = true, requireCombatPriority = false, requireInRange = false, requireAcceleratesDemise = false)
   }
+
+  /**
+   * Tracked enemies the live sources miss, inside the recall horizon:
+   * alive, non-chaff, believed-present, hittable, close. Same registry
+   * BeMutalisk hunts off, minus the horizon the duel must not cross.
+   */
+  private def rememberedNear(attacker: FriendlyUnitInfo): Seq[UnitInfo] =
+    With.units.enemy.view.filter(e =>
+      e.alive
+      && ! TargetChaff.isChaff(e.unitClass)
+      && e.likelyStillThere
+      && attacker.canAttack(e)
+      && TargetRecall.shouldRecall(attacker.tileDistanceEdge(e))).toSeq
 
   // Assigned-before-matchups sweep for one predicate: the ladder's atom.
   // Every doctrine above walks the same two sources in the same order;
