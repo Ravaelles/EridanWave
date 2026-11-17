@@ -87,7 +87,7 @@ object BeReaver extends Action {
 
   /** Combat family, in order; the arbiter gates it behind the fight. */
   private val combatClaims: Seq[GroundContext => Boolean] = Seq(
-    backOffOutrangedStatic, standShoot, closeStatic, backOffOutrangedInRange)
+    backOffOutrangedStatic, coolWalk, standShoot, closeStatic, backOffOutrangedInRange)
 
   /** Walk to the ride instead of waiting for it: the anti-paralysis leg. */
   private def walkToRide(unit: FriendlyUnitInfo): Boolean = {
@@ -193,6 +193,28 @@ object BeReaver extends Action {
 
     context.unit.agent.act("StandShoot")
     Commander.hold(context.unit)
+
+    true
+  }
+
+  /**
+   * Cooling walk: a hull with the shot still minutes out does not stand
+   * under closing guns for it - it backs off the nearest mobile threat
+   * instead, and the next volley lands from safety. Statics keep their
+   * own game (keep-off above, close/back-off below); this is only the
+   * cooling duel vs walkers.
+   */
+  private def coolWalk(context: GroundContext): Boolean = {
+    val unit = context.unit
+    val threat = Maff.minBy(unit.matchups.threats.view.filter(t =>
+      ! t.unitClass.isStaticDefense && t.canAttack(unit)))(unit.pixelDistanceEdge(_))
+    if ( ! threat.exists(t => ReaverCoolWalk.shouldWalk(unit.cooldownLeft, unit.pixelDistanceEdge(t) * Maff.inv32))) return false
+
+    threat.foreach(t => {
+      unit.agent.act("CoolWalk")
+      unit.agent.forceTo(unit.pixel.project(t.pixel, -4.0 * 32.0).walkablePixel)
+      Commander.move(unit)
+    })
 
     true
   }
