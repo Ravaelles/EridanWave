@@ -73,8 +73,9 @@ object ReaverShuttlePair {
   val escortReleaseTiles: Double = mateEscortTiles + 2.0
 
   private val escorting = new Latch
+  private val raiding = new Latch
 
-  def reset(): Unit = { escorting.reset() }
+  def reset(): Unit = { escorting.reset(); raiding.reset() }
 
   /**
    * Latched escort hold: fires sharp inside escort range, releases past
@@ -124,19 +125,36 @@ object ReaverShuttlePair {
   /** Shared status for the Shuttle's pair (empty ride supports the army). */
   def statusOfShuttle(shuttle: FriendlyUnitInfo): ReaverShuttleStatus.PairStatus = {
     val passenger = passengerOf(shuttle)
-    status(ReaverShuttleStatus.decide(
+    latchedStatus(
+      shuttle.id,
       isOldestReaver  = passenger.exists(isOldest),
-      shuttleHealth01 = health01(shuttle),
-      reaverHealth01  = passenger.map(health01).getOrElse(1.0)))
+      ownHealth01     = health01(shuttle),
+      mateHealth01    = passenger.map(health01).getOrElse(1.0))
   }
 
   /** Shared status for the Reaver's pair (no ride supports the army). */
   def statusOfReaver(reaver: FriendlyUnitInfo): ReaverShuttleStatus.PairStatus = {
     val ride = rideOf(reaver)
-    status(ReaverShuttleStatus.decide(
+    latchedStatus(
+      reaver.id,
       isOldestReaver  = isOldest(reaver),
-      shuttleHealth01 = ride.map(health01).getOrElse(1.0),
-      reaverHealth01  = health01(reaver)))
+      ownHealth01     = health01(reaver),
+      mateHealth01    = ride.map(health01).getOrElse(1.0))
+  }
+
+  /**
+   * Latched raid status, one bit per hull: the sharp lines below would
+   * flip the pair's orders on every wound crossing (shields regenerate,
+   * damage jumps), so the deadband between them holds the current
+   * assignment instead - start raiding past the return line, stop below
+   * the retreat line, hold steady inside.
+   */
+  private def latchedStatus(unitId: Int, isOldestReaver: Boolean, ownHealth01: Double, mateHealth01: Double): ReaverShuttleStatus.PairStatus = {
+    val raid = raiding(
+      unitId,
+      fires    = ReaverShuttleStatus.shouldRaid(isOldestReaver, ownHealth01, mateHealth01),
+      releases = ReaverShuttleStatus.shouldSupport(isOldestReaver, ownHealth01, mateHealth01))
+    status(if (raid) ReaverShuttleStatus.RaidBase else ReaverShuttleStatus.SupportArmy)
   }
 
   /** The army to follow: the attack squad's goal, or home. */
