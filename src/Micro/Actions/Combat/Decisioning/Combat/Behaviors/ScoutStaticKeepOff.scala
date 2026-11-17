@@ -56,13 +56,13 @@ object ScoutStaticKeepOff {
 
     holdPoint(
       staticX = static.get.pixel.x, staticY = static.get.pixel.y,
-      staticRangePixels = unit.pixelRangeAgainst(static.get),
+      staticRangePixels = static.get.pixelRangeAgainst(unit),
       targetX = target.get.pixel.x, targetY = target.get.pixel.y,
       weaponRangePixels = unit.pixelRangeAgainst(target.get)) match {
       case None => false
       case Some((hx, hy)) =>
-        // Outside the reach plus margin there is nothing to hold.
-        if (unit.pixelDistanceEdge(static.get) > unit.pixelRangeAgainst(static.get) + marginTiles * 32.0) return false
+        // Outside the static's reach plus margin there is nothing to hold.
+        if (unit.pixelDistanceEdge(static.get) > static.get.pixelRangeAgainst(unit) + marginTiles * 32.0) return false
 
         unit.agent.act("ScoutStandoff")
         if (unit.inRangeToAttack(target.get)) Commander.attack(unit, target.get)
