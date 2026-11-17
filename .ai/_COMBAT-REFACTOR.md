@@ -217,3 +217,36 @@ stance retirement (fightConsensus from posture, delete RegroupLatch);
 Retreat floor + rearguard execution; HoldLine creep (queued);
 Withdraw-to-middle-choke anchor (queued); live validation of every
 unproven rule above on raid/PvP/PvT/PvZ games.
+
+## 8. Live validation log (2026-11-16/17, all on f/phase-f)
+
+- Benzene PvP x5 (71/74 -> 83/3 -> 80/9 -> 79/9 -> 84/11, then 80/25):
+  verdict split 82.9% -> 74.8%, losses collapsed and stayed down.
+  Shadow stable (9-20 flips/game); stance latched Regrouping ~f4300 in
+  games 2-4 (0.65 release never reached) - posture voted Fight through
+  it 7x, which is why #4 exists.
+- Benzene PvT VICTORY 96/27 (shadow validation, split 88.9%).
+- Benzene PvP 80/25 (#7 game): Posture/PostureHold reasons flow;
+  +Sim:Posture vs -Sim:PostureHold pairs are cross-frame smear
+  (change-only probe + forward fill), not same-frame dissent.
+- Benzene PvP 132/158 (all new rules live): ZealotLeash 918,
+  DragoonRoam 609, AlwaysAttack 674, SpreadWorkers 65, EnemyStrategy
+  EarlyForge->GatewayFE, EnemyIntel dt/bases transitions, ShuttleVeto
+  holding (3-5 dragoons, score ~50). No carriers/scouts built - those
+  rules await their matchup.
+- Benzene PvZ 35/3: TargetChaff 0 picks with 3 larvae on the map.
+- scbw BetaStar VICTORY 226/129 (18 min grind): leash 1050, spread 773,
+  roam 588, EnemyStrategy evolving, posture all three states. No probes
+  on the release log - trace-only audit.
+- UMS batch (Sunkens3/4, Reaver_v_Sunkens, Reav&Shut x2): pair fights,
+  rejoins (15-18x), unloads and shoots; no await dither, no abandonment.
+  Sunkens3 16/10 -> 17/14 after the baseless fix (Fight on UMS).
+  LoneMarch flap is hunt-destination alternation, not a march leg.
+- StarEngine full pass: 255 suites / 1014 tests green (march, pairs,
+  mirrors, focus fire, hold lines, pursuit horizons).
+- Unvalidated live (need their matchup/game): DragoonCarrier (needs
+  carriers), ScoutStandoff (needs our scouts + enemy AA), FleeToMate
+  (needs a pressured pair), ForceGlobalAttack (needs our DT without
+  enemy detection), ClusterRejoin (0 acts so far - healthy cohesion or
+  narrow conditions, watch the next grinds), CanProduceShuttle veto
+  held correctly (0-shuttle early PvP proven by absence).

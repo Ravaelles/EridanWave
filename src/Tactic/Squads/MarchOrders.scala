@@ -7,7 +7,7 @@ import Mathematics.Points.Pixel
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{DragoonRoaming, LoneMarch, MainMarch, MarchDress, NoTankMarch, SquadRally, StrongMarch, SuicideMission, ToothlessMarch}
+import Tactic.Squads.Decisions.{DragoonRoaming, LoneMarch, MainMarch, MarchDress, NoTankMarch, SlotDiscipline, SquadRally, StrongMarch, SuicideMission, ToothlessMarch}
 import Utilities.?
 
 /**
@@ -46,6 +46,8 @@ object MarchOrders {
     case object ToothlessMarch extends MarchLabel("ToothlessMarch")
 
     case object DragoonRoam extends MarchLabel("DragoonRoam")
+
+    case object MarchingHome extends MarchLabel("Marching home")
 
     case object LoneMarch extends MarchLabel("LoneMarch")
 
@@ -124,19 +126,24 @@ object MarchOrders {
     // the goal instead of posing, rallying or returning - and the march
     // never sends them home for lack of a consensus they do not need.
     val roam = marchLabel == MarchLabel.DragoonRoam
-    Debugging.CherryVis.CherryVis.decision(unit.id,
-      ?(squad.fightConsensus || assault || toothless || roam, marchLabel, MarchLabel.ReturningToSlot).label)
+    val marching = squad.fightConsensus || assault || toothless || roam
+    // Honest labels: marching home with no fight is not returning to a
+    // slot. The slot return only names the trip home under contact.
+    val returning = ! marching && unit.matchups.enemies.exists(e =>
+      e.likelyStillThere && MarchDress.enemyNear(unit.pixelDistanceEdge(e) * Maff.inv32))
+    val marchHome = ?(marching, marchLabel, ?(returning, MarchLabel.ReturningToSlot, MarchLabel.MarchingHome))
+    Debugging.CherryVis.CherryVis.decision(unit.id, marchHome.label)
     Debugging.Probe.note("March", unit.id,
-      f"${?(squad.fightConsensus || assault || toothless || roam, marchLabel, MarchLabel.ReturningToSlot)} terminus=${terminus.tx},${terminus.ty}")
+      f"$marchHome terminus=${terminus.tx},${terminus.ty}")
     unit.intend(squad)
-      .setTerminus(?(squad.fightConsensus || assault || toothless || roam, terminus, finalReturn))
+      .setTerminus(?(marching, terminus, finalReturn))
       .setRedoubt(finalReturn)
       // The march-home verdict rides the frame-fresh intention: a unit the
       // march sent home must not re-engage in the unit phase. Consensus
       // reads agree within a frame, but the verdict can change hands
       // between the phases (re-squadding, HuntContact mode), and one
       // overwrite frame is enough to feed a charge into a retreat.
-      .setMarchHome( ! (squad.fightConsensus || assault || toothless || roam))
+      .setMarchHome( ! marching)
   }
 
   // The march rules, innermost first: rallying stragglers beat slots,
@@ -242,10 +249,18 @@ object MarchOrders {
 
   // The march legs: rallying stragglers beat slots, closing ranks beats
   // marching alone, dressing beats everything but a gated march above.
+  // Every leg answers to the slot discipline: a unit with a target, a hot
+  // gun, fresh wounds or threats in range never poses - it fights or
+  // walks instead. Posing is for the untouched and unthreatened.
   private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean): (Pixel, MarchLabel) = {
-    val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide)
-    val joinPixel              = joinLeg(squad, unit, suicide)
-    val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide)
+    val slotOpen             = SlotDiscipline.maySlot(
+      hasAttackTarget  = unit.agent.toAttack.isDefined,
+      weaponReady      = unit.cooldownLeft <= 0,
+      framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),
+      threatsInRange   = unit.matchups.threatsInRange.nonEmpty)
+    val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide, slotOpen)
+    val joinPixel              = joinLeg(squad, unit, suicide, slotOpen)
+    val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, slotOpen)
     val pack                   = ?(unit.flying, squad.centroidAir, squad.centroidGround)
     val terminus = ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch)))
     val label    = ?(holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot))
@@ -261,10 +276,10 @@ object MarchOrders {
   // of rejoining the pack centroid it just fled - the line it left is
   // where the guns are. Non-warriors keep their legs (no verdict gates
   // what never fights).
-  private def rallyLeg(squad: Squad, unit: FriendlyUnitInfo, finalTravel: Pixel, suicide: Boolean): (Pixel, Boolean) = {
+  private def rallyLeg(squad: Squad, unit: FriendlyUnitInfo, finalTravel: Pixel, suicide: Boolean, slotOpen: Boolean): (Pixel, Boolean) = {
     val pack     = ?(unit.flying, squad.centroidAir, squad.centroidGround)
     val leash    = SquadRally.rallyRadiusFor(Protoss.Reaver(unit))
-    val rallying = ! suicide && squad.fightConsensus && SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) && SquadRally.isRallyingLatched(
+    val rallying = ! suicide && slotOpen && squad.fightConsensus && SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) && SquadRally.isRallyingLatched(
       unit.id,
       unit.pixelDistanceCenter(pack) * Maff.inv32,
       leash * Maff.inv32)
@@ -274,9 +289,9 @@ object MarchOrders {
   // Close ranks on the march: a unit adrift from its nearest ally
   // rejoins instead of milling alone. Consensus-only, so guards and
   // defenders keep their posts instead of bunching up.
-  private def joinLeg(squad: Squad, unit: FriendlyUnitInfo, suicide: Boolean): Option[Pixel] = {
+  private def joinLeg(squad: Squad, unit: FriendlyUnitInfo, suicide: Boolean, slotOpen: Boolean): Option[Pixel] = {
     val nearestAlly  = Maff.minBy(squad.units.view.filter(_ != unit))(_.pixelDistanceCenter(unit.pixel))
-    val joiningAlly  = ! suicide && squad.fightConsensus && SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) && nearestAlly.exists(a => SquadRally.shouldJoinAlly(unit.tileDistanceCenter(a.pixel)))
+    val joiningAlly  = ! suicide && slotOpen && squad.fightConsensus && SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) && nearestAlly.exists(a => SquadRally.shouldJoinAlly(unit.tileDistanceCenter(a.pixel)))
     if (joiningAlly) nearestAlly.map(_.pixel) else None
   }
 
@@ -285,7 +300,7 @@ object MarchOrders {
   // stuck counter (tryingToMove is false), so Unstick stays out of it.
   // Reavers never hold: a slow hull waiting ahead of a stalled pack
   // freezes next to the enemy, so it walks back to the pack instead.
-  private def dressLeg(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, suicide: Boolean): (Boolean, Boolean) = {
+  private def dressLeg(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, suicide: Boolean, slotOpen: Boolean): (Boolean, Boolean) = {
     // Fresh reinforcements never dress on an empty battlefield: with no
     // enemy inside twenty tiles there is no contact to dress for, so the
     // line marches instead of posing at the spawn. A strong compact pack
@@ -303,7 +318,7 @@ object MarchOrders {
     // for stragglers that are not straggling.
     val massed = MarchDress.isMassed(squad.units.count(u =>
       u != unit && unit.pixelDistanceCenter(u.pixel) <= MarchDress.massedTiles * 32.0))
-    val waiting      = ! suicide && MarchDress.shouldHoldForPack(
+    val waiting      = ! suicide && slotOpen && MarchDress.shouldHoldForPack(
       squad.fightConsensus,
       enemyNear,
       skipCompactStrong,
