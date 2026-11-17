@@ -7,6 +7,14 @@ Chase, Approach that closes). Retreating + Retreat* is the consistent
 pair and does not count. Also counts duplicate same-unit same-frame
 March notes (two writers = re-squadding double-send).
 
+The mixed count splits by label: the verdict arm owns `Retreating`
+(hard retreat - must be zero, same-tick contradictions only), while
+`Marching home` is the soft fallback (walk home, no fight) where a
+fight-verdict duel while marching through contact is marching, not
+flapping. Sleep-merged windows (a pre-flip duel act flushed together
+with fresh retreat acts) and terminus re-notes inflate both buckets;
+read the residual with scripts/shadow-join.py, not raw.
+
 Usage: python3 scripts/retreat-audit.py out/wine_runs/<run>/WINE_DEBUG
 """
 import re
@@ -32,6 +40,7 @@ def main(path):
                 acts[uid].setdefault(frame, []).append(msg.split()[0] if msg else '')
 
     mixed = Counter()
+    hard_mixed = Counter()
     retreat_frames = 0
     for uid, frames in march.items():
         for frame, label in frames.items():
@@ -41,6 +50,8 @@ def main(path):
                 first = chain.split('/')[0] if chain else '(none)'
                 if 'Abuse' in chain or first in DUEL_ACTS or chain.startswith('Engage'):
                     mixed[(label, first if first != '(none)' else chain)] += 1
+                    if 'Retreat' in label:
+                        hard_mixed[(label, first if first != '(none)' else chain)] += 1
 
     dup_pat = re.compile(r'PROBE March (\d+) (\d+) ')
     seen = defaultdict(Counter)
@@ -51,7 +62,7 @@ def main(path):
                 seen[m.group(2)][int(m.group(1))] += 1
     dups = sum(1 for u in seen.values() for n in u.values() if n > 1)
 
-    print(f'retreat-march frames: {retreat_frames} mixed: {sum(mixed.values())}')
+    print(f'retreat-march frames: {retreat_frames} mixed: {sum(mixed.values())} (hard Retreating: {sum(hard_mixed.values())})')
     for (label, act), n in mixed.most_common(15):
         print(f'  {n:5d}  {label} + {act}')
     print(f'duplicate same-unit same-frame March notes: {dups}')

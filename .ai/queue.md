@@ -106,11 +106,6 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Corsair 14-tile flee trigger (shared AirFlee stays 12).
 - Shooting Corsairs hold the spread mid-duel.
 - CorsairHunt march gate (macro corsairs vs Overlords).
-- Observer standoff latch inconclusive (eye still flips 2079x with
-  run-length-1 alternation; suspect detector-set/visibility flicker -
-  StandOff probe landed (det id/dist/visibility/latch verdict per
-  frame, BeDetector.keepOffDetectors): run a hunter game and read the
-  flicker off the log).
 - Observer hunter early warning macro confirmation (muta pressure).
 - Observers stand off detectors (6 tiles, pack-spread ray).
 - Arbiters flee like Corsairs (wound-scaled 2-to-11 margin).
@@ -172,8 +167,6 @@ New kernels ride suites; these need a live game that reaches them
 - March-home bypass (Retreating label must own every retreat frame;
   no Waiting/Rallying/Marching-to-slot while the verdict says flee -
   watch the f16368 pattern stay dead).
-- Roam suspension (needs an unseen PvP mirror: DragoonRoam march labels
-  with zero Abuse acts).
 - DefenseWhy board (needs any defense staffing: reason + triggering
   enemies by class/count + army total on the board).
 - ClusterRejoin (0 acts so far across grinds: needs a drifter >14 tiles
