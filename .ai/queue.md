@@ -120,8 +120,6 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Vulture duels (PotshotVulture rows).
 - Carrier berth (scratched shields vs ranged, CarrierKite rows).
 - Screened static +50% (statics covered by 2+ defenders).
-- Larva/Egg exclusion (SquadAttack lists carry no Larva/Egg; needs a Zerg
-  game: Target probe never picks them, no Engage/Approach on chaff).
 - Slow-alone watch (log stutter with no units nearby, max 10/game).
 
 ## Open: gameplan/economy
