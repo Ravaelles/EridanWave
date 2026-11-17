@@ -128,4 +128,19 @@ class MarchGateOrderSuite extends AnyFunSuite {
     unit(isWarrior = true, shouldFight = false,
       nearestWarriorTiles = Some(3.0), nearestStaticTiles = Some(5.0)),
     None)
+
+  test("the gate list order is explicit data, not ladder folklore") {
+    assert(MarchGates.order == Seq(
+      MarchLabel.DarkTemplarHunt,
+      MarchLabel.CorsairHunt,
+      MarchLabel.MainMarch,
+      MarchLabel.SuicideMission,
+      MarchLabel.PairRide,
+      MarchLabel.StrongMarch,
+      MarchLabel.NoTankMarch,
+      MarchLabel.ToothlessMarch,
+      MarchLabel.DragoonRoam,
+      MarchLabel.LoneMarch,
+      MarchLabel.StaticPush))
+  }
 }

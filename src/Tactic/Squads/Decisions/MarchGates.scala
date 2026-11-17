@@ -90,4 +90,14 @@ object MarchGates {
   /** First claim wins, in order; nothing when no gate fires. */
   def select(facts: MarchFacts, unit: MarchUnit): Option[MarchLabel] =
     gates.collectFirst { case gate if gate.applies(facts, unit) => gate.label }
+
+  /**
+   * Gate order as data (one explicit list): the sequence below is the
+   * contract, pinned beside the behavioral rows by MarchGateOrderSuite.
+   * Reorder by moving a MarchGate line, disable by commenting one out.
+   * March gates arbitrate one domain (the march label), so they carry
+   * no duel bands - first claim wins, in this order.
+   */
+  def order: Seq[MarchLabel] =
+    gates.map(_.label)
 }
