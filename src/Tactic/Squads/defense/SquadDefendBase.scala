@@ -192,7 +192,7 @@ class SquadDefendBase(base: Base) extends Squad {
 
     if ( ! MainChokeHold.shouldHold(
       With.enemies.exists(_.isZerg),
-      units.count(_.unitClass.isWarrior),
+      With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
       With.battles.globalAttack.us.skimStrengthUnits)) return false
 
     lastAction = "ChokeHold"
