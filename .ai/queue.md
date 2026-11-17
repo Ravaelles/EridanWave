@@ -87,8 +87,8 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   vicinity alternates between hunt points every ~10 frames; the latched
   lone-march boundary is innocent - the *input* flaps. Reaver duels
   through it; ClusterCohesion rejoin runs before Hunt).
-- HoldLine creep (kernel + behavior + suite exist; needs per-unit
-  hold positions advancing with the enemy, then a game).
+- HoldLine creep (per-unit advancing anchors landed + scenario;
+  needs a live game with a dressed holding line).
 
 ## Open: posture-era validation (needs games that reach each rule)
 
