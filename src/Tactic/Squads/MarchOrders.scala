@@ -73,16 +73,23 @@ object MarchOrders {
     // never sends them home for lack of a consensus they do not need.
     val roam = marchLabel == MarchLabel.DragoonRoam
     val marching = squad.fightConsensus || assault || toothless || roam
+    // Pair shuttles never march home: an empty ride that awaits, escorts
+    // or rejoins belongs with the army, and marching it to a slot strands
+    // the next Reaver exactly like the old fetch bug did. Loaded hulls
+    // already march at the goal via PairRide; the legs dress the rest
+    // near the pack instead. (Bait rides still bait: the brain's forceTo
+    // outranks the march terminus either way.)
+    val holdShuttle = Protoss.Shuttle(unit) && unit.loadedUnitCount == 0
     // Honest labels: marching home with no fight is not returning to a
     // slot. The slot return only names the trip home under contact.
-    val returning = ! marching && unit.matchups.enemies.exists(e =>
+    val returning = ! marching && ! holdShuttle && unit.matchups.enemies.exists(e =>
       e.likelyStillThere && MarchDress.enemyNear(unit.pixelDistanceEdge(e) * Maff.inv32))
-    val marchHome = ?(marching, marchLabel, ?(returning, MarchLabel.ReturningToSlot, MarchLabel.MarchingHome))
+    val marchHome = ?(marching || holdShuttle, marchLabel, ?(returning, MarchLabel.ReturningToSlot, MarchLabel.MarchingHome))
     Debugging.CherryVis.CherryVis.decision(unit.id, marchHome.label)
     Debugging.Probe.note("March", unit.id,
       f"$marchHome terminus=${terminus.tx},${terminus.ty}")
     unit.intend(squad)
-      .setTerminus(?(marching, terminus, finalReturn))
+      .setTerminus(?(marching || holdShuttle, terminus, finalReturn))
       .setRedoubt(finalReturn)
       // The march-home verdict rides the frame-fresh intention: a unit the
       // march sent home must not re-engage in the unit phase. Consensus
