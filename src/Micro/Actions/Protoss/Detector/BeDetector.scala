@@ -137,13 +137,25 @@ object BeDetector extends Action {
 
     // Nearest enemy detector, regardless of id: foe ids carry no seniority.
     val nearest = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isDetector))(unit.pixelDistanceEdge)
-    nearest.exists(foe => {
-      if (DetectorSpread.standOffLatched(unit.id, unit.tileDistanceEdge(foe) * Maff.inv32)) {
-        unit.cherryVisUnitLog("ObserverStandOff")
-        unit.agent.forceTo(DetectorSpread.standOff(unit.pixel, foe.pixel))
-        Commander.move(unit)
-        true
-      } else false
-    })
+    // Latch-input probe: the standoff flips run-length-one in hunter
+    // games and the latch itself is pinned, so either the detector set
+    // or visibility flickers underneath it. Log the inputs per frame -
+    // detector id (or none), distance, visibility, latch verdict - and
+    // read the flicker off the log instead of guessing.
+    nearest match {
+      case Some(foe) =>
+        val distTiles = unit.tileDistanceEdge(foe) * Maff.inv32
+        val latched = DetectorSpread.standOffLatched(unit.id, distTiles)
+        Debugging.Probe.note("StandOff", unit.id, f"det=${foe.id} dist=$distTiles%.1f vis=${foe.visible} latched=$latched")
+        if (latched) {
+          unit.cherryVisUnitLog("ObserverStandOff")
+          unit.agent.forceTo(DetectorSpread.standOff(unit.pixel, foe.pixel))
+          Commander.move(unit)
+          true
+        } else false
+      case None =>
+        Debugging.Probe.note("StandOff", unit.id, "det=none")
+        false
+    }
   }
 }

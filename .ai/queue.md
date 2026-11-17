@@ -50,7 +50,9 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - CorsairHunt march gate (macro corsairs vs Overlords).
 - Observer standoff latch inconclusive (eye still flips 2079x with
   run-length-1 alternation; suspect detector-set/visibility flicker -
-  needs per-frame latch-input probe in a hunter game).
+  StandOff probe landed (det id/dist/visibility/latch verdict per
+  frame, BeDetector.keepOffDetectors): run a hunter game and read the
+  flicker off the log).
 - Observer hunter early warning macro confirmation (muta pressure).
 - Observers stand off detectors (6 tiles, pack-spread ray).
 - Arbiters flee like Corsairs (wound-scaled 2-to-11 margin).
