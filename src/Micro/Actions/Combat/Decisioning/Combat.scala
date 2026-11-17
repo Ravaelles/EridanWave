@@ -182,7 +182,10 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // march, duel or retreat plan runs. Runs before the Fallback potshot
     // on purpose - a sleeping hull claims the potshot without firing and
     // would otherwise pose inside the shells instead of leaving them.
-    if (ArtilleryKeepOff.act(unit)) return
+    // Order is load-bearing (first claim wins, like every chain here):
+    // the two static keep-offs live one home below
+    // (HandleEnemyCombatBuildings), the duel and the retreat below them.
+    if (HandleEnemyCombatBuildings.run(unit, this, advance)) return
     if (technique == Walk       && maneuvers.walk())        return
     if (technique == Aim        && AimBehavior.run(unit, this))        return
     if (technique == Dodge      && maneuvers.dodge())       return
@@ -191,12 +194,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // Scourge, Carriers and the rest on sight - even while retreating.
     // A shot in range never waits for the duel to start or the retreat
     // to finish; the ladder picks, the gun fires, the frame ends here.
-    if (AlwaysAttackInRange.run(unit)) return unit.unready
-    // Static keep-off is HIGH: a duelist never poses inside anti-air
-    // reach. Holds outside range plus margin instead (and shoots from
-    // the hold when the gun reaches); umbrellas keep the normal duel.
-    // Runs advance-gated - withdrawing hulls already leave via Retreat.
-    if (advance && ScoutStaticKeepOff.run(unit, this)) return
+    if (AlwaysAttackInRange.run(unit)) return
     // A fresh hot Dragoon shoots the Terran in range instead of running
     // from it - but never under siege, the line above already claimed it.
     if (advance && DragoonStandBehavior.run(unit, this)) return
