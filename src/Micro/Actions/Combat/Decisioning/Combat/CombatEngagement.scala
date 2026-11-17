@@ -69,7 +69,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // Crucial air victims outrank everything: a grounded anti-air warrior
     // shoots Scourge, Carriers, Vessels, Battlecruisers and Wraiths in
     // range first - even while retreating - then carries on as ordered.
-    if (CrucialAirSnipeBehavior.run(unit)) return unit.unready
+    if (AlwaysAttackInRange.run(unit)) return unit.unready
 
     // Contain fire: a ready weapon shoots instead of dressing past the kill.
     if (ContainFireBehavior.run(unit)) return unit.unready

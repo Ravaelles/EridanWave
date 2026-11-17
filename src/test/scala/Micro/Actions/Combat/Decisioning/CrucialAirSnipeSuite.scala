@@ -33,6 +33,21 @@ class CrucialAirSnipeSuite extends AnyFunSuite {
       mark(3.0, Carrier, 150.0))).contains(1))
   }
 
+  test("casters and support follow the capitals in fixed order") {
+    assert(CrucialAirSnipe.pick(Seq(
+      mark(3.0, HighTemplar, 40.0),
+      mark(3.0, DarkTemplar, 120.0),
+      mark(3.0, Reaver, 200.0),
+      mark(3.0, Observer, 40.0),
+      mark(3.0, Wraith, 100.0))).contains(4))
+    assert(CrucialAirSnipe.pick(Seq(
+      mark(3.0, HighTemplar, 40.0),
+      mark(3.0, DarkTemplar, 120.0))).contains(1))
+    assert(CrucialAirSnipe.pick(Seq(
+      mark(3.0, Observer, 40.0),
+      mark(3.0, Reaver, 200.0))).contains(0))
+  }
+
   test("a Scourge past the range still gets sniped when it is coming at us") {
     assert(CrucialAirSnipe.inSnipeReach(inRange = true, isScourge = true, facingUs = true, beyondTiles = 0.0))
     assert(CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = true, beyondTiles = 1.5))

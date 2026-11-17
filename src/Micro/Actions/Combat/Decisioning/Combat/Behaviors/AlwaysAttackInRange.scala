@@ -6,15 +6,14 @@ import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
- * Crucial air-victim snipe: a grounded anti-air warrior shoots Scourge,
- * Carriers, Vessels, Battlecruisers and Wraiths on sight, in that order -
- * ahead of kiting, dressing, rallying and even retreating. An incoming
- * Scourge gets sniped from 1.5 tiles past the range edge, since waiting
- * for contact means eating it. A Scourge that
- * lives one frame too long kills a Shuttle; a Carrier left alone kills
- * the army. Returns true when it shot or is already on the victim.
+ * Always-attack victims in range (was CrucialAirSnipeBehavior): a grounded
+ * anti-air warrior shoots the targets that must die first, regardless of
+ * anything else the unit is doing - even retreating. Fixed priority:
+ * suicide Scourge nearest, then the weakest Carrier, Science Vessel,
+ * Battlecruiser, Wraith, detected Observer, Reaver, Dark Templar,
+ * High Templar. Returns true when it shot or is already on the victim.
  */
-object CrucialAirSnipeBehavior {
+object AlwaysAttackInRange {
 
   def run(unit: FriendlyUnitInfo): Boolean = {
     if (unit.flying) return false
@@ -36,7 +35,7 @@ object CrucialAirSnipeBehavior {
       kind = kindOf(t).get,
       totalHealth = t.totalHealth))
     CrucialAirSnipe.pick(marks.toSeq).foreach(i =>
-      NearestShot.take(unit, "CrucialSnipe", Seq(victims(i))))
+      NearestShot.take(unit, "AlwaysAttack", Seq(victims(i))))
 
     true
   }
@@ -47,6 +46,10 @@ object CrucialAirSnipeBehavior {
     else if (Terran.ScienceVessel(target)) Some(Vessel)
     else if (Terran.Battlecruiser(target)) Some(Battlecruiser)
     else if (Terran.Wraith(target)) Some(Wraith)
+    else if (Protoss.Observer(target) && ! target.effectivelyCloaked) Some(Observer)
+    else if (Protoss.Reaver(target)) Some(Reaver)
+    else if (Protoss.DarkTemplar(target)) Some(DarkTemplar)
+    else if (Protoss.HighTemplar(target)) Some(HighTemplar)
     else None
   }
 }

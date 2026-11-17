@@ -1,14 +1,15 @@
 package Micro.Actions.Combat.Decisioning
 
 /**
- * Crucial air-victim snipe (no game access) - a pre-`Target` doctrine pick
+ * Always-attack victims in range (no game access) - a pre-`Target` doctrine pick
  * (conventions rule 15): a fixed priority that outranks retreat, so it
  * stays one documented ladder instead of joining `Target`'s scoring.
  *
- * Ground anti-air shoots the
+ * Grounded warriors shoot the
  * targets that must die first, regardless of anything else the unit is
  * doing - even retreating. Fixed priority: suicide Scourge nearest,
- * then the weakest Carrier, Science Vessel, Battlecruiser, Wraith.
+ * then the weakest Carrier, Science Vessel, Battlecruiser, Wraith,
+ * detected Observer, Reaver, Dark Templar, High Templar.
  * Distances in tiles, health pooled.
  */
 object CrucialAirSnipe {
@@ -24,6 +25,14 @@ object CrucialAirSnipe {
   case object Battlecruiser extends VictimKind
 
   case object Wraith extends VictimKind
+
+  case object Observer extends VictimKind
+
+  case object Reaver extends VictimKind
+
+  case object DarkTemplar extends VictimKind
+
+  case object HighTemplar extends VictimKind
 
   final case class Mark(distTiles: Double, kind: VictimKind, totalHealth: Double)
 
@@ -57,5 +66,9 @@ object CrucialAirSnipe {
       .orElse(weakest(Vessel))
       .orElse(weakest(Battlecruiser))
       .orElse(weakest(Wraith))
+      .orElse(weakest(Observer))
+      .orElse(weakest(Reaver))
+      .orElse(weakest(DarkTemplar))
+      .orElse(weakest(HighTemplar))
   }
 }
