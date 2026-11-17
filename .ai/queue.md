@@ -36,8 +36,12 @@ pointer. Steps, each a green unit on its own:
 3. Delete the old predicates only after step 2 holds a full game
    with zero mixed frames (`scripts/retreat-audit.py`).
    (`MarchRetreat` + suite deleted with the switches; `RetreatShadow`
-   and `Technique` probes stay until the final game measures the
-   migration, then go.)
+   and `Technique` probes stay until the final validation game, then go.)
+   Final game #1 (VICTORY 135/125) caught arm 2 outranking the hold
+   (74 RetreatSimple/Abuse chains on a held bus) - fixed by moving the
+   verdict arm above the fresh-fight arm (d89da97d4). Final game #2
+   pending to confirm zero mixed frames, then probes go and the
+   migration closes.
 
 Open question the shadow data must answer: is a 24f unit-level hold
 enough, or take the 96-frame cluster floor for the verdict too.
