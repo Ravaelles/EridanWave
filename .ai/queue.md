@@ -96,8 +96,9 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Overlord veto (lone Overlords need 190 energy).
 - Lead moving victims (2.0-tile heading lead).
 - Hunt inside cast range (8.9-tile search, no leash walk).
-- Gap: HT run-downs (25/24/11 dead in storm games; casters march into
-  contact - caster-standoff concept if it repeats).
+- Gap: HT run-downs CLOSED 2026-11-17 (PvZ storm game: 44 HTs built,
+  1243 storm casts incl. RetreatSimple/PsionicStorm chains, 0 HT deaths
+  in 27 minutes - casters no longer march into contact).
 - Gap: lurker wall (2064 storms killed 0/18 lurkers; need cast
   positions vs lurker sightings, detection upstream suspected).
 
@@ -164,13 +165,11 @@ New kernels ride suites; these need a live game that reaches them
   one RaidCarry->FollowArmy transition, no flicker).
 - Rearguard cover (needs a Withdraw with the table naming a rearguard:
   cover shoots while the line leaves, then falls through to Retreat).
-- March-home bypass (Retreating label must own every retreat frame;
-  no Waiting/Rallying/Marching-to-slot while the verdict says flee -
-  watch the f16368 pattern stay dead).
 - DefenseWhy board (needs any defense staffing: reason + triggering
   enemies by class/count + army total on the board).
-- ClusterRejoin (0 acts so far across grinds: needs a drifter >14 tiles
-  from its fighting cluster with no local contact).
+- ClusterRejoin (0 acts across 3 macro grinds; engine suite pins the
+  behavior and grinds lose their drifters in contact, so live may
+  never trigger - validated in StarEngine, watch only).
 - ZealotLeash (validating live: 918-1050 acts across PvP grinds; still
   wants one clean lone-zealot-vs-3-goons case).
 - WorkerSpread (validating live: 65-773 dealt picks; wants one worker-
