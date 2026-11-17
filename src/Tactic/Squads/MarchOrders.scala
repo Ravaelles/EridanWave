@@ -151,6 +151,12 @@ object MarchOrders {
   // The march rules, innermost first: rallying stragglers beat slots,
   // closing ranks beats marching alone, dressing beats everything but
   // a suicide charge (which skips the dressing room entirely).
+  // Order is load-bearing (first gate wins, like every first-claims
+  // chain in the tree): Dark Templars and Corsairs hunt outside the
+  // line, the main march skips the dance at home, and every
+  // skip-formation gate below walks straight at the goal instead of
+  // milling - retune by moving whole gates, never by tweaking one
+  // gate's thresholds against another's.
   // Dark Templars run their own hunt (visible or remembered contacts only):
   // they never dress, rally, or take formation slots, so they march
   // straight at the squad goal instead of posing with the line.

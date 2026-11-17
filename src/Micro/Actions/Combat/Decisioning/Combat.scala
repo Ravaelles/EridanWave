@@ -154,6 +154,17 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
   private def safePassage: Boolean =
     unit.matchups.ignorant || unit.topSpeedTransported >= 0.9 * group.meanTopSpeed && unit.matchups.pixelsToThreatRange.forall(_ > 32 * ?(unit.agent.receivedPushPriority() < TrafficPriorities.Bump, 2, 16))
 
+  /**
+   * Dispatch order is load-bearing (first claim wins - never reorder
+   * without reading every leg below). Bands, top to bottom: HIGH owns
+   * survival and unconditional kills (unseen killers, shells, the
+   * always-attack ladder, static keep-off); MEDIUM owns the duel
+   * (stands, chases, brawls, engages, and the rearguard cover that
+   * holds instead of turning); LOW is whatever the squad phase decided
+   * before us (march legs, slots, rally). A higher band with a live
+   * claim ends the dispatch - lower bands are not even asked, so no
+   * threshold inside them can overrule a retreat, a dodge or a snipe.
+   */
   private def dispatchByTechnique(): Unit = {
 
     // The cluster posture bounds the duel claims: Withdraw/Regroup never
@@ -176,6 +187,16 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     if (technique == Aim        && AimBehavior.run(unit, this))        return
     if (technique == Dodge      && maneuvers.dodge())       return
     if (technique == Fallback   && PotshotBehavior.run(unit, this))    return
+    // Always-attack victims outrank retreat: grounded anti-air shoots
+    // Scourge, Carriers and the rest on sight - even while retreating.
+    // A shot in range never waits for the duel to start or the retreat
+    // to finish; the ladder picks, the gun fires, the frame ends here.
+    if (AlwaysAttackInRange.run(unit)) return unit.unready
+    // Static keep-off is HIGH: a duelist never poses inside anti-air
+    // reach. Holds outside range plus margin instead (and shoots from
+    // the hold when the gun reaches); umbrellas keep the normal duel.
+    // Runs advance-gated - withdrawing hulls already leave via Retreat.
+    if (advance && ScoutStaticKeepOff.run(unit, this)) return
     // A fresh hot Dragoon shoots the Terran in range instead of running
     // from it - but never under siege, the line above already claimed it.
     if (advance && DragoonStandBehavior.run(unit, this)) return
@@ -186,9 +207,6 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // line while the cluster withdraws instead of turning with it. With
     // nothing to shoot it falls through and retreats with everyone.
     if (unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit) || ContainFireBehavior.run(unit))) return
-    // A Scout dueling near anti-air statics holds outside their reach
-    // instead of posing inside it - like every other air hull.
-    if (advance && ScoutStaticKeepOff.run(unit, this)) return
     if (shouldRetreat           && Retreat(unit)) return
     if (shouldEngage && advance && Brawl(unit))   return
     if (technique == Abuse && advance && AbuseBehavior.run(unit, this))      return

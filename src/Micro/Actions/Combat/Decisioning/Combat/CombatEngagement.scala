@@ -91,11 +91,6 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   }
 
   private[Decisioning] def engage(): Boolean = {
-    // Crucial air victims outrank everything: a grounded anti-air warrior
-    // shoots Scourge, Carriers, Vessels, Battlecruisers and Wraiths in
-    // range first - even while retreating - then carries on as ordered.
-    if (AlwaysAttackInRange.run(unit)) return unit.unready
-
     // Contain fire: a ready weapon shoots instead of dressing past the kill.
     if (ContainFireBehavior.run(unit)) return unit.unready
 
@@ -157,6 +152,12 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   }
 
   private def dispatchEngage(): Unit = {
+    // Duel dispatch order is load-bearing too (first claim wins, same as
+    // the shared chain above): breaking through beats scavenging, closing
+    // beats repositioning, and the hold/approach/kite trio runs before the
+    // raw charge. Never reorder without reading every leg - the push
+    // claim, the volley gate and the chase override each read the same
+    // target, and the first match owns the frame.
     if (combat.pushThrough) PushBehavior.run(unit, combat)
       else if (combat.techniqueIs(Scavenge)) ScavengeBehavior.run(unit, combat)
       else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {

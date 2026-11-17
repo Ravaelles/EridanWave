@@ -73,7 +73,7 @@ Changed seams (thin, game-coupled, reviewed by reading):
 | Class | Change |
 |---|---|
 | `Squad.run` / `SquadAttack` | DONE: publishes `(posture, roles)` + `battlePosture` query; `fightConsensus` follows `advances(posture)` (yolo/suicide keep explicit outs) |
-| `MarchOrders` | OPEN (#6): legs read posture + `SlotDiscipline`; fix the lying `ReturningToSlot` label |
+| `MarchOrders` | DONE: legs read posture + `SlotDiscipline`; Retreat outranks formation unconditionally (march-home bypass); honest `Marching home` vs `Returning to slot` split |
 | `CombatEngagement.engage` + `Combat.dispatchByTechnique` | DONE: consume `(posture, advances)`; `syncConsensus` lost the vote; `decideFight` has one writer |
 | `Retreat` maneuver | OPEN: honor the 96-frame floor + rearguard role on Withdraw |
 | `FormationHold` | Keeps today's line-hold semantics under `HoldLine`; the gradual-advance creep is QUEUED (section 5), not this refactor |
@@ -212,16 +212,17 @@ All commits on `f/phase-f`; every one green on the full base suite
 - UMS batch 0/4 exposed the baseless hole (Withdraw on maps with
   nowhere to regroup to); fixed via canWithdraw=false, needs re-run.
 
-OPEN, in order: #6 march legs through SlotDiscipline + honest labels
-(done, validated: Waiting 1/frame, Rallying ~50, honest Marching-home
-vs Returning-to-slot split); stance retirement (done, validated:
-no stuck regroups, posture cycles Withdraw/HoldLine/Fight);
-Retreat floor (structural via posture, verified) + rearguard cover
-(done, validated); HoldLine creep (queued);
-Withdraw-to-middle-choke anchor (queued).
+OPEN, in order: HoldLine creep (queued); Withdraw-to-middle-choke
+anchor (queued); rearguard covers validated in one more grind;
+live validation of every unproven rule above on raid/PvP/PvT/PvZ games.
+DONE since: march legs gated by SlotDiscipline + honest Marching-home
+vs Returning-to-slot split (validated: Waiting x1, Rallying dozens,
+no more mill-flap); roam suspends Fight/Abuse in the unit phase (same
+facts as the march gate); defense triggers only on anti-ground weapons
+(Observer false alarm fixed) + DefenseWhy board (reason, triggering
+enemies, counts); muta/drop proactive guards answer at any army size.
 
 ## 8. Live validation log (2026-11-16/17, all on f/phase-f)
-
 - Benzene PvP x5 (71/74 -> 83/3 -> 80/9 -> 79/9 -> 84/11, then 80/25):
   verdict split 82.9% -> 74.8%, losses collapsed and stayed down.
   Shadow stable (9-20 flips/game); stance latched Regrouping ~f4300 in
@@ -252,3 +253,48 @@ Withdraw-to-middle-choke anchor (queued).
   enemy detection), ClusterRejoin (0 acts so far - healthy cohesion or
   narrow conditions, watch the next grinds), CanProduceShuttle veto
   held correctly (0-shuttle early PvP proven by absence).
+
+## 9. Priority bands: retreat is never outvoted by positioning
+
+Atlantis lesson, applied here: managers run at high/medium/low, and a
+higher band with a live claim ends the frame - lower bands are not even
+asked. Suppression is by band membership (a static property of the
+behavior), never by comparing thresholds across bands, so no tuning
+inside one band can ever overrule another. Every arbitration chain in
+the tree carries an explicit order-is-load-bearing header naming its
+bands; move whole arms, never retune one leg against another.
+
+Bands, top to bottom:
+
+- HIGH owns survival and unconditional kills: unseen-killer dodges,
+  siege keep-off, the always-attack ladder (Scourge/Carrier/capitals
+  first - even while retreating), static keep-off (hold outside AA
+  reach). A live HIGH claim ends the dispatch; positioning never runs.
+- MEDIUM owns the duel: stand-fight overrides (DragoonStand,
+  DragoonCarrier), rearguard cover (holds instead of turning), brawl,
+  abuse, superkite, engage. Techniques pick the how inside the posture.
+- LOW is whatever the squad phase decided before us: march legs,
+  formation slots, rally, dress waits, leashes, rejoins, static
+  positioning holds (hold-instead-of-walk near statics outranks other
+  formation inside LOW).
+
+Consequences, all pinned by existing suites plus the StarEngine
+scenarios that mirror each shipped kernel:
+
+- Retreat (HIGH verdict + Flee/Fallback technique) can never be
+  stopped, dressed, rallied or slotted: the march sends the hull home
+  without asking a single gate or leg (MarchRetreat bypass), and the
+  dispatch reaches Retreat with every formation claim already skipped.
+  The f16368 Retreat-vs-Waiting/Marching flap is structurally impossible:
+  the two labels cannot share a frame because only one band speaks.
+- Roaming Dragoons skip the duel entirely (Fight base and Abuse gated
+  on the same facts as the march gate): scouting the unseen mirror is
+  MEDIUM business, dueling can wait for the first enemy Dragoon.
+- Static keep-off is HIGH (threat avoidance); static positioning holds
+  (hold-instead-of-walk, FormationHold, brave stands) are LOW with
+  priority over the rest of formation - documented at each site.
+- The pair arbiter keeps its own first-rule-wins contract (one decider,
+  sealed orders); BeShuttle executes arms most-to-least urgent per
+  order. No second manager may claim a bonded hull - see the Shuttle
+  assignment rule (PairGlue + status latch instead of a registry: the
+  bond already maps shuttle to mate).

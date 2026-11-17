@@ -25,6 +25,11 @@ object BeShuttle extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Shuttle(unit)
 
   override protected def perform(shuttle: FriendlyUnitInfo): Unit = {
+    // One order per hull per frame (the arbiter decided, the brain
+    // executes - never negotiates). Arm order is load-bearing: ditch
+    // hitchhikers first, then the order's own legs from most to least
+    // urgent, with the support post as the catch-all at the end of
+    // every leg. Reorder an arm only with its order.
     if (ditch(shuttle)) return
 
     PairArbiter.shuttleOrder(shuttle) match {
