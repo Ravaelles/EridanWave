@@ -39,6 +39,11 @@ enough, or take the 96-frame cluster floor for the verdict too.
 Answer it in StarEngine, not in games: a hold-calibration scenario
 jitters the raw inputs at the measured flip rate and pins the mixed
 frame count at zero for the chosen hold (plus clean release).
+ANSWERED 2026-11-17 in-engine (`RetreatVerdictHoldSuite`): under
+7-frame jitter with 6-frame reader skew, 24f holds unanimous
+(flips 89 -> 5, release 22f after the facts clear), 96f equally
+calm but releases 72f later. Decision: 24-frame unit hold; the
+cluster keeps its own 96f posture floor as a separate layer.
 
 ## Parked (explicit orders, do not touch)
 

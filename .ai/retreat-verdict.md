@@ -72,9 +72,32 @@ Owner decision 2026-11-17: do NOT rewrite now. The incremental series
 lands first with live validation per fix; this file keeps the design
 from being lost and the evidence from being re-gathered.
 
-## Agreed next step (owner confirmed 2026-11-17, work starts on context refresh)
+## Step 2 design inputs (measured, not assumed)
 
-The rewrite above is approved in the stepped form: shadow verdict +
-per-reader switch behind shadow data (plan steps 1-2 in
-`.ai/queue.md` under NEXT UP). Open question for the shadow data:
-24-frame unit-level hold vs the 96-frame cluster floor.
+- Task order is budget-driven (`TaskQueueParallel` sorts by due/budget,
+  Planning skips up to 6 frames): squad phase and unit phase interleave
+  arbitrarily frame to frame. No design may assume "march first, combat
+  second, same frame" - the shadow game caught march running after the
+  unit phase (Retreating label with a stale-false marchHome flag).
+- `shouldFight` has ~10 writers (`decideFight` callers: FightOrFlee,
+  CombatManeuvers.move, Cast, BeRushingZealot, BeZealotVsZealot,
+  GetRepairedMobile, BeMutalisk, ...), most of them silent (no Verdict
+  probe row). The verdict is already emergent; centralizing it removes
+  the silent writers too.
+- Release handshake: the duel reader obeys the march flag (the
+  engage-gate shape), so the home-bound reader clears first on its own
+  schedule and the duel resumes late, never early. Late re-engage
+  (<= one march tick) is the safe direction; early retreat entry stays
+  sharp. Pinned in `RetreatVerdictHoldSuite` (mixed == 0 on every leg).
+
+## Hysteresis answer (StarEngine, 2026-11-17)
+
+`RetreatVerdictHoldSuite` (tags retreat+march): one body playing both
+readers on skewed schedules (march every 6th frame, duel every 2nd)
+against one shared hold bus fed by the shipped `RetreatVerdict`
+kernel on jittered facts. hold=0: mixed 0 (the march flag rules it
+out structurally) but 89 decision flips (the dither disease);
+hold=24: mixed 0, 5 flips, resume 22 frames after the facts clear;
+hold=96: mixed 0, 5 flips, resume 94 frames after. Decision: the
+24-frame unit hold; the 96-frame floor stays at the cluster posture
+layer where it belongs.
