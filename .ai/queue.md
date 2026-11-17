@@ -102,8 +102,11 @@ New kernels ride suites; these need a live game that reaches them
   fires only pre-threat with a handful, as designed).
 - Middle-choke guard (2026-11-17: past 13 warriors the standing guard
   moves to the middle choke; needs a mid-size army game).
-- Reaver leash (2026-11-17: foot reaver past 3 tiles from its squad
-  centroid walks back when walking with people; needs an army game).
+- Reaver leash REVERTED same night (foot reaver past 3 tiles walks
+  back): UMS evidence shows the pair lives in SquadAttack, so the
+  with-army gate stays open while boarding/fetching and the leash
+  turns arbiter flap into movement flap. Retry needs proximity
+  anchoring plus the fetch-glue latch, not squad identity.
 - No reavers in the PvP goon mirror (2026-11-17: three-/four-gate
   goons no longer force the Bay/Reaver detour; needs a PvP mirror).
 - Dragoon bravery vs pure melee (2026-11-17: facesRush needs ranged
