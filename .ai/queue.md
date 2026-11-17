@@ -73,6 +73,10 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - StaticDefense overwhelm (12 of ours push one static).
 - Crowded leaders skip the dress wait (6 friendlies in 4 tiles).
 - Lurker/DT avoid radii (8/4 tiles, above every formation and duel).
+- Hunt-destination stabilization (UMS Reav&Shut 2026-11-17: squad
+  vicinity alternates between hunt points every ~10 frames; the latched
+  lone-march boundary is innocent - the *input* flaps. Reaver duels
+  through it; ClusterCohesion rejoin runs before Hunt).
 - HoldLine creep (from _COMBAT-REFACTOR.md, after the posture rewire):
   while attacking, hold formation and close the distance gradually (~0.1
   tile steps) instead of breaking or standing; needs per-unit hold
@@ -150,51 +154,6 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   row-less units are unmanaged single-frame ephemera (no first_seen,
   viewer can't name them anyway) - None is correct there. UMS emits no
   traces by design; Owner/Action probes cover manager visibility there.
-
-## Session: UMS Reaver freeze (validating now)
-
-- DragC hunt step (target-less duelists attack-move toward the nearest
-  known foe; hold-cap + pursuit latch already proven - do NOT
-  re-litigate). Mechanism pinned by Path + Engage probes (since
-  reverted): paths exist, no wall - the line holds vs an invisible
-  remembered ghost 6-8 tiles out (hold=true, never approaches, never
-  fires) while toAttack sits pinned on the far pylon, then dresses
-  against the ghost and attacks the pin with a stale perch (Stop/
-  AttackUnit flap, zero shots). Hunt now covers useless targets too:
-  far pins past the pursuit horizon and ghosts past sight + 1 tile
-  (sight-edge flicker keeps the line). Hunt remembers: mobiles three
-  minutes (squad HuntContact parity), seen-once buildings until they
-  die - a fogged pin no longer strands the line on an empty list. Hook
-  rides two paths: engage (Fight-technique target-less) and consensus
-  walk (no battle parks the ignorant technique in formation slots -
-  audit showed Hunt 1172 + Abuse 560 frames then empty chains,
-  +Committed, Contain-on-pylon while the line sits 700px short).
-  Validating on the hunt jar.
-- Re-run remaining Reaver UMS maps with pauses between games (Wine
-  box lock aborts concurrent launches): Sunkens3/4, Reaver_v_Sunkens.
-- Owner probe (intend-client changes ride `Probe Owner`, traces or not -
-  UMS manager tracking per unit). Pair batch running on it: Shuttle
-  must flee properly, Reaver must attack and fight most frames.
-- LoneMarch flap re-run (Reav&Shut; confirm the +-300px terminus flap
-  is gone on the latched jar).
-
-## Session: PairArbiter (one decider per pair, 2026-11-16)
-
-- Kernel (`PairArbiter.decide`) + game-free bond resolution over
-  plain views (`resolveShuttle`/`resolveReaver`) + `PairArbiterSuite`
-  (decide rows, resolve rows, WalkToArmy regression, landing band).
-  Same resolve path runs in production and in StarEngine pilots.
-- `PairOrdersSuite` (fetch-the-fighting, pressured flee) +
-  `PairLifecycleSuite` (12 Sunkens3 stages: bond, ferry, unload,
-  shoot, fight, reboard, evacuate, fetch, walk, alone, retarget,
-  full run). Pair UMS iteration replaced by these; live games stay
-  for what the engine lacks (squad march, fog).
-- Live reads: Sunkens 11/6 (Bait fired on first contact), Sunkens3
-  2/1 (LoneMarch terminus still flaps +-300px to f4810, army never
-  arrives - squad level, not pair; needs its own repro).
-- Wired: `BeShuttle`/`BeReaver` execute arbiter orders (incl.
-  UnloadHere through the existing landing gates); `landingReady`
-  moved to the arbiter so order and executor share one read.
 
 ## Session: warnings + DT + rally + storm + ferry (2026-11-16, open)
 
