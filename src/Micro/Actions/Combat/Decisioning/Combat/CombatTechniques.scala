@@ -127,5 +127,38 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       unit.agent.decision.set(unit.agent.safety)
     }
     Debugging.Probe.note("Technique", unit.id, combat.technique.toString)
+    shadowVerdict()
+  }
+
+  // Unified-verdict shadow (step 1, no behavior change): the union of the
+  // march retreat arm and the technique march arm, computed beside them
+  // from the same inputs. Nothing reads the result; disagreements against
+  // today's two readers probe out for the next validation game. The march
+  // arm ignores canFlee and the storm hold, so committed hulls and casting
+  // Templars are the expected shadow-vs-march shape; the technique arms
+  // add the latch, so shadow-vs-technique fires wherever the latch holds
+  // a retreat the raw inputs released (or the reverse).
+  private def shadowVerdict(): Unit = {
+    val shadow = Tactic.Squads.Decisions.RetreatVerdict.shouldHold(
+      unit.unitClass.isWarrior,
+      Protoss.Reaver(unit),
+      unit.intent.canFlee,
+      Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit),
+      unit.agent.shouldFight,
+      unit.totalHealth,
+      Information.Battles.ArmyStrength.score(
+        With.battles.globalAttack.us.skimStrengthUnits,
+        With.battles.globalAttack.enemy.skimStrengthUnits),
+      Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
+        .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax())
+    val marchHome   = unit.intent.marchHome
+    val techRetreat = combat.shouldRetreat
+    if (shadow != marchHome || shadow != techRetreat) {
+      Debugging.Probe.note(
+        "RetreatShadow",
+        unit.id,
+        f"shadow=$shadow marchHome=$marchHome techRetreat=$techRetreat tech=${combat.technique}")
+    }
   }
 }
