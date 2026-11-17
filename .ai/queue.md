@@ -24,13 +24,21 @@ pointer. Steps, each a green unit on its own:
    + `RetreatShadow` probe in `syncConsensus`; validating in Benzene PvP.)
 2. Switch readers one by one behind the shadow data: march retreat
    arm, then `selectBaseTechnique` march arm, then the engage
-   `advance` gate, then Abuse/dispatch gates. Each step its own
-   commit, each revertable; full suite + one validation game each.
+   `advance` gate, then Abuse/dispatch gates. StarEngine-first per
+   owner 2026-11-17: each switch lands behind a scenario pinning the
+   temporal guarantee (no mixed frames under jittered inputs, clean
+   release when inputs clear) plus the base suite; each step its own
+   commit, each revertable. ONE validation game at the very end of
+   the migration, not per reader - the game is the final test, not
+   the debugging loop.
 3. Delete the old predicates only after step 2 holds a full game
    with zero mixed frames (`scripts/retreat-audit.py`).
 
 Open question the shadow data must answer: is a 24f unit-level hold
 enough, or take the 96-frame cluster floor for the verdict too.
+Answer it in StarEngine, not in games: a hold-calibration scenario
+jitters the raw inputs at the measured flip rate and pins the mixed
+frame count at zero for the chosen hold (plus clean release).
 
 ## Parked (explicit orders, do not touch)
 

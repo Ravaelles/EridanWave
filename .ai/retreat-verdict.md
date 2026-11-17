@@ -50,8 +50,10 @@ One verdict object per unit per frame, computed ONCE, read everywhere:
   none re-derives it.
 - Migration: shadow mode first (compute alongside, probe
   disagreements, no behavior change - same pattern as the posture
-  shadow), switch readers one by one with a game each, then delete
-  the old predicates.
+  shadow), switch readers one by one with a StarEngine scenario each
+  (temporal guarantees: no mixed frames under jitter, clean release)
+  plus base suites, then delete the old predicates. One validation
+  game at the very end, not per reader.
 
 Explicitly rejected alternatives:
 
