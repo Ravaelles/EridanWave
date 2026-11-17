@@ -179,6 +179,9 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // A fresh hot Dragoon shoots the Terran in range instead of running
     // from it - but never under siege, the line above already claimed it.
     if (advance && DragoonStandBehavior.run(unit, this)) return
+    // A shielded Dragoon answers a Carrier in range and closes a pathed
+    // one inside eleven tiles instead of retreating past the kill.
+    if (advance && DragoonCarrierBehavior.run(unit, this)) return
     if (shouldRetreat           && Retreat(unit)) return
     if (shouldEngage && advance && Brawl(unit))   return
     if (technique == Abuse && advance && AbuseBehavior.run(unit, this))      return
