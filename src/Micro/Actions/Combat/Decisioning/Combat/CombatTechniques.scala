@@ -52,6 +52,12 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
           .map(unit.pixelDistanceEdge(_) * Maff.inv32)
           .getOrElse(Double.PositiveInfinity),
         unit.squad.exists(_.fightConsensus)))                       Fight
+      // March verdict owns the duel: a warrior the retreat sent home
+      // retreats here too, on the same predicate the march reads, so the
+      // two phases can never claim opposite frames. (Storm stand above
+      // keeps its deliberate cast-hold; defenders that may not flee hold
+      // their ground; Reavers keep their own brain.)
+      else  if (unit.intent.canFlee && Tactic.Squads.Decisions.MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight)) Flee
       else  if ( ! unit.intent.canFlee)                             Walk
       else                                                          Flee
   }
@@ -70,7 +76,10 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
   private[Decisioning] def applyTransitions(): Unit = {
     combat.transition(Aim,       ! unit.canMove)
     combat.transition(Dodge,     unit.agent.receivedPushPriority() >= TrafficPriorities.Dodge && shouldDodge)
-    combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && (combat.shouldRetreat || combat.framesUntilShot < unit.cooldownMaxAirGround))
+    // Abuse never pokes out of a retreat: Fallback already shoots while
+    // leaving and the rearguard covers through AlwaysAttack, so the poke
+    // dance would only flap against the Flee it just left.
+    combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && ! combat.shouldRetreat && combat.framesUntilShot < unit.cooldownMaxAirGround)
     combat.transition(SuperKite, unit.isAny(Terran.Wraith, Zerg.Mutalisk))
     combat.transition(Scavenge,  outmatchedPrey)
     combat.transition(Fallback,  unit.matchups.inRangeOfTank && TankHug.shouldWithdraw(

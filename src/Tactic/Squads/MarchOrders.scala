@@ -51,6 +51,11 @@ object MarchOrders {
   }
 
   private def sendUnit(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): Unit = {
+    // Single writer per frame: during re-squadding a unit sits in two squads'
+    // lists and both would march it - two March probes, last-writer-wins
+    // destination. Only the current owner sends; unassigned hulls march.
+    if (unit.squad.exists(_ != squad)) return
+
     val finalReturn = getReturn(unit, squad, defaultReturn)
     val assault = SuicideMission.isActive(unit)
     // A toothless Terran fields nothing worth forming up against: combat
