@@ -52,7 +52,7 @@ object BeReaver extends Action {
       case PairArbiter.RideAlong  => true
       case PairArbiter.UnloadHere => true
       case PairArbiter.BoardRide  => boardingClaims.exists(_.apply(context)) || walkToRide(unit)
-      case PairArbiter.FightOnFoot => combatClaims.exists(_.apply(context))
+      case PairArbiter.FightOnFoot => rejoinBall(unit) || combatClaims.exists(_.apply(context))
       case PairArbiter.HoldShoot   =>
         if (standShoot(context)) true
         else {
@@ -84,6 +84,25 @@ object BeReaver extends Action {
   /** Boarding family, in order; the arbiter gates it behind BoardRide. */
   private val boardingClaims: Seq[GroundContext => Boolean] = Seq(
     rescueScarab, boardShotless, backOffSiegedTanks, boardRide, boardIdle)
+
+  /**
+   * Ball leash (army only): a hull on foot past three tiles from its
+   * squad centroid walks back instead of duelling out of the ball.
+   * Only binds a reaver walking with people - raids, ferries, lone
+   * hulls and boarding runs keep their explicit orders. Runs before
+   * the combat claims so a drifting duel never re-opens the gap.
+   */
+  private def rejoinBall(unit: FriendlyUnitInfo): Boolean = {
+    val squad = unit.squad.getOrElse(return false)
+    if ( ! squad.units.exists(u => u != unit && u.alive && u.unitClass.isWarrior)) return false
+    if ( ! ReaverLeash.shouldRejoin(unit.tileDistanceCenter(squad.centroidGround))) return false
+
+    unit.agent.act("ReaverLeash")
+    unit.agent.forceTo(squad.centroidGround)
+    Commander.move(unit)
+
+    true
+  }
 
   /** Combat family, in order; the arbiter gates it behind the fight. */
   private val combatClaims: Seq[GroundContext => Boolean] = Seq(
