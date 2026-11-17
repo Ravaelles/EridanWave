@@ -12,7 +12,10 @@ import org.scalatest.funsuite.AnyFunSuite
  * The live map flips between VICTORY and DEFEAT run to run, so this
  * pins the mechanism (the fight happens, no dithering), not the score.
  */
-class ZealotMirrorSuite extends AnyFunSuite {
+class ZealotMirrorSuite extends AnyFunSuite with StarEngineSuite {
+
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Zealot.name) }
 
   test("a mirrored zealot line resolves without dithering") {
     val ours = Seq(

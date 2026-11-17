@@ -13,6 +13,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class DarkTemplarRazeSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.DT.name + StarEngineTags.Raze.name + StarEngineTags.Targeting.name) }
+
   private def tierPilot(fallback: (Double, Double)): Pilot = new Pilot {
 
     override def direct(me: Body, world: World): Directive = {

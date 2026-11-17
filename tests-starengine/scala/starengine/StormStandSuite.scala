@@ -16,6 +16,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class StormStandSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Psionic.name + StarEngineTags.Templar.name + StarEngineTags.Retreat.name) }
+
   private val home = (-400.0, 500.0)
 
   /** Old rule: the retreat verdict owns the frame, the battery walks home. */

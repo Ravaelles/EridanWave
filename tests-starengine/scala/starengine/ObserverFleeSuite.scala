@@ -11,7 +11,10 @@ import org.scalatest.funsuite.AnyFunSuite
  * must break first and keep the larger cushion. Speeds, reaches and
  * damage are the real UnitType numbers; the muta always presses.
  */
-class ObserverFleeSuite extends AnyFunSuite {
+class ObserverFleeSuite extends AnyFunSuite with StarEngineSuite {
+
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Observer.name + StarEngineTags.Detector.name) }
 
   /** Production order, stripped to the flee: hunter early warning first, gun flee second, hold otherwise. */
   private class EyePilot(detector: Option[Body]) extends Pilot {

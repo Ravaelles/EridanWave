@@ -15,6 +15,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class CorsairHuntSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Corsair.name + StarEngineTags.Hunt.name) }
+
   /** Production order: flee ranged threats first, hunt the nearest Overlord second. */
   private class CorsairHunt extends Pilot {
     var flees = 0

@@ -16,6 +16,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class SunkensScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Static.name + StarEngineTags.Reaver.name + StarEngineTags.Shuttle.name) }
+
   private def vetoed(f: Body): Boolean =
     f.kind.isBuilding && ! TargetFilterFocus.allowsBuilding(
       isBuilding = f.kind.isBuilding,

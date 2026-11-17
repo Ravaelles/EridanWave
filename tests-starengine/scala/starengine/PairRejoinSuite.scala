@@ -17,6 +17,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class PairRejoinSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Reaver.name + StarEngineTags.Shuttle.name + StarEngineTags.Rejoin.name) }
+
   private val home = (0.0, 500.0)
   private val awaitPoint = (500.0, 500.0)
 

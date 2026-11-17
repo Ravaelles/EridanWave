@@ -14,6 +14,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ReaverZombieSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Reaver.name + StarEngineTags.Targeting.name) }
+
   private def vetoed(f: Body): Boolean =
     f.kind.isBuilding && ! TargetFilterFocus.allowsBuilding(
       isBuilding = f.kind.isBuilding,

@@ -17,6 +17,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class AirStandoffScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Static.name + StarEngineTags.Observer.name) }
+
   private val goal = (2000.0, 500.0)
 
   /** Straight line, no doctrine: the field behavior. */

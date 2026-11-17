@@ -19,6 +19,9 @@ import scala.collection.mutable
  */
 class PressedRideSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Shuttle.name + StarEngineTags.Reaver.name + StarEngineTags.Retreat.name) }
+
   private val mapPx = 2400
 
   /** Reaver discipline: shoot from the anchor, never chase. */

@@ -15,6 +15,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ScoredFleeSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Retreat.name + StarEngineTags.Corsair.name + StarEngineTags.Observer.name) }
+
   /** Mirrors CorsairRangedFlee: flee scored threats first, hunt second. */
   private class CorsairScored extends Pilot {
     var flees = 0

@@ -14,6 +14,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class CarrierDoctrineSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Carrier.name + StarEngineTags.Targeting.name) }
+
   private def markOf(me: Body, foe: Body): CarrierTargets.Mark =
     CarrierTargets.Mark(
       me.dist(foe) / 32.0,

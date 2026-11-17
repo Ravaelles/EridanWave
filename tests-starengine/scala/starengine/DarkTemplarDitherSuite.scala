@@ -17,7 +17,10 @@ import org.scalatest.funsuite.AnyFunSuite
  * Overlord's sight are the real UnitType numbers; both pilots call the
  * shipped kernels, the engine owns the loop only.
  */
-class DarkTemplarDitherSuite extends AnyFunSuite {
+class DarkTemplarDitherSuite extends AnyFunSuite with StarEngineSuite {
+
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.DT.name + StarEngineTags.Detector.name) }
 
   private def away(me: Body, x: Double, y: Double): (Double, Double) = {
     val dx = me.x - x

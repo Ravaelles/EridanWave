@@ -18,6 +18,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class DragoonPackScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Dragoon.name + StarEngineTags.Cohesion.name + StarEngineTags.Retreat.name) }
+
   private val goal = (-800.0, 500.0)
 
   /** Retreat verdict: run for the edge, shooting over the shoulder. */

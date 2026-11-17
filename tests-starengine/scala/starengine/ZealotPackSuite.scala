@@ -15,6 +15,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ZealotPackSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Zealot.name + StarEngineTags.Cohesion.name) }
+
   private class PackPilot(centroid: (Double, Double)) extends Pilot {
 
     override def direct(me: Body, world: World): Directive = {

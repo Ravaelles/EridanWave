@@ -21,6 +21,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ArtilleryKeepOffScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Artillery.name + StarEngineTags.Dragoon.name) }
+
   private val goal = (1600.0, 500.0)
 
   /** Plain retreat: the waypoint line is the whole plan. */

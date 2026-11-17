@@ -17,6 +17,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class StormRangeSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Psionic.name + StarEngineTags.Templar.name) }
+
   private val searchPx: Double = PsionicStorm.stormSearchTiles * 32.0
 
   /** Search-capped Templar: storms the densest box in reach the shipped vetoes allow, holds past the cap. */

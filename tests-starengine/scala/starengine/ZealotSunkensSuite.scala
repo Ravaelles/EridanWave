@@ -14,7 +14,10 @@ import org.scalatest.funsuite.AnyFunSuite
  * ledger (a clean engage flips orders a handful of times, never
  * hundreds - dithering would show up here).
  */
-class ZealotSunkensSuite extends AnyFunSuite {
+class ZealotSunkensSuite extends AnyFunSuite with StarEngineSuite {
+
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Zealot.name + StarEngineTags.Static.name) }
 
   private def vetoed(f: Body): Boolean =
     f.kind.isBuilding && ! TargetFilterFocus.allowsBuilding(

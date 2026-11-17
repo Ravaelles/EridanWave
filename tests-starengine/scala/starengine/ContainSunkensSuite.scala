@@ -14,6 +14,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ContainSunkensSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Contain.name + StarEngineTags.Static.name) }
+
   /** Shared ring latch: one hit pulls every hull back for pullbackFrames. */
   private class RingPullback(val pullbackFrames: Int) {
     var until: Int = -1

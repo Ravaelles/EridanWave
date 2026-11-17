@@ -19,6 +19,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class PairCycleSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Ferry.name + StarEngineTags.Rejoin.name) }
+
   private val home = (0.0, 500.0)
   private val goal = (1700.0, 500.0)
 

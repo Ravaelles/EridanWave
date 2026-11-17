@@ -22,6 +22,9 @@ import scala.collection.mutable
  */
 class MarchDressSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.March.name + StarEngineTags.Formation.name + StarEngineTags.Dragoon.name + StarEngineTags.Zealot.name) }
+
   /** March at the pack, dress inside the horizon, fight on contact. */
   private class DressMarchPilot extends Pilot {
     val modes: mutable.ListBuffer[(Int, String)] = mutable.ListBuffer.empty

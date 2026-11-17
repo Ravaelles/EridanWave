@@ -16,6 +16,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class StormLeadSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Psionic.name + StarEngineTags.Templar.name) }
+
   /** Hydralisk drift: down-left, full speed, every frame. */
   private class DownLeft extends Pilot {
     override def direct(me: Body, world: World): Directive =

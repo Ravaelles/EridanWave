@@ -18,6 +18,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class RetreatHoldSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Retreat.name + StarEngineTags.Dragoon.name) }
+
   /** Settling verdict: flaps for 200 frames, then the sim holds fight. */
   private def settling(frame: Int): Boolean =
     if (frame < 200) (frame / 30) % 2 == 0 else true

@@ -14,7 +14,10 @@ import org.scalatest.funsuite.AnyFunSuite
  * holds past the edge and releases two tiles out. Reaches and speeds are
  * the real UnitType numbers; both pilots call the shipped kernels.
  */
-class ObserverStandOffSuite extends AnyFunSuite {
+class ObserverStandOffSuite extends AnyFunSuite with StarEngineSuite {
+
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Observer.name + StarEngineTags.Detector.name) }
 
   private class EyePilot(id: Int, latched: Boolean) extends Pilot {
     val yielded = new scala.collection.mutable.ListBuffer[Boolean]()

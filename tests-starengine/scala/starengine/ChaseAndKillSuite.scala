@@ -12,7 +12,10 @@ import org.scalatest.funsuite.AnyFunSuite
  * runs it down. Speeds, reaches and damage are the real UnitType
  * numbers; the worker flees full-speed, the engine owns the loop only.
  */
-class ChaseAndKillSuite extends AnyFunSuite {
+class ChaseAndKillSuite extends AnyFunSuite with StarEngineSuite {
+
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Targeting.name + StarEngineTags.Dragoon.name) }
 
   /** Old shape: hold the max-range standoff forever, never close. */
   private class KitingPilot extends Pilot {

@@ -14,6 +14,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class WorkerHuntSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Hunt.name + StarEngineTags.Dragoon.name) }
+
   /** Timid pilot, old rule: workers are not a fight, hold the slot. */
   private class TimidPilot extends Pilot {
     var holds = 0

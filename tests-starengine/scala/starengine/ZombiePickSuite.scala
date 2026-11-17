@@ -10,6 +10,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ZombiePickSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Targeting.name) }
+
   private def ling(x: Double, y: Double, hpRatio: Double): Body = {
     val hp = (Zerg.Zergling.maxTotalHealth * hpRatio).toInt
     new Body(Zerg.Zergling, x, y, hp.toDouble)

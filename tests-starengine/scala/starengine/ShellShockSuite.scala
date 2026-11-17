@@ -16,6 +16,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ShellShockSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Retreat.name + StarEngineTags.Dragoon.name + StarEngineTags.Artillery.name) }
+
   /** Plain hunter: attack-move at the nearest foe, no matter the shells. */
   private class HuntPilot extends Pilot {
 

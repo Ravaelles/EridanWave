@@ -15,6 +15,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class SuicideRazeSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Raze.name) }
+
   private def vetoed(f: Body): Boolean =
     f.kind.isBuilding && ! TargetFilterFocus.allowsBuilding(
       isBuilding = f.kind.isBuilding,

@@ -13,7 +13,10 @@ import org.scalatest.funsuite.AnyFunSuite
  * the real UnitType numbers; the foe holds its ground like the map dummy,
  * the pilot calls the shipped hold kernel, the engine owns the loop only.
  */
-class FormationStandoffSuite extends AnyFunSuite {
+class FormationStandoffSuite extends AnyFunSuite with StarEngineSuite {
+
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Formation.name + StarEngineTags.Dragoon.name) }
 
   private class HoldPilot extends Pilot {
     var pursuing: Boolean = false

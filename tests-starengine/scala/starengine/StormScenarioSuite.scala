@@ -14,6 +14,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class StormScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Psionic.name + StarEngineTags.Templar.name) }
+
   /** Templar that storms the densest in-reach pack the shipped vetoes allow, else holds. */
   private class TemplarStorm extends Pilot {
     override def direct(me: Body, world: World): Directive = {

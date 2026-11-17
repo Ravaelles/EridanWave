@@ -16,6 +16,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class DarkTemplarMineSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.DT.name + StarEngineTags.Mine.name) }
+
   private class SidestepPilot(goal: (Double, Double)) extends Pilot {
     var steps = 0
     var minMineTiles = Double.PositiveInfinity

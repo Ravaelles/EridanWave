@@ -18,6 +18,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ShuttleFerryLatchSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Ferry.name) }
+
   private class FerryPilot(id: Int, latched: Boolean) extends Pilot {
     val fled = new scala.collection.mutable.ListBuffer[Boolean]()
 

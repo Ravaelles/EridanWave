@@ -16,6 +16,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class MarchFlapSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.March.name + StarEngineTags.Zealot.name) }
+
   private val goalA = (300.0, 0.0)
   private val goalB = (-300.0, 0.0)
   private val home = (0.0, 600.0)

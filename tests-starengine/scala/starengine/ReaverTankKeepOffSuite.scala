@@ -18,6 +18,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class ReaverTankKeepOffSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Reaver.name + StarEngineTags.Artillery.name) }
+
   /** Plain hunter: nearest foe, tanks included. */
   private class HuntAllPilot extends Pilot {
 

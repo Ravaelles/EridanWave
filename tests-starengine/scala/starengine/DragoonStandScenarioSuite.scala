@@ -18,6 +18,9 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class DragoonStandScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
+  override def tags: Map[String, Set[String]] =
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Dragoon.name + StarEngineTags.Retreat.name) }
+
   /** No attack order: the retreat verdict's output, a passive hull. */
   private class NoOrdersPilot extends Pilot {
 
