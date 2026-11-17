@@ -17,31 +17,25 @@ rejected alternatives (god-object, capability types) and migration
 contract live in `.ai/retreat-verdict.md` - this entry is only the
 pointer. Steps, each a green unit on its own:
 
-1. Shadow: compute the verdict alongside the current code, probe only
-   the disagreements vs today's decisions (same pattern as the old
-   shadow posture). No behavior change. Run a game, read the probe.
-   (LANDED c44df2aa8: `RetreatVerdict.shouldHold` + `RetreatVerdictSuite`
-   + `RetreatShadow` probe in `syncConsensus`; validating in Benzene PvP.)
-2. Switch readers one by one behind the shadow data (LANDED:
-   shared ticked bus with 24f hold + PerGame sweep, march arm,
-   technique arm, dispatch advance; `MarchRetreat` + suite deleted,
-   `RetreatAllowed` stays as verdict input; the hold scenario pins
-   the temporal contract). StarEngine-first per
-   owner 2026-11-17: each switch lands behind a scenario pinning the
-   temporal guarantee (no mixed frames under jittered inputs, clean
-   release when inputs clear) plus the base suite; each step its own
-   commit, each revertable. ONE validation game at the very end of
-   the migration, not per reader - the game is the final test, not
-   the debugging loop.
+1. Shadow (DONE): verdict computed alongside the old readers, probe
+   only the disagreements; two validation games measured the
+   migration, then the probes were removed.
+2. Switch readers one by one behind the shadow data (DONE: shared
+   ticked bus with 24f hold + PerGame sweep, march arm, technique arm,
+   dispatch advance, verdict arm above the fresh-fight arm;
+   `MarchRetreat` + suite deleted, `RetreatAllowed` stays as verdict
+   input; the hold scenario pins the temporal contract).
+   StarEngine-first per owner 2026-11-17: each switch landed behind a
+   scenario pinning the temporal guarantee plus the base suite, each
+   step its own revertable commit; validation games closed the
+   migration, not the debugging loop.
 3. Delete the old predicates only after step 2 holds a full game
    with zero mixed frames (`scripts/retreat-audit.py`).
-   (`MarchRetreat` + suite deleted with the switches; `RetreatShadow`
-   and `Technique` probes stay until the final validation game, then go.)
-   Final game #1 (VICTORY 135/125) caught arm 2 outranking the hold
-   (74 RetreatSimple/Abuse chains on a held bus) - fixed by moving the
-   verdict arm above the fresh-fight arm (d89da97d4). Final game #2
-   pending to confirm zero mixed frames, then probes go and the
-   migration closes.
+   (DONE: `MarchRetreat` + suite deleted with the switches;
+   `RetreatShadow` and `Technique` probes removed after final game #2
+   (VICTORY 142/25) showed zero same-tick contradictions - the 16
+   residual audit rows are all sleep-merged windows with technique
+   Flee throughout, proven per row. Migration CLOSED.)
 
 4. Dispatch order as pipeline registries (agreed 2026-11-17, starts
    after steps 1-3 close). Every dispatch chain becomes one explicit

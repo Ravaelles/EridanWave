@@ -102,17 +102,19 @@ hold=96: mixed 0, 5 flips, resume 94 frames after. Decision: the
 24-frame unit hold; the 96-frame floor stays at the cluster posture
 layer where it belongs.
 
-## Status (2026-11-17): readers switched, final game pending
+## Status (2026-11-17): migration CLOSED
 
-Step 2 landed in four slices: shared ticked bus with the calibrated
-24f hold (`RetreatVerdict` memory + `PerGame` sweep), march arm,
-technique arm and dispatch advance all on the bus; `MarchRetreat` +
-suite deleted, `RetreatAllowed` stays as a verdict input.
-`RetreatShadow` and `Technique` probes stay until the final validation
-game measures the migration, then go with it. Engage keeps its own
-marchHome gate as defense in depth; engage() is only reachable through
-the gated dispatch. Abuse-while-held is unreachable (selectBase forces
-Flee before transitions run).
+Steps 1-3 done. Final game #2 (VICTORY 142/25, Benzene PvP, full bus
+in the jar): 16 audit rows, every one with technique Flee, flee
+verdict and a agreeing shadow - the leading duel acts are pre-flip
+remnants merged by the sleep-flush (proven per row, e.g. u=226 f=11944
+flips to Flee/Retreating and retreats cleanly from f=11946 on).
+Zero same-tick contradictions: no row shows a fight technique under a
+flee verdict. `MarchRetreat` + suite deleted, `RetreatShadow` and
+`Technique` probes removed, `RetreatAllowed` stays as a verdict input.
+Residual audit counts are measurement smear (terminus re-notes +
+sleep-merged windows), not behavior - read them with shadow-join.py,
+not raw.
 
 ## Step 4 (agreed, starts after steps 1-3 close): order as pipeline
 
