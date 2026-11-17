@@ -197,6 +197,7 @@ class SquadDefendBase(base: Base) extends Squad {
 
     lastAction = "ChokeHold"
     formations += new FormationStandard(this, FormationStyleGuard, choke.get, None)
+    units.foreach(_.agent.act("ChokeHold"))
     SquadAutomation.send(this)
     units.foreach(_.intent.setCanFlee(false))
 
