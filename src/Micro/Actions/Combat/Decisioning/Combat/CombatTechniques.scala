@@ -37,14 +37,13 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         unit.agent.shouldFight,
         unit.confidence11))                                         Flee
       else  if (unit.agent.shouldFight && combat.target.isDefined)   Fight
-      else  if (safePassage && combat.target.exists(unit.inRangeToAttack)) Fight
-      // March verdict owns the duel: a warrior the retreat sent home
-      // flees instead of strolling through safe passage, so the two
-      // phases can never claim opposite frames. Storm-ready Templars
-      // keep their deliberate cast-hold below; defenders that may not
-      // flee hold their ground; Reavers keep their own brain; forbidden
-      // retreats fall through like the march does, so the line advances
-      // as one.
+      // March verdict owns the duel: a retreating warrior holds no
+      // safe-passage duels and strolls nowhere - the verdict sent it
+      // home, so it walks home instead of stopping for free shots.
+      // Storm-ready Templars are exempt (their deliberate cast-hold
+      // below); defenders that may not flee hold their ground; Reavers
+      // keep their own brain. Forbidden retreats fall through like the
+      // march does, so the line advances as one.
       else  if (unit.intent.canFlee && Tactic.Squads.Decisions.MarchRetreat.shouldMarchHome(unit.unitClass.isWarrior, Protoss.Reaver(unit), unit.agent.shouldFight) && ! (Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit)) && Tactic.Squads.Decisions.RetreatAllowed.forUnit(
         unit.totalHealth,
         Information.Battles.ArmyStrength.score(
@@ -53,6 +52,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
           .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
         With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax())) Flee
+      else  if (safePassage && combat.target.exists(unit.inRangeToAttack)) Fight
       else  if (safePassage)                                        Walk
       // Templar storm stand: a loaded hull walks into cast range instead
       // of retreating out of it - the cast itself already fired first in
