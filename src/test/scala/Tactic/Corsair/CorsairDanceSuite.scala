@@ -8,25 +8,29 @@ class CorsairDanceSuite extends AnyFunSuite {
     assert(CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 12,
       distTiles     = 6.0,
-      wound01       = 0.0))
+      wound01       = 0.0,
+      sporeCover    = true))
   }
 
   test("a ready Corsair goes for the kill instead of dancing") {
     assert( ! CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 0,
       distTiles     = 6.0,
-      wound01       = 0.0))
+      wound01       = 0.0,
+      sporeCover    = true))
   }
 
   test("ten or fewer frames left means no dance, eleven means dance") {
     assert( ! CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 10,
       distTiles     = 6.0,
-      wound01       = 0.0))
+      wound01       = 0.0,
+      sporeCover    = true))
     assert(CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 11,
       distTiles     = 6.0,
-      wound01       = 0.0))
+      wound01       = 0.0,
+      sporeCover    = true))
   }
 
   test("a duel means cooling down or a recently started attack") {
@@ -46,22 +50,39 @@ class CorsairDanceSuite extends AnyFunSuite {
     assert( ! CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 12,
       distTiles     = 2.0,
-      wound01       = 0.0))
+      wound01       = 0.0,
+      sporeCover    = true))
   }
 
   test("wounds raise the dance edge from 3 up to 5 tiles") {
     assert(CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 12,
       distTiles     = 5.1,
-      wound01       = 1.0))
+      wound01       = 1.0,
+      sporeCover    = true))
     assert( ! CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 12,
       distTiles     = 4.9,
-      wound01       = 1.0))
+      wound01       = 1.0,
+      sporeCover    = true))
     assert(CorsairDanceToOverlord.shouldDance(
       cooldownLeft  = 12,
       distTiles     = 4.9,
-      wound01       = 0.0))
+      wound01       = 0.0,
+      sporeCover    = true))
+  }
+
+  test("no spore cover means no dance - run the overlord down") {
+    assert( ! CorsairDanceToOverlord.shouldDance(
+      cooldownLeft  = 30,
+      distTiles     = 6.0,
+      wound01       = 0.0,
+      sporeCover    = false))
+    assert( ! CorsairDanceToOverlord.shouldDance(
+      cooldownLeft  = 30,
+      distTiles     = 3.0,
+      wound01       = 1.0,
+      sporeCover    = false))
   }
 
   test("relocation is deterministic per unit and bucket") {

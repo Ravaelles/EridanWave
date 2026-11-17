@@ -5,13 +5,30 @@ import Mathematics.Maff
 import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Tactic.Squads.support.SquadAcePilots
+import Utilities.Latch
 
 /**
  * Mid-duel Overlord dance: a cooling Corsair holds at standoff instead of
  * closing into the Spore math behind the Overlord; ours shoots the moment
  * it is ready. Close (or already firing) Corsairs go for the kill.
+ * Without spore cover ahead there is nothing to hold against - the dance
+ * yields and the hunt runs the Overlord down instead of watching it
+ * leave, which is exactly what a standing Corsair does.
  */
 object CorsairDanceToOverlord {
+
+  /** Enemy static air defense this close to the Overlord covers it, in tiles. */
+  val sporeCoverTiles: Double = 9.0
+
+  /**
+   * Latched standoff (auto-registered, reset per game): entering holds
+   * through the cooldown cycle instead of flapping with the hunt every
+   * few frames when the duel sits on the dance edge - each flip
+   * re-issues orders and the re-aiming never lets the hull close, so
+   * the Overlord walks away from a standing Corsair. Release when the
+   * gun is ready (go kill) or the duel is over (go hunt).
+   */
+  private val dancing = new Latch
 
   /**
    * Dance only on a long cooldown: a Corsair with ten or fewer frames
@@ -20,8 +37,8 @@ object CorsairDanceToOverlord {
    */
   val DanceCooldown = 11
 
-  def shouldDance(cooldownLeft: Int, distTiles: Double, wound01: Double): Boolean =
-    cooldownLeft >= DanceCooldown && distTiles >= 3.0 + wound01 * 2.0
+  def shouldDance(cooldownLeft: Int, distTiles: Double, wound01: Double, sporeCover: Boolean): Boolean =
+    sporeCover && cooldownLeft >= DanceCooldown && distTiles >= 3.0 + wound01 * 2.0
 
   /**
    * A duel is on: cooling down from a shot, or started one recently.
@@ -54,7 +71,17 @@ object CorsairDanceToOverlord {
       val committed = unit.agent.toAttack.filter(Zerg.Overlord(_))
       if (keepsAttacking(committed.nonEmpty, committed.exists(_.alive), committed.exists(t => unit.inRangeToAttack(t)))) return false
 
-      if (shouldDance(unit.cooldownLeft, unit.tileDistanceCenter(overlord.pixel), unit.woundPercent())) {
+      val distTiles = unit.tileDistanceCenter(overlord.pixel)
+      val sporeCover = unit.matchups.enemies.exists(e =>
+        e.alive && e.unitClass.isStaticDefense && e.canAttackAir && e.pixelDistanceCenter(overlord.pixel) < sporeCoverTiles * 32.0)
+      val duelingNow = dueling(unit.cooldownLeft, With.framesSince(unit.lastFrameStartingAttack))
+      val dance = dancing(
+        unit.id,
+        fires    = duelingNow && shouldDance(unit.cooldownLeft, distTiles, unit.woundPercent(), sporeCover),
+        releases = unit.cooldownLeft == 0 || ! duelingNow)
+      if ( ! dance) return false
+
+      if (shouldDance(unit.cooldownLeft, distTiles, unit.woundPercent(), sporeCover)) {
         unit.intend(squad).setTargets(Seq(overlord)).setTerminus(unit.pixel)
       } else {
         unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
