@@ -103,6 +103,8 @@ New kernels ride suites; these need a live game that reaches them
   centroid walks back when walking with people; needs an army game).
 - No reavers in the PvP goon mirror (2026-11-17: three-/four-gate
   goons no longer force the Bay/Reaver detour; needs a PvP mirror).
+- Dragoon bravery vs pure melee (2026-11-17: facesRush needs ranged
+  backup in the pressuring pack; needs a ling/zealot flood game).
 
 - Scout static keep-off (ScoutStandoffScenarioSuite green; needs our
   Scouts vs enemy AA: hold outside reach+margin, shoot from the hold,
