@@ -12,8 +12,9 @@ import Mathematics.Points.{Pixel, Points}
  * middleChoke is the odd one out on purpose: the most central lane that is
  * none of the base chokes, where the army can set up in formation and wait
  * for the enemy. That is neither a flee (disengage home) nor a fight
- * (engage the enemy) - a future middle-focus stance would march here and
- * hold, letting DressLine/FormationHold govern the wait.
+ * (engage the enemy) - the middle-focus stance marches here and
+ * holds (BaseGuardPost past thirteen warriors), letting
+ * DressLine/FormationHold govern the wait.
  */
 object Chokes {
 
@@ -32,7 +33,8 @@ object Chokes {
   /**
    * The most central lane that is none of the base chokes above.
    * Scored by distance to map middle minus choke radius: central and wide
-   * enough to set up a formation around wins.
+   * enough to set up a formation around wins. The standing guard posts
+   * here past thirteen warriors (see MiddleChokeHold / BaseGuardPost).
    */
   def middleChoke: Option[Edge] = {
     val taken = Set(mainChoke, naturalChoke, enemyMainChoke, enemyNaturalChoke).flatten.map(_.pixelCenter)

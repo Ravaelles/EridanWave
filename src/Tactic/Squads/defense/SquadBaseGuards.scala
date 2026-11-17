@@ -6,6 +6,7 @@ import Mathematics.Maff
 import Mathematics.Points.Pixel
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.UnitInfo
+import Tactic.Squads.Decisions.MiddleChokeHold
 import Tactic.Squads.Squad
 import Tactic.Squads.SquadAutomation
 import Utilities.UnitFilters.IsAny
@@ -17,7 +18,15 @@ import Utilities.UnitFilters.IsAny
  */
 object BaseGuardPost {
 
-  def apply(): Pixel = threatened.getOrElse(choke)
+  def apply(): Pixel = threatened.getOrElse(postureChoke)
+
+  // Mid-size armies meet the enemy out: past thirteen warriors the post
+  // moves to the middle choke instead of the natural. Falls back to the
+  // natural when the middle is unknown.
+  private def postureChoke: Pixel =
+    if (MiddleChokeHold.shouldHold(With.units.ours.count(u => u.alive && u.unitClass.isWarrior)))
+      Chokes.middleChoke.map(_.pixelCenter).getOrElse(choke)
+    else choke
 
   private def threatened: Option[Pixel] = With.geography.ourBases.filterNot(_.isMain)
     .filter(h => h.metro.units.exists(u => u.isEnemy && u.unitClass.isWarrior))
