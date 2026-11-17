@@ -121,8 +121,15 @@ object BeShuttle extends Action {
       && (passenger.matchups.targetedByScarab
         || passenger.agent.wantsPickup
         || (Protoss.Reaver(passenger)
-          && passenger.matchups.targetsInRange.isEmpty
-          && (endangered(shuttle, passenger) || travelsFar(passenger) || ReaverShuttlePair.pairIdle(shuttle, passenger) || strandedFetch(shuttle, passenger) || shuttle.agent.passengers.contains(passenger)))
+          && ShuttleFetch.shouldFetchReaver(
+            hasTargets    = passenger.matchups.targets.nonEmpty,
+            wantsPickup   = false,
+            scarabTargeted = false,
+            endangered    = endangered(shuttle, passenger),
+            travelsFar    = travelsFar(passenger),
+            pairIdle      = ReaverShuttlePair.pairIdle(shuttle, passenger),
+            strandedFetch = strandedFetch(shuttle, passenger),
+            reserved      = shuttle.agent.passengers.contains(passenger)))
         || (Protoss.HighTemplar(passenger) && MacroFacts.techStarted(Protoss.PsionicStorm)))
       && (shuttle.agent.passengers.isEmpty || shuttle.agent.passengers.headOption.map(_.squad).getOrElse(shuttle.squad).forall(passenger.squad.contains))
     )
