@@ -167,14 +167,9 @@ New kernels ride suites; these need a live game that reaches them
 - DT flees guns first (visible gun in 13 tiles outranks the detector).
 - Workers run straight from visible enemy DTs (3.0 tiles, no pathing).
 - Shuttle pair owns loaded hulls (no other pickups, no drop missions).
-- Shuttle fetch glue diagnosed end to end (Reav&Shut_v_Sunkens): a TEMP
-  Flow probe proved BeShuttle runs every 2nd frame but support never
-  fires - adopt() returns true forever fetching a fighting reaver that
-  never boards (stale reservation + live hail), starving escort/await
-  while the mate dies 45px away. Fix: fetch only non-fighting Reavers
-  (explicit hailers still fetch); first game with the fix shows
-  EscortRide/AwaitRide from f178 and AirFlee under pressure - but they
-  flap every 2nd frame (new dither: latch the escort/await choice).
+- Shuttle fetch glue (2026-11-18: adopt gated on no-duel for the
+  whole pickup branch - fighting hulls board only on explicit hail
+  or Scarab; kernel + suite. UMS pair maps validating now).
 - Shuttle await dither candidate (Returning/AwaitRide 2619x flips).
 - Drop lifted targets (tasked building takes off, slot releases).
 - StaticDefenseRepel shoots (weakest-first, retreat still outranks).
