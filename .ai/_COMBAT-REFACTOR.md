@@ -217,12 +217,13 @@ anchor (queued); rearguard covers validated in one more grind;
 live validation of every unproven rule above on raid/PvP/PvT/PvZ games.
 DONE since: march legs gated by SlotDiscipline + honest Marching-home
 vs Returning-to-slot split (validated: Waiting x1, Rallying dozens,
-no more mill-flap); roam suspends Fight/Abuse in the unit phase (same
-facts as the march gate); defense triggers only on anti-ground weapons
+no more mill-flap); roam suspends Abuse (verified live: 0 Abuse in
+3308 roam frames) while duelling on contact stays; defense triggers only on anti-ground weapons
 (Observer false alarm fixed) + DefenseWhy board (reason, triggering
 enemies, counts); muta/drop proactive guards answer at any army size.
 
 ## 8. Live validation log (2026-11-16/17, all on f/phase-f)
+
 - Benzene PvP x5 (71/74 -> 83/3 -> 80/9 -> 79/9 -> 84/11, then 80/25):
   verdict split 82.9% -> 74.8%, losses collapsed and stayed down.
   Shadow stable (9-20 flips/game); stance latched Regrouping ~f4300 in
@@ -287,9 +288,10 @@ scenarios that mirror each shipped kernel:
   dispatch reaches Retreat with every formation claim already skipped.
   The f16368 Retreat-vs-Waiting/Marching flap is structurally impossible:
   the two labels cannot share a frame because only one band speaks.
-- Roaming Dragoons skip the duel entirely (Fight base and Abuse gated
-  on the same facts as the march gate): scouting the unseen mirror is
-  MEDIUM business, dueling can wait for the first enemy Dragoon.
+- Roaming Dragoons do not kite: Abuse is suspended while the roam gate
+  walks them at the squad goal (same facts both sides, verified live:
+  3308 roam frames, 0 Abuse acts). Duelling on contact stays - scouts
+  shoot what they walk into, they just never break stride to poke.
 - Static keep-off is HIGH (threat avoidance); static positioning holds
   (hold-instead-of-walk, FormationHold, brave stands) are LOW with
   priority over the rest of formation - documented at each site.
@@ -298,3 +300,33 @@ scenarios that mirror each shipped kernel:
   order. No second manager may claim a bonded hull - see the Shuttle
   assignment rule (PairGlue + status latch instead of a registry: the
   bond already maps shuttle to mate).
+
+## 10. StarEngine tag catalog and coverage (2026-11-17)
+
+Topics live in one registry (`tests-starengine/scala/starengine/StarEngineTags.scala`, 32 tags);
+every scenario suite carries its topics (`scripts/starengine-tags.py` prints the catalog and
+fails on untagged suites or unused tags; run it after adding a suite). Tags mark topics, not
+verdicts - one tag query (`scripts/starengine.sh --filter dragoon`) runs everything about it.
+
+Engine-proven in this pass: posture floor + deadband (PostureHoldSuite), glued retreat +
+broken-bond flee (FleeToMateSuite), raid deadband without order flap (RaidStatusSuite),
+worker spread (WorkerSpreadScenarioSuite), chaff ban (ChaffScenarioSuite), escorted
+scout doctrine (ScoutDisciplineScenarioSuite), always-attack ladder incl. new victims
+(AlwaysAttackScenarioSuite), zealot leash (ZealotLeashScenarioSuite), cluster rejoin
+(ClusterRejoinScenarioSuite), static standoff (ScoutStandoffScenarioSuite), rearguard
+cover (RearguardScenarioSuite).
+
+Deliberately live-only (engine lacks the layer): march legs (no march machinery),
+ForceGlobalAttack seam (needs squads/economy), CanProduceShuttle seam (macro),
+DragoonCarrier halfway (needs ground paths), stance retirement + rearguard cover
+execution (needs full squads; kernels pinned by suites, behavior read live).
+
+2026-11-17 additions: HandleEnemyCombatBuildings (one concept home for the
+static keep-offs - shells first, AA reach second, one first-claims list;
+duel/formation/retreat stay with their owners and the group falls through
+to them); MarchRetreat (retreat outranks formation unconditionally - no
+gate, no leg, no slot is asked while the verdict says flee); roam
+suspends Fight/Abuse on the same facts as the march gate; defense only
+answers anti-ground weapons (Observer/detector/transport false alarms
+gone) + DefenseWhy board (reason, triggering enemies, army total);
+proactive muta/drop guards answer at any army size again.

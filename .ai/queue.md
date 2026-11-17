@@ -82,6 +82,47 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   tile steps) instead of breaking or standing; needs per-unit hold
   positions advancing with the enemy + suite first.
 
+## Open: posture-era validation (needs games that reach each rule)
+
+New kernels ride suites; these need a live game that reaches them
+(scout the named behavior in trace/probe/errors.json, delete the line):
+
+- Scout static keep-off (ScoutStandoffScenarioSuite green; needs our
+  Scouts vs enemy AA: hold outside reach+margin, shoot from the hold,
+  never pose inside).
+- Dragoon carrier hunt (kernel + suite green; needs Dragoons 20+ shields
+  vs a Carrier: always attacks in range, closes a pathed one inside 11
+  tiles or its halfway point).
+- ForceGlobalAttack (kernel + suite green; needs our DT in PvP/PvT
+  without enemy Observer/Vessel: global attack fires regardless, covered
+  statics hold without advantage).
+- CanProduceShuttle veto (kernel + suite green; proven holding by absence
+  in early PvP - still wants an observer game: ShuttleVeto board must
+  fire while production holds the ferry).
+- Early mirror pressure penalty (-20% below 7 combat units vs Dragoons;
+  needs an early PvP: DragoonMirrorSuite covers 3v5/4v2, live must show
+  the break at the penalized line).
+- FleeToMate (order proven in engine; needs a pressured pair with the
+  mate on foot inside 15 tiles: ride converges instead of fleeing away).
+- Raid status deadband (RaidStatusSuite pins no-flap inside 0.5-0.65;
+  needs a raid-capable game: oldest pair, wounds crossing the band,
+  one RaidCarry->FollowArmy transition, no flicker).
+- Rearguard cover (needs a Withdraw with the table naming a rearguard:
+  cover shoots while the line leaves, then falls through to Retreat).
+- March-home bypass (Retreating label must own every retreat frame;
+  no Waiting/Rallying/Marching-to-slot while the verdict says flee -
+  watch the f16368 pattern stay dead).
+- Roam suspension (needs an unseen PvP mirror: DragoonRoam march labels
+  with zero Abuse acts).
+- DefenseWhy board (needs any defense staffing: reason + triggering
+  enemies by class/count + army total on the board).
+- ClusterRejoin (0 acts so far across grinds: needs a drifter >14 tiles
+  from its fighting cluster with no local contact).
+- ZealotLeash (validating live: 918-1050 acts across PvP grinds; still
+  wants one clean lone-zealot-vs-3-goons case).
+- WorkerSpread (validating live: 65-773 dealt picks; wants one worker-
+  harass game with the spread visible per unit).
+
 ## Open: micro validation (needs games that reach it)
 
 - Spot retreat logic (sloppy catch-all today; doesn't handle the observer/
@@ -98,8 +139,10 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Reaver vs workers (pressure, shields >70, no Hop).
 - Scarab rescue (pressured mid-shot boards while the shot flies).
 - No Reaver raids vs Zerg (pair supports the main army).
-- Crucial air victims first (grounded AA shoots Scourge/Carrier/
-  Vessel/Battlecruiser/Wraith in range).
+- Always-attack ladder (renamed from CrucialAirSnipe; grounded AA shoots
+  Scourge/Carrier/Vessel/Wraith/BC in range, plus detected Observer,
+  Reaver, DT, HT in that order - needs live confirms of the four new
+  victims taking fire first).
 - DT flees guns first (visible gun in 13 tiles outranks the detector).
 - Workers run straight from visible enemy DTs (3.0 tiles, no pathing).
 - Shuttle pair owns loaded hulls (no other pickups, no drop missions).
