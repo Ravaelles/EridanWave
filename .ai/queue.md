@@ -234,3 +234,18 @@ New kernels ride suites; these need a live game that reaches them
 - OPEN investigation: NoTankMarch-vs-Retreat flap (Hao Pan
   f6666) - march terminus vs combat retreat writers; unresolved,
   needs the exact game or a squad-level repro the engine lacks.
+
+## Deferred: unified retreat verdict (no rewrite now)
+
+- Full write-up lives in `.ai/retreat-verdict.md` (this entry is only
+  the pointer). Problem: the retreat verdict is re-derived per phase
+  (march reads stale `shouldFight`, combat reads fresh verdict plus
+  posture, technique latches its own) so mixed march/retreat frames
+  keep recurring per pair of readers - audited 144 -> 8 -> 7 mixed
+  frames per game as each pair got its own gate. Proposal: one
+  `RetreatVerdict` per unit per frame with hysteresis, read by the
+  march arm, the technique arm and the duel dispatch gates; migrate
+  behind a shadow probe like the posture rewire. Rejected: a
+  god-object decider (kills the squad/unit split and OCP) and
+  capability-typed permits (ceremony over readable ifs).
+  Owner decision 2026-11-17: park it, keep per-site fixes coming.
