@@ -26,8 +26,10 @@ class EridanWave extends DefaultBWListener {
         // the skip per frame for its micro maps.
         // (Must run after With.onStart: that is what assigns With.game.)
         if (scala.sys.env.get("ERIDANWAVE_HEADLESS").contains("1")) {
-          With.game.setFrameSkip(1000)
-          Lifecycle.Keyboard.GameCommands.setGui(false)
+          // Full speed ahead, no rendering: every frame is still simulated,
+          // the wall clock just stops waiting for it. One call does speed,
+          // skip and GUI (skip > 150 turns the GUI off by itself).
+          Lifecycle.Keyboard.GameCommands.setSpeed(0, 1000)
         }
         // Tuning params (if --tuning-strategy= was passed): randomize or
         // override before the first frame, Atlantis OnGameStarted parity.
