@@ -25,8 +25,75 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Tactic.Squads.Group.GenericFriendlyUnitGroup
 import Tactic.Squads.Group.TFriendlyUnitGroup
 import Tactic.Squads.Group.UnitGroup
+import Utilities.DispatchBand
 import Utilities.Time.Forever
 import Utilities.?
+
+/**
+ * Technique dispatch pipeline (one explicit list, first claim wins):
+ * reorder by moving a line, disable by commenting one out. Bands say
+ * which arbitration each stage fights in; the sequence below is the
+ * contract, pinned by TechniqueDispatchOrderSuite. Every expression
+ * below is the old ladder line verbatim - the list changes the shape,
+ * never the behavior.
+ */
+private[Decisioning] object TechniquePipeline {
+  case class Stage(name: String, band: DispatchBand, run: (FriendlyUnitInfo, Combat, Boolean) => Boolean)
+
+  val stages: Vector[Stage] = Vector(
+    // Unseen killers outrank every formation and duel: a remembered Lurker
+    // or cloaked Templar kills the line that rallies or engages through
+    // its memory, so the dodge claims before Walk, Aim, retreat and fight.
+    Stage("Avoid", DispatchBand.High, (unit, _, _) =>
+      AvoidDarkTemplar.act(unit) || AvoidLurkers.act(unit)),
+    // Siege shells outrank everything below: a detected ground unit that
+    // does not want the tank battle steps past the shell line before any
+    // march, duel or retreat plan runs. Runs before the Fallback potshot
+    // on purpose - a sleeping hull claims the potshot without firing and
+    // would otherwise pose inside the shells instead of leaving them.
+    // The two static keep-offs live one home below
+    // (HandleEnemyCombatBuildings), the duel and the retreat below them.
+    Stage("StaticKeepOff", DispatchBand.High, (unit, combat, advance) =>
+      HandleEnemyCombatBuildings.run(unit, combat, advance)),
+    // The technique executes inside the fight its band allows.
+    Stage("Walk", DispatchBand.Medium, (unit, combat, _) =>
+      combat.technique == Walk && combat.maneuvers.walk()),
+    Stage("Aim", DispatchBand.Medium, (unit, combat, _) =>
+      combat.technique == Aim && AimBehavior.run(unit, combat)),
+    Stage("Dodge", DispatchBand.Medium, (unit, combat, _) =>
+      combat.technique == Dodge && combat.maneuvers.dodge()),
+    // Retreat potshot: Fallback shoots while leaving.
+    Stage("Potshot", DispatchBand.Medium, (unit, combat, _) =>
+      combat.technique == Fallback && PotshotBehavior.run(unit, combat)),
+    // Always-attack victims outrank retreat: grounded anti-air shoots
+    // Scourge, Carriers and the rest on sight - even while retreating.
+    // A shot in range never waits for the duel to start or the retreat
+    // to finish; the ladder picks, the gun fires, the frame ends here.
+    Stage("AlwaysAttack", DispatchBand.High, (unit, _, _) =>
+      AlwaysAttackInRange.run(unit)),
+    // A fresh hot Dragoon shoots the Terran in range instead of running
+    // from it - but never under siege, the line above already claimed it.
+    Stage("DragoonStand", DispatchBand.Medium, (unit, combat, advance) =>
+      advance && DragoonStandBehavior.run(unit, combat)),
+    // A shielded Dragoon answers a Carrier in range and closes a pathed
+    // one inside eleven tiles instead of retreating past the kill.
+    Stage("DragoonCarrier", DispatchBand.Medium, (unit, combat, advance) =>
+      advance && DragoonCarrierBehavior.run(unit, combat)),
+    // A covering rearguard shoots victims of opportunity and holds the
+    // line while the cluster withdraws instead of turning with it. With
+    // nothing to shoot it falls through and retreats with everyone.
+    Stage("Rearguard", DispatchBand.Medium, (unit, _, _) =>
+      unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit) || ContainFireBehavior.run(unit))),
+    // Retreat owns survival: the walk to safety ends the frame.
+    Stage("Retreat", DispatchBand.High, (unit, combat, _) =>
+      combat.shouldRetreat && Retreat(unit)),
+    Stage("Brawl", DispatchBand.Medium, (unit, combat, advance) =>
+      combat.shouldEngage && advance && Brawl(unit)),
+    Stage("Abuse", DispatchBand.Medium, (unit, combat, advance) =>
+      combat.technique == Abuse && advance && AbuseBehavior.run(unit, combat)),
+    Stage("SuperKite", DispatchBand.Medium, (unit, combat, advance) =>
+      combat.technique == SuperKite && advance && SuperkiteBehavior.run(unit, combat)))
+}
 
 final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
 
@@ -178,45 +245,15 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // always-attack ladder and the retreat potshot above.
     val advance = unit.squad.flatMap(_.battlePosture).forall(ClusterPosture.advances) && ! RetreatVerdict.held(unit.id, With.frame)
 
-    // Unseen killers outrank every formation and duel: a remembered Lurker
-    // or cloaked Templar kills the line that rallies or engages through
-    // its memory, so the dodge claims before Walk, Aim, retreat and fight.
-    if (AvoidDarkTemplar.act(unit) || AvoidLurkers.act(unit)) return
-
-    // Siege shells outrank everything below: a detected ground unit that
-    // does not want the tank battle steps past the shell line before any
-    // march, duel or retreat plan runs. Runs before the Fallback potshot
-    // on purpose - a sleeping hull claims the potshot without firing and
-    // would otherwise pose inside the shells instead of leaving them.
-    // Order is load-bearing (first claim wins, like every chain here):
-    // the two static keep-offs live one home below
-    // (HandleEnemyCombatBuildings), the duel and the retreat below them.
-    if (HandleEnemyCombatBuildings.run(unit, this, advance)) return
-    if (technique == Walk       && maneuvers.walk())        return
-    if (technique == Aim        && AimBehavior.run(unit, this))        return
-    if (technique == Dodge      && maneuvers.dodge())       return
-    if (technique == Fallback   && PotshotBehavior.run(unit, this))    return
-    // Always-attack victims outrank retreat: grounded anti-air shoots
-    // Scourge, Carriers and the rest on sight - even while retreating.
-    // A shot in range never waits for the duel to start or the retreat
-    // to finish; the ladder picks, the gun fires, the frame ends here.
-    if (AlwaysAttackInRange.run(unit)) return
-    // A fresh hot Dragoon shoots the Terran in range instead of running
-    // from it - but never under siege, the line above already claimed it.
-    if (advance && DragoonStandBehavior.run(unit, this)) return
-    // A shielded Dragoon answers a Carrier in range and closes a pathed
-    // one inside eleven tiles instead of retreating past the kill.
-    if (advance && DragoonCarrierBehavior.run(unit, this)) return
-    // A covering rearguard shoots victims of opportunity and holds the
-    // line while the cluster withdraws instead of turning with it. With
-    // nothing to shoot it falls through and retreats with everyone.
-    if (unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit) || ContainFireBehavior.run(unit))) return
-    if (shouldRetreat           && Retreat(unit)) return
-    if (shouldEngage && advance && Brawl(unit))   return
-    if (technique == Abuse && advance && AbuseBehavior.run(unit, this))      return
-    if (technique == SuperKite && advance && SuperkiteBehavior.run(unit, this))  return
-
-    if (shouldEngage && advance && engagement.engage())      {}
+    var i = 0
+    var claimed = false
+    while (i < TechniquePipeline.stages.length && ! claimed) {
+      claimed = TechniquePipeline.stages(i).run(unit, this, advance)
+      i += 1
+    }
+    // The engage never claims: it runs for side effects when nothing
+    // above owned the frame.
+    if ( ! claimed && shouldEngage && advance) engagement.engage()
   }
 
   private[Decisioning] def techniqueIs(candidates: Technique*): Boolean = candidates.contains(technique)
