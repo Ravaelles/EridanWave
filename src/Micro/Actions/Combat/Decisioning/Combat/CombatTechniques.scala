@@ -60,15 +60,13 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         unit.matchups.pixelsEntangled * Maff.inv32,
         unit.agent.shouldFight,
         unit.confidence11))                                         Flee
-      else  if (unit.agent.shouldFight && combat.target.isDefined)   Fight
-      // March verdict owns the duel: a retreating warrior holds no
-      // safe-passage duels and strolls nowhere - the verdict sent it
-      // home, so it walks home instead of stopping for free shots.
-      // Storm-ready Templars are exempt (their deliberate cast-hold
-      // below); defenders that may not flee hold their ground; Reavers
-      // keep their own brain. Forbidden retreats fall through like the
-      // march does, so the line advances as one.
+      // Held verdict owns the duel above the fresh skirmish vote: the bus
+      // carries the last 24 frames both phases already agreed on, so a
+      // verdict that just flipped fight under a march still walking home
+      // holds Flee instead of charging back through the retreat. Fresh
+      // fight with no retreat behind it falls through untouched.
       else  if (verdictRetreat)                                      Flee
+      else  if (unit.agent.shouldFight && combat.target.isDefined)   Fight
       else  if (safePassage && combat.target.exists(unit.inRangeToAttack)) Fight
       else  if (safePassage)                                        Walk
       // Templar storm stand: a loaded hull walks into cast range instead
