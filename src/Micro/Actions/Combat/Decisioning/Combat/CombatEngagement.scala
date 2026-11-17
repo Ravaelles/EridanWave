@@ -14,8 +14,141 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Decisions.ClusterCohesion
 import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.SuicideMission
+import Utilities.DispatchBand
 import Utilities.Latch
 import Utilities.?
+
+
+/**
+ * Engage pipelines (one explicit place, first claim wins): the duel
+ * dispatch and its engage gate share this registry. Reorder by moving a
+ * line, disable by commenting one out; bands say which arbitration each
+ * stage fights in. Pinned by EngageDispatchOrderSuite. Every expression
+ * below is the old ladder line verbatim - the lists change the shape,
+ * never the behavior.
+ */
+private[Decisioning] object EngagePipeline {
+
+  case class Stage(name: String, band: DispatchBand, run: (FriendlyUnitInfo, Combat, Boolean) => Option[Boolean])
+
+  val stages: Vector[Stage] = Vector(
+    // Contain fire: a ready weapon shoots instead of dressing past the kill.
+    Stage("ContainFire", DispatchBand.High, (unit, _, _) =>
+      if (ContainFireBehavior.run(unit)) Some(unit.unready) else None),
+    // No advance, no prey: walk the march instead of dueling.
+    Stage("AdvanceGate", DispatchBand.Low, (unit, combat, advance) =>
+      if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); Some(true) } else None),
+    // Zealot leash: a Zealot never operates past 5.5 tiles from our
+    // Dragoons - a lone charge into their guns while ours fall back is a
+    // donation, not pressure. Scouts, committed rushers, suicides and yolo
+    // pushes keep their explicit orders; with no Dragoons mustered there
+    // is nothing to leash to. Rejoins the line instead of dueling alone.
+    Stage("ZealotLeash", DispatchBand.Medium, (unit, combat, _) =>
+      if (leashZealot(unit, combat)) Some(true) else None),
+    // Cluster cohesion: a warrior moving without a victim, neither
+    // retreating nor cooling under fire, never drifts past fourteen tiles
+    // from its cluster's centroid. Inside a battle that unit is lost -
+    // walking at ghosts, stale slots or old orders - while the cluster
+    // fights without it. Rejoins instead of hunting the map.
+    Stage("ClusterRejoin", DispatchBand.Medium, (unit, combat, _) =>
+      if (rejoinCluster(unit, combat)) Some(true) else None),
+    // No target, or a target the line would only pose at: hunt the
+    // nearest known enemy instead of dressing until the timeout.
+    Stage("Hunt", DispatchBand.Medium, (unit, _, _) =>
+      if (HuntBehavior.run(unit)) Some(true) else None))
+
+  case class DuelStage(name: String, band: DispatchBand, run: (FriendlyUnitInfo, Combat) => Boolean)
+
+  val duelStages: Vector[DuelStage] = Vector(
+    // Breaking through beats scavenging: the push owns the frame.
+    DuelStage("Push", DispatchBand.Medium, (unit, combat) =>
+      if ( ! combat.pushThrough) false else { PushBehavior.run(unit, combat); true }),
+    DuelStage("Scavenge", DispatchBand.Medium, (unit, combat) =>
+      if ( ! combat.techniqueIs(Scavenge)) false else { ScavengeBehavior.run(unit, combat); true }),
+    // Closing beats repositioning: the hold/approach/kite trio runs before
+    // the raw charge. No closing or charging while retreating: the march
+    // goes home and the technique walks away, so approaching the guns (or
+    // charging them outright) is exactly the flap. KiteAway keeps its
+    // fighting withdrawal and TankHug keeps its own tank logic - only the
+    // closing leg and the raw charge yield. A taken branch still claims
+    // the frame when its inner legs decline, so Reposition never runs
+    // behind it.
+    DuelStage("Close", DispatchBand.Medium, (unit, combat) => {
+      val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase
+      if ( ! outer) false
+      else {
+        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! combat.shouldRetreat && ! ApproachBehavior.run(unit, combat)) {
+          unit.agent.act("Engage")
+          combat.maneuvers.charge()
+        }
+        true
+      }
+    }),
+    // Terminal: claim value moot, nothing follows.
+    DuelStage("Reposition", DispatchBand.Low, (unit, combat) => {
+      if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineCreepBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
+      true
+    }))
+
+  def order: Seq[(String, DispatchBand)] =
+    stages.map(s => (s.name, s.band))
+
+  def duelOrder: Seq[(String, DispatchBand)] =
+    duelStages.map(s => (s.name, s.band))
+
+  /**
+   * Helpless prey, unit-level read for the engage gate and the formation
+   * break below: workers-only contacts, or a three-to-one local skim
+   * from the forecast the dressing already trusts.
+   */
+  private[Decisioning] def preyDrive(unit: FriendlyUnitInfo): Boolean = {
+    val targets = unit.matchups.targets
+    val workersOnly = targets.nonEmpty && targets.forall(_.unitClass.isWorker)
+    val (usSkim, foeSkim) = unit.combatForecast
+      .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
+      .getOrElse((0.0, 0.0))
+
+    PreyDrive.shouldHunt(workersOnly, usSkim, foeSkim)
+  }
+
+  private def leashZealot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    if ( ! Protoss.Zealot(unit)) return false
+    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
+
+    val anchor = Maff.minBy(With.units.ours.view.filter(u => u != unit && u.alive && Protoss.Dragoon(u)))(
+      _.pixelDistanceCenter(unit.pixel))
+    if (anchor.isEmpty) return false
+    if ( ! ZealotLeash.shouldRejoin(anchor.get.pixelDistanceCenter(unit.pixel) * Maff.inv32)) return false
+
+    unit.agent.act("ZealotLeash")
+    unit.agent.forceTo(anchor.get.pixel)
+    Commander.move(unit)
+    true
+  }
+
+  private def rejoinCluster(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    val squad = unit.squad.getOrElse(return false)
+    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
+    if (unit.loaded) return false
+
+    val centroid = ?(unit.flying, squad.centroidAir, squad.centroidGround)
+    val contactTiles = 2.0
+    if ( ! ClusterCohesion.shouldRejoin(
+      isWarrior         = unit.unitClass.isWarrior,
+      hasTarget         = unit.agent.toAttack.isDefined,
+      retreating        = combat.shouldRetreat,
+      coolingUnderFire  = unit.cooldownLeft > 0 && unit.matchups.threatsInRange.nonEmpty,
+      inBattle          = unit.battle.isDefined,
+      macroGame         = ! With.umsMode,
+      hasLocalContact   = unit.matchups.enemies.exists(e => unit.pixelDistanceEdge(e) < unit.pixelRangeMax + contactTiles * 32.0),
+      distTiles         = unit.pixelDistanceCenter(centroid) * Maff.inv32)) return false
+
+    unit.agent.act("ClusterRejoin")
+    unit.agent.forceTo(centroid)
+    Commander.move(unit)
+    true
+  }
+}
 
 class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
 
@@ -38,63 +171,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         || unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)
         || unit.matchups.engagedUpon)
 
-  /**
-   * Helpless prey, unit-level read for the engage gate and the formation
-   * break below: workers-only contacts, or a three-to-one local skim
-   * from the forecast the dressing already trusts.
-   */
-  private def preyDrive: Boolean = {
-    val targets = unit.matchups.targets
-    val workersOnly = targets.nonEmpty && targets.forall(_.unitClass.isWorker)
-    val (usSkim, foeSkim) = unit.combatForecast
-      .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
-      .getOrElse((0.0, 0.0))
-
-    PreyDrive.shouldHunt(workersOnly, usSkim, foeSkim)
-  }
-
-  private def leashZealot(): Boolean = {
-    if ( ! Protoss.Zealot(unit)) return false
-    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
-
-    val anchor = Maff.minBy(With.units.ours.view.filter(u => u != unit && u.alive && Protoss.Dragoon(u)))(
-      _.pixelDistanceCenter(unit.pixel))
-    if (anchor.isEmpty) return false
-    if ( ! ZealotLeash.shouldRejoin(anchor.get.pixelDistanceCenter(unit.pixel) * Maff.inv32)) return false
-
-    unit.agent.act("ZealotLeash")
-    unit.agent.forceTo(anchor.get.pixel)
-    Commander.move(unit)
-    true
-  }
-
-  private def rejoinCluster(): Boolean = {
-    val squad = unit.squad.getOrElse(return false)
-    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
-    if (unit.loaded) return false
-
-    val centroid = ?(unit.flying, squad.centroidAir, squad.centroidGround)
-    val contactTiles = 2.0
-    if ( ! ClusterCohesion.shouldRejoin(
-      isWarrior         = unit.unitClass.isWarrior,
-      hasTarget         = unit.agent.toAttack.isDefined,
-      retreating        = combat.shouldRetreat,
-      coolingUnderFire  = unit.cooldownLeft > 0 && unit.matchups.threatsInRange.nonEmpty,
-      inBattle          = unit.battle.isDefined,
-      macroGame         = ! With.umsMode,
-      hasLocalContact   = unit.matchups.enemies.exists(e => unit.pixelDistanceEdge(e) < unit.pixelRangeMax + contactTiles * 32.0),
-      distTiles         = unit.pixelDistanceCenter(centroid) * Maff.inv32)) return false
-
-    unit.agent.act("ClusterRejoin")
-    unit.agent.forceTo(centroid)
-    Commander.move(unit)
-    true
-  }
-
   private[Decisioning] def engage(): Boolean = {
-    // Contain fire: a ready weapon shoots instead of dressing past the kill.
-    if (ContainFireBehavior.run(unit)) return unit.unready
-
     // Cluster posture owns the duel (phase 4 of _COMBAT-REFACTOR.md):
     // Withdraw/Regroup walk the march, Fight/HoldLine duel. Explicit
     // all-ins bypass the cluster vote the way prey does: a suicide
@@ -109,29 +186,13 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active) && ! unit.intent.marchHome
       case None          => combat.fightConsensus && ! unit.intent.marchHome
     }
-    if ( ! advance && ! preyDrive) {
-      combat.maneuvers.move()
-
-      return true
+    var i = 0
+    var claimed: Option[Boolean] = None
+    while (i < EngagePipeline.stages.length && claimed.isEmpty) {
+      claimed = EngagePipeline.stages(i).run(unit, combat, advance)
+      i += 1
     }
-
-    // Zealot leash: a Zealot never operates past 5.5 tiles from our
-    // Dragoons - a lone charge into their guns while ours fall back is a
-    // donation, not pressure. Scouts, committed rushers, suicides and yolo
-    // pushes keep their explicit orders; with no Dragoons mustered there
-    // is nothing to leash to. Rejoins the line instead of dueling alone.
-    if (leashZealot()) return true
-
-    // Cluster cohesion: a warrior moving without a victim, neither
-    // retreating nor cooling under fire, never drifts past fourteen tiles
-    // from its cluster's centroid. Inside a battle that unit is lost -
-    // walking at ghosts, stale slots or old orders - while the cluster
-    // fights without it. Rejoins instead of hunting the map.
-    if (rejoinCluster()) return true
-
-    // No target, or a target the line would only pose at: hunt the
-    // nearest known enemy instead of dressing until the timeout.
-    if (HuntBehavior.run(unit)) return true
+    if (claimed.isDefined) return claimed.get
 
     if (unit.ready) {
       resolveBreakFormation()
@@ -158,24 +219,12 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   }
 
   private def dispatchEngage(): Unit = {
-    // Duel dispatch order is load-bearing too (first claim wins, same as
-    // the shared chain above): breaking through beats scavenging, closing
-    // beats repositioning, and the hold/approach/kite trio runs before the
-    // raw charge. Never reorder without reading every leg - the push
-    // claim, the volley gate and the chase override each read the same
-    // target, and the first match owns the frame. No closing or charging
-    // while retreating: the march goes home and the technique walks away,
-    // so approaching the guns (or charging them outright) is exactly the
-    // flap. KiteAway keeps its fighting withdrawal and TankHug keeps its
-    // own tank logic - only the closing leg and the raw charge yield.
-    if (combat.pushThrough) PushBehavior.run(unit, combat)
-      else if (combat.techniqueIs(Scavenge)) ScavengeBehavior.run(unit, combat)
-      else if (combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase) {
-        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! combat.shouldRetreat && ! ApproachBehavior.run(unit, combat)) {
-          unit.agent.act("Engage")
-          combat.maneuvers.charge()
-        }
-      } else if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineCreepBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
+    var i = 0
+    var claimed = false
+    while (i < EngagePipeline.duelStages.length && ! claimed) {
+      claimed = EngagePipeline.duelStages(i).run(unit, combat)
+      i += 1
+    }
   }
 
   // Formation resolution: break for the attack once no formation exists,
@@ -198,7 +247,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       && ( ! combat.formationHelpsEngage || combat.squadEngagedUpon))
     combat.breakFormationToAttack ||= ! unit.formationEngage.exists(_.flanking) && combat.target.exists(unit.pixelsToGetInRange(_) < Math.max(0, 128 * unit.confidence11))
     combat.breakFormationToAttack ||= With.yolo.active
-    combat.breakFormationToAttack ||= preyDrive
+    combat.breakFormationToAttack ||= EngagePipeline.preyDrive(unit)
   }
 
   // Hold the line while a ranged armed combat target is well beyond our
