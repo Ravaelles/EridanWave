@@ -1,6 +1,7 @@
 package Tactic.Squads.defense
 
 import Debugging.Visualizations.Forces
+import Information.Geography.Chokes
 import Information.Geography.Types.{Base, Edge, Zone}
 import Lifecycle.With
 import Macro.Facts.MacroFacts
@@ -22,6 +23,7 @@ import Utilities.Time.Minutes
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters._
 import Tactic.Squads.Group.GenericFriendlyUnitGroup
+import Tactic.Squads.Decisions.MainChokeHold
 import Tactic.Squads.support.SquadAcePilots
 import Tactic.Squads.Squad
 import Tactic.Squads.SquadAutomation
@@ -174,7 +176,31 @@ class SquadDefendBase(base: Base) extends Squad {
     else if (plan.canPlugWall)    plugWallStance(formationBastion, plan.wallGaps)
     else if (plan.canPlugEdge)    plugEdgeStance()
     else if (plan.canGuard)       guardStance(plan, formationScour, formationGuard)
+    // Main-choke hold (early Zerg, handful army): post the line on the
+    // main choke instead of camping the bastion - lings run past a base
+    // camp and chew probes, and a lone pack gets surrounded out on the
+    // map. Runs after the wall plugs (gaps are more precise than the
+    // choke pixel) and before the bastion camp. Committed hold, like
+    // every hold stance: the choke is the ground, it is not abandoned.
+    else if (chokeHoldStance())   ()
     else                          holdStance(formationBastion)
+  }
+
+  private def chokeHoldStance(): Boolean = {
+    val choke = Chokes.mainChoke.map(_.pixelCenter)
+    if (choke.isEmpty) return false
+
+    if ( ! MainChokeHold.shouldHold(
+      With.enemies.exists(_.isZerg),
+      units.count(_.unitClass.isWarrior),
+      With.battles.globalAttack.us.skimStrengthUnits)) return false
+
+    lastAction = "ChokeHold"
+    formations += new FormationStandard(this, FormationStyleGuard, choke.get, None)
+    SquadAutomation.send(this)
+    units.foreach(_.intent.setCanFlee(false))
+
+    true
   }
 
   /** Everything the stance choice needs, read once and ranked into targets. */
