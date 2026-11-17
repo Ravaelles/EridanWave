@@ -10,9 +10,10 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
  * `BeCarrier` applies it to leashed hittable enemies before the
  * generic `Target.choose` chain, because interceptors are wasted on
  * whatever the squad ladder scores highest. AA first, then the guns
- * that can answer, then builders and workers. Nearest inside each
- * tier; anything else hittable falls through to the generic pick.
- * Distances in tiles.
+ * that can answer, then builders and workers. Tanks lead the ground
+ * ladder: the most valuable hulls die first, then Goliaths, then
+ * Turrets, then Marines. Nearest inside each tier; anything else
+ * hittable falls through to the generic pick. Distances in tiles.
  */
 object CarrierTargets {
 
@@ -29,10 +30,10 @@ object CarrierTargets {
     isWorker: Boolean)
 
   def tier(mark: Mark): Int =
-    if (mark.isTurret) 0
-    else if (mark.isGoliath) 1
-    else if (mark.isSiegedTank) 2
-    else if (mark.isUnsiegedTank) 3
+    if (mark.isSiegedTank) 0
+    else if (mark.isUnsiegedTank) 1
+    else if (mark.isGoliath) 2
+    else if (mark.isTurret) 3
     else if (mark.isMarine) 4
     else if (mark.isBunker) 5
     else if (mark.isMedic) 6
