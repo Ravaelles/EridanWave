@@ -182,6 +182,9 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // A shielded Dragoon answers a Carrier in range and closes a pathed
     // one inside eleven tiles instead of retreating past the kill.
     if (advance && DragoonCarrierBehavior.run(unit, this)) return
+    // A Scout dueling near anti-air statics holds outside their reach
+    // instead of posing inside it - like every other air hull.
+    if (advance && ScoutStaticKeepOff.run(unit, this)) return
     if (shouldRetreat           && Retreat(unit)) return
     if (shouldEngage && advance && Brawl(unit))   return
     if (technique == Abuse && advance && AbuseBehavior.run(unit, this))      return
