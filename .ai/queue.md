@@ -149,7 +149,10 @@ New kernels ride suites; these need a live game that reaches them
   all six ran with the baseless Retreat NPE (fixed same day) - the
   goon-survival half needs one post-fix re-measure before the wall
   is final; the scarab arithmetic (8-10 needed, ~5 carried) stands
-  regardless).
+  regardless. Re-measured 2026-11-18 (DEFEAT 3/6, errors clean):
+  wall stands, zero victories in 7; losses run lower post-fix
+  (7, 6 vs 8-10 - retreats function), kills swing 3-10 on early
+  chaos, sunkens still never die).
 - UMS map-side endings (2026-11-18: Reav&Shut_v_Sunkens instant
   DEFEAT f1 0/0, Sunkens4 DEFEAT f257 0/0): BWAPI onEnd(false) with
   no decisions from the bot - triggers, not behavior. Re-run single
