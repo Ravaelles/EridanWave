@@ -155,6 +155,9 @@ New kernels ride suites; these need a live game that reaches them
   floor forbids retreat at >=180 unless lurkers/DT/carriers/siege
   known, dying hulls keep their out, proxy still forbids. Needs a
   live 180+ macro game confirming band instead of Withdraw).
+- Main-base DT hunt (needs live: detected enemy DT within 40 ground
+  tiles of our main - army picks nearest-to-main, already-dueling
+  keeps; Reavers and our DTs keep their disciplines).
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
