@@ -141,20 +141,26 @@ New kernels ride suites; these need a live game that reaches them
   fetch-glue no-duel adopt gate while the empty ride holds station.
   Needs owner doctrine: should an escorting ride hail a dueling
   mate, or is duel-first correct?).
-- Reaver_v_Sunkens wall (6 live games, best DEFEAT 10/7 f641;
+- Reaver_v_Sunkens wall (6 live games pre-retreat-fix, best DEFEAT 10/7;
   StarEngine ReaverSunkensScaleSuite pins it stage by stage: packed
   and column screens clear with 8-10 shots, a 5-scarab hull leaves
   a sunken standing, and the shipped KiteAway kernel does not save
-  the escort against faster melee on an open plane. 8-10 scarabs
-  needed, ~5 carried per game; the #1/#13 flap fix and the demise
-  exemption stay verified, reaver escort-first stays reverted
-  (3x99 < 300). Arithmetic, not decisions - park until the scarab
-  economy or the escort toolkit changes; the batch keeps it as
-  a punisher, score is kills, not VICTORY).
+  the escort against faster melee on an open plane. CAUTION 2026-11-18:
+  all six ran with the baseless Retreat NPE (fixed same day) - the
+  goon-survival half needs one post-fix re-measure before the wall
+  is final; the scarab arithmetic (8-10 needed, ~5 carried) stands
+  regardless).
 - UMS map-side endings (2026-11-18: Reav&Shut_v_Sunkens instant
   DEFEAT f1 0/0, Sunkens4 DEFEAT f257 0/0): BWAPI onEnd(false) with
   no decisions from the bot - triggers, not behavior. Re-run single
   maps that start properly; do not chase these in code.
+- Baseless geography crashes FIXED 2026-11-18 (ZealDrag_v_ZealDrag:
+  2292 notes/game - ourMain empty.minBy via DefendFFE, ourMetro NPE
+  via the rush-retreat arm - both guarded on ourBases.isEmpty;
+  post-fix errors.json absent and the map flips DEFEAT 4/9 to
+  VICTORY 9/2). Implication: every UMS result before this fix ran
+  with per-frame Tactician/Agency deaths - re-measure walls
+  (Reaver_v_Sunkens first) before trusting old numbers.
 - Spot retreat logic (sloppy catch-all today; doesn't handle the observer/
   detector/caster cases separately - needs a game per case).
 - Carrier stop-hold micro (SH doubles Carrier DPS; needs a Carrier test
