@@ -152,6 +152,13 @@ New kernels ride suites; these need a live game that reaches them
   posture 2 flips in 16 min with retreats flowing under sieged
   tanks (floor binds, escape opens - no cycling); NoTankMarch 0
   same-tick Retreat combos.
+- Sunkens mineral wall (Reav&Shut 1/2: 0 scarabs built all game,
+  0/0 timeout defeats; Reav&Shut 3 builds 3, fights 6/3; Sunkens4
+  ends f257 by map trigger): ReloadScarabs gates on minerals>=price
+  and baseless UMS has no income, so a 0-mineral start permanently
+  disarms the reaver - nothing to shoot with, nothing to ferry for.
+  Sunkens3 is the positive control (armed pair fights). No code fix;
+  map resources, not behavior.
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
