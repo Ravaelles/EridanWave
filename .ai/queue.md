@@ -135,6 +135,20 @@ New kernels ride suites; these need a live game that reaches them
   fetch-glue no-duel adopt gate while the empty ride holds station.
   Needs owner doctrine: should an escorting ride hail a dueling
   mate, or is duel-first correct?).
+- Reaver_v_Sunkens wall (6 games 2026-11-18, best DEFEAT 10/7 f641:
+  reaver + observer live, all dragoons dead, 0/3 sunkens dead): the
+  #1/#13 flap is fixed and verified (keep-current damps mill noise,
+  demise exemption holds one static 200+ frames) and reaver
+  escort-first was tried and REVERTED same day (kills fell 9/8 to
+  6/5: three scarabs deal 3x99 = 297 vs 300 HP + armor, the ban wastes
+  the 4th scarab on single lings). Remaining gap is static-kill
+  completion under ling pressure, not targeting - needs a game with
+  the full escort alive or a kiting split-role answer, not another
+  ladder tweak.
+- UMS map-side endings (2026-11-18: Reav&Shut_v_Sunkens instant
+  DEFEAT f1 0/0, Sunkens4 DEFEAT f257 0/0): BWAPI onEnd(false) with
+  no decisions from the bot - triggers, not behavior. Re-run single
+  maps that start properly; do not chase these in code.
 - Spot retreat logic (sloppy catch-all today; doesn't handle the observer/
   detector/caster cases separately - needs a game per case).
 - Carrier stop-hold micro (SH doubles Carrier DPS; needs a Carrier test
