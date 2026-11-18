@@ -13,6 +13,13 @@ object ZealotLeash {
   val leashTiles: Double = 5.5
 
   /**
+   * Release band, in tiles: a latched Zealot walks the leash all the way
+   * back inside this before the slot leg may take it again, so the two
+   * legs cannot trade the unit every frame on the boundary.
+   */
+  val leashReleaseTiles: Double = 4.5
+
+  /**
    * Rejoin when the nearest Dragoon is past the leash. Pure numbers for
    * the suite; the caller measures, exempts scouts/commits/suicides, and
    * walks the leg.

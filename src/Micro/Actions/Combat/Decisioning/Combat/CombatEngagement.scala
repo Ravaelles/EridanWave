@@ -111,6 +111,13 @@ private[Decisioning] object EngagePipeline {
     PreyDrive.shouldHunt(workersOnly, usSkim, foeSkim)
   }
 
+  /**
+   * Leash latch (auto-registered, reset per game): the slot leg and the
+   * leash leg share one actuator, so a raw 5.5-tile boundary trades the
+   * Zealot every few frames instead of committing to either leg.
+   */
+  private val zealotLeash = new Latch
+
   private def leashZealot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! Protoss.Zealot(unit)) return false
     if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
@@ -118,7 +125,12 @@ private[Decisioning] object EngagePipeline {
     val anchor = Maff.minBy(With.units.ours.view.filter(u => u != unit && u.alive && Protoss.Dragoon(u)))(
       _.pixelDistanceCenter(unit.pixel))
     if (anchor.isEmpty) return false
-    if ( ! ZealotLeash.shouldRejoin(anchor.get.pixelDistanceCenter(unit.pixel) * Maff.inv32)) return false
+
+    val distTiles = anchor.get.pixelDistanceCenter(unit.pixel) * Maff.inv32
+    if ( ! zealotLeash(
+      unit.id,
+      fires = ZealotLeash.shouldRejoin(distTiles),
+      releases = distTiles < ZealotLeash.leashReleaseTiles)) return false
 
     unit.agent.act("ZealotLeash")
     unit.agent.forceTo(anchor.get.pixel)

@@ -11,4 +11,9 @@ class ZealotLeashSuite extends AnyFunSuite {
     assert(ZealotLeash.shouldRejoin(5.6))
     assert(ZealotLeash.shouldRejoin(20.0))
   }
+
+  test("the release sits a full tile inside the leash") {
+    assert(ZealotLeash.leashReleaseTiles == 4.5)
+    assert(ZealotLeash.leashReleaseTiles < ZealotLeash.leashTiles)
+  }
 }
