@@ -255,6 +255,19 @@ New kernels ride suites; these need a live game that reaches them
   posture Fight and the walk stays on the slots, duel releases through
   the break conditions. Needs a live macro PvT vs tankless Terran
   confirming Dragoons attack in formation instead of posing).
+- Formation-first refactor (2026-11-19, five moves, suites green):
+  (1) slot discipline binds in contact - only a firing gun, fresh
+  wounds or a held retreat vetoes the legs; (2) Strong/Toothless/
+  Roam/Static gates deleted, their intent votes posture Fight/Fight/
+  Regroup/Fight in updatePosture, travel keys on posture (Regroup
+  marches out dressed); Main/LoneMarch stay as pure travel overrides;
+  (3) kite steps back off the slot pin, Hunt assigns the target and
+  yields to the duel instead of attack-moving; (4) never-retreat is a
+  posture floor (Withdraw->HoldLine) plus the shared technique lock,
+  homeHold replaced by NoRetreat.holdsAny; (5) standing guards form
+  Guard at the choke post, not the main. Needs: macro PvT (posture
+  forces + slot line), Goon_v_DT (Hunt assign), macro defense game
+  (choke guard + posture floor).
 - Formation holdable (2026-11-18: line forms only vs what shoots
   ground - Turret/Spore marched down, Sunken/Cannon still hold;
   kernel isHoldableTarget + suite. Needs a live PvT confirming

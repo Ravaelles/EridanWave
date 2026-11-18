@@ -19,9 +19,14 @@ import Utilities.UnitFilters.{IsBuilding, IsWorker}
 import scala.collection.mutable.ArrayBuffer
 import Tactic.Squads.Decisions.HuntLogic
 import Tactic.Squads.Decisions.AttackModes
+import Micro.Actions.Combat.Decisioning.Skirmish.NoRetreat
 import Tactic.Squads.Decisions.ClusterPosture
-import Tactic.Squads.Decisions.NoTankAttack
 import Tactic.Squads.Decisions.ClusterRoles
+import Tactic.Squads.Decisions.DragoonRoaming
+import Tactic.Squads.Decisions.MarchDress
+import Tactic.Squads.Decisions.NoTankAttack
+import Tactic.Squads.Decisions.StrongMarch
+import Tactic.Squads.Decisions.ToothlessMarch
 import Tactic.Squads.Decisions.RetreatDiscipline
 import Tactic.Squads.Decisions.RetreatAllowed
 import Tactic.Squads.ContainStatus
@@ -313,6 +318,12 @@ class SquadAttack extends Squad {
   // fraction, coverage, penalized advantage, contact - through the
   // posture latch (floor + sim agreement + parity + deadband). Published
   // beside targets/formations/vicinity for the duel gate and the march.
+  /** Nearest hittable static in ground tiles, mirroring the march facts. */
+  private def nearestHittableStaticTiles(unit: FriendlyUnitInfo): Double =
+    Maff.minBy(unit.matchups.enemies.view.filter(e =>
+      e.likelyStillThere && e.unitClass.isStaticDefense && e.unitClass.canAttack(unit)))(unit.tileDistanceEdge)
+      .map(unit.tileDistanceEdge(_).toDouble).getOrElse(Double.PositiveInfinity)
+
   private def updatePosture(): Unit = {
     val verdicts = units.flatMap(u => u.combatJudgment.map(_.unitShouldFight(u)))
     val coverage = verdicts.size.toDouble / Math.max(1, units.size)
@@ -336,14 +347,53 @@ class SquadAttack extends Squad {
     // walk stays on the slots and the duel still releases through the
     // break conditions; siege lines keep the careful approach because
     // the force only fires while no tank shows.
-    val forced =
-      if (NoTankAttack.shouldForceAttack(
+    // Strong, toothless and static-covered forces vote the same way:
+    // a banked or maxed army attacks instead of dancing, there is
+    // nothing to dress against when the Terran fields neither Tanks
+    // nor Vultures, and a pack already inside static reach pushes
+    // through instead of milling under the guns. One Dragoon roaming
+    // a mirror with no enemy Dragoon seen votes Regroup: march dressed
+    // to the goal, never pose, never duel.
+    val enemyIsTerran = With.enemies.exists(_.isTerran)
+    val enemyTanks = With.units.enemy.exists(t =>
+      t.alive && (Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t)))
+    val forceFight =
+      NoTankAttack.shouldForceAttack(
         units.exists(u => Protoss.Dragoon(u)),
-        With.enemies.exists(_.isTerran),
-        With.units.enemy.exists(t => t.alive && (Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t))))) ClusterPosture.Fight
+        enemyIsTerran,
+        enemyTanks) ||
+      StrongMarch.shouldForceAttack(
+        With.self.minerals,
+        ArmyStrength.score(
+          With.battles.globalAttack.us.skimStrengthTotal,
+          With.battles.globalAttack.enemy.skimStrengthTotal),
+        With.self.supplyUsed200) ||
+      ToothlessMarch.shouldForceAttack(
+        units.exists(_.unitClass.isWarrior),
+        enemyIsTerran,
+        enemyTanks,
+        With.units.enemy.exists(Terran.Vulture(_))) ||
+      units.exists(u =>
+        u.unitClass.isWarrior && u.agent.shouldFight &&
+          MarchDress.shouldPushPastStatics(nearestHittableStaticTiles(u)))
+    val forceRegroup =
+      DragoonRoaming.mayRoam(
+        units.exists(u => Protoss.Dragoon(u)),
+        With.enemies.exists(_.isProtoss),
+        MacroFacts.enemyHasShown(Protoss.Dragoon))
+    val forced =
+      if (forceFight) ClusterPosture.Fight
+      else if (forceRegroup) ClusterPosture.Regroup
       else next
-    if (forced == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
-    posture = forced
+    // Sacred-ground floor: any hull that must not retreat vetoes a
+    // Withdraw for the whole cluster - home soil, tanks on the natural,
+    // brave Dragoons and Reavers hold at least the line. Read only on
+    // the way out (a formed line never pays the pathing bill).
+    val floored =
+      if (forced == ClusterPosture.Withdraw && units.exists(u => NoRetreat.holdsAny(u))) ClusterPosture.HoldLine
+      else forced
+    if (floored == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
+    posture = floored
     roles = assignRolesShadow()
     Probe.note("Sim", 0, f"$posture fighting=$fighting%.2f coverage=$coverage%.2f adv=$advantage%.2f")
     Debugging.CherryVis.CherryVis.board("AttackPosture", posture.toString)

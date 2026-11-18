@@ -73,6 +73,16 @@ object NoRetreat {
         HomeStand.chokeDistToMain(mainHeart, choke.pixelCenter))
     })
 
+  /**
+   * Standing ground (one predicate for the posture floor and the
+   * technique lock): any sacred-ground rule firing pins the whole
+   * cluster - a single hull that must not retreat vetoes a Withdraw
+   * for everyone, the way one vote already decides a consensus.
+   */
+  def holdsAny(unit: FriendlyUnitInfo): Boolean =
+    homeStand(unit) || tanksAtNatural(unit) || dragoonBrave(unit) ||
+      dragoonPack(unit) || reaverBrave(unit)
+
   /** Siege tanks this close to our natural, in tiles, must die standing. */
   val naturalTankTiles: Double = 18.0
 

@@ -38,29 +38,6 @@ object MarchGates {
     // the park/raid brains wait for a march that never comes. Empty hulls
     // still march the legs (they await the next ride, nothing to strand).
     MarchGate(MarchLabel.PairRide, (_, unit) => unit.isLoadedShuttle),
-    // Strong march: a banked stock or a maxed strong army never poses -
-    // it walks straight at the squad goal instead of rallying to the pack
-    // centroid or marching to a formation slot.
-    MarchGate(MarchLabel.StrongMarch, (facts, _) => StrongMarch.shouldMarchDirectly(
-      facts.bankedMinerals,
-      facts.armyStrength,
-      facts.supplyUsed)),
-    // Toothless Terran, no formations at all: without Vultures or Tanks
-    // combat units skip every march leg, including the trip home - the
-    // pack just walks at the goal.
-    MarchGate(MarchLabel.ToothlessMarch, (facts, unit) => ToothlessMarch.shouldMarchDirectly(
-      unit.isWarrior,
-      facts.enemyIsTerran,
-      facts.enemyHasTanks,
-      facts.enemyHasVultures)),
-    // Early Dragoon roam: our Dragoons in a mirror with no enemy Dragoon
-    // scouted skip every march leg, including the trip home - there is
-    // nothing ranged to dress against, so they roam the map instead of
-    // posing at the spawn. The permission closes on first recognition.
-    MarchGate(MarchLabel.DragoonRoam, (facts, unit) => DragoonRoaming.mayRoam(
-      unit.isDragoon,
-      facts.enemyIsProtoss,
-      facts.enemyDragoonSeen)),
     // Lone march: with no friendly warrior inside ten tiles there is no
     // line to pose in, so the unit skips rallying to the pack centroid
     // and slot-marching and walks straight at the squad goal instead of
@@ -70,16 +47,7 @@ object MarchGates {
     // the destination for units breathing on the boundary.
     MarchGate(MarchLabel.LoneMarch, (_, unit) =>
       unit.shouldFight &&
-      unit.nearestWarriorTiles.map(t => LoneMarch.marchAlone(unit.unitId, t)).getOrElse(true)),
-    // Static push: with an enemy static defense that can hit us inside
-    // ten tiles there is no pack to rally to and no slot to march to -
-    // milling in their reach trades the line for nothing, so the unit
-    // walks straight at the squad goal instead. Latched per unit: the
-    // gate itself used to flap with Rallying and Marching on the
-    // boundary until the unit died milling instead of attacking.
-    MarchGate(MarchLabel.StaticPush, (_, unit) =>
-      unit.shouldFight &&
-      MarchDress.pushPastStatics(unit.unitId, unit.nearestStaticTiles.getOrElse(Double.PositiveInfinity))))
+      unit.nearestWarriorTiles.map(t => LoneMarch.marchAlone(unit.unitId, t)).getOrElse(true)))
 
   /** First claim wins, in order; nothing when no gate fires. */
   def select(facts: MarchFacts, unit: MarchUnit): Option[MarchLabel] =

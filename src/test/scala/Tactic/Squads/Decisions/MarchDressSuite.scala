@@ -44,16 +44,6 @@ class MarchDressSuite extends AnyFunSuite {
     assert( ! MarchDress.shouldPushPastStatics(10.01))
   }
 
-  test("static push latches: enter at ten, hold to twelve, exit past it") {
-    val id = 777001
-    assert( ! MarchDress.pushPastStatics(id, 13.0))
-    assert(MarchDress.pushPastStatics(id, 9.0))
-    assert(MarchDress.pushPastStatics(id, 11.0))
-    assert(MarchDress.pushPastStatics(id, 12.0))
-    assert( ! MarchDress.pushPastStatics(id, 12.01))
-    assert( ! MarchDress.pushPastStatics(id, 11.0))
-    assert( ! MarchDress.pushPastStatics(777002, 10.5))
-  }
 
   test("dress wait latches: enter past two and a half, march below one and a half") {
     val id = 424242

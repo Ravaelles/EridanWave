@@ -91,32 +91,11 @@ class MarchGateOrderSuite extends AnyFunSuite {
     unit(isLoadedShuttle = true, shouldFight = true),
     Some(MarchLabel.PairRide))
 
-  check("a banked stock outranks the tank check",
-    facts(enemyIsTerran = true, bankedMinerals = 5000),
-    unit(isDragoon = true, isWarrior = true, shouldFight = true),
-    Some(MarchLabel.StrongMarch))
-
-  check("a toothless Terran walks a lone Zealot out",
-    facts(enemyIsTerran = true),
-    unit(isWarrior = true, shouldFight = true, nearestWarriorTiles = Some(3.0)),
-    Some(MarchLabel.ToothlessMarch))
-
-  check("the unseen mirror roams instead of marching alone",
-    facts(enemyIsProtoss = true, enemyDragoonSeen = false),
-    unit(isDragoon = true, isWarrior = true, shouldFight = true, nearestWarriorTiles = None),
-    Some(MarchLabel.DragoonRoam))
-
   check("a lone hunter outranks a static push",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
     unit(isWarrior = true, shouldFight = true,
       nearestWarriorTiles = None, nearestStaticTiles = Some(5.0)),
     Some(MarchLabel.LoneMarch))
-
-  check("a packed hunter pushes past covering statics",
-    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
-    unit(isWarrior = true, shouldFight = true,
-      nearestWarriorTiles = Some(3.0), nearestStaticTiles = Some(5.0)),
-    Some(MarchLabel.StaticPush))
 
   check("a packed hunter with no fight consensus marches the legs",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
@@ -131,10 +110,6 @@ class MarchGateOrderSuite extends AnyFunSuite {
       MarchLabel.MainMarch,
       MarchLabel.SuicideMission,
       MarchLabel.PairRide,
-      MarchLabel.StrongMarch,
-      MarchLabel.ToothlessMarch,
-      MarchLabel.DragoonRoam,
-      MarchLabel.LoneMarch,
-      MarchLabel.StaticPush))
+      MarchLabel.LoneMarch))
   }
 }

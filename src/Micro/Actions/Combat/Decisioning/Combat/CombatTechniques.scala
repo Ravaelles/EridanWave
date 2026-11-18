@@ -28,13 +28,12 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       Macro.Facts.MacroFacts.enemyHasShown(Protoss.Dragoon))
 
   private[Decisioning] def selectBaseTechnique(safePassage: Boolean): Unit = {
-    // Home-hold lock, computed once per frame: the verdict geography
-    // (HomeStand, ground tiles to the main inside the choke margin) plus
-    // the dodge cooldown (a hot gun holds for the volley). While set the
-    // technique below can be neither Fallback nor Flee, so the verdict
-    // the HomeStand rule just won is never overruled by the technique.
-    homeHoldNow =
-      NoRetreat.homeStand(unit) && unit.cooldownLeft < DOdge.homeCooldownFrames
+    // Standing-ground lock, computed once per frame: any sacred-ground
+    // rule firing (home soil, tanks on the natural, brave Dragoons and
+    // Reavers) pins the technique below to neither Fallback nor Flee, so
+    // a verdict the never-retreat family just won is never overruled by
+    // the technique. The posture floor carries the same vote cluster-wide.
+    standGroundNow = NoRetreat.holdsAny(unit)
     // Second verdict reader (step 2): the technique ticks the shared bus
     // with frame-fresh inputs and obeys the held verdict. The raw inputs
     // match the old arm one for one; the only behavior change is the hold
@@ -67,7 +66,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // not flee keep the old ladder untouched below. Committed hunts
       // never latch: the order already bypassed the vote, so holding
       // the retreat would walk a duel it was sent to fight.
-      else  if (unit.intent.canFlee && ! unit.agent.commit && ! homeHoldNow && ReengageLatch.shouldHoldRetreat(
+      else  if (unit.intent.canFlee && ! unit.agent.commit && ! standGroundNow && ReengageLatch.shouldHoldRetreat(
         combat.techniqueIs(Fallback, Flee, Excuse),
         unit.matchups.pixelsEntangled * Maff.inv32,
         unit.agent.shouldFight,
@@ -98,11 +97,11 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         With.units.enemy.exists(e =>
           e.alive && e.likelyStillThere && Terran.SiegeTankSieged(e)))) Fight
       else  if ( ! unit.intent.canFlee)                             Walk
-      // Home ground with a hot gun never retreats: the verdict above
-      // already voted fight, but with no target picked yet the ladder
-      // below would fall through to Flee - hold the line instead and let
+      // Standing ground never retreats: the verdict above already
+      // voted fight, but with no target picked yet the ladder below
+      // would fall through to Flee - hold the line instead and let
       // the engage pick the duel up.
-      else  if (homeHoldNow)                                          Fight
+      else  if (standGroundNow)                                       Fight
       else                                                          Flee
   }
 
@@ -118,15 +117,13 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       cooldownLeft    = unit.cooldownLeft)
 
   /**
-   * Home-hold lock (one read per frame, set above): inside the
-   * natural-choke margin with a hot gun the unit holds instead of
-   * withdrawing - same line the HomeStand verdict voted on, same
-   * cooldown the dodge discipline holds on, so the three can never
-   * disagree on when the volley matters. A `var`, not a `def`: the
-   * verdict geography walks the ground path, so every transition below
-   * reads the memoized frame value instead of re-walking it.
+   * Standing-ground lock (one read per frame, set above): while any
+   * never-retreat rule fires the unit holds instead of withdrawing.
+   * A `var`, not a `def`: the verdict geography walks the ground path
+   * (HomeStand), so every transition below reads the memoized frame
+   * value instead of re-walking it.
    */
-  private var homeHoldNow: Boolean = false
+  private var standGroundNow: Boolean = false
 
   private[Decisioning] def applyTransitions(): Unit = {
     combat.transition(Aim,       ! unit.canMove)
@@ -141,21 +138,21 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     // holds the line instead of yielding it - the verdict already voted
     // fight on this same line, so a Fallback here would overrule the
     // vote it just won and donate the natural a volley at a time.
-    combat.transition(Fallback,  ! homeHoldNow && unit.matchups.inRangeOfTank && TankHug.shouldWithdraw(
+    combat.transition(Fallback,  ! standGroundNow && unit.matchups.inRangeOfTank && TankHug.shouldWithdraw(
       With.framesSince(unit.lastFrameTakingDamage) < TankHug.shellShockFrames,
       Maff.minBy(unit.matchups.threats.view.filter(Terran.SiegeTankSieged))(_.pixelDistanceEdge(unit))
         .map(unit.pixelDistanceEdge(_) * Maff.inv32)
         .getOrElse(Double.PositiveInfinity)))
-    combat.transition(Fallback,  ! homeHoldNow && unit.isAny(Terran.SiegeTankUnsieged, Terran.Goliath, Protoss.Reaver) && ! unit.airborne)
+    combat.transition(Fallback,  ! standGroundNow && unit.isAny(Terran.SiegeTankUnsieged, Terran.Goliath, Protoss.Reaver) && ! unit.airborne)
     // Unit-owned claims (the predicates live with their units; the order
     // lives here because the technique state machine constrains it).
-    combat.transition(Fallback,  ! homeHoldNow && Micro.Actions.Protoss.Dragoon.DragoonFallback.facesRush(
+    combat.transition(Fallback,  ! standGroundNow && Micro.Actions.Protoss.Dragoon.DragoonFallback.facesRush(
       Protoss.Dragoon(unit),
       unit.agent.receivedPushPriority(),
       unit.matchups.targetNearest.exists(unit.inRangeToAttack),
       unit.matchups.threatsInFrames(unit.unitClass.framesToPotshot + 9).forall(_.isAny(Terran.Vulture, IsSpeedlot, Zerg.Zergling)),
       unit.matchups.threatsInFrames(unit.unitClass.framesToPotshot + 9).exists(_.unitClass.ranged)))
-    combat.transition(Fallback,  ! homeHoldNow && Micro.Actions.Protoss.Zealot.ZealotFallback.outnumberedBySpeedlings(
+    combat.transition(Fallback,  ! standGroundNow && Micro.Actions.Protoss.Zealot.ZealotFallback.outnumberedBySpeedlings(
       unit.isAny(Protoss.Archon, Protoss.Zealot),
       unit.matchups.targetsInRange.exists(IsSpeedling)))
   }

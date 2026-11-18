@@ -9,7 +9,7 @@ import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.Decisions.{ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -59,21 +59,20 @@ object MarchOrders {
 
     val finalReturn = getReturn(unit, squad, defaultReturn)
     val assault = SuicideMission.isActive(unit)
-    // A toothless Terran fields nothing worth forming up against: combat
-    // units skip every formation leg, including the trip home, and walk
-    // straight at the goal instead.
-    val toothless = ToothlessMarch.shouldMarchDirectly(
+    // A toothless Terran fields nothing worth dressing against: the
+    // posture vote below attacks instead of posing, and the legs walk
+    // the line out instead of trickling it.
+    val toothless = ToothlessMarch.shouldForceAttack(
       unit.unitClass.isWarrior,
       facts.enemyIsTerran,
       facts.enemyHasTanks,
       facts.enemyHasVultures)
     val (terminus, marchLabel) = marchTerminus(squad, unit, meanDistToGoalTiles, defaultReturn, facts)
-    // Roaming Dragoons march like the toothless columns: with no enemy
-    // Dragoon scouted there is nothing to dress against, so they walk at
-    // the goal instead of posing, rallying or returning - and the march
-    // never sends them home for lack of a consensus they do not need.
-    val roam = marchLabel == MarchLabel.DragoonRoam
-    val marching = squad.fightConsensus || assault || toothless || roam
+    // Posture marches: an attacking or regrouping cluster walks out
+    // dressed instead of sitting on its return slots - the Roam vote
+    // below is posture now, and the legs stay inert without consensus,
+    // so the column moves without dancing.
+    val marching = squad.fightConsensus || postureMarches(squad) || assault || toothless
     // Pair shuttles never march home: an empty ride that awaits, escorts
     // or rejoins belongs with the army, and marching it to a slot strands
     // the next Reaver exactly like the old fetch bug did. Loaded hulls
@@ -105,13 +104,12 @@ object MarchOrders {
 
   // The march rules, innermost first: rallying stragglers beat slots,
   // closing ranks beats marching alone, dressing beats everything but
-  // a suicide charge (which skips the dressing room entirely).
+  // a gated march above. The gate table holds travel overrides (lone
+  // and main-march columns walk at the goal instead of rallying home),
+  // missions (suicide, pair rides) and the slotless hunters - battle
+  // intent lives in the cluster posture now, not in gate-skipped legs.
   // Order is load-bearing (first gate wins, like every first-claims
-  // chain in the tree): Dark Templars and Corsairs hunt outside the
-  // line, the main march skips the dance at home, and every
-  // skip-formation gate below walks straight at the goal instead of
-  // milling - retune by moving whole gates, never by tweaking one
-  // gate's thresholds against another's.
+  // chain in the tree).
   // The gate table lives in Decisions.MarchGates (pure predicates over
   // MarchFacts + MarchUnit, first claim wins); the order table suite
   // pins the sequence row by row.
@@ -151,21 +149,20 @@ object MarchOrders {
         (getReturn(unit, squad, defaultReturn), MarchLabel.Retreating)
       case None =>
         val finalTravel = getTravel(unit, squad, defaultReturn)
-        marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide)
+        marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat)
     }
   }
 
   // The march legs: rallying stragglers beat slots, closing ranks beats
   // marching alone, dressing beats everything but a gated march above.
-  // Every leg answers to the slot discipline: a unit with a target, a hot
-  // gun, fresh wounds or threats in range never poses - it fights or
-  // walks instead. Posing is for the untouched and unthreatened.
-  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean): (Pixel, MarchLabel) = {
+  // Every leg answers to the slot discipline: a firing gun, fresh wounds
+  // or a held retreat vetoes the pose that frame, but contact alone never
+  // does - the line only exists if it forms while the enemy is out there.
+  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean): (Pixel, MarchLabel) = {
     val slotOpen             = SlotDiscipline.maySlot(
-      hasAttackTarget  = unit.agent.toAttack.isDefined,
-      weaponReady      = unit.cooldownLeft <= 0,
+      firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
       framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),
-      threatsInRange   = unit.matchups.threatsInRange.nonEmpty)
+      verdictHeld       = verdictRetreat)
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide, slotOpen)
     val joinPixel              = joinLeg(squad, unit, suicide, slotOpen)
     val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, slotOpen)
@@ -260,6 +257,16 @@ object MarchOrders {
     new Pixel(ax.toInt, ay.toInt).walkablePixel
   }
 
+  /**
+   * Posture marching (one predicate for the send and the travel legs):
+   * an attacking cluster walks at the goal and a regrouping one dresses
+   * out to it - both move without consensus, and the legs stay inert
+   * without it, so the column walks instead of dancing. Squads without
+   * a posture keep the consensus gate untouched.
+   */
+  private def postureMarches(squad: Squad): Boolean =
+    squad.battlePosture.exists(p => ClusterPosture.advances(p) || p == ClusterPosture.Regroup)
+
   def getTravel(unit: FriendlyUnitInfo, squad: Squad, defaultReturn: Option[Pixel] = None): Pixel =
     ?(squad.hasGround, None, Some(squad.vicinity))
       .orElse(
@@ -268,5 +275,5 @@ object MarchOrders {
           .headOption
           .find(_.placements.contains(unit))
           .map(_.placements(unit)))
-      .getOrElse(?(squad.fightConsensus, squad.vicinity, getReturn(unit, squad, defaultReturn)))
+      .getOrElse(?(squad.fightConsensus || postureMarches(squad), squad.vicinity, getReturn(unit, squad, defaultReturn)))
 }

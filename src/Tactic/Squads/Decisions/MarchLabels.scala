@@ -21,19 +21,11 @@ object MarchLabel {
 
   case object PairRide extends MarchLabel("PairRide")
 
-  case object StrongMarch extends MarchLabel("StrongMarch")
-
-  case object ToothlessMarch extends MarchLabel("ToothlessMarch")
-
-  case object DragoonRoam extends MarchLabel("DragoonRoam")
-
   case object Retreating extends MarchLabel("Retreating")
 
   case object MarchingHome extends MarchLabel("Marching home")
 
   case object LoneMarch extends MarchLabel("LoneMarch")
-
-  case object StaticPush extends MarchLabel("StaticPush")
 
   case object WaitingForPack extends MarchLabel("Waiting for pack")
 

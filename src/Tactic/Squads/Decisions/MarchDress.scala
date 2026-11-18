@@ -32,7 +32,7 @@ object MarchDress {
 
   private val dressing = new Latch
 
-  def reset(): Unit = { dressing.reset(); pushing.reset() }
+  def reset(): Unit = { dressing.reset() }
 
   def holdDress(unitId: Int, aheadTiles: Double): Boolean =
     dressing(
@@ -114,21 +114,8 @@ object MarchDress {
     distTiles <= staticPushTiles
 
   /**
-   * Latched static push (LoneMarch shape): the gate below flips every
-   * few frames for a unit breathing on exactly ten tiles - a live log
-   * showed StaticPush alternating with Rallying/Marching/Returning
-   * until the zealot died milling instead of attacking. Enter at ten,
-   * rejoin the legs past twelve, hold the side inside the band.
-   * Per-unit state, reset per game like the other march watches.
-   */
-  val staticPushExitTiles: Double = 12.0
-
-  private val pushing = new Latch
-
-  def pushPastStatics(unitId: Int, nearestTiles: Double): Boolean =
-    pushing(
-      unitId,
-      fires    = nearestTiles <= staticPushTiles,
-      releases = nearestTiles > staticPushExitTiles,
-      initial  = shouldPushPastStatics(nearestTiles))
-}
+   * Static-push band (pure predicate for the posture vote): a pack inside
+   * ten tiles of guns it can be hit by pushes through instead of milling
+   * in their reach. The posture deadband absorbs the boundary breathing -
+   * buildings do not move, so the set only flips when one dies.
+   */}
