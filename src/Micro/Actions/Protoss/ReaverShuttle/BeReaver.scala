@@ -87,7 +87,31 @@ object BeReaver extends Action {
 
   /** Combat family, in order; the arbiter gates it behind the fight. */
   private val combatClaims: Seq[GroundContext => Boolean] = Seq(
-    backOffOutrangedStatic, coolWalk, standShoot, closeStatic, backOffOutrangedInRange)
+    backToPack, backOffOutrangedStatic, coolWalk, standShoot, closeStatic, backOffOutrangedInRange)
+
+  /**
+   * Pack anchor (always first in the combat family): a hull standing
+   * further from home than its pack line walks back to the centroid
+   * instead of holding or closing ahead of the army - ahead of the pack
+   * it is a free kill, with it it is a volley. Wounded hulls keep extra
+   * distance home. Baseless maps have no main to measure from, so the
+   * anchor stays off there and the duel walk below owns the frame.
+   */
+  private def backToPack(context: GroundContext): Boolean = {
+    if (With.geography.ourBases.isEmpty) return false
+
+    val centroid = context.unit.squad.map(_.centroidGround).getOrElse(return false)
+    val mainPx = With.geography.ourMain.heart.center
+    val reaverMainTiles = context.unit.pixelDistanceTravelling(mainPx) * Maff.inv32
+    val armyMainTiles = centroid.groundPixels(mainPx) * Maff.inv32
+    if ( ! ReaverAnchor.shouldBackToPack(reaverMainTiles, armyMainTiles, context.unit.woundPercent())) return false
+
+    context.unit.agent.act("BackToPack")
+    context.unit.agent.forceTo(centroid)
+    Commander.move(context.unit)
+
+    true
+  }
 
   /** Walk to the ride instead of waiting for it: the anti-paralysis leg. */
   private def walkToRide(unit: FriendlyUnitInfo): Boolean = {

@@ -207,6 +207,16 @@ New kernels ride suites; these need a live game that reaches them
   first among revealed Templars; still needs live: detected enemy DT
   within 40 ground tiles of our main - already-dueling keeps;
   Reavers and our DTs keep their disciplines).
+- Reaver pack anchor (2026-11-18: on-foot hull never stands further
+  from home than the squad centroid line, minus woundBonus(0,4);
+  BackToPack outranks cool-walk/stand/close. Baseless UMS skips it.
+  Needs a live pair game confirming no ahead-of-army deaths).
+- Home-hold lock (2026-11-18: inside the choke margin with a hot gun
+  the technique can be neither Fallback nor Flee - latch broken,
+  all four Fallback transitions gated, fallthrough forced to Fight.
+  Same line the HomeStand verdict votes on, same cooldown the dodge
+  holds on. Needs a live natural-defense game confirming no
+  Retreat/Fallback/Potshot at home with a ready gun).
 - UMS batch triage 2026-11-18 (8W/15L/2NA, post all fixes):
   ZealDrag flips to VICTORY 9/6 errors-clean (baseless guards hold);
   15Drag ends 3v1 chase-timeout (surrounds unbuilt, contain parked);
