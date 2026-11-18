@@ -42,6 +42,14 @@ abstract class Squad extends Tactic with FriendlyUnitGroup {
    * isInstanceOf case at the bottom of the stack.
    */
   def wantsNewbornReavers: Boolean = false
+
+  /**
+   * Standing defense: the squad holds its post in formation instead of
+   * marching home - base guards post at the choke, not the main. Lets
+   * the guard formation anchor forward while the return still walks
+   * stragglers back.
+   */
+  def holdsGround: Boolean = false
   def assignedTransport(passenger: FriendlyUnitInfo): Option[FriendlyUnitInfo] = None
   def allowsPickup(transport: FriendlyUnitInfo, passenger: FriendlyUnitInfo): Boolean = true
   def accountForCargo(transport: FriendlyUnitInfo): Unit = {}
@@ -137,4 +145,4 @@ abstract class Squad extends Tactic with FriendlyUnitGroup {
   )
 
   override def toString: String = ToString(this).replace("Squad", "")
-}
+}

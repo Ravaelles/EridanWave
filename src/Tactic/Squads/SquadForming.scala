@@ -29,8 +29,11 @@ object SquadForming {
       }
       output += Formations.march(squad, to, meleeBack)
     }
-    // Always include a disengagey formation for units that want to retreat/kite
-    if (squad.centroidKey.zone == squad.homeConsensus.zone && With.scouting.enemyThreatOrigin.zone != squad.homeConsensus.zone) {
+    // Always include a disengagey formation for units that want to retreat/kite.
+    // A standing defense guards forward at its post (the natural choke
+    // arc, not the main): defenders staging at the choke get guard slots
+    // there instead of a disengage arc pointing home.
+    if (squad.holdsGround || (squad.centroidKey.zone == squad.homeConsensus.zone && With.scouting.enemyThreatOrigin.zone != squad.homeConsensus.zone)) {
       output += Formations.guard(squad, Some(squad.homeConsensus))
     } else {
       output += Formations.disengage(squad)

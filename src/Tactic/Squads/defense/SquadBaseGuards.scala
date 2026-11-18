@@ -65,6 +65,10 @@ class SquadBaseGuards extends Squad {
 
   override def launch(): Unit = {} // Staffed externally by Tactician
 
+  // The guard holds its post: staging and returning happen in the
+  // choke arc, never at the main.
+  override def holdsGround: Boolean = true
+
   // Latched by run() below: with an enemy on the doorstep the guard fights
   // now instead of waiting out the consensus latch at the choke.
   private var engagingBase: Boolean = false
