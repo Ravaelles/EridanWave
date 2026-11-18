@@ -9,7 +9,8 @@ import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.Decisions.{AttackModes, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.attack.SquadAttack
 import Utilities.?
 
 /**
@@ -267,13 +268,25 @@ object MarchOrders {
   private def postureMarches(squad: Squad): Boolean =
     squad.battlePosture.exists(p => ClusterPosture.advances(p) || p == ClusterPosture.Regroup)
 
+  /**
+   * Contact hunt walks at the contact, never at a stale slot: when the
+   * squad hunts a remembered or visible enemy, a home slot outranks the
+   * vicinity in the lookup below and the pack mills at home while the
+   * target lives elsewhere (UMS mop-up timeouts). Hunting bypasses the
+   * slot lookup so the legs walk the vicinity instead.
+   */
+  private def huntingContact(squad: Squad): Boolean = squad match {
+    case attack: SquadAttack => attack.mode == AttackModes.HuntContact
+    case _                   => false
+  }
+
   def getTravel(unit: FriendlyUnitInfo, squad: Squad, defaultReturn: Option[Pixel] = None): Pixel =
     ?(squad.hasGround, None, Some(squad.vicinity))
       .orElse(
         squad
           .formations
           .headOption
-          .find(_.placements.contains(unit))
+          .find(f => ! huntingContact(squad) && f.placements.contains(unit))
           .map(_.placements(unit)))
       .getOrElse(?(squad.fightConsensus || postureMarches(squad), squad.vicinity, getReturn(unit, squad, defaultReturn)))
 }
