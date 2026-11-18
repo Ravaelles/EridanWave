@@ -51,18 +51,19 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Shooting Corsairs hold the spread mid-duel.
 - CorsairHunt march gate (macro corsairs vs Overlords).
 - Observer hunter early warning macro confirmation (muta pressure).
-- Observers stand off detectors (6 tiles, pack-spread ray).
 - Arbiters flee like Corsairs (wound-scaled 2-to-11 margin).
 - Arbiter spread cloak coverage (one Arbiter game; senior-arbiter
   attraction removed per review C2).
 
 ## Open: march validation (needs macro games)
 
-- Toothless march (PvT columns walk with no tanks/vultures).
 - StrongMarch (banked stock or maxed army skips rally/slots).
 - Retreating warriors never rally or close ranks.
 - Expo punish vs Zerg at 140 (units-strength only).
-- TankHug (cooling warriors close sieged tanks to 0.2 tiles).
+- TankHug (cooling warriors close sieged tanks to 0.2 tiles;
+  Terminus 2026-11-18: HugTank act fired 129x in three late clusters
+  f21434-30516, 13 enemy tanks died - act-level proven, 0.2-tile
+  arrival still unproven from trace acts).
 - Sealed-breach wall chew (quiet 3s + sealed + 6-tile lane and reach, no
   shield term): needs a live PvT wall-in, zealots and dragoons both read
   it via BreakTerranWallIn.
@@ -74,9 +75,14 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
   lone-march boundary is innocent - the *input* flaps. Reaver duels
   through it; ClusterCohesion rejoin runs before Hunt).
 - HoldLine creep (per-unit advancing anchors landed + scenario;
-  0 fires in 3 macro games - the gate (Fight posture + dressed +
-  !broken + beyond range) may never hold; needs a game that reaches
-  it or a gate review).
+  0 fires in 4 macro games incl. 25-min Terminus grind - gate review
+  2026-11-18, no game needed from here: creep sits in the terminal
+  Reposition stage behind volley-hold (Close outer=false), while
+  resolveBreakFormation:248 breaks whenever the target sits inside
+  128*confidence px past range. The creep window (Fight posture +
+  dressed 0.8 + cold weapon + beyond range + unbroken) looks
+  unsatisfiable in contact; needs an owner decision: relax the
+  readiness/break terms, re-scope, or delete the behavior).
 
 ## Open: posture-era validation (needs games that reach each rule)
 
@@ -159,7 +165,9 @@ New kernels ride suites; these need a live game that reaches them
   1-7 HP unconnected hunting alone - no duel without local edge).
 - Dying Templars suicide-storm the median pack.
 - ZealotSwarm pure case (warriors-only zealot-vs-ling +10% margin).
-- ReaverBraveStand (stale shielded hull holds vs Terran in 8.5 tiles).
+- ReaverBraveStand (stale shielded hull holds vs Terran in 8.5 tiles;
+  Terminus 2026-11-18: 0 acts with 15 reavers built - conditions
+  never met, still unvalidated).
 - Reaver vs workers (pressure, shields >70, no Hop).
 - Scarab rescue (pressured mid-shot boards while the shot flies).
 - No Reaver raids vs Zerg (pair supports the main army).
@@ -244,3 +252,6 @@ New kernels ride suites; these need a live game that reaches them
   -OutOfContact; single-writer skips leave the label behind when the
   squad changes under it. Post-migration the dispatch reads the bus,
   so the stale label cannot dispatch - the twin cost 4 smear frames.
+  Terminus 2026-11-18 data point (25-min macro PvT): 1274 NoTankMarch
+  rows, zero same-tick Retreat combinations - march and duel never
+  share a frame; neighbors within +-10f are sequencing, not flap.
