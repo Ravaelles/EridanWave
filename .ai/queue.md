@@ -159,6 +159,12 @@ New kernels ride suites; these need a live game that reaches them
   disarms the reaver - nothing to shoot with, nothing to ferry for.
   Sunkens3 is the positive control (armed pair fights). No code fix;
   map resources, not behavior.
+- Crona rematch post-fix (VICTORY 47/3 f11038): leash latch runs
+  (208 acts), floor holds (posture 1 row all game, 28 Retreating vs
+  1388 pre-fix - no cycling), DT hunt correctly idle. Caveat: stomp
+  (24-zealot flood), never behind - validates no-regression, not the
+  grind case. A grind-case PvZ still wanted for the choke-hold
+  confirmation.
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
