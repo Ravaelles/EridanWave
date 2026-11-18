@@ -96,11 +96,6 @@ class MarchGateOrderSuite extends AnyFunSuite {
     unit(isDragoon = true, isWarrior = true, shouldFight = true),
     Some(MarchLabel.StrongMarch))
 
-  check("no tanks outranks toothless on a Dragoon",
-    facts(enemyIsTerran = true),
-    unit(isDragoon = true, isWarrior = true, shouldFight = true),
-    Some(MarchLabel.NoTankMarch))
-
   check("a toothless Terran walks a lone Zealot out",
     facts(enemyIsTerran = true),
     unit(isWarrior = true, shouldFight = true, nearestWarriorTiles = Some(3.0)),
@@ -137,7 +132,6 @@ class MarchGateOrderSuite extends AnyFunSuite {
       MarchLabel.SuicideMission,
       MarchLabel.PairRide,
       MarchLabel.StrongMarch,
-      MarchLabel.NoTankMarch,
       MarchLabel.ToothlessMarch,
       MarchLabel.DragoonRoam,
       MarchLabel.LoneMarch,

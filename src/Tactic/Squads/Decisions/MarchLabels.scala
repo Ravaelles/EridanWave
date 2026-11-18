@@ -23,8 +23,6 @@ object MarchLabel {
 
   case object StrongMarch extends MarchLabel("StrongMarch")
 
-  case object NoTankMarch extends MarchLabel("NoTankMarch")
-
   case object ToothlessMarch extends MarchLabel("ToothlessMarch")
 
   case object DragoonRoam extends MarchLabel("DragoonRoam")

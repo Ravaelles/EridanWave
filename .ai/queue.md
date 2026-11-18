@@ -216,8 +216,11 @@ New kernels ride suites; these need a live game that reaches them
   skips committed hulls by design, so no UMS map can reach the
   branch; the formation gate is additionally lifted for blades
   (requiresFormation kernel + suite - melee never holds dress
-  slots). Validation needs a macro game with uncommitted zealots;
-  2Zeal_v_LingUp stays DEFEAT (rerun 4/2 f332) as the baseline).
+  slots). LIVE 2026-11-18 (Crona VICTORY 44/4 f12744): fired 33x on
+  suicide-mission zealots 148 (28x) and 163 (5x) inside the enemy
+  base, interleaved with Engage/Chase plus a drone kill - the branch
+  works in a real duel. Open-field line hold still unproven.
+  2Zeal_v_LingUp stays DEFEAT (rerun 4/2 f332) as the UMS baseline).
 - Reaver_v_Sunkens wall STANDS (2026-11-18 batch VICTORY 37/45 f4028
   re-run to DEFEAT f506 - outlier on early chaos, now 1W/9;
   no new labels in either game, baseless skips anchor/home-hold).
@@ -232,13 +235,26 @@ New kernels ride suites; these need a live game that reaches them
   f512 on remembered contacts, kills 0->3 across runs, both games
   DEFEAT at f3203 map timeout. Anchor validated; the map has no
   detection so the DTs stay unkillable - unwinnable by design, as
-  triaged).
+  triaged. 2026-11-18 3rd run: 3/3 f3203, hunt 15x - kills now
+  consistent, timeout unchanged).
+- UMS walls re-confirmed 2026-11-18 (Sunkens1 instant f1 trigger;
+  Sunkens4 f257 trigger; Sunkens2/3 f4820 timeouts on Approach/Move
+  milling with 4-10 CloseStatic/StandShoot - the hunt-destination
+  input flap, already queued; DT_v_Protoss 0/2 f497 - wall;
+  ZealDragLings 24/10 f4820 - wins the fight, loses the mop-up).
 - Home-hold lock (2026-11-18: inside the choke margin with a hot gun
   the technique can be neither Fallback nor Flee - latch broken,
   all four Fallback transitions gated, fallthrough forced to Fight.
   Same line the HomeStand verdict votes on, same cooldown the dodge
-  holds on. Needs a live natural-defense game confirming no
+  holds on. Crona 2026-11-18 (VICTORY 44/4 f12744) never pressured
+  home - 3 forward zealot deaths + 1 probe, no natural defense.
+  Still needs a live defensive game confirming no
   Retreat/Fallback/Potshot at home with a ready gun).
+- NoTankMarch inverted to posture (2026-11-19: the gate skipped slots
+  to make Dragoons attack tankless Terran; now NoTankAttack votes
+  posture Fight and the walk stays on the slots, duel releases through
+  the break conditions. Needs a live macro PvT vs tankless Terran
+  confirming Dragoons attack in formation instead of posing).
 - Formation holdable (2026-11-18: line forms only vs what shoots
   ground - Turret/Spore marched down, Sunken/Cannon still hold;
   kernel isHoldableTarget + suite. Needs a live PvT confirming

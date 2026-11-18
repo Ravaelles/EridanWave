@@ -45,12 +45,6 @@ object MarchGates {
       facts.bankedMinerals,
       facts.armyStrength,
       facts.supplyUsed)),
-    // No tanks, no dressing: Dragoons walk straight at a Terran without
-    // siege lines instead of posing for guns that are not there.
-    MarchGate(MarchLabel.NoTankMarch, (facts, unit) => NoTankMarch.shouldMarchDirectly(
-      unit.isDragoon,
-      facts.enemyIsTerran,
-      facts.enemyHasTanks)),
     // Toothless Terran, no formations at all: without Vultures or Tanks
     // combat units skip every march leg, including the trip home - the
     // pack just walks at the goal.

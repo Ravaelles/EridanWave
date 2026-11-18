@@ -9,6 +9,7 @@ import Mathematics.Points.{Pixel, Points, Tile}
 import Mathematics.Shapes.Spiral
 import Performance.Cache
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitTracking.UnorderedBuffer
 import Tactic.Squads.Decisions.AttackModes._
 import Utilities.In
@@ -19,6 +20,7 @@ import scala.collection.mutable.ArrayBuffer
 import Tactic.Squads.Decisions.HuntLogic
 import Tactic.Squads.Decisions.AttackModes
 import Tactic.Squads.Decisions.ClusterPosture
+import Tactic.Squads.Decisions.NoTankAttack
 import Tactic.Squads.Decisions.ClusterRoles
 import Tactic.Squads.Decisions.RetreatDiscipline
 import Tactic.Squads.Decisions.RetreatAllowed
@@ -329,8 +331,19 @@ class SquadAttack extends Squad {
     val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
     val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame, ! With.umsMode,
       RetreatAllowed.forCluster(unitsAdvantage, nearestArmed, proxyRush, MacroFacts.enemyHardCounterKnown))
-    if (next == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
-    posture = next
+    // Tankless force: Dragoons attack a Terran with no tanks instead of
+    // posing for guns that are not there. This votes posture Fight - the
+    // walk stays on the slots and the duel still releases through the
+    // break conditions; siege lines keep the careful approach because
+    // the force only fires while no tank shows.
+    val forced =
+      if (NoTankAttack.shouldForceAttack(
+        units.exists(u => Protoss.Dragoon(u)),
+        With.enemies.exists(_.isTerran),
+        With.units.enemy.exists(t => t.alive && (Terran.SiegeTankSieged(t) || Terran.SiegeTankUnsieged(t))))) ClusterPosture.Fight
+      else next
+    if (forced == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
+    posture = forced
     roles = assignRolesShadow()
     Probe.note("Sim", 0, f"$posture fighting=$fighting%.2f coverage=$coverage%.2f adv=$advantage%.2f")
     Debugging.CherryVis.CherryVis.board("AttackPosture", posture.toString)
