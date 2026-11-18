@@ -302,12 +302,15 @@ class SquadAttack extends Squad {
     val tiles = (0 until With.mapTileWidth by 4)
       .flatMap(x => (0 until With.mapTileHeight by 4)
         .map(y => Tile(x, y))
-        .filter(t => t.walkable && With.framesSince(t.lastSeen) > Minutes(2)()))
-    // March somewhere worth marching to: nearby tiles make followers jitter
+        .filter(_.walkable))
+    // Oldest-seen first, far legs before feet: the sweep never ends, so
+    // movers re-infesting swept tiles get re-found instead of stranding
+    // the pack at home after one lap (UMS mop-up timeouts). March
+    // somewhere worth marching to: nearby tiles make followers jitter
     // around their own feet instead of searching. 1 tile = 32 px.
-    val farEnough = tiles.filter(t => attackKeyDistanceTo(t.center) >= 32 * 16)
-    val sorted = Maff.orElse(farEnough, tiles).toSeq.sortBy(t => attackKeyDistanceTo(t.center))
-    sorted.map(_.center)
+    val byAge = tiles.toSeq.sortBy(t => -With.framesSince(t.lastSeen))
+    val farEnough = byAge.filter(t => attackKeyDistanceTo(t.center) >= 32 * 16)
+    Maff.orElse(farEnough, byAge).toSeq.map(_.center)
   }
 
   val otherTargets = new ArrayBuffer[UnitInfo]

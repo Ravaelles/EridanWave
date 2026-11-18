@@ -19,8 +19,15 @@ object SquadForming {
     val output: ArrayBuffer[Formation] = ArrayBuffer.empty
     // If advancing, give a formation for forward movement.
     // March as soon as enemies are known en route (Stardust: form the line
-    // before contact), not only after the squad voted to fight.
-    if (SquadMarch.shouldFormMarch(squad.fightConsensus, squad.battleEnemies.nonEmpty)) {
+    // before contact), not only after the squad voted to fight. A hunting
+    // squad marches too: the contact hunt walks the arc out at the
+    // remembered point instead of milling in home slots, so the advance
+    // stays slot-bound even with no consensus behind it.
+    val huntingContact = squad match {
+      case attack: SquadAttack => attack.mode == AttackModes.HuntContact
+      case _                   => false
+    }
+    if (SquadMarch.shouldFormMarch(squad.fightConsensus || huntingContact, squad.battleEnemies.nonEmpty)) {
       // Contain dressing rides the march formation: melee drops back so the
       // Dragoons keep the inner arc and shoot.
       val meleeBack = squad match {
