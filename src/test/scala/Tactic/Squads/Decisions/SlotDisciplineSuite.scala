@@ -5,22 +5,26 @@ import org.scalatest.funsuite.AnyFunSuite
 class SlotDisciplineSuite extends AnyFunSuite {
 
   private def slot(
-    target: Boolean = false,
-    ready: Boolean = false,
+    firing: Boolean = false,
     sinceDamage: Int = 1000,
-    threats: Boolean = false): Boolean =
-    SlotDiscipline.maySlot(target, ready, sinceDamage, threats)
+    verdict: Boolean = false): Boolean =
+    SlotDiscipline.maySlot(firing, sinceDamage, verdict)
 
   test("an idle untouched unit may dress") {
     assert(slot())
   }
 
-  test("a target, a ready weapon, a wound or a threat vetoes the slot") {
-    assert( ! slot(target = true))
-    assert( ! slot(ready = true))
+  test("contact alone never vetoes the slot") {
+    // A target on the ladder, a cooling weapon or a distant threat used
+    // to veto; now only an actual shot does.
+    assert(slot())
+  }
+
+  test("a firing gun, fresh wounds or a held retreat vetoes the slot") {
+    assert( ! slot(firing = true))
     assert( ! slot(sinceDamage = 0))
     assert( ! slot(sinceDamage = 59))
-    assert( ! slot(threats = true))
+    assert( ! slot(verdict = true))
   }
 
   test("old damage stops vetoing after a minute of silence") {

@@ -2,11 +2,12 @@ package Tactic.Squads.Decisions
 
 /**
  * Slot discipline (no game access): the single gate every formation leg
- * shares. Dressing, rallying and returning only happen while the unit has
- * nothing to shoot, nothing ready to shoot with, no fresh wounds and no
- * threat in range - a shot, a cooldown or an incoming round vetoes the
- * slot that frame, by definition. This is what stops the slot/retreat
- * flap: the two can never both claim one frame.
+ * shares. Dressing, rallying and returning only yield to an actual shot -
+ * a hot gun with a hittable target outranks the pose - to fresh wounds,
+ * and to a held retreat verdict that already owns the frame. Mere
+ * contact no longer vetoes: a target on the ladder, a cooling weapon or
+ * a distant threat never stopped PurpleWave from dressing, and the line
+ * only exists if it forms while the enemy is still out there.
  */
 object SlotDiscipline {
 
@@ -14,10 +15,9 @@ object SlotDiscipline {
   val damageSilenceFrames: Int = 60
 
   def maySlot(
-    hasAttackTarget: Boolean,
-    weaponReady: Boolean,
+    firingNow: Boolean,
     framesSinceDamage: Int,
-    threatsInRange: Boolean): Boolean =
-    ! hasAttackTarget && ! weaponReady &&
-      framesSinceDamage >= damageSilenceFrames && ! threatsInRange
+    verdictHeld: Boolean): Boolean =
+    ! firingNow &&
+      framesSinceDamage >= damageSilenceFrames && ! verdictHeld
 }
