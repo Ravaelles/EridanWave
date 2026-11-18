@@ -84,8 +84,9 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // Templar storm stand: a loaded hull walks into cast range instead
       // of retreating out of it - the cast itself already fired first in
       // the chain, so holding here only keeps it in reach for the next
-      // volley. Gated on Zerg: walking hydras down is the doctrine's
-      // home ground, other matchups keep the old retreat.
+      // volley. Gated on siege, not race: walking Zerg or unsieged
+      // Terran down is allowed danger, walking into siege shells is not
+      // (the cast itself still vetoes tank-covered boxes).
       else  if (StormStand.shouldHold(
         Protoss.HighTemplar(unit),
         With.enemies.exists(_.isZerg),
@@ -93,7 +94,9 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         Maff.minBy(unit.matchups.enemies.view.filter(_.alive))(_.pixelDistanceEdge(unit))
           .map(unit.pixelDistanceEdge(_) * Maff.inv32)
           .getOrElse(Double.PositiveInfinity),
-        unit.squad.exists(_.fightConsensus)))                       Fight
+        unit.squad.exists(_.fightConsensus),
+        With.units.enemy.exists(e =>
+          e.alive && e.likelyStillThere && Terran.SiegeTankSieged(e)))) Fight
       else  if ( ! unit.intent.canFlee)                             Walk
       // Home ground with a hot gun never retreats: the verdict above
       // already voted fight, but with no target picked yet the ladder

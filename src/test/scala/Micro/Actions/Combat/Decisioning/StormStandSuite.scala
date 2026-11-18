@@ -9,8 +9,9 @@ class StormStandSuite extends AnyFunSuite {
     enemyIsZerg: Boolean = true,
     energyReady: Boolean = true,
     nearestFoeTiles: Double = 10.0,
-    fightConsensus: Boolean = false): Boolean =
-    StormStand.shouldHold(isTemplar, enemyIsZerg, energyReady, nearestFoeTiles, fightConsensus)
+    fightConsensus: Boolean = false,
+    siegeThreat: Boolean = false): Boolean =
+    StormStand.shouldHold(isTemplar, enemyIsZerg, energyReady, nearestFoeTiles, fightConsensus, siegeThreat)
 
   test("a loaded Templar holds the line inside the approach band") {
     assert(holds())
@@ -21,10 +22,18 @@ class StormStandSuite extends AnyFunSuite {
     assert(holds(nearestFoeTiles = 30.0, fightConsensus = true))
   }
 
-  test("dry, wrong-race or far hulls retreat as before") {
+  test("unsieged Terran is allowed danger: the walk holds, the cast vetoes the shells") {
+    assert(holds(enemyIsZerg = false, siegeThreat = false))
+    assert( ! holds(enemyIsZerg = false, siegeThreat = true))
+  }
+
+  test("dry, unarmed or far hulls retreat as before") {
     assert( ! holds(energyReady = false))
-    assert( ! holds(enemyIsZerg = false))
     assert( ! holds(isTemplar = false))
     assert( ! holds(nearestFoeTiles = StormStand.approachTiles + 0.1))
+  }
+
+  test("siege never stops a Zerg-race stand, only the walk-in") {
+    assert(holds(enemyIsZerg = true, nearestFoeTiles = 30.0, fightConsensus = true, siegeThreat = true))
   }
 }

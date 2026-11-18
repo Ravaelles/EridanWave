@@ -48,7 +48,8 @@ class StormStandSuite extends AnyFunSuite with StarEngineSuite {
         enemyIsZerg = true,
         energyReady = me.energy >= World.StormCostEnergy,
         nearestFoeTiles = nearestTiles,
-        fightConsensus = false)) {
+        fightConsensus = false,
+        siegeThreat = false)) {
         val inReach = foes.filter(f => me.dist(f) <= World.StormCastRangePx)
         if (me.energy >= World.StormCostEnergy && inReach.nonEmpty) {
           val center = inReach.minBy(me.dist)
