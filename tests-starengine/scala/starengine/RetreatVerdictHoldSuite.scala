@@ -46,7 +46,8 @@ class RetreatVerdictHoldSuite extends AnyFunSuite with StarEngineSuite {
         totalHp = 160,
         unitsScore = 100.0,
         nearestArmedTiles = 40.0,
-        proxyRush = false)
+        proxyRush = false,
+        hardCounterKnown = false)
 
     override def direct(me: Body, world: World): Directive = {
       val mTick = world.frame % 6 == 0
