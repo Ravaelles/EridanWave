@@ -182,6 +182,14 @@ New kernels ride suites; these need a live game that reaches them
   Closing a kiter needs surrounds, not stickiness - contain carve-out
   stays parked; StarEngine ChaseAndKill covers workers, live needs
   the same proof vs kiters).
+- Re-baseline UMS batch post-all-fixes (9W/13L/3NA): mirror
+  VICTORY 398 with f0 Retreat flicker releasing to duel (bus 24f
+  hold absorbs, latch never engages committed hunts - as designed);
+  ZealDrag VICTORY 1091, errors clean (crash fix holds 4th game);
+  15Drag/3Zeal flip both ways across identical-code batches
+  (variance, not regression - stop chasing single-map flips);
+  Reaver_v_Sunkens DEFEAT 513 (wall stands 7th game);
+  ReavDrag L/W/L coin-flip with escort working, boarding by design.
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
