@@ -175,13 +175,13 @@ New kernels ride suites; these need a live game that reaches them
   zealot flood into 88-ling flood + sunken, right comp, out-massed;
   1 Forge 0 cannons built. Zealot-first again appropriate here;
   still needs a game where dragoon-first branches get picked).
-- Endgame stall (ZealDrag_v_LingsHydra 30/8 timeout f4820:
-  synchronized retarget to #218 at f2694, then zero kills, zero
-  hunt acts (last f302), march terminus frozen - 4th map with the
-  mop-up shape (15Drag 3v1 chase, Sunkens creep-fail, DT_v_Protoss
-  4100f hold). Hunt gate needs no-target-or-past-pursuit while the
-  duel needs advance; a visible-but-uncaught last enemy satisfies
-  neither. Surrounds stay the answer (contain carve-out parked).
+- Endgame chase (ZealDrag re-measured post-hunt-fix: DEFEAT k26,
+  hunt pursues to f4800 with march updating throughout - no more
+  f2852 freeze; remaining enemies kite forever at equal speed while
+  the pack switches targets together (43/212/216 synchronised).
+  Closing a kiter needs surrounds, not stickiness - contain carve-out
+  stays parked; StarEngine ChaseAndKill covers workers, live needs
+  the same proof vs kiters).
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
