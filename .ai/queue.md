@@ -152,6 +152,12 @@ New kernels ride suites; these need a live game that reaches them
   posture 2 flips in 16 min with retreats flowing under sieged
   tanks (floor binds, escape opens - no cycling); NoTankMarch 0
   same-tick Retreat combos.
+- Terminus grind 2026-11-18 (VICTORY 642/371 f40848): NoTankMarch
+  and Toothless end exactly at first siege f18138 (gates honest);
+  HugTank 472x f18185-38827 (4th firing data); DT hunt idle again
+  (no enemy DTs); posture stable, retreats flow vs siege (escape
+  opens); leash alternation p50 11 vs pre-fix 5 (damped, phase
+  instrument inconclusive); MineSidestep N/A (no enemy mines).
 - Sunkens mineral wall (Reav&Shut 1/2: 0 scarabs built all game,
   0/0 timeout defeats; Reav&Shut 3 builds 3, fights 6/3; Sunkens4
   ends f257 by map trigger): ReloadScarabs gates on minerals>=price
