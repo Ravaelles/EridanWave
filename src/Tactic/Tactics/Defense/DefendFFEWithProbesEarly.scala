@@ -36,6 +36,10 @@ class DefendFFEWithProbesEarly extends Tactic {
   var haveMinedEnoughForTwoCannons: Boolean = false
   
   def launch(): Unit = {
+    // Baseless maps (UMS duels) have no main to defend: ourMain has no
+    // answer there and must never be asked.
+    if (With.geography.ourBases.isEmpty) return
+
     if (With.frame > Minutes(4)()) return
     if (With.enemies.size > 1) return
     if ( ! With.geography.ourMain.units.exists(Zerg.Zergling)) return
