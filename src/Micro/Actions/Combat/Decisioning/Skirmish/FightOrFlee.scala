@@ -55,10 +55,7 @@ object FightOrFlee extends Action {
     committed   = u.agent.commit,
     hallTargeted = u.agent.toAttack.exists(_.unitClass.isTownHall),
     loneScout = Protoss.Scout(u) && Enemy.protoss() && ! TargetFilterScout.hasWingmate(u),
-    // The mirror retreat walks the handful home to the middle choke to
-    // join the line - a line that does not exist on UMS duel maps, where
-    // retreating is walking to death without firing. Duel it out there.
-    outmatchedGoon = Protoss.Dragoon(u) && Enemy.protoss() && ! With.umsMode && {
+    outmatchedGoon = Protoss.Dragoon(u) && Enemy.protoss() && {
       val global = With.battles.globalAttack
       DragoonPvpRetreat.shouldRetreat(
         true,
