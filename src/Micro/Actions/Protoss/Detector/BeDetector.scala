@@ -34,6 +34,14 @@ object BeDetector extends Action {
     // inside eleven tiles the eye is seen, and Scourge, Corsairs,
     // Wraiths and Mutalisks close too fast to outrun once committed.
     if (fleeFastHunters(unit)) return
+    // A detected eye never sits inside the guns: with the watch already
+    // blown it holds four tiles off their centroid instead of donating
+    // the hull for nothing.
+    if (fleeDetected(unit)) return
+    // Science Vessels see eleven out: the generic six-tile ring would
+    // skim inside the sight ring while the escort still pulls the eye
+    // in, so the wider Vessel ring claims before the spread below.
+    if (keepOffVessels(unit)) return
 
     BeFlier(unit)
     // Survival owns the frame: once anything above moved, later claims
@@ -129,6 +137,43 @@ object BeDetector extends Action {
       Commander.move(unit)
       true
     })
+  }
+
+  /** Observer keep-off: never close inside eleven tiles of a Science Vessel; back straight out instead. */
+  private def keepOffVessels(unit: FriendlyUnitInfo): Boolean = {
+    if ( ! Protoss.Observer(unit)) return false
+
+    Maff.minBy(With.units.enemy.view.filter(e => e.alive && Terran.ScienceVessel(e)))(unit.pixelDistanceEdge)
+      .exists(vessel => {
+        val distTiles = unit.tileDistanceEdge(vessel)
+        if (DetectorSpread.standOffVesselLatched(unit.id, distTiles)) {
+          unit.cherryVisUnitLog("ObserverVesselKeepOff")
+          unit.agent.forceTo(DetectorSpread.standOffVessel(unit.pixel, vessel.pixel))
+          Commander.move(unit)
+          true
+        } else false
+      })
+  }
+
+  /** Detected eye: step four tiles off the centroid of everything that can hit it instead of sitting inside. */
+  private def fleeDetected(unit: FriendlyUnitInfo): Boolean = {
+    if ( ! Protoss.Observer(unit)) return false
+    if ( ! unit.visibleToOpponents) return false
+
+    val attackers = With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
+    if (attackers.isEmpty) return false
+
+    val centroid = Maff.centroid(attackers)
+    if (DetectorSpread.shouldYieldToCentroid(unit.pixelDistanceCenter(centroid) * Maff.inv32)) {
+      unit.cherryVisUnitLog("ObserverDetectedFlee")
+      unit.agent.forceTo(CornerAntiStuckGuard.guard(
+        DetectorSpread.stepOutFromCentroid(unit.pixel, centroid),
+        With.mapPixelWidth,
+        With.mapPixelHeight))
+      Commander.move(unit)
+      true
+    } else false
   }
 
   /** Observer keep-off: never close inside six tiles of an enemy detector; back straight out instead. */

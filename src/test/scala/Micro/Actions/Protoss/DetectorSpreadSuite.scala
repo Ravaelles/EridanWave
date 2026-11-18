@@ -25,4 +25,21 @@ class DetectorSpreadSuite extends AnyFunSuite {
     assert(DetectorSpread.standOffLatched(7, 5.9))
     assert( ! DetectorSpread.standOffLatched(8, 6.1))
   }
+
+  test("vessels keep eleven tiles off, latched like the generic ring") {
+    assert(DetectorSpread.shouldYieldToVessel(10.9))
+    assert( ! DetectorSpread.shouldYieldToVessel(11.0))
+    DetectorSpread.reset()
+    assert(DetectorSpread.standOffVesselLatched(1, 10.9))
+    assert(DetectorSpread.standOffVesselLatched(1, 11.5))
+    assert(DetectorSpread.standOffVesselLatched(1, 12.9))
+    assert( ! DetectorSpread.standOffVesselLatched(1, 13.1))
+    assert( ! DetectorSpread.standOffVesselLatched(1, 11.5))
+  }
+
+  test("a detected eye steps four off the gun centroid, landing past the line") {
+    assert(DetectorSpread.shouldYieldToCentroid(3.9))
+    assert( ! DetectorSpread.shouldYieldToCentroid(4.0))
+    assert(DetectorSpread.stepOutFromCentroid(Pixel(0, 0), Pixel(96, 0)) == Pixel(-64, 0))
+  }
 }
