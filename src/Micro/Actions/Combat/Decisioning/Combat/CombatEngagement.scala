@@ -35,6 +35,17 @@ private[Decisioning] object EngagePipeline {
     // Contain fire: a ready weapon shoots instead of dressing past the kill.
     Stage("ContainFire", DispatchBand.High, (unit, _, _) =>
       if (ContainFireBehavior.run(unit)) Some(unit.unready) else None),
+    // No target, or a target the line would only pose at: hunt the
+    // nearest known enemy instead of dressing until the timeout. Runs
+    // ahead of the advance gate on purpose: the gate walks the march
+    // when there is nothing to duel, but a remembered contact is
+    // something to duel, and on UMS maps hunting is always right -
+    // otherwise the line dresses at stale slots while the last enemy
+    // walks away and the map times out. Off UMS the hunt is inert
+    // (no game access beyond the umsMode flag), so macro order is
+    // untouched.
+    Stage("Hunt", DispatchBand.Medium, (unit, _, _) =>
+      if (HuntBehavior.run(unit)) Some(true) else None),
     // No advance, no prey: walk the march instead of dueling.
     Stage("AdvanceGate", DispatchBand.Low, (unit, combat, advance) =>
       if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); Some(true) } else None),
@@ -51,11 +62,7 @@ private[Decisioning] object EngagePipeline {
     // walking at ghosts, stale slots or old orders - while the cluster
     // fights without it. Rejoins instead of hunting the map.
     Stage("ClusterRejoin", DispatchBand.Medium, (unit, combat, _) =>
-      if (rejoinCluster(unit, combat)) Some(true) else None),
-    // No target, or a target the line would only pose at: hunt the
-    // nearest known enemy instead of dressing until the timeout.
-    Stage("Hunt", DispatchBand.Medium, (unit, _, _) =>
-      if (HuntBehavior.run(unit)) Some(true) else None))
+      if (rejoinCluster(unit, combat)) Some(true) else None))
 
   case class DuelStage(name: String, band: DispatchBand, run: (FriendlyUnitInfo, Combat) => Boolean)
 

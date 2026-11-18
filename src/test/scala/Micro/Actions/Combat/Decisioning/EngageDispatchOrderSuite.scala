@@ -13,17 +13,17 @@ import org.scalatest.funsuite.AnyFunSuite
  */
 class EngageDispatchOrderSuite extends AnyFunSuite {
 
-  test("the engage gate serves contain, march, leash, rejoin, hunt") {
+  test("the engage gate serves contain, hunt, march, leash, rejoin") {
     assert(EngagePipeline.order.map(_._1) == Vector(
       "ContainFire",
+      "Hunt",
       "AdvanceGate",
       "ZealotLeash",
-      "ClusterRejoin",
-      "Hunt"))
+      "ClusterRejoin"))
     assert(EngagePipeline.order.map(_._2) == Vector(
       High,
-      Low,
       Medium,
+      Low,
       Medium,
       Medium))
   }
