@@ -41,7 +41,9 @@ object Target {
     unit.unitClass.attacksOrCastsOrDetectsOrTransports
   }
   private def acceleratesDemise(attacker: UnitInfo, target: UnitInfo): Boolean = {
-    target.doomFrameAbsolute > With.frame + attacker.framesToConnectDamage(target) + 24
+    DemiseGate.qualifies(
+      target.unitClass.isStaticDefense,
+      target.doomFrameAbsolute > With.frame + attacker.framesToConnectDamage(target) + 24)
   }
 
   def defaultTargets(attacker: FriendlyUnitInfo, filters: TargetFilter*): (Boolean, Seq[UnitInfo]) = {
@@ -236,6 +238,13 @@ object Target {
     var best        : UnitInfo = null
     var bestScore   : Double   = 0.0
     var found       : Boolean  = false
+    var current     : UnitInfo = null
+    var currentScore: Double   = 0.0
+    // Last frame's pick: the ladder re-picks every frame for order-less
+    // fighters, so without stickiness two near-equal targets trade the
+    // pick on mill noise. toAttack is already the new intent here;
+    // toAttackLast is the pick to keep.
+    val currentId   = attacker.agent.toAttackLast.map(_.id)
     val targetIterator = targets.iterator
     while (targetIterator.hasNext) {
       val target = targetIterator.next()
@@ -244,13 +253,18 @@ object Target {
         if ( ! rankByScore) return Some(target)
 
         val score = attacker.targetScore(target)
-        if ( ! found || score > bestScore) {
+        if (currentId.contains(target.id)) {
+          current = target
+          currentScore = score
+        } else if ( ! found || score > bestScore) {
           found = true
           best = target
           bestScore = score
         }
       }
     }
+    if (current != null && ( ! found || KeepCurrent.keepsTarget(currentScore, bestScore))) return Some(current)
+
     ?(found, Some(best), None)
   }
 
