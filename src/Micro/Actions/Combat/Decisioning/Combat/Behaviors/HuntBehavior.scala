@@ -3,14 +3,13 @@ package Micro.Actions.Combat.Decisioning
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.FormationHold
-import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Time.Minutes
 
 /**
  * Target-less hunt: a warrior with fight consensus but no useful target
- * attack-moves toward the nearest known hittable enemy instead of posing
+ * picks the nearest known hittable enemy instead of posing
  * in formation slots until the timeout. Without a battle cluster there are
  * no matchups, so Target.choose stays empty and the line dresses forever -
  * the UMS duels froze a thousand pixels from passive hulls this way. A
@@ -18,7 +17,9 @@ import Utilities.Time.Minutes
  * dies, so micro never re-picks, while the line dresses against a ghost
  * it never shoots. UMS duels only: no economy and static vicinities, so
  * hunting is always right; macro columns ride the march and must not chase
- * remembered contacts. Returns true when it moved the unit. Reavers keep
+ * remembered contacts. Assigns the target and yields - the pipeline below
+ * owns the move through the break conditions, so the advance stays
+ * slot-bound and confidence-gated. Reavers keep
  * their pair doctrine (BeReaver owns their movement).
  */
 object HuntBehavior {
@@ -42,9 +43,9 @@ object HuntBehavior {
     if (foe.isEmpty) return false
 
     unit.agent.act("Hunt")
-    Commander.attackMove(unit, foe.get.pixel)
+    unit.agent.toAttack = Some(foe.get)
 
-    true
+    false
   }
 
   def huntables(unit: FriendlyUnitInfo): Seq[UnitInfo] =

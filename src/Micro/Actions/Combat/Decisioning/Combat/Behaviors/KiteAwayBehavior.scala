@@ -130,8 +130,13 @@ object KiteAwayBehavior {
 
   private def kiteAway(unit: FriendlyUnitInfo, combat: Combat): Unit = {
     unit.agent.act("KiteAway")
+    // Yield from the pin, not from the feet: the fallback steps back off
+    // the formation slot away from the gun, so the line reclaims the hull
+    // the moment the gate closes instead of chasing a free map point.
+    // Slotless hulls fall back to their own pixel, as before.
+    val anchor = unit.formationEngage.flatMap(_.placements.get(unit)).getOrElse(unit.pixel)
     val offsetPixels = WoundMargin(0.0, KiteAway.maxOffsetTiles).pixels(unit.woundPercent())
-    unit.agent.decision.set(unit.pixel.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
+    unit.agent.decision.set(anchor.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
     combat.maneuvers.move()
   }
 
