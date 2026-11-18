@@ -4,7 +4,7 @@ import Debugging.Visualizations.Forces
 import Lifecycle.With
 import Mathematics.{Maff, Separation, WoundMargin}
 import Micro.Actions.Action
-import Micro.Actions.Combat.Maneuvering.Retreat
+import Micro.Actions.Combat.Maneuvering.{AvoidDangerousUnits, Retreat}
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
 import Micro.Actions.Protoss.Detector.DetectorSpread
 import Micro.Agency.Commander
@@ -56,6 +56,11 @@ object BeArbiter extends Action {
   }
 
   override protected def perform(arbiter: FriendlyUnitInfo): Unit = {
+    // Lockdown is instant death for a mechanical hull: a charged Ghost
+    // turns the cloak before entanglement and spread - a frozen Arbiter
+    // cloaks nothing, so the hull never stands inside lockdown reach.
+    if (AvoidDangerousUnits.act(arbiter)) return
+
     if (arbiter.matchups.pixelsEntangled > -16
       || arbiter.matchups.threats.exists(t =>
         arbiter.pixelDistanceEdge(t) < fleeMarginTiles(arbiter.woundPercent()) * 32.0)) {

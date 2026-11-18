@@ -3,7 +3,7 @@ package Micro.Actions.Protoss.Carrier
 import Lifecycle.With
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
-import Micro.Actions.Combat.Maneuvering.Retreat
+import Micro.Actions.Combat.Maneuvering.{AvoidDangerousUnits, Retreat}
 import Micro.Actions.Protoss.Carrier._
 import Micro.Agency.Commander
 import Micro.Targeting.FiltersSituational.{TargetFilterCombatants, TargetFilterVisibleInRange}
@@ -62,6 +62,11 @@ object BeCarrier extends Action {
   }
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    // Lockdown is instant death for a mechanical hull: a charged Ghost
+    // turns the wing before batteries, kites and leashes - nothing the
+    // hull owns outvalues moving.
+    if (AvoidDangerousUnits.act(unit)) return
+
     // Beat hull, empty shields: fly home to a battery instead of trading
     // the wing away. Recharge covers the last mile once it shares the
     // battery's metro; this opens the trip. No battery, no trip.

@@ -5,6 +5,7 @@ import Mathematics.Points.Pixel
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.AirFlee
+import Micro.Actions.Combat.Maneuvering.AvoidDangerousUnits
 import Micro.Actions.Combat.Maneuvering.CornerAntiStuckGuard
 import Micro.Agency.Commander
 import Macro.Facts.MacroFacts
@@ -31,6 +32,12 @@ object BeShuttle extends Action {
     // urgent, with the support post as the catch-all at the end of
     // every leg. Reorder an arm only with its order.
     if (ditch(shuttle)) return
+
+    // Lockdown is instant death for a mechanical hull, loaded or not:
+    // a charged Ghost turns the ride before every order leg - a frozen
+    // Shuttle ferries nothing, so the hull never stands inside lockdown
+    // reach, whatever the arbiter ordered.
+    if (AvoidDangerousUnits.act(shuttle)) return
 
     PairArbiter.shuttleOrder(shuttle) match {
       case PairArbiter.Flee       => if ( ! flee(shuttle)) support(shuttle)
