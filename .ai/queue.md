@@ -182,9 +182,10 @@ New kernels ride suites; these need a live game that reaches them
   detection vs permanent cloak is unwinnable, 1+1+obs vs 8+cannon
   needs picks that never split off. Re-run when the escort toolkit
   changes; the batch covers both maps now.
-- Main-base DT hunt (needs live: detected enemy DT within 40 ground
-  tiles of our main - army picks nearest-to-main, already-dueling
-  keeps; Reavers and our DTs keep their disciplines).
+- Main-base DT hunt (engine-pinned: nearest-to-main takes fire
+  first among revealed Templars; still needs live: detected enemy DT
+  within 40 ground tiles of our main - already-dueling keeps;
+  Reavers and our DTs keep their disciplines).
 - UMS batch triage 2026-11-18 (8W/15L/2NA, post all fixes):
   ZealDrag flips to VICTORY 9/6 errors-clean (baseless guards hold);
   15Drag ends 3v1 chase-timeout (surrounds unbuilt, contain parked);
