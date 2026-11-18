@@ -37,4 +37,9 @@ class MeleeKiteAwaySuite extends AnyFunSuite {
     assert( ! retreat())
     assert( ! retreat(totalHp = 200, attackingMelee = true))
   }
+
+  test("blades need no formation, guns keep the dress-line gate") {
+    assert( ! MeleeKiteAway.requiresFormation(melee = true))
+    assert(MeleeKiteAway.requiresFormation(melee = false))
+  }
 }

@@ -211,6 +211,28 @@ New kernels ride suites; these need a live game that reaches them
   from home than the squad centroid line, minus woundBonus(0,4);
   BackToPack outranks cool-walk/stand/close. Baseless UMS skips it.
   Needs a live pair game confirming no ahead-of-army deaths).
+- MeleeKiteAway reach (2026-11-18: zero fires in 4 zealot games -
+  UMS commits every warrior (SquadAttack:359), and the behavior
+  skips committed hulls by design, so no UMS map can reach the
+  branch; the formation gate is additionally lifted for blades
+  (requiresFormation kernel + suite - melee never holds dress
+  slots). Validation needs a macro game with uncommitted zealots;
+  2Zeal_v_LingUp stays DEFEAT (rerun 4/2 f332) as the baseline).
+- Reaver_v_Sunkens wall STANDS (2026-11-18 batch VICTORY 37/45 f4028
+  re-run to DEFEAT f506 - outlier on early chaos, now 1W/9;
+  no new labels in either game, baseless skips anchor/home-hold).
+- Reav_v_Drag pair win (2026-11-18: VICTORY f497 twice in a row,
+  StandShoot/CoolWalk duel, 7/9 kills - escort/board/glue era holds).
+- UMS variance re-confirmed (2026-11-18: 3DragHydra VICTORY->DEFEAT
+  ->VICTORY, 15Drag VICTORY->DEFEAT->VICTORY, 3Zeal VICTORY 3-0->
+  DEFEAT across identical-code runs; 3DragHydra timeout kills 4-0 -
+  mop-up, not combat. No new labels anywhere - the formation-hold
+  change does not touch these matchups).
+- Goon_v_DT hunt fires (2026-11-18 rerun: 16x HuntEnemyTemplar from
+  f512 on remembered contacts, kills 0->3 across runs, both games
+  DEFEAT at f3203 map timeout. Anchor validated; the map has no
+  detection so the DTs stay unkillable - unwinnable by design, as
+  triaged).
 - Home-hold lock (2026-11-18: inside the choke margin with a hot gun
   the technique can be neither Fallback nor Flee - latch broken,
   all four Fallback transitions gated, fallthrough forced to Fight.

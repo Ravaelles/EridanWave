@@ -44,7 +44,11 @@ object KiteAwayBehavior {
 
   private def kitable(unit: FriendlyUnitInfo): Boolean = {
     if (unit.unitClass.melee && ! unit.isAny(Protoss.Zealot, Protoss.Archon)) return false
-    if (unit.formationEngage.isEmpty) return false
+    // Blades need no formation to yield (MeleeKiteAway.requiresFormation):
+    // melee never holds dress slots, so the gate would only strand blades
+    // on formation-less maps. Ranged hulls keep it - their kite is a
+    // dress-line maneuver.
+    if (MeleeKiteAway.requiresFormation(unit.unitClass.melee) && unit.formationEngage.isEmpty) return false
 
     true
   }

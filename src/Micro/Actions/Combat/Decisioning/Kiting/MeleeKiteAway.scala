@@ -15,6 +15,15 @@ object MeleeKiteAway {
   /** A hull at or below this many hit points is fighting on borrowed time. */
   val woundHp: Int = 60
 
+  /**
+   * Blades need no formation to yield: melee never holds formation
+   * slots (the dress line poses ranged hulls, blades close), so a
+   * formation gate would leave blades standing on formation-less maps
+   * while lings surround them. Ranged hulls keep the gate - their kite
+   * is a dress-line maneuver.
+   */
+  def requiresFormation(melee: Boolean): Boolean = ! melee
+
   def shouldRetreat(
     totalHp: Int,
     coolingDown: Boolean,
