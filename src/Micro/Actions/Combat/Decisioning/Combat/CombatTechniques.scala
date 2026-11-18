@@ -55,8 +55,10 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // Latched retreat: once falling back, hold Flee until clear of the
       // deepest threat with margin and the verdict says fight (or the
       // duel is confident enough to turn inside contact). Units that may
-      // not flee keep the old ladder untouched below.
-      else  if (unit.intent.canFlee && ReengageLatch.shouldHoldRetreat(
+      // not flee keep the old ladder untouched below. Committed hunts
+      // never latch: the order already bypassed the vote, so holding
+      // the retreat would walk a duel it was sent to fight.
+      else  if (unit.intent.canFlee && ! unit.agent.commit && ReengageLatch.shouldHoldRetreat(
         combat.techniqueIs(Fallback, Flee, Excuse),
         unit.matchups.pixelsEntangled * Maff.inv32,
         unit.agent.shouldFight,
