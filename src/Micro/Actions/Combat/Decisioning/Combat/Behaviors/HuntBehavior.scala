@@ -3,6 +3,7 @@ package Micro.Actions.Combat.Decisioning
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.FormationHold
+import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Time.Minutes
@@ -44,8 +45,16 @@ object HuntBehavior {
 
     unit.agent.act("Hunt")
     unit.agent.toAttack = Some(foe.get)
+    // Visible prey belongs to the duel: it advances through the break
+    // conditions, slot-bound and confidence-gated. An invisible memory
+    // gets no such owner - the line would dress against the ghost
+    // instead of walking it down (Goon_v_DT posed and died standing),
+    // so the hunt keeps the old attack-move and the feet keep moving.
+    if (foe.get.visible) return false
 
-    false
+    Commander.attackMove(unit, foe.get.pixel)
+
+    true
   }
 
   def huntables(unit: FriendlyUnitInfo): Seq[UnitInfo] =
