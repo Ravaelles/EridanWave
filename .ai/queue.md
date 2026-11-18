@@ -155,6 +155,14 @@ New kernels ride suites; these need a live game that reaches them
   floor forbids retreat at >=180 unless lurkers/DT/carriers/siege
   known, dying hulls keep their out, proxy still forbids. Needs a
   live 180+ macro game confirming band instead of Withdraw).
+- DT maps wall (2026-11-18: DT_v_Protoss DEFEAT f497 k0/l2 -
+  DT hit-and-runs vs 8 goons + cannon, obs caught f306, no isolated
+  prey so no kills; Goon_v_DT DEFEAT f827 k0/l4 - 5 goons chase one
+  kiting zealot while 2 invisible DTs carve them, hunt correctly
+  idle with no detection). Both numbers/kit, not targeting: no
+  detection vs permanent cloak is unwinnable, 1+1+obs vs 8+cannon
+  needs picks that never split off. Re-run when the escort toolkit
+  changes; the batch covers both maps now.
 - Main-base DT hunt (needs live: detected enemy DT within 40 ground
   tiles of our main - army picks nearest-to-main, already-dueling
   keeps; Reavers and our DTs keep their disciplines).
