@@ -165,6 +165,10 @@ New kernels ride suites; these need a live game that reaches them
   (24-zealot flood), never behind - validates no-regression, not the
   grind case. A grind-case PvZ still wanted for the choke-hold
   confirmation.
+- Monster sample #2 (2026-11-18, DEFEAT 29/50 f11376: 2-gate
+  zealot flood into 88-ling flood + sunken, right comp, out-massed;
+  1 Forge 0 cannons built. Zealot-first again appropriate here;
+  still needs a game where dragoon-first branches get picked).
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
