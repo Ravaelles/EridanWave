@@ -146,6 +146,15 @@ New kernels ride suites; these need a live game that reaches them
   does not line up yet), or the march never handing off to combat.
   Needs the exact writer, then a StarEngine 1v1 pin of the fixed
   handoff.
+- ZealotLeash latch (2026-11-18: slot/Leash alternation every
+  3-6f on the natural choke - raw 5.5 boundary, no hysteresis;
+  latched 5.5/4.5 same shape as pursuit. Needs a live choke game
+  confirming one commit per crossing).
+- Attack floor 180 with hard-counter escape (2026-11-18: 238-strength
+  Withdraw via fighting<0.35 with RetreatAllowed open under 250;
+  floor forbids retreat at >=180 unless lurkers/DT/carriers/siege
+  known, dying hulls keep their out, proxy still forbids. Needs a
+  live 180+ macro game confirming band instead of Withdraw).
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
