@@ -250,6 +250,19 @@ trait MacroCounting {
     enemyHasShown(Zerg.Lurker, Zerg.LurkerEgg) || (With.self.isTerran && enemyHasShown(Zerg.Hydralisk, Zerg.HydraliskDen) && enemyHasShown(Zerg.Lair, Zerg.Hive, Zerg.Spire, Zerg.Mutalisk))
   }
 
+  /**
+   * Unfair-fight markers (no game access beyond the intel reads): lurkers,
+   * Dark Templar, carriers and dug-in siege break lines the units score
+   * cannot see, so a strong cluster keeps its old retreat vote against
+   * them. Suspicion counts as knowledge - only a confident clear field
+   * holds the attack floor.
+   */
+  def enemyHardCounterKnown: Boolean =
+    enemyLurkersLikely ||
+      enemyDarkTemplarLikely ||
+      enemyCarriersLikely ||
+      With.units.enemy.exists(e => e.alive && Terran.SiegeTankSieged(e))
+
   def enemyHydralisksLikely: Boolean = {
     enemyHasShown(Zerg.Hydralisk, Zerg.HydraliskDen)
   }

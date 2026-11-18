@@ -13,7 +13,8 @@ class RetreatVerdictSuite extends AnyFunSuite {
     totalHp: Int = 200,
     unitsScore: Double = 100.0,
     nearestArmedTiles: Double = 40.0,
-    proxyRush: Boolean = false): Boolean =
+    proxyRush: Boolean = false,
+    hardCounterKnown: Boolean = false): Boolean =
     RetreatVerdict.shouldHold(
       isWarrior,
       isReaver,
@@ -23,7 +24,8 @@ class RetreatVerdictSuite extends AnyFunSuite {
       totalHp,
       unitsScore,
       nearestArmedTiles,
-      proxyRush)
+      proxyRush,
+      hardCounterKnown)
 
   test("a beaten warrior with room to run holds the retreat") {
     assert(hold())
@@ -51,7 +53,9 @@ class RetreatVerdictSuite extends AnyFunSuite {
 
   test("retreat permission still gates the verdict") {
     assert( ! hold(unitsScore = 866.0, proxyRush = false))
-    assert(hold(unitsScore = 866.0, nearestArmedTiles = 3.0))
+    assert(hold(unitsScore = 866.0, nearestArmedTiles = 3.0, hardCounterKnown = true))
+    assert( ! hold(unitsScore = 866.0, nearestArmedTiles = 3.0))
+    assert( ! hold(unitsScore = 238.0, nearestArmedTiles = 3.0))
     assert( ! hold(unitsScore = 100.0, proxyRush = true))
   }
 

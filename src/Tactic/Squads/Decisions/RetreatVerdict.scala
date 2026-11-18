@@ -40,13 +40,14 @@ object RetreatVerdict extends PerGame {
     totalHp: Int,
     unitsScore: Double,
     nearestArmedTiles: Double,
-    proxyRush: Boolean): Boolean =
+    proxyRush: Boolean,
+    hardCounterKnown: Boolean): Boolean =
     isWarrior &&
       ! isReaver &&
       canFlee &&
       ! stormHold &&
       ! shouldFight &&
-      RetreatAllowed.forUnit(totalHp, unitsScore, nearestArmedTiles, proxyRush)
+      RetreatAllowed.forUnit(totalHp, unitsScore, nearestArmedTiles, proxyRush, hardCounterKnown)
 
   private val lastRaw = new mutable.HashMap[Int, Boolean]()
   private val fightEdgeFrame = new mutable.HashMap[Int, Int]()

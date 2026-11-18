@@ -15,6 +15,15 @@ object RetreatAllowed {
   /** Units score at or above which a clear field never retreats. */
   val strongUnitsScore: Double = 250.0
 
+  /**
+   * Units score at or above which the cluster attacks without asking
+   * the sim: the forecast already had its say through the fighting
+   * fraction, and a standing army does not walk home. Hard counters
+   * keep the old vote - lurkers, Dark Templar, carriers and dug-in
+   * siege break lines the score cannot see.
+   */
+  val attackUnitsScore: Double = 180.0
+
   /** Past this an armed enemy is not near the cluster, in tiles. */
   val armedNearTiles: Double = 12.0
 
@@ -27,8 +36,10 @@ object RetreatAllowed {
    * matter. A proxy rush forbids it outright - marines at our door are
    * answered, not fled from.
    */
-  def forCluster(unitsScore: Double, nearestArmedTiles: Double, proxyRush: Boolean): Boolean =
-    ! proxyRush && (unitsScore < strongUnitsScore || nearestArmedTiles <= armedNearTiles)
+  def forCluster(unitsScore: Double, nearestArmedTiles: Double, proxyRush: Boolean, hardCounterKnown: Boolean): Boolean =
+    ! proxyRush &&
+      (unitsScore < attackUnitsScore || hardCounterKnown) &&
+      (unitsScore < strongUnitsScore || nearestArmedTiles <= armedNearTiles)
 
   /**
    * Unit retreat allowed (pure numbers for the suite): the cluster
@@ -36,6 +47,6 @@ object RetreatAllowed {
    * The hit-points gate is the only per-unit fact the cluster verdict
    * does not own.
    */
-  def forUnit(totalHp: Int, unitsScore: Double, nearestArmedTiles: Double, proxyRush: Boolean): Boolean =
-    totalHp <= dyingHp || forCluster(unitsScore, nearestArmedTiles, proxyRush)
+  def forUnit(totalHp: Int, unitsScore: Double, nearestArmedTiles: Double, proxyRush: Boolean, hardCounterKnown: Boolean): Boolean =
+    totalHp <= dyingHp || forCluster(unitsScore, nearestArmedTiles, proxyRush, hardCounterKnown)
 }

@@ -1,6 +1,7 @@
 package Micro.Actions.Combat.Decisioning
 
 import Lifecycle.With
+import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
@@ -45,7 +46,8 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
           With.battles.globalAttack.enemy.skimStrengthUnits),
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
           .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
-        With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()),
+        With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax(),
+        MacroFacts.enemyHardCounterKnown),
       With.frame)
     val verdictRetreat = Tactic.Squads.Decisions.RetreatVerdict.held(unit.id, With.frame)
     combat.technique =

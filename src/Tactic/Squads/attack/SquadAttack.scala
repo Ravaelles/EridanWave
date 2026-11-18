@@ -328,7 +328,7 @@ class SquadAttack extends Squad {
       .map(e => e.pixelDistanceCenter(centroidGround) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
     val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame, ! With.umsMode,
-      RetreatAllowed.forCluster(unitsAdvantage, nearestArmed, proxyRush))
+      RetreatAllowed.forCluster(unitsAdvantage, nearestArmed, proxyRush, MacroFacts.enemyHardCounterKnown))
     if (next == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
     posture = next
     roles = assignRolesShadow()

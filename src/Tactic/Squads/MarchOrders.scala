@@ -135,7 +135,8 @@ object MarchOrders {
         unit.totalHealth,
         facts.armyUnitsScore,
         marchUnit.nearestArmedTiles,
-        facts.proxyRush),
+        facts.proxyRush,
+        MacroFacts.enemyHardCounterKnown),
       With.frame)
     val verdictRetreat = RetreatVerdict.held(unit.id, With.frame)
     MarchGates.select(facts, marchUnit) match {
