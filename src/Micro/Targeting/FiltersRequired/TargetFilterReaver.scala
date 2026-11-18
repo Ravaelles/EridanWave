@@ -10,13 +10,6 @@ object TargetFilterReaver extends TargetFilter {
 
     if ( ! ReaverTargetRules.allowsBuilding(target.unitClass.isBuilding, target.unitClass.isCombatBuilding)) return false
 
-    // Escort-first: a scarab belongs in the closing pack, never in the
-    // static behind it. Only hittable mobiles count - an air threat the
-    // hull cannot touch must not disarm it against the guns below.
-    if (target.unitClass.isBuilding && ! ReaverTargetRules.yieldsToEscort(
-      isBuilding = true,
-      mobileThreatInRange = actor.matchups.threatsInRange.exists(t => ! t.unitClass.isBuilding && actor.canAttack(t)))) return false
-
     if (actor.agent.ride.isDefined) {
       val worthAttacking = (
         target.proxied
