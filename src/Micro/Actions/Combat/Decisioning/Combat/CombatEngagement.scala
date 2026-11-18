@@ -272,8 +272,10 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   // Hold the line while a ranged armed combat target is well beyond our
   // firing range (tiles = pixels / 32, as in Atlantis): keep formation
   // slots and let the enemy come to us instead of chasing piecemeal.
-  // Buildings - even shooting ones - and unarmed units are always
-  // attacked normally: there is no line to hold against them.
+  // Only what can shoot back on the ground holds the line (isHoldableTarget):
+  // air-only statics like Turrets never pin a formation - they cannot
+  // answer a Dragoon, so the line marches them down instead of posing.
+  // Buildings that shoot ground (Sunkens, Cannons) still hold it.
   // Inside ~1 tile of the range the fight starts - the unit steps in and
   // shoots. The hold also releases once the fight is on for this unit: an
   // enemy in range whose weapon is cooling down (it opened fire), or this
@@ -289,7 +291,11 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         flanking          = unit.formationEngage.exists(_.flanking),
         unitEngaged       = unit.matchups.engagedUpon,
         enemyFired        = unit.matchups.threatsInRange.exists(_.cooldownLeft > 0),
-        targetHoldable    = t.unitClass.isWarrior && t.unitClass.canAttack && (! t.unitClass.isBuilding || t.unitClass.isCombatBuilding)))
+        targetHoldable    = FormationHold.isHoldableTarget(
+          t.unitClass.isWarrior,
+          t.unitClass.attacksGround,
+          t.unitClass.isBuilding,
+          t.unitClass.isCombatBuilding)))
     combat.target.foreach(t => Probe.note("Hold", unit.id, f"form=${unit.formationEngage.isDefined} flank=${unit.formationEngage.exists(_.flanking)} me=${unit.matchups.engagedUpon} fired=${unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)} beyond=${unit.pixelsToGetInRange(t) / 32.0}%.1f hold=$hold target=${t.id}"))
     if ( ! OverwhelminglyStronger.skipFormation(unit) && ! With.yolo.active && hold) {
       combat.breakFormationToAttack = false

@@ -217,6 +217,21 @@ New kernels ride suites; these need a live game that reaches them
   Same line the HomeStand verdict votes on, same cooldown the dodge
   holds on. Needs a live natural-defense game confirming no
   Retreat/Fallback/Potshot at home with a ready gun).
+- Formation holdable (2026-11-18: line forms only vs what shoots
+  ground - Turret/Spore marched down, Sunken/Cannon still hold;
+  kernel isHoldableTarget + suite. Needs a live PvT confirming
+  dragoons march a Turret instead of posing).
+- Storm stand siege-gated (2026-11-18: stand holds vs unsieged Terran
+  too - walking Marines down is allowed danger, siege shells still
+  forbid; the cast itself keeps vetoing tank-covered boxes. Needs a
+  live PvT with charged HTs vs Marines confirming the cast lands).
+- Observer Vessel ring (2026-11-18: eleven-tile keep-off vs Science
+  Vessel, latched 11/13; detected eye holds four off the gun centroid.
+  Kernel + suite. Needs a live PvT confirming no inside-sight skims).
+- Ghost lockdown avoid (2026-11-18: Carrier/Arbiter/Shuttle never
+  inside 9.6 tiles of a 98+ Ghost, last in the avoid order;
+  AvoidDangerousUnits kernel + suite, wired at the top of all three
+  brains. Needs a live PvT vs Ghosts confirming no freezes).
 - UMS batch triage 2026-11-18 (8W/15L/2NA, post all fixes):
   ZealDrag flips to VICTORY 9/6 errors-clean (baseless guards hold);
   15Drag ends 3v1 chase-timeout (surrounds unbuilt, contain parked);

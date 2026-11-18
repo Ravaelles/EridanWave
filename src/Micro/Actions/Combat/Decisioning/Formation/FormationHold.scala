@@ -43,10 +43,24 @@ object FormationHold {
    * the arc dies before it is ever used. Melee must still close (it cannot
    * fight from a slot), flankers must still circle, and without a formation
    * there is nothing to hold.
-   * The hold applies only to armed enemy combat units (targetHoldable):
-   * buildings - even shooting ones like Sunkens - and unarmed units are
-   * always attacked normally instead of being posed against.
+   * The hold applies only to holdable targets (isHoldableTarget): what
+   * can shoot back on the ground. Air-only statics like Turrets and
+   * Spores, unarmed units and non-combat buildings are always attacked
+   * normally instead of being posed against.
    */
+  /**
+   * Holdable targets (pure class flags for the suite): the line forms
+   * only against what can shoot back on the ground - an air-only static
+   * like a Missile Turret or a Spore is marched down, never posed
+   * against, even though it counts as a combat building.
+   */
+  def isHoldableTarget(
+    isWarrior     : Boolean,
+    attacksGround : Boolean,
+    isBuilding    : Boolean,
+    isCombatBuilding: Boolean): Boolean =
+    isWarrior && attacksGround && (! isBuilding || isCombatBuilding)
+
   def shouldHoldLine(
     tilesBeyondRange  : Double,
     melee             : Boolean,

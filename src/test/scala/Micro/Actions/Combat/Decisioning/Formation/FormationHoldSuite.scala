@@ -146,6 +146,20 @@ class FormationHoldSuite extends AnyFunSuite {
       targetHoldable    = true))
   }
 
+  test("only what shoots ground holds the line") {
+    // Marine: warrior, shoots ground, not a building - holdable.
+    assert(FormationHold.isHoldableTarget(isWarrior = true, attacksGround = true, isBuilding = false, isCombatBuilding = false))
+    // Sunken: warrior building that shoots ground - holdable.
+    assert(FormationHold.isHoldableTarget(isWarrior = true, attacksGround = true, isBuilding = true, isCombatBuilding = true))
+    // Missile Turret: combat building, air-only - marched down, never posed against.
+    assert( ! FormationHold.isHoldableTarget(isWarrior = true, attacksGround = false, isBuilding = true, isCombatBuilding = true))
+    // Spore Colony: same air-only story on the Zerg side.
+    assert( ! FormationHold.isHoldableTarget(isWarrior = true, attacksGround = false, isBuilding = true, isCombatBuilding = true))
+    // Unarmed or non-combat masonry never holds the line either.
+    assert( ! FormationHold.isHoldableTarget(isWarrior = false, attacksGround = true, isBuilding = false, isCombatBuilding = false))
+    assert( ! FormationHold.isHoldableTarget(isWarrior = true, attacksGround = true, isBuilding = true, isCombatBuilding = false))
+  }
+
   test("advances only once every unit sits in its slot") {
     assert(FormationHold.shouldAdvanceInFormation(1.0))
     assert( ! FormationHold.shouldAdvanceInFormation(0.99))
