@@ -14,7 +14,9 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  * ladder does. Already dueling one in range keeps its duel - the pick
  * is nearest to the main, never nearest to me, so hunters cannot flap
  * a shared victim between them. Reavers and our own Templars keep
- * their own disciplines and never enter. Returns true when it hunts.
+ * their own disciplines and never enter. Baseless maps anchor on our
+ * start tile instead of a main that does not exist; the anchor never
+ * moves either way. Returns true when it hunts.
  */
 object DarkTemplarHuntBehavior {
 
@@ -23,10 +25,11 @@ object DarkTemplarHuntBehavior {
     if ( ! unit.unitClass.isWarrior) return false
     if ( ! unit.unitClass.attacksGround) return false
     if (Protoss.Reaver(unit) || Protoss.DarkTemplar(unit)) return false
-    if (With.geography.ourBases.isEmpty) return false
     if (unit.agent.toAttack.exists(t => Protoss.DarkTemplar(t) && unit.inRangeToAttack(t))) return false
 
-    val main = With.geography.ourMain.heart.center
+    val main =
+      if (With.geography.ourBases.nonEmpty) With.geography.ourMain.heart.center
+      else With.geography.home.center
     val candidates = unit.matchups.targets.view.filter(t =>
       t.alive && t.visible && t.detected && Protoss.DarkTemplar(t) &&
         DarkTemplarHunt.inHuntRange(t.tile.groundPixels(main) * Maff.inv32)).toVector
