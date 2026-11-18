@@ -6,15 +6,6 @@ trace/`probe.txt`/`errors.json`, delete the line.
 Conventions: docs stay English; `.ai/conventions.md` (tests +
 blank-line gate per change, commit per unit).
 
-## NEXT UP (closed 2026-11-17; history in git, live contract below)
-
-Unified retreat verdict + dispatch pipelines. Shipped: `RetreatVerdict`
-bus with 24f hold (all readers), `DispatchBand` + `TechniquePipeline` /
-`EngagePipeline` / `MarchGates.order` (each order-suited). Residual
-audit rows are measurement smear (terminus re-notes + sleep-merged
-windows) - read them with shadow-join.py. Next order question starts
-at the registries.
-
 ## Parked (explicit orders, do not touch)
 
 - Sunkens2 baseless mission fallback (pair stalls after the first pack
@@ -47,9 +38,6 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Overlord veto (lone Overlords need 190 energy).
 - Lead moving victims (2.0-tile heading lead).
 - Hunt inside cast range (8.9-tile search, no leash walk).
-- Gap: HT run-downs CLOSED 2026-11-17 (PvZ storm game: 44 HTs built,
-  1243 storm casts incl. RetreatSimple/PsionicStorm chains, 0 HT deaths
-  in 27 minutes - casters no longer march into contact).
 - Gap: lurker wall (2064 storms killed 0/18 lurkers; need cast
   positions vs lurker sightings, detection upstream suspected).
 
@@ -73,8 +61,6 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 - Toothless march (PvT columns walk with no tanks/vultures).
 - StrongMarch (banked stock or maxed army skips rally/slots).
 - Retreating warriors never rally or close ranks.
-- MarchDressSuite (StarEngine): scattered 4 dragoons + 4 zealots march dressed at an enemy 30 tiles out, modes March>Dress>Engage with no flap, reissues 14, pack tightens - green.
-- PressedRideSuite (StarEngine): hydras press the line while scourge dive the ride - shuttle flees on the shipped penetration/latch/guard rule (1 clean latch cycle, 3 redirects), holds 15-tile corners, never takes a hit; reaver never leaves its anchor; pack dies - green.
 - Expo punish vs Zerg at 140 (units-strength only).
 - TankHug (cooling warriors close sieged tanks to 0.2 tiles).
 - Sealed-breach wall chew (quiet 3s + sealed + 6-tile lane and reach, no
@@ -97,9 +83,6 @@ Stasis; scout-harass soup to one table; worker-fight backup to one gate.
 New kernels ride suites; these need a live game that reaches them
 (scout the named behavior in trace/probe/errors.json, delete the line):
 
-- Main-choke hold (CLOSED 2026-11-17, PvZ Fighting Spirit: 1
-  ChokeHold act + hold-gap moves at 2:24, zealot posted on the choke;
-  fires only pre-threat with a handful, as designed).
 - Middle-choke guard (2026-11-17: past 13 warriors the standing guard
   moves to the middle choke; needs a mid-size army game).
 - Reaver leash REVERTED same night (foot reaver past 3 tiles walks
@@ -146,6 +129,12 @@ New kernels ride suites; these need a live game that reaches them
 
 ## Open: micro validation (needs games that reach it)
 
+- Baseless pair unite (Reav_v_Drag 2026-11-18, DEFEAT 5/11:
+  lenient gate escorts f61-641 with one clean transition, no
+  escort/await flap; both hulls duel on foot to death under the
+  fetch-glue no-duel adopt gate while the empty ride holds station.
+  Needs owner doctrine: should an escorting ride hail a dueling
+  mate, or is duel-first correct?).
 - Spot retreat logic (sloppy catch-all today; doesn't handle the observer/
   detector/caster cases separately - needs a game per case).
 - Carrier stop-hold micro (SH doubles Carrier DPS; needs a Carrier test
@@ -176,9 +165,6 @@ New kernels ride suites; these need a live game that reaches them
 - Rich bank skips kiting (minerals >= 1000, expendables hold DPS).
 - Dragoon closes fleeing workers (StarEngine ChaseAndKillSuite green;
   needs one live confirm).
-- Vulture duels (CLOSED 2026-11-17, PvT 194253: 9 PotshotVulture
-  rows, Fallback+Retreat chains = shooting while leaving per doctrine;
-  0 vulture kills - the duel is proven, the body count is not).
 - Carrier berth (scratched shields vs ranged, CarrierKite rows).
 - Screened static +50% (statics covered by 2+ defenders).
 - Slow-alone watch (log stutter with no units nearby, max 10/game).
@@ -200,14 +186,7 @@ New kernels ride suites; these need a live game that reaches them
   ~9f later under fire, jamming shuttle/reaver production; gate
   retraining when trainings die instantly).
 
-## Open: viewer check (verified - contract proven, record kept short)
-
-- CherryVis Task tab contract verified against the shipped viewer JS:
-  9 manager tasks, 78/78 managed units with rows, zero dangling refs
-  (Benzene VICTORY trace). Row-less units are unmanaged single-frame
-  ephemera - None is correct. UMS emits no traces by design.
-
-## Session: warnings + DT + rally + storm + ferry (2026-11-16, open)
+## Session: warnings + DT + rally + ferry (2026-11-16, open)
 
 - Warnings triage: fix `SimulationCheckpoint` hidden import (alias),
   `UmsMode`/`SpinWait` discarded returns, `IndexedSet` erasure
@@ -228,8 +207,6 @@ New kernels ride suites; these need a live game that reaches them
   StarEngine leg-level repro pending (march machinery is out of
   the engine); live mop-up confirm still wanted (Hao Pan f15721
   pattern).
-- Storm stand (CLOSED 2026-11-17, PvZ storm game: 44 HTs, 1243
-  casts incl. cast-while-retreating chains, 0 HT deaths).
 - DT ferry: `MissionDarkTemplarFerry` (pair straight to enemy main,
   ASAP drop, single trip) registered in Tactician. Needs: live
   game with DT+Shuttle (formation + drop + raid).
@@ -248,10 +225,3 @@ New kernels ride suites; these need a live game that reaches them
   -OutOfContact; single-writer skips leave the label behind when the
   squad changes under it. Post-migration the dispatch reads the bus,
   so the stale label cannot dispatch - the twin cost 4 smear frames.
-
-## Deferred: unified retreat verdict (CLOSED 2026-11-17)
-
-- Migrated, not parked: `RetreatVerdict` bus with 24f hold, all readers
-  switched, `MarchRetreat` deleted, probes removed after validation.
-  Full write-up, evidence, rejected alternatives and the follow-up
-  Step 4 (dispatch pipelines) live in `.ai/retreat-verdict.md`.

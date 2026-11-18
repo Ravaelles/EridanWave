@@ -8,11 +8,9 @@ suites green, no behavior change.
 
 # Targeting parity with Atlantis — test roadmap
 
-Pin pure kernels beside the caller with a `*Suite`
-(`TargetScoring.damageForSize`, `creepColonyBonus` — done).
+Pin pure kernels beside the caller with a `*Suite`.
 Game-coupled strata stay thin and delegate. `testkit.TestKit` covers
-geometry/static math (DONE 2026-11-11); matchups/battles stay
-game-only. Next seam on demand: per-stratum MatchupSnapshot views.
+geometry/static math; matchups/battles stay game-only. Next seam on demand: per-stratum MatchupSnapshot views.
 Atlantis ports (NEXT #184/#185, need a stub harness):
 `TargetLadderTest` (ladder order), `AcquireTargetTest` (top of
 ladder), `MeleeChewerTargetTest` (weakest-in-range vs keep-current),
@@ -28,9 +26,7 @@ combat fighters outrank it — neither may idle past a standing colony.
 
 # SRP pass on the longest files
 
-`docs/longest-files.md` lists the 20 longest sources. Done:
-`UnitClass` tables, `PlacementCacheFormat.writeWall`, three
-`Tactician` methods, `BeRushingZealot` split. Next cheapest first:
+`docs/longest-files.md` lists the 20 longest sources. Next cheapest first:
 `WallFinder.canPlace/scoreWall`, `SimulationGrid.applySplash`,
 `Debugging/*` painters; controllers (`MacroSim.simulate`,
 `PvZ1BaseReactive.buildTech`, `SquadDefendBase.run`) need a game per cut.
