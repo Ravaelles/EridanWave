@@ -71,6 +71,13 @@ private[Decisioning] object TechniquePipeline {
     // to finish; the ladder picks, the gun fires, the frame ends here.
     Stage("AlwaysAttack", DispatchBand.High, (unit, _, _) =>
       AlwaysAttackInRange.run(unit)),
+    // Main-base Templar hunt: a detected enemy DT inside forty ground
+    // tiles of our main must die, even out of contact - the army walks
+    // it down instead of scoring shinier fights. Already dueling one
+    // in range keeps its duel; Reavers and our own Templars keep
+    // their own disciplines.
+    Stage("DarkTemplarHunt", DispatchBand.High, (unit, _, _) =>
+      DarkTemplarHuntBehavior.run(unit)),
     // A fresh hot Dragoon shoots the Terran in range instead of running
     // from it - but never under siege, the line above already claimed it.
     Stage("DragoonStand", DispatchBand.Medium, (unit, combat, advance) =>
