@@ -192,6 +192,11 @@ New kernels ride suites; these need a live game that reaches them
   once the line stands (was: ten-warrior generic floor, flooding to ~18
   Zealots first) - needs PvZ games to confirm first Dragoon lands
   around a dozen hulls without breaking the ling hold.
+- Monster sample #1 (2026-11-18, DEFEAT 5/38 f11856: zealot-first
+  into a blind hydra switch - Den complete 3:36, first hydra seen
+  5:11 already marching, collapse from 5:26; worker scout abandons
+  vs lings by design, corsair explore arrives too late). Sample
+  count is one; needs more PvZ before any branch verdict.
 - Crona 4-pool overrun (lings arrive before the first Zealot; early-pool
   scout reaction needs gameplan review).
 - March-leg death tails (returning/marching units die mid-leg; probes
