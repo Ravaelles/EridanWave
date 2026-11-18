@@ -61,6 +61,7 @@ MAPS=(
   "ums/rav/protoss/Reav&Shut_v_Sunkens3.scx|"
   "ums/rav/protoss/Reav&Shut_v_Sunkens4.scx|"
   "ums/rav/protoss/Reav_v_Drag.scm|pair vs dragoons, RaidBase path"
+  "ums/rav/protoss/Goon_v_DT.scx|goon escort vs cloaked DTs, no detection",
   "ums/rav/protoss/DT_v_Protoss.scx|DT plus dragoon plus obs vs Protoss"
 #  "|"
 )

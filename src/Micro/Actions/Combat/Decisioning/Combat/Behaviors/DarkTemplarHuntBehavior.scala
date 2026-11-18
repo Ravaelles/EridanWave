@@ -35,7 +35,7 @@ object DarkTemplarHuntBehavior {
     val marks = candidates.map(t =>
       DarkTemplarHunt.Mark(t.tile.groundPixels(main) * Maff.inv32))
     DarkTemplarHunt.pick(marks).foreach(i =>
-      NearestShot.take(unit, "DarkTemplarHunt", Seq(candidates(i))))
+      NearestShot.take(unit, "HuntEnemyTemplar", Seq(candidates(i))))
 
     true
   }
