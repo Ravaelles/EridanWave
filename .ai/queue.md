@@ -144,6 +144,11 @@ New kernels ride suites; these need a live game that reaches them
   floor forbids retreat at >=180 unless lurkers/DT/carriers/siege
   known, dying hulls keep their out, proxy still forbids. Needs a
   live 180+ macro game confirming band instead of Withdraw).
+- Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
+  one clean transition, no escort/await flap; batch re-run
+  2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
+  Open doctrine remainder: should an escorting ride hail a dueling
+  mate, or is duel-first correct?).
 - DT maps wall (2026-11-18: DT_v_Protoss DEFEAT f497 k0/l2 -
   DT hit-and-runs vs 8 goons + cannon, obs caught f306, no isolated
   prey so no kills; Goon_v_DT DEFEAT f827 k0/l4 - 5 goons chase one
@@ -164,11 +169,12 @@ New kernels ride suites; these need a live game that reaches them
   separately. Regressions to re-measure: 15Drag(V->D), 3Zeal(V->D),
   3Drag_HydraUpg(V->D). Next full batch after the next behavior
   change, not before.
-- Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
-  one clean transition, no escort/await flap; batch re-run
-  2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
-  Open doctrine remainder: should an escorting ride hail a dueling
-  mate, or is duel-first correct?).
+- AttackPosture flap (Crona PvZ 2026-11-18: 20 Fight<->Withdraw flips
+  f5205-7154, ~100f period): entry needs only fighting<0.35, the 96f
+  floor gates only the exit - leave after 96f, re-enter the moment
+  fighting dips. Strong armies cycled home instead of holding; the
+  180 floor (band instead of Withdraw) plus the leash latch target
+  exactly this. Needs a live PvZ choke game post-fix to confirm.
 - Reaver_v_Sunkens wall (6 live games pre-retreat-fix, best DEFEAT 10/7;
   StarEngine ReaverSunkensScaleSuite pins it stage by stage: packed
   and column screens clear with 8-10 shots, a 5-scarab hull leaves
