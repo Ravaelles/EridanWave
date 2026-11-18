@@ -155,6 +155,15 @@ New kernels ride suites; these need a live game that reaches them
 - Main-base DT hunt (needs live: detected enemy DT within 40 ground
   tiles of our main - army picks nearest-to-main, already-dueling
   keeps; Reavers and our DTs keep their disciplines).
+- UMS batch triage 2026-11-18 (8W/15L/2NA, post all fixes):
+  ZealDrag flips to VICTORY 9/6 errors-clean (baseless guards hold);
+  15Drag ends 3v1 chase-timeout (surrounds unbuilt, contain parked);
+  3Zeal pack focuses together but trades 1-3 (variance, no stuck
+  retreats); Reav_v_Drag L/W/L coin-flip with escort working and no
+  boardings by design; Goon_v_DT + DT_v_Protoss walls recorded
+  separately. Regressions to re-measure: 15Drag(V->D), 3Zeal(V->D),
+  3Drag_HydraUpg(V->D). Next full batch after the next behavior
+  change, not before.
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
