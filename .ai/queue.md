@@ -135,17 +135,6 @@ New kernels ride suites; these need a live game that reaches them
 
 ## Open: micro validation (needs games that reach it)
 
-- 1v1 mirror stuck retreat (1Drag_v_1Drag 2026-11-18, DEFEAT 0/1 x3:
-  Retreat act stuck from f2, 0 return fire, Sim adv 0.96 collapses
-  to 0.10 as injury accrues; verdict reads +Committed throughout.
-  Ruled OUT: mirror walk-home kernel (committed short-circuits before
-  outmatched is consulted - gated and reverted same day) and the
-  baseless Retreat NPE (fixed, errors clean). Open leads: bus flicker
-  on stale shouldFight arming the duel-level latch (but observed
-  technique is RetreatSimple, outside the latch's techniqueIs list -
-  does not line up yet), or the march never handing off to combat.
-  Needs the exact writer, then a StarEngine 1v1 pin of the fixed
-  handoff.
 - ZealotLeash latch (2026-11-18: slot/Leash alternation every
   3-6f on the natural choke - raw 5.5 boundary, no hysteresis;
   latched 5.5/4.5 same shape as pursuit. Needs a live choke game
