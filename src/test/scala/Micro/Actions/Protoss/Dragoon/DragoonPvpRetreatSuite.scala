@@ -34,4 +34,8 @@ class DragoonPvpRetreatSuite extends AnyFunSuite {
     assert( ! retreat(enemyHasDragoons = false))
     assert( ! retreat(foeUnits = 0.0))
   }
+
+  test("a lone dragoon walks home to the line (macro; UMS duels gate this at the caller)") {
+    assert(retreat(oursDragoons = 1, usUnits = 1.0, foeUnits = 1.0))
+  }
 }
