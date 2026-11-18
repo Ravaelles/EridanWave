@@ -24,7 +24,7 @@ object SquadForming {
     // remembered point instead of milling in home slots, so the advance
     // stays slot-bound even with no consensus behind it.
     val huntingContact = squad match {
-      case attack: SquadAttack => attack.mode == AttackModes.HuntContact
+      case attack: SquadAttack => attack.huntMarches
       case _                   => false
     }
     if (SquadMarch.shouldFormMarch(squad.fightConsensus || huntingContact, squad.battleEnemies.nonEmpty)) {

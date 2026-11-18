@@ -42,6 +42,15 @@ class SquadAttack extends Squad {
 
   var mode: AttackMode = PushMain
 
+  /**
+   * Hunt march permission, refreshed with the posture: a contact hunt
+   * marches the arc out only at or above parity - marching fourteen
+   * Dragoons into sixteen is a scripted wipe, so an outmatched pack
+   * holds its home slots and lets the micro hunt pick instead. Reads
+   * the same penalized advantage the posture vote reads, no new knob.
+   */
+  var huntMarches: Boolean = false
+
   // HuntContact marches to contact: act as if the squad agreed to fight.
   // Cluster posture (phase 4 of _COMBAT-REFACTOR.md): one verdict per
   // cluster per frame, latched. The RegroupLatch stance retired here: the
@@ -397,6 +406,7 @@ class SquadAttack extends Squad {
       else forced
     if (floored == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStartFrame = With.frame
     posture = floored
+    huntMarches = mode == AttackModes.HuntContact && advantage >= ClusterPosture.withdrawBelowAdvantage
     roles = assignRolesShadow()
     Probe.note("Sim", 0, f"$posture fighting=$fighting%.2f coverage=$coverage%.2f adv=$advantage%.2f")
     Debugging.CherryVis.CherryVis.board("AttackPosture", posture.toString)
