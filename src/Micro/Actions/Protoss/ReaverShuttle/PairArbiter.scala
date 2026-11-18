@@ -241,9 +241,9 @@ object PairArbiter {
     Math.sqrt(dx * dx + dy * dy)
   }
 
-  private def nearestMate(shuttle: ShuttleView, reavers: Seq[ReaverView]): Option[ReaverView] =
+  private def nearestMate(shuttle: ShuttleView, reavers: Seq[ReaverView], baseless: Boolean): Option[ReaverView] =
     Maff.minBy(reavers.view.filter(r =>
-      ! r.loaded && shuttle.squadKey.forall(k => r.squadKey.contains(k))))(r => distTiles(shuttle.posTiles, r.posTiles))
+      ! r.loaded && ReaverShuttlePair.sameSquadOrUnstaffed(shuttle.squadKey, r.squadKey, baseless)))(r => distTiles(shuttle.posTiles, r.posTiles))
 
   private def nearestFoe(foes: Seq[FoeView]): Option[FoeView] =
     Maff.minBy(foes)(_.distTiles)
@@ -276,8 +276,8 @@ object PairArbiter {
    * an unbonded hull with a free same-squad ride walks to the ride,
    * never to the army.
    */
-  def resolveShuttle(shuttle: ShuttleView, reavers: Seq[ReaverView], raid: Boolean, baitRide: Boolean): PairDirective = {
-    val mate = nearestMate(shuttle, reavers)
+  def resolveShuttle(shuttle: ShuttleView, reavers: Seq[ReaverView], raid: Boolean, baitRide: Boolean, baseless: Boolean = false): PairDirective = {
+    val mate = nearestMate(shuttle, reavers, baseless)
     val foe = mate.flatMap(m => nearestFoe(m.foes))
     decide(
       loaded            = shuttle.hasReaverAboard,
@@ -302,7 +302,7 @@ object PairArbiter {
    * third - a hull with none of the three walks to the army instead
    * of holding for a pickup that is not coming.
    */
-  def resolveReaver(reaver: ReaverView, shuttles: Seq[ShuttleView], raid: Boolean): PairDirective = {
+  def resolveReaver(reaver: ReaverView, shuttles: Seq[ShuttleView], raid: Boolean, baseless: Boolean = false): PairDirective = {
     if (reaver.loaded) {
       val out = decide(
         loaded            = true,
@@ -322,7 +322,7 @@ object PairArbiter {
     }
 
     val ride = reaver.bond.orElse(Maff.minBy(shuttles.view.filter(s =>
-      ! s.hasReaverAboard && reaver.squadKey.forall(k => s.squadKey.contains(k))))(s => distTiles(reaver.posTiles, s.posTiles)))
+      ! s.hasReaverAboard && ReaverShuttlePair.sameSquadOrUnstaffed(reaver.squadKey, s.squadKey, baseless)))(s => distTiles(reaver.posTiles, s.posTiles)))
     val foe = nearestFoe(reaver.foes)
     decide(
       loaded            = false,
@@ -348,7 +348,8 @@ object PairArbiter {
       shuttleView(shuttle),
       reavers,
       ReaverShuttlePair.statusOfShuttle(shuttle) == ReaverShuttleStatus.RaidBase,
-      ReaverShuttlePair.isBaitRide(shuttle)).shuttle
+      ReaverShuttlePair.isBaitRide(shuttle),
+      With.geography.ourBases.isEmpty).shuttle
   }
 
   /** Game mapper: one Reaver, plain data out. */
@@ -358,7 +359,8 @@ object PairArbiter {
     resolveReaver(
       reaverView(reaver, bond),
       rides,
-      ReaverShuttlePair.statusOfReaver(reaver) == ReaverShuttleStatus.RaidBase).reaver
+      ReaverShuttlePair.statusOfReaver(reaver) == ReaverShuttleStatus.RaidBase,
+      With.geography.ourBases.isEmpty).reaver
   }
 
   /**

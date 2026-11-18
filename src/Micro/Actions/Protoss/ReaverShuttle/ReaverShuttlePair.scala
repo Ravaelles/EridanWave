@@ -44,7 +44,7 @@ object ReaverShuttlePair {
    * 64 pixels) has to stay its ride until it boards again.
    */
   def mateOnFoot(shuttle: FriendlyUnitInfo): Option[FriendlyUnitInfo] =
-    Maff.minBy(unloadedReavers().filter(u => mateInSquad(shuttle.squad, u.squad)))(
+    Maff.minBy(unloadedReavers().filter(u => mateInSquad(shuttle.squad, u.squad, With.geography.ourBases.isEmpty)))(
       _.pixelDistanceCenter(shuttle.pixel))
 
   /**
@@ -54,10 +54,19 @@ object ReaverShuttlePair {
    * restaffing frames, and a strict gate blinds the mate lookup exactly
    * then, flipping escort/await every other frame. So None on our side
    * accepts the nearest hull; a squadded ride stays strict, even against
-   * squadless hulls.
+   * squadless hulls. Baseless maps (UMS duels) never staff squads at
+   * all, so the lenient side applies there instead of blinding the pair
+   * for the whole game: either side unstaffed counts as a match.
    */
+  def sameSquadOrUnstaffed[A](a: Option[A], b: Option[A], lenient: Boolean): Boolean =
+    a.forall(b.contains) || (lenient && (a.isEmpty || b.isEmpty))
+
+  /** Squad-typed mate gate; baseless maps pass lenient = true. */
   def mateInSquad(shuttleSquad: Option[Squad], mateSquad: Option[Squad]): Boolean =
-    shuttleSquad.forall(mateSquad.contains)
+    mateInSquad(shuttleSquad, mateSquad, lenient = false)
+
+  def mateInSquad(shuttleSquad: Option[Squad], mateSquad: Option[Squad], lenient: Boolean): Boolean =
+    sameSquadOrUnstaffed(shuttleSquad, mateSquad, lenient)
 
   /** Stay with an unloaded mate operating this close, in tiles: the ride the Reaver brain assumes. */
   val mateEscortTiles: Double = 15.0

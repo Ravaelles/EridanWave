@@ -334,4 +334,32 @@ class PairArbiterSuite extends AnyFunSuite {
       raid = false)
     assert(out.reaver == PairArbiter.BoardRide)
   }
+
+  test("resolve: on baseless maps a squadless hull sees the squadless ride") {
+    val ride = shuttleView(squad = None)
+    val out = PairArbiter.resolveReaver(reaverView(squad = None), Seq(ride), raid = false, baseless = true)
+    assert(out.reaver == PairArbiter.WalkToRide)
+    assert(out.shuttle == PairArbiter.FetchMate)
+  }
+
+  test("resolve: on baseless maps a squadless ride fetches the squadless hull") {
+    val out = PairArbiter.resolveShuttle(
+      shuttleView(squad = None),
+      Seq(reaverView(squad = None)),
+      raid = false,
+      baitRide = false,
+      baseless = true)
+    assert(out.shuttle == PairArbiter.FetchMate)
+  }
+
+  test("resolve: strict maps split the handshake on restaffing frames") {
+    val reaverOut = PairArbiter.resolveReaver(reaverView(squad = None), Seq(shuttleView(squad = Some(1))), raid = false)
+    assert(reaverOut.reaver == PairArbiter.WalkToRide)
+    val shuttleOut = PairArbiter.resolveShuttle(
+      shuttleView(squad = Some(1)),
+      Seq(reaverView(squad = None)),
+      raid = false,
+      baitRide = false)
+    assert(shuttleOut.shuttle == PairArbiter.AwaitPost)
+  }
 }
