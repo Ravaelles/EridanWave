@@ -2,9 +2,9 @@ package Micro.Actions.Combat.Decisioning
 
 import Lifecycle.With
 import Mathematics.{Maff, WoundMargin}
-import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldToShoot, KiteAway}
+import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldToShoot, KiteAway, MeleeKiteAway}
 import Micro.Agency.Commander
-import ProxyBwapi.Races.Terran
+import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
@@ -43,13 +43,15 @@ object KiteAwayBehavior {
   }
 
   private def kitable(unit: FriendlyUnitInfo): Boolean = {
-    if (unit.unitClass.melee) return false
+    if (unit.unitClass.melee && ! unit.isAny(Protoss.Zealot, Protoss.Archon)) return false
     if (unit.formationEngage.isEmpty) return false
 
     true
   }
 
   private def shouldKite(unit: FriendlyUnitInfo): Boolean = {
+    if (unit.unitClass.melee) return shouldKiteMelee(unit)
+
     val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
     // Turned-away melee neither chases nor hits: it never counts as the
     // enemy in margin that triggers the retreat.
@@ -60,6 +62,25 @@ object KiteAwayBehavior {
     if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.woundPercent(), unit.cooldownLeft, enemyInMargin)) return false
 
     true
+  }
+
+  /**
+   * Melee kite gate (thin seam over the pure kernel): blades yield
+   * only on the kernel's terms - nearby lings, a superior zealot pack,
+   * or a dying hull still swinging at melee. Anything else stands.
+   */
+  private def shouldKiteMelee(unit: FriendlyUnitInfo): Boolean = {
+    val marginPixels = KiteAway.enemyMarginTiles * 32
+    val foeZealots = unit.matchups.threatsInPixels(marginPixels).count(Protoss.Zealot)
+    val mates = unit.matchups.allies.count(a =>
+      a.alive && a.unitClass.isWarrior && a.pixelDistanceEdge(unit) <= marginPixels)
+
+    MeleeKiteAway.shouldRetreat(
+      totalHp = unit.totalHealth,
+      coolingDown = unit.cooldownLeft > 0,
+      hasLingNearby = unit.matchups.threatsInPixels(marginPixels).exists(Zerg.Zergling),
+      outnumberedByZealots = foeZealots > mates + 1,
+      attackingMelee = unit.matchups.targetNearest.exists(_.unitClass.melee))
   }
 
   // Hold-to-shoot: a committed chaser met with a ready gun is a free shot,
