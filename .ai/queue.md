@@ -135,11 +135,21 @@ New kernels ride suites; these need a live game that reaches them
 
 ## Open: micro validation (needs games that reach it)
 
-- Baseless pair unite (Reav_v_Drag 2026-11-18, DEFEAT 5/11:
-  lenient gate escorts f61-641 with one clean transition, no
-  escort/await flap; both hulls duel on foot to death under the
-  fetch-glue no-duel adopt gate while the empty ride holds station.
-  Needs owner doctrine: should an escorting ride hail a dueling
+- 1v1 mirror stuck retreat (1Drag_v_1Drag 2026-11-18, DEFEAT 0/1 x3:
+  Retreat act stuck from f2, 0 return fire, Sim adv 0.96 collapses
+  to 0.10 as injury accrues; verdict reads +Committed throughout.
+  Ruled OUT: mirror walk-home kernel (committed short-circuits before
+  outmatched is consulted - gated and reverted same day) and the
+  baseless Retreat NPE (fixed, errors clean). Open leads: bus flicker
+  on stale shouldFight arming the duel-level latch (but observed
+  technique is RetreatSimple, outside the latch's techniqueIs list -
+  does not line up yet), or the march never handing off to combat.
+  Needs the exact writer, then a StarEngine 1v1 pin of the fixed
+  handoff.
+- Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
+  one clean transition, no escort/await flap; batch re-run
+  2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
+  Open doctrine remainder: should an escorting ride hail a dueling
   mate, or is duel-first correct?).
 - Reaver_v_Sunkens wall (6 live games pre-retreat-fix, best DEFEAT 10/7;
   StarEngine ReaverSunkensScaleSuite pins it stage by stage: packed
