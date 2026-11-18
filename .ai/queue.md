@@ -144,6 +144,14 @@ New kernels ride suites; these need a live game that reaches them
   floor forbids retreat at >=180 unless lurkers/DT/carriers/siege
   known, dying hulls keep their out, proxy still forbids. Needs a
   live 180+ macro game confirming band instead of Withdraw).
+- Terminus grind 2026-11-18 (DEFEAT 82/144 f24120): DT hunt
+  correctly idle (0 HuntEnemyTemplar, no enemy DTs, no errors);
+  PotshotVulture 102x (2nd live confirm); HugTank 129-133x in
+  clusters (3rd firing data point, 0.2-tile arrival still unproven);
+  MineSidestep 22x vs 38 mines (fired, quality unproven);
+  posture 2 flips in 16 min with retreats flowing under sieged
+  tanks (floor binds, escape opens - no cycling); NoTankMarch 0
+  same-tick Retreat combos.
 - Baseless pair unite (Reav_v_Drag: lenient gate escorts f61-641 with
   one clean transition, no escort/await flap; batch re-run
   2026-11-18 VICTORY 596 - the pair unites and wins, gate validated.
