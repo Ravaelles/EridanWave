@@ -229,7 +229,7 @@ object BeDarkTemplar extends Action {
     // outguns it dies unconnected, so each pick's local pack must lose
     // the power comparison first. An unseen Templar answers everything.
     val open = unit.matchups.targets.filter(t =>
-      t.visible && unit.canAttack(t) && DarkTemplarTargets.isPrey(t.unitClass) && ! coveredByDetector(unit, t))
+      t.visible && unit.canAttack(t) && DarkTemplarTargets.isPrey(t.unitClass) && ! coveredByDetector(unit, t) && ! raidLeashed(unit, t))
     val brave = open.filter(t => packDuelWorthIt(unit, t, open))
     val close = brave.filter(t =>
       unit.tileDistanceEdge(t) <= DarkTemplarTargets.closeTiles).toVector
@@ -266,6 +266,24 @@ object BeDarkTemplar extends Action {
   private def groundDps(unitClass: UnitClass): Double =
     unitClass.effectiveGroundDamage.toDouble / unitClass.groundDamageCooldown.max(1)
 
+  /**
+   * Raid leash (thin game seam over the pure hold): workers and lone
+   * warriors deep over the enemy main are not approached past dueling
+   * distance. Without a scouted enemy main there is nothing to
+   * measure against, so the hunt runs unclipped.
+   */
+  private def raidLeashed(unit: FriendlyUnitInfo, target: UnitInfo): Boolean = {
+    val mainPx = With.scouting.enemyMain.map(_.heart.center).getOrElse(return false)
+    val othersNear = With.units.enemy.count(e =>
+      e.alive && e.id != target.id && e.unitClass.isWarrior &&
+        e.tileDistanceEdge(target) <= DarkTemplarBravery.packTiles * 32.0)
+    DarkTemplarRaidLeash.holdRaid(
+      target.unitClass.isWorker,
+      target.unitClass.isWarrior && othersNear == 0,
+      target.tile.groundPixels(mainPx) * Maff.inv32,
+      unit.tileDistanceEdge(target))
+  }
+
   private def coveredByDetector(unit: FriendlyUnitInfo, target: UnitInfo): Boolean =
     DarkTemplarEvade.underDetection(
       target.pixel,
@@ -279,6 +297,7 @@ object BeDarkTemplar extends Action {
       && unit.canAttack(e)
       && DarkTemplarTargets.isPrey(e.unitClass)
       && ! coveredByDetector(unit, e)
+      && ! raidLeashed(unit, e)
       && ! DarkTemplarPursuit.ghostDropped(
         unit.id, e.id,
         arrivedUnseen = DarkTemplarPursuit.shouldDropGhost(unit.tileDistanceEdge(e), e.visible),

@@ -124,6 +124,10 @@ blank-line gate per change, commit per unit).
    Needs a live strong-army grind confirming no retreat with no foe.
  - Zealot regroup respects closing enemies: mutual approach meets
    instead of yo-yoing home (3Zeal diagnosis). Needs a 3Zeal re-run.
+ - Dark Templar raid leash (user rule): no worker/loner hunts inside
+   60 ground tiles of the enemy main - hold instead of approaching;
+   duels within 1.1 keep fighting. Needs a live DT raid confirming
+   holds replace the groceries run.
    Needs a live wall-in confirming no dress/flap at the breach.
 - StandShoot yields past the band (E1): vs Sunkens/Cannons past 7.25
   with scarabs the hull closes through instead of standing - standing
