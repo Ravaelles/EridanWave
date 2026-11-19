@@ -219,7 +219,16 @@ object BeReaver extends Action {
 
   /** Anything the scarab can reach dies from where we stand: holding is the whole plan. */
   private def standShoot(context: GroundContext): Boolean = {
-    if ( ! context.foe.exists(context.unit.inRangeToAttack)) return false
+    val hold = context.foe.filter(context.unit.inRangeToAttack)
+    // Launch-band discipline vs Sunkens and Cannons: engine range claims
+    // in-range, but the game only launches inside the band - holding at
+    // eight tiles is how hulls die without firing. With a shot to spend,
+    // close through instead of standing; the hold cadence owns the band.
+    if (hold.exists(t =>
+      (Zerg.SunkenColony(t) || Protoss.PhotonCannon(t))
+      && context.unit.scarabs > 0
+      && ! ReaverStaticHold.inHold(context.unit.tileDistanceEdge(t)))) return false
+    if (hold.isEmpty) return false
 
     context.unit.agent.act("StandShoot")
     Commander.hold(context.unit)

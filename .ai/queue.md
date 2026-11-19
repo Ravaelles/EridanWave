@@ -99,6 +99,20 @@ blank-line gate per change, commit per unit).
   closing within the 5-tile rejoin reach. They opt out of XY
   correction for one move now. Needs the same Sunkens2 run confirming
   the ride closes and boards.
+- StandShoot yields past the band (E1): vs Sunkens/Cannons past 7.25
+  with scarabs the hull closes through instead of standing - standing
+  at engine range is how the f293 hull died without firing. Needs a
+  live Sunkens2 run confirming the walk-in.
+- Arbiter boards stalled static duels (E2): foe static plus ride
+  within 5 plus 6s quiet boards the waiting ride - the f290 moment
+  (ride 38px away, hull dueled to death). Mobiles keep duel-first; no
+  ride in reach keeps dueling. Needs a live Sunkens2 run confirming
+  BoardRide off a stalled duel.
+- StarEngine SunkensPairScenarioSuite (11 rows, green): bugged-launch
+  opt-in pinned equal to the shipped band; wall reproduced (0 shots,
+  hull dies); cadence/cannon/stand/ring/loop kill; holed yields;
+  stalled boards; progressing keeps dueling; no-ferry control walls.
+  Engine rot from the week's kernel changes re-pinned (8 suites).
 
 ## Parked (explicit orders, do not touch)
 
