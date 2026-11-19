@@ -12,10 +12,16 @@
   every warrior death dumps frame, unit and last orders
   (`DEATHWATCH ... died f...`); ladder keeps the quiet set
   (Observer/Shuttle/DT/Reaver). First-dragoon-dead frame judges kite
-  and dress on 14v16 (baseline f194 pre-61).
+  and dress on 14v16 (baseline f194 pre-61, f213-257 post-61).
+- 14v16 scoreboard: kite61 alone won 16/7 f1355 (first win ever)
+  plus a 13/8 timeout; far-wait era 2W/4L but every fight
+  competitive (11-14 kills vs 5-7 before) with the wait firing
+  (up to 751 Waiting rows in the 16/11 win). Verdict: keep
+  iterating, not reverting.
 - Next: early formation dress (user plan) - dress far, wait ~5 tiles
   out, micro-nudges forward. PvP-only (vs Protoss reavers it feeds).
   BUILT (d686ff703): `MarchDress.holdFarWait` latch (fires at five
   out, holds through the creep, releases on contact or past six;
   warriors only, UMS mirrors, never under reavers) + creep 0.15
-  tiles every 24f in `marchLegs`. Validating on 14v16 now.
+  tiles every 24f in `marchLegs`. Outranks memory duels (d5cdffa1d);
+  race read off seen units (8055e88ed).
