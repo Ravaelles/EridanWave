@@ -15,7 +15,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class DragoonMirrorSuite extends AnyFunSuite with StarEngineSuite {
 
   override def tags: Map[String, Set[String]] =
-    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Dragoon.name + StarEngineTags.Pressure.name + StarEngineTags.Retreat.name) }
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Dragoon.name + StarEngineTags.Pressure.name + StarEngineTags.Retreat.name + StarEngineTags.PvP.name) }
 
   private val home = (-400.0, 500.0)
 

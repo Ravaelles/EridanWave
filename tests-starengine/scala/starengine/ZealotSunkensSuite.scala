@@ -17,7 +17,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class ZealotSunkensSuite extends AnyFunSuite with StarEngineSuite {
 
   override def tags: Map[String, Set[String]] =
-    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Zealot.name + StarEngineTags.Static.name) }
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Zealot.name + StarEngineTags.Static.name + StarEngineTags.PvZ.name) }
 
   private def vetoed(f: Body): Boolean =
     f.kind.isBuilding && ! TargetFilterFocus.allowsBuilding(

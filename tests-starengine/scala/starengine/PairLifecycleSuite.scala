@@ -399,7 +399,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     assert(reaver.transport.isDefined, "doomed hull never boarded the ride in reach")
   }
 
-  test("evacuate: a pressured loaded pair opens the distance aboard", StarEngineTags.Reaver, StarEngineTags.Shuttle) {
+  test("evacuate: a pressured loaded pair opens the distance aboard", StarEngineTags.Reaver, StarEngineTags.Shuttle, StarEngineTags.Hydra) {
     val (reaver, shuttle) = pair(1400.0)
     reaver.transport = Some(shuttle)
     val hydra = new Body(Zerg.Hydralisk, 1500.0, 500.0, Zerg.Hydralisk.maxTotalHealth)

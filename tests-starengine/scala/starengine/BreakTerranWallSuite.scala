@@ -21,7 +21,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class BreakTerranWallSuite extends AnyFunSuite with StarEngineSuite {
 
   override def tags: Map[String, Set[String]] =
-    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Wall.name + StarEngineTags.Dragoon.name) }
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Wall.name + StarEngineTags.Dragoon.name + StarEngineTags.PvT.name) }
 
   private val wallX = 800.0
   private val choke = (800.0, 500.0)

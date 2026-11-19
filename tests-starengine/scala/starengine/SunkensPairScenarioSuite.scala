@@ -108,7 +108,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     }
   }
 
-  test("attack-move dies without firing: the map wall, reproduced") {
+  test("attack-move dies without firing: the map wall, reproduced", StarEngineTags.PvZ) {
     val sunken = sunkenAt(0.0, 0.0)
     val reaver = new Body(Protoss.Reaver, 0.0, 1024.0, Protoss.Reaver.maxTotalHealth)
     // No hold discipline: walk at the pixel the way the shipped close
@@ -135,7 +135,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert( ! reaver.alive, "the hull dies walking at guns that never answer")
   }
 
-  test("hold cadence kills the sunken: the user mechanism, proven") {
+  test("hold cadence kills the sunken: the user mechanism, proven", StarEngineTags.PvZ) {
     val sunken = sunkenAt(0.0, 0.0)
     val reaver = new Body(Protoss.Reaver, 0.0, 1024.0, Protoss.Reaver.maxTotalHealth)
     val pilots: Map[Body, Pilot] = Map(
@@ -156,7 +156,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert(count(0) > 0, "scarabs launched")
   }
 
-  test("hold cadence kills the cannon too: both scoped statics") {
+  test("hold cadence kills the cannon too: both scoped statics", StarEngineTags.PvP) {
     val cannon = new Body(Protoss.PhotonCannon, 0.0, 0.0, Protoss.PhotonCannon.maxTotalHealth)
     val reaver = new Body(Protoss.Reaver, 0.0, 1024.0, Protoss.Reaver.maxTotalHealth)
     val pilots: Map[Body, Pilot] = Map(
@@ -176,7 +176,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert(reaver.alive, "the hull lives")
   }
 
-  test("a fresh hull stands through the permission and kills") {
+  test("a fresh hull stands through the permission and kills", StarEngineTags.PvZ) {
     val sunken = sunkenAt(0.0, 0.0)
     val reaver = new Body(Protoss.Reaver, 0.0, 1024.0, Protoss.Reaver.maxTotalHealth)
     val ammo = new Ammo(20)
@@ -197,7 +197,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert(reaver.alive, "the hull lives")
   }
 
-  test("a holed hull yields instead of standing: the withdraw half") {
+  test("a holed hull yields instead of standing: the withdraw half", StarEngineTags.PvZ) {
     val sunken = sunkenAt(0.0, 0.0)
     val reaver = new Body(Protoss.Reaver, 0.0, 700.0, Protoss.Reaver.maxTotalHealth)
     reaver.hp = reaver.maxHp - 41
@@ -219,7 +219,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert(count(0) == 0, "no standing, no shots")
   }
 
-  test("the ring delivers the unload: designated spot, berth legal") {
+  test("the ring delivers the unload: designated spot, berth legal", StarEngineTags.PvZ) {
     val sunken = sunkenAt(0.0, 0.0)
     val home = (0.0, 2000.0)
     val spot = ringSpot((0.0, 0.0), home)
@@ -257,7 +257,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert(reaver.alive, "the hull lives")
   }
 
-  test("the full loop wins: board, ferry, ring, unload, kill both") {
+  test("the full loop wins: board, ferry, ring, unload, kill both", StarEngineTags.PvZ, StarEngineTags.Ling) {
     val sunkenA = sunkenAt(-160.0, 0.0)
     val sunkenB = sunkenAt(160.0, 0.0)
     val ling1 = new Body(Zerg.Zergling, -160.0, 480.0, Zerg.Zergling.maxTotalHealth)
@@ -313,7 +313,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert(reaver.alive, "the hull lives")
   }
 
-  test("a stalled duel boards the waiting ride: the f290 moment") {
+  test("a stalled duel boards the waiting ride: the f290 moment", StarEngineTags.PvZ) {
     val sunken = sunkenAt(0.0, 0.0)
     // f290 geometry: inside engine gun (256) but outside the launch
     // band (232) - the hull holds, the game never launches.
@@ -349,7 +349,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert(reaver.transport.contains(shuttle), "the stalled hull boards the waiting ride")
   }
 
-  test("a progressing duel keeps fighting: the carve-out holds") {
+  test("a progressing duel keeps fighting: the carve-out holds", StarEngineTags.PvZ) {
     val ling = new Body(Zerg.Zergling, 0.0, 200.0, Zerg.Zergling.maxTotalHealth)
     val reaver = new Body(Protoss.Reaver, 0.0, 400.0, Protoss.Reaver.maxTotalHealth)
     val shuttle = new Body(Protoss.Shuttle, 0.0, 450.0, Protoss.Shuttle.maxTotalHealth)
@@ -378,7 +378,7 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
     assert( ! ling.alive, "the duel progresses")
   }
 
-  test("no ferry, no win: the control that makes the loop load-bearing") {
+  test("no ferry, no win: the control that makes the loop load-bearing", StarEngineTags.PvZ) {
     val sunken = sunkenAt(0.0, 0.0)
     val reaver = new Body(Protoss.Reaver, 0.0, 1024.0, Protoss.Reaver.maxTotalHealth)
     val shuttle = new Body(Protoss.Shuttle, 0.0, 2000.0, Protoss.Shuttle.maxTotalHealth)

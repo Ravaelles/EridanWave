@@ -110,4 +110,19 @@ object StarEngineTags {
 
   /** Raid status: oldest pair raids, bleeding pairs support. */
   object Raid extends Tag("starengine.raid")
+
+  /** Zerglings: the pack, the surround, the flood. */
+  object Ling extends Tag("starengine.ling")
+
+  /** Hydralisks: the ranged Zerg pack, with and without upgrades. */
+  object Hydra extends Tag("starengine.hydra")
+
+  /** Protoss vs Zerg: ling, hydra and lurker shapes. */
+  object PvZ extends Tag("starengine.pvz")
+
+  /** Protoss vs Terran: walls, tanks, vessels and ghosts. */
+  object PvT extends Tag("starengine.pvt")
+
+  /** Protoss mirror: goon and zealot lines. */
+  object PvP extends Tag("starengine.pvp")
 }
