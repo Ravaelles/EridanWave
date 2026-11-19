@@ -7,8 +7,11 @@ class SlotDisciplineSuite extends AnyFunSuite {
   private def slot(
     firing: Boolean = false,
     sinceDamage: Int = 1000,
-    verdict: Boolean = false): Boolean =
-    SlotDiscipline.maySlot(firing, sinceDamage, verdict)
+    verdict: Boolean = false,
+    nearBuilding: Double = Double.PositiveInfinity,
+    melee: Boolean = false,
+    nearEnemy: Double = Double.PositiveInfinity): Boolean =
+    SlotDiscipline.maySlot(firing, sinceDamage, verdict, nearBuilding, melee, nearEnemy)
 
   test("an idle untouched unit may dress") {
     assert(slot())
@@ -29,5 +32,18 @@ class SlotDisciplineSuite extends AnyFunSuite {
 
   test("old damage stops vetoing after a minute of silence") {
     assert(slot(sinceDamage = 60))
+  }
+
+  test("dressing stops inside eight tiles of an enemy building") {
+    assert( ! slot(nearBuilding = 8.0))
+    assert( ! slot(nearBuilding = 0.0))
+    assert(slot(nearBuilding = 8.01))
+  }
+
+  test("a blade never dresses inside four tiles of an enemy") {
+    assert( ! slot(melee = true, nearEnemy = 4.0))
+    assert( ! slot(melee = true, nearEnemy = 0.0))
+    assert(slot(melee = true, nearEnemy = 4.01))
+    assert(slot(melee = false, nearEnemy = 0.0))
   }
 }

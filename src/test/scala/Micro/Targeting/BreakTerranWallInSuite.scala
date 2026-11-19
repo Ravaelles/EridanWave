@@ -38,4 +38,16 @@ class BreakTerranWallInSuite extends AnyFunSuite {
   test("no visible wall means nothing to chew") {
     assert( ! breaks(seesTerranBuilding = false))
   }
+
+  test("a blocked wall-in is depot-only, never the rax") {
+    assert(BreakTerranWallIn.wallPieceLegal(isBarracks = false, wallInBlocked = true))
+    assert( ! BreakTerranWallIn.wallPieceLegal(isBarracks = true, wallInBlocked = true))
+    assert(BreakTerranWallIn.wallPieceLegal(isBarracks = true, wallInBlocked = false))
+    assert(BreakTerranWallIn.wallPieceLegal(isBarracks = false, wallInBlocked = false))
+  }
+
+  test("the breach never claims a dark templar") {
+    assert(BreakTerranWallIn.claimsUnit(isDarkTemplar = false))
+    assert( ! BreakTerranWallIn.claimsUnit(isDarkTemplar = true))
+  }
 }

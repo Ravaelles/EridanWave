@@ -9,7 +9,7 @@ import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineCreepBehavior
 import Micro.Actions.Protoss.Zealot.ZealotLeash
 import Micro.Agency.Commander
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Decisions.ClusterCohesion
 import Tactic.Squads.Decisions.ClusterPosture
@@ -140,6 +140,12 @@ private[Decisioning] object EngagePipeline {
     if (anchor.isEmpty) return false
 
     val distTiles = anchor.get.pixelDistanceCenter(unit.pixel) * Maff.inv32
+    // A blade on a sieged tank stays on it: the leash would trade a
+    // free point-blank kill for a walk home, the same no-reason retreat
+    // the technique floor already forbids.
+    if (Maff.minBy(unit.matchups.enemies.view.filter(e =>
+      e.alive && Terran.SiegeTankSieged(e)))(
+      _.pixelDistanceEdge(unit)).exists(t => TankHug.holdsTank(unit.pixelDistanceEdge(t) * Maff.inv32, isMelee = true))) return false
     if ( ! zealotLeash(
       unit.id,
       fires = ZealotLeash.shouldRejoin(distTiles),

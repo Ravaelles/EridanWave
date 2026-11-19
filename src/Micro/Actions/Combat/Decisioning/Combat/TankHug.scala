@@ -24,6 +24,16 @@ object TankHug {
   /** Shells landing this recently still count as incoming fire, in frames. */
   val shellShockFrames: Int = Seconds(2)()
 
+  /**
+   * Melee stand, in tiles: a blade this close to a sieged tank never
+   * withdraws - the tank cannot answer point-blank, so leaving trades
+   * a free kill for a walk back into the shells.
+   */
+  val meleeStandTiles: Double = 1.1
+
+  def holdsTank(distTiles: Double, isMelee: Boolean): Boolean =
+    isMelee && distTiles <= meleeStandTiles
+
   def shouldHug(
     siegedTankTiles: Double,
     cooldownLeft: Int,
@@ -41,6 +51,6 @@ object TankHug {
    * only starts the withdrawal, on the first shells, never inside the
    * hug where the tank cannot answer.
    */
-  def shouldWithdraw(shelledRecently: Boolean, nearestSiegedTiles: Double): Boolean =
-    shelledRecently && nearestSiegedTiles > hugGapTiles
+  def shouldWithdraw(shelledRecently: Boolean, nearestSiegedTiles: Double, isMelee: Boolean): Boolean =
+    shelledRecently && nearestSiegedTiles > hugGapTiles && ! holdsTank(nearestSiegedTiles, isMelee)
 }

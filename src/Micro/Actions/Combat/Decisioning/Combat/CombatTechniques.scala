@@ -153,7 +153,8 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       With.framesSince(unit.lastFrameTakingDamage) < TankHug.shellShockFrames,
       Maff.minBy(unit.matchups.threats.view.filter(Terran.SiegeTankSieged))(_.pixelDistanceEdge(unit))
         .map(unit.pixelDistanceEdge(_) * Maff.inv32)
-        .getOrElse(Double.PositiveInfinity)))
+        .getOrElse(Double.PositiveInfinity),
+      unit.unitClass.melee))
     combat.transition(Fallback,  ! standGroundNow && unit.isAny(Terran.SiegeTankUnsieged, Terran.Goliath, Protoss.Reaver) && ! unit.airborne)
     // Unit-owned claims (the predicates live with their units; the order
     // lives here because the technique state machine constrains it).

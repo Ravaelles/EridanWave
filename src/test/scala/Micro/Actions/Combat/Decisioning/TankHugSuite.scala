@@ -23,13 +23,23 @@ class TankHugSuite extends AnyFunSuite {
   }
 
   test("fresh shells outside the hug break the duel off") {
-    assert(TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.3))
-    assert(TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 12.0))
+    assert(TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.3, isMelee = false))
+    assert(TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 12.0, isMelee = false))
+  }
+
+  test("a blade on the tank never withdraws: point-blank answers nothing") {
+    assert(TankHug.holdsTank(distTiles = 1.1, isMelee = true))
+    assert(TankHug.holdsTank(distTiles = 0.0, isMelee = true))
+    assert( ! TankHug.holdsTank(distTiles = 1.11, isMelee = true))
+    assert( ! TankHug.holdsTank(distTiles = 0.0, isMelee = false))
+    assert( ! TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 1.1, isMelee = true))
+    assert( ! TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.5, isMelee = true))
+    assert(TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 1.11, isMelee = true))
   }
 
   test("stale shells and the hug itself hold the line") {
-    assert( ! TankHug.shouldWithdraw(shelledRecently = false, nearestSiegedTiles = 12.0))
-    assert( ! TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.2))
-    assert( ! TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.0))
+    assert( ! TankHug.shouldWithdraw(shelledRecently = false, nearestSiegedTiles = 12.0, isMelee = false))
+    assert( ! TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.2, isMelee = false))
+    assert( ! TankHug.shouldWithdraw(shelledRecently = true, nearestSiegedTiles = 0.0, isMelee = false))
   }
 }

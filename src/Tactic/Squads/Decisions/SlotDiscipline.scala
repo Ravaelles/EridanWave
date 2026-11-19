@@ -14,10 +14,34 @@ object SlotDiscipline {
   /** Damage older than this stops vetoing formation legs. */
   val damageSilenceFrames: Int = 60
 
+  /**
+   * Dressing stops inside this distance to an enemy building, in tiles:
+   * at the wall the breach outvalues the line - every step to a slot
+   * is a shot the depot never takes.
+   */
+  val buildingVetoTiles: Double = 8.0
+
+  /**
+   * Melee never dresses inside this distance to an enemy, in tiles:
+   * a blade on guns or masonry trades the kill for a walk home.
+   */
+  val meleeEnemyVetoTiles: Double = 4.0
+
+  def nearBuilding(distTiles: Double): Boolean =
+    distTiles <= buildingVetoTiles
+
+  def meleeEngaged(isMelee: Boolean, distTiles: Double): Boolean =
+    isMelee && distTiles <= meleeEnemyVetoTiles
+
   def maySlot(
     firingNow: Boolean,
     framesSinceDamage: Int,
-    verdictHeld: Boolean): Boolean =
+    verdictHeld: Boolean,
+    nearEnemyBuildingTiles: Double = Double.PositiveInfinity,
+    isMelee: Boolean = false,
+    nearEnemyTiles: Double = Double.PositiveInfinity): Boolean =
     ! firingNow &&
-      framesSinceDamage >= damageSilenceFrames && ! verdictHeld
+      framesSinceDamage >= damageSilenceFrames && ! verdictHeld &&
+      ! nearBuilding(nearEnemyBuildingTiles) &&
+      ! meleeEngaged(isMelee, nearEnemyTiles)
 }

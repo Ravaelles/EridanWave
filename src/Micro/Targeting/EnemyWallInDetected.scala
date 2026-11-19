@@ -3,6 +3,7 @@ package Micro.Targeting
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Agency.Commander
+import ProxyBwapi.Orders
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import ProxyBwapi.UnitInfo.UnitInfo
@@ -42,10 +43,22 @@ object EnemyWallInDetected {
   def pickDepot[T](marks: Seq[(T, Double)]): Option[T] =
     Maff.minBy(marks)(_._2).map(_._1)
 
+  /**
+   * Repair snipe (pure flags for the suite): an SCV visibly repairing
+   * the depot dies first - free repairs out-damage the chew. The blade
+   * must see theSCV; blind swings at fogged memories stay on the depot.
+   */
+  def shouldSnipeRepairer(visible: Boolean, isScv: Boolean, repairingDepot: Boolean): Boolean =
+    visible && isScv && repairingDepot
+
   def check(unit: FriendlyUnitInfo): Boolean = {
     if ( ! unit.unitClass.isWarrior || unit.flying) return false
     if ( ! TerranWallIn.blocked) return false
+    // Outgunned line holds off the wall for the rest of the game.
+    if (WallInBan.banned()) return false
+
     if ( ! shouldFightDepot(unit.hitPoints)) return false
+
     if (shouldYieldToTanks(
       With.units.enemy.exists(e => e.alive && (Terran.SiegeTankSieged(e) || Terran.SiegeTankUnsieged(e))),
       unit.shieldPoints)) return false
@@ -60,8 +73,24 @@ object EnemyWallInDetected {
     if (unit.isAny(Protoss.Zealot)) {
       // A dueling blade keeps its duel: only the idle marchers take the
       // depot, so the line converges on one piece instead of flip-flopping
-      // between chewing and chasing.
-      if (unit.agent.toAttack.exists(t => t.alive && unit.matchups.targetsInRange.exists(_.id == t.id))) return false
+      // between chewing and chasing. A Barracks duel is not a duel: the
+      // doctrine is depot-only, so a blade chewing the Rax re-points.
+      if (unit.agent.toAttack.exists(t =>
+        t.alive && ! Terran.Barracks(t) && unit.matchups.targetsInRange.exists(_.id == t.id))) return false
+
+      // Repairing SCVs die first: free repairs out-damage the chew, and
+      // the SCV stands on the depot the blade already holds.
+      val scv = With.units.enemy.view.find(e =>
+        shouldSnipeRepairer(
+          e.visible,
+          Terran.SCV(e),
+          e.alive && e.order == Orders.Repair && e.orderTarget.contains(depot.get)))
+      scv.foreach(victim => {
+        unit.agent.toAttack = Some(victim)
+        unit.agent.act("EnemyWallInRepair")
+        Commander.attack(unit, victim)
+      })
+      if (scv.isDefined) return true
 
       unit.agent.toAttack = depot
       unit.agent.act("EnemyWallIn")

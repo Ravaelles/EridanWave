@@ -68,7 +68,7 @@ object TerranWallIn {
 
   /** A wall piece: Terran depot or rax, alive and standing. */
   def isWallPiece(enemy: UnitInfo): Boolean =
-    enemy.unitClass.isBuilding && (Terran.SupplyDepot(enemy) || Terran.Barracks(enemy))
+    enemy.unitClass.isBuilding && ! enemy.flying && (Terran.SupplyDepot(enemy) || Terran.Barracks(enemy))
 
   /** Pixels to tiles against the nearest choke tile (wide chokes included). */
   def distToChokeTiles(buildingPixel: Pixel, choke: Edge): Double = {

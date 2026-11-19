@@ -2,7 +2,7 @@ package Micro.Targeting
 
 import Lifecycle.With
 import Mathematics.Maff
-import ProxyBwapi.Races.Terran
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.Time.Seconds
 
@@ -40,8 +40,25 @@ object BreakTerranWallIn {
       ! enemyHasSiegedTank &&
       distBuildingToChokeTiles <= chokeRadiusTiles
 
+  /**
+   * Depot-only pick while the wall-in stands (pure flags for the
+   * suite): the Barracks costs a thousand hit points the line never
+   * repays - chew the Depot that seals the lane, never the Rax behind
+   * it. Away from a detected wall-in every Terran building stays legal.
+   */
+  def wallPieceLegal(isBarracks: Boolean, wallInBlocked: Boolean): Boolean =
+    ! wallInBlocked || ! isBarracks
+
+  /** Dark Templars own their targets: the breach never claims the blade. */
+  def claimsUnit(isDarkTemplar: Boolean): Boolean =
+    ! isDarkTemplar
+
   def run(unit: FriendlyUnitInfo): Unit = {
     if ( ! unit.unitClass.isWarrior || unit.flying || unit.loaded || ! unit.tile.valid) return
+    if ( ! claimsUnit(Protoss.DarkTemplar(unit))) return
+    // Outgunned line holds off the wall for the rest of the game:
+    // feeding the breach a dragoon at a time never opens it.
+    if (WallInBan.banned()) return
     // The user's wall rule first: close, quiet past three seconds, the
     // piece inside the breach reach of the choke, and the lane verified
     // sealed from our own tile. No shield term: a battered column at a
@@ -53,6 +70,7 @@ object BreakTerranWallIn {
     if (With.framesSince(unit.lastFrameStartingAttack) > TerranWallIn.quietSealedFrames) {
       val near = TerranWallIn.wallPiecesNear(TerranWallIn.sealedBreachTiles)
         .filter(wall => unit.tileDistanceEdge(wall) <= TerranWallIn.sealedBreachTiles)
+        .filter(wall => wallPieceLegal(Terran.Barracks(wall), TerranWallIn.blocked))
       if (near.nonEmpty && TerranWallIn.isSealedBreach(unit.tile)) {
         Maff.minBy(near)(_.pixelDistanceEdge(unit)).foreach(wall => {
           unit.agent.toAttack = Some(wall)
@@ -75,7 +93,8 @@ object BreakTerranWallIn {
       e.alive
         && e.visible
         && e.unitClass.isBuilding
-        && e.unitClass.isTerran).toSeq
+        && e.unitClass.isTerran
+        && wallPieceLegal(Terran.Barracks(e), TerranWallIn.blocked)).toSeq
     if (walls.isEmpty) return
     if (With.geography.edges.isEmpty) return
 
@@ -97,7 +116,8 @@ object BreakTerranWallIn {
     }
 
     if (TerranWallIn.isSealed(unit.tile)) {
-      Maff.minBy(TerranWallIn.wallPieces)(_.pixelDistanceEdge(unit)).foreach(wall => {
+      Maff.minBy(TerranWallIn.wallPieces.filter(wall =>
+        wallPieceLegal(Terran.Barracks(wall), TerranWallIn.blocked)))(_.pixelDistanceEdge(unit)).foreach(wall => {
         unit.agent.toAttack = Some(wall)
       })
     }

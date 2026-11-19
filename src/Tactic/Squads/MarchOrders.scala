@@ -174,11 +174,21 @@ object MarchOrders {
     if (duelHoldsMarch(
       verdictRetreat,
       hasAttackTarget = unit.agent.toAttack.isDefined,
-      engagedUpon = unit.matchups.engagedUpon)) return (unit.pixel, MarchLabel.MarchingToSlot)
+      engagedUpon = unit.matchups.engagedUpon)) return (unit.pixel, MarchLabel.HoldingDuel)
     val slotOpen             = SlotDiscipline.maySlot(
       firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
       framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),
-      verdictHeld       = verdictRetreat)
+      verdictHeld       = verdictRetreat,
+      nearEnemyBuildingTiles = Maff.minBy(With.units.enemy.view.filter(e =>
+        e.alive && e.unitClass.isBuilding))(
+        unit.pixelDistanceEdge(_))
+        .map(unit.pixelDistanceEdge(_) * Maff.inv32)
+        .getOrElse(Double.PositiveInfinity),
+      isMelee           = unit.unitClass.melee,
+      nearEnemyTiles    = Maff.minBy(With.units.enemy.view.filter(_.alive))(
+        unit.pixelDistanceEdge(_))
+        .map(unit.pixelDistanceEdge(_) * Maff.inv32)
+        .getOrElse(Double.PositiveInfinity))
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide, slotOpen)
     val joinPixel              = joinLeg(squad, unit, suicide, slotOpen)
     val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, slotOpen)

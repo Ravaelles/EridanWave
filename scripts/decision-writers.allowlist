@@ -91,6 +91,7 @@ src/Micro/Actions/Terran/Repair.scala :: .decision.set(patient.pixel.project(uni
 src/Micro/Coordination/Pathing/MicroPathing.scala :: .decision.set(waypoint)
 src/Micro/Coordination/Pathing/MicroPathing.scala :: .move(unit, 32.0)
 src/Micro/Targeting/EnemyWallInDetected.scala :: .attack(unit, depot.get)
+src/Micro/Targeting/EnemyWallInDetected.scala :: .attack(unit, victim)
 src/Tactic/Missions/drop/DropPassengerActions.scala :: .decision.set(assignedTransport(passenger).map(_.pixel))
 src/Tactic/Missions/drop/DropTransportActions.scala :: .decision.set(Maff.centroid(Maff.orElse(crew.view.filterNot(_.loaded), crew.view).map(_.pixel)))
 src/Tactic/Missions/drop/DropTransportActions.scala :: .decision.set(runway)

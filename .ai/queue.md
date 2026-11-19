@@ -99,6 +99,22 @@ blank-line gate per change, commit per unit).
   closing within the 5-tile rejoin reach. They opt out of XY
   correction for one move now. Needs the same Sunkens2 run confirming
   the ride closes and boards.
+ - Wall-in is depot-only, never the Rax: all three breach picks
+   (WallBreachTarget, EnemyWallInDetected, BreakTerranWallIn) chew the
+   Depot while the wall stands; a Barracks duel re-points instead of
+   holding; Dark Templars are never claimed by the breach (own brain).
+   SCVs repairing the depot die first. Lifted pieces unblock the wall
+   (lane open, no wall-in). Needs a live wall-in confirming depot chew
+   plus SCV snipe and no Rax picks.
+ - Outgunned line bans the wall (5 dragoons per sieged tank, latched):
+   below the ratio the wall-in is forbidden for the rest of the game;
+   supply >= 195 or minerals >= 1200 release it, supply <= 165 re-arms.
+   Needs a live outgunned wall-in confirming the hold.
+ - Melee never dresses at the enemy: no slots inside 8 tiles of a
+   building, blades never inside 4 of an enemy; a blade on a sieged
+   tank (1.1) never withdraws and the leash never yanks it off.
+   Duel-hold reports HoldingDuel instead of smearing MarchingToSlot.
+   Needs a live wall-in confirming no dress/flap at the breach.
 - StandShoot yields past the band (E1): vs Sunkens/Cannons past 7.25
   with scarabs the hull closes through instead of standing - standing
   at engine range is how the f293 hull died without firing. Needs a
