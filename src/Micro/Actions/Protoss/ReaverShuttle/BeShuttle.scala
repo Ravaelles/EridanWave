@@ -2,6 +2,7 @@ package Micro.Actions.Protoss.ReaverShuttle
 
 import Lifecycle.With
 import Mathematics.Points.Pixel
+import Mathematics.Points.Tile
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.AirFlee
@@ -357,15 +358,63 @@ object BeShuttle extends Action {
 
   /**
    * Duelist ferry (baseless maps only): no bases means no mission and no
-   * army to support, so the loaded pair flies at the nearest known enemy
+   * army to support, so the loaded pair flies at a designated drop spot
    * instead of parking in place - the static-attack unload fires the
    * landing, flee answers the danger. With nothing known, park.
    */
   private def duel(shuttle: FriendlyUnitInfo): Unit = {
-    ReaverShuttlePair.duelTarget(shuttle.pixel).map(target => {
-      shuttle.agent.act("DuelFerry")
-      shuttle.agent.forceTo(target)
-      Commander.move(shuttle)
-    }).getOrElse(park(shuttle))
+    dropSpot(shuttle) match {
+      case Some(spot) =>
+        shuttle.agent.act("DuelDropSpot")
+        shuttle.agent.forceTo(spot)
+        Commander.move(shuttle)
+      case None =>
+        ReaverShuttlePair.duelTarget(shuttle.pixel).map(target => {
+          shuttle.agent.act("DuelFerry")
+          shuttle.agent.forceTo(target)
+          Commander.move(shuttle)
+        }).getOrElse(park(shuttle))
+    }
+  }
+
+  /**
+   * Designated drop (the old ferry flew at the static itself and circled
+   * over it until something died): eight ring points past the drop
+   * berth around the nearest static, each holding the static floor and
+   * the mobile margin, nearest our side wins. The unload order fires on
+   * arrival and the hull walks the last tiles instead of the ride
+   * improvising overhead. Nothing when no static anchors the fight or
+   * every ring point breaks a margin - the old ferry below stays.
+   */
+  private def dropSpot(shuttle: FriendlyUnitInfo): Option[Pixel] = {
+    val static = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && e.unitClass.isStaticDefense))(
+      _.pixelDistanceCenter(shuttle.pixel))
+
+    static.flatMap(s => {
+      val home =
+        if (With.geography.ourBases.nonEmpty) With.geography.ourMain.heart.center
+        else With.geography.home.center
+      val candidates = ReaverDropSpot.ring((s.tile.x.toDouble, s.tile.y.toDouble)).flatMap { case (x, y) =>
+        val tile = Tile(x.round.toInt, y.round.toInt)
+        if ( ! tile.walkable) None
+        else {
+          val px = tile.center
+          val mobileTiles = Maff.minBy(With.units.enemy.view.filter(e =>
+            e.alive && e.likelyStillThere && e.unitClass.isWarrior))(
+            _.pixelDistanceCenter(px))
+            .map(_.pixelDistanceCenter(px) * Maff.inv32)
+            .getOrElse(Double.PositiveInfinity)
+          Some(ReaverDropSpot.Candidate(
+            x,
+            y,
+            px.pixelDistance(s.pixel) * Maff.inv32,
+            mobileTiles,
+            px.pixelDistance(home) * Maff.inv32))
+        }
+      }
+      ReaverDropSpot.pick(candidates).map(c =>
+        Tile(c.xTiles.round.toInt, c.yTiles.round.toInt).center)
+    })
   }
 }

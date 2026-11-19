@@ -71,6 +71,20 @@ blank-line gate per change, commit per unit).
   invisible Dark Templar (stale HP), other recalls untouched. Needs a
   Goon_v_DT re-run confirming the ladder stays quiet without detection.
 
+## Done 2026-11-19 reaver static break (validate live)
+
+- Static hold-to-fire vs Sunkens/Cannons (Atlantis band, 8-frame
+  cadence): inside 7.25 tiles with scarabs and the longer gun the hull
+  holds every eighth frame and re-attacks between holds (release 7.75,
+  per-hull latch); outranged guns keep the back-off. Needs a live
+  Reav&Shut_v_Sunkens2 run confirming StaticHoldFire acts and a scarab
+  launches.
+- Designated pair drop (baseless duels): the loaded ride holds a ring
+  spot 8.5 out from the nearest static (never inside 7.5, 4-tile mobile
+  margin, nearest our side) instead of flying at the static and
+  circling; the unload fires on arrival. Needs the same Sunkens2 run
+  confirming DuelDropSpot acts and the ride never parks over the colony.
+
 ## Parked (explicit orders, do not touch)
 
 - Sunkens2 baseless mission fallback (pair stalls after the first pack
