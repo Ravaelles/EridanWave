@@ -23,6 +23,7 @@ class PvTArbiter extends PvTOpeners {
       armyNormalPriority()
     }
     get(Protoss.DragoonRange)
+    expandWhileContaining()
     if (With.fingerprints.twoFac()) {
       get(2, Protoss.Gateway)
     }
@@ -128,5 +129,18 @@ class PvTArbiter extends PvTOpeners {
     }
     gasLimitCeiling(Math.max(1, miningBases) * 300)
     With.blackboard.monitorBases.set(unitsComplete(Protoss.Observer) > 1 || ! enemyHasShown(Terran.SpiderMine) || ! shouldAttack)
+  }
+
+  /**
+   * Expand while containing: a Terran locked behind his wall cannot
+   * punish a Nexus, so the natural goes down instead of waiting for a
+   * timing that never needs it. Same shape as the PvP fearContain
+   * clause: contain plus a safe path, never blind.
+   */
+  private def expandWhileContaining(): Unit = {
+    if (Tactic.Squads.ContainStatus.now() && With.geography.safeExpansions.nonEmpty) {
+      status("ContainExpand")
+      expandOnce()
+    }
   }
 }

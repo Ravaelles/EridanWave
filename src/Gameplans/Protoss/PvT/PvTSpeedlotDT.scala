@@ -40,6 +40,7 @@ class PvTSpeedlotDT extends GameplanImperative {
     }
     get(2, Protoss.Gateway)
     get(Protoss.TemplarArchives)
+    expandWhileContaining()
     once(2, Protoss.DarkTemplar)
     get(5, Protoss.Gateway)
     get(Protoss.DragoonRange)
@@ -55,5 +56,18 @@ class PvTSpeedlotDT extends GameplanImperative {
     pump(Protoss.Zealot, units(Protoss.Dragoon))
     pump(Protoss.Dragoon)
     pump(Protoss.Zealot)
+  }
+
+  /**
+   * Expand while containing: a Terran locked behind his wall cannot
+   * punish a Nexus, so the natural goes down instead of waiting for a
+   * timing that never needs it. Same shape as the PvP fearContain
+   * clause: contain plus a safe path, never blind.
+   */
+  private def expandWhileContaining(): Unit = {
+    if (Tactic.Squads.ContainStatus.now() && With.geography.safeExpansions.nonEmpty) {
+      status("ContainExpand")
+      expandOnce()
+    }
   }
 }
