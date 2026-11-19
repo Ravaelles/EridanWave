@@ -132,12 +132,34 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
     }
   }
 
+  /**
+   * Sunken wall breaker (user doctrine): three Sunken Colonies start
+   * the Robotics Facility - the first step toward Reavers, without the
+   * Support Bay that Reaver production needs directly. A fourth Colony
+   * finishes the job: Bay plus at most two Reavers, which outrange the
+   * wall instead of trading Dragoons into it. Unconditional on the
+   * composition caps: a known wall is a known wall, not a weight to
+   * tune. The cancel below respects the same count.
+   */
+  def sunkenBreak(static: Int): Unit = {
+    if (static >= 3 && ! have(Protoss.RoboticsFacility)) {
+      status("SunkenBreakRobo")
+      get(Protoss.RoboticsFacility)
+    }
+    if (static >= 4) {
+      status("SunkenBreakReavers")
+      get(Protoss.RoboticsSupportBay)
+      get(2, Protoss.Reaver)
+    }
+  }
+
   def buildTech(): Unit = {
     get(Protoss.Gateway, Protoss.Assimilator, Protoss.CyberneticsCore)
     if (units(Protoss.Gateway) >= 5 || units(IsWorker) > 35) {
       pumpGasPumps()
     }
 
+    sunkenBreak(enemies(Zerg.SunkenColony, Zerg.CreepColony))
     composition.foreach {
       case Goon     => techGoon()
       case Speedlot => techSpeedlot()
@@ -246,7 +268,9 @@ trait PvZReactiveTech extends PvZ1BaseReactiveUtilities {
   }
 
   private def cancelRoboUnlessLurker(): Unit = {
-    if (composition.length <= 1 && ! enemyLurkersLikely) {
+    // Never cancel into a known sunken wall: the break needs the Robo
+    // whether or not lurkers show.
+    if (composition.length <= 1 && ! enemyLurkersLikely && enemies(Zerg.SunkenColony, Zerg.CreepColony) < 3) {
       cancel(Protoss.RoboticsFacility)
     }
   }
