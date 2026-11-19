@@ -22,8 +22,7 @@ class MirrorKiteSuite extends AnyFunSuite with StarEngineSuite {
       val foe = world.nearestFoeOf(me, world.foes, (_, _) => true)
       val inMargin = foe.exists(f => me.dist(f) <= me.rangeAgainst(f) + KiteAway.enemyMarginTiles * 32.0)
       val meleeNear = foe.exists(f => f.kind == Protoss.Zealot && me.dist(f) <= me.rangeAgainst(f) + KiteAway.enemyMarginTiles * 32.0)
-      val wound = (me.maxHp - me.hp).toInt
-      if (foe.isDefined && KiteAway.shouldRetreat(me.hp.toInt, me.lossFraction, me.cooldownLeft, inMargin, meleeNear, wound, 0, me.hp.toInt)) {
+      if (foe.isDefined && KiteAway.shouldRetreat(me.hp.toInt, me.cooldownLeft, inMargin, meleeNear)) {
         val f = foe.get
         val dx = me.x - f.x
         val dy = me.y - f.y

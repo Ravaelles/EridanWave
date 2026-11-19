@@ -15,7 +15,6 @@ class KiteAwayDuelStrategy extends TuningStrategy {
   override def params: Seq[TuneParam] = Seq(
     TuneParam("KiteAway.seriousWoundHp", () => KiteAway.seriousWoundHp.toString, text => KiteAway.seriousWoundHp = text.toDouble.round.toInt, 50, 80, isInt = true),
     TuneParam("KiteAway.criticalWoundHp", () => KiteAway.criticalWoundHp.toString, text => KiteAway.criticalWoundHp = text.toDouble.round.toInt, 10, 40, isInt = true),
-    TuneParam("KiteAway.woundScopeFraction", () => KiteAway.woundScopeFraction.toString, text => KiteAway.woundScopeFraction = text.toDouble, 0.0, 0.2, isInt = false),
     TuneParam("KiteAway.seriousCooldown", () => KiteAway.seriousCooldown.toString, text => KiteAway.seriousCooldown = text.toDouble.round.toInt, 6, 14, isInt = true),
     TuneParam("KiteAway.criticalCooldown", () => KiteAway.criticalCooldown.toString, text => KiteAway.criticalCooldown = text.toDouble.round.toInt, 2, 8, isInt = true),
     TuneParam("KiteAway.mildCooldown", () => KiteAway.mildCooldown.toString, text => KiteAway.mildCooldown = text.toDouble.round.toInt, 10, 20, isInt = true),

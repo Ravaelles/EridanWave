@@ -10,16 +10,14 @@ import Mathematics.Maff
  *
  * A dragoon below ~60 total HP dies within a second to focused fire, and our
  * own TargetScoring (+4.0 * injury) proves the enemy thinks the same way
- * about its targets. So: the more wounded the unit, the deeper it sits, and
- * after firing it pulls back while its weapon cools down - waiting time it
- * pays anyway - instead of standing in range posing. Healthy units hold the
- * mean line (FormationApproach governs them); only wounded ones rotate.
- *
- * Two wound levels (total HP = hit points + shields, as in Atlantis):
- * seriously wounded retreat until almost ready to shoot again, critically
- * wounded until fully ready. Non-zero gates because the dragoon attack
- * animation eats frames either way. Seriously wounded units are also exempt
- * from volley discipline: holding fire while exposed is the worst outcome.
+ * about its targets. So after firing it pulls back while its weapon cools
+ * down - waiting time it pays anyway - instead of standing in range posing.
+ * Melee on top of us always kites while cooling (range abuse, not the duel);
+ * against ranged guns only hulls below the wound line yield, everything
+ * else holds its volleys: a scratch never outweighs a volley in an even
+ * duel. Non-zero cooldown gates because the dragoon attack animation eats
+ * frames either way. Dying hulls are also exempt from volley discipline:
+ * holding fire while exposed is the worst outcome.
  *
  * Pure decisions on numbers so they stay unit-testable without a game;
  * Combat supplies the game-aware seam (health, cooldown, contact).
@@ -40,9 +38,6 @@ object KiteAway {
    * (range abuse, not the volley race).
    */
   var kiteVsRangedHp: Int = 61
-
-  /** Only units more wounded than this rotate; healthy ones hold the line. */
-  var woundScopeFraction: Double = 0.05
 
   /** Seriously wounded withdraw while cooldown exceeds this. */
   var seriousCooldown: Int = 10
@@ -71,32 +66,11 @@ object KiteAway {
   def woundOffsetTiles(injury01: Double): Double =
     Maff.clamp(injury01, 0.0, 1.0) * maxOffsetTiles
 
-  /** Cooldown above which the unit withdraws. None means hold/fire. */
-  def retreatAboveCooldown(totalHealth: Int, woundFraction: Double): Option[Int] = {
-    if (isCriticallyWounded(totalHealth)) Some(criticalCooldown)
-    else if (isSeriouslyWounded(totalHealth)) Some(seriousCooldown)
-    else if (woundFraction > woundScopeFraction) Some(mildCooldown)
-    else None
-  }
-
-  /** Fresh hulls never yield ground, in hit points: a scratch never outweighs a volley. */
-  val freshWoundHp: Int = 14
-
-  /** Healthy hulls hold with this many shields or more: they can pay for the trade. */
-  val healthyShieldHp: Int = 30
-
-  /** Above the pack median: the beating spreads instead of piling onto one hull. */
-  def aboveMedian(totalHp: Int, medianHp: Int): Boolean = totalHp > medianHp
-
   def shouldRetreat(
     totalHealth: Int,
-    woundFraction: Double,
     cooldownLeft: Int,
     enemyInMargin: Boolean,
-    hasMeleeNearby: Boolean,
-    woundPoints: Int,
-    shields: Int,
-    medianHp: Int): Boolean = {
+    hasMeleeNearby: Boolean): Boolean = {
     if ( ! enemyInMargin) return false
     // Melee on top of us always kites while cooling: standing trades
     // volleys for contact we cannot win, so the wound ladder is skipped.

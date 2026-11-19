@@ -73,10 +73,7 @@ object KiteAwayBehavior {
           FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
     val enemyInMargin = squadUnits.exists(u => inMargin(u).nonEmpty)
     val hasMeleeNearby = squadUnits.exists(u => inMargin(u).exists(_.unitClass.melee))
-    val woundPoints = unit.unitClass.maxTotalHealth - unit.totalHealth
-    val packHp = squadUnits.view.filter(u => u.alive && u.unitClass == unit.unitClass).map(_.totalHealth).toSeq
-    val medianHp = Maff.medianOpt(if (packHp.isEmpty) Seq(unit.totalHealth) else packHp).getOrElse(unit.totalHealth)
-    if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.woundPercent(), unit.cooldownLeft, enemyInMargin, hasMeleeNearby, woundPoints, unit.shieldPoints, medianHp)) return false
+    if ( ! KiteAway.shouldRetreat(unit.totalHealth, unit.cooldownLeft, enemyInMargin, hasMeleeNearby)) return false
 
     true
   }
