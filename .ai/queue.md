@@ -124,6 +124,21 @@ blank-line gate per change, commit per unit).
    Needs a live strong-army grind confirming no retreat with no foe.
  - Zealot regroup respects closing enemies: mutual approach meets
    instead of yo-yoing home (3Zeal diagnosis). Needs a 3Zeal re-run.
+ - DT raid leash (user rule): no worker/loner hunts inside 60 ground
+   tiles of the enemy main; duels within 1.1 always allowed. Needs a
+   live DT raid (no UMS map covers it; needs a PvP/PvT with DTs).
+ - Dragoon MineDefuse: detected mines inside 10 tiles die when no
+   answering threat is inside 12. Needs a live PvT with mines.
+ - Vulture cannons: 4+ Vultures double the expo cannons (2 per expo).
+   Needs a live PvT with vulture pressure.
+ - Bank/forward gateways: minerals>800 forces 13 gateways; 3+ bases
+   build forward of the natural-choke line (Distances). Needs a live
+   macro game. Weak PvP holds the natural (ASU<=140 and <10 warriors
+   -> no second base). Needs a live losing PvP.
+ - HT cast owns rejoin: committed spellIntent suppresses
+   ClusterRejoin (no more yo-yo). Artillery keep-off outranks duels
+   (hug keeps the exception, 1-tile release latch). Both need live
+   Templar / sieged-tank games.
 
 ## Session handoff 2026-11-19 ~16:10 (context reset - START HERE)
 
