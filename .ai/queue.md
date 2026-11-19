@@ -60,6 +60,10 @@ blank-line gate per change, commit per unit).
   with PackRegroup 1474x (errors absent). The overwhelming-line release
   rode along - still needs the E_10:27-style grind to confirm the
   394-skim flap is gone.
+- Senior observer sticks to the blade: the first eye follows the enemy
+  Dark Templar nearest our main inside 50 ground tiles (release 56),
+  juniors keep their duties, survival still outranks. Needs a live game
+  with enemy DT plus observer confirming ObserverTemplarFollow acts.
 
 ## Parked (explicit orders, do not touch)
 

@@ -38,6 +38,10 @@ object BeDetector extends Action {
     // blown it holds four tiles off their centroid instead of donating
     // the hull for nothing.
     if (fleeDetected(unit)) return
+    // Templar watch: the senior eye sticks to the enemy blade nearest
+    // our main while one works inside fifty ground tiles of it. Survival
+    // above already claimed guns, so this step only steers a safe eye.
+    if (followTemplar(unit)) return
     // Science Vessels see eleven out: the generic six-tile ring would
     // skim inside the sight ring while the escort still pulls the eye
     // in, so the wider Vessel ring claims before the spread below.
@@ -176,9 +180,43 @@ object BeDetector extends Action {
     } else false
   }
 
-  /** Observer keep-off: never close inside six tiles of an enemy detector; back straight out instead. */
-  private def keepOffDetectors(unit: FriendlyUnitInfo): Boolean = {
+  /**
+   * Templar watch (senior eye only): while an enemy blade - seen or
+   * remembered - works inside fifty ground tiles of our main, the first
+   * observer sticks to the one nearest the main so the army's hunt walks
+   * under coverage. Junior eyes keep their spread; baseless maps anchor
+   * on the start tile like the hunt does.
+   */
+  private def followTemplar(unit: FriendlyUnitInfo): Boolean = {
     if ( ! Protoss.Observer(unit)) return false
+
+    val senior = Maff.minBy(With.units.ours.view.filter(u =>
+      u.alive && Protoss.Observer(u) && u.canMove))(_.id)
+    if ( ! senior.exists(_.id == unit.id)) return false
+
+    val main =
+      if (With.geography.ourBases.nonEmpty) With.geography.ourMain.heart.center
+      else With.geography.home.center
+    val nearest = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && Protoss.DarkTemplar(e)))(
+      _.tile.groundPixels(main))
+    val distTiles = nearest
+      .map(_.tile.groundPixels(main) * Maff.inv32)
+      .getOrElse(Double.PositiveInfinity)
+    if ( ! ObserverTemplarFollow.followLatched(unit.id, distTiles)) return false
+
+    nearest.exists(templar => {
+      val hunt = templar.pixel
+      unit.agent.forceTo(hunt)
+      Commander.move(unit)
+      unit.agent.act("ObserverTemplarFollow")
+
+      true
+    })
+  }
+
+  /** Observer keep-off: never close inside six tiles of an enemy detector; back straight out instead. */
+  private def keepOffDetectors(unit: FriendlyUnitInfo): Boolean = {    if ( ! Protoss.Observer(unit)) return false
 
     // Nearest enemy detector, regardless of id: foe ids carry no seniority.
     val nearest = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isDetector))(unit.pixelDistanceEdge)
