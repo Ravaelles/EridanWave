@@ -14,3 +14,19 @@
   rally and join still reform.
 - Live check: depot chew + SCV snipe + zero Rax picks + no dress
   flap at the breach.
+
+## PvP mission (212f964, needs a live PvP wall-in)
+
+- Detect: 3+ Protoss buildings inside 4 tiles of the enemy natural
+  choke, at or before minute 9. Latched: the mission holds past the
+  entry while 2 stand. Release: 1 or fewer left, or minute 9 over.
+  No enemy natural (baseless UMS) means no mission, ever.
+- Dragoons only: chew the building nearest the cluster centroid
+  (one shared pick, no re-pick flap). Zealots are not claimed -
+  blades have no business chewing into cannons. DTs keep their brain.
+- Wounded hulls hold off: withdraw at 15 wound (shields plus hull),
+  back at 13, or everyone fights at supply >= 180 / minerals >= 1000.
+  Holding hulls act `ProtossWallHold` and let normal logic own them.
+- Chain order in `acquireTarget`: Terran wall-in, then Protoss, then
+  the generic breach fallback. No new movement writer (attack and
+  hold are both exempt legs).

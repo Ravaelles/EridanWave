@@ -12,6 +12,17 @@ Mechanics (all in jar since 16:39 clean build):
   inside 12 tiles kills the whole retreat vote, both phases. Callers
   pass the measured distance; unmeasured call sites keep the old
   behavior. Dying hulls keep their way out by design.
+- Technique terminal (`CombatTechniques`, b8f1c74): the ladder's bare
+  `else Flee` had no enemy check - the march obeyed RetreatAllowed
+  while the technique routed anyway, flapping every few frames with
+  no foe in sight (BetaStar f6945-6978: zero enemy sightings, still
+  Marching<->Retreat). The terminal now reuses the same
+  `RetreatAllowed.forUnit` the march reads, so both phases agree by
+  construction; without permission the frame falls to Walk (the march
+  owns it). Your ASU>=250 instinct already exists as
+  `strongUnitsScore = 250` inside that predicate - it was enforced in
+  one phase only until now. Dying hulls (hp<=35) and known hard
+  counters keep the old Flee.
 
 Origin: BetaStar f8979/f8224 - strong line (ASU 185+/394 skim)
 routing with no foe nearby, Retreat/Retreating flaps. Open band

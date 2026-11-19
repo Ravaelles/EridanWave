@@ -6,10 +6,11 @@ Details live in `details/` - the queue keeps one line per item.
 
 ## Now
 
-- BetaStar rematch RUNNING (GAME_8222603D, clean jar 16:39 with lonely
-  gate): read `Retreating(...)` parens, confirm no rout with no foe
-  inside 12 tiles (see `details/retreat.md`). Then Crona, Terminus.
-- Jar fresh 16:39, slot synced. Tree clean (d274575c6 mirror suites).
+- BetaStar rematch next (jar has the terminal gate + PvP mission):
+  read f6900-7000 for the Marching<->Retreat flap (must be gone) and
+  the `Retreating(...)` parens (see `details/retreat.md`). Then Crona,
+  Terminus; a live PvP wall-in for `details/wall-in.md`.
+- Jar fresh, slot synced. Tree clean (212f964 wall-in mission).
 
 ## Needs a live game (code green, jar includes it)
 
