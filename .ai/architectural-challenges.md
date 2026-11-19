@@ -7,6 +7,13 @@ hysteresis home (rule 14).
 
 ## Open
 
+- Single retreat verdict (continued): the technique terminal gates on
+  `nearestArmedTiles` (anything shooting ground) while the march bus
+  additionally gates on `nearestEnemyWarriorTiles` (lonely rule).
+  Armed-but-not-warrior nearby (cannons, no army) votes retreat on
+  one and hold on the other - the next flap candidate. Unify both
+  call sites on one predicate (needs a ladder game that reaches
+  lone-statics first).
 - Single retreat verdict: `FightOrFlee`, `RetreatVerdict` (+bus),
   `ReengageLatch`, `ClusterPosture` floor, `NoRetreat`, technique
   ladder, march legs all vote retreat separately today and must be
