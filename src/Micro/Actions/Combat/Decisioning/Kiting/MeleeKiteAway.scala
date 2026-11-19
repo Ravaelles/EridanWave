@@ -8,14 +8,23 @@ package Micro.Actions.Combat.Decisioning.Kiting
  * the duel is already lost: slow Zerglings in reach (they surround a
  * standing blade but cannot catch a yielding one), more enemy Zealots
  * than us around, or a hull under a third health still swinging at
- * melee. Upgraded speedlings are never yielded to: outrun and outnumbered,
- * the blade stands and swings instead of donating its back. Pure flags
- * for the suite; the behavior reads the band and the duel.
+ * melee. Upgraded speedlings are only yielded to as a pack: alone a
+ * blade cannot outrun them, so it stands and swings instead of
+ * donating its back - but a balled line kites together, sharing the
+ * beating instead of splitting apart. Pure flags for the suite; the
+ * behavior reads the band and the duel.
  */
 object MeleeKiteAway {
 
   /** A hull at or below this many hit points is fighting on borrowed time. */
   val woundHp: Int = 60
+
+  /**
+   * Kite with speedlings only inside this of a zealot mate, in tiles:
+   * shoulder-to-shoulder is the tightest a ball gets, so this is the
+   * intact-pack band - wider means the line already split.
+   */
+  val packKiteTiles: Double = 1.0
 
   /**
    * Blades need no formation to yield: melee never holds formation
@@ -30,10 +39,13 @@ object MeleeKiteAway {
     totalHp: Int,
     coolingDown: Boolean,
     hasSlowLingNearby: Boolean,
+    hasSpeedlingNearby: Boolean,
+    packIntact: Boolean,
     outnumberedByZealots: Boolean,
     attackingMelee: Boolean): Boolean =
     coolingDown && (
       hasSlowLingNearby ||
+        (hasSpeedlingNearby && packIntact) ||
         outnumberedByZealots ||
         (totalHp <= woundHp && attackingMelee))
 }

@@ -6,7 +6,7 @@ import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldT
 import Micro.Agency.Commander
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Utilities.UnitFilters.IsSlowling
+import Utilities.UnitFilters.{IsSlowling, IsSpeedling}
 
 /**
  * Kite behavior (was CombatEngagement.kiteAway): wounded units yield ground
@@ -96,6 +96,10 @@ object KiteAwayBehavior {
       totalHp = unit.totalHealth,
       coolingDown = unit.cooldownLeft > 0,
       hasSlowLingNearby = unit.matchups.threatsInPixels(marginPixels).exists(IsSlowling),
+      hasSpeedlingNearby = unit.matchups.threatsInPixels(marginPixels).exists(IsSpeedling),
+      packIntact = Maff.minBy(unit.matchups.allies.view.filter(a =>
+        a.alive && Protoss.Zealot(a) && a.id != unit.id))(_.pixelDistanceCenter(unit.pixel))
+        .exists(mate => unit.pixelDistanceCenter(mate.pixel) * Maff.inv32 <= MeleeKiteAway.packKiteTiles),
       outnumberedByZealots = foeZealots > mates + 1,
       attackingMelee = unit.matchups.targetNearest.exists(_.unitClass.melee))
   }
