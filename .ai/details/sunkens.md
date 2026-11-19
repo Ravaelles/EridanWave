@@ -1,17 +1,15 @@
 # Sunkens / reaver pair
 
 - Map fixed by the owner (19:28): the Reaver starts in range to
-  fight. Remaining code side: the Lurker standoff.
-- Lurker keep-off bends for loaded Reavers (`AvoidLurkers`,
-  7.05 tiles with >= 1 scarab, full 8.0 otherwise): spines stop at
-  six tiles and the Reaver outranges them, so an armed hull walks
-  to firing distance instead of milling outside. Empty hulls keep
-  the dodge.
-- Reaver special picks (doctrine override, pre-`Target`): vs Zerg
-  the nearest detected Lurker, vs Protoss the nearest Dark Templar
-  (`ReaverTargets.check` in `acquireTarget`, needs scarabs and a
-  hull on its own feet; player records stay empty on UMS so the
-  race reads off seen units).
+  fight. Lurker standoff (7.05 tiles with >= 1 scarab) and Reaver
+  special picks (nearest detected Lurker vs Zerg, Dark Templar vs
+  Protoss) are built.
+- Validation 20261119_203155 (fixed map): the pick fires (155
+  ReaverTargets rows), the hull duels the Lurker to f1843, then
+  dies dry - last scarab built f1056, 8/8 timeout. Remaining gap:
+  the duel chases the Lurker inside static cover instead of
+  shelling from 8. Proposal: hold lurker duels at scarab range,
+  never close under guns (awaits owner call).
 - Sunkens2 is an ammo wall, not micro: the hull starts 5 scarabs,
   fires exactly 5, builds none (0 minerals, no income). ~500 damage
   cannot clear 3 sunkens plus lings (~970 HP). Needs a map fix
