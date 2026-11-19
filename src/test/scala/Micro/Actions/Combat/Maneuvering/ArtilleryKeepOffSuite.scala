@@ -18,6 +18,14 @@ class ArtilleryKeepOffSuite extends AnyFunSuite {
     assert( ! ArtilleryKeepOff.shouldYield(14.8, 1.0))
   }
 
+  test("the yield latches a tile past the line before the duel resumes") {
+    val id = 424242
+    assert(ArtilleryKeepOff.yieldLatched(id, distTiles = 12.7, wound01 = 0.0))
+    assert(ArtilleryKeepOff.yieldLatched(id, distTiles = 13.5, wound01 = 0.0))
+    assert( ! ArtilleryKeepOff.yieldLatched(id, distTiles = 13.9, wound01 = 0.0))
+    assert( ! ArtilleryKeepOff.yieldLatched(id, distTiles = 13.5, wound01 = 0.0))
+  }
+
   test("the fallback steps one tile past the line") {
     val own = Pixel(800, 500)
     val threat = Pixel(800, 500 - 10 * 32)
