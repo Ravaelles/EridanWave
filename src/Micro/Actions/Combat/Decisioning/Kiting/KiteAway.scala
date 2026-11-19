@@ -70,8 +70,37 @@ object KiteAway {
     else None
   }
 
-  def shouldRetreat(totalHealth: Int, woundFraction: Double, cooldownLeft: Int, enemyInMargin: Boolean): Boolean =
-    enemyInMargin && retreatAboveCooldown(totalHealth, woundFraction).exists(cooldownLeft > _)
+  /** Fresh hulls never yield ground, in hit points: a scratch never outweighs a volley. */
+  val freshWoundHp: Int = 14
+
+  /** Healthy hulls hold with this many shields or more: they can pay for the trade. */
+  val healthyShieldHp: Int = 30
+
+  /** Above the pack median: the beating spreads instead of piling onto one hull. */
+  def aboveMedian(totalHp: Int, medianHp: Int): Boolean = totalHp > medianHp
+
+  def shouldRetreat(
+    totalHealth: Int,
+    woundFraction: Double,
+    cooldownLeft: Int,
+    enemyInMargin: Boolean,
+    hasMeleeNearby: Boolean,
+    woundPoints: Int,
+    shields: Int,
+    medianHp: Int): Boolean = {
+    if ( ! enemyInMargin) return false
+    // Melee on top of us always kites while cooling: standing trades
+    // volleys for contact we cannot win, so the wound ladder is skipped.
+    if (hasMeleeNearby) return cooldownLeft > mildCooldown
+    // Fresh hulls hold the line: the volley outvalues a scratch.
+    if (woundPoints <= freshWoundHp) return false
+    // Healthy hulls above the pack median hold and shoot: they can
+    // afford the trade, and retreating them donates the beating to
+    // the wounded instead of sharing it.
+    if (shields >= healthyShieldHp && aboveMedian(totalHealth, medianHp)) return false
+
+    retreatAboveCooldown(totalHealth, woundFraction).exists(cooldownLeft > _)
+  }
 
   /** Wounded units never hold fire for the volley while exposed. */
   def exemptFromVolley(totalHealth: Int): Boolean = isSeriouslyWounded(totalHealth)

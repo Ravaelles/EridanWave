@@ -30,21 +30,51 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.woundOffsetTiles(1.0) == KiteAway.maxOffsetTiles)
   }
 
+  private def retreat(
+    totalHealth: Int,
+    woundFraction: Double,
+    cooldownLeft: Int,
+    enemyInMargin: Boolean = true,
+    hasMeleeNearby: Boolean = false,
+    woundPoints: Int = 100,
+    shields: Int = 0,
+    medianHp: Int = Int.MaxValue): Boolean =
+    KiteAway.shouldRetreat(totalHealth, woundFraction, cooldownLeft, enemyInMargin, hasMeleeNearby, woundPoints, shields, medianHp)
+
   test("critical retreats until nearly ready, serious until almost ready") {
-    assert(KiteAway.shouldRetreat(totalHealth = 20, woundFraction = 0.9, cooldownLeft = 5, enemyInMargin = true))
-    assert( ! KiteAway.shouldRetreat(totalHealth = 20, woundFraction = 0.9, cooldownLeft = 4, enemyInMargin = true))
-    assert(KiteAway.shouldRetreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 11, enemyInMargin = true))
-    assert( ! KiteAway.shouldRetreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 10, enemyInMargin = true))
+    assert(retreat(totalHealth = 20, woundFraction = 0.9, cooldownLeft = 5))
+    assert( ! retreat(totalHealth = 20, woundFraction = 0.9, cooldownLeft = 4))
+    assert(retreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 11))
+    assert( ! retreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 10))
   }
 
   test("mildly wounded rotate on high cooldown, healthy hold") {
-    assert(KiteAway.shouldRetreat(totalHealth = 120, woundFraction = 0.3, cooldownLeft = 16, enemyInMargin = true))
-    assert( ! KiteAway.shouldRetreat(totalHealth = 120, woundFraction = 0.3, cooldownLeft = 15, enemyInMargin = true))
-    assert( ! KiteAway.shouldRetreat(totalHealth = 170, woundFraction = 0.04, cooldownLeft = 22, enemyInMargin = true))
+    assert(retreat(totalHealth = 120, woundFraction = 0.3, cooldownLeft = 16))
+    assert( ! retreat(totalHealth = 120, woundFraction = 0.3, cooldownLeft = 15))
+    assert( ! retreat(totalHealth = 170, woundFraction = 0.04, cooldownLeft = 22))
   }
 
   test("no retreat without an enemy pressing with margin") {
-    assert( ! KiteAway.shouldRetreat(totalHealth = 20, woundFraction = 0.9, cooldownLeft = 22, enemyInMargin = false))
+    assert( ! retreat(totalHealth = 20, woundFraction = 0.9, cooldownLeft = 22, enemyInMargin = false))
+  }
+
+  test("melee on top always kites while cooling, at any health") {
+    assert(retreat(totalHealth = 180, woundFraction = 0.0, cooldownLeft = 20, hasMeleeNearby = true, woundPoints = 0, shields = 80, medianHp = 180))
+    assert( ! retreat(totalHealth = 180, woundFraction = 0.0, cooldownLeft = 15, hasMeleeNearby = true, woundPoints = 0, shields = 80, medianHp = 180))
+    assert( ! retreat(totalHealth = 180, woundFraction = 0.0, cooldownLeft = 0, hasMeleeNearby = true, woundPoints = 0))
+  }
+
+  test("fresh hulls hold the line without melee around") {
+    assert( ! retreat(totalHealth = 170, woundFraction = 0.04, cooldownLeft = 22, woundPoints = 10))
+    assert( ! retreat(totalHealth = 166, woundFraction = 0.08, cooldownLeft = 22, woundPoints = 14))
+    assert(retreat(totalHealth = 165, woundFraction = 0.08, cooldownLeft = 22, woundPoints = 15))
+  }
+
+  test("a shielded hull above the pack median holds and shoots") {
+    assert( ! retreat(totalHealth = 170, woundFraction = 0.2, cooldownLeft = 22, woundPoints = 30, shields = 30, medianHp = 150))
+    assert(retreat(totalHealth = 170, woundFraction = 0.2, cooldownLeft = 22, woundPoints = 30, shields = 29, medianHp = 150))
+    assert(retreat(totalHealth = 140, woundFraction = 0.3, cooldownLeft = 22, woundPoints = 40, shields = 60, medianHp = 150))
+    assert( ! retreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 11, woundPoints = 120, shields = 40, medianHp = 50))
   }
 
   test("seriously wounded skip volley discipline") {
