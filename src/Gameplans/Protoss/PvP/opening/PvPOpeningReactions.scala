@@ -183,6 +183,15 @@ trait PvPOpeningReactions { self: PvPOpening =>
       getReavers      ||= ! getObservatory && ! have(Protoss.Observatory) && ! Gameplans.Protoss.PvP.MirrorGoonTech.skipReavers(
         enemyStrategy(With.fingerprints.fourGateGoon),
         enemyStrategy(With.fingerprints.threeGateGoon))
+      // Dragoons before Reavers: below fifteen Dragoons with no known
+      // enemy Photon Cannon the gas stays on gates and goons instead of
+      // a Bay the army cannot cover and a hull with no wall to break.
+      // Reavers answer static play; without a scouted Cannon and without
+      // a pack to escort them they trade gas for nothing.
+      if (getReavers && units(Protoss.Dragoon) < 15 && ! enemyHasShown(Protoss.PhotonCannon)) {
+        getReavers = false
+        status(true, "DragoonsBeforeReavers")
+      }
       if ( ! have(Protoss.Shuttle, Protoss.RoboticsSupportBay, Protoss.Observatory)) {
         shuttleFirst = getReavers && ! enemyCitadel && ! With.fingerprints.cannonRush()
       }
