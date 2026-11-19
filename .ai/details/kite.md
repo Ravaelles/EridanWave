@@ -27,13 +27,17 @@
   1DragHydra, 3Zeal, 2DragUpg, 10Zeal, 1DragWounded all VICTORY;
   single losses on 1Zeal/10Zeal/3Drag re-ran to wins (variance, not
   the veto). 16v16 flips W/L (even duel); 3Drag coin-flip.
-- Next: early formation dress (user plan) - dress far, wait ~5 tiles
-  out, micro-nudges forward. PvP-only (vs Protoss reavers it feeds).
-  BUILT (d686ff703): `MarchDress.holdFarWait` latch (fires at five
-  out, holds through the creep, releases on contact or past six;
-  warriors only, UMS mirrors, never under reavers) + creep 0.15
-  tiles every 24f in `marchLegs`. Outranks memory duels (d5cdffa1d);
-  race read off seen units (8055e88ed).
+- Zealot ball (built 574d2bb11, REVERTED e71d56d09): zero fires
+  in four games (2Zeal x2, ZealDrag x2) - packs already hold
+  shoulder-to-shoulder, deaths land 2 tiles apart. Verification
+  stands (kite fires, formation holds); the mechanism was dead code.
+  Melee shared pick remains the unbuilt lever for 2v6.
+- Far dress-and-wait (d686ff703): `MarchDress.holdFarWait` latch
+  (fires at five out, holds through the creep, releases on contact
+  or past six; warriors only, UMS mirrors, never under reavers) +
+  creep 0.15 tiles every 24f in `marchLegs`. Outranks memory duels
+  (d5cdffa1d); race read off seen units (8055e88ed). Fires
+  hundreds of rows on 14v16; fights competitive since.
 - 1Drag gun dither (revised): was 0 kills x4 with Move/Attack
   alternating ~10f; post-kite61 won twice (f398, f398) by planting
   and trading instead of mild-kite dithering. Verdict: the mild
