@@ -10,8 +10,9 @@ class ZealotPackSuite extends AnyFunSuite {
     mateTiles: Double = Double.PositiveInfinity,
     usSkim: Double = 0.0,
     foeSkim: Double = 0.0,
-    inContact: Boolean = false): Boolean =
-    ZealotPack.shouldRegroup(onlyZealots, zealots, mateTiles, usSkim, foeSkim, inContact)
+    inContact: Boolean = false,
+    enemyClosing: Boolean = false): Boolean =
+    ZealotPack.shouldRegroup(onlyZealots, zealots, mateTiles, usSkim, foeSkim, inContact, enemyClosing)
 
   test("a lone hull of a small zealot ball returns to the centroid") {
     assert(regroup())
@@ -33,6 +34,11 @@ class ZealotPackSuite extends AnyFunSuite {
     assert( ! regroup(inContact = true))
     assert( ! regroup(mateTiles = 5.0, inContact = true))
     assert(regroup(mateTiles = 5.0, inContact = false))
+  }
+
+  test("a closing enemy is contact: mutual approach meets, never regroups") {
+    assert( ! regroup(mateTiles = 5.0, enemyClosing = true))
+    assert(regroup(mateTiles = 5.0, enemyClosing = false))
   }
 
   test("a two-to-one local edge fights instead of regrouping") {

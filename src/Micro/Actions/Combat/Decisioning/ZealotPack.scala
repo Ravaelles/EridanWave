@@ -27,8 +27,10 @@ object ZealotPack {
     mateTiles: Double,
     usSkim: Double,
     foeSkim: Double,
-    inContact: Boolean): Boolean =
+    inContact: Boolean,
+    enemyClosing: Boolean = false): Boolean =
     ! inContact &&
+      ! enemyClosing &&
       onlyZealots &&
       zealots < packSize &&
       mateTiles > packTiles &&

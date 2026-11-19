@@ -168,6 +168,11 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     // charges into the fight, and dragging fighters back out reverses
     // it - the duel owns the frame while the gun or the enemy is hot.
     val inContact = unit.matchups.targetsInRange.nonEmpty || unit.matchups.engagedUpon
+    // Closing enemies are contact too: a mutual approach is a joined
+    // fight, and regrouping home through it feeds the pack piecemeal.
+    // A camping enemy still lets the lone hull walk home.
+    val enemyClosing = unit.matchups.threats.exists(t =>
+      t.unitClass.isWarrior && (t.presumptiveTarget.contains(unit) || t.speedApproaching(unit) > 0))
     if (inContact) return false
 
     val warriors = With.units.ours.view.filter(u => u.alive && u.unitClass.isWarrior).take(ZealotPack.packSize + 1).toSeq
@@ -186,7 +191,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     val (usSkim, foeSkim) = unit.combatForecast
       .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
       .getOrElse((0.0, 0.0))
-    if ( ! ZealotPack.shouldRegroup(onlyZealots = true, warriors.size, mateTiles, usSkim, foeSkim, inContact)) return false
+    if ( ! ZealotPack.shouldRegroup(onlyZealots = true, warriors.size, mateTiles, usSkim, foeSkim, inContact, enemyClosing)) return false
 
     unit.agent.act("PackRegroup")
     unit.agent.forceTo(centroid)
