@@ -76,7 +76,8 @@ object RetreatVerdict extends PerGame {
     if (total <= 0) return reason
 
     val us = Math.round(10 * usSkim / total) * 10
-    f"$reason $us%.0fvs${100 - us}%.0f"
+    val shares = f"$us%.0fvs${100 - us}%.0f"
+    if (reason.isEmpty) shares else s"$reason $shares"
   }
 
   /** Held verdict both readers obey: sharp enter, timed release. */

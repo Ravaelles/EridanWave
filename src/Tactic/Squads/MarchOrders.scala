@@ -85,7 +85,17 @@ object MarchOrders {
     val returning = ! marching && ! holdShuttle && unit.matchups.enemies.exists(e =>
       e.likelyStillThere && MarchDress.enemyNear(unit.pixelDistanceEdge(e) * Maff.inv32))
     val marchHome = ?(marching || holdShuttle, marchLabel, ?(returning, MarchLabel.ReturningToSlot, MarchLabel.MarchingHome))
-    Debugging.CherryVis.CherryVis.decision(unit.id, marchHome.label)
+    // Retreats carry their reason in parens on the visible march label:
+    // a stronger army routing with no enemy in front reads what it
+    // voted and at what odds, instead of a bare Retreating.
+    val marchReason =
+      if (marchHome == MarchLabel.Retreating)
+        "Retreating(" + RetreatVerdict.retreatLabel(
+          unit.agent.fightReason,
+          With.battles.globalAttack.us.skimStrengthUnits,
+          With.battles.globalAttack.enemy.skimStrengthUnits) + ")"
+      else marchHome.label
+    Debugging.CherryVis.CherryVis.decision(unit.id, marchReason)
     Debugging.Probe.note("March", unit.id,
       f"$marchHome terminus=${terminus.tx},${terminus.ty}")
     unit.intend(squad)
