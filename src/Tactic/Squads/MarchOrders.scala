@@ -154,7 +154,9 @@ object MarchOrders {
         facts.armyUnitsScore,
         marchUnit.nearestArmedTiles,
         facts.proxyRush,
-        MacroFacts.enemyHardCounterKnown),
+        MacroFacts.enemyHardCounterKnown,
+        Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
+          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)),
       With.frame)
     // An overwhelming line marches instead of going home: the same
     // release that frees the technique owns the march, or the two

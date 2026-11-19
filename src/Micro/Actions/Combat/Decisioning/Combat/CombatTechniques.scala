@@ -56,7 +56,9 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
           .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
         With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax(),
-        MacroFacts.enemyHardCounterKnown),
+        MacroFacts.enemyHardCounterKnown,
+        Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
+          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)),
       With.frame)
     // Overwhelming line never routs: when the unit's own squad votes to
     // fight from a clearly superior skim, a latched personal retreat

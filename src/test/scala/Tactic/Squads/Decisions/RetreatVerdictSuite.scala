@@ -14,7 +14,8 @@ class RetreatVerdictSuite extends AnyFunSuite {
     unitsScore: Double = 100.0,
     nearestArmedTiles: Double = 40.0,
     proxyRush: Boolean = false,
-    hardCounterKnown: Boolean = false): Boolean =
+    hardCounterKnown: Boolean = false,
+    nearestFoeWarriorTiles: Double = 0.0): Boolean =
     RetreatVerdict.shouldHold(
       isWarrior,
       isReaver,
@@ -25,7 +26,8 @@ class RetreatVerdictSuite extends AnyFunSuite {
       unitsScore,
       nearestArmedTiles,
       proxyRush,
-      hardCounterKnown)
+      hardCounterKnown,
+      nearestFoeWarriorTiles)
 
   test("retreat labels carry the reason plus both skim shares in tens") {
     assert(RetreatVerdict.retreatLabel("OutOfContact", 80.0, 20.0) == "OutOfContact 80vs20")
@@ -104,5 +106,15 @@ class RetreatVerdictSuite extends AnyFunSuite {
     RetreatVerdict.update(id = 7, rawHold = true, frame = 100)
     RetreatVerdict.reset()
     assert( ! RetreatVerdict.held(id = 7, frame = 100))
+  }
+
+  test("no enemy warriors inside twelve tiles means no retreat, ever") {
+    assert(RetreatVerdict.lonely(12.01))
+    assert( ! RetreatVerdict.lonely(12.0))
+    assert( ! RetreatVerdict.lonely(0.0))
+    assert(hold(nearestFoeWarriorTiles = 12.0))
+    assert( ! hold(nearestFoeWarriorTiles = 12.01))
+    assert( ! hold(nearestFoeWarriorTiles = 100.0))
+    assert(hold(nearestFoeWarriorTiles = 11.9))
   }
 }

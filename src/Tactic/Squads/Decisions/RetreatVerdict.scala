@@ -25,11 +25,23 @@ object RetreatVerdict extends PerGame {
   val holdFrames: Int = 24
 
   /**
+   * No enemy warriors inside this, in tiles, and there is nothing to
+   * retreat from: the vote stays fight no matter what the skirmish
+   * verdict just said, so Reinforcements marching through empty ground
+   * never route on fog flicker or stale news.
+   */
+  val lonelyTiles: Double = 12.0
+
+  def lonely(nearestEnemyWarriorTiles: Double): Boolean =
+    nearestEnemyWarriorTiles > lonelyTiles
+
+  /**
    * Unified verdict (pure numbers for the suite): a warrior that may flee,
    * holds no storm cast, lost the skirmish verdict and may retreat, holds
-   * the retreat. Matches the march arm where the arms agree; where they
-   * differ (committed hulls, casting Templars) it sides with the technique
-   * arm and the disagreement probes out against the march label.
+   * the retreat - unless no enemy warrior is near enough to run from.
+   * Matches the march arm where the arms agree; where they differ
+   * (committed hulls, casting Templars) it sides with the technique arm
+   * and the disagreement probes out against the march label.
    */
   def shouldHold(
     isWarrior: Boolean,
@@ -41,12 +53,14 @@ object RetreatVerdict extends PerGame {
     unitsScore: Double,
     nearestArmedTiles: Double,
     proxyRush: Boolean,
-    hardCounterKnown: Boolean): Boolean =
+    hardCounterKnown: Boolean,
+    nearestEnemyWarriorTiles: Double = 0.0): Boolean =
     isWarrior &&
       ! isReaver &&
       canFlee &&
       ! stormHold &&
       ! shouldFight &&
+      ! lonely(nearestEnemyWarriorTiles) &&
       RetreatAllowed.forUnit(totalHp, unitsScore, nearestArmedTiles, proxyRush, hardCounterKnown)
 
   private val lastRaw = new mutable.HashMap[Int, Boolean]()
