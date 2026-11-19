@@ -13,6 +13,8 @@ object Distances {
 
   private var key: String = ""
   private var naturalChokeToMainTiles: Double = 0.0
+  private var enemyKey: String = ""
+  private var naturalChokeToEnemyTiles: Double = 0.0
 
   /**
    * Natural choke to our main base, in tiles: the radius inside which a
@@ -33,5 +35,24 @@ object Distances {
         .getOrElse(0.0)
     }
     naturalChokeToMainTiles
+  }
+
+  /**
+   * Natural choke to the enemy base, in tiles: the line inside which
+   * reinforcements stand their own ground. Scouted main when known,
+   * enemy start otherwise - the key re-measures on discovery the same
+   * way the main-side read re-measures on spawn. Unknown layouts read
+   * zero and disable every gate on it instead of guessing.
+   */
+  def naturalChokeToEnemyBase(): Double = {
+    val known = With.scouting.enemyMain.isDefined
+    val now = With.mapFileName + "@" + With.self.startTile.toString + "@" + known
+    if (now != enemyKey) {
+      enemyKey = now
+      val enemyPx = With.scouting.enemyMain.map(_.heart.center).getOrElse(With.scouting.enemyHome.center)
+      naturalChokeToEnemyTiles = Chokes.naturalChoke.map(choke =>
+        choke.pixelCenter.groundPixels(enemyPx) * Maff.inv32).getOrElse(0.0)
+    }
+    naturalChokeToEnemyTiles
   }
 }

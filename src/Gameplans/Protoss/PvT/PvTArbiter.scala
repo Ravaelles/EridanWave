@@ -1,5 +1,6 @@
 package Gameplans.Protoss.PvT
 
+import Information.Geography.Distances
 import Lifecycle.With
 import Placement.Access.PlacementQuery
 import ProxyBwapi.Races.{Protoss, Terran}
@@ -90,6 +91,25 @@ class PvTArbiter extends PvTOpeners {
           get(    count, Protoss.Pylon,   new PlacementQuery(Protoss.Pylon).requireBase(base))
           get(3 * count, Protoss.Gateway, new PlacementQuery(Protoss.Gateway).requireBase(base))
         }))
+
+    // Banked minerals become gates: above the stockpile the line can
+    // afford the production to spend it, thirteen hulls at a time.
+    if (ForwardGateways.shouldBankGates(With.self.minerals)) {
+      status("BankGateways")
+      get(ForwardGateways.minGateways, Protoss.Gateway)
+    }
+    // Forward gates with three bases: reinforce closer to the enemy
+    // than our own natural choke sits, so the walk to the fight
+    // shrinks instead of commuting the whole map.
+    if (ForwardGateways.shouldBuildForward(With.geography.ourBases.size)) {
+      val enemyPx = With.scouting.enemyMain.map(_.heart.center).getOrElse(With.scouting.enemyHome.center)
+      val chokeToEnemy = Distances.naturalChokeToEnemyBase()
+      With.geography.ourMiningBases
+        .filter(base => ForwardGateways.isForward(
+          base.heart.center.groundPixels(enemyPx) * Mathematics.Maff.inv32,
+          chokeToEnemy))
+        .foreach(base => get(2, Protoss.Gateway, new PlacementQuery(Protoss.Gateway).requireBase(base)))
+    }
 
     ///////////////
     // Attacking //
