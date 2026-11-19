@@ -34,6 +34,7 @@ object JudgmentModifiers {
     //add("Gatherers",    Colors.MediumBlue,    gatherers(battle))
     add("HiddenTanks",  Colors.MediumIndigo,  hiddenTanks(battle))
     add("Choke",        Colors.MediumOrange,  choke(battle))
+    add("TankChoke",    Colors.MediumRed,     tankChoke(battle))
     //add("TankLock",     Colors.MediumRed,     tankLock(battle))
     add("Caught",       Colors.BrightGreen,   caught(battle))
     add("Hysteresis",   Colors.MediumViolet,  hysteresis(battle))
@@ -121,6 +122,29 @@ object JudgmentModifiers {
     val speedMultiplier = 1 - battle.us.combatGroundFraction + battle.us.combatGroundFraction * Maff.nanToOne(1.0 / badness)
     val targetDelta     = battle.us.combatGroundFraction * Maff.clamp((badness - 1) * 0.0175, 0.0, 0.3)
     Some(JudgmentModifier(speedMultiplier = speedMultiplier, targetDelta = targetDelta))
+  }
+
+  // Avoid pushing a choke covered by siege tanks: our centroid inside
+  // eight tiles of the lane with sieged guns inside twenty fights the
+  // verdict bar hiked - shells across a lane are the number one army
+  // killer. Unlike the choke modifier this is verdict-only, so it stays
+  // on regardless of the collision sim.
+  def tankChoke(battle: Battle): Option[JudgmentModifier] = {
+    if ( ! With.enemies.exists(_.isTerran)) return None
+    val tanks = battle.enemy.units.filter(e => e.alive && Terran.SiegeTankSieged(e))
+    if (tanks.isEmpty) return None
+
+    val centroid = battle.us.attackCentroidGround
+    val tankDistTiles = tanks.view
+      .map(_.pixelDistanceCenter(centroid) / 32.0)
+      .reduceOption(_ min _)
+      .getOrElse(Double.PositiveInfinity)
+    val chokeDistTiles = battle.choke
+      .map(edge => centroid.pixelDistance(edge.pixelCenter) / 32.0)
+      .getOrElse(Double.PositiveInfinity)
+    if ( ! TankChokePenalty.shouldPenalize(tankDistTiles, chokeDistTiles)) return None
+
+    modifyTarget(TankChokePenalty.penaltyDelta)
   }
 
   // Prefer fighting tanks when we are already in range to attack them, or vice versa
