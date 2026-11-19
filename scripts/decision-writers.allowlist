@@ -11,6 +11,7 @@ src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/KiteAwayBehavior.scala :: 
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/NearestShot.scala :: .attack(unit, target)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/ScoutStaticKeepOff.scala :: .attack(unit, target.get)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/ScoutStaticKeepOff.scala :: .forceTo(Pixel(hx.toInt, hy.toInt).walkablePixel)
+src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/StaticStandoffBehavior.scala :: .decision.set(StaticStandoff.backoff(unit.pixel, gun.pixel).walkablePixel)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/TankHugBehavior.scala :: .attack(unit, tank.get)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/TankHugBehavior.scala :: .move(unit, tank.get.pixel)
 src/Micro/Actions/Combat/Decisioning/Combat/CombatEngagement.scala :: .forceTo(anchor.get.pixel)
