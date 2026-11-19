@@ -24,7 +24,11 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 object FocusFire {
 
   /** Fewer shooters than this can't delete a unit in one volley. */
-  val minShooters: Int = 4
+  val minShooters: Int = 3
+
+  /** Enough guns to make a shared target worth it: three delete while two mill. */
+  def enoughShooters(shooterCount: Int): Boolean =
+    shooterCount >= minShooters
 
   /** Fewer reachable targets than this and there is no line to spread over. */
   val minTargets: Int = 3
@@ -71,7 +75,7 @@ object FocusFire {
     if ( ! squad.engagedUpon && ! squad.engagingOn) return None
 
     val shooters = squad.attackers.filter(s => s.unitClass.canAttack && ! s.unitClass.melee)
-    if (shooters.size < minShooters) return None
+    if ( ! enoughShooters(shooters.size)) return None
 
     val targets = squad.battleEnemies
       .filter(t => t.alive && ! t.unitClass.isBuilding)

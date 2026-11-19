@@ -55,4 +55,10 @@ class FocusFireSuite extends AnyFunSuite {
     // No damage still means no kill.
     assert(FocusFire.volleysToKill(120.0, Seq(0)) == Int.MaxValue)
   }
+
+  test("three guns share a target, two mill alone") {
+    assert( ! FocusFire.enoughShooters(2))
+    assert(FocusFire.enoughShooters(3))
+    assert(FocusFire.enoughShooters(14))
+  }
 }
