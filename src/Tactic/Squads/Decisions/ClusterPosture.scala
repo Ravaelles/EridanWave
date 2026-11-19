@@ -52,8 +52,11 @@ object ClusterPosture {
    * Next posture (pure numbers for the suite): the caller penalizes the
    * advantage through RetreatDiscipline first, so a fresh wound reads
    * weaker than the sim claims without this kernel knowing about frames.
-   * Baseless maps never withdraw: with nowhere to regroup to, contact
-   * means closing, not holding - mirroring the stance's ums-duel rule.
+   * Baseless maps never withdraw, but they may hold: with nowhere to
+   * regroup to, contact reads the same band as everywhere else - an
+   * even or losing line holds instead of charging into a superior one.
+   * Calm still regroups: with no contact there is nothing to hold
+   * against, so the line dresses out instead of posing.
    * A forbidden retreat (RetreatAllowed) skips everything and reads the
    * band straight away: no floor to sit, no agreement to wait for.
    */
@@ -70,7 +73,7 @@ object ClusterPosture {
 
     if (coverageFraction < minimumCoverage) return current
 
-    if ( ! canWithdraw) return if (inContact) Fight else Regroup
+    if ( ! canWithdraw) return if (inContact) band(current, advantageRatio, inContact) else Regroup
 
     if (current == Withdraw) {
       if (RetreatDiscipline.shouldHoldWithdraw(framesSinceWithdraw)) return Withdraw
