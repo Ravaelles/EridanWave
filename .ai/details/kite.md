@@ -8,6 +8,11 @@
   volleys (StarEngine `OutnumberedKiteSuite` 3/3: symmetric movement
   trades symmetric kills; focus-kite 12 kills vs focus-plant 14 down
   two guns).
+- Melee kites only slow lings (27149e81c): speedlings are stood up
+  to (`IsSlowling` seam, kernel param `hasSlowLingNearby`). 2Zeal
+  kills 3->5 with dying-hull kites only; 1Zeal control still
+  VICTORY. 2Zeal parked hard (2v6 upgraded needs a melee shared
+  pick - unbuilt).
 - UMS death log (`DeathWatch.watches`, 68e8ab9f3): on micro maps
   every warrior death dumps frame, unit and last orders
   (`DEATHWATCH ... died f...`); ladder keeps the quiet set
@@ -25,3 +30,7 @@
   warriors only, UMS mirrors, never under reavers) + creep 0.15
   tiles every 24f in `marchLegs`. Outranks memory duels (d5cdffa1d);
   race read off seen units (8055e88ed).
+- 1Drag gun dither (open): Move/Attack orders alternate every ~10f,
+  0 kills in 4 games. `AttackDelay.safeToIssueOrder` gates Agency
+  orders, but the duel legs re-issue through `Commander`/maneuvers -
+  verify the path before touching it.
