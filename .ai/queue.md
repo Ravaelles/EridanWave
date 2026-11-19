@@ -124,6 +124,100 @@ blank-line gate per change, commit per unit).
    Needs a live strong-army grind confirming no retreat with no foe.
  - Zealot regroup respects closing enemies: mutual approach meets
    instead of yo-yoing home (3Zeal diagnosis). Needs a 3Zeal re-run.
+
+## Session handoff 2026-11-19 ~16:10 (context reset - START HERE)
+
+Build is STALE: last `build-jar.sh` with real changes was ~15:27, then
+"reusing target" skipped rebuilds while commits landed. First step next
+session: `mvn -o clean` ONLY if a class moved packages (it did not -
+plain `scripts/tests.sh` then `./build-jar.sh` is enough), then re-run
+every "Needs live" item below. Wine boxes stick after crashes: if a run
+dies at "Waiting for the BWAPI game table", kill leftovers
+(`pkill -f "[S]tarCraft.exe"`, `wineserver -k`) - never bare pkill, it
+kills your own shell (see remarks 2026-11-19).
+
+### Done, code green, needs a LIVE game each (jar must include it)
+
+- Wall-in doctrine (96ff43fbb): depot-only picks, Barracks duels
+  re-point, DTs never claimed by the breach, SCV repairing the depot
+  dies first, lifted pieces unblock, outgunned ban (5 dragoons per
+  sieged tank, release 195 supply / 1200 minerals, re-arm 165), melee
+  never dresses near walls (dressies only the pose leg now - rally
+  and join still reform). Needs a live PvT wall-in.
+- Stalled-duel fetch bypass (e62e56958 + 04a86f5): quiet-crowd pin
+  yields when the hull holds a static inside its gun with no shot for
+  6s; closing hulls approach instead of boarding (in-gun added).
+  Needs a live Sunkens run (Sunkens3 winnable; Sunkens2 is an AMMO
+  WALL - 5 starting scarabs vs ~970 HP needed, no income: map fix,
+  not bot: DO NOT chase Sunkens2 in code).
+- Retreat package (65a8e01cc, 3dc35a6e0, 49451f3eb): overrule releases
+  bus+latch when own squad votes Fight at >=1.5 skim; retreat acts
+  carry reason+shares in parens (visible on march labels AND
+  RetreatPlan acts); floor 96->48f. Needs a live strong-army grind
+  (BetaStar/Crona/Terminus) - read the parens, confirm no rout with
+  no foe nearby. NOTE: 2026-11-19 BetaStar VICTORY 249/140 ran on a
+  STALE jar WITHOUT this package - re-play for validation.
+- Zealot regroup respects closing enemies (5a7f2e4cc + mirror case):
+  needs a live 3Zeal re-run (Wine was busy; never re-ran after the
+  dress-scope fix a9b12e758).
+- DT raid leash (e5f61737e): no worker/loner hunts inside 60 ground
+  tiles of enemy main, duel within 1.1 always allowed. Needs a live
+  DT raid (no UMS map covers it; needs a PvP/PvT with DTs).
+- Dragoon MineDefuse (50d46f3c6): detected mines inside 10 tiles die
+  when no reaver/threat inside 12. Needs a live PvT with mines.
+- Vulture cannons (f34b5507b): 4+ Vultures -> 2 cannons per expo
+  (DefendHall). Needs a live PvT with vulture pressure.
+- Bank/forward gates (c527a38f7): minerals>800 -> 13 gateways;
+  3+ bases build forward of naturalChokeToEnemyBase (Distances).
+  Needs a live macro game.
+- HT cast owns rejoin (uncommitted? CHECK - CombatEngagement edit
+  15:xx, verify `git log`): committed cast walk suppresses
+  ClusterRejoin. Needs a live Templar game (130-energy stalls).
+- Artillery outranks duels (1157a5e5f): keep-off drops the
+  shouldFight veto, hug keeps the exception, 1-tile release latch.
+  Needs a live PvT with sieged tanks (no TankHug regression).
+- Sunkens3 ferry gap: pair never boards a progressing duel - needs an
+  OWNER doctrine decision (ferry a winning-but-slow duel, or keep
+  duel-first and win by grinding?). Do not implement before that.
+- 3v3 mirrors: PackRegroup gate + dress-scope landed; flips both ways
+  on identical code (variance). Re-run 3Zeal/3Drag to confirm no
+  systematic loss; do NOT chase single flips (queue rule stands).
+
+### Open investigations (no code yet, in priority order)
+
+- ZealotDrag_v_ZealDrag 1/6 in batch: systematic, duel quality
+  suspected (melee kite? focus?). Needs log analysis + StarEngine
+  case, then a fix. Reav_v_Drag L/W/L is variance, leave it.
+- 3Drag_v_3Drag / 16Drag mirrors: Reposition milling, no
+  StandShoot/focus at 3v3 (FocusFire minShooters=4 excludes it).
+  Decide: mirror-specific focus, or accept variance.
+- UMS mop-up timeouts (ZealDragLings, 2DragUpg_v_3HydraUpg):
+  endgame chase needs surrounds (contain carve-out still parked).
+- Goon_v_DT + DT_v_Protoss: unwinnable without detection (walls).
+- Natural crescent hold (user spec, NOT built): after natural starts,
+  hold at natural choke +N tiles for 40s, only if ASU<=140 or
+  ArmyStrength<=140 (vs Protoss). Needs guard-machinery reading first
+  (middle-choke guard exists; add a timed natural anchor).
+- Lonely-no-retreat gate (user spec, NOT built): never retreat when no
+  enemy warrior within 12 tiles (both phases), even on withdraw -
+  hold the line instead. This is the BetaStar f8979/f8224 flap fix;
+  overrule stays for in-contact strong lines. NEEDS the latch band
+  question answered (entry 12 / release 15?) - owner said arbitrary,
+  rule 17 wants both sides: 12 in / 15 out proposed.
+- March-label parens (49451f3ec) never seen live (BetaStar jar was
+  stale): confirm `Retreating(...)` rows on the next ladder game.
+- Carrier vs sieged tank with no other AA (owner, asked 2x):
+  implemented as unconditional attack; still needs confirm-or-restate.
+- krasi0, C6 profiling, contain carve-out: parked, do not touch.
+
+### Live validation queue (in order)
+
+1. `./build-jar.sh` (fresh!), then 3Zeal (dress-scope + regroup).
+2. Ladder: BetaStar (reasons+overrule+48f), Crona, Terminus.
+3. Sunkens3 (ferry + E1/E2 + stalled board on winnable map).
+4. PvT with tanks (artillery), PvT with mines (defuse), PvT with
+   vultures (cannons), macro with bank (gateways), DT raid (leash),
+   wall-in (doctrine), Templar game (cast priority).
  - Sunkens2 is an ammo wall, not a micro gap (live proof): the hull
    starts 5 scarabs, fires exactly 5, builds none (no income) - 500
    damage cannot clear 3 sunkens plus lings (~970 HP). Needs a map
