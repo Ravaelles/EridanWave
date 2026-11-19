@@ -113,7 +113,17 @@ blank-line gate per change, commit per unit).
  - Melee never dresses at the enemy: no slots inside 8 tiles of a
    building, blades never inside 4 of an enemy; a blade on a sieged
    tank (1.1) never withdraws and the leash never yanks it off.
-   Duel-hold reports HoldingDuel instead of smearing MarchingToSlot.
+      Needs a live wall-in confirming no dress/flap at the breach.
+ - Shuttle fetches stalled duels despite the quiet pin: the pin
+   stranded the ferry while the blade held a static it cannot hit.
+   Needs a live Sunkens run confirming fetch plus board.
+ - Strong line overrules stale retreats (BetaStar): posture Fight
+   at >=1.5 skim releases the verdict bus and the technique latch
+   in both phases; retreat acts carry the rule plus skim shares in
+   parens (Retreat(OutOfContact 80vs20)); withdrawal floor 96->48.
+   Needs a live strong-army grind confirming no retreat with no foe.
+ - Zealot regroup respects closing enemies: mutual approach meets
+   instead of yo-yoing home (3Zeal diagnosis). Needs a 3Zeal re-run.
    Needs a live wall-in confirming no dress/flap at the breach.
 - StandShoot yields past the band (E1): vs Sunkens/Cannons past 7.25
   with scarabs the hull closes through instead of standing - standing
