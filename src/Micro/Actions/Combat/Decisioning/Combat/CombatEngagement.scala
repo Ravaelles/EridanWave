@@ -88,7 +88,8 @@ private[Decisioning] object EngagePipeline {
         // guns alike instead of walking into unanswered fire. TankHug
         // keeps its point-blank exception above, the kite keeps its
         // fighting withdrawal - only the closing leg and the raw charge
-        // yield to the hold.
+        // yield to the hold. The act logs the veto, so the trace shows
+        // the hold instead of a silent march-in.
         if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! TankHoldBehavior.run(unit, combat) && ! combat.shouldRetreat && ! ApproachBehavior.run(unit, combat)) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()

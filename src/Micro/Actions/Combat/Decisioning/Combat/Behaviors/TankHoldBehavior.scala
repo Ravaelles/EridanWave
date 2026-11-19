@@ -22,8 +22,8 @@ object TankHoldBehavior {
 
     val target = combat.target
     if (target.isEmpty || ! TankHold.isTank(target.get)) return false
-    // Beyond our own max range, in tiles: pixels past the gun, not
-    // the travelling kind - the hold is about the shot, not the path.
+    // Beyond our own max range, in tiles: pixels past the gun, not the
+    // travelling kind - the hold is about the shot, not the path.
     val beyondTiles =
       (unit.pixelDistanceEdge(target.get) - unit.pixelRangeGround) * Maff.inv32
     if ( ! TankHold.shouldHold(targetIsTank = true, distBeyondRangeTiles = beyondTiles)) return false
