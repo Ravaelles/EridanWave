@@ -28,6 +28,20 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       With.units.enemy.exists(_.unitClass.isProtoss),
       Macro.Facts.MacroFacts.enemyHasShown(Protoss.Dragoon))
 
+  /**
+   * Lone hulls march, they do not duel at range: a reinforcing hull
+   * with no pack around stops to poke instead of joining the line,
+   * and the march/duel flap bleeds the reinforcement dry before it
+   * arrives. In contact the duel still owns the frame - a lone hull
+   * already trading holds its ground instead of walking through guns.
+   */
+  private def marchingAlone: Boolean = {
+    val nearest = unit.squad.flatMap(squad => Maff.minBy(squad.units.view.filter(u =>
+      u != unit && u.alive && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
+      .map(a => unit.pixelDistanceCenter(a.pixel) * Maff.inv32))
+    nearest.map(t => Tactic.Squads.Decisions.LoneMarch.marchAlone(unit.id, t)).getOrElse(true)
+  }
+
   private[Decisioning] def selectBaseTechnique(safePassage: Boolean): Unit = {
     // Standing-ground lock, computed once per frame: any sacred-ground
     // rule firing (home soil, tanks on the natural, brave Dragoons and
@@ -169,7 +183,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     // Abuse never pokes out of a retreat: Fallback already shoots while
     // leaving and the rearguard covers through AlwaysAttack, so the poke
     // dance would only flap against the Flee it just left.
-    combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && ! combat.shouldRetreat && combat.framesUntilShot < unit.cooldownMaxAirGround)
+    combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && ( ! marchingAlone || unit.matchups.targetsInRange.nonEmpty) && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && ! combat.shouldRetreat && combat.framesUntilShot < unit.cooldownMaxAirGround)
     combat.transition(SuperKite, unit.isAny(Terran.Wraith, Zerg.Mutalisk))
     combat.transition(Scavenge,  outmatchedPrey)
     // Home ground never withdraws: a hot gun inside the choke margin
