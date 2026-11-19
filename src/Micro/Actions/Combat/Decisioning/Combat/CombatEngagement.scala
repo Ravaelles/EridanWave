@@ -161,6 +161,12 @@ private[Decisioning] object EngagePipeline {
     val squad = unit.squad.getOrElse(return false)
     if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
     if (unit.loaded) return false
+    // A committed cast walk owns the frame: yanking a Templar with a
+    // picked victim back to the centroid every other frame means the
+    // four-frame stand never happens and a full battery circles forever.
+    // The intent expires on its own if the walk goes stale, and the
+    // rejoin resumes - no stuck casters.
+    if (unit.agent.spellIntent.isDefined) return false
 
     val centroid = ?(unit.flying, squad.centroidAir, squad.centroidGround)
     val contactTiles = 2.0
