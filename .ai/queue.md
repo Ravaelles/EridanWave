@@ -18,9 +18,11 @@ Details live in `details/` - the queue keeps one line per item.
 
 - Wall-in doctrine. Needs a PvT wall-in (`details/wall-in.md`).
 - Stalled-duel fetch. Needs Sunkens3 (`details/sunkens.md`).
-- Retreat package + lonely gate + technique terminal. Validated:
-  BetaStar VICTORY 261/75, f6900-7000 flap gone
-  (`details/retreat.md`). Then Crona, Terminus.
+- Retreat package + lonely + technique terminal + duel-hold gate.
+  BetaStar VICTORY 261/75 (flap gone); BetaStar DEFEAT 48/137
+  (13:53 grind loss, outmassed late, no flap/freeze found -
+  fair loss, not a mechanism bug) (`details/retreat.md`).
+  Then Crona, Terminus.
 - DT leash, MineDefuse, vulture cannons, bank gates, weak-PvP hold,
   HT-vs-rejoin, artillery-vs-duels. Needs the triggering games
   (`details/pending-specs.md`).
