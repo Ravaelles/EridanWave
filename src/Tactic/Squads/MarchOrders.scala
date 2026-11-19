@@ -160,7 +160,7 @@ object MarchOrders {
 
   /** Creep step toward the nearest enemy, every couple dozen frames. */
   private def farCreepPixel(unit: FriendlyUnitInfo): Pixel =
-    if (With.frame % MarchDress.creepEveryFrames == 0)
+    if (MarchDress.creepNow(With.frame))
       Maff.minBy(With.units.enemy.view.filter(_.alive))(_.pixelDistanceEdge(unit))
         .map(foe => unit.pixel.project(foe.pixel, MarchDress.creepTiles * 32.0).walkablePixel)
         .getOrElse(unit.pixel)

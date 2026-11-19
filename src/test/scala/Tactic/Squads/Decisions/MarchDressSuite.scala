@@ -84,4 +84,14 @@ class MarchDressSuite extends AnyFunSuite {
     assert( ! hold(704, gap = 9.0, protoss = false))
     assert( ! hold(705, gap = 9.0, reaver = true))
   }
+
+  test("the creep walks in two-frame windows, never single steps") {
+    assert(MarchDress.creepNow(0))
+    assert(MarchDress.creepNow(1))
+    assert( ! MarchDress.creepNow(2))
+    assert( ! MarchDress.creepNow(23))
+    assert(MarchDress.creepNow(24))
+    assert(MarchDress.creepNow(25))
+    assert( ! MarchDress.creepNow(26))
+  }
 }

@@ -119,6 +119,17 @@ object MarchDress {
   /** One creep step every this many frames: mostly waiting, barely walking. */
   val creepEveryFrames: Int = 24
 
+  /**
+   * Creep cadence (pure frames for the suite): a window of consecutive
+   * move frames every cycle. A single creep frame after holds never
+   * moves - the order-change skips movement (Stardust one-order rule),
+   * so the window re-issues until the hull actually steps.
+   */
+  val creepFrames: Int = 2
+
+  def creepNow(frame: Int): Boolean =
+    frame % creepEveryFrames < creepFrames
+
   private val farWaiting = new Latch
 
   /**
