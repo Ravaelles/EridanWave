@@ -1,6 +1,6 @@
 package Gameplans.Protoss.PvP.opening
 
-import Gameplans.Protoss.PvP.PvPOpening
+import Gameplans.Protoss.PvP.{PvPOpening, PvPWeakHold}
 import Gameplans.Protoss.PvP.PvPIdeas
 import Lifecycle.With
 import Mathematics.Maff
@@ -91,6 +91,15 @@ trait PvPOpeningTimings { self: PvPOpening =>
     }
     shouldExpand  ||= enemyStrategy(With.fingerprints.forgeFe, With.fingerprints.gatewayFe) && ! With.fingerprints.cannonRush()
     shouldExpand  ||= unitsComplete(IsWarrior) >= 30 // We will get contained if we wait too long
+    // Weak and outnumbered: no natural while behind on army - the base
+    // never pays for itself if we cannot hold it. Applies before the
+    // hold-natural line below, so the defense stands down with it.
+    if (PvPWeakHold.holdNatural(
+      With.battles.globalAttack.us.skimStrengthUnits,
+      unitsComplete(IsWarrior))) {
+      status(true, "WeakHoldNatural")
+      shouldExpand = false
+    }
 
     // If we want to expand, make sure we control our natural
     shouldHoldNatural   = safeDefending
