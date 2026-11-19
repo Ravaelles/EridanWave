@@ -88,6 +88,12 @@ private[Decisioning] object TechniquePipeline {
     // one inside eleven tiles instead of retreating past the kill.
     Stage("DragoonCarrier", DispatchBand.Medium, (unit, combat, advance) =>
       advance && DragoonCarrierBehavior.run(unit, combat)),
+    // A Dragoon that spots a detected Spider Mine inside ten tiles
+    // shoots it instead of walking into it - but only with no enemy
+    // that can answer inside twelve; under guns the duel owns the
+    // frame. Advancing only: a retreating hull keeps running.
+    Stage("DragoonMineDefuse", DispatchBand.Medium, (unit, _, advance) =>
+      advance && DragoonMineDefuseBehavior.run(unit)),
     // A covering rearguard shoots victims of opportunity and holds the
     // line while the cluster withdraws instead of turning with it. With
     // nothing to shoot it falls through and retreats with everyone.
