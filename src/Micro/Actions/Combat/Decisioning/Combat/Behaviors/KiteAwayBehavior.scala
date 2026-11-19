@@ -29,12 +29,6 @@ object KiteAwayBehavior {
     // A banked stock buys the trade: expendable units hold their DPS
     // instead of yielding ground while cooling down.
     if (KiteAway.skipKiting(With.self.minerals)) return false
-    // Committed units (scenario duelists, raid passengers) hold their ground:
-    // yielding it stops their fire while the enemy keeps shooting, and the
-    // chase usually catches them anyway. Suicide missions still kite: a unit
-    // inside the enemy base never retreats, but stepping out of range while
-    // cooling down is dueling, not fleeing.
-    if (unit.agent.commit && ! unit.isSuicideMission) return false
     if ( ! unit.canMove) return false
     if (staticStandoff(unit, combat)) return true
     if ( ! kitable(unit)) return false
