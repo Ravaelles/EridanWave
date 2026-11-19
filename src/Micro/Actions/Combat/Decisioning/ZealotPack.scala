@@ -6,7 +6,9 @@ package Micro.Actions.Combat.Decisioning
  * with no other warriors around, a zealot with no packmate inside one
  * tile does not approach - it returns to the centroid instead, unless
  * the local skim runs two-to-one or better. A lone charger feeds
- * piecemeal; the pack arrives together or not at all.
+ * piecemeal; the pack arrives together or not at all. Already fighting
+ * hulls never regroup: the rule stops lone charges into the fight, it
+ * must not drag fighters out of one.
  */
 object ZealotPack {
 
@@ -24,8 +26,10 @@ object ZealotPack {
     zealots: Int,
     mateTiles: Double,
     usSkim: Double,
-    foeSkim: Double): Boolean =
-    onlyZealots &&
+    foeSkim: Double,
+    inContact: Boolean): Boolean =
+    ! inContact &&
+      onlyZealots &&
       zealots < packSize &&
       mateTiles > packTiles &&
       ! (foeSkim > 0 && usSkim / foeSkim >= overwhelmRatio)

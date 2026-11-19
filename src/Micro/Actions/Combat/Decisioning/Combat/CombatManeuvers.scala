@@ -164,10 +164,21 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
   private def regroupWithPack(): Boolean = {
     if ( ! Protoss.Zealot(unit)) return false
 
+    // Already fighting hulls never regroup out: the rule stops lone
+    // charges into the fight, and dragging fighters back out reverses
+    // it - the duel owns the frame while the gun or the enemy is hot.
+    val inContact = unit.matchups.targetsInRange.nonEmpty || unit.matchups.engagedUpon
+    if (inContact) return false
+
     val warriors = With.units.ours.view.filter(u => u.alive && u.unitClass.isWarrior).take(ZealotPack.packSize + 1).toSeq
     if (warriors.size >= ZealotPack.packSize || ! warriors.forall(Protoss.Zealot(_))) return false
 
-    val centroid = unit.squad.map(_.centroidGround).getOrElse(return false)
+    // Anchor on the fighting pack, not the squad: a whole-squad centroid
+    // sits wherever the uncommitted mass is and drags the duel home
+    // instead of rejoining it. Warriors only - workers do not anchor blades.
+    val mates = unit.squad.map(_.units.filter(u =>
+      u.id != unit.id && u.alive && u.unitClass.isWarrior)).getOrElse(Seq.empty)
+    val centroid = if (mates.isEmpty) unit.pixel else Maff.centroid(mates.map(_.pixel))
     val mateTiles = Maff.minBy(With.units.ours.view.filter(o =>
       o.id != unit.id && o.alive && Protoss.Zealot(o)))(_.pixelDistanceCenter(unit.pixel))
       .map(_.pixelDistanceCenter(unit.pixel) * Maff.inv32)
@@ -175,7 +186,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     val (usSkim, foeSkim) = unit.combatForecast
       .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
       .getOrElse((0.0, 0.0))
-    if ( ! ZealotPack.shouldRegroup(onlyZealots = true, warriors.size, mateTiles, usSkim, foeSkim)) return false
+    if ( ! ZealotPack.shouldRegroup(onlyZealots = true, warriors.size, mateTiles, usSkim, foeSkim, inContact)) return false
 
     unit.agent.act("PackRegroup")
     unit.agent.forceTo(centroid)
