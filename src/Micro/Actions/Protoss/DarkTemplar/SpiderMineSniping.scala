@@ -33,6 +33,19 @@ object SpiderMineSniping {
   val sidestepStepTiles: Double = 4.0
 
   /**
+   * Crowded mine, in tiles: a mine this close to two or more enemies is
+   * part of the pack, not a lone trap - stepping around it abandons the
+   * hunt for a dodge that trades the fight. Hold the hunt instead.
+   */
+  val crowdRadiusTiles: Double = 1.0
+
+  /** Enemies this numerous around one mine make it pack, not trap. */
+  val crowdFoes: Int = 2
+
+  def crowdedMine(foesNearMine: Int): Boolean =
+    foesNearMine >= crowdFoes
+
+  /**
    * Lateral step around the mine centroid (pure pixels): perpendicular
    * to the centroid-to-hull ray, never radial - backing straight out
    * of a ring walks into the mine behind. The caller picks the side

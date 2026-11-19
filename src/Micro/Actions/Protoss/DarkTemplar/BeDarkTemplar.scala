@@ -139,6 +139,16 @@ object BeDarkTemplar extends Action {
         && unit.pixelDistanceEdge(e) <= SpiderMineSniping.sidestepTiles * 32.0).toSeq
     if (mines.isEmpty) return false
 
+    // A mine inside the pack is pack, not trap: two or more enemies
+    // within a tile of any sidestep mine vetoes the dodge, or the hunt
+    // walks away from the fight it came for. Mines never count as
+    // their own crowd - a lone minefield still gets stepped around.
+    val crowded = mines.exists(mine =>
+      With.units.enemy.count(e =>
+        e.alive && ! Terran.SpiderMine(e) && ! e.unitClass.isBuilding &&
+          e.pixelDistanceEdge(mine) <= SpiderMineSniping.crowdRadiusTiles * 32.0) >= SpiderMineSniping.crowdFoes)
+    if (crowded) return false
+
     val step = SpiderMineSniping.sidestepPixel(
       unit.pixel,
       Maff.centroid(mines.map(_.pixel)),

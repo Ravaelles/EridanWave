@@ -53,4 +53,11 @@ class SpiderMineSnipingSuite extends AnyFunSuite {
     val dt = new Mathematics.Points.Pixel(100, 100)
     assert(sidestepPixel(dt, dt, stepTiles = 4.0, goLeft = true) == dt)
   }
+
+  test("a mine inside the pack is pack, not trap") {
+    assert( ! SpiderMineSniping.crowdedMine(foesNearMine = 0))
+    assert( ! SpiderMineSniping.crowdedMine(foesNearMine = 1))
+    assert(SpiderMineSniping.crowdedMine(foesNearMine = 2))
+    assert(SpiderMineSniping.crowdedMine(foesNearMine = 5))
+  }
 }
