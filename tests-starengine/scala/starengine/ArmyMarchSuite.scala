@@ -49,9 +49,12 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
     override def direct(me: Body, world: World): Directive = {
       val foeSet = foesOf(me, world).filter(_.alive)
       val mates = matesOf(me, world)
-      val nearestFoe = foeSet.sortBy(me.dist).headOption
-      val gapTiles = nearestFoe.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
-      val rangeTiles = foeSet.map(f => me.rangeAgainst(f) / 32.0).reduceOption(_ max _).getOrElse(Double.PositiveInfinity)
+      // The shipped far-wait reads warriors only: eyes and guns never
+      // dress the line, so the pilot measures the same ball here.
+      val warriorFoes = foeSet.filter(_.kind.isWarrior)
+      val nearestFoe = warriorFoes.sortBy(me.dist).headOption.orElse(foeSet.sortBy(me.dist).headOption)
+      val gapTiles = warriorFoes.map(me.dist(_) / 32.0).reduceOption(_ min _).getOrElse(Double.PositiveInfinity)
+      val rangeTiles = warriorFoes.map(f => me.rangeAgainst(f) / 32.0).reduceOption(_ max _).getOrElse(Double.PositiveInfinity)
       val hittable = nearestFoe.filter(f => me.canHit(f) && me.dist(f) <= me.rangeAgainst(f))
       val engagedUpon = foeSet.exists(f => f.dist(me) <= f.rangeAgainst(me))
       val mateTiles = mates.map(me.dist(_) / 32.0).reduceOption(_ min _).getOrElse(Double.PositiveInfinity)
@@ -124,7 +127,15 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
         gapTiles,
         rangeTiles)) {
         farWaits += 1
-        if (MarchDress.creepNow(world.frame)) return MoveTo(goal._1, goal._2)
+        // Creep at the enemy, like the shipped leg: holding the goal
+        // would stall against a defender that never advances.
+        if (MarchDress.creepNow(world.frame)) {
+          val f = nearestFoe.get
+          val dx = f.x - me.x
+          val dy = f.y - me.y
+          val d = Math.sqrt(dx * dx + dy * dy)
+          if (d > 0) return MoveTo(me.x + dx / d * 4.0 * 2, me.y + dy / d * 4.0 * 2)
+        }
         return Hold
       }
 
@@ -185,13 +196,14 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
 
   test("an unhittable watcher never pins melee") {
     // Zealots under a hovering observer: nothing to hit, march on.
-    // (The shipped gate answers the same for any unhittable watcher.)
+    // (The shipped gate answers the same for any unhittable watcher,
+    // and the far-wait reads warriors only, so eyes never dress it.)
     val ours = column(Protoss.Zealot, 3, 900.0)
     val foes = Seq(new Body(Protoss.Observer, 200.0, 500.0, Protoss.Observer.maxTotalHealth),
       new Body(Protoss.Observer, 240.0, 500.0, Protoss.Observer.maxTotalHealth))
     val (world, marchers) = grind(ours, foes, _ => new MarchPilot((200.0, 100.0), dragoon = false), _ => new Pilots.Hold, frames = 6000)
     val arrived = ours.count(o => o.alive && Math.hypot(o.x - 200.0, o.y - 100.0) <= 12 * 32.0)
-    println(s"DIAG arrived=$arrived/3 spurious=${marchers.map(_.spuriousHolds).sum}")
+    println(s"DIAG arrived=$arrived/3 spurious=${marchers.map(_.spuriousHolds).sum} farwaits=${marchers.map(_.farWaits).sum}")
     assert(arrived == 3, "unhittable watchers do not hold melee")
     assert( ! stalled(marchers), "no holds and no retreats under a spectator")
   }

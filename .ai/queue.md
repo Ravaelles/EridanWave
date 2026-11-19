@@ -6,14 +6,16 @@ Details live in `details/` - the queue keeps one line per item.
 
 ## Now
 
-- Ladder validation in flight: BetaStar DEFEAT 48/137 (fair late
-  grind loss, no flap), Crona DEFEAT 21/35 (greedy expand into
-  9pool, known gameplan gap), Terminus running on the full jar.
+- Ladder validation: BetaStar DEFEAT 48/137 (fair late grind,
+  no flap), Crona DEFEAT 21/35 (greedy expand into 9pool, known
+  gameplan gap), Terminus DEFEAT 108/225 (17 min, no flap, no
+  reaver/Lurker/DT acts - grind loss, no mechanism found yet).
 - UMS: full batch 12W/11L; ZealDrag 4-3, 14v16 competitive,
   LingsHydra timeouts fixed twice, 1Drag/1DragWounded flip wins,
   2Zeal parked hard, Sunkens/DT walls stand.
 - Jar verified content-complete (all five units + duel gate +
-  creep window present by `strings` check).
+  creep window present by `strings` check); rebuild pending for
+  the far-wait warrior-only fix (eyes/guns never dress the line).
 
 ## Needs a live game (code green, jar includes it)
 

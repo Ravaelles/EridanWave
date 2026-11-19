@@ -143,10 +143,13 @@ object MarchOrders {
   private def farWaitHolding(unit: FriendlyUnitInfo): Boolean = {
     // Player records stay empty on UMS (nothing ever assigns them), so
     // read the race off seen units instead: blind at spawn, exact later.
+    // Eyes and guns never dress the line: the gap reads warriors only,
+    // so an observer (or a cannon) never holds a column that should
+    // march past it - the duel hold above already answers hittables.
     if ( ! With.umsMode || ! With.units.enemy.exists(_.unitClass.isProtoss)) return false
     if (With.units.enemy.exists(e => e.alive && Protoss.Reaver(e))) return false
 
-    val gapTiles = Maff.minBy(With.units.enemy.view.filter(_.alive))(_.pixelDistanceEdge(unit))
+    val gapTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceEdge(unit))
       .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     MarchDress.holdFarWait(
       unit.id,
