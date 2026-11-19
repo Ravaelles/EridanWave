@@ -6,10 +6,13 @@ Details live in `details/` - the queue keeps one line per item.
 
 ## Now
 
-- UMS round in flight: 2Zeal/1DragWounded/15Drag/16Drag on the
-  melee-slowling jar. 14v16 competitive (wins f1355/f1685, losses),
-  ZealDrag won twice 9/6 + 9/7, 15/16Drag flipped to VICTORY.
-- Jar fresh, slot synced. Tree clean (27149e81c slowling veto).
+- UMS failing-maps round done: ZealDrag (4-2), 3Drag, 16Drag,
+  3DragHydra, Reav_v_Drag, 14Drag all VICTORY; 1DragWounded 2-3
+  on long grinds; 2Zeal parked hard. Only structural walls left
+  (Sunkens ammo, DT detection, mop-up surrounds decision,
+  Sunkens3 chase rule).
+- Jar fresh, slot synced. Tree clean except 4 line-ending M flags
+  (verified byte-identical, normalize on next touch).
 
 ## Needs a live game (code green, jar includes it)
 
