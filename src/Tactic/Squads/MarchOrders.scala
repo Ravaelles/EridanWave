@@ -133,6 +133,36 @@ object MarchOrders {
    */
   def duelHoldsMarch(verdictRetreat: Boolean, hasAttackTarget: Boolean, engagedUpon: Boolean): Boolean =
     ! verdictRetreat && (hasAttackTarget || engagedUpon)
+
+  /**
+   * Far dress-and-wait probe (UMS mirrors, no reavers): arriving at five
+   * tiles outside gun reach the line dresses and waits for the enemy
+   * ball instead of trickling into it. Cheap gates first so ladder
+   * games pay nothing: the scans run only while UMS Protoss stands.
+   */
+  private def farWaitHolding(unit: FriendlyUnitInfo): Boolean = {
+    if ( ! With.umsMode || ! With.enemies.exists(_.isProtoss)) return false
+    if (With.units.enemy.exists(e => e.alive && Protoss.Reaver(e))) return false
+
+    val gapTiles = Maff.minBy(With.units.enemy.view.filter(_.alive))(_.pixelDistanceEdge(unit))
+      .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    MarchDress.holdFarWait(
+      unit.id,
+      unit.unitClass.isWarrior,
+      umsMode = true,
+      enemyProtoss = true,
+      enemyReaverKnown = false,
+      gapTiles,
+      unit.pixelRangeMax * Maff.inv32)
+  }
+
+  /** Creep step toward the nearest enemy, every couple dozen frames. */
+  private def farCreepPixel(unit: FriendlyUnitInfo): Pixel =
+    if (With.frame % MarchDress.creepEveryFrames == 0)
+      Maff.minBy(With.units.enemy.view.filter(_.alive))(_.pixelDistanceEdge(unit))
+        .map(foe => unit.pixel.project(foe.pixel, MarchDress.creepTiles * 32.0).walkablePixel)
+        .getOrElse(unit.pixel)
+    else unit.pixel
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): (Pixel, MarchLabel) = {
     val suicide = SuicideMission.assign(unit)
     val marchUnit = MarchUnit.read(squad, unit, facts.home)
@@ -187,10 +217,18 @@ object MarchOrders {
   private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean): (Pixel, MarchLabel) = {
     // One writer per frame: a dueling unit holds its ground instead of
     // walking the march legs - the duel owns movement while it lasts.
+    // Far dress-and-wait outranks a memory duel first: chasing ghosts at
+    // five tiles out trickles the line, while a real duel always sits
+    // inside gun reach, so the gap guard keeps it untouched.
     if (duelHoldsMarch(
       verdictRetreat,
       hasAttackTarget = unit.agent.toAttack.isDefined,
-      engagedUpon = unit.matchups.engagedUpon)) return (unit.pixel, MarchLabel.HoldingDuel)
+      engagedUpon = unit.matchups.engagedUpon)) {
+      if (farWaitHolding(unit)) return (farCreepPixel(unit), MarchLabel.WaitingForPack)
+
+      return (unit.pixel, MarchLabel.HoldingDuel)
+    }
+
     val slotOpen             = SlotDiscipline.maySlot(
       firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
       framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),
@@ -218,21 +256,10 @@ object MarchOrders {
     // tiles outside gun reach the line dresses and waits for the enemy
     // ball instead of trickling into it, creeping a step every couple
     // dozen frames so a waiting enemy still gets met. Warriors only -
-    // eyes keep their own march. Contact still duels first (above).
-    val farWait = MarchDress.holdFarWait(
-      unit.id,
-      unit.unitClass.isWarrior,
-      With.umsMode,
-      With.enemies.exists(_.isProtoss),
-      With.units.enemy.exists(e => e.alive && Protoss.Reaver(e)),
-      nearEnemyTiles,
-      unit.pixelRangeMax * Maff.inv32)
-    val farCreep = ?(
-      With.frame % MarchDress.creepEveryFrames == 0,
-      Maff.minBy(With.units.enemy.view.filter(_.alive))(_.pixelDistanceEdge(unit))
-        .map(foe => unit.pixel.project(foe.pixel, MarchDress.creepTiles * 32.0).walkablePixel)
-        .getOrElse(unit.pixel),
-      unit.pixel)
+    // eyes keep their own march. Contact still duels first (above), and
+    // a retreating hull never waits - it walks its way out.
+    val farWait = ! verdictRetreat && farWaitHolding(unit)
+    val farCreep = farCreepPixel(unit)
     val pack                   = ?(unit.flying, squad.centroidAir, squad.centroidGround)
     val terminus = ?(farWait, farCreep, ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch))))
     val label    = ?(farWait || holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot))
