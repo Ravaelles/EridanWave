@@ -124,6 +124,7 @@ blank-line gate per change, commit per unit).
    Needs a live strong-army grind confirming no retreat with no foe.
  - Zealot regroup respects closing enemies: mutual approach meets
    instead of yo-yoing home (3Zeal diagnosis). Needs a 3Zeal re-run.
+   VERIFIED 2026-11-19: 3Zeal VICTORY 3/0 f464, regroup 28->4 acts,
  - DT raid leash (user rule): no worker/loner hunts inside 60 ground
    tiles of the enemy main; duels within 1.1 always allowed. Needs a
    live DT raid (no UMS map covers it; needs a PvP/PvT with DTs).
