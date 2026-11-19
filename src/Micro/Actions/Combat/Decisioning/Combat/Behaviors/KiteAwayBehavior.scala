@@ -18,9 +18,8 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 object KiteAwayBehavior {
 
   /**
-   * EXPERIMENT A/B (remove after the Crona series): hard kill-switch
-   * for the whole kite behavior, on/off per jar. Lets the macro series
-   * measure what kiting buys instead of arguing about it.
+   * Kill-switch for the whole kite behavior (kept for experiments;
+   * normal play leaves it on).
    */
   var kiteEnabled: Boolean = true
 
