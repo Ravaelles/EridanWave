@@ -18,6 +18,15 @@ object ExpoCannonCover {
   /** Cannons per expansion while weak. */
   val cannonsPerExpo: Int = 1
 
+  /** Vultures on the map mean raiders: this many sighted. */
+  val vultureCount: Int = 4
+
+  /** Cannons per expansion against vultures: one tight, one covering. */
+  val vultureCannonsPerExpo: Int = 2
+
   def shouldCover(enemyIsTerran: Boolean, armyStrengthUnits: Double): Boolean =
     enemyIsTerran && armyStrengthUnits <= weakArmyUnits
+
+  def shouldCoverVsVultures(enemyIsTerran: Boolean, vultures: Int): Boolean =
+    enemyIsTerran && vultures >= vultureCount
 }

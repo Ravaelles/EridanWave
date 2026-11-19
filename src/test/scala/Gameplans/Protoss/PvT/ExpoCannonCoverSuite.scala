@@ -21,4 +21,12 @@ class ExpoCannonCoverSuite extends AnyFunSuite {
   test("other races hold their own doctrine") {
     assert( ! covers(enemyIsTerran = false))
   }
+
+  test("four vultures double the expo cover") {
+    assert(ExpoCannonCover.shouldCoverVsVultures(enemyIsTerran = true, vultures = 4))
+    assert(ExpoCannonCover.shouldCoverVsVultures(enemyIsTerran = true, vultures = 12))
+    assert( ! ExpoCannonCover.shouldCoverVsVultures(enemyIsTerran = true, vultures = 3))
+    assert( ! ExpoCannonCover.shouldCoverVsVultures(enemyIsTerran = false, vultures = 9))
+    assert(ExpoCannonCover.vultureCannonsPerExpo == 2)
+  }
 }

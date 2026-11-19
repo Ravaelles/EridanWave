@@ -35,8 +35,12 @@ abstract class PvTOpeners extends GameplanImperative
     // Weak against Terran means every expansion holds a Cannon: vultures
     // and bio run over naked mineral lines while the army is still small.
     // Hall-side template spots (between hall and minerals); fixed
-    // gameplan counts still apply on top.
-    if (ExpoCannonCover.shouldCover(
+    // gameplan counts still apply on top. Four-plus Vultures upgrade the
+    // cover to two per expo: one tight on the hall, one on the lane.
+    val vultures = With.units.enemy.count(e => e.alive && Terran.Vulture(e))
+    if (ExpoCannonCover.shouldCoverVsVultures(Lifecycle.Enemy.terran(), vultures)) {
+      buildCannonsAtExpansions(ExpoCannonCover.vultureCannonsPerExpo, PlaceLabels.DefendHall)
+    } else if (ExpoCannonCover.shouldCover(
       Lifecycle.Enemy.terran(),
       With.battles.globalAttack.us.skimStrengthUnits)) {
       buildCannonsAtExpansions(ExpoCannonCover.cannonsPerExpo, PlaceLabels.DefendHall)
