@@ -14,7 +14,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class MirrorFocusSuite extends AnyFunSuite with StarEngineSuite {
 
   override def tags: Map[String, Set[String]] =
-    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Dragoon.name + StarEngineTags.Targeting.name + StarEngineTags.PvP.name) }
+    super.tags.map { case (n, s) => n -> (s + StarEngineTags.Dragoon.name + StarEngineTags.Zealot.name + StarEngineTags.Targeting.name + StarEngineTags.PvP.name) }
 
   /** Shared weakest: the line deletes one hull at a time. */
   private class FocusPilot extends Pilot {
@@ -59,6 +59,18 @@ class MirrorFocusSuite extends AnyFunSuite with StarEngineSuite {
     val spreadKills = (3 - focusOurs) + (3 - focusFoes)
     println(s"DIAG focus-seat ours=$focusOurs/3 foes=$spreadFoes/3; spread-seat ours=$spreadOurs/3 foes=$focusFoes/3; kills focus=$focusKills spread=$spreadKills")
     assert(focusKills >= spreadKills, "a focused line must not trade down")
+  }
+
+  test("zealots focus too: weakest shared target, focus seat") {
+    val oursZ = (-1 to 1).map(i => new Body(Protoss.Zealot, i * 40.0, 900.0, Protoss.Zealot.maxTotalHealth))
+    val foeZ = (-1 to 1).map(i => new Body(Protoss.Zealot, i * 40.0, 100.0, Protoss.Zealot.maxTotalHealth))
+    val world = new World(oursZ, foeZ,
+      (oursZ.map(_ -> new FocusPilot) ++ foeZ.map(_ -> new SpreadPilot)).toMap, Seq.empty)
+    world.run(6000)
+    val focusKills = 3 - foeZ.count(_.alive)
+    val spreadKills = 3 - oursZ.count(_.alive)
+    println(s"DIAG zealot-focus ours=${oursZ.count(_.alive)}/3 foes=${foeZ.count(_.alive)}/3")
+    assert(focusKills >= spreadKills, "focus must not trade down in the mirror")
   }
 
   test("spread mirrors bleed each other: the control") {
