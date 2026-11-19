@@ -13,9 +13,8 @@ Details live in `details/` - the queue keeps one line per item.
 - UMS: full batch 12W/11L; ZealDrag 4-3, 14v16 competitive,
   LingsHydra timeouts fixed twice, 1Drag/1DragWounded flip wins,
   2Zeal parked hard, Sunkens/DT walls stand.
-- Jar verified content-complete (all five units + duel gate +
-  creep window present by `strings` check); rebuild pending for
-  the far-wait warrior-only fix (eyes/guns never dress the line).
+- Jar rebuilt 23:21 with the far-wait warrior-only fix (slot
+  md5 matches target); Crona rematch next on the fresh jar.
 
 ## Needs a live game (code green, jar includes it)
 
