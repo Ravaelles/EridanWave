@@ -124,6 +124,16 @@ blank-line gate per change, commit per unit).
    Needs a live strong-army grind confirming no retreat with no foe.
  - Zealot regroup respects closing enemies: mutual approach meets
    instead of yo-yoing home (3Zeal diagnosis). Needs a 3Zeal re-run.
+ - Sunkens2 is an ammo wall, not a micro gap (live proof): the hull
+   starts 5 scarabs, fires exactly 5, builds none (no income) - 500
+   damage cannot clear 3 sunkens plus lings (~970 HP). Needs a map
+   fix (starting scarabs or minerals), not bot code. Ferry validation
+   moves to Sunkens3, which builds and fights.
+ - Mirror focus measured crossed (StarEngine): focus trades 5v4 over
+   spread; below 4 shooters the shipped gate stays shut (3v3 duels
+   on even, no focus change). Dress veto scoped to the pose leg -
+   rally and join still reform (the 3Zeal 0/3 ran with the legs cut).
+   Needs a live 3Zeal re-run and a winnable-map check.
  - Dark Templar raid leash (user rule): no worker/loner hunts inside
    60 ground tiles of the enemy main - hold instead of approaching;
    duels within 1.1 keep fighting. Needs a live DT raid confirming
