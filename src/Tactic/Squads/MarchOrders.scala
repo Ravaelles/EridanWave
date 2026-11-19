@@ -113,6 +113,16 @@ object MarchOrders {
   // The gate table lives in Decisions.MarchGates (pure predicates over
   // MarchFacts + MarchUnit, first claim wins); the order table suite
   // pins the sequence row by row.
+
+  /**
+   * Duel-owned frames hold position: while a unit duels (it has a target
+   * or is being shot) and no retreat verdict owns it, the march sets the
+   * terminus under its own feet instead of rallying home - the duel moves
+   * or holds through its own orders, and marching away mid-duel is the
+   * approach/retreat flap. Pure flags for the suite.
+   */
+  def duelHoldsMarch(verdictRetreat: Boolean, hasAttackTarget: Boolean, engagedUpon: Boolean): Boolean =
+    ! verdictRetreat && (hasAttackTarget || engagedUpon)
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): (Pixel, MarchLabel) = {
     val suicide = SuicideMission.assign(unit)
     val marchUnit = MarchUnit.read(squad, unit, facts.home)
@@ -159,6 +169,12 @@ object MarchOrders {
   // or a held retreat vetoes the pose that frame, but contact alone never
   // does - the line only exists if it forms while the enemy is out there.
   private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean): (Pixel, MarchLabel) = {
+    // One writer per frame: a dueling unit holds its ground instead of
+    // walking the march legs - the duel owns movement while it lasts.
+    if (duelHoldsMarch(
+      verdictRetreat,
+      hasAttackTarget = unit.agent.toAttack.isDefined,
+      engagedUpon = unit.matchups.engagedUpon)) return (unit.pixel, MarchLabel.MarchingToSlot)
     val slotOpen             = SlotDiscipline.maySlot(
       firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
       framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),

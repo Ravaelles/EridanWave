@@ -6,6 +6,32 @@ trace/`probe.txt`/`errors.json`, delete the line.
 Conventions: docs stay English; `.ai/conventions.md` (tests +
 blank-line gate per change, commit per unit).
 
+## Done 2026-11-19 night (validate on next games)
+
+- Kite A/B (7 Crona games, ON 2-1 vs OFF 1-2): kite fired in exactly
+  one game (ON#2, 6 acts, one dragoon) - too rare to move results in
+  these comps. Mechanism confirmed separately (33x suicide zealots,
+  6x dragoon here); OFF arm correctly shows zero kite acts (kill-switch
+  works). Verdict: keep the behavior, do not re-run the A/B without
+  frozen code. Confound note: working tree evolved mid-series (hunt
+  assign, AlwaysAttack split, coordination, standoff), so ON#1 ran
+  older code than the rest - mechanism analysis only, no causal claims.
+- Tank hold (dragoons never close sieged/unsieged tanks; hug keeps its
+  point-blank exception): needs a live PvT with tanks walking at dragoons.
+- Contain-expand (natural while containing if a safe path exists):
+  needs a live containing PvT (Terminus game running).
+- Static standoff 9.1 + holdsLine hook: needs a live HoldLine game vs
+  statics. Terminus running may cover it.
+- Pack regroup in-contact hold + warrior anchor + mayFight HP>20:
+  needs a live early-PvZ defense (the E_10:27 pattern).
+- Sunken break (Robo at 3, Bay+2 Reavers at 4): needs a live PvZ with
+  a 3-4 sunken wall. Cancel guarded while static >= 3.
+- Builder shift (re-seat town hall up to 5 tiles on unseen blockers):
+  needs a live blocked-base game; inProgressNearby guard unproven live.
+- Duel-owns-hold (march legs yield while the duel has a target or the
+  unit is engaged): needs any live fight - fixes the per-frame
+  Approach/Rallying flap on dragoons and the PackRegroup yo-yo.
+
 ## Parked (explicit orders, do not touch)
 
 - Sunkens2 baseless mission fallback (pair stalls after the first pack
