@@ -12,6 +12,7 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.seriousCooldown == 10)
     assert(KiteAway.criticalCooldown == 4)
     assert(KiteAway.mildCooldown == 15)
+    assert(KiteAway.kiteVsRangedHp == 61)
     assert(KiteAway.enemyMarginTiles == 1.8)
     assert(KiteAway.maxOffsetTiles == 1.4)
   }
@@ -48,9 +49,9 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! retreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 10))
   }
 
-  test("mildly wounded rotate on high cooldown, healthy hold") {
-    assert(retreat(totalHealth = 120, woundFraction = 0.3, cooldownLeft = 16))
-    assert( ! retreat(totalHealth = 120, woundFraction = 0.3, cooldownLeft = 15))
+  test("mild wounds hold against ranged guns: only the dying yield") {
+    assert( ! retreat(totalHealth = 120, woundFraction = 0.3, cooldownLeft = 16))
+    assert( ! retreat(totalHealth = 120, woundFraction = 0.3, cooldownLeft = 22))
     assert( ! retreat(totalHealth = 170, woundFraction = 0.04, cooldownLeft = 22))
   }
 
@@ -67,14 +68,15 @@ class KiteAwaySuite extends AnyFunSuite {
   test("fresh hulls hold the line without melee around") {
     assert( ! retreat(totalHealth = 170, woundFraction = 0.04, cooldownLeft = 22, woundPoints = 10))
     assert( ! retreat(totalHealth = 166, woundFraction = 0.08, cooldownLeft = 22, woundPoints = 14))
-    assert(retreat(totalHealth = 165, woundFraction = 0.08, cooldownLeft = 22, woundPoints = 15))
+    assert( ! retreat(totalHealth = 165, woundFraction = 0.08, cooldownLeft = 22, woundPoints = 15))
   }
 
-  test("a shielded hull above the pack median holds and shoots") {
-    assert( ! retreat(totalHealth = 170, woundFraction = 0.2, cooldownLeft = 22, woundPoints = 30, shields = 30, medianHp = 150))
-    assert(retreat(totalHealth = 170, woundFraction = 0.2, cooldownLeft = 22, woundPoints = 30, shields = 29, medianHp = 150))
-    assert(retreat(totalHealth = 140, woundFraction = 0.3, cooldownLeft = 22, woundPoints = 40, shields = 60, medianHp = 150))
-    assert( ! retreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 11, woundPoints = 120, shields = 40, medianHp = 50))
+  test("sub-61 hulls save themselves, everything else holds and shoots") {
+    assert(retreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 11))
+    assert( ! retreat(totalHealth = 60, woundFraction = 0.6, cooldownLeft = 10))
+    assert( ! retreat(totalHealth = 61, woundFraction = 0.6, cooldownLeft = 22))
+    assert( ! retreat(totalHealth = 140, woundFraction = 0.3, cooldownLeft = 22, woundPoints = 40, shields = 60, medianHp = 150))
+    assert( ! retreat(totalHealth = 170, woundFraction = 0.2, cooldownLeft = 22, woundPoints = 30, shields = 29, medianHp = 150))
   }
 
   test("seriously wounded skip volley discipline") {

@@ -32,6 +32,15 @@ object KiteAway {
   /** Critically wounded at or below this total HP (shields + hit points). */
   var criticalWoundHp: Int = 25
 
+  /**
+   * Kite away from ranged guns only below this total HP: a mild wound
+   * never outweighs a volley in an even duel, so the line holds and
+   * shoots until the hull is one volley from death - then it gets out
+   * instead of donating itself. Melee on top still kites while cooling
+   * (range abuse, not the volley race).
+   */
+  var kiteVsRangedHp: Int = 61
+
   /** Only units more wounded than this rotate; healthy ones hold the line. */
   var woundScopeFraction: Double = 0.05
 
@@ -92,14 +101,12 @@ object KiteAway {
     // Melee on top of us always kites while cooling: standing trades
     // volleys for contact we cannot win, so the wound ladder is skipped.
     if (hasMeleeNearby) return cooldownLeft > mildCooldown
-    // Fresh hulls hold the line: the volley outvalues a scratch.
-    if (woundPoints <= freshWoundHp) return false
-    // Healthy hulls above the pack median hold and shoot: they can
-    // afford the trade, and retreating them donates the beating to
-    // the wounded instead of sharing it.
-    if (shields >= healthyShieldHp && aboveMedian(totalHealth, medianHp)) return false
+    // Against ranged guns only the dying yield: the line holds its
+    // volleys until the hull is nearly gone, then it saves itself.
+    if (isCriticallyWounded(totalHealth)) return cooldownLeft > criticalCooldown
+    if (totalHealth < kiteVsRangedHp) return cooldownLeft > seriousCooldown
 
-    retreatAboveCooldown(totalHealth, woundFraction).exists(cooldownLeft > _)
+    false
   }
 
   /** Wounded units never hold fire for the volley while exposed. */
