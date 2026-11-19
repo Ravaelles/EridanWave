@@ -21,7 +21,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 object AvoidDangerousUnits {
 
   /** Lockdown reach of a Ghost, in tiles: never stand inside it. */
-  val lockdownRadiusTiles: Double = 9.6
+  val lockdownRadiusTiles: Double = 11.1
 
   /**
    * Lockdown-ready Ghost energy: the spell costs 100, and 98 covers the
@@ -41,6 +41,16 @@ object AvoidDangerousUnits {
   def isLockdownThreat(ghostEnergy: Int, distTiles: Double): Boolean =
     ghostEnergy >= lockdownReadyEnergy && distTiles < lockdownRadiusTiles
 
+  /**
+   * Targeted check (pure ids for the suite): a Ghost with our hull on
+   * its order target is already casting or about to - leave regardless
+   * of range or battery. A set target with our id means the cast is
+   * inbound; waiting for the energy readout trades the hull for a
+   * number.
+   */
+  def isTargetedBy(ghostTargetId: Option[Int], victimId: Int): Boolean =
+    ghostTargetId.contains(victimId)
+
   /** Raw fallback point, straight away from the Ghost past the line. */
   def fallback(own: Pixel, threat: Pixel): Pixel =
     own.project(threat, -(lockdownRadiusTiles + pastLineTiles) * 32.0)
@@ -50,9 +60,11 @@ object AvoidDangerousUnits {
     if ( ! unit.canMove) return false
 
     Maff.minBy(With.units.enemy.view.filter(e =>
-      e.alive && e.likelyStillThere && Terran.Ghost(e) && e.energy >= lockdownReadyEnergy))(
+      e.alive && e.likelyStillThere && Terran.Ghost(e) && (
+        e.energy >= lockdownReadyEnergy || isTargetedBy(e.orderTarget.map(_.id), unit.id))))(
       unit.pixelDistanceEdge(_)).exists(ghost => {
-      if (isLockdownThreat(ghost.energy, unit.pixelDistanceEdge(ghost) * Maff.inv32)) {
+      if (isTargetedBy(ghost.orderTarget.map(_.id), unit.id) ||
+        isLockdownThreat(ghost.energy, unit.pixelDistanceEdge(ghost) * Maff.inv32)) {
         unit.cherryVisUnitLog("AvoidLockdown")
         unit.agent.forceTo(CornerAntiStuckGuard.guard(
           fallback(unit.pixel, ghost.pixel),

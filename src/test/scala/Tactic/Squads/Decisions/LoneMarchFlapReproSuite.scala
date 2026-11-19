@@ -15,19 +15,19 @@ import org.scalatest.funsuite.AnyFunSuite
 class LoneMarchFlapReproSuite extends AnyFunSuite {
 
   test("one step of movement flips the march branch") {
-    // A unit closing in: 10.01 tiles out it marches alone at the goal...
-    assert(LoneMarch.shouldMarchAlone(10.01))
-    // ...one step later, 9.99 out, it falls into the pack legs.
-    assert( ! LoneMarch.shouldMarchAlone(9.99))
+    // A unit closing in: 15.01 tiles out it marches alone at the goal...
+    assert(LoneMarch.shouldMarchAlone(15.01))
+    // ...one step later, 14.99 out, it falls into the pack legs.
+    assert( ! LoneMarch.shouldMarchAlone(14.99))
     // Same discontinuity leaving: no deadband either way.
-    assert(LoneMarch.shouldMarchAlone(10.01))
-    assert( ! LoneMarch.shouldMarchAlone(9.99))
+    assert(LoneMarch.shouldMarchAlone(15.01))
+    assert( ! LoneMarch.shouldMarchAlone(14.99))
   }
 
   test("two competing attractors chatter across the boundary") {
-    // 1-D march toward a far goal: outside ten tiles of the pack the unit
+    // 1-D march toward a far goal: outside fifteen tiles of the pack the unit
     // heads for the goal, inside it holds with the pack legs while the
-    // pack itself advances. Relative distance breathes across ten tiles,
+    // pack itself advances. Relative distance breathes across fifteen tiles,
     // so the branch flips again and again instead of settling.
     var unit = 0.0
     var pack = 11.0

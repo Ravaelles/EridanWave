@@ -42,7 +42,7 @@ object MarchGates {
     // line to pose in, so the unit skips rallying to the pack centroid
     // and slot-marching and walks straight at the squad goal instead of
     // milling alone, and never while retreating (a falling-back unit
-    // walks home, not at the squad goal). Latched (10.5 out, 9.5 back): the terminus on
+    // walks home, not at the squad goal). Latched (17 out, 13 back): the terminus on
     // either side lives hundreds of pixels apart, so a sharp gate jerks
     // the destination for units breathing on the boundary.
     MarchGate(MarchLabel.LoneMarch, (_, unit) =>
