@@ -280,6 +280,23 @@ New kernels ride suites; these need a live game that reaches them
   unfrozen). ZealDrag_v_ZealDrag stable 5-6/9 loss with verified focus fire
   (74 picks on one target) - duel quality, not targeting; future. Goon_v_DT
   unwinnable without detection (3rd confirm); leave the map alone.
+- Pack-work coordination at the main choke (E_10:27:25 Crona analysis:
+  2 zealots + ~10 probes fight at the choke but PackRegroup yo-yos the
+  blades home every ~30f to a home-weighted centroid while probes die
+  alone. Fix, post-freeze: (1) PackRegroup never fires in contact
+  (inRangeToAttack or engagedUpon) - the rule stops lone charges, it
+  must not pull fighters out; (2) detachment staffing waives the 5-warrior
+  minimum when a defense squad has zero warriors, so the blades join the
+  fight's squad instead of milling home; (3) WorkerCombatSupport.mayFight
+  gains an HP>20 gate - wounded probes rotate to the minerals, continuous
+  recruitWorkers backfills. Rejected: workers into the attack squad (no
+  consensus marches home - abandons the post). The leash emerges: fight
+  only within 10 of a fighting warrior, chase further and withdraw.
+- PvZ sunken break (user spec, post-freeze): unconditional go(Reaver,
+  static >= 4) independent of composition caps, Robo cancel forbidden
+  while static >= 4, max 2 Reavers (techReaver already does get(2)).
+  Caveat to verify live: were the 4-6 sunkens scouted at all - if not,
+  the trigger needs scout survival first, not just weights.
 - Formation holdable (2026-11-18: line forms only vs what shoots
   ground - Turret/Spore marched down, Sunken/Cannon still hold;
   kernel isHoldableTarget + suite. Needs a live PvT confirming
