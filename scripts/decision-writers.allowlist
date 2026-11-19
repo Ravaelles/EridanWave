@@ -16,6 +16,7 @@ src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/TankHugBehavior.scala :: .
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/TankHugBehavior.scala :: .move(unit, tank.get.pixel)
 src/Micro/Actions/Combat/Decisioning/Combat/CombatEngagement.scala :: .forceTo(anchor.get.pixel)
 src/Micro/Actions/Combat/Decisioning/Combat/CombatEngagement.scala :: .forceTo(centroid)
+src/Micro/Actions/Combat/Decisioning/Combat/CombatEngagement.scala :: .forceTo(mate.get.pixel)
 src/Micro/Actions/Combat/Decisioning/Combat/CombatManeuvers.scala :: .decision.set(unit.pixel.project(chaseGoal, combat.idealDistanceForward + extraChaseDistance))
 src/Micro/Actions/Combat/Decisioning/Combat/CombatManeuvers.scala :: .forceTo(centroid)
 src/Micro/Actions/Combat/Decisioning/Combat/CombatManeuvers.scala :: .forceTo(forceGoal)
