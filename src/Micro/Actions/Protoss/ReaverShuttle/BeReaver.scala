@@ -140,8 +140,14 @@ object BeReaver extends Action {
    * static that can hit the hull inside the floor costs one step out,
    * away from its pixel, onto a walkable tile. One step per frame keeps
    * a hull sliding along the band instead of diving in or routing out.
+   * A fresh hull with a shot to spend skips the floor: it walks in,
+   * shoots, and withdraws after - a hull that yields before firing
+   * never fires.
    */
   private def staticKeepOff(unit: FriendlyUnitInfo): Boolean = {
+    if (ReaverStaticStand.mayStand(unit.shieldWound, unit.scarabs, With.framesSince(unit.lastFrameStartingAttack))) return false
+
+    // The floor breathes with the shields: fresh hulls hold 7.05, holed
     // The floor breathes with the shields: fresh hulls hold 7.05, holed
     // ones back out up to 0.8 tiles earlier.
     val floorTiles = ReaverShuttleStaticAttack.keepOffTiles + unit.shieldWoundBonus(0.0, 0.8)
