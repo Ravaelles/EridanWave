@@ -124,6 +124,13 @@ blank-line gate per change, commit per unit).
    Needs a live strong-army grind confirming no retreat with no foe.
  - Zealot regroup respects closing enemies: mutual approach meets
    instead of yo-yoing home (3Zeal diagnosis). Needs a 3Zeal re-run.
+ - Lonely units never retreat (BetaStar f8979 pattern): no enemy
+   warrior inside 12 tiles gates the whole retreat vote out, both
+   phases (committed 16:3x, NOT in the running BetaStar game - needs
+   the next build + a strong-army grind with no foe nearby).
+ - Natural crescent hold (user spec, NOT built): after natural starts,
+   hold at the natural choke +N tiles for 40s, only if ASU<=140 or
+   ArmyStrength<=140 vs Protoss. Needs guard-machinery reading first.
    VERIFIED 2026-11-19: 3Zeal VICTORY 3/0 f464, regroup 28->4 acts,
  - DT raid leash (user rule): no worker/loner hunts inside 60 ground
    tiles of the enemy main; duels within 1.1 always allowed. Needs a
