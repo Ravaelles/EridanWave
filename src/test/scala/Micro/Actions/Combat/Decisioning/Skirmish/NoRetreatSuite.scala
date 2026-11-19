@@ -10,11 +10,12 @@ class NoRetreatSuite extends AnyFunSuite {
     assert( ! NoRetreat.threatensNatural(18.01))
   }
 
-  test("ten seconds in, UMS stops retreating; ladder never does") {
+  test("ten seconds in, UMS stops retreating without a target in range") {
     assert(NoRetreat.umsNoRetreatFrames == 240)
-    assert(NoRetreat.umsEndgame(umsMode = true, frame = 240))
-    assert(NoRetreat.umsEndgame(umsMode = true, frame = 10000))
-    assert( ! NoRetreat.umsEndgame(umsMode = true, frame = 239))
-    assert( ! NoRetreat.umsEndgame(umsMode = false, frame = 10000))
+    assert(NoRetreat.umsEndgame(umsMode = true, frame = 240, hasTargetInRange = false))
+    assert(NoRetreat.umsEndgame(umsMode = true, frame = 10000, hasTargetInRange = false))
+    assert( ! NoRetreat.umsEndgame(umsMode = true, frame = 239, hasTargetInRange = false))
+    assert( ! NoRetreat.umsEndgame(umsMode = true, frame = 10000, hasTargetInRange = true))
+    assert( ! NoRetreat.umsEndgame(umsMode = false, frame = 10000, hasTargetInRange = false))
   }
 }

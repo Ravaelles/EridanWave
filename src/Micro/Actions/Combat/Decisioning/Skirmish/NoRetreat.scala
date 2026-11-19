@@ -82,18 +82,20 @@ object NoRetreat {
   def holdsAny(unit: FriendlyUnitInfo): Boolean =
     homeStand(unit) || tanksAtNatural(unit) || dragoonBrave(unit) ||
       dragoonPack(unit) || reaverBrave(unit) ||
-      umsEndgame(With.umsMode, With.frame)
+      umsEndgame(With.umsMode, With.frame, unit.matchups.targetsInRange.nonEmpty)
 
   /** Ten seconds in, UMS micro maps stop retreating for good. */
   val umsNoRetreatFrames: Int = Utilities.Time.Seconds(10)()
 
   /**
-   * UMS endgame (pure flags for the suite): past ten seconds every
-   * unit holds - endgame chases are lost the moment a kiter baits a
-   * withdrawal, so the line only advances. Ladder games never read it.
+   * UMS endgame (pure flags for the suite): past ten seconds a unit
+   * with nothing in range holds instead of withdrawing - endgame
+   * chases die the moment a kiter baits a withdrawal, so the line
+   * only advances. Duels keep the old vote: a hull trading hits may
+   * still withdraw when the skim says so. Ladder games never read it.
    */
-  def umsEndgame(umsMode: Boolean, frame: Int): Boolean =
-    umsMode && frame >= umsNoRetreatFrames
+  def umsEndgame(umsMode: Boolean, frame: Int, hasTargetInRange: Boolean): Boolean =
+    umsMode && frame >= umsNoRetreatFrames && ! hasTargetInRange
 
   /** Siege tanks this close to our natural, in tiles, must die standing. */
   val naturalTankTiles: Double = 18.0
