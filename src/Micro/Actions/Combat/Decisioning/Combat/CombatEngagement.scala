@@ -84,7 +84,12 @@ private[Decisioning] object EngagePipeline {
       val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase
       if ( ! outer) false
       else {
-        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! combat.shouldRetreat && ! ApproachBehavior.run(unit, combat)) {
+        // Tanks are never closed: the hold stands off siege and unsieged
+        // guns alike instead of walking into unanswered fire. TankHug
+        // keeps its point-blank exception above, the kite keeps its
+        // fighting withdrawal - only the closing leg and the raw charge
+        // yield to the hold.
+        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! TankHoldBehavior.run(unit, combat) && ! combat.shouldRetreat && ! ApproachBehavior.run(unit, combat)) {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
