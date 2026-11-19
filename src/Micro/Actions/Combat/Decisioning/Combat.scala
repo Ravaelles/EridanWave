@@ -15,6 +15,7 @@ import Micro.Coordination.Pushing.TrafficPriorities
 import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.RetreatVerdict
 import Micro.Targeting.BreakTerranWallIn
+import Micro.Targeting.EnemyWallInDetected
 import Micro.Targeting.Target
 import Micro.Targeting.TargetChaff
 import Micro.Targeting.WallBreachTarget
@@ -206,7 +207,11 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     }
 
     WallBreachTarget.run(unit)
-    BreakTerranWallIn.run(unit)
+    // Detected wall-in fight first: zealots chew the depot nearest the
+    // cluster and ranged hulls hold outside it instead of marching in.
+    // The old breach logic below stays as the fallback for everything
+    // this doctrine does not claim.
+    if ( ! EnemyWallInDetected.check(unit)) BreakTerranWallIn.run(unit)
     spreadWorkers()
     Probe.note("Target", unit.id, unit.agent.toAttack.map(_.id.toString).getOrElse("-"))
     unit.agent.choosePerch()

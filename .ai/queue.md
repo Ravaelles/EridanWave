@@ -32,6 +32,21 @@ blank-line gate per change, commit per unit).
   unit is engaged): needs any live fight - fixes the per-frame
   Approach/Rallying flap on dragoons and the PackRegroup yo-yo.
 
+## Done 2026-11-19 midday (validate live)
+
+- Overwhelming-line latch release: a held personal retreat drops
+  immediately when the unit's own squad votes Fight at >=1.5 skim -
+  ten hulls stop routing off four. Needs the E_10:27-style grind
+  (posture Fight + outnumbered duel + retreat flap).
+- EnemyWallInDetected: zealots chew the depot nearest the cluster
+  (hp>=31, yield on tanks+shields<=10), dragoons hold outside 8 tiles
+  instead of marching in. Needs a live PvT wall-in.
+- PvP reaver gate: no Bay/Reavers below 15 dragoons without a scouted
+  enemy Cannon; gas stays on gates and goons. Needs a live PvP.
+- AlwaysAttack picks always, shoots only when the duel will not run
+  (retreating or no advance): the kite starvation fix. Needs any live
+  fight with an air victim in margin.
+
 ## Parked (explicit orders, do not touch)
 
 - Sunkens2 baseless mission fallback (pair stalls after the first pack
