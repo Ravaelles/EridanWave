@@ -8,38 +8,34 @@
   volleys (StarEngine `OutnumberedKiteSuite` 3/3: symmetric movement
   trades symmetric kills; focus-kite 12 kills vs focus-plant 14 down
   two guns).
-- Melee kites only slow lings (27149e81c): speedlings are stood up
-  to (`IsSlowling` seam, kernel param `hasSlowLingNearby`). 2Zeal
-  kills 3->5 with dying-hull kites only; 1Zeal control still
-  VICTORY. 2Zeal parked hard (2v6 upgraded needs a melee shared
-  pick - unbuilt).
+- Melee kites slow lings (27149e81c), and speedlings only as an
+  intact pack (pack-gate): alone a blade cannot outrun them, so it
+  stands; balled the line kites together (`MeleeKiteAway.packKiteTiles`
+  1.0, seam reads nearest zealot mate). Validating on 2Zeal.
 - UMS death log (`DeathWatch.watches`, 68e8ab9f3): on micro maps
   every warrior death dumps frame, unit and last orders
   (`DEATHWATCH ... died f...`); ladder keeps the quiet set
   (Observer/Shuttle/DT/Reaver). First-dragoon-dead frame judges kite
   and dress on 14v16 (baseline f194 pre-61, f213-257 post-61).
 - 14v16 scoreboard: kite61 alone won 16/7 f1355 (first win ever)
-  plus a 13/8 timeout; far-wait era 3W/5L but every fight
+  plus a 13/8 timeout; far-wait era 2W/5L but every fight
   competitive (11-16 kills vs 5-7 before) with the wait firing
   (up to 751 Waiting rows in the 16/11 win). Verdict: keep
   iterating, not reverting.
 - Easy round green (slowling jar): 1DragZeal, 1DragLing, 1Zeal x3,
   1DragHydra, 3Zeal, 2DragUpg, 10Zeal, 1DragWounded all VICTORY;
-  single losses on 1Zeal/10Zeal/3Drag re-ran to wins (variance, not
-  the veto). 16v16 flips W/L (even duel); 3Drag coin-flip.
-- Zealot ball (built 574d2bb11, REVERTED e71d56d09): zero fires
-  in four games (2Zeal x2, ZealDrag x2) - packs already hold
-  shoulder-to-shoulder, deaths land 2 tiles apart. Verification
-  stands (kite fires, formation holds); the mechanism was dead code.
-  Melee shared pick remains the unbuilt lever for 2v6.
+  single losses re-ran to wins (variance, not the veto).
+  1Drag post-kite61 won twice (was 0/4): the mild mill was the
+  dither.
 - Far dress-and-wait (d686ff703): `MarchDress.holdFarWait` latch
   (fires at five out, holds through the creep, releases on contact
   or past six; warriors only, UMS mirrors, never under reavers) +
   creep 0.15 tiles every 24f in `marchLegs`. Outranks memory duels
-  (d5cdffa1d); race read off seen units (8055e88ed). Fires
-  hundreds of rows on 14v16; fights competitive since.
-- 1Drag gun dither (revised): was 0 kills x4 with Move/Attack
-  alternating ~10f; post-kite61 won twice (f398, f398) by planting
-  and trading instead of mild-kite dithering. Verdict: the mild
-  rotation was the dither; no gun-discipline work needed unless it
-  flips back.
+  (d5cdffa1d); race read off seen units (8055e88ed).
+- Zealot ball (built 574d2bb11, REVERTED e71d56d09): zero fires in
+  four games - packs already hold shoulder-to-shoulder.
+- UMS endgame (new): past 10s (240f) retreat is banned outright
+  (`NoRetreat.umsEndgame`) - endgame chases die when a kiter baits
+  a withdrawal. Validating on LingsHydra + 14v16 timeouts.
+- 2Zeal parked hard (2v6 upgraded, kills 3-5): melee shared pick
+  unbuilt; pack-kite is the current lever.

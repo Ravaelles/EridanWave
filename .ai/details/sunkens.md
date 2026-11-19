@@ -1,5 +1,17 @@
 # Sunkens / reaver pair
 
+- Map fixed by the owner (19:28): the Reaver starts in range to
+  fight. Remaining code side: the Lurker standoff.
+- Lurker keep-off bends for loaded Reavers (`AvoidLurkers`,
+  7.05 tiles with >= 1 scarab, full 8.0 otherwise): spines stop at
+  six tiles and the Reaver outranges them, so an armed hull walks
+  to firing distance instead of milling outside. Empty hulls keep
+  the dodge.
+- Reaver special picks (doctrine override, pre-`Target`): vs Zerg
+  the nearest detected Lurker, vs Protoss the nearest Dark Templar
+  (`ReaverTargets.check` in `acquireTarget`, needs scarabs and a
+  hull on its own feet; player records stay empty on UMS so the
+  race reads off seen units).
 - Sunkens2 is an ammo wall, not micro: the hull starts 5 scarabs,
   fires exactly 5, builds none (0 minerals, no income). ~500 damage
   cannot clear 3 sunkens plus lings (~970 HP). Needs a map fix
@@ -20,13 +32,9 @@ Shipped (validate on Sunkens3):
   arrival.
 - Baseless pairs bond blind (nearest hull regardless of squad);
   arrival legs use movePrecise (no 288px flyer overshoot).
-- Stalled-duel fetch: 6s quiet while holding a static inside the gun
-  boards despite the quiet-crowd pin. Closing hulls approach instead
-  of boarding (in-gun added).
-- E1: past 7.25 with scarabs, close through instead of standing
-  (standing at engine range is how hulls die unfired).
+- Stalled-duel fetch: 6s quiet while holding a static inside the
+  gun boards despite the quiet-crowd pin. Closing hulls approach
+  instead of boarding (in-gun added).
+- E1: past 7.25 with scarabs, close through instead of standing.
 - E2: foe static plus ride within 5 plus 6s quiet boards the waiting
   ride. Mobiles keep duel-first; no ride in reach keeps dueling.
-
-OWNER DECISION pending: ferry a winning-but-slow duel, or keep
-duel-first and win by grinding? No code before the call.
