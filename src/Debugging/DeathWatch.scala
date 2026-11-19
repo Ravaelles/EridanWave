@@ -27,6 +27,15 @@ object DeathWatch extends PerGame {
     Protoss.DarkTemplar,
     Protoss.Reaver)
 
+  /**
+   * Watched right now (pure flags for the suite): the standing set plus,
+   * on UMS micro maps, every warrior - small armies and short games make
+   * each hull's death data (first-dragoon-dead judges kite and dress),
+   * and a dozen rings cost nothing. Ladder games keep the quiet set.
+   */
+  def watches(unitClass: UnitClass, umsMode: Boolean): Boolean =
+    watched(unitClass) || (umsMode && unitClass.isWarrior)
+
   private val depth = 20
   private val orderRings = new mutable.HashMap[Int, mutable.Queue[(Int, String)]]()
   private val behavedRings = new mutable.HashMap[Int, mutable.Queue[(Int, String)]]()
@@ -37,7 +46,7 @@ object DeathWatch extends PerGame {
   }
 
   def update(): Unit = {
-    With.units.ours.view.filter(u => watched(u.unitClass)).foreach(trackOrders)
+    With.units.ours.view.filter(u => watches(u.unitClass, With.umsMode)).foreach(trackOrders)
   }
 
   def recordBehavior(unitId: Int, label: String): Unit = {
@@ -45,7 +54,7 @@ object DeathWatch extends PerGame {
   }
 
   def reportIfWatched(unit: UnitInfo): Unit = {
-    if ( ! watched(unit.unitClass)) return
+    if ( ! watches(unit.unitClass, With.umsMode)) return
 
     val orders = orderRings.getOrElse(unit.id, mutable.Queue.empty).map(p => f"f${p._1} #${p._2}").mkString("; ")
     val behaved = behavedRings.getOrElse(unit.id, mutable.Queue.empty).map(p => f"f${p._1} ${p._2}").mkString("; ")

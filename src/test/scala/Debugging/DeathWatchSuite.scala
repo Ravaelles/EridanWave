@@ -12,4 +12,12 @@ class DeathWatchSuite extends AnyFunSuite {
     assert(DeathWatch.watched(Protoss.Reaver))
     assert( ! DeathWatch.watched(Protoss.Dragoon))
   }
+
+  test("ums micro maps watch every warrior, ladder keeps the quiet set") {
+    assert(DeathWatch.watches(Protoss.Observer, umsMode = false))
+    assert(DeathWatch.watches(Protoss.Dragoon, umsMode = true))
+    assert(DeathWatch.watches(Protoss.Zealot, umsMode = true))
+    assert( ! DeathWatch.watches(Protoss.Dragoon, umsMode = false))
+    assert( ! DeathWatch.watches(Protoss.Pylon, umsMode = true))
+  }
 }
