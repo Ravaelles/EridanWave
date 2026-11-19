@@ -24,12 +24,14 @@ class ZealotPackSuite extends AnyFunSuite with StarEngineSuite {
       val mates = world.ours.filter(o => o.alive && o.kind == Protoss.Zealot && (o ne me))
       val mateTiles = mates.sortBy(me.dist).headOption.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
       val ours = world.ours.count(o => o.alive && o.kind == Protoss.Zealot)
+      val inContact = world.foes.exists(f => f.alive && me.dist(f) <= me.rangeAgainst(f) + 32.0)
       val regroup = ZealotPack.shouldRegroup(
         onlyZealots = world.ours.forall(o => ! o.alive || o.kind == Protoss.Zealot),
         zealots = ours,
         mateTiles = mateTiles,
         usSkim = 100.0,
-        foeSkim = 100.0)
+        foeSkim = 100.0,
+        inContact = inContact)
       if (regroup) MoveTo(centroid._1, centroid._2)
       else world.foes.filter(_.alive).sortBy(me.dist).headOption.map(Chase).getOrElse(Hold)
     }

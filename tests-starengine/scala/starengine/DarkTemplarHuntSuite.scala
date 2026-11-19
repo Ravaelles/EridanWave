@@ -27,8 +27,9 @@ class DarkTemplarHuntSuite extends AnyFunSuite with StarEngineSuite {
     override def direct(me: Body, world: World): Directive = {
       val revealed = world.foes.filter(f =>
         f.alive && f.kind == Protoss.DarkTemplar && world.detectorsRevealing(f).nonEmpty)
+      val warriors = world.ours.count(o => o.alive && o.kind.isWarrior)
       val inRange = revealed.filter(f =>
-        DarkTemplarHunt.inHuntRange(Math.hypot(f.x - mainPx._1, f.y - mainPx._2) / 32.0))
+        DarkTemplarHunt.inHuntRange(Math.hypot(f.x - mainPx._1, f.y - mainPx._2) / 32.0, warriors))
       DarkTemplarHunt.pick(inRange.map(markOf(me, _))).map(i => Chase(inRange(i))).getOrElse(Hold)
     }
   }

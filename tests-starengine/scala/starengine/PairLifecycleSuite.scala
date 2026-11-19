@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate, ReaverShuttleFerry, ReaverShuttleStaticAttack}
+import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate, ReaverShuttleFerry, ReaverStaticStand, ReaverShuttleStaticAttack}
 import ProxyBwapi.Races.{Protoss, Zerg}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -27,7 +27,8 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
     foes.filter(_.alive).map(f => PairArbiter.FoeView(
       me.dist(f) / 32.0,
       f.rangeAgainst(me) / 32.0,
-      me.rangeAgainst(f) / 32.0))
+      me.rangeAgainst(f) / 32.0,
+      f.kind.isStaticDefense))
 
   /**
    * Inferred shot clock, production order: the engine never tells the
@@ -43,6 +44,17 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       .map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
 
     ReaverBoardGate.locked(frame - lastShot(me), crowd)
+  }
+
+  /**
+   * Inferred stall clock, production order: the engine never tells the
+   * pilot it fired, so a foe inside the gun means the clock resets -
+   * the same inference the boarding gate pilot uses. Past the quiet
+   * window the duel is stalled, and the arbiter may board it.
+   */
+  private def stalledShot(me: Body, foes: Seq[Body], frame: Int): Boolean = {
+    if (foes.filter(_.alive).exists(f => me.dist(f) <= me.rangeAgainst(f))) lastShot(me) = frame
+    frame - lastShot(me) >= ReaverStaticStand.quietFrames
   }
 
   private def staticTiles(me: Body, foes: Seq[Body]): Option[Double] =
@@ -69,6 +81,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
       boardLocked(r, foes, frame),
       Double.PositiveInfinity,
       false,
+      stalledShot(r, foes, frame),
       foeViews(r, foes))
 
   /** Shuttle executor, production order: resolve, then the legs. */
@@ -189,6 +202,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             boardLocked(me, foes, world.frame),
             Double.PositiveInfinity,
             false,
+            stalledShot(me, foes, world.frame),
             foeViews(me, foes)),
           Seq.empty,
           raid = false).reaver
@@ -225,6 +239,7 @@ class PairLifecycleSuite extends AnyFunSuite with StarEngineSuite {
             boardLocked(me, foes, world.frame),
             threatTiles(me, foes),
             ReaverShuttleFerry.needsRide(tripTiles(me)),
+            stalledShot(me, foes, world.frame),
             foeViews(me, foes)),
           rides,
           raid = false).reaver

@@ -78,7 +78,13 @@ class ReaverSunkensScaleSuite extends AnyFunSuite with StarEngineSuite {
     override def direct(me: Body, world: World): Directive = {
       val foe = world.nearestFoeOf(me, world.foes, (_, _) => true)
       val enemyInMargin = foe.exists(f => me.dist(f) <= me.rangeAgainst(f) + KiteAway.enemyMarginTiles * 32.0)
-      if (foe.isDefined && KiteAway.shouldRetreat(me.hp.toInt, me.lossFraction, me.cooldownLeft, enemyInMargin)) {
+      // Engine bodies pool shields into hp, so shields read zero and the
+      // median over live allies stands in for the pack median - the same
+      // wound ladder, only the split the engine never models is flat.
+      val hps = world.ours.filter(_.alive).map(_.hp.toInt).sorted
+      val medianHp = if (hps.isEmpty) me.hp.toInt else hps(hps.size / 2)
+      val hasMeleeNearby = foe.exists(f => ! f.kind.isBuilding && me.dist(f) <= 96.0)
+      if (foe.isDefined && KiteAway.shouldRetreat(me.hp.toInt, me.lossFraction, me.cooldownLeft, enemyInMargin, hasMeleeNearby, (me.maxHp - me.hp).toInt, shields = 0, medianHp)) {
         val f = foe.get
         val dx = me.x - f.x
         val dy = me.y - f.y

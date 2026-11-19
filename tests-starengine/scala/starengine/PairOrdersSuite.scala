@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate, ReaverShuttleFerry}
+import Micro.Actions.Protoss.ReaverShuttle.{PairArbiter, ReaverBoardGate, ReaverShuttleFerry, ReaverStaticStand}
 import ProxyBwapi.Races.{Protoss, Terran}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -24,7 +24,19 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
     foes.filter(_.alive).map(f => PairArbiter.FoeView(
       me.dist(f) / 32.0,
       f.rangeAgainst(me) / 32.0,
-      me.rangeAgainst(f) / 32.0))
+      me.rangeAgainst(f) / 32.0,
+      f.kind.isStaticDefense))
+
+  /**
+   * Inferred stall clock, production order: the engine never tells the
+   * pilot it fired, so a foe inside the gun means the clock resets -
+   * the same inference the boarding gate pilot uses. Past the quiet
+   * window the duel is stalled, and the arbiter may board it.
+   */
+  private def stalledShot(me: Body, foes: Seq[Body], frame: Int): Boolean = {
+    if (foes.filter(_.alive).exists(f => me.dist(f) <= me.rangeAgainst(f))) lastShot(me) = frame
+    frame - lastShot(me) >= ReaverStaticStand.quietFrames
+  }
 
   private def staticTiles(me: Body, foes: Seq[Body]): Option[Double] =
     foes.filter(f => f.alive && f.kind.isBuilding).sortBy(me.dist).headOption
@@ -74,6 +86,7 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           boardLocked(r, foes, world.frame),
           Double.PositiveInfinity,
           false,
+          stalledShot(r, foes, world.frame),
           foeViews(r, foes))).toSeq
       val out = PairArbiter.resolveShuttle(
         PairArbiter.ShuttleView(
@@ -157,6 +170,7 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
           boardLocked(me, foes, world.frame),
           foes.filter(_.canHit(me)).sortBy(me.dist).headOption.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity),
           ReaverShuttleFerry.needsRide(Math.hypot(me.x - army._1, me.y - army._2) / 32.0),
+          stalledShot(me, foes, world.frame),
           foeViews(me, foes)),
         rides,
         raid = false).reaver

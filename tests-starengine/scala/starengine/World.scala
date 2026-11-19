@@ -1,5 +1,7 @@
 package starengine
 
+import ProxyBwapi.Races.Protoss
+
 /**
  * The StarEngine world: two sides, one frame at a time. Owns the loop
  * only - pilots decide, constraints adjust, and this object moves bodies
@@ -55,7 +57,9 @@ final class World(
     val (loy, hiy) = if (y1 < y2) (y1, y2) else (y2, y1)
     // Endpoint inside reads as blocked: sealed in means reforming inside.
     if (ax >= lox && ax <= hix && ay >= loy && ay <= hiy) return true
+
     if (bx >= lox && bx <= hix && by >= loy && by <= hiy) return true
+
     def cross(px: Double, py: Double, qx: Double, qy: Double, rx: Double, ry: Double): Double =
       (qx - px) * (ry - py) - (qy - py) * (rx - px)
     val edges = Seq(
@@ -72,6 +76,16 @@ final class World(
 
   /** Attack lock, in frames: a body that just dealt damage holds still (no re-aiming mid-swing). */
   val attackLock = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
+
+  /**
+   * Bugged reaver launch (scenario opt-in, off by default): scarabs
+   * against defensive statics only leave inside the launch band and
+   * only from a hold - outside it, or on the move, the hull stands
+   * ready forever without firing. The BW behavior the Sunkens2 map
+   * dies on: engine range claims the shot, the game never launches
+   * it. Scenarios without the concept read exactly as before.
+   */
+  var buggedStaticLaunch: Boolean = false
 
   /** Committed storms waiting to land: (landing frame, x, y). */
   private val pendingStorms = new scala.collection.mutable.ListBuffer[(Int, Double, Double)]()
@@ -242,6 +256,21 @@ final class World(
     })
   }
 
+  /**
+   * Bugged static launch, one home: a Reaver shelling a defensive
+   * static only resolves inside the launch band and only from a hold
+   * order - the band is the shipped hold kernel's number, pinned equal
+   * by suite so the bug model and the fix can never drift apart.
+   * Everything else (mobiles, other shooters, the flag off) resolves
+   * exactly as before.
+   */
+  private def staticLaunchResolves(me: Body, foe: Body, orders: Map[Body, Directive]): Boolean =
+    ! buggedStaticLaunch ||
+      me.kind != Protoss.Reaver ||
+      ! foe.kind.isStaticDefense ||
+      (me.dist(foe) <= World.ReaverStaticLaunchBandPx &&
+        orders.get(me).exists(_ == Hold))
+
   /** Storms due this frame land on post-move positions. Loaded cargo rides through: guns cannot hit it, storms neither. */
   private def landStorms(): Unit = {
     val due = pendingStorms.filter(_._1 <= frame)
@@ -272,9 +301,9 @@ final class World(
         // live foe detector's sight reaches them. Nothing is cloaked by
         // default, so scenarios without the concept read exactly as before.
         val committed = orders.get(body).collect {
-          case Chase(target) if target.alive && target.transport.isEmpty && body.canHit(target) && body.dist(target) <= body.rangeAgainst(target) && ( ! target.cloaked || detectorsRevealing(target).nonEmpty) => target
+          case Chase(target) if target.alive && target.transport.isEmpty && body.canHit(target) && body.dist(target) <= body.rangeAgainst(target) && staticLaunchResolves(body, target, orders) && ( ! target.cloaked || detectorsRevealing(target).nonEmpty) => target
         }
-        val victim = committed.orElse(nearestFoeOf(body, victims, (me, foe) => me.canHit(foe) && me.dist(foe) <= me.rangeAgainst(foe) && ( ! foe.cloaked || detectorsRevealing(foe).nonEmpty)))
+        val victim = committed.orElse(nearestFoeOf(body, victims, (me, foe) => me.canHit(foe) && me.dist(foe) <= me.rangeAgainst(foe) && staticLaunchResolves(me, foe, orders) && ( ! foe.cloaked || detectorsRevealing(foe).nonEmpty)))
         victim.foreach(v => {
           v.hp = Math.max(0, v.hp - body.damageAgainst(v))
           v.lastDamageFrame = frame
@@ -306,6 +335,13 @@ final class World(
  * by suite so the two can never drift apart.
  */
 object World {
+
+  /**
+   * Reaver launch band, in pixels: scarabs vs defensive statics only
+   * resolve inside this, and only from a hold. Mirrors the shipped
+   * ReaverStaticHold band - pinned equal by suite, never from memory.
+   */
+  val ReaverStaticLaunchBandPx: Double = 7.25 * 32.0
 
   val StormCostEnergy: Int = 75
   val StormDamage: Int = 112

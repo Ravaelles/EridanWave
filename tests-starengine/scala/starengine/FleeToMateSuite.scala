@@ -40,6 +40,7 @@ class FleeToMateSuite extends AnyFunSuite with StarEngineSuite {
       boardLocked = false,
       Double.PositiveInfinity,
       longTrip = false,
+      stalledShot = false,
       Seq.empty)
 
   /** Pilot, production order: the arbiter decides, legs execute. */
