@@ -17,6 +17,13 @@ class TargetMemorySuite extends AnyFunSuite {
     assert(Target.shouldDropMemory(targetVisible = false, otherHittableInRange = true))
   }
 
+  test("a warrior holds only what it could hit, casters keep aiming") {
+    assert(Target.holdsDuelTarget(isWarrior = true, canHitEvenDetected = true))
+    assert( ! Target.holdsDuelTarget(isWarrior = true, canHitEvenDetected = false))
+    assert(Target.holdsDuelTarget(isWarrior = false, canHitEvenDetected = false))
+    assert(Target.holdsDuelTarget(isWarrior = false, canHitEvenDetected = true))
+  }
+
   test("a fogged templar memory is never legal, everything else recalls") {
     assert( ! Target.visibleHpLegal(isDarkTemplar = true, targetVisible = false))
     assert(Target.visibleHpLegal(isDarkTemplar = true, targetVisible = true))

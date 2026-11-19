@@ -219,12 +219,16 @@ object MarchOrders {
   private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean): (Pixel, MarchLabel) = {
     // One writer per frame: a dueling unit holds its ground instead of
     // walking the march legs - the duel owns movement while it lasts.
+    // Only a hittable duel pins the march: a warrior staring at what it
+    // could never hit even with detection (zealots under an Overlord) is
+    // not dueling, it is stuck - the legs march on instead.
     // Far dress-and-wait outranks a memory duel first: chasing ghosts at
     // five tiles out trickles the line, while a real duel always sits
     // inside gun reach, so the gap guard keeps it untouched.
     if (duelHoldsMarch(
       verdictRetreat,
-      hasAttackTarget = unit.agent.toAttack.isDefined,
+      hasAttackTarget = unit.agent.toAttack.exists(t =>
+        Micro.Targeting.Target.holdsDuelTarget(unit.unitClass.isWarrior, unit.canAttack(t, assumeDetection = true))),
       engagedUpon = unit.matchups.engagedUpon)) {
       if (farWaitHolding(unit)) return (farCreepPixel(unit), MarchLabel.WaitingForPack)
 

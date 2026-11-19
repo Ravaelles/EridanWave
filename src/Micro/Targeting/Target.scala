@@ -333,6 +333,18 @@ object Target {
     ! targetVisible && otherHittableInRange
 
   /**
+   * Duel-worthy target (pure booleans for the suite): a warrior holds
+   * its march only for a target it could hit with detection on.
+   * Zealots froze under an Overlord contact while the march held the
+   * duel and the maneuvers tugged home and out every few frames - a
+   * harmless spectator never pins the line. Non-warriors keep their
+   * targets (casters aim through toAttack), goons keep their Templar
+   * hunt and dragoons their pest control.
+   */
+  def holdsDuelTarget(isWarrior: Boolean, canHitEvenDetected: Boolean): Boolean =
+    ! isWarrior || canHitEvenDetected
+
+  /**
    * Visible-HP gate (pure booleans for the suite): a fogged Dark Templar
    * memory carries stale hit points the duel must never pick - without
    * eyes on the blade there is nothing to shoot, only a walk into two
