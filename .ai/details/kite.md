@@ -19,10 +19,14 @@
   (Observer/Shuttle/DT/Reaver). First-dragoon-dead frame judges kite
   and dress on 14v16 (baseline f194 pre-61, f213-257 post-61).
 - 14v16 scoreboard: kite61 alone won 16/7 f1355 (first win ever)
-  plus a 13/8 timeout; far-wait era 2W/4L but every fight
-  competitive (11-14 kills vs 5-7 before) with the wait firing
+  plus a 13/8 timeout; far-wait era 3W/5L but every fight
+  competitive (11-16 kills vs 5-7 before) with the wait firing
   (up to 751 Waiting rows in the 16/11 win). Verdict: keep
   iterating, not reverting.
+- Easy round green (slowling jar): 1DragZeal, 1DragLing, 1Zeal x3,
+  1DragHydra, 3Zeal, 2DragUpg, 10Zeal, 1DragWounded all VICTORY;
+  single losses on 1Zeal/10Zeal/3Drag re-ran to wins (variance, not
+  the veto). 16v16 flips W/L (even duel); 3Drag coin-flip.
 - Next: early formation dress (user plan) - dress far, wait ~5 tiles
   out, micro-nudges forward. PvP-only (vs Protoss reavers it feeds).
   BUILT (d686ff703): `MarchDress.holdFarWait` latch (fires at five
@@ -30,7 +34,8 @@
   warriors only, UMS mirrors, never under reavers) + creep 0.15
   tiles every 24f in `marchLegs`. Outranks memory duels (d5cdffa1d);
   race read off seen units (8055e88ed).
-- 1Drag gun dither (open): Move/Attack orders alternate every ~10f,
-  0 kills in 4 games. `AttackDelay.safeToIssueOrder` gates Agency
-  orders, but the duel legs re-issue through `Commander`/maneuvers -
-  verify the path before touching it.
+- 1Drag gun dither (revised): was 0 kills x4 with Move/Attack
+  alternating ~10f; post-kite61 won twice (f398, f398) by planting
+  and trading instead of mild-kite dithering. Verdict: the mild
+  rotation was the dither; no gun-discipline work needed unless it
+  flips back.
