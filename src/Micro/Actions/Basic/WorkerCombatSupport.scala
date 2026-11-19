@@ -15,13 +15,21 @@ object WorkerCombatSupport {
 
   val supportPixels: Double = 32.0 * supportTiles
 
-  def mayFight(fightingWarriorsNearby: Int): Boolean =
-    fightingWarriorsNearby > 0
+  /**
+   * Fighting hulls retire at or below this many hit points: a dying
+   * worker trades the mineral line for nothing, and the staffing keeps
+   * sending replacements while the fight lasts.
+   */
+  val fightHp: Int = 20
+
+  def mayFight(fightingWarriorsNearby: Int, totalHealth: Int): Boolean =
+    fightingWarriorsNearby > 0 && totalHealth > fightHp
 
   def supported(worker: FriendlyUnitInfo): Boolean = mayFight(
     worker.matchups.allies.count(_.friendly.exists(ally =>
       ally.unitClass.isWarrior
       && ! ally.unitClass.isWorker
       && ally.agent.shouldFight
-      && ally.pixelDistanceEdge(worker) <= supportPixels)))
+      && ally.pixelDistanceEdge(worker) <= supportPixels)),
+    worker.totalHealth)
 }
