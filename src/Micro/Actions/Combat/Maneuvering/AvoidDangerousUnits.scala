@@ -24,9 +24,10 @@ object AvoidDangerousUnits {
   val lockdownRadiusTiles: Double = 11.1
 
   /**
-   * Lockdown-ready Ghost energy: the spell costs 100, and 98 covers the
-   * regen during the approach - a hull waiting for the round hundred
-   * eats the cast it was counting down.
+   * Lockdown-ready Ghost energy: near the spell cost, covering the
+   * regen during the approach - a hull waiting for the round number
+   * eats the cast it was counting down. The number lives on the val
+   * below, not in prose, so retunes never rot the comment.
    */
   val lockdownReadyEnergy: Int = 98
 
