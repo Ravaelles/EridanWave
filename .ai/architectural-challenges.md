@@ -7,19 +7,16 @@ hysteresis home (rule 14).
 
 ## Open
 
-- Single retreat verdict (continued): the technique terminal gates on
-  `nearestArmedTiles` (anything shooting ground) while the march bus
-  additionally gates on `nearestEnemyWarriorTiles` (lonely rule).
-  Armed-but-not-warrior nearby (cannons, no army) votes retreat on
-  one and hold on the other - the next flap candidate. Unify both
-  call sites on one predicate (needs a ladder game that reaches
-  lone-statics first).
 - Single retreat verdict: `FightOrFlee`, `RetreatVerdict` (+bus),
   `ReengageLatch`, `ClusterPosture` floor, `NoRetreat`, technique
   ladder, march legs all vote retreat separately today and must be
   kept in agreement by hand (lonely gate, terminal gate, overrule).
   Target: one pure `RetreatVote` per unit per frame, both phases read
   it. Guarded by `ArmyMarchSuite` + UMS duels before any move.
+  Known leftover divergence: the technique terminal gates on
+  `nearestArmedTiles` while the march bus additionally gates on
+  `nearestEnemyWarriorTiles` (lonely rule) - unify on one predicate
+  (needs a ladder game that reaches lone statics first).
 - March-vs-technique movement ownership: both write movement (march
   terminus/intent, technique decision/move) and only convention
   separates them; every flap (HoldingDuel jitter, Marching/Retreat,
@@ -64,3 +61,9 @@ hysteresis home (rule 14).
   strong-army routs were unreadable in trace. Closed by
   `RetreatVerdict.retreatLabel` parens on march labels and
   RetreatPlan acts.
+- No-foe retreats (Crona min-5 rout): the old `forUnit` let weak
+  clusters retreat from empty fields. Closed by requiring an armed
+  enemy within 12 tiles on both arms (`01166c5de`).
+- Dead-code drift: `KiteAway` carried a mild-wound ladder,
+  fresh/median gates and four knobs nobody called after the 61-HP
+  rewrite - pure deletion, no behavior change (`ff18e7ab7`).
