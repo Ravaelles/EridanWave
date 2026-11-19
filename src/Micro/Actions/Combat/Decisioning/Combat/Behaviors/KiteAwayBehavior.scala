@@ -4,8 +4,9 @@ import Lifecycle.With
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldToShoot, KiteAway, MeleeKiteAway}
 import Micro.Agency.Commander
-import ProxyBwapi.Races.{Protoss, Terran, Zerg}
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Utilities.UnitFilters.IsSlowling
 
 /**
  * Kite behavior (was CombatEngagement.kiteAway): wounded units yield ground
@@ -94,7 +95,7 @@ object KiteAwayBehavior {
     MeleeKiteAway.shouldRetreat(
       totalHp = unit.totalHealth,
       coolingDown = unit.cooldownLeft > 0,
-      hasLingNearby = unit.matchups.threatsInPixels(marginPixels).exists(Zerg.Zergling),
+      hasSlowLingNearby = unit.matchups.threatsInPixels(marginPixels).exists(IsSlowling),
       outnumberedByZealots = foeZealots > mates + 1,
       attackingMelee = unit.matchups.targetNearest.exists(_.unitClass.melee))
   }
