@@ -15,4 +15,7 @@
   and dress on 14v16 (baseline f194 pre-61).
 - Next: early formation dress (user plan) - dress far, wait ~5 tiles
   out, micro-nudges forward. PvP-only (vs Protoss reavers it feeds).
-  NOT built yet.
+  BUILT (d686ff703): `MarchDress.holdFarWait` latch (fires at five
+  out, holds through the creep, releases on contact or past six;
+  warriors only, UMS mirrors, never under reavers) + creep 0.15
+  tiles every 24f in `marchLegs`. Validating on 14v16 now.
