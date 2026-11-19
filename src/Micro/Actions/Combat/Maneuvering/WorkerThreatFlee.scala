@@ -20,11 +20,21 @@ object WorkerThreatFlee {
   /** A lone hurt miner runs from a single closing fighter, in hit points. */
   val loneFighterHp: Int = 30
 
-  /** An enemy Dark Templar this close, in tiles: run straight away, no pathing detours - the blade is already in range. */
+  /** A visible enemy Dark Templar this close, in tiles: run straight away, no pathing detours - the blade is already in range. */
   val darkTemplarTiles: Double = 3.0
+
+  /**
+   * The straight run holds past the edge: a Templar stepping on the
+   * boundary would otherwise yo-yo the miner every frame, so the flee
+   * releases a tile further out instead of at the exact entry line.
+   */
+  val darkTemplarReleaseTiles: Double = 4.0
 
   def fleeDarkTemplarStraight(distTiles: Double): Boolean =
     distTiles <= darkTemplarTiles
+
+  def releasedDarkTemplar(distTiles: Double): Boolean =
+    distTiles > darkTemplarReleaseTiles
 
   /** A fighter this close to landing hits, in tiles beyond its range, counts. */
   val loneFighterTiles: Double = 1.5

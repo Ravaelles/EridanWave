@@ -47,6 +47,20 @@ blank-line gate per change, commit per unit).
   (retreating or no advance): the kite starvation fix. Needs any live
   fight with an air victim in margin.
 
+## Done 2026-11-19 DT defense (validate live)
+
+- Worker Templar flee owns the frame: a visible blade within 3 tiles
+  moves a worker straight out ten (release at 4, per-worker latch)
+  through WorkerDarkTemplarFlee, never through Retreat - the Retreat DT
+  branch is deleted. Needs a live DT-at-the-line game confirming
+  WorkerDarkTemplarFlee acts.
+- Live on this build: Terminus DEFEAT 45/135 with TankHold 215x +
+  HugTank 41x (first live TankHold fires, errors absent; no wall-in on
+  TauCross so WallStand/EnemyWallIn correctly 0); Monster DEFEAT 90/125
+  with PackRegroup 1474x (errors absent). The overwhelming-line release
+  rode along - still needs the E_10:27-style grind to confirm the
+  394-skim flap is gone.
+
 ## Parked (explicit orders, do not touch)
 
 - Sunkens2 baseless mission fallback (pair stalls after the first pack

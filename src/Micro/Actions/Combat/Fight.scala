@@ -4,6 +4,7 @@ import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Basic.WorkerCombatSupport
 import Micro.Actions.Combat.Maneuvering.Retreat
+import Micro.Actions.Combat.Maneuvering.WorkerDarkTemplarFlee
 import Micro.Actions.Combat.Maneuvering.StaticDefenseRepel
 import Micro.Actions.Combat.Maneuvering.Stealth
 import Micro.Actions.Combat.Decisioning.Actions.{Cast, Follow, Root}
@@ -29,6 +30,11 @@ object Fight extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canAttack || unit.canMove) && ! unit.agent.isScout && ! unit.unitClass.isDetector
 
   override def perform(unit: FriendlyUnitInfo): Unit = {
+    // Templar on the line first: a visible blade near a worker owns the
+    // frame through the dedicated move-away manager, never through
+    // Retreat - the shortest line out, supported or not.
+    if (unit.unitClass.isWorker && WorkerDarkTemplarFlee.run(unit)) return
+
     // Miners are not a combat squad. Without a fighting warrior nearby to
     // anchor them, they withdraw instead of trading alone after the army
     // has disengaged (worker rushes opt out explicitly).

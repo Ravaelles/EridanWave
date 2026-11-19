@@ -96,16 +96,6 @@ object Retreat extends Action {
       return RetreatPlan(unit, baseToRunTo.heart.center, "Run")
     }
 
-    // Dark Templar on a worker: run straight away from it, no pathing
-    // detours or waypoint hops - at three tiles the blade is already in
-    // range, so the shortest line out is the only one that saves.
-    val dtNear = Maff.minBy(unit.matchups.enemies.filter(e =>
-      IsWorker(unit) && e.alive && e.visible && Protoss.DarkTemplar(e)))(
-      _.pixelDistanceEdge(unit))
-    if (dtNear.exists(dt => WorkerThreatFlee.fleeDarkTemplarStraight(unit.pixelDistanceEdge(dt) / 32.0))) {
-      return RetreatPlan(unit, unit.pixel.project(dtNear.get.pixel, -10.0 * 32.0).walkablePixel, "DarkTemplar")
-    }
-
     // Enshuttled VIPs: If not primary passenger, retreat towards primary passenger
     val leadPassenger = unit.agent.ride.flatMap(_.agent.passengersPrioritized.headOption)
     if (leadPassenger.isDefined && ! leadPassenger.contains(unit)) {
