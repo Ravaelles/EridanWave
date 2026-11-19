@@ -6,7 +6,7 @@ import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
 import Micro.Actions.Combat.Maneuvering.ReaverTankKeepOff
 import Micro.Agency.Commander
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
@@ -87,7 +87,7 @@ object BeReaver extends Action {
 
   /** Combat family, in order; the arbiter gates it behind the fight. */
   private val combatClaims: Seq[GroundContext => Boolean] = Seq(
-    backToPack, backOffOutrangedStatic, coolWalk, standShoot, closeStatic, backOffOutrangedInRange)
+    backToPack, backOffOutrangedStatic, coolWalk, standShoot, staticHoldFire, closeStatic, backOffOutrangedInRange)
 
   /**
    * Pack anchor (always first in the combat family): a hull standing
@@ -243,9 +243,36 @@ object BeReaver extends Action {
     true
   }
 
+  /**
+   * Launch-band hold vs Sunkens and Cannons (before the close): the game
+   * only launches the scarab once the hull stands inside the static's
+   * own reach, so a march straight through never fires. Inside the band
+   * the hull holds every eighth frame and re-attacks between holds -
+   * each hold forces a launch attempt. Outranged guns stay out: holding
+   * under a longer gun trades hull for nothing, the back-off below owns
+   * that case.
+   */
+  private def staticHoldFire(context: GroundContext): Boolean = {
+    val unit = context.unit
+    val hold = context.foe.filter(t =>
+      (Zerg.SunkenColony(t) || Protoss.PhotonCannon(t))
+      && unit.scarabs > 0
+      && ! outranges(t, unit)
+      && ReaverStaticHold.holdLatched(unit.id, unit.tileDistanceEdge(t)))
+    hold.foreach(t => {
+      if (ReaverStaticHold.holdFrame(With.frame, unit.id)) {
+        unit.agent.act("StaticHoldFire")
+        Commander.hold(unit)
+      } else {
+        unit.agent.act("StaticReattack")
+        Commander.attack(unit, t)
+      }
+    })
+    hold.isDefined
+  }
+
   /** Close a static we can outwalk and outrange, so the next shot lands inside our reach. */
-  private def closeStatic(context: GroundContext): Boolean = {
-    val close = context.foe.filter(t =>
+  private def closeStatic(context: GroundContext): Boolean = {    val close = context.foe.filter(t =>
       t.unitClass.isStaticDefense
       && context.unit.tileDistanceEdge(t) < ReaverShuttleStaticAttack.engageTiles
       && ! outranges(t, context.unit))
