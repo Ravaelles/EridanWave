@@ -58,6 +58,22 @@ object BeShuttle extends Action {
     }
   }
 
+  /**
+   * Arrival move (no overshoot): the flyer fast-transit projects every
+   * destination 288px past itself to hold acceleration, so a leg that
+   * must arrive - rejoin the mate, fetch a hailer, hold the escort
+   * hover, park on the drop ring - orbits at 288px forever instead of
+   * closing. A Sunkens run watched the ride track its mate at 285px
+   * for three minutes while the timeout ran out. These legs park, so
+   * they opt out of the XY correction for one move, like Search does.
+   */
+  private def movePrecise(shuttle: FriendlyUnitInfo): Unit = {
+    val correctXY = shuttle.intent.shouldAdjustXY
+    shuttle.intent.shouldAdjustXY = false
+    Commander.move(shuttle)
+    shuttle.intent.shouldAdjustXY = correctXY
+  }
+
   /** Drop passengers that are not ours to ferry. */
   private def ditch(shuttle: FriendlyUnitInfo): Boolean = {
     if (shuttle.base.exists(_.owner.isEnemy) && ! shuttle.agent.destinationFinal().base.exists(_.owner.isEnemy)) return false
@@ -94,7 +110,7 @@ object BeShuttle extends Action {
       shuttle.agent.addPassenger(passenger)
       shuttle.agent.act("FetchPassenger")
       shuttle.agent.forceTo(passenger.pixel)
-      Commander.move(shuttle)
+      movePrecise(shuttle)
       acted = true
     })
 
@@ -327,7 +343,7 @@ object BeShuttle extends Action {
           mate.pixel.x * Maff.inv32, mate.pixel.y * Maff.inv32,
           hover.x * Maff.inv32, hover.y * Maff.inv32)
         shuttle.agent.forceTo(Pixel((hx * 32).toInt, (hy * 32).toInt))
-        Commander.move(shuttle)
+        movePrecise(shuttle)
         true
       }).getOrElse(false)
   }
@@ -343,7 +359,7 @@ object BeShuttle extends Action {
     ReaverShuttlePair.mateOnFoot(shuttle).exists(mate => {
       shuttle.agent.act("RejoinRide")
       shuttle.agent.forceTo(mate.pixel)
-      Commander.move(shuttle)
+      movePrecise(shuttle)
       true
     })
   }
@@ -367,7 +383,7 @@ object BeShuttle extends Action {
       case Some(spot) =>
         shuttle.agent.act("DuelDropSpot")
         shuttle.agent.forceTo(spot)
-        Commander.move(shuttle)
+        movePrecise(shuttle)
       case None =>
         ReaverShuttlePair.duelTarget(shuttle.pixel).map(target => {
           shuttle.agent.act("DuelFerry")

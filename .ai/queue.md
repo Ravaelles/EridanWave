@@ -93,6 +93,12 @@ blank-line gate per change, commit per unit).
   watched the ride await while its mate died on foot at f336, neither
   new behavior ever reached. Strict based games untouched. Needs the
   same Sunkens2 run confirming board plus ferry.
+- Pair arrival legs park precisely (Sunkens2 root cause): the flyer
+  fast-transit projects destinations 288px past, so rejoin/fetch/
+  escort/drop legs orbited at 285px for three minutes instead of
+  closing within the 5-tile rejoin reach. They opt out of XY
+  correction for one move now. Needs the same Sunkens2 run confirming
+  the ride closes and boards.
 
 ## Parked (explicit orders, do not touch)
 
