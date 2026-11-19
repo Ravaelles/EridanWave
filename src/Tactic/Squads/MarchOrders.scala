@@ -196,6 +196,11 @@ object MarchOrders {
     val verdictRetreat = RetreatVerdict.held(unit.id, With.frame) &&
       ! ClusterPosture.overrulesRetreat(squad.battlePosture, facts.armyUnitsScore)
     MarchGates.select(facts, marchUnit) match {
+      // A lone hull kites better from a set line than from a march: at
+      // five tiles outside gun reach it dresses and waits instead of
+      // walking into the enemy corner, where there is nowhere left to
+      // kite to. Same gate as the dressed far-wait, same creep.
+      case Some(MarchLabel.LoneMarch) if farWaitHolding(unit) => (farCreepPixel(unit), MarchLabel.WaitingForPack)
       case Some(label) => (squad.vicinity, label)
       case None if verdictRetreat =>
         // Retreat outranks every formation rule below: the verdict already
