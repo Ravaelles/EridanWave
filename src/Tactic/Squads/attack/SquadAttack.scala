@@ -51,6 +51,11 @@ class SquadAttack extends Squad {
    */
   var huntMarches: Boolean = false
 
+  // A containing squad holds its line by doctrine, whatever the sims
+  // say this frame: the arc stands off the statics instead of trading
+  // into them while the pack closes the exits.
+  override def holdsLine: Boolean = super.holdsLine || mode == AttackModes.ContainArmy
+
   // HuntContact marches to contact: act as if the squad agreed to fight.
   // Cluster posture (phase 4 of _COMBAT-REFACTOR.md): one verdict per
   // cluster per frame, latched. The RegroupLatch stance retired here: the

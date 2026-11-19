@@ -50,6 +50,14 @@ abstract class Squad extends Tactic with FriendlyUnitGroup {
    * stragglers back.
    */
   def holdsGround: Boolean = false
+
+  /**
+   * Hold-the-line posture for the duel layer: standing ground in
+   * formation instead of charging or leaving. True on HoldLine, or for
+   * squads whose doctrine is the line itself - the static standoff
+   * below answers only where this holds.
+   */
+  def holdsLine: Boolean = battlePosture.contains(ClusterPosture.HoldLine)
   def assignedTransport(passenger: FriendlyUnitInfo): Option[FriendlyUnitInfo] = None
   def allowsPickup(transport: FriendlyUnitInfo, passenger: FriendlyUnitInfo): Boolean = true
   def accountForCargo(transport: FriendlyUnitInfo): Unit = {}
@@ -145,4 +153,4 @@ abstract class Squad extends Tactic with FriendlyUnitGroup {
   )
 
   override def toString: String = ToString(this).replace("Squad", "")
-}
+}
