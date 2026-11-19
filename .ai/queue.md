@@ -67,6 +67,9 @@ blank-line gate per change, commit per unit).
 - Small armies answer the blade: below 30 warriors the main-base hunt
   reaches 50 ground tiles instead of 40; large armies hold the old line.
   Needs a live DT defense confirming the extended walk.
+- Fogged blades are not targets: rememberedNear never recalls an
+  invisible Dark Templar (stale HP), other recalls untouched. Needs a
+  Goon_v_DT re-run confirming the ladder stays quiet without detection.
 
 ## Parked (explicit orders, do not touch)
 

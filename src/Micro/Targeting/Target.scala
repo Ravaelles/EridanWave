@@ -206,6 +206,7 @@ object Target {
       && ! TargetChaff.isChaff(e.unitClass)
       && e.likelyStillThere
       && attacker.canAttack(e)
+      && Target.visibleHpLegal(Protoss.DarkTemplar(e), e.visible)
       && TargetRecall.shouldRecall(attacker.tileDistanceEdge(e))).toSeq
 
   // Assigned-before-matchups sweep for one predicate: the ladder's atom.
@@ -330,6 +331,15 @@ object Target {
    */
   def shouldDropMemory(targetVisible: Boolean, otherHittableInRange: Boolean): Boolean =
     ! targetVisible && otherHittableInRange
+
+  /**
+   * Visible-HP gate (pure booleans for the suite): a fogged Dark Templar
+   * memory carries stale hit points the duel must never pick - without
+   * eyes on the blade there is nothing to shoot, only a walk into two
+   * free swipes. Other recalls keep the old horizon rule untouched.
+   */
+  def visibleHpLegal(isDarkTemplar: Boolean, targetVisible: Boolean): Boolean =
+    ! isDarkTemplar || targetVisible
 
   /**
    * Liftoff release (pure booleans for the suite): a grounded target that
