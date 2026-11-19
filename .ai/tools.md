@@ -1,67 +1,48 @@
 # Tools (read me after context reset)
 
 ## Run games - only these two ways, never bare StarCraft
-- `bash scripts/run.sh --map=<path> [--race= --enemy-race= --headless --speed=0 --cherryvis]`:
-  THE way. Headless+Xvfb is default; builds the jar if missing. Map via
+
+- `bash scripts/run.sh --map=<path> [--headless ...]`: THE way.
+  Headless+Xvfb is default; builds the jar if missing. Map via
   `bash scripts/list-maps.sh [filter]`.
-- scbw path: `/sc-ai/BOTS/__PlayAsEridan/_<Enemy>.sh` (all route through
-  `__GENERIC-RUN-ERIDAN.sh`; new launchers via `__CREATE-BOT-LAUNCHER.sh`).
-  No seeds on the Wine path (host sets the seed; scbw has `seed_override`).
-- UMS micro maps self-start headless now (briefing dismissed by keypress);
-  UMS writes NO CherryVis trace (`!umsMode` gate) - use `probe.py` on the
-  debug log instead, never traces.
+- scbw path: `/sc-ai/BOTS/__PlayAsEridan/_<Enemy>.sh` (all route
+  through `__GENERIC-RUN-ERIDAN.sh`). No seeds on the Wine path.
+- UMS micro maps self-start headless; UMS writes no CherryVis trace
+  (`!umsMode`) - use `probe.py`, never traces.
 
 ## Read a game (cheapest first)
-- `python3 scripts/summarize-cherryvis.py <trace.json|dir> [--unit ID] [--acts]`:
-  move/hold counts per unit (scout smoothness), acts, kills with balances.
-- `python3 scripts/summarize-errors.py <errors.json> [--min-priority ...]`:
-  one line per key, worst first.
-- Dashboard: `dashboard/index.html` opens straight from disk. Every finished
-  `run.sh` game is recorded by `scripts/dashboard-record.sh` (called from
-  `wine-run.sh`) into `dashboard/data/history.jsonl` plus the
-  `history.js` snapshot the page can load under `file://`; `ums-batch.sh`
-  opts out and writes its own richer rows. Rows can be hidden per browser
-  with the row's trash button (localStorage, the file is untouched).
-- `python3 scripts/probe.py <normal.log> [--unit ID] [--key KEY]`:
-  per-unit decision chains on traceless UMS games (arm keys in
-  `bwapi-data/write/probe.txt`: `Act` decision chains, `Move` ordered travel,
-  `Sim` stance votes, `Formation` pack audit for `formation-check.py`, `Form`
-  formation census, `Hold` line-hold decisions, `Target` chosen enemy id).
-- `bash scripts/run.sh --map=... --formation-audit` + `python3
-  scripts/formation-audit.py [path] [--assert-mean lo-hi] [--assert-breaks n]`:
-  flag-gated harness (off by default) tallying leaf behaviors per unit-frame
-  and slot-leave ranges at each breakFormationToAttack rising edge, written to
-  `bwapi-data/write/formation-audit.txt` at game end; the reader prints
-  per-class n/mean/stddev/min/max and can gate a future harness.
-- After moving a class across packages, run `mvn -o clean`:
-stale zinc analysis leaves phantom packages that crash the 2.12
-backend globally ("Java member module without member class").
+
+- `python3 scripts/summarize-cherryvis.py <trace.json|dir> [--unit ID] [--acts]`
+- `python3 scripts/summarize-errors.py <errors.json> [--min-priority ...]`
+- Dashboard: `dashboard/index.html` opens from disk (rows recorded
+  per game; hide rows with the trash button, file untouched).
+- `python3 scripts/probe.py <normal.log> [--unit ID] [--key KEY]`
+  (per-unit chains on traceless UMS: `Act`, `Move`, `Sim`, `Form`,
+  `Hold`, `Target`; `probe.txt` arm keys).
+- `bash scripts/run.sh --map=... --formation-audit` +
+  `python3 scripts/formation-audit.py` (flag-gated pack/slot tally).
+- After moving a class across packages: `mvn -o clean` (stale zinc
+  kills the 2.12 backend).
 - Traces: wine `bwapi-data/write/cherryvis_dir.rep.cvis/`; scbw
-  `~/.scbw/games/GAME_*/write_0/...` auto-paired to `E_*.rep.cvis`
-  (needs default-on cherryvis; checker depth is 3, not 2).
-- Per-game logs: `out/wine/WINE_LOG` (score box), `WINE_DEBUG` (frames,
-  exceptions), `bwapi-data/write/*.normal.log.txt` (births/tech),
-  `errors.json` (absent = clean), replays in `/sc-ai/REPLAYS/`.
+  `~/.scbw/games/GAME_*/write_0/...` (checker depth 3, not 2).
+- Per-game logs: `out/wine/WINE_LOG`, `WINE_DEBUG`,
+  `bwapi-data/write/*.normal.log.txt`, `errors.json` (absent = clean).
 
-## Verify ritual (every change, one command chain)
+## Verify ritual (every change)
+
 `python3 scripts/check-blank-lines.py <touched>` +
-`scripts/tests.sh` (all base tests; StarEngine excluded by tag) +
-`./build-jar.sh` (auto-syncs the scbw slot jar). Then commit per unit.
-StarEngine scenarios run alone, never in the default suite:
-`scripts/starengine.sh [<Suite>...]` (sources in
-`tests-starengine/scala`, real UnitType numbers, SOLID: pilots decide,
-engine advances, constraints adjust).
+`scripts/tests.sh` (base; StarEngine excluded by tag) +
+`./build-jar.sh` (auto-syncs the slot jar). Then commit per unit.
+StarEngine alone: `scripts/starengine.sh [<Suite>...]`
+(sources in `tests-starengine/`, pilots decide, engine advances).
 
-## Gotchas that already burned us
-- Never edit `scripts/wine-run.sh` mid-run (bash reparses, kills teardown).- New Scala = CRLF, scripts = LF; blank line after `return`.
-- Human-only UMS maps (e.g. `dragoons_v_map`) idle forever headless: `list-maps.sh` hides them and `run.sh` refuses them - do not force-launch.
-- Box stuck in NOATTACH ("Game table mapping not found" every run): kill leftovers, `wineserver -k`, retry; still dead, launch one manual game (Chaoslauncher by hand) plus one manual client attach to prove game vs table side, then resume `run.sh`.
+## Gotchas
+
+- Never edit `scripts/wine-run.sh` mid-run (bash reparses, kills teardown).
+- New Scala = CRLF, scripts = LF; blank line after `return`.
+- Human-only UMS maps idle headless: `list-maps.sh` hides them,
+  `run.sh` refuses them - do not force-launch.
+- Box stuck in NOATTACH: kill leftovers, `wineserver -k`, retry;
+  still dead, prove game vs table side once by hand, then resume.
 - Distances are tiles unless the name says pixels (rule 12).
-- `scripts/verify-drop.sh` (micro gate), `scripts/smoke.sh` (melee gate).
-- Full docs: `.ai/conventions.md` (rules), `.ai/architecture.md` (levels),
-  `.ai/knowledge.md` (vendor/build).
-- TestKit: `testkit.TestKit` seeds a game-free world (Mockito dep,
-  test scope); boundary in `todo.md`.
-
-## Planned tooling (not built)
-- Replay reader: parked (see remarks.md).
+- Full docs: `.ai/conventions.md`, `.ai/architecture.md`.

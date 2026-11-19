@@ -1,84 +1,52 @@
 # Architecture consensus
 
-How we structure unit control, what we promote, and the contract between
-levels. Decisions here outrank local habits; new code follows this file.
+New code follows this file; it outranks local habits.
 
-## 1. Primary decomposition: squad WHERE, unit HOW
+## 1. Squad WHERE, unit HOW
 
-- **Squad** owns destination, continuity and roles: vicinity, latch, centroid,
-  who scouts, who bombs (`SquadAcePilots.chooseActivity`, missions).
-- **Unit** owns execution in contact: duels, cooldowns, holds, boarding
-  (`CorsairBrain`, `ReaverAtlantisBrain`).
-- Neither level alone works: squad-only wastes flight time on stale info,
-  unit-only commutes map-wide (ghost chases). Cluster concepts (centroid,
-  latch, shared targets) live only at squad level.
+- Squad: destination, continuity, roles - vicinity, latch, centroid,
+  scouts, bombs (`SquadAcePilots.chooseActivity`, missions).
+- Unit: execution in contact - duels, cooldowns, holds, boarding.
+- Cluster concepts (centroid, latch, shared targets) live only at
+  squad level.
 
-## 2. Arbitration inside each level: first-claims chain
+## 2. Arbitration: first-claims chain
 
-Ordered behaviors, first `applies` wins (`CorsairBrain`, `ReaverAtlantisBrain`,
-activity early-returns in `chooseActivity`). The generic fighter chain went
-the same way: one `*Behavior` object per decision (`Behaviors/`, each with
-a contract comment), orchestrated by `CombatEngagement.engage` dispatch.
-Order is the contract and reads as documentation. This complements §1,
-it does not compete with it.
+Ordered behaviors, first `applies` wins (one `*Behavior` object per
+decision, orchestrated by `CombatEngagement.engage`). Order is the
+contract and reads as documentation.
 
 ## 3. Override contract (unit over squad)
 
-The unit brain runs after the squad activity and may redirect, iff:
+The unit brain may redirect iff it takes targets (preferring the
+squad's own), makes a bounded local adjustment (holds, dances,
+offsets), or runs an explicit time-boxed scout task with a staleness
+gate. Never widen the search to a farther/staler target. Best case:
+the unit never touches destination at all.
 
-1. **It takes targets** (real or remembered contact): hunt, dance, duel.
-   Prefer the squad's own targets first (`CorsairDanceToOverlord` reads
-   `squad.targets` before picking its own).
-2. **Or bounded local adjustment**: holds, dances, relocate offsets.
-3. **Or an explicit time-boxed scouting task** with a staleness gate
-   (`CorsairExploreEnemyMain`: 9 s per 30 s, unseen-main gate).
-4. **Never widen the search**: no override to a farther or staler target
-   than the squad's. `CorsairHuntKnownOverlords` (sorted by our main,
-   yanks across the map) is the anti-example to fix, not to copy.
+## 4. Testability
 
-Best case: the unit never touches destination at all (Reaver chain only
-holds/loads/unloads via `Commander`).
+Branch with 2+ thresholds -> pure function with a suite (`KiteAway`,
+`ReaverBoardLogic`, ...). Game-coupled reads go through a snapshot
+(`ReaverSituation.read`). Squad choosers and missions stay untested
+but thin; kernels go pure. `testkit.TestKit` seeds a game-free
+world; matchups/battles stay game-only - next seam on demand.
 
-## 4. Testability rule
+## 5. Layer guide
 
-- Numeric decisions become pure functions with suites (`HuntLogic`,
-  `AceExploreLogic`, `KiteAway`, `ReaverBoardLogic`, `ReaverUnloadSafety`,
-  `ReaverDropAirSafety`). Rule of thumb: a branch with 2+ thresholds
-  deserves a pure kernel.
-- Game-coupled chains read the world once into a snapshot
-  (`ReaverSituation.read`) so behaviors take facts, not the game.
-- Squad choosers and missions stay untested (game-coupled) but thin;
-  their kernels go pure (§4, first bullet).
-- `testkit.TestKit` seeds a game-free world (Mockito units, map dims,
-  frame): geometry, static class math and player-free field math have
-  suites. Live fields need grids, player queries need players, matchups
-  need a world - those stay game-only; next seam on demand.
+Gameplan (tech/army) -> squad activity (where) -> unit behavior
+(how) -> missions (multi-unit jobs with locks, drops only).
+Shared combat vocabulary lives in `Combat` + `Decisioning/Combat/`.
+`Be*` = dispatched Actions, `*Behavior` = engage helpers,
+`*Brain` = first-claims chain.
 
-## 5. Layer guide (which architecture for what)
+## 6. From Atlantis: decisions, not plumbing
 
-- **Gameplan/strategy**: what tech and army (`Gameplans`, `Strategery`).
-- **Squad activity**: where the cluster goes (`Tactic.Squads`, `Tactic.Corsair`).
-- **Unit behavior**: how in contact (`Micro.Actions`, Reaver chain).
-- **Mission**: coordinated multi-unit jobs with locks/itineraries
-  (`Tactic.Missions`, drops only). No new state machines elsewhere.
-- **Shared combat pipeline** (`Combat` facade + grouped delegates in
-  `Decisioning/Combat/`): vocabulary and dispatch, never unit specifics.
-- **Naming**: `Be*` are `Action`s dispatched from `Fight.perform`,
-  `*Behavior` are helpers called by `CombatEngagement`, `*Brain` is a
-  first-claims chain - pick the one that matches the layer above.
+Port the decision (unload safety, hold-to-fire, tank evac), keep our
+plumbing. Risky rewrites hide behind a Strategy switch with the old
+code intact and the new behavior default.
 
-## 6. From Atlantis: port decisions, not plumbing
+## 7. New behavior = new object + dispatch line + contract comment
 
-Take the decision (unload safety, hold-to-fire, tank evac), keep our
-plumbing (targeting, pipeline, missions). Do not import the Manager base,
-`Alpha` globals, or magic numbers inline. Risky rewrites hide behind a
-Strategy switch with the old code intact and the new behavior default
-(`BeReaver` dispatcher, blackboard flag).
-
-## 7. Adding a behavior
-
-New `*Behavior` object plus its dispatch line, with a contract comment
-(when it fires, what it yields to). Pure kernel and suite where numbers
-decide. Split any method past 15 lines into named submethods. No new
-entries in run-everything lists (`Fight.perform` is grandfathered,
-not a pattern).
+One `*Behavior` object per decision (when it fires, what it yields
+to). Split methods past 15 lines. No new run-everything lists.

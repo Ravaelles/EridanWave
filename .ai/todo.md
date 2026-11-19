@@ -1,39 +1,34 @@
 # Distance hygiene (owner direction: tiles everywhere)
 
-Convert `.pixelDistance` uses to tiles where possible
+Convert `.pixelDistance` to tiles where possible
 (`tileDistanceEdge/Center`, `Pixel.tx/ty`, `Maff.div32`). Exceptions:
-pixel construction, genuinely mixed range math, hot sim loops. Count
-with `grep -rn "\.pixelDistance" src --include=*.scala | wc -l`; keep
+pixel construction, mixed range math, hot sim loops. Count with
+`grep -rn "\.pixelDistance" src --include=*.scala | wc -l`; keep
 suites green, no behavior change.
 
-# Targeting parity with Atlantis — test roadmap
+# Targeting parity with Atlantis
 
-Pin pure kernels beside the caller with a `*Suite`.
-Game-coupled strata stay thin and delegate. `testkit.TestKit` covers
-geometry/static math; matchups/battles stay game-only. Next seam on demand: per-stratum MatchupSnapshot views.
-Atlantis ports (NEXT #184/#185, need a stub harness):
-`TargetLadderTest` (ladder order), `AcquireTargetTest` (top of
-ladder), `MeleeChewerTargetTest` (weakest-in-range vs keep-current),
-`TargetPlacementNearTest`, `UndetectedTargetTest`, `ChaseVetoTest`,
-`ChaseVetoFollowsDecidedPostureTest`, `FocusFireTest`.
+Pin pure kernels beside the caller with a `*Suite`. Game-coupled
+strata stay thin and delegate. `testkit.TestKit` covers geometry;
+matchups/battles stay game-only - next seam on demand. Atlantis
+ports (`TargetLadderTest`, `AcquireTargetTest`, `FocusFireTest`,
+...) need per-stratum MatchupSnapshot views first.
 
-## Creep Colony acceptance (the repeated miss, needs a game)
+# Open ends (each needs a game to prove)
 
-Morphing colony (future Sunken) over idle; fighters still outrank
-colonies; Reavers still skip non-combat buildings (`TargetFilterReaver`).
-Both combat states intended: out of combat the bonus dominates, in
-combat fighters outrank it — neither may idle past a standing colony.
+- Creep Colony: morphing colony over idle; fighters still outrank
+  colonies; Reavers skip non-combat buildings. Neither combat state
+  may idle past a standing colony.
+- 4th/5th base progression: watch (shifted base may have fixed it).
+- Spot retreat: catch-all today, needs one game per case
+  (observer/detector/caster).
+- Carrier stop-hold micro (SH doubles DPS; links in BeCarrier) and
+  the 24f post-attack wait: need a Carrier map + visualizations.
 
-# SRP pass on the longest files
+# Code health
 
-`docs/longest-files.md` lists the 20 longest sources. Next cheapest first:
-`WallFinder.canPlace/scoreWall`, `SimulationGrid.applySplash`,
-`Debugging/*` painters; controllers (`MacroSim.simulate`,
-`PvZ1BaseReactive.buildTech`, `SquadDefendBase.run`) need a game per cut.
-
-# SquadAutomation shell deletion target
-
-`Tactic.Squads.SquadAutomation` is a forwarder shell over
-`SquadTargeting`, `SquadForming` and `MarchOrders` (15 call sites,
-down from 41). Migrate the callers to the halves and delete the
-shell; until then new code must call the halves, never the shell.
+- `docs/longest-files.md`: cut cheapest first (`WallFinder`,
+  `SimulationGrid`, painters); controllers need a game per cut.
+- `Tactic.Squads.SquadAutomation` is a forwarder shell over
+  `SquadTargeting`/`SquadForming`/`MarchOrders`: migrate callers to
+  the halves and delete it. New code calls the halves, never the shell.
