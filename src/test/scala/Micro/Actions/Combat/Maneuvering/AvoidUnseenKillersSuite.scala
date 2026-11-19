@@ -20,5 +20,8 @@ class AvoidUnseenKillersSuite extends AnyFunSuite {
   test("lurkers keep a spine-length berth, templars a blade-length one") {
     assert(AvoidLurkers.avoidTiles == 8.0)
     assert(AvoidDarkTemplar.avoidTiles == 4.0)
+    assert(AvoidDarkTemplar.workerAvoidTiles == 5.5)
+    assert(AvoidDarkTemplar.avoidTilesFor(isWorker = true) == 5.5)
+    assert(AvoidDarkTemplar.avoidTilesFor(isWorker = false) == 4.0)
   }
 }

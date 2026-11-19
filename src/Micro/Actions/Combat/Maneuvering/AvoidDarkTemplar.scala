@@ -14,9 +14,18 @@ object AvoidDarkTemplar {
   /** The blade kills at melee; the dodge starts one step outside that. */
   val avoidTiles: Double = 4.0
 
+  /**
+   * Workers give the blade extra room: they cannot answer back, so the
+   * dodge starts wider instead of trading a probe for a late step out.
+   */
+  val workerAvoidTiles: Double = 5.5
+
+  def avoidTilesFor(isWorker: Boolean): Double =
+    if (isWorker) workerAvoidTiles else avoidTiles
+
   /** Escape stride, in tiles: straight out, no pathing detours. */
   val fleeTiles: Double = 10.0
 
   def act(unit: FriendlyUnitInfo): Boolean =
-    AvoidUnseenKillers.avoid(unit, Protoss.DarkTemplar(_), avoidTiles, fleeTiles, "AvoidDarkTemplar")
+    AvoidUnseenKillers.avoid(unit, Protoss.DarkTemplar(_), avoidTilesFor(unit.unitClass.isWorker), fleeTiles, "AvoidDarkTemplar")
 }
