@@ -69,6 +69,9 @@ object ClusterPosture {
    * against, so the line dresses out instead of posing.
    * A forbidden retreat (RetreatAllowed) skips everything and reads the
    * band straight away: no floor to sit, no agreement to wait for.
+   * A forced fight (UMS micro maps) skips everything too: the whole
+   * point of the map is the duel, so the line promotes fighting and
+   * leaves local withdrawals to the technique's own margins.
    */
   def next(
     current: Posture,
@@ -78,7 +81,9 @@ object ClusterPosture {
     inContact: Boolean,
     framesSinceWithdraw: Int,
     canWithdraw: Boolean = true,
-    retreatAllowed: Boolean = true): Posture = {
+    retreatAllowed: Boolean = true,
+    forceFight: Boolean = false): Posture = {
+    if (forceFight) return Fight
     if ( ! retreatAllowed) return band(current, advantageRatio, inContact)
 
     if (coverageFraction < minimumCoverage) return current

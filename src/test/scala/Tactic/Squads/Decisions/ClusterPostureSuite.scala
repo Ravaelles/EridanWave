@@ -12,8 +12,9 @@ class ClusterPostureSuite extends AnyFunSuite {
     advantage: Double = 2.0,
     inContact: Boolean = true,
     sinceWithdraw: Int = 1000,
-    retreatAllowed: Boolean = true): Posture =
-    ClusterPosture.next(current, fighting, coverage, advantage, inContact, sinceWithdraw, retreatAllowed = retreatAllowed)
+    retreatAllowed: Boolean = true,
+    forceFight: Boolean = false): Posture =
+    ClusterPosture.next(current, fighting, coverage, advantage, inContact, sinceWithdraw, retreatAllowed = retreatAllowed, forceFight = forceFight)
 
   test("no forecast never flips anything") {
     assert(next(Fight, coverage = 0.4) == Fight)
@@ -85,5 +86,11 @@ class ClusterPostureSuite extends AnyFunSuite {
     assert(next(Regroup, fighting = 0.0, advantage = 1.2, inContact = false, retreatAllowed = false) == Regroup)
     assert(next(Withdraw, fighting = 0.0, advantage = 1.2, sinceWithdraw = 0, retreatAllowed = false) == HoldLine)
     assert(next(Withdraw, fighting = 1.0, advantage = 10.0, sinceWithdraw = 0, retreatAllowed = false) == Fight)
+  }
+
+  test("a forced fight fights from any posture, any forecast") {
+    assert(next(Withdraw, fighting = 0.0, coverage = 0.0, advantage = 0.1, inContact = false, sinceWithdraw = 0, forceFight = true) == Fight)
+    assert(next(Regroup, fighting = 0.2, coverage = 0.4, advantage = 0.5, inContact = true, forceFight = true) == Fight)
+    assert(next(HoldLine, fighting = 1.0, coverage = 1.0, advantage = 3.0, inContact = true, forceFight = true) == Fight)
   }
 }

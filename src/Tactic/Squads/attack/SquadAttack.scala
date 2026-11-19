@@ -358,7 +358,8 @@ class SquadAttack extends Squad {
       .map(e => e.pixelDistanceCenter(centroidGround) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
     val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame, ! With.umsMode,
-      RetreatAllowed.forCluster(unitsAdvantage, nearestArmed, proxyRush, MacroFacts.enemyHardCounterKnown))
+      RetreatAllowed.forCluster(unitsAdvantage, nearestArmed, proxyRush, MacroFacts.enemyHardCounterKnown),
+      forceFight = With.umsMode)
     // Tankless force: Dragoons attack a Terran with no tanks instead of
     // posing for guns that are not there. This votes posture Fight - the
     // walk stays on the slots and the duel still releases through the
