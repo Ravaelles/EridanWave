@@ -141,7 +141,9 @@ object MarchOrders {
    * games pay nothing: the scans run only while UMS Protoss stands.
    */
   private def farWaitHolding(unit: FriendlyUnitInfo): Boolean = {
-    if ( ! With.umsMode || ! With.enemies.exists(_.isProtoss)) return false
+    // Player records stay empty on UMS (nothing ever assigns them), so
+    // read the race off seen units instead: blind at spawn, exact later.
+    if ( ! With.umsMode || ! With.units.enemy.exists(_.unitClass.isProtoss)) return false
     if (With.units.enemy.exists(e => e.alive && Protoss.Reaver(e))) return false
 
     val gapTiles = Maff.minBy(With.units.enemy.view.filter(_.alive))(_.pixelDistanceEdge(unit))
