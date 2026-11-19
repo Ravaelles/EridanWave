@@ -5,6 +5,7 @@ import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Skirmish.NoRetreat
+import Tactic.Squads.Decisions.ClusterPosture
 import Micro.Actions.Combat.Maneuvering.DOdge
 import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -58,6 +59,16 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         MacroFacts.enemyHardCounterKnown),
       With.frame)
     val verdictRetreat = Tactic.Squads.Decisions.RetreatVerdict.held(unit.id, With.frame)
+    // Overwhelming line never routs: when the unit's own squad votes to
+    // fight from a clearly superior skim, a latched personal retreat
+    // releases immediately instead of waiting for duel confidence that
+    // never comes against the few it already outmasses - ten hulls
+    // holding off four while the line advances is how grinds stall out.
+    // Squads without a posture keep the old latch untouched below.
+    val overwhelmingLine = unit.squad.exists(_.battlePosture.exists(ClusterPosture.advances)) &&
+      Information.Battles.ArmyStrength.score(
+        With.battles.globalAttack.us.skimStrengthUnits,
+        With.battles.globalAttack.enemy.skimStrengthUnits) / 100.0 >= ClusterPosture.fightAboveAdvantage
     combat.technique =
             if ( ! unit.canMove)                                    Fight
       // Latched retreat: once falling back, hold Flee until clear of the
@@ -66,7 +77,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // not flee keep the old ladder untouched below. Committed hunts
       // never latch: the order already bypassed the vote, so holding
       // the retreat would walk a duel it was sent to fight.
-      else  if (unit.intent.canFlee && ! unit.agent.commit && ! standGroundNow && ReengageLatch.shouldHoldRetreat(
+      else  if (unit.intent.canFlee && ! unit.agent.commit && ! standGroundNow && ! overwhelmingLine && ReengageLatch.shouldHoldRetreat(
         combat.techniqueIs(Fallback, Flee, Excuse),
         unit.matchups.pixelsEntangled * Maff.inv32,
         unit.agent.shouldFight,
