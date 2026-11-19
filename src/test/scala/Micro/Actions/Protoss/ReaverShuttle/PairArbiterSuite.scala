@@ -364,6 +364,25 @@ class PairArbiterSuite extends AnyFunSuite {
     assert(out.reaver == PairArbiter.HoldShoot)
   }
 
+  test("resolve: a stalled duel is fetched despite the quiet pin") {
+    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0, isStatic = true)
+    val out = PairArbiter.resolveShuttle(
+      shuttleView(),
+      Seq(reaverView(boardLocked = true, stalledShot = true, foes = Seq(foe))),
+      raid = false,
+      baitRide = false)
+    assert(out.shuttle == PairArbiter.FetchMate)
+  }
+
+  test("resolve: a quiet hull with no duel keeps the pin") {
+    val out = PairArbiter.resolveShuttle(
+      shuttleView(),
+      Seq(reaverView(boardLocked = true)),
+      raid = false,
+      baitRide = false)
+    assert(out.shuttle == PairArbiter.AwaitPost)
+  }
+
   test("resolve: a quiet adjacent ride is not boarded for a short hop") {
     val out = PairArbiter.resolveReaver(
       reaverView(pos = (0.0, 0.0), bond = Some(shuttleView(pos = (1.0, 0.0)))),

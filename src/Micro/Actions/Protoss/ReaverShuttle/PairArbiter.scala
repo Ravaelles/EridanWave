@@ -287,6 +287,16 @@ object PairArbiter {
    * an unbonded hull with a free same-squad ride walks to the ride,
    * never to the army.
    */
+  /**
+   * Stalled mate (pure on the views): a hull holding a static inside
+   * its gun with no shot for six seconds is not milling, it is stuck -
+   * the quiet-crowd pin must not strand the ferry for a duel the hull
+   * cannot progress. Mobiles keep the pin: their cooldowns land inside
+   * six seconds, so staleness means nothing.
+   */
+  private def stalledMate(mate: Option[ReaverView]): Boolean =
+    mate.exists(m => m.stalledShot && m.foes.exists(f => f.isStatic && f.distTiles <= f.reaverGunTiles))
+
   def resolveShuttle(shuttle: ShuttleView, reavers: Seq[ReaverView], raid: Boolean, baitRide: Boolean, baseless: Boolean = false): PairDirective = {
     val mate = nearestMate(shuttle, reavers, baseless)
     val foe = mate.flatMap(m => nearestFoe(m.foes))
@@ -301,7 +311,7 @@ object PairArbiter {
       reaverDoomed      = mate.exists(m => doomed(m.wound01, m.foes)),
       raid              = raid,
       baitRide          = baitRide,
-      boardLocked       = mate.exists(_.boardLocked),
+      boardLocked       = mate.exists(_.boardLocked) && ! stalledMate(mate),
       threatTiles       = mate.flatMap(m => Maff.minBy(m.foes)(_.distTiles)).map(_.distTiles).getOrElse(Double.PositiveInfinity),
       longTrip          = false,
       wound01           = mate.map(_.wound01).getOrElse(0.0))
