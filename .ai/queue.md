@@ -6,13 +6,14 @@ Details live in `details/` - the queue keeps one line per item.
 
 ## Now
 
-- UMS failing-maps round done: ZealDrag (4-2), 3Drag, 16Drag,
-  3DragHydra, Reav_v_Drag, 14Drag all VICTORY; 1DragWounded 2-3
-  on long grinds; 2Zeal parked hard. Only structural walls left
-  (Sunkens ammo, DT detection, mop-up surrounds decision,
-  Sunkens3 chase rule).
-- Jar fresh, slot synced. Tree clean except 4 line-ending M flags
-  (verified byte-identical, normalize on next touch).
+- Ladder validation in flight: BetaStar DEFEAT 48/137 (fair late
+  grind loss, no flap), Crona DEFEAT 21/35 (greedy expand into
+  9pool, known gameplan gap), Terminus running on the full jar.
+- UMS: full batch 12W/11L; ZealDrag 4-3, 14v16 competitive,
+  LingsHydra timeouts fixed twice, 1Drag/1DragWounded flip wins,
+  2Zeal parked hard, Sunkens/DT walls stand.
+- Jar verified content-complete (all five units + duel gate +
+  creep window present by `strings` check).
 
 ## Needs a live game (code green, jar includes it)
 
