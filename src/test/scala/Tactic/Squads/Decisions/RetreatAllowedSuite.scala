@@ -4,15 +4,17 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class RetreatAllowedSuite extends AnyFunSuite {
 
-  test("a weak cluster may always retreat") {
-    assert(RetreatAllowed.forCluster(unitsScore = 100.0, nearestArmedTiles = 40.0, proxyRush = false, hardCounterKnown = false))
-    assert(RetreatAllowed.forCluster(unitsScore = 179.9, nearestArmedTiles = 40.0, proxyRush = false, hardCounterKnown = false))
+  test("weak clusters retreat from near enemies, never from empty fields") {
     assert(RetreatAllowed.forCluster(unitsScore = 100.0, nearestArmedTiles = 3.0, proxyRush = false, hardCounterKnown = false))
+    assert(RetreatAllowed.forCluster(unitsScore = 179.9, nearestArmedTiles = 11.9, proxyRush = false, hardCounterKnown = false))
+    assert( ! RetreatAllowed.forCluster(unitsScore = 100.0, nearestArmedTiles = 40.0, proxyRush = false, hardCounterKnown = false))
+    assert( ! RetreatAllowed.forCluster(unitsScore = 100.0, nearestArmedTiles = Double.PositiveInfinity, proxyRush = false, hardCounterKnown = false))
   }
 
   test("a strong cluster on a clear field never retreats") {
     assert( ! RetreatAllowed.forCluster(unitsScore = 250.0, nearestArmedTiles = 40.0, proxyRush = false, hardCounterKnown = false))
     assert( ! RetreatAllowed.forCluster(unitsScore = 866.0, nearestArmedTiles = Double.PositiveInfinity, proxyRush = false, hardCounterKnown = false))
+    assert(RetreatAllowed.forCluster(unitsScore = 866.0, nearestArmedTiles = 3.0, proxyRush = false, hardCounterKnown = true))
   }
 
   test("at or above 180 the cluster holds without asking the sim") {
@@ -38,6 +40,7 @@ class RetreatAllowedSuite extends AnyFunSuite {
     assert(RetreatAllowed.forUnit(totalHp = 35, unitsScore = 866.0, nearestArmedTiles = 40.0, proxyRush = true, hardCounterKnown = false))
     assert(RetreatAllowed.forUnit(totalHp = 10, unitsScore = 866.0, nearestArmedTiles = 40.0, proxyRush = false, hardCounterKnown = false))
     assert( ! RetreatAllowed.forUnit(totalHp = 36, unitsScore = 866.0, nearestArmedTiles = 40.0, proxyRush = true, hardCounterKnown = false))
-    assert(RetreatAllowed.forUnit(totalHp = 200, unitsScore = 100.0, nearestArmedTiles = 40.0, proxyRush = false, hardCounterKnown = false))
+    assert(RetreatAllowed.forUnit(totalHp = 200, unitsScore = 100.0, nearestArmedTiles = 3.0, proxyRush = false, hardCounterKnown = false))
+    assert( ! RetreatAllowed.forUnit(totalHp = 200, unitsScore = 100.0, nearestArmedTiles = 40.0, proxyRush = false, hardCounterKnown = false))
   }
 }

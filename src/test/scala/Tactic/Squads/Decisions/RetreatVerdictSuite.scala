@@ -37,7 +37,7 @@ class RetreatVerdictSuite extends AnyFunSuite {
   }
 
   test("a beaten warrior with room to run holds the retreat") {
-    assert(hold())
+    assert(hold(nearestArmedTiles = 5.0))
   }
 
   test("winning the verdict releases the retreat") {
@@ -112,9 +112,9 @@ class RetreatVerdictSuite extends AnyFunSuite {
     assert(RetreatVerdict.lonely(12.01))
     assert( ! RetreatVerdict.lonely(12.0))
     assert( ! RetreatVerdict.lonely(0.0))
-    assert(hold(nearestFoeWarriorTiles = 12.0))
+    assert(hold(nearestFoeWarriorTiles = 12.0, nearestArmedTiles = 3.0))
     assert( ! hold(nearestFoeWarriorTiles = 12.01))
     assert( ! hold(nearestFoeWarriorTiles = 100.0))
-    assert(hold(nearestFoeWarriorTiles = 11.9))
+    assert(hold(nearestFoeWarriorTiles = 11.9, nearestArmedTiles = 3.0))
   }
 }
