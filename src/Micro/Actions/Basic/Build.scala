@@ -2,6 +2,8 @@ package Micro.Actions.Basic
 
 import Mathematics.Maff
 import Mathematics.Points.Tile
+import Mathematics.Shapes.Spiral
+import Lifecycle.PerGame
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Skirmish.FightOrFlee
@@ -11,13 +13,71 @@ import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.{CircularPush, TrafficPriorities}
 import Micro.Targeting.Target
 import ProxyBwapi.Races.{Protoss, Zerg}
+import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+
+import scala.collection.mutable
 import Utilities.?
 import Utilities.UnitFilters.IsWorker
 
 object Build extends Action {
   override def isContainer: Boolean = true
-  
+
+  /**
+   * Stalled-builder ledger (one read per frame, reset per game): failed
+   * placements accumulate per builder until the base lands or the intent
+   * moves on, so the shift below walks outward instead of retrying one
+   * blocked tile forever. Keyed by tile index, so a reissued intent
+   * starts clean without any identity bookkeeping.
+   */
+  private object BuildStall extends PerGame {
+    private val attempts = new mutable.HashMap[Int, (Int, Int)]()
+
+    def count(unitId: Int, tileIndex: Int, stalled: Boolean): Int = {
+      val (prevTile, prevCount) = attempts.getOrElse(unitId, (tileIndex, 0))
+      val next = if (stalled && prevTile == tileIndex) prevCount + 1 else 0
+      attempts(unitId) = (tileIndex, next)
+      next
+    }
+
+    override def reset(): Unit = attempts.clear()
+  }
+
+  /**
+   * Shifted placement for a walled-out base (town halls only): when the
+   * assigned tile sits under an unseen enemy (a burrowed Zergling, a
+   * mine the builder is not allowed to duel) the builder re-seats the
+   * base up to five tiles out instead of waiting on it forever. A
+   * remembered blocker skips the wait; otherwise the failure counter
+   * walks the spiral one step per stalled window. Returns None to keep
+   * the assigned tile (cheap path: no search until the first shift).
+   */
+  private def shiftedSite(unit: FriendlyUnitInfo, tile: Tile, building: UnitClass, startNow: Boolean): Option[Tile] = {
+    if ( ! building.isTownHall) return None
+
+    val rememberedBlocker = With.units.enemy.exists(e =>
+      e.alive && e.likelyStillThere && ! e.visible && ! e.flying && ! e.unitClass.isBuilding &&
+        e.pixelDistanceCenter(tile.center) <= BuildShift.shiftRadiusTiles * 32.0)
+    val started = tile.units.exists(u => u.isOurs && u.unitClass.isBuilding && (u.complete || u.unitClass.isProtoss))
+    val atSite = unit.pixelDistanceCenter(building.tileArea.add(tile).center) < 128
+    val affordable = With.self.minerals >= building.mineralPrice - 8 && With.self.gas >= building.gasPrice - 8
+    val stalled = startNow && atSite && tile.visible && affordable && ! started
+    val attempts = BuildStall.count(unit.id, tile.i, stalled)
+    val shift = BuildShift.shiftIndex(attempts, rememberedBlocker)
+    if (shift == 0) return None
+
+    val area = building.tileArea
+    val candidates = Spiral(BuildShift.shiftRadiusTiles).map(tile.add).filter(c =>
+      c.valid && area.add(c).tiles.forall(_.buildableTerrain))
+    candidates.lift(shift).orElse(candidates.lastOption)
+  }
+
+  /** A project already underway next to the builder: do not double-order. */
+  private def inProgressNearby(unit: FriendlyUnitInfo, building: UnitClass): Boolean =
+    With.units.ours.exists(u =>
+      u.unitClass.isBuilding && u.unitClass == building && ! u.complete &&
+        u.pixelDistanceCenter(unit.pixel) <= 10 * 32.0)
+
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.intent.toBuild.nonEmpty
   
   override def perform(unit: FriendlyUnitInfo): Unit = {
@@ -25,8 +85,12 @@ object Build extends Action {
     val building    = intent.unitClass
     val tile        = intent.tile
 
-    // If building already started, get a head start on mining
-    if (unit.unitClass.isWorker && tile.units.exists(u => u.isOurs && u.unitClass.isBuilding && (u.complete || u.unitClass.isProtoss))) {
+    // Blocked-base shift: a town hall ordered onto an unseen blocker
+    // re-seats up to five tiles out instead of waiting on the spot.
+    val site = shiftedSite(unit, tile, building, intent.startNow).getOrElse(tile)
+
+    // If building already started (here or at a shifted seat), get a head start on mining
+    if (unit.unitClass.isWorker && (site.units.exists(u => u.isOurs && u.unitClass.isBuilding && (u.complete || u.unitClass.isProtoss)) || inProgressNearby(unit, building))) {
       if (unit.intent.toScoutTiles.isEmpty) {
         unit.agent.toGather = Maff.minBy(With.geography.ourBases.flatMap(_.minerals))(_.pixelDistanceCenter(unit.pixel))
         Gather(unit)
@@ -34,13 +98,13 @@ object Build extends Action {
       return
     }
     
-    def blockersForTile(tile: Tile) = tile.units.filter(blocker =>
+    def blockersForTile(spot: Tile) = spot.units.filter(blocker =>
       blocker != unit
       && ! blocker.unitClass.isGas
       && ! blocker.flying
       && blocker.visible)
 
-    val buildArea             = building.tileArea.add(tile)
+    val buildArea             = building.tileArea.add(site)
     val ignoreBlockers        = unit.pixelDistanceTravelling(buildArea.center) > 32.0 * 8.0 || With.yolo.active
     lazy val blockersIn       = if (ignoreBlockers) Seq.empty else buildArea.tiles.flatMap(blockersForTile).toSeq
     lazy val blockersNear     = if (ignoreBlockers) Seq.empty else buildArea.expand(2, 2).tiles.flatMap(blockersForTile).toSeq
@@ -75,7 +139,7 @@ object Build extends Action {
 
     With.coordinator.pushes.put(new CircularPush(priority, pushPixel, 32 + building.radialHypotenuse, unit))
 
-    var movePixel = tile.topLeftPixel.add(building.tileWidth * 16, building.tileHeight * 16)
+    var movePixel = site.topLeftPixel.add(building.tileWidth * 16, building.tileHeight * 16)
 
     // Builder stages for the trace: assigned (has intent, not cleared to
     // build yet), moveToConstruct (traveling in), waiting (at the site but
@@ -84,14 +148,14 @@ object Build extends Action {
     val atSite = unit.pixelDistanceCenter(pushPixel) < 128
     lazy val affordable = With.self.minerals >= building.mineralPrice - 8 && With.self.gas >= building.gasPrice - 8
     unit.agent.act(?(atSite,
-      ?(intent.startNow && tile.visible && affordable, f"issueBuild:${Tactic.Missions.evaluation.KillCredits.shortName(building)}", "waiting"),
+      ?(intent.startNow && site.visible && affordable, f"issueBuild:${Tactic.Missions.evaluation.KillCredits.shortName(building)}", "waiting"),
       ?(intent.startNow, "moveToConstruct", "assigned")))
 
     if (intent.startNow
-      && tile.visible
+      && site.visible
       && unit.pixelDistanceCenter(movePixel) < 112 // Addtl reference: McRave uses 96
       && affordable) {
-      Commander.build(unit, building, ?(building.isAddon, tile.add(4, 1), tile))
+      Commander.build(unit, building, ?(building.isAddon, site.add(4, 1), site))
 
       return
     }
