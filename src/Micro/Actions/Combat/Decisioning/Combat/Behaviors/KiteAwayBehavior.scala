@@ -17,7 +17,15 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
  */
 object KiteAwayBehavior {
 
+  /**
+   * EXPERIMENT A/B (remove after the Crona series): hard kill-switch
+   * for the whole kite behavior, on/off per jar. Lets the macro series
+   * measure what kiting buys instead of arguing about it.
+   */
+  var kiteEnabled: Boolean = true
+
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    if ( ! kiteEnabled) return false
     if (With.yolo.active) return false
     // A banked stock buys the trade: expendable units hold their DPS
     // instead of yielding ground while cooling down.
@@ -36,6 +44,11 @@ object KiteAwayBehavior {
     if (nearest.isEmpty) return false
     if ( ! shouldKite(unit)) return false
     if (holdToShoot(unit, combat)) return true
+    // Masonry never chases: kiting away from a building anchor donates
+    // DPS and time for nothing, so a building anchor holds instead of
+    // yielding. Hold-to-shoot above is untouched: a free shot at a
+    // pressing chaser is still taken.
+    if (KiteAway.holdAgainstBuildings(nearest.exists(_.unitClass.isBuilding))) return false
 
     kiteAway(unit, combat)
 

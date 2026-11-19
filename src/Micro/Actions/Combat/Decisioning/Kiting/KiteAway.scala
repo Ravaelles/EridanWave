@@ -75,4 +75,12 @@ object KiteAway {
 
   /** Wounded units never hold fire for the volley while exposed. */
   def exemptFromVolley(totalHealth: Int): Boolean = isSeriouslyWounded(totalHealth)
+
+  /**
+   * Masonry never chases: kiting away from a building anchor donates DPS
+   * and time for nothing - a static cannot pursue, so the walk buys no
+   * safety. The behavior checks this past hold-to-shoot: a free shot at
+   * a pressing chaser is still taken.
+   */
+  def holdAgainstBuildings(anchorIsBuilding: Boolean): Boolean = anchorIsBuilding
 }
