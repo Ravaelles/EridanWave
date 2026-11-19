@@ -17,13 +17,14 @@ import Tactic.Squads.Decisions.RetreatVerdict
 import Micro.Targeting.BreakTerranWallIn
 import Micro.Targeting.EnemyWallInDetected
 import Micro.Targeting.ProtossWallIn
+import Micro.Targeting.ReaverTargets
 import Micro.Targeting.Target
 import Micro.Targeting.TargetChaff
 import Micro.Targeting.WallBreachTarget
 import Information.Battles.ArmyStrength
 import Micro.Targeting.WorkerSpread
 import Micro.Actions.Combat.Decisioning.Formation.FormationHold
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Tactic.Squads.Group.GenericFriendlyUnitGroup
 import Tactic.Squads.Group.TFriendlyUnitGroup
@@ -210,6 +211,11 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
 
   private def acquireTarget(): Unit = {
     releaseStaleTarget()
+    // Reaver special picks first: vs Zerg the nearest detected Lurker
+    // outranks masonry, vs Protoss the nearest Dark Templar does.
+    // Loaded and unarmed hulls keep the old targeting untouched.
+    if (unit.agent.toAttack.forall(t =>
+      ! Zerg.Lurker(t) && ! Protoss.DarkTemplar(t))) ReaverTargets.check(unit)
     if (unit.agent.toAttack.isEmpty) {
       Target.choose(unit)
     }
