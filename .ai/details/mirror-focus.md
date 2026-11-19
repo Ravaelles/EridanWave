@@ -10,6 +10,7 @@
   (`FocusFire.minShooters = 4`, src/Micro/Targeting/FocusFire.scala):
   3v3 lines duel even, no shared target.
 
-OWNER DECISION pending: lower the gate for mirrors (ZealDrag
-duel quality is the symptomatic map), or accept variance?
-Single flips on identical code are variance - do not chase them.
+OWNER DECISION taken: gate lowered 4 -> 3 everywhere (b5233fb43),
+`enoughShooters` pins the edge (2 mills, 3 shares). Validating live on
+14/15/16Drag + ZealDrag. If small lines still spread, the next suspect
+is reach (wings out of shared-target range), not the count.

@@ -6,10 +6,9 @@ Details live in `details/` - the queue keeps one line per item.
 
 ## Now
 
-- BetaStar rematch next (jar has the terminal gate + PvP mission):
-  read f6900-7000 for the Marching<->Retreat flap (must be gone) and
-  the `Retreating(...)` parens (see `details/retreat.md`). Then Crona,
-  Terminus; a live PvP wall-in for `details/wall-in.md`.
+- BetaStar VICTORY 261/75 (20:38, GAME_AE4BE6A5): f6900-7000 flap
+  gone (10 Retreat, 0 Marching vs the old every-5f alternation).
+  Terminal gate proven live.
 - Jar fresh, slot synced. Tree clean (212f964 wall-in mission).
 
 ## Needs a live game (code green, jar includes it)
