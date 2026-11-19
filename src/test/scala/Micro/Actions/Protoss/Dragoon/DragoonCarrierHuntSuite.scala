@@ -20,6 +20,12 @@ class DragoonCarrierHuntSuite extends AnyFunSuite {
     assert(DragoonCarrierHunt.shouldClose(isDragoon = true, shields = 80, carrierTiles = 3.0, pathed = true))
   }
 
+  test("a dying hull keeps its retreat instead of trading") {
+    assert(DragoonCarrierHunt.healthyEnough(totalHp = 71))
+    assert( ! DragoonCarrierHunt.healthyEnough(totalHp = 70))
+    assert( ! DragoonCarrierHunt.healthyEnough(totalHp = 0))
+  }
+
   test("no path, no shields or no Dragoon means no chase") {
     assert( ! DragoonCarrierHunt.shouldClose(isDragoon = true, shields = 80, carrierTiles = 3.0, pathed = false))
     assert( ! DragoonCarrierHunt.shouldClose(isDragoon = true, shields = 80, carrierTiles = 11.1, pathed = true))

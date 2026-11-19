@@ -20,6 +20,9 @@ object DragoonCarrierBehavior {
   def run(unit: FriendlyUnitInfo, situation: CombatSituation): Boolean = {
     if ( ! Protoss.Dragoon(unit)) return false
     if ( ! situation.shouldRetreat) return false
+    // Dying hulls keep their retreat: seventy hit points buy no Carrier
+    // trade, only a donation - the interceptors do not miss.
+    if ( ! DragoonCarrierHunt.healthyEnough(unit.totalHealth)) return false
     if (unit.shieldPoints < DragoonCarrierHunt.shieldFloor) return false
 
     val carrier = Maff.minBy(unit.matchups.enemies.view.filter(e =>

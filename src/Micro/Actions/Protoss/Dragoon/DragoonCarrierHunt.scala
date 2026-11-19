@@ -15,6 +15,15 @@ object DragoonCarrierHunt {
   /** Carriers past this never get chased, in tiles. */
   val huntTiles: Double = 11.0
 
+  /**
+   * Dying hulls keep their retreat: at or below this many hit points a
+   * Dragoon runs from the Carrier instead of trading the hull for
+   * interceptors - the duel is for shields that come home.
+   */
+  val woundHp: Int = 70
+
+  def healthyEnough(totalHp: Int): Boolean = totalHp > woundHp
+
   /** Shoot: a shielded Dragoon always answers a Carrier in range. */
   def shouldShoot(isDragoon: Boolean, shields: Int, carrierInRange: Boolean): Boolean =
     isDragoon && shields >= shieldFloor && carrierInRange

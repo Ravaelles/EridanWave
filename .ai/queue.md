@@ -268,6 +268,18 @@ New kernels ride suites; these need a live game that reaches them
   Guard at the choke post, not the main. Needs: macro PvT (posture
   forces + slot line), Goon_v_DT (Hunt assign), macro defense game
   (choke guard + posture floor).
+- HuntContact marches at parity, sweep never ends (2026-11-19 night:
+  Hunt assigned the target and yielded, but posing at an invisible
+  ghost froze Goon_v_DT, and marching 14 Dragoons into 16 wiped twice
+  identically at f827. Now: visible prey goes to the duel slot-bound,
+  invisible memory keeps the attack-move; the hunt arc marches out only
+  at/above parity (withdrawBelowAdvantage), below it the pack holds home
+  slots; the unseen sweep is oldest-first perpetual. Results: 14Drag back
+  to variance (VICTORY 16/8 + close DEFEAT 12/7), ZealDragLings VICTORY x2
+  (31/8, 31/10 ~f1025, mop-up timeout gone), 3DragHydra VICTORY x2 (5/2 f695,
+  unfrozen). ZealDrag_v_ZealDrag stable 5-6/9 loss with verified focus fire
+  (74 picks on one target) - duel quality, not targeting; future. Goon_v_DT
+  unwinnable without detection (3rd confirm); leave the map alone.
 - Formation holdable (2026-11-18: line forms only vs what shoots
   ground - Turret/Spore marched down, Sunken/Cannon still hold;
   kernel isHoldableTarget + suite. Needs a live PvT confirming
