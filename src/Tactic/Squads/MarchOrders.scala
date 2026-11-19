@@ -214,9 +214,28 @@ object MarchOrders {
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide, slotOpen)
     val joinPixel              = joinLeg(squad, unit, suicide, slotOpen)
     val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, dressOpen)
+    // Far dress-and-wait (UMS mirrors, no reavers): arriving at five
+    // tiles outside gun reach the line dresses and waits for the enemy
+    // ball instead of trickling into it, creeping a step every couple
+    // dozen frames so a waiting enemy still gets met. Warriors only -
+    // eyes keep their own march. Contact still duels first (above).
+    val farWait = MarchDress.holdFarWait(
+      unit.id,
+      unit.unitClass.isWarrior,
+      With.umsMode,
+      With.enemies.exists(_.isProtoss),
+      With.units.enemy.exists(e => e.alive && Protoss.Reaver(e)),
+      nearEnemyTiles,
+      unit.pixelRangeMax * Maff.inv32)
+    val farCreep = ?(
+      With.frame % MarchDress.creepEveryFrames == 0,
+      Maff.minBy(With.units.enemy.view.filter(_.alive))(_.pixelDistanceEdge(unit))
+        .map(foe => unit.pixel.project(foe.pixel, MarchDress.creepTiles * 32.0).walkablePixel)
+        .getOrElse(unit.pixel),
+      unit.pixel)
     val pack                   = ?(unit.flying, squad.centroidAir, squad.centroidGround)
-    val terminus = ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch)))
-    val label    = ?(holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot))
+    val terminus = ?(farWait, farCreep, ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch))))
+    val label    = ?(farWait || holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot))
     (terminus, label)
   }
 

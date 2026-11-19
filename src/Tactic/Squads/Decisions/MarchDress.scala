@@ -107,6 +107,43 @@ object MarchDress {
   def staticNear(distTiles: Double): Boolean =
     distTiles <= staticDressTiles
 
+  /** Far dress-and-wait (UMS duels): stop this far outside gun reach and dress instead of marching in piecemeal. */
+  val waitFarTiles: Double = 5.0
+
+  /** The wait releases once the gap reopens past this: the 5/6 band never flaps. */
+  val resumeFarTiles: Double = 6.0
+
+  /** Creep forward this far per step while waiting, in tiles. */
+  val creepTiles: Double = 0.15
+
+  /** One creep step every this many frames: mostly waiting, barely walking. */
+  val creepEveryFrames: Int = 24
+
+  private val farWaiting = new Latch
+
+  /**
+   * Far wait latch (holdDress shape): on UMS mirrors with no reavers the
+   * line dresses five tiles outside gun reach and waits for the enemy
+   * ball instead of trickling into it - first volley plus concave beats
+   * a meeting engagement. Fires arriving (gap at or inside five out),
+   * holds through the creep, releases on contact (the duel takes over)
+   * or once the gap reopens past six. Per-unit state, reset per game
+   * with the latch family. PvP-only: reavers punish a waiting line.
+   */
+  def holdFarWait(
+    unitId: Int,
+    isWarrior: Boolean,
+    umsMode: Boolean,
+    enemyProtoss: Boolean,
+    enemyReaverKnown: Boolean,
+    gapTiles: Double,
+    rangeTiles: Double): Boolean =
+    farWaiting(
+      unitId,
+      fires    = isWarrior && umsMode && enemyProtoss && ! enemyReaverKnown && gapTiles > rangeTiles && gapTiles <= rangeTiles + waitFarTiles,
+      releases = gapTiles <= rangeTiles || gapTiles > rangeTiles + resumeFarTiles || ! umsMode || ! enemyProtoss || enemyReaverKnown,
+      initial  = false)
+
   /** Never rally or slot under static guns, in tiles: a pack milling in their reach trades the line for nothing. */
   val staticPushTiles: Double = 10.0
 

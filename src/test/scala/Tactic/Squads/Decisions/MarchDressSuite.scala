@@ -67,4 +67,21 @@ class MarchDressSuite extends AnyFunSuite {
     assert( ! MarchDress.shouldHoldForPack(true, true, false, false, true, holdDress = true, targetsInRange = false))
     assert( ! MarchDress.shouldHoldForPack(true, true, false, false, false, holdDress = false, targetsInRange = false))
   }
+
+  test("far dress-and-wait holds five out on UMS mirrors, never elsewhere") {
+    def hold(id: Int, gap: Double, range: Double = 4.0, warrior: Boolean = true, ums: Boolean = true, protoss: Boolean = true, reaver: Boolean = false): Boolean =
+      MarchDress.holdFarWait(id, warrior, ums, protoss, reaver, gap, range)
+    // Dragoon range 4: march past 10, wait at 9, hold to contact, resume past 10.
+    assert( ! hold(701, gap = 30.0))
+    assert(hold(701, gap = 9.0))
+    assert(hold(701, gap = 8.0))
+    assert(hold(701, gap = 4.5))
+    assert( ! hold(701, gap = 4.0))
+    assert( ! hold(701, gap = 30.0))
+    // Warriors only, UMS mirrors only, never under reavers.
+    assert( ! hold(702, gap = 9.0, warrior = false))
+    assert( ! hold(703, gap = 9.0, ums = false))
+    assert( ! hold(704, gap = 9.0, protoss = false))
+    assert( ! hold(705, gap = 9.0, reaver = true))
+  }
 }
