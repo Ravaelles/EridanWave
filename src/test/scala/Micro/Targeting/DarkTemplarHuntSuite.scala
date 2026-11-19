@@ -4,10 +4,18 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class DarkTemplarHuntSuite extends AnyFunSuite {
 
-  test("the hunt reaches forty ground tiles from the main") {
-    assert(DarkTemplarHunt.inHuntRange(0.0))
-    assert(DarkTemplarHunt.inHuntRange(40.0))
-    assert( ! DarkTemplarHunt.inHuntRange(40.1))
+  test("a small army hunts to fifty ground tiles from the main") {
+    assert(DarkTemplarHunt.huntRangeTiles(0) == 50.0)
+    assert(DarkTemplarHunt.huntRangeTiles(29) == 50.0)
+    assert(DarkTemplarHunt.inHuntRange(50.0, 29))
+    assert( ! DarkTemplarHunt.inHuntRange(50.1, 29))
+  }
+
+  test("a large army holds the old forty") {
+    assert(DarkTemplarHunt.huntRangeTiles(30) == 40.0)
+    assert(DarkTemplarHunt.huntRangeTiles(200) == 40.0)
+    assert(DarkTemplarHunt.inHuntRange(40.0, 30))
+    assert( ! DarkTemplarHunt.inHuntRange(40.1, 30))
   }
 
   test("nearest to the main wins, never nearest to me") {

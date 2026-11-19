@@ -64,6 +64,9 @@ blank-line gate per change, commit per unit).
   Dark Templar nearest our main inside 50 ground tiles (release 56),
   juniors keep their duties, survival still outranks. Needs a live game
   with enemy DT plus observer confirming ObserverTemplarFollow acts.
+- Small armies answer the blade: below 30 warriors the main-base hunt
+  reaches 50 ground tiles instead of 40; large armies hold the old line.
+  Needs a live DT defense confirming the extended walk.
 
 ## Parked (explicit orders, do not touch)
 

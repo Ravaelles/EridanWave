@@ -16,9 +16,22 @@ object DarkTemplarHunt {
 
   final case class Mark(distToMainTiles: Double)
 
-  /** Inside the hunt, in ground tiles from our main. */
-  def inHuntRange(distToMainTiles: Double): Boolean =
-    distToMainTiles <= huntTiles
+  /**
+   * Small-army reach, in ground tiles: below thirty warriors the whole
+   * army answers a blade at the workers, so the hunt walks ten tiles
+   * further out instead of holding the old line while miners die. Large
+   * armies keep the old forty - they must not all march home for one
+   * blade while the front needs them.
+   */
+  val smallArmyWarriors: Int = 30
+  val farHuntTiles: Double = 50.0
+
+  def huntRangeTiles(warriors: Int): Double =
+    if (warriors < smallArmyWarriors) farHuntTiles else huntTiles
+
+  /** Inside the hunt, in ground tiles from our main, at this army size. */
+  def inHuntRange(distToMainTiles: Double, warriors: Int): Boolean =
+    distToMainTiles <= huntRangeTiles(warriors)
 
   /** Nearest to the main; nothing when nobody qualifies. */
   def pick(marks: Seq[Mark]): Option[Int] =

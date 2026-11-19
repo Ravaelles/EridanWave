@@ -8,7 +8,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
  * Main-base Templar hunt: the army walks down a detected enemy Dark
- * Templar inside forty ground tiles of our main, even out of contact.
+ * Templar near our main, even out of contact - forty ground tiles out,
+ * fifty while below thirty warriors.
  * A Templar at the workers kills for free while the ladder scores
  * shinier fights, so the hunt outranks retreat like the always-attack
  * ladder does. Already dueling one in range keeps its duel - the pick
@@ -30,9 +31,13 @@ object DarkTemplarHuntBehavior {
     val main =
       if (With.geography.ourBases.nonEmpty) With.geography.ourMain.heart.center
       else With.geography.home.center
+    // Below thirty warriors the whole army answers the blade: a small
+    // force cannot spare a detachment, so the hunt reaches fifty ground
+    // tiles out instead of forty. Large armies hold the old line.
+    val warriors = With.units.ours.view.count(u => u.alive && u.unitClass.isWarrior)
     val candidates = unit.matchups.targets.view.filter(t =>
       t.alive && t.visible && t.detected && Protoss.DarkTemplar(t) &&
-        DarkTemplarHunt.inHuntRange(t.tile.groundPixels(main) * Maff.inv32)).toVector
+        DarkTemplarHunt.inHuntRange(t.tile.groundPixels(main) * Maff.inv32, warriors)).toVector
     if (candidates.isEmpty) return false
 
     val marks = candidates.map(t =>
