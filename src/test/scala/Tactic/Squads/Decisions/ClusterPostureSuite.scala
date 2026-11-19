@@ -30,7 +30,8 @@ class ClusterPostureSuite extends AnyFunSuite {
 
   test("the floor holds the withdrawal against any forecast") {
     assert(next(Withdraw, fighting = 1.0, advantage = 10.0, sinceWithdraw = 0) == Withdraw)
-    assert(next(Withdraw, fighting = 1.0, advantage = 10.0, sinceWithdraw = 95) == Withdraw)
+    assert(next(Withdraw, fighting = 1.0, advantage = 10.0, sinceWithdraw = 47) == Withdraw)
+    assert(next(Withdraw, fighting = 1.0, advantage = 10.0, sinceWithdraw = 48) == Fight)
   }
 
   test("leaving takes sim agreement plus parity, then reads the band") {
@@ -68,6 +69,14 @@ class ClusterPostureSuite extends AnyFunSuite {
     assert(ClusterPosture.advances(HoldLine))
     assert( ! ClusterPosture.advances(Withdraw))
     assert( ! ClusterPosture.advances(Regroup))
+  }
+
+  test("an overwhelming line overrules a stale retreat vote") {
+    assert(ClusterPosture.overrulesRetreat(Some(Fight), skimScore = 150.0))
+    assert(ClusterPosture.overrulesRetreat(Some(HoldLine), skimScore = 200.0))
+    assert( ! ClusterPosture.overrulesRetreat(Some(Fight), skimScore = 149.9))
+    assert( ! ClusterPosture.overrulesRetreat(Some(Withdraw), skimScore = 500.0))
+    assert( ! ClusterPosture.overrulesRetreat(None, skimScore = 500.0))
   }
 
   test("a forbidden retreat reads the band instead of withdrawing") {

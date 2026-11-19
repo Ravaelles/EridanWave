@@ -27,6 +27,12 @@ class RetreatVerdictSuite extends AnyFunSuite {
       proxyRush,
       hardCounterKnown)
 
+  test("retreat labels carry the reason plus both skim shares in tens") {
+    assert(RetreatVerdict.retreatLabel("OutOfContact", 80.0, 20.0) == "OutOfContact 80vs20")
+    assert(RetreatVerdict.retreatLabel("OutmatchedGoon", 185.0, 100.0) == "OutmatchedGoon 60vs40")
+    assert(RetreatVerdict.retreatLabel("Sim", 0.0, 0.0) == "Sim")
+  }
+
   test("a beaten warrior with room to run holds the retreat") {
     assert(hold())
   }

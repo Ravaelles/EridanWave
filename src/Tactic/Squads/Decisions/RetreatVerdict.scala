@@ -64,6 +64,21 @@ object RetreatVerdict extends PerGame {
     if ( ! rawHold) fightEdgeFrame(id) = frame
   }
 
+  /**
+   * Retreat label (pure format for the suite): the verdict reason plus
+   * both skim shares in tens, so a traceless game answers why it
+   * retreated and at what odds - Retreat(OutOfContact 80vs20). Tens,
+   * not units: the chain stays readable instead of exploding into a
+   * distinct string per point of skim.
+   */
+  def retreatLabel(reason: String, usSkim: Double, foeSkim: Double): String = {
+    val total = usSkim + foeSkim
+    if (total <= 0) return reason
+
+    val us = Math.round(10 * usSkim / total) * 10
+    f"$reason $us%.0fvs${100 - us}%.0f"
+  }
+
   /** Held verdict both readers obey: sharp enter, timed release. */
   def held(id: Int, frame: Int): Boolean =
     lastRaw.get(id) match {

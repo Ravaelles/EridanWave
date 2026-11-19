@@ -19,6 +19,7 @@ import Micro.Targeting.EnemyWallInDetected
 import Micro.Targeting.Target
 import Micro.Targeting.TargetChaff
 import Micro.Targeting.WallBreachTarget
+import Information.Battles.ArmyStrength
 import Micro.Targeting.WorkerSpread
 import Micro.Actions.Combat.Decisioning.Formation.FormationHold
 import ProxyBwapi.Races.{Protoss, Terran}
@@ -255,7 +256,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // brawls, abuses, kites, the engage below) do not run and the unit
     // coasts on the march home order, shooting only through the
     // always-attack ladder and the retreat potshot above.
-    val advance = unit.squad.flatMap(_.battlePosture).forall(ClusterPosture.advances) && ! RetreatVerdict.held(unit.id, With.frame)
+    val posture = unit.squad.flatMap(_.battlePosture)
+    val overruled = ClusterPosture.overrulesRetreat(
+      posture,
+      Information.Battles.ArmyStrength.score(
+        With.battles.globalAttack.us.skimStrengthUnits,
+        With.battles.globalAttack.enemy.skimStrengthUnits))
+    val advance = posture.forall(ClusterPosture.advances) && (! RetreatVerdict.held(unit.id, With.frame) || overruled)
 
     var i = 0
     var claimed = false
@@ -272,7 +279,15 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
   private[Decisioning] def transition(newTechnique: Technique, predicate: => Boolean): Unit = {
     if (unit.ready && technique.canTransition(newTechnique) && predicate) {
       technique = newTechnique
-      unit.agent.act(technique.toString)
+      // Retreats carry their reason plus both skim shares in parens -
+      // a stronger army routing with no enemy in front reads exactly
+      // what it voted and at what odds, instead of a bare Retreat.
+      unit.agent.act(?(techniqueIs(Fallback, Flee, Excuse),
+        Tactic.Squads.Decisions.RetreatVerdict.retreatLabel(
+          unit.agent.fightReason,
+          With.battles.globalAttack.us.skimStrengthUnits,
+          With.battles.globalAttack.enemy.skimStrengthUnits),
+        technique.toString))
     }
   }
 

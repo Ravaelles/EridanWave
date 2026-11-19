@@ -20,7 +20,7 @@ package Tactic.Squads.Decisions
 object RetreatDiscipline {
 
   /** Withdrawal floor, in frames: nothing re-engages sooner than this. */
-  val minWithdrawFrames: Int = 96
+  val minWithdrawFrames: Int = 48
 
   /**
    * Advantage multiplier by frames since the withdrawal started: fresh

@@ -32,7 +32,10 @@ object Retreat extends Action {
           to)
         unit.agent.decision.set(runTo)
         if (With.configuration.debugging) {
-          unit.agent.act(f"Retreat$name")
+          unit.agent.act("Retreat" + name + "(" + Tactic.Squads.Decisions.RetreatVerdict.retreatLabel(
+            unit.agent.fightReason,
+            With.battles.globalAttack.us.skimStrengthUnits,
+            With.battles.globalAttack.enemy.skimStrengthUnits) + ")")
         }
         // Fleeing scouts reorder on a wide deadband: their waypoints hop
         // with the threat, and tight refresh restarts movement every frame.

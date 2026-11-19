@@ -146,7 +146,11 @@ object MarchOrders {
         facts.proxyRush,
         MacroFacts.enemyHardCounterKnown),
       With.frame)
-    val verdictRetreat = RetreatVerdict.held(unit.id, With.frame)
+    // An overwhelming line marches instead of going home: the same
+    // release that frees the technique owns the march, or the two
+    // phases split the frame between home and the duel.
+    val verdictRetreat = RetreatVerdict.held(unit.id, With.frame) &&
+      ! ClusterPosture.overrulesRetreat(squad.battlePosture, facts.armyUnitsScore)
     MarchGates.select(facts, marchUnit) match {
       case Some(label) => (squad.vicinity, label)
       case None if verdictRetreat =>

@@ -36,6 +36,16 @@ object ClusterPosture {
   /** Penalized advantage clearly superior argues for closing. */
   val fightAboveAdvantage: Double = 1.5
 
+  /**
+   * Overwhelming line overrules a held retreat vote (pure flags for the
+   * suite): when the unit's own squad votes Fight from a clearly
+   * superior skim, a stale bus vote - re-armed by fog flicker faster
+   * than it expires - must not rout a stronger army that has nothing
+   * in front of it. Skim score runs 100 at parity (ArmyStrength.score).
+   */
+  def overrulesRetreat(posture: Option[Posture], skimScore: Double): Boolean =
+    posture.exists(advances) && skimScore / 100.0 >= fightAboveAdvantage
+
   /** Leaving Fight takes a clear drop, not the edge itself. */
   val fightHoldDeadband: Double = 0.2
 

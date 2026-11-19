@@ -4,10 +4,10 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class RetreatDisciplineSuite extends AnyFunSuite {
 
-  test("a withdrawal lasts four seconds whatever the forecast says") {
+  test("a withdrawal lasts two seconds whatever the forecast says") {
     assert(RetreatDiscipline.shouldHoldWithdraw(0))
-    assert(RetreatDiscipline.shouldHoldWithdraw(95))
-    assert( ! RetreatDiscipline.shouldHoldWithdraw(96))
+    assert(RetreatDiscipline.shouldHoldWithdraw(47))
+    assert( ! RetreatDiscipline.shouldHoldWithdraw(48))
     assert( ! RetreatDiscipline.shouldHoldWithdraw(1000))
   }
 
@@ -24,7 +24,7 @@ class RetreatDisciplineSuite extends AnyFunSuite {
     assert(RetreatDiscipline.advantageMultiplier(10000) == 1.0)
   }
 
-  test("the floor matches the four-second minimum") {
-    assert(RetreatDiscipline.minWithdrawFrames == 96)
+  test("the floor matches the two-second minimum") {
+    assert(RetreatDiscipline.minWithdrawFrames == 48)
   }
 }
