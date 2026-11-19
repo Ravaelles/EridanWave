@@ -8,8 +8,9 @@ Details live in `details/` - the queue keeps one line per item.
 
 - Ladder validation: BetaStar DEFEAT 48/137 (fair late grind,
   no flap), Crona DEFEAT 21/35 (greedy expand into 9pool, known
-  gameplan gap), Terminus DEFEAT 108/225 (17 min, no flap, no
-  reaver/Lurker/DT acts - grind loss, no mechanism found yet).
+  gameplan gap), Terminus DEFEAT 108/225 (17 min grind, no
+  mechanism), Crona REMATCH VICTORY 703/329 (36 min, clean -
+  retreat votes ordinary No/OutOfContact, no flap).
 - UMS: full batch 12W/11L; ZealDrag 4-3, 14v16 competitive,
   LingsHydra timeouts fixed twice, 1Drag/1DragWounded flip wins,
   2Zeal parked hard, Sunkens/DT walls stand.
