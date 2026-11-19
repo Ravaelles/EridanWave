@@ -11,7 +11,13 @@ Details live in `details/` - the queue keeps one line per item.
   gameplan gap), Terminus DEFEAT 108/225 (17 min grind, no
   mechanism), Crona REMATCH VICTORY 703/329 (36 min, clean -
   retreat votes ordinary No/OutOfContact, no flap), Terminus
-  REMATCH VICTORY 461/330 (29 min, 286 retreat votes, clean).
+  REMATCH VICTORY 461/330 (29 min, 286 retreat votes, clean),
+  BetaStar REMATCH DEFEAT 57/173 (16 min PvP: our PvPDT/DTRush
+  + GatewayFE into observers - 2 DTs managed 1 kill, enemy
+  massed dragoons, we peaked 26 warriors and traded 85 for 31
+  goons; micro clean throughout - duels, no flap, sane votes;
+  same known gameplan-selection gap as Crona 21/35, no mechanism
+  found).
 - UMS: full batch 12W/11L; ZealDrag 4-3, 14v16 competitive,
   LingsHydra timeouts fixed twice, 1Drag/1DragWounded flip wins,
   2Zeal parked hard, Sunkens/DT walls stand.
