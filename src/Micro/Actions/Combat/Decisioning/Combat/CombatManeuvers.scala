@@ -181,9 +181,14 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     // Anchor on the fighting pack, not the squad: a whole-squad centroid
     // sits wherever the uncommitted mass is and drags the duel home
     // instead of rejoining it. Warriors only - workers do not anchor blades.
+    // No fighting mates means no fight to join yet: fall back to the whole
+    // pack so lone hulls still group up before contact.
     val mates = unit.squad.map(_.units.filter(u =>
       u.id != unit.id && u.alive && u.unitClass.isWarrior)).getOrElse(Seq.empty)
-    val centroid = if (mates.isEmpty) unit.pixel else Maff.centroid(mates.map(_.pixel))
+    val fighting = mates.filter(m =>
+      m.matchups.targetsInRange.nonEmpty || m.matchups.engagedUpon)
+    val anchor = if (fighting.nonEmpty) fighting else mates
+    val centroid = if (anchor.isEmpty) unit.pixel else Maff.centroid(anchor.map(_.pixel))
     val mateTiles = Maff.minBy(With.units.ours.view.filter(o =>
       o.id != unit.id && o.alive && Protoss.Zealot(o)))(_.pixelDistanceCenter(unit.pixel))
       .map(_.pixelDistanceCenter(unit.pixel) * Maff.inv32)
