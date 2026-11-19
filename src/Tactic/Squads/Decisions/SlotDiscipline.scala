@@ -36,12 +36,25 @@ object SlotDiscipline {
   def maySlot(
     firingNow: Boolean,
     framesSinceDamage: Int,
-    verdictHeld: Boolean,
-    nearEnemyBuildingTiles: Double = Double.PositiveInfinity,
-    isMelee: Boolean = false,
-    nearEnemyTiles: Double = Double.PositiveInfinity): Boolean =
+    verdictHeld: Boolean): Boolean =
     ! firingNow &&
-      framesSinceDamage >= damageSilenceFrames && ! verdictHeld &&
+      framesSinceDamage >= damageSilenceFrames && ! verdictHeld
+
+  /**
+   * Dressing veto (no game access): the pose leg - and only the pose
+   * leg - stands down inside eight tiles of an enemy building, or for
+   * blades inside four of an enemy. Rallying home and closing ranks
+   * keep their own gate above: a scattered pack must still reform,
+   * just never pose for the camera in front of the guns.
+   */
+  def mayDress(
+    firingNow: Boolean,
+    framesSinceDamage: Int,
+    verdictHeld: Boolean,
+    nearEnemyBuildingTiles: Double,
+    isMelee: Boolean,
+    nearEnemyTiles: Double): Boolean =
+    maySlot(firingNow, framesSinceDamage, verdictHeld) &&
       ! nearBuilding(nearEnemyBuildingTiles) &&
       ! meleeEngaged(isMelee, nearEnemyTiles)
 }

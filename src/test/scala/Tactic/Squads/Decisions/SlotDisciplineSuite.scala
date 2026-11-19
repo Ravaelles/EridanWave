@@ -7,11 +7,17 @@ class SlotDisciplineSuite extends AnyFunSuite {
   private def slot(
     firing: Boolean = false,
     sinceDamage: Int = 1000,
+    verdict: Boolean = false): Boolean =
+    SlotDiscipline.maySlot(firing, sinceDamage, verdict)
+
+  private def dress(
+    firing: Boolean = false,
+    sinceDamage: Int = 1000,
     verdict: Boolean = false,
     nearBuilding: Double = Double.PositiveInfinity,
     melee: Boolean = false,
     nearEnemy: Double = Double.PositiveInfinity): Boolean =
-    SlotDiscipline.maySlot(firing, sinceDamage, verdict, nearBuilding, melee, nearEnemy)
+    SlotDiscipline.mayDress(firing, sinceDamage, verdict, nearBuilding, melee, nearEnemy)
 
   test("an idle untouched unit may dress") {
     assert(slot())
@@ -35,15 +41,20 @@ class SlotDisciplineSuite extends AnyFunSuite {
   }
 
   test("dressing stops inside eight tiles of an enemy building") {
-    assert( ! slot(nearBuilding = 8.0))
-    assert( ! slot(nearBuilding = 0.0))
-    assert(slot(nearBuilding = 8.01))
+    assert( ! dress(nearBuilding = 8.0))
+    assert( ! dress(nearBuilding = 0.0))
+    assert(dress(nearBuilding = 8.01))
+  }
+
+  test("rallying and joining ignore the dress veto") {
+    assert(slot())
+    assert(slot(sinceDamage = 0) == false)
   }
 
   test("a blade never dresses inside four tiles of an enemy") {
-    assert( ! slot(melee = true, nearEnemy = 4.0))
-    assert( ! slot(melee = true, nearEnemy = 0.0))
-    assert(slot(melee = true, nearEnemy = 4.01))
-    assert(slot(melee = false, nearEnemy = 0.0))
+    assert( ! dress(melee = true, nearEnemy = 4.0))
+    assert( ! dress(melee = true, nearEnemy = 0.0))
+    assert(dress(melee = true, nearEnemy = 4.01))
+    assert(dress(melee = false, nearEnemy = 0.0))
   }
 }

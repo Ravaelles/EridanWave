@@ -182,20 +182,26 @@ object MarchOrders {
     val slotOpen             = SlotDiscipline.maySlot(
       firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
       framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),
+      verdictHeld       = verdictRetreat)
+    val nearEnemyBuildingTiles = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.unitClass.isBuilding))(
+      unit.pixelDistanceEdge(_))
+      .map(unit.pixelDistanceEdge(_) * Maff.inv32)
+      .getOrElse(Double.PositiveInfinity)
+    val nearEnemyTiles       = Maff.minBy(With.units.enemy.view.filter(_.alive))(
+      unit.pixelDistanceEdge(_))
+      .map(unit.pixelDistanceEdge(_) * Maff.inv32)
+      .getOrElse(Double.PositiveInfinity)
+    val dressOpen            = SlotDiscipline.mayDress(
+      firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
+      framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),
       verdictHeld       = verdictRetreat,
-      nearEnemyBuildingTiles = Maff.minBy(With.units.enemy.view.filter(e =>
-        e.alive && e.unitClass.isBuilding))(
-        unit.pixelDistanceEdge(_))
-        .map(unit.pixelDistanceEdge(_) * Maff.inv32)
-        .getOrElse(Double.PositiveInfinity),
+      nearEnemyBuildingTiles = nearEnemyBuildingTiles,
       isMelee           = unit.unitClass.melee,
-      nearEnemyTiles    = Maff.minBy(With.units.enemy.view.filter(_.alive))(
-        unit.pixelDistanceEdge(_))
-        .map(unit.pixelDistanceEdge(_) * Maff.inv32)
-        .getOrElse(Double.PositiveInfinity))
+      nearEnemyTiles    = nearEnemyTiles)
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide, slotOpen)
     val joinPixel              = joinLeg(squad, unit, suicide, slotOpen)
-    val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, slotOpen)
+    val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, dressOpen)
     val pack                   = ?(unit.flying, squad.centroidAir, squad.centroidGround)
     val terminus = ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch)))
     val label    = ?(holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot))
