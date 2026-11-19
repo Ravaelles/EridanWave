@@ -113,7 +113,8 @@ object PairArbiter {
     boardLocked: Boolean = false,
     threatTiles: Double = Double.PositiveInfinity,
     longTrip: Boolean = false,
-    wound01: Double = 0.0): PairDirective = {
+    wound01: Double = 0.0,
+    stalledStaticDuel: Boolean = false): PairDirective = {
 
     if (shuttlePressured && loaded) {
       return PairDirective(Flee, RideAlong)
@@ -153,6 +154,15 @@ object PairArbiter {
       // hull takes the ride even mid-duel. The pressured branch above
       // already rescued it under fire; this is the calm-ride twin.
       if (reaverDoomed && ReaverShuttleReboard.rideInReach(mateDistTiles)) {
+        return PairDirective(GuardMate, BoardRide)
+      }
+
+      // Stalled static duel with the ride at hand: a hull holding a
+      // Sunken past the launch band with no shot in six seconds is not
+      // dueling, it is milling - board the waiting ride instead of dying
+      // under guns that never answer. Mobiles keep the duel-first rule:
+      // their cooldowns land inside six seconds, so staleness means firing.
+      if (stalledStaticDuel && ReaverShuttleReboard.rideInReach(mateDistTiles)) {
         return PairDirective(GuardMate, BoardRide)
       }
 
@@ -207,7 +217,7 @@ object PairArbiter {
    * line: `resolve` below is pure and suite-pinned, the mappers beside
    * it are mechanical field reads.
    */
-  final case class FoeView(distTiles: Double, foeGunTiles: Double, reaverGunTiles: Double)
+  final case class FoeView(distTiles: Double, foeGunTiles: Double, reaverGunTiles: Double, isStatic: Boolean)
 
   final case class ThreatView(distTiles: Double, rangeTiles: Double)
 
@@ -232,6 +242,7 @@ object PairArbiter {
     boardLocked: Boolean,
     threatTiles: Double,
     longTrip: Boolean,
+    stalledShot: Boolean,
     foes: Seq[FoeView])
 
   private def distTiles(a: (Double, Double), b: (Double, Double)): Double = {
@@ -327,6 +338,7 @@ object PairArbiter {
     decide(
       loaded            = false,
       mateOnFoot        = ride.isDefined,
+      stalledStaticDuel = foe.exists(_.isStatic) && reaver.stalledShot,
       mateDistTiles     = ride.map(r => distTiles(reaver.posTiles, r.posTiles)).getOrElse(Double.PositiveInfinity),
       reaverFoeTiles    = foe.map(_.distTiles).getOrElse(Double.PositiveInfinity),
       reaverGunTiles    = foe.map(_.reaverGunTiles).getOrElse(0.0),
@@ -409,9 +421,11 @@ object PairArbiter {
       Maff.minBy(reaver.matchups.threats.view.filter(t => t.likelyStillThere && t.canAttack(reaver)))(reaver.pixelDistanceEdge(_))
         .map(reaver.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity),
       ReaverShuttleFerry.needsRide(reaver.pixelDistanceCenter(reaver.agent.destinationNext()) * Maff.inv32),
+      With.framesSince(reaver.lastFrameStartingAttack) >= ReaverStaticStand.quietFrames,
       reaver.matchups.targets.map(t =>
         FoeView(
           reaver.pixelDistanceEdge(t) * Maff.inv32,
           t.pixelRangeAgainst(reaver) * Maff.inv32,
-          reaver.pixelRangeAgainst(t) * Maff.inv32)).toSeq)
+          reaver.pixelRangeAgainst(t) * Maff.inv32,
+          t.unitClass.isStaticDefense)).toSeq)
 }

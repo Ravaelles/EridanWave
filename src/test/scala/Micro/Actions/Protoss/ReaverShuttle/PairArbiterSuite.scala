@@ -175,8 +175,9 @@ class PairArbiterSuite extends AnyFunSuite {
     boardLocked: Boolean = false,
     threatTiles: Double = Double.PositiveInfinity,
     longTrip: Boolean = false,
+    stalledShot: Boolean = false,
     foes: Seq[PairArbiter.FoeView] = Seq.empty): PairArbiter.ReaverView =
-    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, wound01, unloadOrdered, nearestStaticTiles, attackedRecently, boardLocked, threatTiles, longTrip, foes)
+    PairArbiter.ReaverView(pos, squad, loaded, bond, 1, activeScarab = false, 0, wound01, unloadOrdered, nearestStaticTiles, attackedRecently, boardLocked, threatTiles, longTrip, stalledShot, foes)
 
   test("resolve: an unbonded hull sees the free same-squad ride") {
     val ride = shuttleView()
@@ -269,7 +270,7 @@ class PairArbiterSuite extends AnyFunSuite {
   }
 
   test("resolve: doom rescue still boards past the quiet-crowd pin") {
-    val foe = PairArbiter.FoeView(distTiles = 1.0, foeGunTiles = 5.0, reaverGunTiles = 8.0)
+    val foe = PairArbiter.FoeView(distTiles = 1.0, foeGunTiles = 5.0, reaverGunTiles = 8.0, isStatic = false)
     val threat = PairArbiter.ThreatView(distTiles = 3.0, rangeTiles = 5.0)
     val out = PairArbiter.resolveReaver(
       reaverView(
@@ -284,7 +285,7 @@ class PairArbiterSuite extends AnyFunSuite {
   }
 
   test("resolve: a calm-ride doom boards through the pin too") {
-    val foe = PairArbiter.FoeView(distTiles = 1.0, foeGunTiles = 5.0, reaverGunTiles = 8.0)
+    val foe = PairArbiter.FoeView(distTiles = 1.0, foeGunTiles = 5.0, reaverGunTiles = 8.0, isStatic = false)
     val out = PairArbiter.resolveReaver(
       reaverView(
         pos = (0.0, 0.0),
@@ -298,7 +299,7 @@ class PairArbiterSuite extends AnyFunSuite {
   }
 
   test("resolve: an engaged hull finishes its duel before any trip") {
-    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0)
+    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0, isStatic = false)
     val out = PairArbiter.resolveReaver(
       reaverView(
         pos = (0.0, 0.0),
@@ -309,6 +310,58 @@ class PairArbiterSuite extends AnyFunSuite {
       raid = false)
     assert(out.reaver == PairArbiter.HoldShoot)
     assert(out.shuttle == PairArbiter.FetchMate)
+  }
+
+  test("resolve: a stalled static duel boards the waiting ride") {
+    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0, isStatic = true)
+    val out = PairArbiter.resolveReaver(
+      reaverView(
+        pos = (0.0, 0.0),
+        bond = Some(shuttleView(pos = (1.0, 0.0))),
+        stalledShot = true,
+        foes = Seq(foe)),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(out.reaver == PairArbiter.BoardRide)
+    assert(out.shuttle == PairArbiter.GuardMate)
+  }
+
+  test("resolve: a progressing static duel keeps dueling") {
+    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0, isStatic = true)
+    val out = PairArbiter.resolveReaver(
+      reaverView(
+        pos = (0.0, 0.0),
+        bond = Some(shuttleView(pos = (1.0, 0.0))),
+        foes = Seq(foe)),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(out.reaver == PairArbiter.HoldShoot)
+  }
+
+  test("resolve: a stalled mobile duel keeps dueling") {
+    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0, isStatic = false)
+    val out = PairArbiter.resolveReaver(
+      reaverView(
+        pos = (0.0, 0.0),
+        bond = Some(shuttleView(pos = (1.0, 0.0))),
+        stalledShot = true,
+        foes = Seq(foe)),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(out.reaver == PairArbiter.HoldShoot)
+  }
+
+  test("resolve: a stalled static duel without a ride in reach keeps dueling") {
+    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0, isStatic = true)
+    val out = PairArbiter.resolveReaver(
+      reaverView(
+        pos = (0.0, 0.0),
+        bond = Some(shuttleView(pos = (100.0, 0.0))),
+        stalledShot = true,
+        foes = Seq(foe)),
+      Seq(shuttleView(pos = (100.0, 0.0))),
+      raid = false)
+    assert(out.reaver == PairArbiter.HoldShoot)
   }
 
   test("resolve: a quiet adjacent ride is not boarded for a short hop") {
