@@ -56,12 +56,6 @@ private[Decisioning] object EngagePipeline {
     // is nothing to leash to. Rejoins the line instead of dueling alone.
     Stage("ZealotLeash", DispatchBand.Medium, (unit, combat, _) =>
       if (leashZealot(unit, combat)) Some(true) else None),
-    // Zealot ball: with no Dragoons to leash to, blades facing a melee
-    // swarm glue to the nearest blade instead of dueling alone - lone
-    // blades kiting in opposite directions is how packs get picked
-    // apart. Scouts, commits, suicides and yolo keep their orders.
-    Stage("ZealotBall", DispatchBand.Medium, (unit, combat, _) =>
-      if (ballZealots(unit, combat)) Some(true) else None),
     // Cluster cohesion: a warrior moving without a victim, neither
     // retreating nor cooling under fire, never drifts past fourteen tiles
     // from its cluster's centroid. Inside a battle that unit is lost -
@@ -137,7 +131,8 @@ private[Decisioning] object EngagePipeline {
    */
   private val zealotLeash = new Latch
 
-  private def leashZealot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {    if ( ! Protoss.Zealot(unit)) return false
+  private def leashZealot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    if ( ! Protoss.Zealot(unit)) return false
     if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
 
     val anchor = Maff.minBy(With.units.ours.view.filter(u => u != unit && u.alive && Protoss.Dragoon(u)))(
@@ -158,31 +153,6 @@ private[Decisioning] object EngagePipeline {
 
     unit.agent.act("ZealotLeash")
     unit.agent.forceTo(anchor.get.pixel)
-    Commander.move(unit)
-    true
-  }
-
-  /**
-   * Ball glue (thin seam over the pure rule): with no Dragoons mustered
-   * the leash above has nothing to hold, so blades facing a melee swarm
-   * glue to the nearest blade instead of dueling alone. Scouts, commits,
-   * suicides and yolo keep their explicit orders; the duel still picks
-   * targets, the ball only votes movement, so the line swings together.
-   */
-  private def ballZealots(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    if ( ! Protoss.Zealot(unit)) return false
-    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
-
-    val mate = Maff.minBy(With.units.ours.view.filter(u => u != unit && u.alive && Protoss.Zealot(u)))(
-      _.pixelDistanceCenter(unit.pixel))
-    if (mate.isEmpty) return false
-
-    val marginPixels = KiteAway.enemyMarginTiles * 32.0
-    val meleeFoes = unit.matchups.threatsInPixels(marginPixels).count(_.unitClass.melee)
-    if ( ! ZealotLeash.shouldBall(mate.get.pixelDistanceCenter(unit.pixel) * Maff.inv32, meleeFoes)) return false
-
-    unit.agent.act("ZealotBall")
-    unit.agent.forceTo(mate.get.pixel)
     Commander.move(unit)
     true
   }

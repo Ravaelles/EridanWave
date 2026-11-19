@@ -26,25 +26,4 @@ object ZealotLeash {
    */
   def shouldRejoin(nearestDragoonTiles: Double): Boolean =
     nearestDragoonTiles > leashTiles
-
-  /**
-   * Ball radius, in tiles: blades hold shoulder-to-shoulder inside this.
-   * Center-to-center cannot go below the unit diameter (collision), so
-   * this is the tightest a ball gets - 0.3-tile spacing is physically
-   * impossible, one tile is touching.
-   */
-  val ballTiles: Double = 1.0
-
-  /** Glue once this many melee foes press the blade: fewer is a duel. */
-  val ballSwarmFoes: Int = 2
-
-  /**
-   * Ball up with the nearest blade (pure numbers for the suite): with a
-   * melee swarm on the line, a Zealot whose mate drifts past a tile
-   * steps back to it instead of dueling alone - lone blades kiting in
-   * opposite directions is how packs get picked apart. Releases at a
-   * tile: the mates approach monotonically, so the edge never flaps.
-   */
-  def shouldBall(mateTiles: Double, meleeFoes: Int): Boolean =
-    meleeFoes >= ballSwarmFoes && mateTiles > ballTiles
 }

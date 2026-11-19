@@ -16,14 +16,4 @@ class ZealotLeashSuite extends AnyFunSuite {
     assert(ZealotLeash.leashReleaseTiles == 4.5)
     assert(ZealotLeash.leashReleaseTiles < ZealotLeash.leashTiles)
   }
-
-  test("blades ball up past a tile with a melee swarm on them") {
-    assert(ZealotLeash.ballTiles == 1.0)
-    assert(ZealotLeash.shouldBall(mateTiles = 1.1, meleeFoes = 2))
-    assert(ZealotLeash.shouldBall(mateTiles = 5.0, meleeFoes = 6))
-    assert( ! ZealotLeash.shouldBall(mateTiles = 1.0, meleeFoes = 2))
-    assert( ! ZealotLeash.shouldBall(mateTiles = 0.5, meleeFoes = 6))
-    assert( ! ZealotLeash.shouldBall(mateTiles = 5.0, meleeFoes = 1))
-    assert( ! ZealotLeash.shouldBall(mateTiles = 5.0, meleeFoes = 0))
-  }
 }
