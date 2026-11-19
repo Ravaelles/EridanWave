@@ -34,8 +34,10 @@
   (d5cdffa1d); race read off seen units (8055e88ed).
 - Zealot ball (built 574d2bb11, REVERTED e71d56d09): zero fires in
   four games - packs already hold shoulder-to-shoulder.
-- UMS endgame (new): past 10s (240f) retreat is banned outright
-  (`NoRetreat.umsEndgame`) - endgame chases die when a kiter baits
-  a withdrawal. Validating on LingsHydra + 14v16 timeouts.
-- 2Zeal parked hard (2v6 upgraded, kills 3-5): melee shared pick
-  unbuilt; pack-kite is the current lever.
+- UMS endgame (`NoRetreat.umsEndgame`, fe2e62cae): past ten seconds
+  a unit with nothing in range holds instead of withdrawing - duels
+  keep the skim vote. Validated: LingsHydra timeouts gone (W f1619,
+  W f1322); 14v16 recovered (W f1322) after the blanket version
+  collapsed it 0-3 fast.
+- 2Zeal parked hard (upgraded 2v6: kills 2-6 across runs, 1W/7L):
+  pack-kite is the ceiling without a melee shared pick (declined).
