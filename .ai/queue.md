@@ -134,6 +134,12 @@ blank-line gate per change, commit per unit).
    on even, no focus change). Dress veto scoped to the pose leg -
    rally and join still reform (the 3Zeal 0/3 ran with the legs cut).
    Needs a live 3Zeal re-run and a winnable-map check.
+ - Sunkens ferry: Sunkens2 is unwinnable by arithmetic (5 scarabs vs
+   ~970 HP, no income) - needs a map fix, not bot code. Sunkens3 is
+   winnable and grinds 8-11 kills on foot but never ferries: the
+   progressing duel has no board trigger (E2 needs a stall, the pin
+   bypass needs one too). Needs an owner decision: ferry a winning-
+   but-slow duel, or keep duel-first and win by grinding.
  - Dark Templar raid leash (user rule): no worker/loner hunts inside
    60 ground tiles of the enemy main - hold instead of approaching;
    duels within 1.1 keep fighting. Needs a live DT raid confirming
