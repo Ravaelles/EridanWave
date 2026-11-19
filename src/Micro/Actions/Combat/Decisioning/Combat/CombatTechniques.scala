@@ -35,6 +35,26 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     // a verdict the never-retreat family just won is never overruled by
     // the technique. The posture floor carries the same vote cluster-wide.
     standGroundNow = NoRetreat.holdsAny(unit)
+    // One retreat permission for both phases: the march already obeys
+    // RetreatAllowed (strong clusters hold clear fields, dying hulls
+    // keep their way out), but the ladder below fell through to a bare
+    // Flee with no enemy check at all - marching out with no foe in
+    // sight routed every few frames while the march voted to advance.
+    // Gating the terminal on the same predicate makes both phases agree
+    // by construction. Computed once, shared with the bus update below.
+    val unitsScore = Information.Battles.ArmyStrength.score(
+      With.battles.globalAttack.us.skimStrengthUnits,
+      With.battles.globalAttack.enemy.skimStrengthUnits)
+    val nearestArmedTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
+      .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
+    val hardCounterKnown = MacroFacts.enemyHardCounterKnown
+    val retreatPermitted = Tactic.Squads.Decisions.RetreatAllowed.forUnit(
+      unit.totalHealth,
+      unitsScore,
+      nearestArmedTiles,
+      proxyRush,
+      hardCounterKnown)
     // Second verdict reader (step 2): the technique ticks the shared bus
     // with frame-fresh inputs and obeys the held verdict. The raw inputs
     // match the old arm one for one; the only behavior change is the hold
@@ -50,13 +70,10 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit),
         unit.agent.shouldFight,
         unit.totalHealth,
-        Information.Battles.ArmyStrength.score(
-          With.battles.globalAttack.us.skimStrengthUnits,
-          With.battles.globalAttack.enemy.skimStrengthUnits),
-        Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
-          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
-        With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax(),
-        MacroFacts.enemyHardCounterKnown,
+        unitsScore,
+        nearestArmedTiles,
+        proxyRush,
+        hardCounterKnown,
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
           .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)),
       With.frame)
@@ -118,7 +135,12 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // would fall through to Flee - hold the line instead and let
       // the engage pick the duel up.
       else  if (standGroundNow)                                       Fight
-      else                                                          Flee
+      // No permission, no retreat: the cluster doctrine above forbids
+      // this withdrawal (strong on a clear field, proxy answered not
+      // fled), so the frame belongs to the march, not to safety.
+      // Dying hulls and known hard counters keep the old Flee.
+      else  if (retreatPermitted)                                     Flee
+      else                                                            Walk
   }
 
   /**
