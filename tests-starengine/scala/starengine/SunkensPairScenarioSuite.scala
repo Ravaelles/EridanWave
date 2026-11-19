@@ -315,23 +315,36 @@ class SunkensPairScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
   test("a stalled duel boards the waiting ride: the f290 moment") {
     val sunken = sunkenAt(0.0, 0.0)
-    val reaver = new Body(Protoss.Reaver, 0.0, 300.0, Protoss.Reaver.maxTotalHealth)
-    val shuttle = new Body(Protoss.Shuttle, 0.0, 400.0, Protoss.Shuttle.maxTotalHealth)
+    // f290 geometry: inside engine gun (256) but outside the launch
+    // band (232) - the hull holds, the game never launches.
+    val reaver = new Body(Protoss.Reaver, 0.0, 240.0, Protoss.Reaver.maxTotalHealth)
+    val shuttle = new Body(Protoss.Shuttle, 0.0, 340.0, Protoss.Shuttle.maxTotalHealth)
     val lastShot = Array(0)
     val pilots: Map[Body, Pilot] = Map(
       shuttle -> new Pilots.Hold,
       reaver -> new Pilot {
+        var closing = false
+
         override def direct(me: Body, world: World): Directive = {
-          val stalled = world.frame - lastShot(0) >= 144
-          if (stalled && me.dist(shuttle) <= 160.0) Board(shuttle)
+          // The f290 moment, production order: a stalled duel boards the
+          // waiting ride; once walking out of the gun the WalkToRide leg
+          // finishes the converge instead of re-holding at the edge.
+          val inGun = me.dist(sunken) <= me.rangeAgainst(sunken)
+          if (inGun && world.frame - lastShot(0) >= 144 && me.dist(shuttle) <= 160.0) closing = true
+          if (closing && me.transport.isEmpty) {
+            if (me.dist(shuttle) <= 32.0) Board(shuttle)
+            else MoveTo(shuttle.x, shuttle.y)
+          }
           else Hold
         }
       },
       sunken -> new Pilots.Hold)
     val world = new World(Seq(reaver, shuttle), Seq(sunken), pilots, Seq.empty)
     world.buggedStaticLaunch = true
-    world.run(2000)
-    println(s"DIAG stalled loaded=${reaver.transport.isDefined} frames=${world.frame}")
+    while (world.frame < 2000 && reaver.transport.isEmpty && reaver.alive) {
+      world.step()
+    }
+    println(s"DIAG stalled loaded=${reaver.transport.isDefined} frames=${world.frame} reaver=${reaver.hp.toInt}")
 
     assert(reaver.transport.contains(shuttle), "the stalled hull boards the waiting ride")
   }

@@ -28,14 +28,18 @@ class PairOrdersSuite extends AnyFunSuite with StarEngineSuite {
       f.kind.isStaticDefense))
 
   /**
-   * Inferred stall clock, production order: the engine never tells the
-   * pilot it fired, so a foe inside the gun means the clock resets -
-   * the same inference the boarding gate pilot uses. Past the quiet
-   * window the duel is stalled, and the arbiter may board it.
+   * Stall clock, production order: cooldown transitions are real shots,
+   * so the clock stamps those - never the range inference (a held hull
+   * inside the gun that fires nothing is exactly the stalled duel the
+   * arbiter may board). Closing hulls are approaching, not stalled.
    */
+  private val prevCooldown = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
+  private val lastRealShot = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(-100000)
   private def stalledShot(me: Body, foes: Seq[Body], frame: Int): Boolean = {
-    if (foes.filter(_.alive).exists(f => me.dist(f) <= me.rangeAgainst(f))) lastShot(me) = frame
-    frame - lastShot(me) >= ReaverStaticStand.quietFrames
+    if (prevCooldown(me) == 0 && me.cooldownLeft > 0) lastRealShot(me) = frame
+    prevCooldown(me) = me.cooldownLeft
+    val inGun = foes.filter(_.alive).exists(f => me.dist(f) <= me.rangeAgainst(f))
+    inGun && frame - lastRealShot(me) >= ReaverStaticStand.quietFrames
   }
 
   private def staticTiles(me: Body, foes: Seq[Body]): Option[Double] =

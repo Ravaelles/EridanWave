@@ -338,7 +338,10 @@ object PairArbiter {
     decide(
       loaded            = false,
       mateOnFoot        = ride.isDefined,
-      stalledStaticDuel = foe.exists(_.isStatic) && reaver.stalledShot,
+      // In the gun, not just near it: a hull still closing is
+      // approaching, not stalled - only a held duel that fires nothing
+      // for six seconds boards the ride.
+      stalledStaticDuel = foe.exists(f => f.isStatic && f.distTiles <= f.reaverGunTiles) && reaver.stalledShot,
       mateDistTiles     = ride.map(r => distTiles(reaver.posTiles, r.posTiles)).getOrElse(Double.PositiveInfinity),
       reaverFoeTiles    = foe.map(_.distTiles).getOrElse(Double.PositiveInfinity),
       reaverGunTiles    = foe.map(_.reaverGunTiles).getOrElse(0.0),
