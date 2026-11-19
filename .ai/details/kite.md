@@ -27,6 +27,10 @@
   single losses re-ran to wins (variance, not the veto).
   1Drag post-kite61 won twice (was 0/4): the mild mill was the
   dither.
+- Failing-maps round green: ZealDrag W 9/5 (4-2 overall),
+  3Drag W 3/2, 16Drag W 16/13, 3DragHydra W 5/1, Reav_v_Drag W 7/6,
+  14Drag W 16/11, 1DragWounded W 1/0. 1DragWounded sits 2-3 on long
+  grinds (variance); 2Zeal stays parked (kills 2-6, 1W/8L).
 - Far dress-and-wait (d686ff703): `MarchDress.holdFarWait` latch
   (fires at five out, holds through the creep, releases on contact
   or past six; warriors only, UMS mirrors, never under reavers) +
