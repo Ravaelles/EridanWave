@@ -54,12 +54,13 @@ object ReaverShuttlePair {
    * restaffing frames, and a strict gate blinds the mate lookup exactly
    * then, flipping escort/await every other frame. So None on our side
    * accepts the nearest hull; a squadded ride stays strict, even against
-   * squadless hulls. Baseless maps (UMS duels) never staff squads at
-   * all, so the lenient side applies there instead of blinding the pair
-   * for the whole game: either side unstaffed counts as a match.
+   * squadless hulls. Baseless maps (UMS duels) staff nothing stable at
+   * all - the staffing dice stranded a whole Sunkens run with the ride
+   * awaiting while its mate died on foot - so the lenient side bonds
+   * blind: nearest hull, no squad questions.
    */
   def sameSquadOrUnstaffed[A](a: Option[A], b: Option[A], lenient: Boolean): Boolean =
-    a.forall(b.contains) || (lenient && (a.isEmpty || b.isEmpty))
+    lenient || a.forall(b.contains)
 
   /** Squad-typed mate gate; baseless maps pass lenient = true. */
   def mateInSquad(shuttleSquad: Option[Squad], mateSquad: Option[Squad]): Boolean =

@@ -84,6 +84,15 @@ blank-line gate per change, commit per unit).
   margin, nearest our side) instead of flying at the static and
   circling; the unload fires on arrival. Needs the same Sunkens2 run
   confirming DuelDropSpot acts and the ride never parks over the colony.
+- Fresh hulls stand under statics (user gate): shieldWound <= 40 with
+  scarabs and 6s quiet skips the keep-off floor - walk in, shoot,
+  withdraw after, not before. Needs the same Sunkens2 run confirming
+  the hull fires instead of stepping out.
+- Baseless pairs bond blind (Sunkens2 diagnosis): the lenient squad
+  gate bonds the nearest hull regardless of staffing - the 13:24 run
+  watched the ride await while its mate died on foot at f336, neither
+  new behavior ever reached. Strict based games untouched. Needs the
+  same Sunkens2 run confirming board plus ferry.
 
 ## Parked (explicit orders, do not touch)
 

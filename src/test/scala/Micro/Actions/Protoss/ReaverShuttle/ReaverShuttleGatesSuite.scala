@@ -22,6 +22,15 @@ class ReaverShuttleGatesSuite extends AnyFunSuite {
     assert( ! ReaverShuttlePair.mateInSquad(Some(squad), Some(Mockito.mock(classOf[Squad]))))
   }
 
+  test("baseless pairs bond blind: no staffing dice on UMS maps") {
+    val squad = Mockito.mock(classOf[Squad])
+    val other = Mockito.mock(classOf[Squad])
+    assert(ReaverShuttlePair.mateInSquad(None, None, lenient = true))
+    assert(ReaverShuttlePair.mateInSquad(Some(squad), None, lenient = true))
+    assert(ReaverShuttlePair.mateInSquad(Some(squad), Some(other), lenient = true))
+    assert(ReaverShuttlePair.mateInSquad(Some(squad), Some(squad), lenient = true))
+  }
+
   test("the ride stays with an unloaded mate operating close") {
     assert(ReaverShuttlePair.shouldEscort(0.0))
     assert(ReaverShuttlePair.shouldEscort(15.0))
