@@ -15,8 +15,11 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
  * only fast runners (Scourge, Wraith showing its engines) are let go.
  * Fixed priority: suicide Scourge nearest, then the weakest Carrier,
  * Science Vessel, Battlecruiser, Wraith, detected Observer, Reaver,
- * Dark Templar, High Templar. Returns true when it shot or is already
- * on the victim.
+ * Dark Templar, High Templar. The pick always lands; the shot only
+ * fires when the duel will not run this frame (retreating, or no
+ * advance) - an advancing duel owns its frame and kites on cooldown,
+ * so a standing shot here would pin it in place and starve the kite.
+ * Returns true when it shot or is already on the victim.
  */
 object AlwaysAttackInRange {
 
@@ -45,7 +48,11 @@ object AlwaysAttackInRange {
     Prey(Protoss.DarkTemplar, DarkTemplar),
     Prey(Protoss.HighTemplar, HighTemplar))
 
-  def run(unit: FriendlyUnitInfo): Boolean = {
+  /**
+   * @param willRetreat the duel will not run (technique owns survival)
+   * @param advance     the duel will run (posture advances the line)
+   */
+  def run(unit: FriendlyUnitInfo, willRetreat: Boolean, advance: Boolean): Boolean = {
     if (unit.flying) return false
 
     if ( ! unit.unitClass.isWarrior) return false
@@ -83,10 +90,13 @@ object AlwaysAttackInRange {
       distTiles = unit.pixelDistanceEdge(t) * Maff.inv32,
       kind = kind,
       totalHealth = t.totalHealth) }
-    CrucialAirSnipe.pick(marks.toSeq).foreach(i =>
-      NearestShot.take(unit, "AlwaysAttack", Seq(victims(i))))
+    val pick = CrucialAirSnipe.pick(marks.toSeq)
+    pick.foreach(i => unit.agent.toAttack = Some(victims(i)))
+    if (willRetreat || ! advance) {
+      pick.foreach(i => NearestShot.take(unit, "AlwaysAttack", Seq(victims(i))))
 
-    true
+      true
+    } else false
   }
 
   /** Victims of one half of the sky: the row decides the ladder, the

@@ -69,8 +69,8 @@ private[Decisioning] object TechniquePipeline {
     // Scourge, Carriers and the rest on sight - even while retreating.
     // A shot in range never waits for the duel to start or the retreat
     // to finish; the ladder picks, the gun fires, the frame ends here.
-    Stage("AlwaysAttack", DispatchBand.High, (unit, _, _) =>
-      AlwaysAttackInRange.run(unit)),
+    Stage("AlwaysAttack", DispatchBand.High, (unit, combat, advance) =>
+      AlwaysAttackInRange.run(unit, combat.shouldRetreat, advance)),
     // Main-base Templar hunt: a detected enemy DT inside forty ground
     // tiles of our main must die, even out of contact - the army walks
     // it down instead of scoring shinier fights. Already dueling one
@@ -90,7 +90,7 @@ private[Decisioning] object TechniquePipeline {
     // line while the cluster withdraws instead of turning with it. With
     // nothing to shoot it falls through and retreats with everyone.
     Stage("Rearguard", DispatchBand.Medium, (unit, _, _) =>
-      unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit) || ContainFireBehavior.run(unit))),
+      unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit, willRetreat = true, advance = false) || ContainFireBehavior.run(unit))),
     // Retreat owns survival: the walk to safety ends the frame.
     Stage("Retreat", DispatchBand.High, (unit, combat, _) =>
       combat.shouldRetreat && Retreat(unit)),
