@@ -49,14 +49,26 @@ class CrucialAirSnipeSuite extends AnyFunSuite {
   }
 
   test("a Scourge past the range still gets sniped when it is coming at us") {
-    assert(CrucialAirSnipe.inSnipeReach(inRange = true, isScourge = true, facingUs = true, beyondTiles = 0.0))
-    assert(CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = true, beyondTiles = 1.5))
-    assert(CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = true, beyondTiles = 0.5))
+    assert(CrucialAirSnipe.inSnipeReach(Scourge, inRange = true, inMargin = false, facingUs = true))
+    assert(CrucialAirSnipe.inSnipeReach(Scourge, inRange = false, inMargin = true, facingUs = true))
   }
 
   test("a leaving Scourge past the range is left alone") {
-    assert( ! CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = false, beyondTiles = 0.5))
-    assert( ! CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = true, facingUs = true, beyondTiles = 1.51))
+    assert( ! CrucialAirSnipe.inSnipeReach(Scourge, inRange = false, inMargin = true, facingUs = false))
+    assert( ! CrucialAirSnipe.inSnipeReach(Scourge, inRange = false, inMargin = false, facingUs = true))
+  }
+
+  test("a visible Observer a tile and a half past the guns gets walked down") {
+    assert(CrucialAirSnipe.inSnipeReach(Observer, inRange = false, inMargin = true, facingUs = true))
+    assert(CrucialAirSnipe.inSnipeReach(Observer, inRange = false, inMargin = true, facingUs = false))
+    assert( ! CrucialAirSnipe.inSnipeReach(Observer, inRange = false, inMargin = false, facingUs = true))
+  }
+
+  test("slow capitals get walked down inside the margin, fast runners do not") {
+    assert(CrucialAirSnipe.inSnipeReach(Carrier, inRange = false, inMargin = true, facingUs = false))
+    assert(CrucialAirSnipe.inSnipeReach(Wraith, inRange = false, inMargin = true, facingUs = true))
+    assert( ! CrucialAirSnipe.inSnipeReach(Wraith, inRange = false, inMargin = true, facingUs = false))
+    assert(CrucialAirSnipe.inSnipeReach(Wraith, inRange = true, inMargin = false, facingUs = false))
   }
 
   test("a Dark Templar is dueled on terms: warm gun, room for ranged hulls") {
@@ -92,9 +104,12 @@ class CrucialAirSnipeSuite extends AnyFunSuite {
       "Hero Samir Duran"))
   }
 
-  test("capitals never get the reach bonus") {
-    assert(CrucialAirSnipe.inSnipeReach(inRange = true, isScourge = false, facingUs = true, beyondTiles = 0.0))
-    assert( ! CrucialAirSnipe.inSnipeReach(inRange = false, isScourge = false, facingUs = true, beyondTiles = 0.5))
+  test("only fast runners lose the margin when they flee") {
+    assert(CrucialAirSnipe.inSnipeReach(Carrier, inRange = true, inMargin = false, facingUs = true))
+    assert( ! CrucialAirSnipe.chasesAway(Carrier))
+    assert( ! CrucialAirSnipe.chasesAway(Observer))
+    assert(CrucialAirSnipe.chasesAway(Scourge))
+    assert(CrucialAirSnipe.chasesAway(Wraith))
   }
 
   test("no victims means no pick") {

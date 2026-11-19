@@ -165,6 +165,14 @@ trait CombatUnit {
   @inline final def inRangeToAttack               (target: CombatUnit, from: Pixel, targetAt: Pixel)  : Boolean = { val d = pixelDistanceEdge(target, from, targetAt); d <= pixelRangeAgainst(target) && (pixelRangeMin <= 0.0 || d > pixelRangeMin) }
   @inline final def inRangeToAttackFrom           (target: CombatUnit, from: Pixel)                   : Boolean = pixelDistanceEdgeFrom(target, from) <= pixelRangeAgainst(target) && (pixelRangeMin <= 0.0 || pixelDistanceEdgeFrom(target, from) > pixelRangeMin)
   @inline final def pixelsToGetInRange            (target: CombatUnit)                                : Double  = ?(canAttack(target), pixelDistanceEdge(target)             - pixelRangeAgainst(target), LightYear())
+  /**
+   * Atlantis reach pricing (game-coupled): true while the victim sits
+   * inside our range or at most bonusTiles past it - the walk-in for a
+   * must-kill victim starts before the gun is hot, so a victim just
+   * outside the range still counts instead of being watched leave.
+   * Pixels convert once at the seam (rule 12).
+   */
+  @inline final def canAttackWithMargin         (bonusTiles: Double, target: CombatUnit)            : Boolean = canAttack(target) && pixelsToGetInRange(target) <= bonusTiles * 32.0
   @inline final def pixelsToGetInRange            (target: CombatUnit,              targetAt: Pixel)  : Double  = ?(canAttack(target), pixelDistanceEdge(target, targetAt)   - pixelRangeAgainst(target), LightYear())
   @inline final def pixelsToGetInRangeFrom        (target: CombatUnit, from: Pixel)                   : Double  = ?(canAttack(target), pixelDistanceEdgeFrom(target, from)   - pixelRangeAgainst(target), LightYear())
   @inline final def pixelsToGetInRangeTraveling   (target: CombatUnit)                                : Double  = Math.max(pixelsToGetInRange(target), ?( ! canAttack(target) || flying || inRangeToAttack(target), 0, pixelDistanceTravelling(target.pixel) - pixelRangeAgainst(target) - unitClass.dimensionMin - target.unitClass.dimensionMin))

@@ -36,8 +36,21 @@ object CrucialAirSnipe {
 
   final case class Mark(distTiles: Double, kind: VictimKind, totalHealth: Double)
 
-  /** Extra reach against an incoming Scourge, in tiles: shoot it before it connects. */
-  val scourgeReachBonusTiles: Double = 1.5
+  /**
+   * Chase margin past our own range, in tiles: a must-kill victim this
+   * close gets walked down instead of watched leave - a visible Observer
+   * a tile and a half past a six-tile gun still dies for the walk.
+   */
+  val chaseMarginTiles: Double = 1.5
+
+  /**
+   * Fast victims we never chase off the line: a Scourge that turned home
+   * and a Wraith showing its engines are gone either way - the line
+   * would trade formation for a kill it cannot catch. Slow capitals,
+   * observers and ground support always get walked down inside the
+   * margin (allowAttackingUnitsRunningAwayFromUs is false only here).
+   */
+  def chasesAway(kind: VictimKind): Boolean = kind == Scourge || kind == Wraith
 
   /**
    * Dark Templar duel terms, in frames and tiles: answer the swipe only
@@ -55,11 +68,12 @@ object CrucialAirSnipe {
 
   /**
    * Snipe reach (pure flags for the suite): in range always counts; past
-   * the range an incoming Scourge still counts inside the bonus, a
-   * leaving one never does, and capitals never get the bonus.
+   * the range a victim inside the chase margin counts unless it is a
+   * fast one running away - capitals, observers and ground support get
+   * walked down, runners do not.
    */
-  def inSnipeReach(inRange: Boolean, isScourge: Boolean, facingUs: Boolean, beyondTiles: Double): Boolean =
-    inRange || (isScourge && facingUs && beyondTiles <= scourgeReachBonusTiles)
+  def inSnipeReach(kind: VictimKind, inRange: Boolean, inMargin: Boolean, facingUs: Boolean): Boolean =
+    inRange || (inMargin && (facingUs || ! chasesAway(kind)))
 
   /** First the nearest Scourge, then the weakest of each capital in order. */
   def pick(marks: Seq[Mark]): Option[Int] = {
