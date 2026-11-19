@@ -58,12 +58,6 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax(),
         MacroFacts.enemyHardCounterKnown),
       With.frame)
-    val verdictRetreat = Tactic.Squads.Decisions.RetreatVerdict.held(unit.id, With.frame) &&
-      ! ClusterPosture.overrulesRetreat(
-        unit.squad.flatMap(_.battlePosture),
-        Information.Battles.ArmyStrength.score(
-          With.battles.globalAttack.us.skimStrengthUnits,
-          With.battles.globalAttack.enemy.skimStrengthUnits))
     // Overwhelming line never routs: when the unit's own squad votes to
     // fight from a clearly superior skim, a latched personal retreat
     // releases immediately instead of waiting for duel confidence that
@@ -77,6 +71,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       Information.Battles.ArmyStrength.score(
         With.battles.globalAttack.us.skimStrengthUnits,
         With.battles.globalAttack.enemy.skimStrengthUnits))
+    val verdictRetreat = Tactic.Squads.Decisions.RetreatVerdict.held(unit.id, With.frame) && ! overwhelmingLine
     combat.technique =
             if ( ! unit.canMove)                                    Fight
       // Latched retreat: once falling back, hold Flee until clear of the
