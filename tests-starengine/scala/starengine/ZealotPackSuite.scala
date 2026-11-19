@@ -52,6 +52,52 @@ class ZealotPackSuite extends AnyFunSuite with StarEngineSuite {
     assert(Math.abs(zealot.x - 0.0) <= 100.0, f"lone hull left the centroid to ${zealot.x.toInt}px")
   }
 
+  test("a mutual approach meets in the middle: closing enemies are contact", StarEngineTags.PvP) {
+    // The 3Zeal wall: packs closing on each other never regroup home -
+    // a foe warrior whose distance shrinks is an incoming fight, not
+    // a lone charge. The pilot measures closing the way production
+    // does (presumptive target or approach speed): shrinking distance.
+    val ours = (-1 to 1).map(i => new Body(Protoss.Zealot, i * 100.0, 900.0, Protoss.Zealot.maxTotalHealth))
+    val foes = (-1 to 1).map(i => new Body(Protoss.Zealot, i * 100.0, 100.0, Protoss.Zealot.maxTotalHealth))
+    var regroups = 0
+    val pilots: Map[Body, Pilot] = (ours.map(o => o -> new Pilot {
+      override def direct(me: Body, world: World): Directive = {
+        val live = world.foes.filter(_.alive)
+        // Intent, not geometry: a foe ordered onto one of ours is
+        // closing even at equal speed, where distance trends stall.
+        val closing = live.filter(_.kind == Protoss.Zealot).exists(f =>
+          world.orderOf(f).exists({
+            case Chase(t) => t.alive && world.ours.contains(t)
+            case _        => false
+          }))
+        val mates = world.ours.filter(x => x.alive && (x ne me))
+        val mateTiles = mates.sortBy(me.dist).headOption.map(me.dist(_) / 32.0).getOrElse(Double.PositiveInfinity)
+        val regroup = ZealotPack.shouldRegroup(
+          onlyZealots = true,
+          zealots = world.ours.count(_.alive),
+          mateTiles = mateTiles,
+          usSkim = 100.0,
+          foeSkim = 100.0,
+          inContact = live.exists(f => me.dist(f) <= me.rangeAgainst(f) + 32.0),
+          enemyClosing = closing)
+        if (regroup) {
+          regroups += 1
+          MoveTo(0.0, 1200.0)
+        }
+        else live.sortBy(me.dist).headOption.map(Chase).getOrElse(Hold)
+      }
+    }) ++ foes.map(f => f -> new Pilots.ZombieAttack(_.ours, (0.0, 900.0)))).toMap
+    val world = new World(ours, foes, pilots, Seq.empty)
+    world.run(3000)
+    val foeHp = foes.map(_.hp.toInt).sum
+    println(s"DIAG mirror regroups=$regroups ours=${ours.count(_.alive)}/3 foeHp=$foeHp frames=${world.frame}")
+    // Foes shoot first in this engine, so a symmetric grind favors them -
+    // the mechanism under test is the meeting, not the winning: no
+    // regroup yo-yo past the opening frames, and the packs bleed.
+    assert(regroups <= 6, "mutual approach regrouped home instead of meeting")
+    assert(foeHp < 3 * Protoss.Zealot.maxTotalHealth.toInt, "packs never joined")
+  }
+
   test("a joined mate releases the approach") {
     val first = new Body(Protoss.Zealot, 0.0, 500.0, Protoss.Zealot.maxTotalHealth)
     val second = new Body(Protoss.Zealot, 32.0, 500.0, Protoss.Zealot.maxTotalHealth)

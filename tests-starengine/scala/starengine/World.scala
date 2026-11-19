@@ -78,6 +78,14 @@ final class World(
   val attackLock = new scala.collection.mutable.HashMap[Body, Int]().withDefaultValue(0)
 
   /**
+   * Committed pick, last frame: what a body was ordered to do. Pilots
+   * read each other's intents through this the way production reads
+   * presumptive targets - a foe chasing one of ours is closing
+   * regardless of whether the distance trend shows it yet.
+   */
+  def orderOf(body: Body): Option[Directive] = lastOrder.get(body)
+
+  /**
    * Bugged reaver launch (scenario opt-in, off by default): scarabs
    * against defensive statics only leave inside the launch band and
    * only from a hold - outside it, or on the move, the hull stands
