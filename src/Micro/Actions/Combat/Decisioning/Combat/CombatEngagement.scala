@@ -219,10 +219,15 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // rearguard and the Retreat maneuver above already spoke for it,
     // and dispatching it back into the fight is exactly the mixed
     // frame the retreat discipline exists to kill.
-    val advance = unit.squad.flatMap(_.battlePosture) match {
+    // UMS committed duelists always advance: the sim forecasts trades,
+    // but a losing trade the unit can kite is still a duel - without
+    // advance the technique never runs and the march walks losing duels
+    // out of the map instead of kiting them. Retreating units keep
+    // marching home.
+    val advance = (unit.squad.flatMap(_.battlePosture) match {
       case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active) && ! unit.intent.marchHome
       case None          => combat.fightConsensus && ! unit.intent.marchHome
-    }
+    }) || (With.umsMode && unit.agent.commit && ! unit.intent.marchHome)
     var i = 0
     var claimed: Option[Boolean] = None
     while (i < EngagePipeline.stages.length && claimed.isEmpty) {
