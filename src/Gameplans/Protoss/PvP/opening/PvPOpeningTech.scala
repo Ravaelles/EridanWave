@@ -1,5 +1,6 @@
 package Gameplans.Protoss.PvP.opening
 
+import Gameplans.Protoss.PvP.DragoonsBeforeReavers
 import Gameplans.Protoss.PvP.PvPOpening
 import Gameplans.Protoss.PvP.PvPIdeas
 import Lifecycle.With
@@ -252,7 +253,11 @@ trait PvPOpeningTech { self: PvPOpening =>
     pumpObs ||= With.fingerprints.dtRush()
     if (getObservers) once(Protoss.Observer)
     if (pumpObs) pump(Protoss.Observer, 2) else if (units(Protoss.Observer) > 1) cancel(Protoss.Observer)
-    if (reaverAllIn || units(Protoss.Reaver) >= 2) pumpShuttleAndReavers() else pump(Protoss.Reaver)
+    // The first hull waits for the dragoon backbone, like the opening
+    // gate above; committed reaver play (two hulls out) keeps pumping.
+    val allowReavers = DragoonsBeforeReavers.allowReavers(units(Protoss.Dragoon), enemyHasShown(Protoss.PhotonCannon))
+    if (units(Protoss.Reaver) >= 2 || (reaverAllIn && allowReavers)) pumpShuttleAndReavers()
+    else if (allowReavers) pump(Protoss.Reaver)
   }
 
   private def trainGatewayUnits(): Unit = {

@@ -1,6 +1,7 @@
 package Gameplans.Protoss.PvP.opening
 
 import Gameplans.Protoss.PvP.PvPOpening
+import Gameplans.Protoss.PvP.DragoonsBeforeReavers
 import Lifecycle.With
 import ProxyBwapi.Races.Protoss
 import Strategery.Strategies.Protoss._
@@ -188,7 +189,7 @@ trait PvPOpeningReactions { self: PvPOpening =>
       // a Bay the army cannot cover and a hull with no wall to break.
       // Reavers answer static play; without a scouted Cannon and without
       // a pack to escort them they trade gas for nothing.
-      if (getReavers && units(Protoss.Dragoon) < 15 && ! enemyHasShown(Protoss.PhotonCannon)) {
+      if (getReavers && ! DragoonsBeforeReavers.allowReavers(units(Protoss.Dragoon), enemyHasShown(Protoss.PhotonCannon))) {
         getReavers = false
         status(true, "DragoonsBeforeReavers")
       }

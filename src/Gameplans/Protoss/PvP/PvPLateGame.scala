@@ -243,9 +243,12 @@ class PvPLateGame extends GameplanImperative {
     }
 
     pump(Protoss.Observer, Math.min(3, 1 + enemies(Protoss.DarkTemplar)))
-    pumpShuttleAndReavers(2, shuttleFirst = ! have(Protoss.RoboticsSupportBay))
+    // The first hull waits for the dragoon backbone, like the opening
+    // gate; committed reaver play and the goon pumps keep their say.
+    val allowReavers = DragoonsBeforeReavers.allowReavers(units(Protoss.Dragoon), enemyHasShown(Protoss.PhotonCannon))
+    if (allowReavers) pumpShuttleAndReavers(2, shuttleFirst = ! have(Protoss.RoboticsSupportBay))
     pump(Protoss.Observer, 2)
-    pumpShuttleAndReavers(6)
+    if (allowReavers) pumpShuttleAndReavers(6)
     pumpRatio(Protoss.Dragoon, 8, 24, Seq(Friendly(Protoss.Zealot, 2.0)))
     if (techStarted(Protoss.PsionicStorm)) {
       pumpRatio(Protoss.HighTemplar, 0, 8, Seq(Flat(-4), Friendly(IsWarrior, 1.0 / 4.0)))
