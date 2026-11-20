@@ -21,7 +21,10 @@ Details live in `details/` - the queue keeps one line per item.
   to DTs, Robo never built - policy correctly silent with zero
   vetoes and zero crashes; peaked 22 warriors, killed their Nexus
   on Timing1, then lost the grind on even votes - out-massed macro
-  loss, no mechanism).
+  loss, no mechanism), BetaStar SINK2 DEFEAT 7/73 (9 min PvP vs
+  4GateGoon rush: dead min 6-8 with 12 warriors, 486 ordinary
+  votes, no flap - failed rush defense, macro loss; policy again
+  correctly silent, zero vetoes).
 - UMS: full batch 12W/11L; ZealDrag 4-3, 14v16 competitive,
   LingsHydra timeouts fixed twice, 1Drag/1DragWounded flip wins,
   2Zeal parked hard, Sunkens/DT walls stand.
