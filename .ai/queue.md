@@ -31,11 +31,14 @@ Details live in `details/` - the queue keeps one line per item.
   DEFEAT 180/612 (34 min PvT carriers: 1:3.4 grind, 603 ordinary
   votes dominated by OutOfContact/No at advantage, no flap -
   out-comped late loss, toggles N/A outside PvP).
-- UMS: full batch 12W/11L; ZealDrag 4-3, 14v16 competitive,
-  LingsHydra timeouts fixed twice, 1Drag/1DragWounded flip wins,
-  2Zeal parked hard, Sunkens/DT walls stand.
-- Jar rebuilt 23:21 with the far-wait warrior-only fix (slot
-  md5 matches target); Crona rematch next on the fresh jar.
+- UMS on the toggle jar: full batch 9W/13L/3NA, then re-run wins
+  on 1DragWounded + 1DragLing (flippers flip back); 3DragHydra
+  timeouts sit inside its all-time flip distribution (8W/9L);
+  Reav_v_Drag double NOATTACH is box flake (won before). Structural
+  walls unchanged (Sunkens ammo, DT detection, mop-up timeouts).
+  No UMS regression from toggles, standoff bonus or halves.
+- Jar: sink + toggles + standoff bonus + halves + lone-march
+  duel gate (all `strings`-verified, slot md5 matches target).
 
 ## Needs a live game (code green, jar includes it)
 
