@@ -32,8 +32,10 @@ import Tactic.Squads.Decisions.RetreatAllowed
 import Tactic.Squads.ContainStatus
 import Tactic.Squads.Decisions.VoteConfirmation
 import Tactic.Squads.Decisions.SuicideMission
+import Tactic.Squads.MarchOrders
 import Tactic.Squads.Squad
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.SquadForming
+import Tactic.Squads.SquadTargeting
 import Tactic.Squads.Squads
 
 class SquadAttack extends Squad {
@@ -48,6 +50,8 @@ class SquadAttack extends Squad {
    * Dragoons into sixteen is a scripted wipe, so an outmatched pack
    * holds its home slots and lets the micro hunt pick instead. Reads
    * the same penalized advantage the posture vote reads, no new knob.
+   * Read by the forming half, which marches hunting squads in
+   * formation even with no consensus behind the hunt.
    */
   var huntMarches: Boolean = false
 
@@ -126,7 +130,7 @@ class SquadAttack extends Squad {
       setMode(
         ContainArmy,
         With.scouting.enemyThreatOrigin.center,
-        SquadAutomation.rankedEnRoute(this))
+        SquadTargeting.rankedEnRoute(this))
 
       return mode
     }
@@ -144,7 +148,7 @@ class SquadAttack extends Squad {
       setMode(
         PushExpo,
         expo.heart.center,
-        SquadAutomation.rankedAround(this))
+        SquadTargeting.rankedAround(this))
 
       return mode
     }
@@ -170,21 +174,21 @@ class SquadAttack extends Squad {
           .orElse(neutralBase.map(_.heart.center))
           .orElse(unseenTile.map(_.center))
           .getOrElse(With.scouting.enemyHome.center),
-        SquadAutomation.rankForArmy(this, legalTargets.filter(e => IsBuilding(e) || e.matchups.pixelsToThreatRange.exists(_ <= 0)).toVector))
+        SquadTargeting.rankForArmy(this, legalTargets.filter(e => IsBuilding(e) || e.matchups.pixelsToThreatRange.exists(_ <= 0)).toVector))
 
     } else if (enemyBasesOccupied.nonEmpty) {
 
       setMode(
         RazeBase,
         enemyBasesOccupied.map(_.heart.center).minBy(attackKeyDistanceTo),
-        SquadAutomation.rankedAround(this))
+        SquadTargeting.rankedAround(this))
 
     } else if (proxies.nonEmpty) {
 
       setMode(
         RazeProxy,
         proxies.map(_.pixel).minBy(attackKeyDistanceTo),
-        SquadAutomation.rankedAround(this))
+        SquadTargeting.rankedAround(this))
 
     } else if (With.umsMode && huntDestination.isDefined) {
 
@@ -195,14 +199,14 @@ class SquadAttack extends Squad {
       setMode(
         HuntContact,
         huntDestination.get,
-        SquadAutomation.rankedAround(this))
+        SquadTargeting.rankedAround(this))
 
     } else if (MacroFacts.killPotential) {
 
       setMode(
         PushMain,
         nearestEnemyBuilding.getOrElse(With.scouting.enemyHome.center),
-        SquadAutomation.rankedEnRoute(this))
+        SquadTargeting.rankedEnRoute(this))
 
     } else if (MacroFacts.safePushing) {
 
@@ -211,21 +215,21 @@ class SquadAttack extends Squad {
         setMode(
           CrushArmy,
           With.scouting.enemyMuscleOrigin.center,
-          SquadAutomation.rankedEnRoute(this))
+          SquadTargeting.rankedEnRoute(this))
 
       } else if (unguardedBases.nonEmpty) {
 
         setMode(
           PushExpo,
           unguardedBases.head.heart.center,
-          SquadAutomation.rankedAround(this))
+          SquadTargeting.rankedAround(this))
 
       } else {
 
         setMode(
           ContainArmy,
           With.scouting.enemyThreatOrigin.center,
-          SquadAutomation.rankedEnRoute(this))
+          SquadTargeting.rankedEnRoute(this))
 
       }
     } else if (faster && With.scouting.enemyProximity > 0.4) {
@@ -233,7 +237,7 @@ class SquadAttack extends Squad {
       setMode(
         Backstab,
         Maff.maxBy(With.geography.enemyBases.map(_.heart))(_.groundPixels(With.scouting.enemyMuscleOrigin)).getOrElse(With.scouting.enemyHome).center,
-        SquadAutomation.rankedAround(this))
+        SquadTargeting.rankedAround(this))
 
     } else if (With.umsMode && visibleEnemyChase.isDefined) {
 
@@ -245,7 +249,7 @@ class SquadAttack extends Squad {
       setMode(
         HuntContact,
         visibleEnemyChase.get,
-        SquadAutomation.rankedAround(this))
+        SquadTargeting.rankedAround(this))
 
     } else {
 
@@ -265,7 +269,7 @@ class SquadAttack extends Squad {
       setMode(
         ClearMap,
         target,
-        SquadAutomation.rankedAround(this))
+        SquadTargeting.rankedAround(this))
     }
 
     mode
@@ -465,9 +469,10 @@ class SquadAttack extends Squad {
       && With.frame < Minutes(5)()
       && ! vicinity.zone.metro.exists(_.bases.exists(_.isOurs))
       && units.forall(_.matchups.threats.forall(IsWorker))) {
-      SquadAutomation.send(this)
+      MarchOrders.sendUnits(this, this.unintended)
     } else {
-      SquadAutomation.formAndSend(this)
+      this.formations = SquadForming.form(this, this.homeConsensus, this.vicinity)
+      MarchOrders.sendUnits(this, this.unintended, Some(this.homeConsensus))
     }
     Probe.note("Form", 0, f"n=${formations.size} engage=${formationEngage.isDefined} consensus=$fightConsensus enemies=${battleEnemies.size} unplaced=${units.count(_.formationEngage.isEmpty)}/${units.size}")
 

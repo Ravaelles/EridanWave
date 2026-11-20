@@ -25,7 +25,10 @@ hysteresis home (rule 14).
 - March-vs-technique movement ownership: both write movement (march
   terminus/intent, technique decision/move) and only convention
   separates them; every flap (HoldingDuel jitter, Marching/Retreat,
-  Contain/PushMain) is this seam disagreeing with itself.
+  Contain/PushMain) is this seam disagreeing with itself. Specimen
+  2026-11: an early lone Dragoon alternating LoneMarch/Approach+Engage/
+  Dress every 1-2 frames - march, technique and formation each owning
+  a frame.
 - Wall-in doctrine duplication: Terran (`TerranWallIn`,
   `EnemyWallInDetected`, `BreakTerranWallIn`, `WallInBan`) and Protoss
   (`ProtossWallIn`) grew as parallel implementations; the next wall
@@ -42,13 +45,25 @@ hysteresis home (rule 14).
   it permanently, so the only live edge is pre-Bay request churn while
   dragoons hover at the boundary. If a Bay request start/stop saw ever
   shows in trace, the release band goes in the kernel with a
-  gameplan-level latch (open, watch only - rules 14/17).
+  gameplan-level latch (open, watch only - rules 14/17). The ratchet
+  has since moved into the policy as an explicit committed-play bypass
+  (`haveReaver`/`haveBay` flow); the watch stands for pre-commitment
+  request churn.
 - Stateless sharp edges at the engage layer: PreyDrive 3.0, ZealotPack
   1.0/12/2.0 recompute symmetric thresholds every frame with no release
   band. No flap observed (duel/contact guards release them in practice);
   if a hunt/pose or approach/regroup dither ever traces to one, the band
   goes in with a unit-keyed Latch at the caller (open, watch only).
-
+- Mode selection as if/else (`SquadAttack.chooseMode`): the squad's
+  destination ladder is the only first-claims chain not held as data
+  (`MarchGates`, `EngagePipeline`, `HandleEnemyCombatBuildings` all pin
+  their order beside the rows). Reordering a mode today is silent;
+  reordering a gate is a diff to one place. Extract the modes into an
+  order table when a reorder flaps provenly - not before (open).
+- Temporary testing switches (`Strategery.StrategyToggles`, 2026-11):
+  PvP Robo family and Reaver track default OFF for the test series;
+  revert after. The file tracks them so a temporary kill cannot
+  fossilize into doctrine - flip back is a revert of two vars.
 
 ## Closed
 
@@ -115,3 +130,17 @@ hysteresis home (rule 14).
 - Dead-code drift: `KiteAway` carried a mild-wound ladder,
   fresh/median gates and four knobs nobody called after the 61-HP
   rewrite - pure deletion, no behavior change (`ff18e7ab7`).
+- LoneMarch/Abuse/HoldingDuel keep-or-delete (2026-11): kept. The
+  flap log showed reader disagreement, not concept guilt: HoldingDuel
+  pins mop-up (timeouts without it), Abuse owns outranged pack duels
+  (pinned in mirror suites), LoneMarch already is a 17/13 Latch (the
+  template, marching past instead of milling alone). Deleting any of
+  the three regresses proven wins; the pain is owned by the
+  single-verdict item above.
+- Production parity in-engine (`starengine.production`, 2026-11):
+  production gates proven without an economy - free gate, power and
+  stockpile in, hulls out at table rate, vetoes as silence. First
+  non-micro StarEngine module; the fight engine untouched (constraint
+  seam), scenarios assert on emergence. Pattern: when live proof
+  costs ladder games, pin the mechanism in-engine and keep ladder
+  for the doctrine.
