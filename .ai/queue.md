@@ -24,7 +24,13 @@ Details live in `details/` - the queue keeps one line per item.
   loss, no mechanism), BetaStar SINK2 DEFEAT 7/73 (9 min PvP vs
   4GateGoon rush: dead min 6-8 with 12 warriors, 486 ordinary
   votes, no flap - failed rush defense, macro loss; policy again
-  correctly silent, zero vetoes).
+  correctly silent, zero vetoes), BetaStar SINK3 DEFEAT 24/129
+  (14:30 PvP: toggles steered to Citadel/Archives, zero Robotics in
+  the log - selection and production obeyed; wiped min 11-13 in
+  4Gate+DT chaos, 443 ordinary votes, no mechanism), Hao Pan
+  DEFEAT 180/612 (34 min PvT carriers: 1:3.4 grind, 603 ordinary
+  votes dominated by OutOfContact/No at advantage, no flap -
+  out-comped late loss, toggles N/A outside PvP).
 - UMS: full batch 12W/11L; ZealDrag 4-3, 14v16 competitive,
   LingsHydra timeouts fixed twice, 1Drag/1DragWounded flip wins,
   2Zeal parked hard, Sunkens/DT walls stand.
