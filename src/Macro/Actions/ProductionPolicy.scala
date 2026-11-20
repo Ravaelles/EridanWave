@@ -3,6 +3,7 @@ package Macro.Actions
 import Gameplans.Protoss.PvP.DragoonsBeforeReavers
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitClasses.UnitClass
+import Strategery.StrategyToggles
 
 /**
  * Production policy sink (one home for "may this be requested at all"):
@@ -31,6 +32,11 @@ object ProductionPolicy {
     override def label: String = s"dragoons $dragoons < $need"
   }
 
+  /** Reaver track switched off for testing - toggle, not economy. */
+  final case class ProductionDisabled(what: String) extends Veto {
+    override def label: String = s"disabled: $what"
+  }
+
   /** Game-read facts the fold decides on; the seam gathers them. */
   final case class Facts(
     dragoons: Int,
@@ -47,10 +53,10 @@ object ProductionPolicy {
    */
   def veto(unit: UnitClass, facts: Facts): Option[Veto] = {
     if ( ! facts.enemyIsProtoss) None
-    else if (unit == Protoss.Reaver || unit == Protoss.RoboticsSupportBay) {
-      if (facts.haveReaver || facts.haveBay) None
-      else if (DragoonsBeforeReavers.allowReavers(facts.dragoons, facts.enemyCannonKnown)) None
-      else Some(BackboneFirst(facts.dragoons, DragoonsBeforeReavers.minDragoons))
-    } else None
+    else if (unit != Protoss.Reaver && unit != Protoss.RoboticsSupportBay) None
+    else if (facts.haveReaver || facts.haveBay) None
+    else if ( ! StrategyToggles.reaverProductionEnabled) Some(ProductionDisabled("reaver production"))
+    else if ( ! DragoonsBeforeReavers.allowReavers(facts.dragoons, facts.enemyCannonKnown)) Some(BackboneFirst(facts.dragoons, DragoonsBeforeReavers.minDragoons))
+    else None
   }
 }

@@ -24,6 +24,7 @@ class StrategyLegality(strategy: Strategy) {
   val rushOkay                : Boolean   = With.strategy.rushDistanceMean > strategy.rushTilesMinimum && With.strategy.rushDistanceMean < strategy.rushTilesMaximum
   val startLocations          : Int       = With.geography.startLocations.size
   val disabledInPlaybook      : Boolean   = With.configuration.playbook.disabled.contains(strategy)
+  val disabledByToggle        : Boolean   = ! StrategyToggles.allows(strategy)
   val disabledOnMap           : Boolean   = strategy.mapsBlacklisted.exists(_()) || (strategy.mapsWhitelisted.nonEmpty && ! strategy.mapsWhitelisted.exists(_()))
   val appropriateForOurRace   : Boolean   = strategy.ourRaces.exists(ourRace==)
   val appropriateForEnemyRace : Boolean   = strategy.enemyRaces.exists(race => if (race == Race.Unknown) enemyRaceWasUnknown else (enemyRaceStillUnknown || enemyRacesCurrent.contains(race)))
@@ -37,6 +38,7 @@ class StrategyLegality(strategy: Strategy) {
     &&  (strategy.islandMaps  || ! isIsland)
     &&  (strategy.groundMaps  || ! isGround)
     &&  ! disabledInPlaybook
+    &&  ! disabledByToggle
     &&  appropriateForOurRace
     &&  appropriateForEnemyRace
     &&  allowedGivenRequirements

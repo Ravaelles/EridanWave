@@ -138,3 +138,17 @@ full suite green, jar rebuilt.
   requests, never kill in-flight.
 - Supply blocks, autosupply and `RequireEssentials` are untouched;
   the policy answers permission, never logistics.
+
+## Master switches (temporary testing)
+
+`Strategery.StrategyToggles` (flags, default OFF while a series needs
+them): `roboGameplansEnabled` shadow-bans the PvP Robo family at
+selection (`StrategyLegality` consults it - one hook, no per-strategy
+edits; `PvPObs` stays legal on purpose so testing never blinds itself
+to Dark Templars), `reaverProductionEnabled` vetoes Reaver hulls and
+their Bay in the policy sink (PvP-scoped; other matchups flow). With
+both off, selection falls through to goon/DT/expand play and the late
+game answers with TemplarTech (Archives, Storm, High Templars) through
+existing machinery - no new HT gameplan needed. Flip, run games,
+revert. The static list (`Playbook.disabled`) stays the permanent
+mechanism.
