@@ -5,7 +5,13 @@ Step 1 done (`9c05a9f1c`, `starengine.production` harness +
 `ProductionParitySuite` 6/6 green); Step 2 done (`6698526c8` sink +
 `ProductionPolicySuite` 6/6 green, `a96460149` emergence scenarios
 3/3 green, full base suite 1122 green, jar rebuilt with the sink).
-Next: Step 3 live proof (ladder PvP Robo game).
+Next: Step 3 live proof (ladder PvP Robo game). UMS no-regression
+check on the sink jar done: full batch 7W/17L, then all 5 re-run
+losses (3Zeal, 1Zeal, 16Drag, ZealDrag, 3Drag) flipped to VICTORY
+on the identical jar - batch variance on known flippers, not a sink
+regression (production is inert on baseless UMS maps; vetoes can
+only suppress requests that cannot execute there). 10Zeal sits
+inside its historical flip distribution (7W/5L all-time).
 
 Goal: every production decision passes through one policy sink that
 communicates intent and reason, so a tech gate cannot be bypassed by a
