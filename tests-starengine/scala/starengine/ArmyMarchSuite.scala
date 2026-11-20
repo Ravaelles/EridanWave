@@ -104,7 +104,11 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
         // The shipped duel definition, so the gate and the legs agree
         // here exactly like they do in production.
         hasDuel = hittable.exists(t => Target.holdsDuelTarget(isWarrior = true, me.canHit(t))) || engagedUpon,
-        nearestWarriorTiles = if (mateTiles.isInfinite) None else Some(mateTiles),
+        // The cordon reads visible guns only: the engine has no fog, so
+      // every armed foe counts, exactly like production with eyes on.
+      nearestVisibleArmedTiles = foeSet.filter(f => f.damageAgainst(me) > 0).map(me.dist(_) / 32.0)
+        .reduceOption(_ min _).getOrElse(Double.PositiveInfinity),
+      nearestWarriorTiles = if (mateTiles.isInfinite) None else Some(mateTiles),
         distHomeTiles = None,
         nearestArmedTiles = nearestArmedTiles,
         nearestStaticTiles = None)

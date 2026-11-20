@@ -29,7 +29,8 @@ final case class MarchUnit(
   nearestWarriorTiles : Option[Double],
   distHomeTiles       : Option[Double],
   nearestArmedTiles   : Double,
-  nearestStaticTiles  : Option[Double])
+  nearestStaticTiles  : Option[Double],
+  nearestVisibleArmedTiles : Double)
 
 object MarchUnit {
 
@@ -60,5 +61,11 @@ object MarchUnit {
       nearestStaticTiles  = Maff.minBy(unit.matchups.enemies.view.filter(e =>
         e.likelyStillThere
         && e.unitClass.isStaticDefense
-        && e.unitClass.canAttack(unit)))(unit.tileDistanceEdge).map(unit.tileDistanceEdge))
+        && e.unitClass.canAttack(unit)))(unit.tileDistanceEdge).map(unit.tileDistanceEdge),
+      // Visible guns that could hit this hull, in tiles: the lone-march
+      // cordon reads only what the hull sees, so fogged memories never
+      // pin it (ghosts own the recall horizon instead).
+      nearestVisibleArmedTiles = Maff.minBy(With.units.enemy.view.filter(e =>
+        e.alive && e.visible && e.unitClass.canAttack(unit.unitClass)))(_.pixelDistanceCenter(unit.pixel))
+        .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity))
 }

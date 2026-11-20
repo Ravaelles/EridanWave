@@ -44,11 +44,12 @@ class MarchGateOrderSuite extends AnyFunSuite {
     nearestWarriorTiles : Option[Double] = None,
     distHomeTiles       : Option[Double] = None,
     nearestArmedTiles   : Double = Double.PositiveInfinity,
-    nearestStaticTiles  : Option[Double] = None): MarchUnit = {
+    nearestStaticTiles  : Option[Double] = None,
+    nearestVisibleArmedTiles : Double = Double.PositiveInfinity): MarchUnit = {
     nextId += 1
     MarchUnit(
       nextId, isDarkTemplar, isCorsair, isDragoon, isWarrior, isLoadedShuttle,
-      isSuicide, shouldFight, verdictRetreat, hasDuel, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles)
+      isSuicide, shouldFight, verdictRetreat, hasDuel, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles, nearestVisibleArmedTiles)
   }
 
   private def check(name: String, f: MarchFacts, u: MarchUnit, want: Option[MarchLabel]): Unit =
@@ -110,6 +111,18 @@ class MarchGateOrderSuite extends AnyFunSuite {
     unit(isWarrior = true, shouldFight = true, verdictRetreat = true,
       nearestWarriorTiles = None),
     None)
+
+  check("a lone hull holds against a visible gun inside the cordon",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true,
+      nearestWarriorTiles = None, nearestVisibleArmedTiles = 10.0),
+    None)
+
+  check("distant guns let the lone march through",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true,
+      nearestWarriorTiles = None, nearestVisibleArmedTiles = 30.0),
+    Some(MarchLabel.LoneMarch))
 
   check("a packed hunter with no fight consensus marches the legs",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
