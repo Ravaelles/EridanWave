@@ -51,6 +51,7 @@ trait MacroActions extends MacroCounting {
 
   def get(item: RequestBuildable): Unit = {
     if (item.unit.exists(_ == Protoss.Shuttle) && ! canProduceShuttle()) return
+    if (item.unit.exists(u => productionVetoed(u).isDefined)) return
 
     With.scheduler.request(this, item)
   }
@@ -71,6 +72,7 @@ trait MacroActions extends MacroCounting {
   def once(tech: Tech)                    : Unit = get(tech)
   def once(quantity: Int, unit: UnitClass): Unit = {
     if (unit == Protoss.Shuttle && ! canProduceShuttle()) return
+    if (productionVetoed(unit).isDefined) return
 
     BuildOnce(this, Get(quantity, unit))
   }
@@ -81,6 +83,7 @@ trait MacroActions extends MacroCounting {
   }
   def pump(unitClass: UnitClass, maximumTotal: Int = 400, maximumConcurrently : Int = 400): Unit = {
     if (unitClass == Protoss.Shuttle && ! canProduceShuttle()) return
+    if (productionVetoed(unitClass).isDefined) return
 
     Pump(unitClass, maximumTotal, maximumConcurrently)
   }
@@ -118,6 +121,23 @@ trait MacroActions extends MacroCounting {
     if ( ! produce) Probe.note("ShuttleVeto", 0, f"obs=$observerDemanded p=$enemyIsProtoss dragoons=$dragoons score=$unitsScore%.0f")
 
     produce
+  }
+  /**
+   * Policy veto seam (one home for "may this be requested at all"):
+   * gathers the game-read facts and folds them through
+   * `ProductionPolicy` - every `once`/`pump`/`get` consults it, so no
+   * production path can bypass a registered gate. Vetoes ride the
+   * ProductionVeto probe so a missing hull is answerable.
+   */
+  def productionVetoed(unit: UnitClass): Option[ProductionPolicy.Veto] = {
+    val veto = ProductionPolicy.veto(unit, ProductionPolicy.Facts(
+      dragoons          = units(Protoss.Dragoon),
+      enemyIsProtoss    = With.enemies.exists(_.isProtoss),
+      enemyCannonKnown  = enemyHasShown(Protoss.PhotonCannon),
+      haveReaver        = have(Protoss.Reaver),
+      haveBay           = have(Protoss.RoboticsSupportBay)))
+    if (veto.isDefined) Probe.note("ProductionVeto", 0, unit.toString + ":" + veto.get.label)
+    veto
   }
   def pumpShuttleAndReavers(reavers: Int = 50, shuttleFirst: Boolean = true): Unit = {
     if (shuttleFirst && ! have(Protoss.RoboticsSupportBay)) {
@@ -259,4 +279,4 @@ trait MacroActions extends MacroCounting {
   def sneakyCitadel(): Unit = {
     SneakyCitadel()
   }
-}
+}

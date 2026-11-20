@@ -48,16 +48,7 @@ hysteresis home (rule 14).
   band. No flap observed (duel/contact guards release them in practice);
   if a hunt/pose or approach/regroup dither ever traces to one, the band
   goes in with a unit-keyed Latch at the caller (open, watch only).
-- Single production policy sink (owner proposal, evaluated 2026-11):
-  the reaver bypass proved a gate in one production path is not a gate.
-  The fix is veto-by-what-not-by-who: one policy object consulted
-  inside the existing mechanical sink (`pump`/`once`/`get`), keyed on
-  the produced class, with per-tech predicates registered in one file
-  and veto reasons logged centrally (the Probe/status reason channel
-  already exists - the enum is its taxonomy, not a second request path).
-  `DragoonsBeforeReavers` becomes rule #1 and its four call-site reads
-  dissolve back into dumb pumps. Same shape as the retreat verdict bus,
-  for production (open, design agreed, awaiting implementation).
+
 
 ## Closed
 
@@ -101,6 +92,15 @@ hysteresis home (rule 14).
   2026-11): branch-new code called the slated-for-deletion
   `SquadAutomation` shell. Pattern: the todo already bans shell calls
   from new code - review greps added files for `SquadAutomation`.
+- Single production policy sink (closed: rule #1 live, call-sites
+  dissolved): the reaver bypass proved a gate in one production path
+  is not a gate. Veto-by-what-not-by-who - one policy object
+  (`Macro.Actions.ProductionPolicy`) consulted inside the mechanical
+  sink (`once`/`pump`/`get`), keyed on the produced class, rules
+  registered in one file, veto reasons on the `ProductionVeto` probe.
+  `getReavers` survives as a strategy flag for expand and hold.
+  Pattern: same shape as the retreat verdict bus, for production.
+  Second rule candidate: the Shuttle veto.
 - Retreat/move flap at no foe (BetaStar f6955): the technique ladder
   fell through to a bare `Flee` with no enemy check while the march
   (lonely-gated) voted advance. Closed by gating the terminal on

@@ -100,9 +100,7 @@ class PvPOpeningVsFE extends GameplanImperative {
 
     val doArmy = new DoQueue(() => {
       pump(Protoss.Observer, 1)
-      // The first Reaver waits for the dragoon backbone, like the
-      // opening gate; goons and observers keep pumping either way.
-      if (DragoonsBeforeReavers.allowReavers(units(Protoss.Dragoon), enemyHasShown(Protoss.PhotonCannon))) pumpShuttleAndReavers()
+      pumpShuttleAndReavers()
       pump(Protoss.Dragoon)
     })
 
@@ -126,13 +124,12 @@ class PvPOpeningVsFE extends GameplanImperative {
     get(Protoss.DragoonRange)
     get(Protoss.Observatory)
     once(Protoss.Observer)
-    // Bay and first hull wait for the dragoon backbone, like the
-    // opening gate; the Shuttle answers Cannons on its own.
-    val allowReavers = DragoonsBeforeReavers.allowReavers(units(Protoss.Dragoon), enemyHasShown(Protoss.PhotonCannon))
-    if (allowReavers) get(Protoss.RoboticsSupportBay)
-    if (allowReavers) once(Protoss.Reaver)
+    // Bay and first hull queue unconditionally: the policy sink vetoes
+    // both until the backbone stands. The Shuttle answers Cannons alone.
+    get(Protoss.RoboticsSupportBay)
+    once(Protoss.Reaver)
     get(Protoss.ShuttleSpeed)
-    if (allowReavers) pumpShuttleAndReavers()
+    pumpShuttleAndReavers()
     pump(Protoss.Dragoon)
     requireMiningBases(2)
     get(5, Protoss.Gateway)
