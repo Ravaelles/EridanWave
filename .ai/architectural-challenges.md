@@ -16,7 +16,12 @@ hysteresis home (rule 14).
   Known leftover divergence: the technique terminal gates on
   `nearestArmedTiles` while the march bus additionally gates on
   `nearestEnemyWarriorTiles` (lonely rule) - unify on one predicate
-  (needs a ladder game that reaches lone statics first).
+  (needs a ladder game that reaches lone statics first). Coupling
+  measured 2026-11: 10 of 29 `MarchOrders` commits co-change the
+  technique or verdict counterparts, and all 6 `RetreatVerdict`
+  commits move `MarchOrders`/`CombatTechniques` with them - the trio
+  already moves as one, maintained by hand; the sink only makes it
+  official.
 - March-vs-technique movement ownership: both write movement (march
   terminus/intent, technique decision/move) and only convention
   separates them; every flap (HoldingDuel jitter, Marching/Retreat,
@@ -43,6 +48,16 @@ hysteresis home (rule 14).
   band. No flap observed (duel/contact guards release them in practice);
   if a hunt/pose or approach/regroup dither ever traces to one, the band
   goes in with a unit-keyed Latch at the caller (open, watch only).
+- Single production policy sink (owner proposal, evaluated 2026-11):
+  the reaver bypass proved a gate in one production path is not a gate.
+  The fix is veto-by-what-not-by-who: one policy object consulted
+  inside the existing mechanical sink (`pump`/`once`/`get`), keyed on
+  the produced class, with per-tech predicates registered in one file
+  and veto reasons logged centrally (the Probe/status reason channel
+  already exists - the enum is its taxonomy, not a second request path).
+  `DragoonsBeforeReavers` becomes rule #1 and its four call-site reads
+  dissolve back into dumb pumps. Same shape as the retreat verdict bus,
+  for production (open, design agreed, awaiting implementation).
 
 ## Closed
 
@@ -82,6 +97,10 @@ hysteresis home (rule 14).
   ordered claims, legs keep kernels and suites). Pattern: when N
   behaviors answer the same question from different chain spots, the
   group owns the order, the legs own the math.
+- Shell callers (`MissionDarkTemplarFerry` -> `SquadTargeting`,
+  2026-11): branch-new code called the slated-for-deletion
+  `SquadAutomation` shell. Pattern: the todo already bans shell calls
+  from new code - review greps added files for `SquadAutomation`.
 - Retreat/move flap at no foe (BetaStar f6955): the technique ladder
   fell through to a bare `Flee` with no enemy check while the march
   (lonely-gated) voted advance. Closed by gating the terminal on
