@@ -51,12 +51,37 @@ object ProductionPolicy {
    * for the dragoon backbone or a scouted Cannon, committed play
    * (hulls or a Bay already out) excepted.
    */
-  def veto(unit: UnitClass, facts: Facts): Option[Veto] = {
-    if ( ! facts.enemyIsProtoss) None
-    else if (unit != Protoss.Reaver && unit != Protoss.RoboticsSupportBay) None
-    else if (facts.haveReaver || facts.haveBay) None
-    else if ( ! StrategyToggles.reaverProductionEnabled) Some(ProductionDisabled("reaver production"))
-    else if ( ! DragoonsBeforeReavers.allowReavers(facts.dragoons, facts.enemyCannonKnown)) Some(BackboneFirst(facts.dragoons, DragoonsBeforeReavers.minDragoons))
+  /** A rule answers one veto question; the fold owns the order. */
+  private type Rule = (UnitClass, Facts) => Option[Veto]
+
+  /**
+   * Testing switches shadow-ban the whole Reaver track in a mirror;
+   * committed play still flows. Absolute: runs before every gate.
+   */
+  private val toggleRule: Rule = { (unit, facts) =>
+    if ((unit == Protoss.Reaver || unit == Protoss.RoboticsSupportBay)
+      && ! facts.haveReaver && ! facts.haveBay
+      && ! StrategyToggles.reaverProductionEnabled)
+      Some(ProductionDisabled("reaver production"))
     else None
   }
+
+  /** First hull waits for the backbone, committed play excepted. */
+  private val backboneRule: Rule = { (unit, facts) =>
+    if (unit != Protoss.Reaver && unit != Protoss.RoboticsSupportBay) None
+    else if (facts.haveReaver || facts.haveBay) None
+    else if ( ! DragoonsBeforeReavers.allowReavers(facts.dragoons, facts.enemyCannonKnown))
+      Some(BackboneFirst(facts.dragoons, DragoonsBeforeReavers.minDragoons))
+    else None
+  }
+
+  /**
+   * Registered rules, first claim wins: adding a track appends a rule,
+   * never edits the fold (Shuttle veto migrates in as rule #2).
+   */
+  private val rules: Seq[Rule] = Seq(toggleRule, backboneRule)
+
+  def veto(unit: UnitClass, facts: Facts): Option[Veto] =
+    if ( ! facts.enemyIsProtoss) None
+    else rules.view.flatMap(_(unit, facts)).headOption
 }
