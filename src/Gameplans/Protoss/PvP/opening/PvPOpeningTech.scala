@@ -269,7 +269,9 @@ trait PvPOpeningTech { self: PvPOpening =>
   }
 
   private def expand(): Unit = {
-    if ( ! With.scouting.enemyControls(With.geography.ourFoyer)) {
+    // Reactive second base only: the veto that would cancel a morphing
+    // Nexus blocks the order instead, so the order/cancel saw cannot start.
+    if ( ! With.scouting.enemyControls(With.geography.ourFoyer) && ! PvPIdeas.forbidSecondBase()) {
       requireMiningBases(2)
     }
   }

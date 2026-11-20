@@ -110,13 +110,13 @@ class PvPOpeningVsFE extends GameplanImperative {
       once(Protoss.Observer)
     }
 
-    if (armySupply200 >= 24) {
+    if (armySupply200 >= 24 && ! PvPIdeas.forbidSecondBase()) {
       requireMiningBases(2)
     }
 
     get(Protoss.Assimilator, Protoss.CyberneticsCore, Protoss.RoboticsFacility)
     if (enemies(Protoss.PhotonCannon) >= 2) {
-      requireMiningBases(2)
+      if ( ! PvPIdeas.forbidSecondBase()) requireMiningBases(2)
       once(Protoss.Shuttle)
     }
 
@@ -131,7 +131,7 @@ class PvPOpeningVsFE extends GameplanImperative {
     get(Protoss.ShuttleSpeed)
     pumpShuttleAndReavers()
     pump(Protoss.Dragoon)
-    requireMiningBases(2)
+    if ( ! PvPIdeas.forbidSecondBase()) requireMiningBases(2)
     get(5, Protoss.Gateway)
     pumpGasPumps()
     pump(Protoss.Zealot)

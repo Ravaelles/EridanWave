@@ -189,7 +189,7 @@ class PvPLateGame extends GameplanImperative {
     get(3, Protoss.Gateway)
     get(Protoss.DragoonRange)
 
-    if (shouldExpand) {
+    if (shouldExpand && ! PvPIdeas.forbidSecondBase()) {
       expandOnce()
     }
     if (With.scouting.enemyProximity < 0.65) {

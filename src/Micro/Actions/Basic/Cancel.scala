@@ -55,6 +55,14 @@ object Cancel extends Action {
   }
   
   override def perform(unit: FriendlyUnitInfo): Unit = {
+    // Every actual cancel lands in the log with its progress: repeated
+    // cancels of the same morphing base are the order/cancel saw, and
+    // the count per game answers whether the veto holds the line.
+    if ( ! unit.complete && unit.isAny(_.unitClass.isBuilding)) {
+      val total = unit.unitClass.buildFrames
+      val pct = if (total > 0) 100 * (total - unit.remainingCompletionFrames) / total else 0
+      With.logger.debug(s"CancelBuilding ${unit.unitClass} #${unit.id} at ${unit.pixel} $pct% frame=${With.frame}")
+    }
     Commander.cancel(unit)
   }
 }

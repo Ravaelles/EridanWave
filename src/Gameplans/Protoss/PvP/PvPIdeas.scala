@@ -1,9 +1,9 @@
 package Gameplans.Protoss.PvP
 
+import Information.Battles.ArmyStrength
 import Information.Geography.Types.Base
 import Lifecycle.With
-import Macro.Actions.MacroActions
-import Macro.Actions.ShouldCancelBase
+import Macro.Actions.{ExpandForbidden, MacroActions}
 import Macro.Requests.RequestUnit
 import Mathematics.Maff
 import Placement.Access.PlaceLabels._
@@ -70,16 +70,48 @@ object PvPIdeas extends MacroActions {
   def requireTimelyDetection()    : Boolean = detectWithObserverOrCannon(auditing = false)
 
   /**
-   * Shown DT plus a morphing base plus no Forge money: cancel the Nexus
-   * so the refund funds detection instead of donating 400 minerals to
-   * the first swipe. Runs where the expanding gameplans run DT defense.
+   * Second-base veto (one home for "would we cancel it right after
+   * ordering"): the ordering sites and the cancel below read the same
+   * predicate with the same live inputs, so a forbidden base never
+   * gets ordered and an allowed one never gets cancelled for economy.
+   * The Dark Templar clause is the only canceller: an unanswered blade
+   * with no Forge money kills the morphing base for free, so the refund
+   * funds detection instead. The army score never cancels - it breathes,
+   * and breathing must not eat bases.
+   */
+  def forbidSecondBase(): Boolean = {
+    val veto = ExpandForbidden.check(
+      minutes             = With.frame / 24.0 / 60.0,
+      armyStrengthUnits   = With.battles.globalAttack.us.skimStrengthUnits,
+      enemyStronger       = ArmyStrength.score(
+        With.battles.globalAttack.us.skimStrengthTotal,
+        With.battles.globalAttack.enemy.skimStrengthTotal) < 100.0,
+      darkTemplarShown    = enemyHasShown(Protoss.DarkTemplar),
+      detectionReady      = With.units.existsOurs(Protoss.Observer) ||
+        With.units.ours.exists(u => Protoss.PhotonCannon(u) && u.complete),
+      forgeAffordable     = With.self.minerals >= Protoss.Forge.mineralPrice)
+    if (veto) status("ForbidSecondBase")
+    veto
+  }
+
+  /**
+   * Shown DT plus a morphing base that the veto still forbids: cancel
+   * the Nexus so the refund funds detection instead of donating 400
+   * minerals to the first swipe. The veto already checked the clock,
+   * the backbone and the answers, so this fires only on a genuine
+   * fresh threat - and every firing lands in the log with its reason.
    */
   def cancelBaseVsDarkTemplar(): Unit = {
-    if (ShouldCancelBase.shouldCancel(
-      enemyDarkTemplarShown = enemyHasShown(Protoss.DarkTemplar),
-      baseInProduction      = With.units.ours.exists(u => Protoss.Nexus(u) && ! u.complete),
-      forgeAffordable       = With.self.minerals >= Protoss.Forge.mineralPrice)) {
+    val morphing = With.units.ours.exists(u => Protoss.Nexus(u) && ! u.complete)
+    if (morphing && ExpandForbidden.shouldCancelBase(
+      minutes         = With.frame / 24.0 / 60.0,
+      morphing        = morphing,
+      darkTemplarShown = enemyHasShown(Protoss.DarkTemplar),
+      detectionReady  = With.units.existsOurs(Protoss.Observer) ||
+        With.units.ours.exists(u => Protoss.PhotonCannon(u) && u.complete),
+      forgeAffordable = With.self.minerals >= Protoss.Forge.mineralPrice)) {
       status("DTCancelBase")
+      With.logger.debug(f"CancelNexus dtShown=true detection=false forgeAffordable=${With.self.minerals >= Protoss.Forge.mineralPrice} frame=${With.frame}")
       cancel(Protoss.Nexus)
     }
   }
