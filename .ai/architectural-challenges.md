@@ -32,6 +32,17 @@ hysteresis home (rule 14).
 - Sunkens3 chase-into-cover: the reaver duel chases a picked Lurker
   inside static cover and dies there (8/7 timeout). Fix is a hold-at-
   range rule for picked lurkers, or a map-side answer (owner call).
+- Gameplan gate stickiness rides have()-ratchets: DragoonsBeforeReavers
+  is symmetric with no release band; post-Bay the have() ratchet latches
+  it permanently, so the only live edge is pre-Bay request churn while
+  dragoons hover at the boundary. If a Bay request start/stop saw ever
+  shows in trace, the release band goes in the kernel with a
+  gameplan-level latch (open, watch only - rules 14/17).
+- Stateless sharp edges at the engage layer: PreyDrive 3.0, ZealotPack
+  1.0/12/2.0 recompute symmetric thresholds every frame with no release
+  band. No flap observed (duel/contact guards release them in practice);
+  if a hunt/pose or approach/regroup dither ever traces to one, the band
+  goes in with a unit-keyed Latch at the caller (open, watch only).
 
 ## Closed
 
@@ -53,6 +64,24 @@ hysteresis home (rule 14).
   kite, so wounded hulls braked every stride and died standing
   (1DragWounded losses). Closed by anchoring on own pixel
   (b3f112560), validated live (flawless 1/0 wins).
+- Gameplan tech-gate bypass (reaver first hull, `c8c3c026c`): the
+  fifteen-dragoon gate lived only in `decideTechOptions` while
+  `trainRoboUnits` pumped, `PvPOpeningVsFE` built Bay+Reaver freely,
+  and `PvPLateGame` pumped around it. Closed by `DragoonsBeforeReavers`
+  (one pure kernel, all four PvP production sites read it, suite
+  pinned). Pattern: a gate in one production path with ungated sibling
+  paths is not a gate - new tech gates start as a kernel, callers follow.
+- March gate that was a fight vote (`NoTankMarch` -> `NoTankAttack`
+  posture vote, `0bd8919aa`). Pattern: locomotion-shaped gates that are
+  really intent votes belong in posture, not in the legs.
+- Stance/posture unification (`RegroupLatch` deleted into the
+  `ClusterPosture` latch, `e7fa90814`): one verdict pass feeding the
+  posture latch, the Sim probe and the board. Pattern: parallel
+  vote-keepers merge into one latch, never two agreeing by hand.
+- Static-defense scatter (`HandleEnemyCombatBuildings`, one home with
+  ordered claims, legs keep kernels and suites). Pattern: when N
+  behaviors answer the same question from different chain spots, the
+  group owns the order, the legs own the math.
 - Retreat/move flap at no foe (BetaStar f6955): the technique ladder
   fell through to a bare `Flee` with no enemy check while the march
   (lonely-gated) voted advance. Closed by gating the terminal on
