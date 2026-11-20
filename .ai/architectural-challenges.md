@@ -62,6 +62,14 @@ hysteresis home (rule 14).
   band. No flap observed (duel/contact guards release them in practice);
   if a hunt/pose or approach/regroup dither ever traces to one, the band
   goes in with a unit-keyed Latch at the caller (open, watch only).
+- Lone-march ownership (2026-11): the gate marched lone hulls at the
+  goal past live guns (330 LoneMarch, zero HoldingDuel, zero technique
+  acts in a 2506-frame 1DragWounded loss). Closed in two steps: the
+  gate yields to the duel the legs would hold (`MarchUnit.hasDuel`,
+  same predicate both sides), then to a visible-armed 20-tile cordon
+  (`ArmedCordon`, latched 21 out / 19 in, fogged memories never pin).
+  Proved in StarEngine (march + duel contracts) and live (HoldingDuel
+  403 vs LoneMarch 1 in the re-run win).
 - Temporary testing switches (`Strategery.StrategyToggles`, 2026-11):
   PvP Robo family and Reaver track default OFF for the test series;
   revert after. The file tracks them so a temporary kill cannot
