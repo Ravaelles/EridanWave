@@ -24,10 +24,15 @@ own sake; working names stay.
 | `Macro.Actions.CanProduceShuttle` | `CanProduceX` (absolute veto: observers, short line, score) | Register as-is; the template |
 | `Gameplans.Protoss.PvP.DragoonsBeforeReavers` | `ShouldProduceYBeforeX` (backbone before first hull) | First registered rule; its four call-site reads dissolve |
 | `Gameplans.Protoss.PvP.MirrorGoonTech.skipReavers` | `ShouldProduceYBeforeX` (gates/goons/range before reactive Bay) | Register; reactive-tech reaction stays a separate rule from committed play |
-| `Gameplans.Protoss.PvZ.policy.ReaverGas.allowsReaver` | Gas gate (reavers vs gas stockpile) | Audit: fold if it is a veto, leave if it is allocation |
-| `Gameplans.Protoss.PvP.PvPWeakHold` | Expand gate (hold natural, no second base) | Audit: production-adjacent, register only the veto half |
-| `Gameplans.Protoss.PvZ.policy.{GasBank, RecoveryGas, ...}` | Allocation, not veto | Out of scope; the sink vetoes, it never budgets |
-| `Macro.Actions.ShouldCancelBase` | Cancel axis, not produce axis | Out of scope; stays with its owner |
+| `Gameplans.Protoss.PvZ.policy.ReaverGas.allowsReaver` | Gas-paced veto (1st always, 2nd at 250, rest at 350) | Register; same shape as `GasBank`, different counter |
+| `Gameplans.Protoss.PvZ.policy.GasBank.allowsDragoon` | Gas-paced veto (10th at 250, past 16 at 360, big army at 210) | Register |
+| `Gameplans.Protoss.PvP.PvPWeakHold.holdNatural` | Expand veto (no second Nexus while weak) | Register the veto half only; the hold itself stays a posture rule |
+| `Gameplans.Protoss.PvZ.policy.TemplarArchivesOrRoboticsFacility` | `ShouldProduceYBeforeX` (DTs before first Robo) | Register; ordering between techs, not counts |
+| `Gameplans.Protoss.PvZ.policy.StormResearch.shouldResearch` | Research veto (committed casters + bank) | Register second wave; policy covers `Buildable`, units first |
+| `Gameplans.Protoss.PvZ.policy.DefenseWithoutDragoons` | Posture (defend without Dragoons) | Out: answers fight-or-hold, never build-or-not |
+| `Gameplans.Protoss.PvZ.policy.EarlyPressure.mayPush` | March (push at 3 warriors) | Out: answers push-or-hold, never build-or-not |
+| `Gameplans.Protoss.PvZ.policy.RecoveryGas.shouldGas` | Allocation (take gas after failed all-in) | Out: moves workers, never vetoes a request |
+| `Macro.Actions.ShouldCancelBase` | Cancel axis (kill the morphing base for detection) | Out: kills in-flight, the sink only gates new requests |
 
 Rule of the audit: the sink answers "may this be requested at all".
 How many, in what order, and when to cancel stay with the owners
