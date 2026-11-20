@@ -9,7 +9,7 @@ import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{AttackModes, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.Decisions.{AttackModes, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -201,7 +201,7 @@ object MarchOrders {
     // phases split the frame between home and the duel.
     val verdictRetreat = RetreatVerdict.held(unit.id, With.frame) &&
       ! ClusterPosture.overrulesRetreat(squad.battlePosture, facts.armyUnitsScore)
-    MarchGates.select(facts, marchUnit.copy(verdictRetreat = verdictRetreat)) match {
+    val (terminus, marchLabel) = MarchGates.select(facts, marchUnit.copy(verdictRetreat = verdictRetreat)) match {
       // A lone hull kites better from a set line than from a march: at
       // five tiles outside gun reach it dresses and waits instead of
       // walking into the enemy corner, where there is nowhere left to
@@ -220,6 +220,20 @@ object MarchOrders {
         val finalTravel = getTravel(unit, squad, defaultReturn)
         marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat)
     }
+    // Stage 1 motion observer (zero behavior): the desired owner from the
+    // same inputs, logged against what the march actually ordered. The
+    // change-only probe keeps quiet maps quiet; disagreements (a LoneMarch
+    // where the verdict wants Duel) are the exact frames the single-owner
+    // stage 2 will reclaim. Pack-dress joins the dressing input then.
+    val actual = marchLabel match {
+      case MarchLabel.Retreating    => MotionVerdict.Withdraw
+      case MarchLabel.HoldingDuel   => MotionVerdict.Duel
+      case MarchLabel.WaitingForPack => MotionVerdict.Dress
+      case _                        => MotionVerdict.Advance
+    }
+    val wanted = MotionVerdict.desired(verdictRetreat, marchUnit.hasDuel, farWaitHolding(unit))
+    Debugging.Probe.note("Motion", unit.id, s"want=${wanted.label} have=${actual.label}")
+    (terminus, marchLabel)
   }
 
   // The march legs: rallying stragglers beat slots, closing ranks beats
