@@ -125,4 +125,7 @@ object StarEngineTags {
 
   /** Protoss mirror: goon and zealot lines. */
   object PvP extends Tag("starengine.pvp")
+
+  /** Production: free gateway, power and resources in, hulls out. */
+  object Production extends Tag("starengine.production")
 }
