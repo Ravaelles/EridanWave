@@ -10,10 +10,12 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 /**
  * Static standoff (pure geometry plus a thin seam): a ranged ground
  * warrior holding the line against an enemy static defense stands its
- * ground instead of milling into the guns. Shoots whatever it can hit
- * from the hold; holds position inside the stand radius; eases a few
- * pixels back only while standing inside the static's own reach. The
- * nudge is a raw projection, never pathing - units die shuffling for a
+ * ground instead of milling into the guns. Wounded hulls stand further
+ * out (up to 2.7 tiles at full wound, same math as the artillery
+ * keep-off): a hull that cannot afford the trade holds a longer line.
+ * Shoots whatever it can hit from the hold; holds position inside the
+ * stand radius; eases a few pixels back only while standing inside the
+ * static's own reach. The nudge is a raw projection, never pathing - units die shuffling for a
  * perfect slot the physics blocks, so the correction stays smaller
  * than a step. Steals only the approach, never the retreat: a fleeing
  * hull still runs for safety.
@@ -23,16 +25,19 @@ object StaticStandoff {
   /** Hold the line this close to an enemy static, in tiles. */
   val standTiles: Double = 9.1
 
+  /** Wounded hulls stand this much further out, in tiles at full wound. */
+  val woundBonusTiles: Double = 2.7
+
   /** Nudge step while inside the guns, in tiles: a few pixels, not a walk. */
   val nudgeStepTiles: Double = 0.05
 
-  /** Inside the stand radius the unit holds instead of closing. */
-  def shouldHold(distTiles: Double): Boolean =
-    distTiles <= standTiles
+  /** Inside the stand radius plus the wound backoff the unit holds instead of closing. */
+  def shouldHold(distTiles: Double, backoffTiles: Double): Boolean =
+    distTiles <= standTiles + backoffTiles
 
-  /** Inside the static's own reach the unit eases out instead of standing. */
-  def shouldNudge(distTiles: Double, staticRangeTiles: Double): Boolean =
-    distTiles <= staticRangeTiles
+  /** Inside the static's own reach plus the wound backoff the unit eases out instead of standing. */
+  def shouldNudge(distTiles: Double, staticRangeTiles: Double, backoffTiles: Double): Boolean =
+    distTiles <= staticRangeTiles + backoffTiles
 
   /** Raw back-off point, straight away from the static. Seam walkables it. */
   def backoff(own: Mathematics.Points.Pixel, threat: Mathematics.Points.Pixel): Mathematics.Points.Pixel =
@@ -54,15 +59,18 @@ object StaticStandoffBehavior {
 
     val gun = static.get
     val distTiles = unit.pixelDistanceEdge(gun) * Maff.inv32
+    // Wounded hulls stand further out: the backoff rides both the nudge
+    // and the hold, like the artillery keep-off (same wound math).
+    val backoffTiles = unit.woundBonus(0.0, StaticStandoff.woundBonusTiles)
     if (unit.matchups.targetsInRange.nonEmpty) {
       unit.agent.act("StaticStandoff")
       NearestShot.take(unit, "StaticStandoff", unit.matchups.targetsInRange)
-    } else if (StaticStandoff.shouldNudge(distTiles, gun.pixelRangeAgainst(unit) * Maff.inv32)) {
+    } else if (StaticStandoff.shouldNudge(distTiles, gun.pixelRangeAgainst(unit) * Maff.inv32, backoffTiles)) {
       unit.agent.act("StaticNudge")
       unit.agent.decision.set(StaticStandoff.backoff(unit.pixel, gun.pixel).walkablePixel)
       Commander.move(unit)
       true
-    } else if (StaticStandoff.shouldHold(distTiles)) {
+    } else if (StaticStandoff.shouldHold(distTiles, backoffTiles)) {
       unit.agent.act("StaticStandoff")
       Commander.hold(unit)
 
