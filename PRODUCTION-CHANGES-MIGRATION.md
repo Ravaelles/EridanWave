@@ -1,5 +1,10 @@
 # Production changes migration plan
 
+Status: Step 0 done (`f1f102aa0`, audit verdicts in the table below);
+Step 1 done (`9c05a9f1c`, `starengine.production` harness +
+`ProductionParitySuite` 6/6 green). Next: Step 2, first rule
+(`DragoonsBeforeReavers`) with a policy-veto emergence scenario.
+
 Goal: every production decision passes through one policy sink that
 communicates intent and reason, so a tech gate cannot be bypassed by a
 sibling production path the way the first-Reaver gate was
