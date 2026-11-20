@@ -24,6 +24,8 @@ final case class MarchUnit(
   isLoadedShuttle     : Boolean,
   isSuicide           : Boolean,
   shouldFight         : Boolean,
+  verdictRetreat      : Boolean,
+  hasDuel             : Boolean,
   nearestWarriorTiles : Option[Double],
   distHomeTiles       : Option[Double],
   nearestArmedTiles   : Double,
@@ -31,7 +33,7 @@ final case class MarchUnit(
 
 object MarchUnit {
 
-  def read(squad: Squad, unit: FriendlyUnitInfo, home: Option[Pixel]): MarchUnit =
+  def read(squad: Squad, unit: FriendlyUnitInfo, home: Option[Pixel], verdictRetreat: Boolean): MarchUnit =
     MarchUnit(
       unitId              = unit.id,
       isDarkTemplar       = Protoss.DarkTemplar(unit),
@@ -41,6 +43,14 @@ object MarchUnit {
       isLoadedShuttle     = Protoss.Shuttle(unit) && unit.loadedUnitCount > 0,
       isSuicide           = SuicideMission.isActive(unit),
       shouldFight         = unit.agent.shouldFight,
+      verdictRetreat      = verdictRetreat,
+      // The duel the legs would hold, read here so the gate and the legs
+      // agree by construction: a hittable target even with detection on,
+      // or incoming fire. Ghosts never qualify (recall horizon drops
+      // them before they arm), unhittable watchers neither.
+      hasDuel             = unit.agent.toAttack.exists(t =>
+        Micro.Targeting.Target.holdsDuelTarget(unit.unitClass.isWarrior, unit.canAttack(t, assumeDetection = true))) ||
+        unit.matchups.engagedUpon,
       nearestWarriorTiles = Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
         .map(a => unit.pixelDistanceCenter(a.pixel) * Maff.inv32),
       distHomeTiles       = home.map(h => unit.pixel.groundPixels(h) * Maff.inv32),

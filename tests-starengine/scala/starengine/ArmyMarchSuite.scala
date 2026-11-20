@@ -63,7 +63,8 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
 
       // Attacking march, like the shipped UMS rule: fight, never withdraw.
       // The verdict bus reads the same raw inputs the march arm does.
-      if (RetreatVerdict.shouldHold(
+      // The gate below reads the verdict back, like production.
+      val verdictRetreat = RetreatVerdict.shouldHold(
         isWarrior = true,
         isReaver = false,
         canFlee = true,
@@ -74,7 +75,8 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
         nearestArmedTiles = nearestArmedTiles,
         proxyRush = false,
         hardCounterKnown = false,
-        nearestEnemyWarriorTiles = gapTiles)) retreats += 1
+        nearestEnemyWarriorTiles = gapTiles)
+      if (verdictRetreat) retreats += 1
 
       // Gate table, with engine-measured facts.
       val facts = MarchFacts(
@@ -98,6 +100,10 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
         isLoadedShuttle = false,
         isSuicide = false,
         shouldFight = true,
+        verdictRetreat = verdictRetreat,
+        // The shipped duel definition, so the gate and the legs agree
+        // here exactly like they do in production.
+        hasDuel = hittable.exists(t => Target.holdsDuelTarget(isWarrior = true, me.canHit(t))) || engagedUpon,
         nearestWarriorTiles = if (mateTiles.isInfinite) None else Some(mateTiles),
         distHomeTiles = None,
         nearestArmedTiles = nearestArmedTiles,
@@ -113,6 +119,7 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
       if (duelHold) {
         val reachable = foeSet.exists(f => me.canHit(f) && me.dist(f) <= me.rangeAgainst(f) + 2 * 32.0)
         if ( ! reachable) spuriousHolds += 1
+
         return Hold
       }
 
@@ -136,6 +143,7 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
           val d = Math.sqrt(dx * dx + dy * dy)
           if (d > 0) return MoveTo(me.x + dx / d * 4.0 * 2, me.y + dy / d * 4.0 * 2)
         }
+
         return Hold
       }
 

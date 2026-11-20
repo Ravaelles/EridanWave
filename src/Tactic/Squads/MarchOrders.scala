@@ -170,7 +170,10 @@ object MarchOrders {
     else unit.pixel
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): (Pixel, MarchLabel) = {
     val suicide = SuicideMission.assign(unit)
-    val marchUnit = MarchUnit.read(squad, unit, facts.home)
+    // The verdict postdates the read (it needs the armed scan below),
+    // so the gate reads it through a copy: the duel and retreat facts
+    // ride the same unit, never two vintages.
+    val marchUnit = MarchUnit.read(squad, unit, facts.home, verdictRetreat = false)
     // First verdict reader (step 2): the march ticks the shared bus with
     // the unified raw inputs and obeys the held verdict instead of
     // re-deriving retreat. Same vintage as before (shouldFight arrives
@@ -198,7 +201,7 @@ object MarchOrders {
     // phases split the frame between home and the duel.
     val verdictRetreat = RetreatVerdict.held(unit.id, With.frame) &&
       ! ClusterPosture.overrulesRetreat(squad.battlePosture, facts.armyUnitsScore)
-    MarchGates.select(facts, marchUnit) match {
+    MarchGates.select(facts, marchUnit.copy(verdictRetreat = verdictRetreat)) match {
       // A lone hull kites better from a set line than from a march: at
       // five tiles outside gun reach it dresses and waits instead of
       // walking into the enemy corner, where there is nowhere left to

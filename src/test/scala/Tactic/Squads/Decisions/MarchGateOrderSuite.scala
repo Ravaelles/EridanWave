@@ -39,6 +39,8 @@ class MarchGateOrderSuite extends AnyFunSuite {
     isLoadedShuttle     : Boolean = false,
     isSuicide           : Boolean = false,
     shouldFight         : Boolean = false,
+    verdictRetreat      : Boolean = false,
+    hasDuel             : Boolean = false,
     nearestWarriorTiles : Option[Double] = None,
     distHomeTiles       : Option[Double] = None,
     nearestArmedTiles   : Double = Double.PositiveInfinity,
@@ -46,7 +48,7 @@ class MarchGateOrderSuite extends AnyFunSuite {
     nextId += 1
     MarchUnit(
       nextId, isDarkTemplar, isCorsair, isDragoon, isWarrior, isLoadedShuttle,
-      isSuicide, shouldFight, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles)
+      isSuicide, shouldFight, verdictRetreat, hasDuel, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles)
   }
 
   private def check(name: String, f: MarchFacts, u: MarchUnit, want: Option[MarchLabel]): Unit =
@@ -96,6 +98,18 @@ class MarchGateOrderSuite extends AnyFunSuite {
     unit(isWarrior = true, shouldFight = true,
       nearestWarriorTiles = None, nearestStaticTiles = Some(5.0)),
     Some(MarchLabel.LoneMarch))
+
+  check("a lone duelist holds instead of marching at the goal",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true, hasDuel = true,
+      nearestWarriorTiles = None, nearestStaticTiles = Some(5.0)),
+    None)
+
+  check("a lone retreating hull walks home, not at the goal",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true, verdictRetreat = true,
+      nearestWarriorTiles = None),
+    None)
 
   check("a packed hunter with no fight consensus marches the legs",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),

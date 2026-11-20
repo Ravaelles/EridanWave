@@ -38,15 +38,20 @@ object MarchGates {
     // the park/raid brains wait for a march that never comes. Empty hulls
     // still march the legs (they await the next ride, nothing to strand).
     MarchGate(MarchLabel.PairRide, (_, unit) => unit.isLoadedShuttle),
-    // Lone march: with no friendly warrior inside ten tiles there is no
-    // line to pose in, so the unit skips rallying to the pack centroid
-    // and slot-marching and walks straight at the squad goal instead of
-    // milling alone, and never while retreating (a falling-back unit
-    // walks home, not at the squad goal). Latched (17 out, 13 back): the terminus on
-    // either side lives hundreds of pixels apart, so a sharp gate jerks
-    // the destination for units breathing on the boundary.
+    // Lone march: with no friendly warrior inside ten tiles, no duel
+    // on and no retreat held, there is no line to pose in, so the unit
+    // skips rallying to the pack centroid and slot-marching and walks
+    // straight at the squad goal instead of milling alone. Contact owns
+    // the frame instead: a lone hull with a hittable duel or incoming
+    // fire falls through to the legs, which hold the duel or walk it
+    // out - marching at the goal past guns is how duels never start.
+    // Latched (17 out, 13 back): the terminus on either side lives
+    // hundreds of pixels apart, so a sharp gate jerks the destination
+    // for units breathing on the boundary.
     MarchGate(MarchLabel.LoneMarch, (_, unit) =>
       unit.shouldFight &&
+      ! unit.verdictRetreat &&
+      ! unit.hasDuel &&
       unit.nearestWarriorTiles.map(t => LoneMarch.marchAlone(unit.unitId, t)).getOrElse(true)))
 
   /** First claim wins, in order; nothing when no gate fires. */
