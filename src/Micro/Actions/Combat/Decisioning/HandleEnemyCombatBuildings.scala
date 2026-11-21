@@ -63,6 +63,9 @@ object HandleEnemyCombatBuildings {
     KeepOffClaim,
     StandClaim)
 
+  def order: Seq[String] =
+    claims.map(_.name)
+
   def run(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
     claims.exists(_.shouldRun(unit, combat, advance))
 }
