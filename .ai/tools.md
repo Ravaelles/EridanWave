@@ -19,6 +19,12 @@
 - `python3 scripts/probe.py <normal.log> [--unit ID] [--key KEY]`
   (per-unit chains on traceless UMS: `Act`, `Move`, `Sim`, `Form`,
   `Hold`, `Target`; `probe.txt` arm keys).
+- Full behavior sequences (cycle hunting): arm
+  `bwapi-data/write/behavior.txt` (`*` or unit ids, one per line),
+  run the map, then `python3 scripts/detect-cycles.py
+  bwapi-data/write/behavior.log [--unit ID] [--min N]` - ranks which
+  behavior pairs actually alternate per unit (change-only PROBE Act
+  rows hide repeats, this file keeps every frame).
 - `bash scripts/run.sh --map=... --formation-audit` +
   `python3 scripts/formation-audit.py` (flag-gated pack/slot tally).
 - After moving a class across packages: `mvn -o clean` (stale zinc

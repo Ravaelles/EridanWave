@@ -83,6 +83,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
       Debugging.Probe.note("Act", unit.id, label)
       if (With.configuration.formationAudit) Debugging.FormationAudit.tally(label)
       Debugging.DeathWatch.recordBehavior(unit.id, label)
+      Debugging.BehaviorLog.note(unit.id, label)
     }
   }
 
