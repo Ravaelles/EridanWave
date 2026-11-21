@@ -2,7 +2,9 @@ package Micro.Actions.Combat.Decisioning
 
 import Micro.Actions.Combat.Decisioning.StaticStandoffBehavior
 import Micro.Actions.Combat.Maneuvering.ArtilleryKeepOff
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Utilities.DispatchBand
 
 /**
  * Enemy combat buildings, one home: everything a unit does about a
@@ -20,13 +22,47 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  */
 object HandleEnemyCombatBuildings {
 
-  private type StaticClaim = (FriendlyUnitInfo, Combat, Boolean) => Boolean
+  /**
+   * Shells first: leave now. Any mobile grounded hull except Reavers -
+   * the cloak, the verdict and the guns gate below.
+   */
+  object ShellsClaim extends TechniqueBehaviorStage("shells", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
 
-  private val claims: Seq[(String, StaticClaim)] = Seq(
-    "shells"   -> ((unit: FriendlyUnitInfo, combat: Combat, advance: Boolean) => ArtilleryKeepOff.act(unit)),
-    "keep-off" -> ((unit: FriendlyUnitInfo, combat: Combat, advance: Boolean) => advance && ScoutStaticKeepOff.run(unit, combat)),
-    "stand"    -> ((unit: FriendlyUnitInfo, combat: Combat, advance: Boolean) => StaticStandoffBehavior.run(unit, combat)))
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      ArtilleryKeepOff.act(unit)
+  }
+
+  /**
+   * Anti-air reach second: scouts hold outside it instead of diving in.
+   * Scouts only; the umbrella math gates below.
+   */
+  object KeepOffClaim extends TechniqueBehaviorStage("keep-off", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Scout(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      advance && ScoutStaticKeepOff.run(unit, combat)
+  }
+
+  /**
+   * Contain-stand third: hold the 9.1 line and shoot out of it. Ranged
+   * ground warriors, never Reavers; the cluster heat and the duel own
+   * the rest.
+   */
+  object StandClaim extends TechniqueBehaviorStage("stand", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      unit.canMove && ! unit.flying && ! unit.unitClass.melee && unit.unitClass.isWarrior && ! Protoss.Reaver(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      StaticStandoffBehavior.run(unit, combat)
+  }
+
+  private val claims: Vector[TechniqueBehaviorStage] = Vector(
+    ShellsClaim,
+    KeepOffClaim,
+    StandClaim)
 
   def run(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-    claims.exists { case (_, claim) => claim(unit, combat, advance) }
+    claims.exists(_.shouldRun(unit, combat, advance))
 }
