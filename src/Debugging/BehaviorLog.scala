@@ -18,6 +18,12 @@ import scala.io.Source
  * * for all); zero cost and zero output without it. The file is temp
  * only (git-ignored, overwritten per game) and never read by the bot -
  * read it back with scripts/detect-cycles.py.
+ *
+ * Convention: chains log the full act() string (behavior name plus any
+ * parameter in parens, the Atlantis way - e.g. Retreating(No 40vs60)).
+ * The slash stays reserved as the chain separator (no act() parameter
+ * may contain one); the detector strips parens and sorts tokens, so a
+ * drifting reason or insertion order never splits a real alternation.
  */
 object BehaviorLog extends PerGame {
 

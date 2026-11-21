@@ -85,3 +85,14 @@ Details live in `details/` - the queue keeps one line per item.
 - Contain carve-out, C6 profiling, krasi0, Sunkens2 mission fallback,
   refresh-hop timing. Goon_v_DT + DT_v_Protoss unwinnable without
   detection: leave alone.
+- Audit 2026-11 follow-ups needing a game (reference-frame sweep;
+  fixed: HoldToShoot own-range + loaded-hold, TankHold tank-range
+  + reply-range leg, ArtilleryKeepOff 13.1, TankHug proactive leave,
+  kite/abuse/carrier/minedefuse ghost gates, SlotDiscipline warrior
+  filter, ArmedCordon edge feed, nearestArmed canAttack filter,
+  Scout hold edge, ZealotPack edge feed, Reposition domain urgency,
+  KiteTo air frame, Suicide ghost charge): KiteAway squad-mate margin
+  gating (pack coherence vs back-line kite), dogfight 0.25 band,
+  carrier-hunt and minedefuse release bands, escaping-toggle
+  smoothing, SuicideMission path/euclidean + squadInZone latch,
+  FormationHold Reaver hold, MeleeKiteAway dragoon-as-mate counting.

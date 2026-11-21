@@ -87,6 +87,19 @@ hysteresis home (rule 14).
 
 ## Closed
 
+- Wrong reference frame (audit 2026-11, the TankHold class): a dozen
+  kernels measured against the wrong side of the duel - our range
+  where the enemy's belonged (HoldToShoot vs Vulture, TankHold seam),
+  centers where edges belonged (ArmedCordon, ZealotPack feed, Scout
+  hold point), the ground path where air belonged (KiteTo feed),
+  cross-domain cooldowns (Reposition urgency), fogged positions where
+  live ones belonged (kite/abuse/carrier/minedefuse/suicide picks),
+  any-building/any-enemy where warriors belonged (SlotDiscipline
+  seam), any ground attacker where hittable guns belonged
+  (nearestArmed). Fixed kernel by kernel with suites, seams live;
+  needs-a-game suspects parked in the queue. Pattern: every distance
+  ships with whose-range stated, and the suite pins the frame, not
+  just the numbers.
 - Single motion verdict (`MotionVerdict` bus + `owner` kernel, 2026-11):
   upgrades preempt sharp (contact answers the frame the march sees it),
   downgrades wait out a 3-frame release, so a one-frame target flicker
