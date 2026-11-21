@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Micro.Actions.UnitControl
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.DispatchBand
 
@@ -11,6 +12,12 @@ import Utilities.DispatchBand
  * dispatches a bare lambda - a new stage without a gate does not
  * compile, and the registry suite fails on a stage without coverage.
  * Reorder stages by moving the object, disable by commenting one out.
+ *
+ * The verdict type is the second half of the contract (owner order):
+ * execute answers in UnitControl, never a bare boolean, so a stage
+ * that forgets its verdict does not compile. Claiming credits the
+ * stage name to the decision chain beside it - visibility is part of
+ * claiming, not an afterthought.
  */
 abstract class BehaviorStage(val name: String, val band: DispatchBand) {
 
@@ -22,21 +29,13 @@ abstract class BehaviorStage(val name: String, val band: DispatchBand) {
    */
   def appliesToUnit(unit: FriendlyUnitInfo): Boolean
 
-  protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean
+  protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl
 
-  /**
-   * Chain credit lives here, not in the dispatch loops: the old
-   * per-Behavior act() died with the W1 migration and the Act,
-   * BehaviorLog and CherryVis chains went dark for claimed frames.
-   * Crediting the winning stage name restores the trace for every
-   * pipeline at once - diagnostics only, never doctrine (no reader
-   * but visuals, death logs and the frame-limit log looks at it).
-   */
-  final def shouldRun(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
-    if ( ! appliesToUnit(unit)) return false
+  final def shouldRun(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
+    if ( ! appliesToUnit(unit)) return UnitControl.Declined
 
-    val claimed = execute(unit, combat, advance)
-    if (claimed) unit.agent.act(name)
-    claimed
+    val verdict = execute(unit, combat, advance)
+    if (verdict.claimed) unit.agent.act(name)
+    verdict
   }
 }

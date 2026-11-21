@@ -2,6 +2,7 @@ package Micro.Actions.Combat.Decisioning
 
 import Micro.Actions.Combat.Decisioning.StaticStandoffBehavior
 import Micro.Actions.Combat.Maneuvering.ArtilleryKeepOff
+import Micro.Actions.UnitControl
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.DispatchBand
@@ -30,8 +31,8 @@ object HandleEnemyCombatBuildings {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      ArtilleryKeepOff.act(unit)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(ArtilleryKeepOff.act(unit))
   }
 
   /**
@@ -41,8 +42,8 @@ object HandleEnemyCombatBuildings {
   object KeepOffClaim extends BehaviorStage("keep-off", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Scout(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      advance && ScoutStaticKeepOff.run(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(advance && ScoutStaticKeepOff.run(unit, combat))
   }
 
   /**
@@ -54,8 +55,8 @@ object HandleEnemyCombatBuildings {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.canMove && ! unit.flying && ! unit.unitClass.melee && unit.unitClass.isWarrior && ! Protoss.Reaver(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      StaticStandoffBehavior.run(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(StaticStandoffBehavior.run(unit, combat))
   }
 
   private val claims: Vector[BehaviorStage] = Vector(
@@ -67,5 +68,5 @@ object HandleEnemyCombatBuildings {
     claims.map(_.name)
 
   def run(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-    claims.exists(_.shouldRun(unit, combat, advance))
+    claims.exists(_.shouldRun(unit, combat, advance).claimed)
 }

@@ -4,6 +4,7 @@ import Debugging.Probe
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.UnitControl
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Maneuvering.AvoidDarkTemplar
 import Micro.Actions.Combat.Maneuvering.AvoidLurkers
@@ -55,8 +56,8 @@ private[Decisioning] object TechniquePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.unitClass.isWarrior
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      AvoidDarkTemplar.act(unit) || AvoidLurkers.act(unit)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(AvoidDarkTemplar.act(unit) || AvoidLurkers.act(unit))
   }
 
   /**
@@ -74,30 +75,30 @@ private[Decisioning] object TechniquePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      HandleEnemyCombatBuildings.run(unit, combat, advance)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(HandleEnemyCombatBuildings.run(unit, combat, advance))
   }
 
   /** The technique executes inside the fight its band allows. */
   object WalkStage extends BehaviorStage("Walk", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      combat.technique == Walk && combat.maneuvers.walk()
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(combat.technique == Walk && combat.maneuvers.walk())
   }
 
   object AimStage extends BehaviorStage("Aim", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = ! unit.canMove
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      combat.technique == Aim && AimBehavior.run(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(combat.technique == Aim && AimBehavior.run(unit, combat))
   }
 
   object DodgeStage extends BehaviorStage("Dodge", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove && ! unit.loaded
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      combat.technique == Dodge && combat.maneuvers.dodge()
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(combat.technique == Dodge && combat.maneuvers.dodge())
   }
 
   /** Retreat potshot: Fallback shoots while leaving. */
@@ -106,8 +107,8 @@ private[Decisioning] object TechniquePipeline {
     // and the stage claims the cadence even with no shot to fire.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      combat.technique == Fallback && PotshotBehavior.run(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(combat.technique == Fallback && PotshotBehavior.run(unit, combat))
   }
 
   /**
@@ -121,8 +122,8 @@ private[Decisioning] object TechniquePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.unitClass.isWarrior
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      AlwaysAttackInRange.run(unit, combat.shouldRetreat, advance)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(AlwaysAttackInRange.run(unit, combat.shouldRetreat, advance))
   }
 
   /**
@@ -137,8 +138,8 @@ private[Decisioning] object TechniquePipeline {
       ! unit.flying && unit.unitClass.isWarrior && unit.unitClass.attacksGround &&
         ! Protoss.Reaver(unit) && ! Protoss.DarkTemplar(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      DarkTemplarHuntBehavior.run(unit)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(DarkTemplarHuntBehavior.run(unit))
   }
 
   /**
@@ -148,8 +149,8 @@ private[Decisioning] object TechniquePipeline {
   object DragoonStandStage extends BehaviorStage("DragoonStand", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      advance && DragoonStandBehavior.run(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(advance && DragoonStandBehavior.run(unit, combat))
   }
 
   /**
@@ -159,8 +160,8 @@ private[Decisioning] object TechniquePipeline {
   object DragoonCarrierStage extends BehaviorStage("DragoonCarrier", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      advance && DragoonCarrierBehavior.run(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(advance && DragoonCarrierBehavior.run(unit, combat))
   }
 
   /**
@@ -172,8 +173,8 @@ private[Decisioning] object TechniquePipeline {
   object DragoonMineDefuseStage extends BehaviorStage("DragoonMineDefuse", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      advance && DragoonMineDefuseBehavior.run(unit)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(advance && DragoonMineDefuseBehavior.run(unit))
   }
 
   /**
@@ -185,16 +186,16 @@ private[Decisioning] object TechniquePipeline {
   object RearguardStage extends BehaviorStage("Rearguard", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit, willRetreat = true, advance = false) || ContainFireBehavior.run(unit))
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit, willRetreat = true, advance = false) || ContainFireBehavior.run(unit)))
   }
 
   /** Retreat owns survival: the walk to safety ends the frame. */
   object RetreatStage extends BehaviorStage("Retreat", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      combat.shouldRetreat && Retreat(unit)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(combat.shouldRetreat && Retreat(unit))
   }
 
   /**
@@ -206,8 +207,8 @@ private[Decisioning] object TechniquePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.canMove && (unit.is(Zerg.Zergling) || unit.unitClass.melee)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      combat.shouldEngage && advance && Brawl.allowed(unit) && Brawl(unit)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(combat.shouldEngage && advance && Brawl.allowed(unit) && Brawl(unit))
   }
 
   /**
@@ -218,8 +219,8 @@ private[Decisioning] object TechniquePipeline {
   object AbuseStage extends BehaviorStage("Abuse", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.unitClass.abuseAllowed
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      combat.technique == Abuse && advance && AbuseBehavior.run(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(combat.technique == Abuse && advance && AbuseBehavior.run(unit, combat))
   }
 
   /**
@@ -230,8 +231,8 @@ private[Decisioning] object TechniquePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.isAny(Terran.Wraith, Zerg.Mutalisk)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      combat.technique == SuperKite && advance && SuperkiteBehavior.run(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(combat.technique == SuperKite && advance && SuperkiteBehavior.run(unit, combat))
   }
 
   val stages: Vector[BehaviorStage] = Vector(
@@ -442,7 +443,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     var i = 0
     var claimed = false
     while (i < TechniquePipeline.stages.length && ! claimed) {
-      claimed = TechniquePipeline.stages(i).shouldRun(unit, this, advance)
+      claimed = TechniquePipeline.stages(i).shouldRun(unit, this, advance).claimed
       i += 1
     }
     // The engage never claims: it runs for side effects when nothing

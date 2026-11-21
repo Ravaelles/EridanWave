@@ -4,8 +4,9 @@ import Debugging.Probe
 import Information.Battles.ArmyStrength
 import Lifecycle.With
 import Mathematics.Maff
-import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
+import Micro.Actions.Combat.Decisioning.Techniques._
+import Micro.Actions.UnitControl
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineCreepBehavior
 import Micro.Actions.Protoss.Zealot.ZealotLeash
@@ -39,8 +40,8 @@ private[Decisioning] object EngagePipeline {
   object ContainFireStage extends BehaviorStage("ContainFire", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      ContainFireBehavior.run(unit)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(ContainFireBehavior.run(unit))
   }
 
   /**
@@ -52,8 +53,8 @@ private[Decisioning] object EngagePipeline {
   object HuntStage extends BehaviorStage("Hunt", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = HuntBehavior.appliesToUnit(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      HuntBehavior.run(unit)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(HuntBehavior.run(unit))
   }
 
   /**
@@ -63,9 +64,9 @@ private[Decisioning] object EngagePipeline {
   object AdvanceGateStage extends BehaviorStage("AdvanceGate", DispatchBand.Low) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
       Debugging.Probe.note("Gate", unit.id, s"advance=$advance prey=${preyDrive(unit)} consensus=${combat.fightConsensus} home=${unit.intent.marchHome} commit=${unit.agent.commit}")
-      if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); true } else false
+      if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); UnitControl.Claimed } else UnitControl.Declined
     }
   }
 
@@ -79,8 +80,8 @@ private[Decisioning] object EngagePipeline {
   object ZealotLeashStage extends BehaviorStage("ZealotLeash", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Zealot(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      leashZealot(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(leashZealot(unit, combat))
   }
 
   /**
@@ -94,8 +95,8 @@ private[Decisioning] object EngagePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.unitClass.isWarrior && ! unit.loaded
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
-      rejoinCluster(unit, combat)
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(rejoinCluster(unit, combat))
   }
 
   val stages: Vector[BehaviorStage] = Vector(
@@ -110,8 +111,8 @@ private[Decisioning] object EngagePipeline {
     // itself owns mobility - the gate never decides movement.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = ! unit.flying
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
-      if ( ! combat.pushThrough) false else { PushBehavior.run(unit, combat); true }
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
+      if ( ! combat.pushThrough) UnitControl.Declined else { PushBehavior.run(unit, combat); UnitControl.Claimed }
     }
   }
 
@@ -120,8 +121,8 @@ private[Decisioning] object EngagePipeline {
     // technique vote, the gate only runs what it is given.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
-      if ( ! combat.techniqueIs(Scavenge)) false else { ScavengeBehavior.run(unit, combat); true }
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
+      if ( ! combat.techniqueIs(Scavenge)) UnitControl.Declined else { ScavengeBehavior.run(unit, combat); UnitControl.Claimed }
     }
   }
 
@@ -140,9 +141,9 @@ private[Decisioning] object EngagePipeline {
     // below, including the immobile hold it never walks into.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
       val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase
-      if ( ! outer) false
+      if ( ! outer) UnitControl.Declined
       else {
         // Tanks are never closed: the hold stands off siege and unsieged
         // guns alike instead of walking into unanswered fire. TankHug
@@ -154,7 +155,7 @@ private[Decisioning] object EngagePipeline {
           unit.agent.act("Engage")
           combat.maneuvers.charge()
         }
-        true
+        UnitControl.Claimed
       }
     }
   }
@@ -168,9 +169,9 @@ private[Decisioning] object EngagePipeline {
     // terminal claims for everyone, the maneuver handles the rest.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
       if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineCreepBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
-      true
+      UnitControl.Claimed
     }
   }
 
@@ -316,7 +317,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     var i = 0
     var claimed = false
     while (i < EngagePipeline.stages.length && ! claimed) {
-      claimed = EngagePipeline.stages(i).shouldRun(unit, combat, advance)
+      claimed = EngagePipeline.stages(i).shouldRun(unit, combat, advance).claimed
       i += 1
     }
     if (claimed) return true
@@ -349,7 +350,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     var i = 0
     var claimed = false
     while (i < EngagePipeline.duelStages.length && ! claimed) {
-      claimed = EngagePipeline.duelStages(i).shouldRun(unit, combat, advance)
+      claimed = EngagePipeline.duelStages(i).shouldRun(unit, combat, advance).claimed
       i += 1
     }
   }
