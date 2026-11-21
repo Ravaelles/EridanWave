@@ -42,74 +42,213 @@ import Utilities.?
  * never the behavior.
  */
 private[Decisioning] object TechniquePipeline {
-  case class Stage(name: String, band: DispatchBand, run: (FriendlyUnitInfo, Combat, Boolean) => Boolean)
 
-  val stages: Vector[Stage] = Vector(
-    // Unseen killers outrank every formation and duel: a remembered Lurker
-    // or cloaked Templar kills the line that rallies or engages through
-    // its memory, so the dodge claims before Walk, Aim, retreat and fight.
-    Stage("Avoid", DispatchBand.High, (unit, _, _) =>
-      AvoidDarkTemplar.act(unit) || AvoidLurkers.act(unit)),
-    // Siege shells outrank everything below: a detected ground unit that
-    // does not want the tank battle steps past the shell line before any
-    // march, duel or retreat plan runs. Runs before the Fallback potshot
-    // on purpose - a sleeping hull claims the potshot without firing and
-    // would otherwise pose inside the shells instead of leaving them.
-    // The two static keep-offs live one home below
-    // (HandleEnemyCombatBuildings), the duel and the retreat below them.
-    Stage("StaticKeepOff", DispatchBand.High, (unit, combat, advance) =>
-      HandleEnemyCombatBuildings.run(unit, combat, advance)),
-    // The technique executes inside the fight its band allows.
-    Stage("Walk", DispatchBand.Medium, (unit, combat, _) =>
-      combat.technique == Walk && combat.maneuvers.walk()),
-    Stage("Aim", DispatchBand.Medium, (unit, combat, _) =>
-      combat.technique == Aim && AimBehavior.run(unit, combat)),
-    Stage("Dodge", DispatchBand.Medium, (unit, combat, _) =>
-      combat.technique == Dodge && combat.maneuvers.dodge()),
-    // Retreat potshot: Fallback shoots while leaving.
-    Stage("Potshot", DispatchBand.Medium, (unit, combat, _) =>
-      combat.technique == Fallback && PotshotBehavior.run(unit, combat)),
-    // Always-attack victims outrank retreat: grounded anti-air shoots
-    // Scourge, Carriers and the rest on sight - even while retreating.
-    // A shot in range never waits for the duel to start or the retreat
-    // to finish; the ladder picks, the gun fires, the frame ends here.
-    Stage("AlwaysAttack", DispatchBand.High, (unit, combat, advance) =>
-      AlwaysAttackInRange.run(unit, combat.shouldRetreat, advance)),
-    // Main-base Templar hunt: a detected enemy DT inside forty ground
-    // tiles of our main must die, even out of contact - the army walks
-    // it down instead of scoring shinier fights. Already dueling one
-    // in range keeps its duel; Reavers and our own Templars keep
-    // their own disciplines.
-    Stage("DarkTemplarHunt", DispatchBand.High, (unit, _, _) =>
-      DarkTemplarHuntBehavior.run(unit)),
-    // A fresh hot Dragoon shoots the Terran in range instead of running
-    // from it - but never under siege, the line above already claimed it.
-    Stage("DragoonStand", DispatchBand.Medium, (unit, combat, advance) =>
-      advance && DragoonStandBehavior.run(unit, combat)),
-    // A shielded Dragoon answers a Carrier in range and closes a pathed
-    // one inside eleven tiles instead of retreating past the kill.
-    Stage("DragoonCarrier", DispatchBand.Medium, (unit, combat, advance) =>
-      advance && DragoonCarrierBehavior.run(unit, combat)),
-    // A Dragoon that spots a detected Spider Mine inside ten tiles
-    // shoots it instead of walking into it - but only with no enemy
-    // that can answer inside twelve; under guns the duel owns the
-    // frame. Advancing only: a retreating hull keeps running.
-    Stage("DragoonMineDefuse", DispatchBand.Medium, (unit, _, advance) =>
-      advance && DragoonMineDefuseBehavior.run(unit)),
-    // A covering rearguard shoots victims of opportunity and holds the
-    // line while the cluster withdraws instead of turning with it. With
-    // nothing to shoot it falls through and retreats with everyone.
-    Stage("Rearguard", DispatchBand.Medium, (unit, _, _) =>
-      unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit, willRetreat = true, advance = false) || ContainFireBehavior.run(unit))),
-    // Retreat owns survival: the walk to safety ends the frame.
-    Stage("Retreat", DispatchBand.High, (unit, combat, _) =>
-      combat.shouldRetreat && Retreat(unit)),
-    Stage("Brawl", DispatchBand.Medium, (unit, combat, advance) =>
-      combat.shouldEngage && advance && Brawl.allowed(unit) && Brawl(unit)),
-    Stage("Abuse", DispatchBand.Medium, (unit, combat, advance) =>
-      combat.technique == Abuse && advance && AbuseBehavior.run(unit, combat)),
-    Stage("SuperKite", DispatchBand.Medium, (unit, combat, advance) =>
-      combat.technique == SuperKite && advance && SuperkiteBehavior.run(unit, combat)))
+  /**
+   * Unseen killers outrank every formation and duel: a remembered Lurker
+   * or cloaked Templar kills the line that rallies or engages through
+   * its memory, so the dodge claims before Walk, Aim, retreat and fight.
+   * Grounded warriors only: flyers pass over both killers untouched.
+   */
+  object AvoidStage extends TechniqueBehaviorStage("Avoid", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      ! unit.flying && unit.unitClass.isWarrior
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      AvoidDarkTemplar.act(unit) || AvoidLurkers.act(unit)
+  }
+
+  /**
+   * Siege shells outrank everything below: a detected ground unit that
+   * does not want the tank battle steps past the shell line before any
+   * march, duel or retreat plan runs. Runs before the Fallback potshot
+   * on purpose - a sleeping hull claims the potshot without firing and
+   * would otherwise pose inside the shells instead of leaving them.
+   * The two static keep-offs live one home below
+   * (HandleEnemyCombatBuildings), the duel and the retreat below them.
+   * Mobile ground hulls: the formation below walks Reavers and
+   * detectors through their own disciplines.
+   */
+  object StaticKeepOffStage extends TechniqueBehaviorStage("StaticKeepOff", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      HandleEnemyCombatBuildings.run(unit, combat, advance)
+  }
+
+  /** The technique executes inside the fight its band allows. */
+  object WalkStage extends TechniqueBehaviorStage("Walk", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      combat.technique == Walk && combat.maneuvers.walk()
+  }
+
+  object AimStage extends TechniqueBehaviorStage("Aim", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = ! unit.canMove
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      combat.technique == Aim && AimBehavior.run(unit, combat)
+  }
+
+  object DodgeStage extends TechniqueBehaviorStage("Dodge", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove && ! unit.loaded
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      combat.technique == Dodge && combat.maneuvers.dodge()
+  }
+
+  /** Retreat potshot: Fallback shoots while leaving. */
+  object PotshotStage extends TechniqueBehaviorStage("Potshot", DispatchBand.Medium) {
+    // Any hull the Fallback picks: the pick below owns the gun check,
+    // and the stage claims the cadence even with no shot to fire.
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      combat.technique == Fallback && PotshotBehavior.run(unit, combat)
+  }
+
+  /**
+   * Always-attack victims outrank retreat: grounded anti-air shoots
+   * Scourge, Carriers and the rest on sight - even while retreating.
+   * A shot in range never waits for the duel to start or the retreat
+   * to finish; the ladder picks, the gun fires, the frame ends here.
+   * Grounded warriors: the sky and the helpless never reach for a gun.
+   */
+  object AlwaysAttackStage extends TechniqueBehaviorStage("AlwaysAttack", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      ! unit.flying && unit.unitClass.isWarrior
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      AlwaysAttackInRange.run(unit, combat.shouldRetreat, advance)
+  }
+
+  /**
+   * Main-base Templar hunt: a detected enemy DT inside forty ground
+   * tiles of our main must die, even out of contact - the army walks
+   * it down instead of scoring shinier fights. Already dueling one
+   * in range keeps its duel; Reavers and our own Templars keep
+   * their own disciplines.
+   */
+  object DarkTemplarHuntStage extends TechniqueBehaviorStage("DarkTemplarHunt", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      ! unit.flying && unit.unitClass.isWarrior && unit.unitClass.attacksGround &&
+        ! Protoss.Reaver(unit) && ! Protoss.DarkTemplar(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      DarkTemplarHuntBehavior.run(unit)
+  }
+
+  /**
+   * A fresh hot Dragoon shoots the Terran in range instead of running
+   * from it - but never under siege, the line above already claimed it.
+   */
+  object DragoonStandStage extends TechniqueBehaviorStage("DragoonStand", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      advance && DragoonStandBehavior.run(unit, combat)
+  }
+
+  /**
+   * A shielded Dragoon answers a Carrier in range and closes a pathed
+   * one inside eleven tiles instead of retreating past the kill.
+   */
+  object DragoonCarrierStage extends TechniqueBehaviorStage("DragoonCarrier", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      advance && DragoonCarrierBehavior.run(unit, combat)
+  }
+
+  /**
+   * A Dragoon that spots a detected Spider Mine inside ten tiles
+   * shoots it instead of walking into it - but only with no enemy
+   * that can answer inside twelve; under guns the duel owns the
+   * frame. Advancing only: a retreating hull keeps running.
+   */
+  object DragoonMineDefuseStage extends TechniqueBehaviorStage("DragoonMineDefuse", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      advance && DragoonMineDefuseBehavior.run(unit)
+  }
+
+  /**
+   * A covering rearguard shoots victims of opportunity and holds the
+   * line while the cluster withdraws instead of turning with it. With
+   * nothing to shoot it falls through and retreats with everyone.
+   * Any hull the squad covers: the squad owns who holds the line.
+   */
+  object RearguardStage extends TechniqueBehaviorStage("Rearguard", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      unit.squad.exists(_.coversRetreat(unit.id)) && (AlwaysAttackInRange.run(unit, willRetreat = true, advance = false) || ContainFireBehavior.run(unit))
+  }
+
+  /** Retreat owns survival: the walk to safety ends the frame. */
+  object RetreatStage extends TechniqueBehaviorStage("Retreat", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      combat.shouldRetreat && Retreat(unit)
+  }
+
+  /**
+   * Brawl claims only allowed brawls: melee hulls that can move trade
+   * blows instead of glitching on re-targets. Ranged hulls never
+   * reach for it; the duel below owns their fight.
+   */
+  object BrawlStage extends TechniqueBehaviorStage("Brawl", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      unit.canMove && (unit.is(Zerg.Zergling) || unit.unitClass.melee)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      combat.shouldEngage && advance && Brawl.allowed(unit) && Brawl(unit)
+  }
+
+  /**
+   * Abuse owns range: kits that outrange the duel poke instead of
+   * trading volleys. Only hulls the doctrine covers - the ladder
+   * whitelists abusers, everyone else fights fair.
+   */
+  object AbuseStage extends TechniqueBehaviorStage("Abuse", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.unitClass.abuseAllowed
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      combat.technique == Abuse && advance && AbuseBehavior.run(unit, combat)
+  }
+
+  /**
+   * Superkite owns the air duel its hulls were built for: Wraiths and
+   * Mutalisks dance instead of trading. Nobody else spins up the dance.
+   */
+  object SuperKiteStage extends TechniqueBehaviorStage("SuperKite", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      unit.isAny(Terran.Wraith, Zerg.Mutalisk)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      combat.technique == SuperKite && advance && SuperkiteBehavior.run(unit, combat)
+  }
+
+  val stages: Vector[TechniqueBehaviorStage] = Vector(
+    AvoidStage,
+    StaticKeepOffStage,
+    WalkStage,
+    AimStage,
+    DodgeStage,
+    PotshotStage,
+    AlwaysAttackStage,
+    DarkTemplarHuntStage,
+    DragoonStandStage,
+    DragoonCarrierStage,
+    DragoonMineDefuseStage,
+    RearguardStage,
+    RetreatStage,
+    BrawlStage,
+    AbuseStage,
+    SuperKiteStage)
 }
 
 final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
@@ -291,7 +430,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     var i = 0
     var claimed = false
     while (i < TechniquePipeline.stages.length && ! claimed) {
-      claimed = TechniquePipeline.stages(i).run(unit, this, advance)
+      claimed = TechniquePipeline.stages(i).shouldRun(unit, this, advance)
       i += 1
     }
     // The engage never claims: it runs for side effects when nothing
