@@ -12,7 +12,7 @@ import Utilities.Latch
 object DetectorSpread {
 
   /** Same-type eyes keep at least this apart, in tiles (`Separation` carries the rule). */
-  val minDistTiles: Double = 9.0
+  val minDistTiles: Double = 15.0
 
   /** Observers keep this clear of enemy detectors, in tiles. */
   val enemyKeepOffTiles: Double = 6.0
