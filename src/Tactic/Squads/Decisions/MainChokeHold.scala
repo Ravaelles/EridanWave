@@ -13,16 +13,39 @@ package Tactic.Squads.Decisions
  */
 object MainChokeHold {
 
+  /** At least this many warriors to post a line instead of camping. */
+  val minWarriors: Int = 4
+
   /** At most this many warriors to hold the choke instead of forming up. */
-  val maxWarriors: Int = 5
+  val maxWarriors: Int = 8
 
   /** At most this army score to hold the choke instead of forming up. */
   val maxUnitsScore: Double = 160.0
 
   /**
-   * Choke hold (pure numbers for the suite): Zerg enemy, a handful of
-   * warriors, a small score - post the line on the main choke.
+   * Choke hold (pure numbers for the suite): Zerg enemy, four to eight
+   * warriors, a small score - post the line on the main choke. Below
+   * four there is no line, only a donation; past eight the army forms
+   * up instead.
    */
   def shouldHold(enemyIsZerg: Boolean, warriors: Int, unitsScore: Double): Boolean =
-    enemyIsZerg && warriors <= maxWarriors && unitsScore <= maxUnitsScore
+    enemyIsZerg && warriors >= minWarriors && warriors <= maxWarriors && unitsScore <= maxUnitsScore
+
+  /** A holder below this total health walks home instead of posting. */
+  val minHolderHp: Int = 30
+
+  /** A holder past this, in tiles, from the choke point never posts. */
+  val postRadiusTiles: Double = 1.0
+
+  /** A holder needs a friendly combat unit inside this, in tiles. */
+  val packRadiusTiles: Double = 0.5
+
+  /**
+   * Holder gate (pure numbers for the suite): only a healthy hull
+   * posted at the choke with a mate in shoulder reach holds it. A
+   * dying, stray or lone hull never pins the line - it fights or
+   * withdraws on the normal rules instead of donating under commit.
+   */
+  def shouldHoldUnit(totalHp: Int, distToChokeTiles: Double, nearestMateTiles: Double): Boolean =
+    totalHp >= minHolderHp && distToChokeTiles <= postRadiusTiles && nearestMateTiles <= packRadiusTiles
 }

@@ -195,11 +195,24 @@ class SquadDefendBase(base: Base) extends Squad {
       With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
       With.battles.globalAttack.us.skimStrengthUnits)) return false
 
+    // Commit holders only: a dying, stray or lone hull never pins the
+    // line - it marches out with the pack uncommitted and fights or
+    // withdraws on the normal rules instead of donating under commit.
+    // The posting itself stays squad-wide (no cold-start deadlock:
+    // the pack must reach the choke before anyone can hold it).
+    val warriors = units.filter(u => u.alive && u.unitClass.isWarrior)
+    val holders = warriors.filter(u =>
+      MainChokeHold.shouldHoldUnit(
+        u.totalHealth,
+        u.pixelDistanceCenter(choke.get) * Maff.inv32,
+        Maff.minBy(warriors.view.filter(o => o.id != u.id))(_.pixelDistanceCenter(u.pixel))
+          .map(_.pixelDistanceCenter(u.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)))
+
     lastAction = "ChokeHold"
     formations += new FormationStandard(this, FormationStyleGuard, choke.get, None)
-    units.foreach(_.agent.act("ChokeHold"))
+    holders.foreach(_.agent.act("ChokeHold"))
     SquadAutomation.send(this)
-    units.foreach(_.intent.setCanFlee(false))
+    holders.foreach(_.intent.setCanFlee(false))
 
     true
   }
