@@ -45,6 +45,12 @@ Details live in `details/` - the queue keeps one line per item.
   ZealotLeash); retreats technique-local only, bus never held (sim
   kept voting fight while behind - sim tuning, pre-existing, out
   of S2 scope); no S2 mechanism).
+  Audit-jar Hao Pan DEFEAT 142/277 (20 min PvTDoubleRobo vs
+  2FacVultures on TauCross: fair grind, better ratio than the
+  180/612 baseline; ArtilleryKeepOff dominates sanely all game,
+  Holding duel/Retreat/Approach/Abuse/KiteAway/TankHold all firing,
+  bus-held retreats present with ordinary reasons, single-digit
+  transitions - no mechanism).
 - UMS on the toggle jar: full batch 9W/13L/3NA, then re-run wins
   on 1DragWounded + 1DragLing (flippers flip back); 3DragHydra
   timeouts sit inside its all-time flip distribution (8W/9L);
