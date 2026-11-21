@@ -65,10 +65,14 @@ object KiteAwayBehavior {
 
     val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
     val marginPixels = KiteAway.enemyMarginTiles * 32.0
+    // Live threats only: a fogged ghost at a stale pixel must not kite
+    // the line or hold it against nothing - the recall horizon owns
+    // memories, the kite answers contact.
     // Turned-away melee neither chases nor hits: it never counts as the
     // enemy in margin that triggers the retreat.
     def inMargin(u: FriendlyUnitInfo) =
       u.matchups.threatsInPixels(marginPixels).filter(t =>
+        t.likelyStillThere &&
         ! FacingAway.dismissMelee(t.unitClass.melee,
           FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
     val enemyInMargin = squadUnits.exists(u => inMargin(u).nonEmpty)
@@ -85,15 +89,17 @@ object KiteAwayBehavior {
    */
   private def shouldKiteMelee(unit: FriendlyUnitInfo): Boolean = {
     val marginPixels = KiteAway.enemyMarginTiles * 32
-    val foeZealots = unit.matchups.threatsInPixels(marginPixels).count(Protoss.Zealot)
+    // Live blades only: ghost zealots must not inflate the pack count.
+    val liveMargin = unit.matchups.threatsInPixels(marginPixels).filter(_.likelyStillThere)
+    val foeZealots = liveMargin.count(Protoss.Zealot)
     val mates = unit.matchups.allies.count(a =>
       a.alive && a.unitClass.isWarrior && a.pixelDistanceEdge(unit) <= marginPixels)
 
     MeleeKiteAway.shouldRetreat(
       totalHp = unit.totalHealth,
       coolingDown = unit.cooldownLeft > 0,
-      hasSlowLingNearby = unit.matchups.threatsInPixels(marginPixels).exists(IsSlowling),
-      hasSpeedlingNearby = unit.matchups.threatsInPixels(marginPixels).exists(IsSpeedling),
+      hasSlowLingNearby = liveMargin.exists(IsSlowling),
+      hasSpeedlingNearby = liveMargin.exists(IsSpeedling),
       packIntact = Maff.minBy(unit.matchups.allies.view.filter(a =>
         a.alive && Protoss.Zealot(a) && a.id != unit.id))(_.pixelDistanceCenter(unit.pixel))
         .exists(mate => unit.pixelDistanceCenter(mate.pixel) * Maff.inv32 <= MeleeKiteAway.packKiteTiles),
@@ -108,7 +114,9 @@ object KiteAwayBehavior {
   // head-on sprinters meet the shot at bonus reach - kiting a Vulture
   // donates the exact distance its speed wants.
   private def holdingShot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    val chaser = Maff.minBy(unit.matchups.threats)(_.pixelDistanceEdge(unit))
+    // Live chasers only: holding against a fogged ghost stands the hull
+    // down for nothing while the real presser walks in for free.
+    val chaser = Maff.minBy(unit.matchups.threats.view.filter(_.likelyStillThere))(_.pixelDistanceEdge(unit))
     chaser.exists(c => combat.target.forall(_.id == c.id) && holdsAgainst(unit, c))
   }
 
