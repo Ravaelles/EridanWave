@@ -3,6 +3,7 @@ package Micro.Actions.Protoss.DarkTemplar
 import Mathematics.Points.Pixel
 import Micro.Actions.Combat.Maneuvering.RangedReach
 import Utilities.Latch
+import Utilities.Time.Seconds
 
 /**
  * Pure detector evasion for a hunting Dark Templar (no game access): a
@@ -111,4 +112,19 @@ object DarkTemplarEvade {
    */
   def shouldHide(distPixels: Double, rangePixels: Double): Boolean =
     isRanged(rangePixels) && distPixels < rangePixels + hideBandTiles * 32.0
+
+  /**
+   * Artillery yield (pure flags for the suite): an undetected Templar
+   * never yields the guns - cloak is the armor, and leaving free kills
+   * to dodge shells that cannot see it donates the hunt for nothing.
+   * Only a hurt hull under live detection with a vessel answer or fresh
+   * shots incoming walks out; everyone else keeps sniping.
+   */
+  val yieldHp: Int = 120
+
+  /** Fresh shots count as detection for this long, in frames. */
+  val yieldAttackedFrames: Int = Seconds(15)()
+
+  def shouldYieldGuns(totalHp: Int, enemyDetected: Boolean, hasVessel: Boolean, attackedRecently: Boolean): Boolean =
+    totalHp <= yieldHp && enemyDetected && (hasVessel || attackedRecently)
 }

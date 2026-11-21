@@ -5,6 +5,7 @@ import Mathematics.{Maff, WoundMargin}
 import Mathematics.Points.Pixel
 import Micro.Agency.Commander
 import Micro.Actions.Combat.Decisioning.TankHug
+import Micro.Actions.Protoss.DarkTemplar.DarkTemplarEvade
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Tactic.Squads.Decisions.TankVerdict
@@ -75,6 +76,15 @@ object ArtilleryKeepOff {
     if ( ! unit.canMove) return false
     if (Protoss.Reaver(unit)) return false
     if ( ! unit.visibleToOpponents) return false
+    // Dark Templar never yield unseen guns: cloak is the armor, and
+    // leaving free kills to dodge shells that cannot see them donates
+    // the hunt for nothing. Only a hurt hull under live detection with
+    // a vessel answer or fresh shots incoming walks out.
+    if (Protoss.DarkTemplar(unit) && ! DarkTemplarEvade.shouldYieldGuns(
+      unit.totalHealth,
+      unit.tile.enemyDetected,
+      With.units.enemy.exists(e => e.alive && Terran.ScienceVessel(e)),
+      With.framesSince(unit.lastFrameTakingDamage) < DarkTemplarEvade.yieldAttackedFrames)) return false
     // Single decider: a committed attack (verdict FIGHT) holds its line
     // instead of bouncing at the keep-off band - yielding there is what
     // the in-out dither is made of. Everyone else keeps the old yield.

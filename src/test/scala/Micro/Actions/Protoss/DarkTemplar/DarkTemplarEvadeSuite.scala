@@ -76,4 +76,22 @@ class DarkTemplarEvadeSuite extends AnyFunSuite {
     assert( ! DarkTemplarEvade.underDetection(open, Seq((detector, sight))))
     assert( ! DarkTemplarEvade.underDetection(covered, Seq.empty))
   }
+
+  test("an undetected Templar never yields the guns") {
+    assert( ! DarkTemplarEvade.shouldYieldGuns(totalHp = 140, enemyDetected = false, hasVessel = true, attackedRecently = true))
+    assert( ! DarkTemplarEvade.shouldYieldGuns(totalHp = 20, enemyDetected = false, hasVessel = true, attackedRecently = true))
+  }
+
+  test("a healthy Templar holds through detection") {
+    assert(DarkTemplarEvade.yieldHp == 120)
+    assert( ! DarkTemplarEvade.shouldYieldGuns(totalHp = 121, enemyDetected = true, hasVessel = true, attackedRecently = true))
+    assert( ! DarkTemplarEvade.shouldYieldGuns(totalHp = 200, enemyDetected = true, hasVessel = false, attackedRecently = false))
+  }
+
+  test("a hurt Templar yields only to live detection with an answer") {
+    assert(DarkTemplarEvade.shouldYieldGuns(totalHp = 120, enemyDetected = true, hasVessel = true, attackedRecently = false))
+    assert(DarkTemplarEvade.shouldYieldGuns(totalHp = 50, enemyDetected = true, hasVessel = false, attackedRecently = true))
+    assert( ! DarkTemplarEvade.shouldYieldGuns(totalHp = 50, enemyDetected = true, hasVessel = false, attackedRecently = false))
+    assert( ! DarkTemplarEvade.shouldYieldGuns(totalHp = 50, enemyDetected = false, hasVessel = true, attackedRecently = false))
+  }
 }
