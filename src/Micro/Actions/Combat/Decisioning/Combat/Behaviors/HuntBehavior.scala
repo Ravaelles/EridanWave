@@ -28,6 +28,17 @@ object HuntBehavior {
   /** Sight margin past which an invisible target is a ghost, not a contact. */
   val sightMarginPixels: Double = 32.0
 
+  /**
+   * Unit context gate (no game beyond the unit): hunting is warriors'
+   * work - non-warriors, Reavers (pair doctrine) and immobile or
+   * loaded hulls never reach here, whatever the map or the targets.
+   * Map, targets and the verdict stay in the gate below; this answers
+   * only which hulls may hunt at all. The run keeps its own checks
+   * for direct callers, so both paths agree by construction.
+   */
+  def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+    unit.unitClass.isWarrior && ! Protoss.Reaver(unit) && unit.canMove && ! unit.loaded
+
   def run(unit: FriendlyUnitInfo): Boolean = {
     val target = unit.agent.toAttack
     if ( ! shouldHunt(

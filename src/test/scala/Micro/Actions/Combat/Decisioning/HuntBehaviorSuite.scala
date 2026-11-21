@@ -1,7 +1,9 @@
 package Micro.Actions.Combat.Decisioning
 
 import Utilities.Time.Minutes
+import bwapi.UnitType
 import org.scalatest.funsuite.AnyFunSuite
+import testkit.TestKit
 
 class HuntBehaviorSuite extends AnyFunSuite {
 
@@ -73,5 +75,14 @@ class HuntBehaviorSuite extends AnyFunSuite {
 
   test("a three-minute-old mobile contact is forgotten") {
     assert( ! HuntBehavior.remembersMobile(Minutes(3)()))
+  }
+
+  test("only mobile warriors hunt, never Reavers or the immobile") {
+    TestKit.seedWorld()
+    assert(HuntBehavior.appliesToUnit(TestKit.friendly(UnitType.Protoss_Dragoon, 1)))
+    assert(HuntBehavior.appliesToUnit(TestKit.friendly(UnitType.Protoss_Zealot, 2)))
+    assert( ! HuntBehavior.appliesToUnit(TestKit.friendly(UnitType.Protoss_Probe, 3)))
+    assert( ! HuntBehavior.appliesToUnit(TestKit.friendly(UnitType.Protoss_Reaver, 4)))
+    assert( ! HuntBehavior.appliesToUnit(TestKit.friendly(UnitType.Protoss_Pylon, 5)))
   }
 }

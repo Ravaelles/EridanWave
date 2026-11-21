@@ -20,6 +20,10 @@ object TestKit {
     With.frame = frame
     With.mapTileWidth = mapTiles
     With.mapTileHeight = mapTiles
+    // Grid lookups stay empty instead of NPE-ing: observation ticks
+    // register into grids, and a null grid kills every mock on read.
+    With.grids = mock(classOf[Information.Grids.Grids])
+    when(With.grids.unit).thenReturn(Seq())
     val player = mock(classOf[Player])
     val game = mock(classOf[Game])
     when(game.getPlayers).thenReturn(List(player).asJava)
@@ -49,6 +53,10 @@ object TestKit {
   def friendly(unitType: UnitType, id: Int, x: Int = 0, y: Int = 0): FriendlyUnitInfo = {
     val unit = new FriendlyUnitInfo(mockUnit(unitType, x, y), id)
     unit.changeUnitType(ProxyBwapi.UnitClasses.UnitClasses.get(unitType))
+    // Run one observation tick so completion/position/visibility flags
+    // read off the mock instead of staying at construction defaults -
+    // otherwise every mock reads as incomplete and immobile.
+    unit.readProxy()
     unit
   }
 }

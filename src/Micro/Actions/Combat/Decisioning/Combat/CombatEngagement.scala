@@ -31,44 +31,79 @@ import Utilities.?
  */
 private[Decisioning] object EngagePipeline {
 
-  case class Stage(name: String, band: DispatchBand, run: (FriendlyUnitInfo, Combat, Boolean) => Option[Boolean])
+  /**
+   * Contain fire (first claim): a ready weapon shoots instead of
+   * dressing past the kill. Any hull the dispatch sends here - the
+   * fight vote and the hittable target gate the shot below.
+   */
+  object ContainFireStage extends EngageBehaviorStage("ContainFire", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-  val stages: Vector[Stage] = Vector(
-    // Contain fire: a ready weapon shoots instead of dressing past the kill.
-    Stage("ContainFire", DispatchBand.High, (unit, _, _) =>
-      if (ContainFireBehavior.run(unit)) Some(unit.unready) else None),
-    // No target, or a target the line would only pose at: hunt the
-    // nearest known enemy instead of dressing until the timeout. Runs
-    // ahead of the advance gate on purpose: the gate walks the march
-    // when there is nothing to duel, but a remembered contact is
-    // something to duel, and on UMS maps hunting is always right -
-    // otherwise the line dresses at stale slots while the last enemy
-    // walks away and the map times out. Off UMS the hunt is inert
-    // (no game access beyond the umsMode flag), so macro order is
-    // untouched.
-    Stage("Hunt", DispatchBand.Medium, (unit, _, _) =>
-      if (HuntBehavior.run(unit)) Some(true) else None),
-    // No advance, no prey: walk the march instead of dueling.
-    // Probe the gate inputs (change-only): when the technique stays
-    // silent for a whole duel, this row says whether advance ever opened.
-    Stage("AdvanceGate", DispatchBand.Low, (unit, combat, advance) => {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] =
+      if (ContainFireBehavior.run(unit)) Some(unit.unready) else None
+  }
+
+  /**
+   * Target-less hunt (second claim): a warrior with fight consensus but
+   * no useful target picks the nearest known hittable enemy instead of
+   * dressing until the timeout. Unit contract beside the behavior;
+   * the map, the target and the verdict gate below.
+   */
+  object HuntStage extends EngageBehaviorStage("Hunt", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = HuntBehavior.appliesToUnit(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] =
+      if (HuntBehavior.run(unit)) Some(true) else None
+  }
+
+  /**
+   * No advance, no prey (third claim): walk the march instead of
+   * dueling. Any hull - the gait is the march's, not a duel's.
+   */
+  object AdvanceGateStage extends EngageBehaviorStage("AdvanceGate", DispatchBand.Low) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] = {
       Debugging.Probe.note("Gate", unit.id, s"advance=$advance prey=${preyDrive(unit)} consensus=${combat.fightConsensus} home=${unit.intent.marchHome} commit=${unit.agent.commit}")
       if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); Some(true) } else None
-    }),
-    // Zealot leash: a Zealot never operates past 5.5 tiles from our
-    // Dragoons - a lone charge into their guns while ours fall back is a
-    // donation, not pressure. Scouts, committed rushers, suicides and yolo
-    // pushes keep their explicit orders; with no Dragoons mustered there
-    // is nothing to leash to. Rejoins the line instead of dueling alone.
-    Stage("ZealotLeash", DispatchBand.Medium, (unit, combat, _) =>
-      if (leashZealot(unit, combat)) Some(true) else None),
-    // Cluster cohesion: a warrior moving without a victim, neither
-    // retreating nor cooling under fire, never drifts past fourteen tiles
-    // from its cluster's centroid. Inside a battle that unit is lost -
-    // walking at ghosts, stale slots or old orders - while the cluster
-    // fights without it. Rejoins instead of hunting the map.
-    Stage("ClusterRejoin", DispatchBand.Medium, (unit, combat, _) =>
-      if (rejoinCluster(unit, combat)) Some(true) else None))
+    }
+  }
+
+  /**
+   * Zealot leash (fourth claim): a Zealot never operates past 5.5 tiles
+   * from our Dragoons - a lone charge into their guns while ours fall
+   * back is a donation, not pressure. Only blades; scouts, committed
+   * rushers, suicides and yolo pushes keep their explicit orders, and
+   * with no Dragoons mustered there is nothing to leash to.
+   */
+  object ZealotLeashStage extends EngageBehaviorStage("ZealotLeash", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Zealot(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] =
+      if (leashZealot(unit, combat)) Some(true) else None
+  }
+
+  /**
+   * Cluster cohesion (fifth claim): a warrior moving without a victim,
+   * neither retreating nor cooling under fire, never drifts past
+   * fourteen tiles from its cluster's centroid. Warriors only; the
+   * explicit orders, the battle state and the contact exemptions gate
+   * below.
+   */
+  object ClusterRejoinStage extends EngageBehaviorStage("ClusterRejoin", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      unit.unitClass.isWarrior && ! unit.loaded
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] =
+      if (rejoinCluster(unit, combat)) Some(true) else None
+  }
+
+  val stages: Vector[EngageBehaviorStage] = Vector(
+    ContainFireStage,
+    HuntStage,
+    AdvanceGateStage,
+    ZealotLeashStage,
+    ClusterRejoinStage)
 
   case class DuelStage(name: String, band: DispatchBand, run: (FriendlyUnitInfo, Combat) => Boolean)
 
@@ -245,7 +280,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     var i = 0
     var claimed: Option[Boolean] = None
     while (i < EngagePipeline.stages.length && claimed.isEmpty) {
-      claimed = EngagePipeline.stages(i).run(unit, combat, advance)
+      claimed = EngagePipeline.stages(i).shouldRun(unit, combat, advance)
       i += 1
     }
     if (claimed.isDefined) return claimed.get
