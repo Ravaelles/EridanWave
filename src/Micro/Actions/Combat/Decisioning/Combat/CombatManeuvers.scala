@@ -190,8 +190,8 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     val anchor = if (fighting.nonEmpty) fighting else mates
     val centroid = if (anchor.isEmpty) unit.pixel else Maff.centroid(anchor.map(_.pixel))
     val mateTiles = Maff.minBy(With.units.ours.view.filter(o =>
-      o.id != unit.id && o.alive && Protoss.Zealot(o)))(_.pixelDistanceCenter(unit.pixel))
-      .map(_.pixelDistanceCenter(unit.pixel) * Maff.inv32)
+      o.id != unit.id && o.alive && Protoss.Zealot(o)))(_.pixelDistanceEdge(unit.pixel))
+      .map(_.pixelDistanceEdge(unit.pixel) * Maff.inv32)
       .getOrElse(Double.PositiveInfinity)
     val (usSkim, foeSkim) = unit.combatForecast
       .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
