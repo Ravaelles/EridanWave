@@ -62,6 +62,7 @@ def load_march(path, only_unit=None):
     by_unit = defaultdict(dict)
     if not path:
         return by_unit
+
     pat = re.compile(r'PROBE March (\d+) (\d+) (.*)')
     with open(path, encoding='utf-8', errors='replace') as f:
         for line in f:
