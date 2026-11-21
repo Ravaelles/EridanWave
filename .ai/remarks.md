@@ -8,7 +8,7 @@
 - 14-vs-16 dragoon ball (`ums/rav/protoss/14Drag_v_16Drag.scm`):
   formation + focus trades better but wins unstable; suspects:
   mop-up, partial focus (wings out of shared-target range).
-- Single unexplained suite flake before three 290/290 greens: watch.
+- Single unexplained suite flake before three 1208/1208 greens: watch.
 
 ## Parked / blocked
 

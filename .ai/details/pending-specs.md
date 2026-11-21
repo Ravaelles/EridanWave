@@ -11,10 +11,9 @@
   base.
 - HT: committed spellIntent suppresses ClusterRejoin (no rejoin
   yo-yo on the cast walk).
-- Artillery (`ArtilleryKeepOff`: 12.8 + woundBonus(0, 2.0) tiles from
-  known tanks) outranks duels; TankHug keeps the point-blank
-  exception (cooling warriors close sieged tanks to 0.2); 1-tile
-  release latch.
+- Artillery (`ArtilleryKeepOff`: 13.1 + woundBonus(0, 2.0) tiles from
+  known tanks, 1-tile release latch) outranks duels; TankHug keeps the
+  point-blank exception (cooling warriors close sieged tanks to 0.2);
 - Observer Vessel ring: 11-tile keep-off vs Science Vessel (release
   13); the detected eye holds 4 off the gun centroid.
 - Ghost lockdown: Carrier/Arbiter/Shuttle never inside 9.6 tiles of
@@ -27,7 +26,7 @@
   carriers or siege are known; dying hulls and proxy keep their outs.
 - PackRegroup: never fires in contact; anchors on fighting mates
   (not the squad centroid); mayFight needs HP > 20.
-- ZealotLeash: fight within 10 of a fighting warrior; latch 5.5/4.5.
+- ZealotLeash: dragoon leash 5.5, release 4.5.
 - Natural crescent hold: SPEC ONLY (natural choke + N tiles, 40s,
   only if ASU <= 140 vs Protoss). Needs guard-machinery reading.
 - Carrier vs sieged tank with no other AA: implemented as attack.

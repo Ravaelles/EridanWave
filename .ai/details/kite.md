@@ -1,47 +1,23 @@
 # Kite doctrine (evidence + live read guide)
 
-- Melee on top always kites while cooling (range abuse, not the
-  volley race). Against ranged guns only the dying yield now
-  (dedc29fdf): below 61 total HP (`KiteAway.kiteVsRangedHp`) the hull
-  saves itself while cooling past 10, everything else holds its
-  volleys. Mild-wound rotation is gone - in even mirrors it donated
-  volleys (StarEngine `OutnumberedKiteSuite` 3/3: symmetric movement
-  trades symmetric kills; focus-kite 12 kills vs focus-plant 14 down
-  two guns).
-- Melee kites slow lings (27149e81c), and speedlings only as an
-  intact pack (pack-gate): alone a blade cannot outrun them, so it
-  stands; balled the line kites together (`MeleeKiteAway.packKiteTiles`
-  1.0, seam reads nearest zealot mate). Validating on 2Zeal.
-- UMS death log (`DeathWatch.watches`, 68e8ab9f3): on micro maps
-  every warrior death dumps frame, unit and last orders
-  (`DEATHWATCH ... died f...`); ladder keeps the quiet set
-  (Observer/Shuttle/DT/Reaver). First-dragoon-dead frame judges kite
-  and dress on 14v16 (baseline f194 pre-61, f213-257 post-61).
-- 14v16 scoreboard: kite61 alone won 16/7 f1355 (first win ever)
-  plus a 13/8 timeout; far-wait era 2W/5L but every fight
-  competitive (11-16 kills vs 5-7 before) with the wait firing
-  (up to 751 Waiting rows in the 16/11 win). Verdict: keep
-  iterating, not reverting.
-- Easy round green (slowling jar): 1DragZeal, 1DragLing, 1Zeal x3,
-  1DragHydra, 3Zeal, 2DragUpg, 10Zeal, 1DragWounded all VICTORY;
-  single losses re-ran to wins (variance, not the veto).
-  1Drag post-kite61 won twice (was 0/4): the mild mill was the
-  dither.
-- Failing-maps round green: ZealDrag W 9/5 (4-2 overall),
-  3Drag W 3/2, 16Drag W 16/13, 3DragHydra W 5/1, Reav_v_Drag W 7/6,
-  14Drag W 16/11, 1DragWounded W 1/0. 1DragWounded sits 2-3 on long
-  grinds (variance); 2Zeal stays parked (kills 2-6, 1W/8L).
-- Far dress-and-wait (d686ff703): `MarchDress.holdFarWait` latch
-  (fires at five out, holds through the creep, releases on contact
-  or past six; warriors only, UMS mirrors, never under reavers) +
-  creep 0.15 tiles every 24f in `marchLegs`. Outranks memory duels
-  (d5cdffa1d); race read off seen units (8055e88ed).
-- Zealot ball (built 574d2bb11, REVERTED e71d56d09): zero fires in
-  four games - packs already hold shoulder-to-shoulder.
-- UMS endgame (`NoRetreat.umsEndgame`, fe2e62cae): past ten seconds
-  a unit with nothing in range holds instead of withdrawing - duels
-  keep the skim vote. Validated: LingsHydra timeouts gone (W f1619,
-  W f1322); 14v16 recovered (W f1322) after the blanket version
-  collapsed it 0-3 fast.
-- 2Zeal parked hard (upgraded 2v6: kills 2-6 across runs, 1W/7L):
-  pack-kite is the ceiling without a melee shared pick (declined).
+- Ranged: only the dying yield (below 61 total HP while cooling past
+  10, `KiteAway.kiteVsRangedHp`); everything else holds its volleys.
+  Mild-wound rotation deleted - in even mirrors it donated volleys
+  (StarEngine: focus-kite 12 kills vs focus-plant 14 down two guns).
+- Melee: kites slow lings; speedlings only as an intact pack
+  (`MeleeKiteAway.packIntact`, seam reads nearest zealot mate) - alone
+  a blade stands. 2Zeal parked hard (upgraded 2v6, 1W/7L): the ceiling
+  without a melee shared pick (declined).
+- Far dress-and-wait (`MarchDress.holdFarWait`: fires at five out,
+  holds through the creep, releases on contact or past six; warriors
+  only, UMS mirrors, never under reavers) outranks memory duels; race
+  read off seen units.
+- UMS endgame (`NoRetreat.umsEndgame`): past ten seconds a unit with
+  nothing in range holds instead of withdrawing - duels keep the skim
+  vote.
+- Death log (`DeathWatch.watches`): micro maps dump frame, unit and
+  last orders on every warrior death; first-dragoon-dead frame judges
+  kite and dress on 14v16.
+- 1DragWounded regressed post-audit (was ~50/50, now losing with k0):
+  open item with evidence in the queue; the kite kernel itself still
+  pins the doctrine in `WoundedDuelSuite`.

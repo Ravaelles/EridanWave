@@ -1,9 +1,9 @@
 # Architectural challenges (living list, newest last)
 
 Named patterns only: one line each (what, where, open or closed).
-Rule 19 (conventions): every solved problem gets one paragraph here.
+Rule 11 (conventions): every solved problem gets one paragraph here.
 Retreats keep one verdict per unit per frame; latches stay the single
-hysteresis home (rule 14).
+hysteresis home (rules 9-10).
 
 ## Open
 
@@ -25,15 +25,10 @@ hysteresis home (rule 14).
 - March-vs-technique movement ownership: both write movement (march
   terminus/intent, technique decision/move) and only convention
   separates them; every flap (HoldingDuel jitter, Marching/Retreat,
-  Contain/PushMain) is this seam disagreeing with itself. Specimen
-  2026-11: an early lone Dragoon alternating LoneMarch/Approach+Engage/
-  Dress every 1-2 frames - march, technique and formation each owning
-  a frame. Measured 2026-11 (`Motion` probe on 1DragWounded): the
-  desired owner is stable for hundreds of frames at a time - the
-  inputs are not the problem, the readers are. Specimen
-  2026-11: an early lone Dragoon alternating LoneMarch/Approach+Engage/
-  Dress every 1-2 frames - march, technique and formation each owning
-  a frame.
+  Contain/PushMain) is this seam disagreeing with itself. Measured
+  2026-11 (`Motion` probe on 1DragWounded): the desired owner is
+  stable for hundreds of frames at a time - the inputs are not the
+  problem, the readers are.
 - Wall-in doctrine duplication: Terran (`TerranWallIn`,
   `EnemyWallInDetected`, `BreakTerranWallIn`, `WallInBan`) and Protoss
   (`ProtossWallIn`) grew as parallel implementations; the next wall
@@ -50,10 +45,7 @@ hysteresis home (rule 14).
   it permanently, so the only live edge is pre-Bay request churn while
   dragoons hover at the boundary. If a Bay request start/stop saw ever
   shows in trace, the release band goes in the kernel with a
-  gameplan-level latch (open, watch only - rules 14/17). The ratchet
-  has since moved into the policy as an explicit committed-play bypass
-  (`haveReaver`/`haveBay` flow); the watch stands for pre-commitment
-  request churn. The ratchet
+  gameplan-level latch (open, watch only - rules 9/17). The ratchet
   has since moved into the policy as an explicit committed-play bypass
   (`haveReaver`/`haveBay` flow); the watch stands for pre-commitment
   request churn.
@@ -62,18 +54,6 @@ hysteresis home (rule 14).
   band. No flap observed (duel/contact guards release them in practice);
   if a hunt/pose or approach/regroup dither ever traces to one, the band
   goes in with a unit-keyed Latch at the caller (open, watch only).
-- Lone-march ownership (2026-11): the gate marched lone hulls at the
-  goal past live guns (330 LoneMarch, zero HoldingDuel, zero technique
-  acts in a 2506-frame 1DragWounded loss). Closed in two steps: the
-  gate yields to the duel the legs would hold (`MarchUnit.hasDuel`,
-  same predicate both sides), then to a visible-armed 20-tile cordon
-  (`ArmedCordon`, latched 21 out / 19 in, fogged memories never pin).
-  Proved in StarEngine (march + duel contracts) and live (HoldingDuel
-  403 vs LoneMarch 1 in the re-run win).
-- Temporary testing switches (`Strategery.StrategyToggles`, 2026-11):
-  PvP Robo family and Reaver track default OFF for the test series;
-  revert after. The file tracks them so a temporary kill cannot
-  fossilize into doctrine - flip back is a revert of two vars.
 - Mode selection as if/else (`SquadAttack.chooseMode`): the squad's
   destination ladder is the only first-claims chain not held as data
   (`MarchGates`, `EngagePipeline`, `HandleEnemyCombatBuildings` all pin
@@ -188,3 +168,11 @@ hysteresis home (rule 14).
   seam), scenarios assert on emergence. Pattern: when live proof
   costs ladder games, pin the mechanism in-engine and keep ladder
   for the doctrine.
+- Lone-march ownership (2026-11): the gate marched lone hulls at the
+  goal past live guns (330 LoneMarch, zero HoldingDuel, zero technique
+  acts in a 2506-frame 1DragWounded loss). Closed in two steps: the
+  gate yields to the duel the legs would hold (`MarchUnit.hasDuel`,
+  same predicate both sides), then to a visible-armed 20-tile cordon
+  (`ArmedCordon`, latched 21 out / 19 in, fogged memories never pin).
+  Proved in StarEngine (march + duel contracts) and live (HoldingDuel
+  403 vs LoneMarch 1 in the re-run win).

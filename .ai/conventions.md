@@ -11,10 +11,10 @@ Ordered most to least important. Each is one rule; keep them short.
    The legacy `tests/` folder is grandfathered - leave it alone.
 2. **Every behavior states its unit context first.** A behavior
    that can fire says which units it ever applies to - race and class,
-   ground or air, worker or warrior, seen or detected on both sides,
-   whose weapon reaches whom - in one `appliesToThisUnit` gate beside
-   its `logicApplies`, behind a single `shouldRun` the pipeline calls
-   instead of `run`. New behaviors without the gate do not compile.
+   ground or air, worker or warrior, mobile or held, loaded or free -
+   in one `appliesToUnit` gate beside its `execute`, behind a single
+   final `shouldRun` the pipeline calls instead of `run`. New behaviors
+   without the gate do not compile.
 3. **Reproduce before fixing.** Every behavior change starts from a
    live game or a StarEngine repro - StarEngine first, add the missing
    mechanic if it lacks one. Never fix blind.
