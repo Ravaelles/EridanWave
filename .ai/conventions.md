@@ -1,23 +1,73 @@
 # Working conventions
 
-1. **English for code, user's language for communication.** 100% of code and code comments is written in English: identifiers, comments, commit messages, and documentation diagrams. Communication with the user happens in the language the user uses in their prompt.
-2. **Reproduce every behavior problem in StarEngine first.** Temporary repro suites are allowed and cheap; significant behaviors stay in the project under `tests-starengine/`, run singly on demand (`mvn -o -Pstarengine test -Dsuites=<Suite>`), never in the default suite. If StarEngine lacks a mechanic the repro needs, implement the mechanic.
-3. **StarEngine code follows SOLID rigorously.** One reason to change per class (SRP); new behaviors arrive as new classes behind stable seams (OCP) - pilots decide, the engine advances, constraints adjust.
-4. **Pragmatic understanding, not perfectionist understanding.** We always aim to understand the source of a problem before fixing it, but we never chase exhaustive understanding. Prefer the smallest investigation that unblocks a confident fix and minimizes long-term maintenance cost.
-5. **Speak up with a better idea.** If you believe there is a better solution than what was asked for, say so and propose it. Never blindly execute a sequence of steps; recommend the best solution and wait for confirmation when the direction is materially different.
-6. **Follow SOLID.** In particular, take Single Responsibility Principle (SRP) and Open/Closed Principle (OCP) seriously: one reason to change per unit, and extend behavior through new code rather than by modifying existing code.
-7. **Rebuild the bot jar at the end of the work.** When you send the final message for a task, run `scripts/build-jar.sh` first (incremental, skips when nothing changed) so the owner never waits on a cold rebuild for the next game start.
-8. **Commit each finished feature as a coherent whole, autonomously.** After completing a functionality that forms a consistent unit, commit it. A commit must never contain documentation or text-only changes by themselves; docs and comments ride along as part of the feature they describe. You may freely commit changes you did not author as long as they belong to the committed whole. Do not ask before committing: a finished unit means green build, green tests and a clean style gate - commit it with an English message right away. Never commit red or half-moved states; never push without being asked.
-9. **Test through the build tool, next to the code by convention.** Unit tests live in `src/test/scala`, mirroring the `src/` tree one `*Suite` per unit (ScalaTest FunSuite), and run with `scripts/tests.sh` (all base tests, never StarEngine - those carry the `starengine.Slow` tag and run ad hoc via `scripts/starengine.sh`). Do not co-locate test files with production files: the build owns the layout, and it keeps test code out of the shipped fat jar. Prefer testing pure decision logic behind a thin game-aware seam (see `HuntLogic`/`KillLedger.record`); follow TDD for complex rules. The legacy `tests/` folder (standalone Apps run by hand) is grandfathered - leave it alone.
-10. **Blank lines around `return` are gated, nothing else is.** Run `python3 scripts/check-blank-lines.py` on touched files before committing (rules in `tools/blank-lines.xml`, ported from Atlantis `tools/checkstyle.xml`: blank after a `return`, blank before a final `return`). Do not reformat untouched legacy code to satisfy it - fix only your own new violations, same as Atlantis skips its Indentation/EmptyLineSeparator churn.
-11. **Noisy per-frame diagnostics go through the keyed ledger, not raw log spam.** `Debugging.ErrorLedger.note(key, priority, message)` with a stable greppable key (`area.Cause.at.Place:line`) instead of repeating full traces every frame; query token-cheap with `python3 scripts/summarize-errors.py <errors.json> [--min-priority medium] [--key ...]` (one line per key, worst first). Exceptions are funneled automatically via the logger.
-12. **Distances are tiles unless the name says pixels.** New code stores thresholds in tiles (`scourgeFleeDist`, never `scourgeFleePixels`); the engine reports pixels, so convert once at the seam (`px / 32.0 < fleeDist`). Existing `pixel*` engine APIs stay as-is - this rule governs our naming and our thresholds, not a rewrite of the engine.
+Ordered most to least important. Each is one rule; keep them short.
 
-13. **Unit packages shadow race matchers, so import races explicitly.** In `Micro.Actions.Protoss.<Unit>` never wildcard-import `ProxyBwapi.Races` (`._` or `.Protoss._`): the package name resolves first and `Protoss.DarkTemplar` reads as the package, not the matcher. Import races by name (`{Protoss, Terran, ...}`).
-14. **Hysteresis has one home: `Utilities.Latch`.** A boolean that turns on sharply and releases past a margin, keyed by unit id, is `Latch` - never a fresh `mutable.HashMap[Int, Boolean]` with its own enter/release pair. Latches register themselves and `Latches.resetAll()` clears the whole family once per game (`EridanWave`), because unit ids restart every game. A pure kernel may still take the thresholds and pass the current side in (`RegroupLatch` shape) when the caller already owns the state; anything keyed by unit goes through `Latch`.
-15. **Doctrine picks sit above `Target`, and say so.** `Target` owns the squad-wide ladder: assignment (`targetsAssigned`), scoring and the required filters. A unit doctrine that outranks it (`CrucialAirSnipe`, `DarkTemplarTargets`) is a documented pre-`Target` override: one target, fixed priority, acting before retreat and before `Target.choose`. Name the rule in the header and do not grow a second scoring ladder for the same question; when a doctrine needs squad assignment, it belongs in `Target` as a filter instead.
-16. **stdout is the launcher's channel, the logger is the game's.** `System.out` is for launchers and pre-logger startup (it works before `With.logger` exists and `wine-run.sh` tees it); in-game diagnostics go through `With.logger` or `ErrorLedger`. Do not mix them for one event - the single exception is DeathWatch death reports, the only per-unit record on traceless UMS maps.
-17. **Every decision threshold ships with its entry and its release.** A sharp edge (`dist < X`) without a release band is a future flap: state the entry condition and the release condition up front, and route unit-keyed state through `Utilities.Latch` (rule 14) - never a bare boolean re-evaluated per frame. A pure kernel takes both thresholds; the seam owns the latch; the suite pins both numbers in the same commit. A requirement that names only one side of the boundary is incomplete - ask for the other before coding it.
-18. **One writer per movement.** A behavior may EITHER vote a cluster posture (Fight/HoldLine/Withdraw/Regroup) OR move a unit relative to its slot (offset, step, return) - never both, and never a free map point without naming the posture it serves. Named exceptions: survival (shells, Lockdown, boarding), duel contact (chase, finish), pair logistics, slotless doctrines (DT, Corsair, rush, scouts). Everything else that writes a destination (`forceTo`/`decision.set`/an order with a point) is caught by `scripts/decision-writers.py` - an unlisted writer fails the gate and returns to the author with three questions: *which posture does it assume? do the slots stay? where is the entry/release hysteresis?* No answer to all three - no entry.
-19. **Every solved problem gets an architecture review.** After the fix lands, spend one paragraph asking: is this the third instance of the same shape? Would a shared gate, a pure kernel, or a deleted special case have prevented it? Name the pattern in `.ai/architectural-challenges.md` (one line: what, where, open or closed) and link the fixing commit. Latches stay the single hysteresis home (rule 14); retreat keeps exactly one verdict per unit per frame - if a new retreat/hold/dress decision appears anywhere else, it merges into the existing one instead.
-20. **Uncommitted changes in the tree belong to the owner.** Nobody else works in this repo, so a dirty working tree is the owner's hand, not a stranger's: read it, pre-analyze what it intends, and commit it as its own unit (a tweak keeps its own message; unrelated hunks split). Never silently drop it, never absorb it into an unrelated commit, never leave it uncommitted past the session it appeared in.
+1. **TDD, no exceptions.** Complex rules ship test-first: a failing
+   suite, then code that greens it. Pure kernels beside their callers
+   (`*Suite` mirrors `src/`, never co-located); game-coupled reads
+   stay behind thin seams (`TestKit` seeds game-free geometry).
+   Temporary repro suites are cheap; keepers live in
+   `tests-starengine/` (tagged slow, never in the default suite).
+   The legacy `tests/` folder is grandfathered - leave it alone.
+2. **Reproduce before fixing.** Every behavior change starts from a
+   live game or a StarEngine repro - StarEngine first, add the missing
+   mechanic if it lacks one. Never fix blind.
+3. **Verify by execution.** Run the code, run the tests, read the
+   evidence. State hypotheses and outcomes; distrust any claim the
+   last run did not confirm.
+4. **Green commits per unit, never push unsolicited.** A finished unit
+   (green build, green tests, clean style gate) commits at once with
+   an English message - including hunks you did not author, as long
+   as they belong to the unit. Docs ride along, never alone. Never
+   red, never pushed unless asked.
+5. **English code, user's language out.** 100% of code, comments and
+   commits in English; talk to the user in their language.
+6. **One reason to change; extend, never rewrite.** SRP/OCP: new
+   behavior arrives as a new object plus one dispatch line, never as
+   a rewrite of untouched code.
+7. **One writer per movement.** A behavior votes a posture OR moves a
+   unit to its slot - never both, never a free map point. Unlisted
+   writers fail the `decision-writers` gate until they answer: which
+   posture, do slots stay, where is the hysteresis. Named exceptions:
+   survival, boarding, pair logistics, slotless doctrines.
+8. **Hysteresis lives in `Latch`; every edge ships entry and release.**
+   Unit-keyed holds go through `Latch` (reset per game), never a fresh
+   map. A threshold naming one side only is incomplete - ask for the
+   other before coding it.
+9. **One verdict per question.** Retreat, motion, production: a single
+   object owns it and every reader obeys. A new vote-holder merges
+   into the existing one instead.
+10. **Every fix gets an architecture review.** One paragraph per solved
+    problem: third instance of the shape? Shared gate, pure kernel,
+    deleted special case? Log it in
+    `.ai/architectural-challenges.md` with the fixing commit.
+11. **Rebuild the bot jar when done.** Run `scripts/build-jar.sh`
+    before the final message so the owner never waits on a cold build.
+12. **The owner's tree changes are theirs.** A dirty working tree is
+    the owner's hand: pre-analyze, adopt, split unrelated hunks,
+    commit separately. Never drop, absorb, or leave past the session.
+13. **Diagnostics through the ledger; stdout is the launcher's.**
+    Per-frame noise goes to `ErrorLedger` with a greppable
+    `area.Cause.at:line` key, never raw spam. In-game words go through
+    the logger; `System.out` is for launchers only (DeathWatch death
+    reports excepted).
+14. **Tiles unless pixels.** New thresholds in tiles; convert once at
+    the seam. Existing `pixel*` engine APIs stay.
+15. **Blank lines around `return`, nothing else.** Gate only your own
+    new violations; never reformat untouched legacy code.
+16. **Protoss unit packages import races explicitly.** The package name
+    shadows matchers - import `{Protoss, Terran, ...}` by name, never
+    wildcard.
+17. **Doctrine outranks `Target` and says so.** A pre-`Target` override
+    is one target, fixed priority, documented in its header. No second
+    scoring ladder for the same question; squad assignment belongs in
+    `Target` as a filter instead.
+18. **Disagree with a better idea; investigate cheapest-first.** Say so
+    and propose it instead of executing blindly; pause for
+    confirmation when the direction is materially different. Prefer
+    the smallest investigation that unblocks a confident fix.
+19. **UMS and StarEngine judge behavior; ladder validates.** Maps and
+    suites are the source of truth, ladder games only confirm.
+20. **Minimal diffs, stable line endings.** Default CRLF for new Scala
+    unless the file says otherwise; no whitespace-only or
+    line-ending-only edits.
