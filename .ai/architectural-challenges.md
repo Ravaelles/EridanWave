@@ -110,12 +110,13 @@ hysteresis home (rule 14).
   `MotionVerdictSuite` + `MarchGateOrderSuite` + `HuntBehaviorSuite` +
   `ClusterCohesionSuite` + `ArmyMarchSuite`, proven live (1DragWounded
   `held=Duel` stable across hundreds of frames, `Dress` blips absorbed).
-- Duel-hold on ghosts (`duelHoldsMarch` + `HoldingDuel` label):
-  any `toAttack` (stale memory, unhittable watcher) pinned the march
-  while the technique tugged home and out every few frames (Crona
-  f5900 zealots vs nothing). Closed by `Target.holdsDuelTarget`
-  (hittable-even-if-detected only), pinned in `TargetMemorySuite`
-  and `ArmyMarchSuite` (ghost + watcher rows never hold).
+- Duel-hold on ghosts (was `duelHoldsMarch` + `HoldingDuel` label, both
+  since deleted): any `toAttack` (stale memory, unhittable watcher)
+  pinned the march while the technique tugged home and out every few
+  frames (Crona f5900 zealots vs nothing). Closed by
+  `Target.holdsDuelTarget` (hittable-even-if-detected only), pinned in
+  `TargetMemorySuite` and `ArmyMarchSuite` (ghost + watcher rows never
+  hold).
 - Far-wait creep eaten by reissue suppression (found BY
   `ArmyMarchSuite` before it ever ran live): a single creep frame
   after Holds never moves (order-change skips movement), so the
@@ -173,27 +174,13 @@ hysteresis home (rule 14).
 - Dead-code drift: `KiteAway` carried a mild-wound ladder,
   fresh/median gates and four knobs nobody called after the 61-HP
   rewrite - pure deletion, no behavior change (`ff18e7ab7`).
-- LoneMarch/Abuse/HoldingDuel keep-or-delete (2026-11): kept. The
-  flap log showed reader disagreement, not concept guilt: HoldingDuel
-  pins mop-up (timeouts without it), Abuse owns outranged pack duels
-  (pinned in mirror suites), LoneMarch already is a 17/13 Latch (the
-  template, marching past instead of milling alone). Deleting any of
-  the three regresses proven wins; the pain is owned by the
-  single-verdict item above.
-- Production parity in-engine (`starengine.production`, 2026-11):
-  production gates proven without an economy - free gate, power and
-  stockpile in, hulls out at table rate, vetoes as silence. First
-  non-micro StarEngine module; the fight engine untouched (constraint
-  seam), scenarios assert on emergence. Pattern: when live proof
-  costs ladder games, pin the mechanism in-engine and keep ladder
-  for the doctrine.
-- LoneMarch/Abuse/HoldingDuel keep-or-delete (2026-11): kept. The
-  flap log showed reader disagreement, not concept guilt: HoldingDuel
-  pins mop-up (timeouts without it), Abuse owns outranged pack duels
-  (pinned in mirror suites), LoneMarch already is a 17/13 Latch (the
-  template, marching past instead of milling alone). Deleting any of
-  the three regresses proven wins; the pain is owned by the
-  single-verdict item above.
+- HoldingDuel removed outright (2026-11, owner call): the march never
+  pins feet to the ground for a duel anymore - it always marches,
+  duels own themselves through the technique. The detector showed the
+  hold alternating against keep-off and technique holds, and years of
+  flaps traced to readers disagreeing over one frame. LoneMarch/Abuse
+  stay (load-bearing, suite-pinned); the verdict bus keeps ticking for
+  the Hunt/rejoin/lone-march gates.
 - Production parity in-engine (`starengine.production`, 2026-11):
   production gates proven without an economy - free gate, power and
   stockpile in, hulls out at table rate, vetoes as silence. First

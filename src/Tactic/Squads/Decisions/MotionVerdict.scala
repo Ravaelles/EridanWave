@@ -5,14 +5,17 @@ import Lifecycle.PerGame
 import scala.collection.mutable
 
 /**
- * Motion verdict (pure mode order, no game access): one owner per unit
- * per frame. Withdraw outranks everything (a held retreat walks home,
- * never duels on the way out), contact outranks dressing (a lone hull
- * with a hittable duel or incoming fire holds the duel instead of
- * marching at the goal), dressing outranks the open march. Read by the
- * march, the technique and the formation from the same inputs both
- * phases already measure - the owners keep their math, the ownership
- * stops being renegotiated every frame.
+ * Motion verdict (pure mode order, no game access): one contact readout
+ * per unit per frame. Withdraw outranks everything (a held retreat walks
+ * home, never duels on the way out), contact outranks dressing (a lone
+ * hull with a hittable duel or incoming fire is dueling, not marching),
+ * dressing outranks the open march. The march ticks it every frame and
+ * the gates read the latched side instead of re-deriving their own;
+ * the legs always march and the technique duels through its own
+ * orders, so no label pins feet to the ground. Upgrades preempt sharply
+ * (contact answers the same frame the march sees it), downgrades wait
+ * out a short release - a one-frame target flicker never flips the
+ * gates mid-duel.
  *
  * Stage 2 owns the frame: the march ticks the desired owner every frame
  * and every reader obeys the latched verdict instead of re-deriving it.

@@ -192,11 +192,12 @@ object MarchOrders {
     val verdictRetreat = RetreatVerdict.held(unit.id, With.frame) &&
       ! ClusterPosture.overrulesRetreat(squad.battlePosture, facts.armyUnitsScore)
     // Stage 2 motion verdict: tick the desired owner from the fresh duel
-    // and dressing scans, then every gate and leg below reads the latched
-    // side instead of re-deriving its own - one owner per unit per frame.
-    // Upgrades preempt sharp (contact answers the same frame the march
-    // sees it), downgrades wait out the release, so a one-frame target
-    // flicker never marches the duel out of the map.
+    // and dressing scans. The gates read the latched side instead of
+    // re-deriving their own; the legs always march, the technique duels
+    // through its own orders. Upgrades preempt sharp (contact answers
+    // the same frame the march sees it), downgrades wait out the
+    // release, so a one-frame target flicker never marches the duel
+    // out of the map.
     val wanted = MotionVerdict.desired(verdictRetreat, marchUnit.hasDuel, farWaitHolding(unit))
     MotionVerdict.update(unit.id, wanted, With.frame)
     val verdictDuel = MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Duel
@@ -220,12 +221,13 @@ object MarchOrders {
         val finalTravel = getTravel(unit, squad, defaultReturn)
         marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat)
     }
-    // Stage 2 motion audit: the desired owner, the latched verdict every
-    // reader obeys, and what the march actually ordered. The change-only
+    // Stage 2 motion audit: the desired owner, the latched verdict the
+    // technique obeys, and what the march actually ordered. The change-only
     // probe keeps quiet maps quiet; want-vs-held disagreements inside the
-    // release are the flicker the bus absorbs, have-vs-held ones are the
-    // frames a reader still renegotiates. Duels own no march label: the
-    // legs always march, the technique duels through its own orders.
+    // release are the flicker the bus absorbs. Duels own no march label:
+    // the legs always march, the technique duels through its own orders -
+    // so have=Duel never appears and want=Duel against have=Advance is
+    // the healthy split, not a flap.
     val actual = marchLabel match {
       case MarchLabel.Retreating    => MotionVerdict.Withdraw
       case MarchLabel.WaitingForPack => MotionVerdict.Dress
