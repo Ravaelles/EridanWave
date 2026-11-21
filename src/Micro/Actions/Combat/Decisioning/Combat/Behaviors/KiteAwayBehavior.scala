@@ -114,9 +114,14 @@ object KiteAwayBehavior {
 
   private def holdsAgainst(unit: FriendlyUnitInfo, chaser: UnitInfo): Boolean = {
     if (Terran.Vulture(chaser)) {
+      // Our reach, never the chaser's: at 4-5 tiles a Dragoon cannot
+      // reply to a Vulture, so measuring "in range" against the
+      // Vulture's five tiles pins a hold with a silent gun - the unit
+      // stands inside enemy range instead of kiting. Potshot reads the
+      // same duel off our range; the hold must agree with it.
       HoldToShoot.shouldStandVsVulture(
         unit.pixelDistanceEdge(chaser),
-        chaser.pixelRangeAgainst(unit),
+        unit.pixelRangeAgainst(chaser),
         unit.cooldownLeft,
         With.latency.latencyFrames,
         chaser.speedApproaching(unit.pixel),

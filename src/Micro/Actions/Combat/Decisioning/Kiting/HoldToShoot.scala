@@ -99,7 +99,10 @@ object HoldToShoot {
     val reachIn = (gapPx - effectiveRangePx) / closingPxPerFrame
     val readyIn = cooldownLeft + latencyFrames
 
-    if (reachIn <= 0) return readyIn <= 0
+    // Already inside: the chaser is here, so a loaded gun holds and a
+    // cooling one kites - latency delays the order, it never unloads
+    // the gun, so it must not veto the hold.
+    if (reachIn <= 0) return cooldownLeft <= 0
 
     reachIn >= readyIn + holdMarginFrames
   }

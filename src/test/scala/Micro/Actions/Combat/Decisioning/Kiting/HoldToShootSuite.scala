@@ -22,6 +22,21 @@ class HoldToShootSuite extends AnyFunSuite {
     assert( ! HoldToShoot.shouldStand(gapPx = 100, effectiveRangePx = 128, cooldownLeft = 8, latencyFrames = 0, closingPxPerFrame = 4, holdMarginFrames = 5))
   }
 
+  test("inside effective range a loaded gun holds through order latency") {
+    // The chaser is already here; waiting out the order delay on foot
+    // is still a hold, not a kite - latency never unloads the gun.
+    assert(HoldToShoot.shouldStand(gapPx = 100, effectiveRangePx = 128, cooldownLeft = 0, latencyFrames = 3, closingPxPerFrame = 4, holdMarginFrames = 5))
+    assert( ! HoldToShoot.shouldStand(gapPx = 100, effectiveRangePx = 128, cooldownLeft = 8, latencyFrames = 3, closingPxPerFrame = 4, holdMarginFrames = 5))
+  }
+
+  test("the Vulture first branch reads our reach, not the Vulture's") {
+    // Own reach 128, Vulture reach 160: at 144px a ready gun cannot
+    // reply, so a non-closing Vulture never pins the hold - the call
+    // site passes our range, never the chaser's.
+    assert( ! HoldToShoot.shouldStandVsVulture(distPx = 144, rangePx = 128, cooldownLeft = 0, latencyFrames = 3, closingPxPerFrame = 0, foeFacingUs = false))
+    assert( ! HoldToShoot.shouldStandVsVulture(distPx = 144, rangePx = 128, cooldownLeft = 0, latencyFrames = 3, closingPxPerFrame = 4, foeFacingUs = false))
+  }
+
   test("effective range grows with windup, shrinks with braking, floors at zero") {
     assert(HoldToShoot.effectiveRange(foeReachPx = 32, foeSpeedPxPerFrame = 4, windupFrames = 5, brakingPx = 10) == 42)
     assert(HoldToShoot.effectiveRange(foeReachPx = 32, foeSpeedPxPerFrame = 4, windupFrames = 0, brakingPx = 100) == 0)
