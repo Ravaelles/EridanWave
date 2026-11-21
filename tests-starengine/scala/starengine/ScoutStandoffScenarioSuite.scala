@@ -26,6 +26,7 @@ class ScoutStandoffScenarioSuite extends AnyFunSuite with StarEngineSuite {
     override def direct(me: Body, world: World): Directive = {
       val hold = ScoutStaticKeepOff.holdPoint(
         staticX = static.x, staticY = static.y,
+        staticTileWidth = static.kind.tileWidth, staticTileHeight = static.kind.tileHeight,
         staticRangePixels = static.rangeAgainst(me),
         targetX = target.x, targetY = target.y,
         weaponRangePixels = me.rangeAgainst(target))

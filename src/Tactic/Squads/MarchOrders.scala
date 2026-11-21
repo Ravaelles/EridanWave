@@ -125,17 +125,6 @@ object MarchOrders {
   // pins the sequence row by row.
 
   /**
-   * Duel-owned frames hold position: while the latched motion verdict
-   * says duel and no retreat owns the unit, the march sets the terminus
-   * under its own feet instead of rallying home - the duel moves or
-   * holds through its own orders, and marching away mid-duel is the
-   * approach/retreat flap. Pure flags for the suite; the bus owns which
-   * duel counts, this owns what the hold means.
-   */
-  def duelHoldsMarch(verdictRetreat: Boolean, verdictDuel: Boolean): Boolean =
-    ! verdictRetreat && verdictDuel
-
-  /**
    * Far dress-and-wait probe (UMS mirrors, no reavers): arriving at five
    * tiles outside gun reach the line dresses and waits for the enemy
    * ball instead of trickling into it. Cheap gates first so ladder
@@ -146,7 +135,7 @@ object MarchOrders {
     // read the race off seen units instead: blind at spawn, exact later.
     // Eyes and guns never dress the line: the gap reads warriors only,
     // so an observer (or a cannon) never holds a column that should
-    // march past it - the duel hold above already answers hittables.
+    // march past it.
     if ( ! With.umsMode || ! With.units.enemy.exists(_.unitClass.isProtoss)) return false
     if (With.units.enemy.exists(e => e.alive && Protoss.Reaver(e))) return false
 
@@ -229,16 +218,16 @@ object MarchOrders {
         (getReturn(unit, squad, defaultReturn), MarchLabel.Retreating)
       case None =>
         val finalTravel = getTravel(unit, squad, defaultReturn)
-        marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat, verdictDuel)
+        marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat)
     }
     // Stage 2 motion audit: the desired owner, the latched verdict every
     // reader obeys, and what the march actually ordered. The change-only
     // probe keeps quiet maps quiet; want-vs-held disagreements inside the
     // release are the flicker the bus absorbs, have-vs-held ones are the
-    // frames a reader still renegotiates.
+    // frames a reader still renegotiates. Duels own no march label: the
+    // legs always march, the technique duels through its own orders.
     val actual = marchLabel match {
       case MarchLabel.Retreating    => MotionVerdict.Withdraw
-      case MarchLabel.HoldingDuel   => MotionVerdict.Duel
       case MarchLabel.WaitingForPack => MotionVerdict.Dress
       case _                        => MotionVerdict.Advance
     }
@@ -251,23 +240,7 @@ object MarchOrders {
   // Every leg answers to the slot discipline: a firing gun, fresh wounds
   // or a held retreat vetoes the pose that frame, but contact alone never
   // does - the line only exists if it forms while the enemy is out there.
-  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean, verdictDuel: Boolean): (Pixel, MarchLabel) = {
-    // One writer per frame: a dueling unit holds its ground instead of
-    // walking the march legs - the duel owns movement while it lasts.
-    // The duel read is the latched verdict, never the fresh scan (same
-    // vintage the gates obey): a hittable pickup still preempts sharp
-    // through the bus, a one-frame target flicker never releases the
-    // hold. Ghosts never qualify upstream (the recall horizon drops them
-    // before they arm), unhittable watchers neither.
-    // Far dress-and-wait outranks a memory duel first: chasing ghosts at
-    // five tiles out trickles the line, while a real duel always sits
-    // inside gun reach, so the gap guard keeps it untouched.
-    if (duelHoldsMarch(verdictRetreat, verdictDuel)) {
-      if (farWaitHolding(unit)) return (farCreepPixel(unit), MarchLabel.WaitingForPack)
-
-      return (unit.pixel, MarchLabel.HoldingDuel)
-    }
-
+  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean): (Pixel, MarchLabel) = {
     val slotOpen             = SlotDiscipline.maySlot(
       firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
       framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),

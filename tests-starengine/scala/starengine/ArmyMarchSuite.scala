@@ -31,17 +31,15 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
 
   /**
    * March brain: the shipped UMS decision order, shrunk to the march.
-   * Gate table first (lone columns walk at the goal), then the duel
-   * hold (production `duelHoldsMarch`: no verdict, and a duel), then
-   * the far-wait dress, then the duel or the march. Every branch
-   * consults a shipped pure kernel with engine-measured numbers - the
-   * pilot owns no thresholds and writes no destinations of its own.
-   * Spurious holds (holding with no hittable foe in reach plus a
-   * two-tile margin) and retreats (the bus never votes on an
+   * Gate table first (lone columns walk at the goal), then the
+   * far-wait dress, then the duel or the march. Duels never hold the
+   * line: the march always walks, the duel chases through its own
+   * orders. Every branch consults a shipped pure kernel with
+   * engine-measured numbers - the pilot owns no thresholds and writes
+   * no destinations of its own. Retreats (the bus never votes on an
    * attacking march) are counted, never just rendered.
    */
   private class MarchPilot(goal: (Double, Double), dragoon: Boolean) extends Pilot {
-    var spuriousHolds: Int = 0
     var retreats: Int = 0
     var loneMarches: Int = 0
     var farWaits: Int = 0
@@ -118,18 +116,9 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
         nearestStaticTiles = None)
       if (MarchGates.select(facts, marchUnit).contains(MarchLabel.LoneMarch)) loneMarches += 1
 
-      // The duel hold, with the shipped hittable-duel gate: a warrior
-      // holds only for what it could hit even with detection on. Ghosts
-      // and unhittable watchers never pin the line.
-      val hasHittableDuel = hittable.exists(t => Target.holdsDuelTarget(isWarrior = true, me.canHit(t)))
-      // Production `duelHoldsMarch`: no verdict (attacking march), and a duel.
-      val duelHold = hasHittableDuel || engagedUpon
-      if (duelHold) {
-        val reachable = foeSet.exists(f => me.canHit(f) && me.dist(f) <= me.rangeAgainst(f) + 2 * 32.0)
-        if ( ! reachable) spuriousHolds += 1
-
-        return Hold
-      }
+      // No duel hold: the line always walks, duels chase through their
+      // own orders instead of pinning feet to the ground. Ghosts and
+      // unhittable watchers never pinned it and still do not.
 
       // Far dress-and-wait, with the shipped latch: dress five out and
       // creep instead of trickling in. Releases on contact by itself.
@@ -182,7 +171,7 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
   }
 
   private def stalled(pilots: Seq[MarchPilot]): Boolean =
-    pilots.exists(p => p.spuriousHolds > 0 || p.retreats > 0)
+    pilots.exists(_.retreats > 0)
 
   test("a column marches on the enemy base and duels on arrival") {
     val ours = column(Protoss.Dragoon, 6, 900.0)
@@ -191,9 +180,9 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
     val (world, marchers) = grind(ours, foes, _ => new MarchPilot((200.0, 100.0), dragoon = true), _ => foeP)
     val arrived = ours.count(o => o.alive && Math.hypot(o.x - 200.0, o.y - 100.0) <= 12 * 32.0)
     val duelling = ours.count(o => o.alive && foes.exists(f => f.alive && o.dist(f) <= o.rangeAgainst(f)))
-    println(s"DIAG arrived=$arrived/6 duelling=$duelling spurious=${marchers.map(_.spuriousHolds).sum} retreats=${marchers.map(_.retreats).sum} farwaits=${marchers.map(_.farWaits).sum}")
+    println(s"DIAG arrived=$arrived/6 duelling=$duelling retreats=${marchers.map(_.retreats).sum} farwaits=${marchers.map(_.farWaits).sum}")
     assert(arrived + duelling == ours.count(_.alive), "every live hull either arrives or duels, none stalls mid-map")
-    assert( ! stalled(marchers), "no spurious holds and no retreats on an attacking march")
+    assert( ! stalled(marchers), "no retreats on an attacking march")
     assert(ours.exists(o => ! o.alive) || foes.exists(f => ! f.alive), "contact deals damage both ways")
   }
 
@@ -204,9 +193,9 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
     val foes = column(Protoss.Dragoon, 2, -2000.0)
     val (world, marchers) = grind(ours, foes, _ => new MarchPilot((200.0, 100.0), dragoon = true), _ => new Pilots.Hold, frames = 3000)
     val arrived = ours.count(o => o.alive && Math.hypot(o.x - 200.0, o.y - 100.0) <= 12 * 32.0)
-    println(s"DIAG arrived=$arrived/3 spurious=${marchers.map(_.spuriousHolds).sum} farwaits=${marchers.map(_.farWaits).sum}")
+    println(s"DIAG arrived=$arrived/3 farwaits=${marchers.map(_.farWaits).sum}")
     assert(arrived == 3, "ghosts do not hold the march")
-    assert( ! stalled(marchers), "no holds and no retreats against nothing")
+    assert( ! stalled(marchers), "no retreats against nothing")
     assert(marchers.forall(_.farWaits == 0), "far away, no wait")
   }
 
@@ -219,9 +208,9 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
       new Body(Protoss.Observer, 240.0, 500.0, Protoss.Observer.maxTotalHealth))
     val (world, marchers) = grind(ours, foes, _ => new MarchPilot((200.0, 100.0), dragoon = false), _ => new Pilots.Hold, frames = 6000)
     val arrived = ours.count(o => o.alive && Math.hypot(o.x - 200.0, o.y - 100.0) <= 12 * 32.0)
-    println(s"DIAG arrived=$arrived/3 spurious=${marchers.map(_.spuriousHolds).sum} farwaits=${marchers.map(_.farWaits).sum}")
+    println(s"DIAG arrived=$arrived/3 farwaits=${marchers.map(_.farWaits).sum}")
     assert(arrived == 3, "unhittable watchers do not hold melee")
-    assert( ! stalled(marchers), "no holds and no retreats under a spectator")
+    assert( ! stalled(marchers), "no retreats under a spectator")
   }
 
   test("a lone hull walks at the goal instead of dressing") {
