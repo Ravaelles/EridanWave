@@ -18,7 +18,11 @@ object SuicideEngageBehavior {
 
     if ( ! unit.agent.shouldFight) return false
 
-    val enemy = Maff.minBy(unit.matchups.enemies.filter(_.alive))(_.pixelDistanceEdge(unit))
+    // Charge live enemies, not ghosts: remembered fogged contacts read
+    // alive, but their pixel is where the enemy was, not where it is -
+    // a one-shot unit spends itself milling around a stale blip.
+    // Plausible memories still count through the recall horizon.
+    val enemy = Maff.minBy(unit.matchups.enemies.filter(e => e.alive && e.likelyStillThere))(_.pixelDistanceEdge(unit))
     if ( ! SuicideEngage.shouldForceAttack(With.framesSince(unit.lastFrameStartingAttack), enemy.isDefined)) return false
 
     NearestShot.take(unit, "SuicideEngage", enemy.toSeq)
