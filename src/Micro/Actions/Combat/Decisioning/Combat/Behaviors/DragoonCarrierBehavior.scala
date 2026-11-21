@@ -26,7 +26,7 @@ object DragoonCarrierBehavior {
     if (unit.shieldPoints < DragoonCarrierHunt.shieldFloor) return false
 
     val carrier = Maff.minBy(unit.matchups.enemies.view.filter(e =>
-      e.alive && Protoss.Carrier(e)))(
+      e.alive && e.likelyStillThere && Protoss.Carrier(e)))(
       unit.pixelDistanceEdge(_))
     if (carrier.isEmpty) return false
 
