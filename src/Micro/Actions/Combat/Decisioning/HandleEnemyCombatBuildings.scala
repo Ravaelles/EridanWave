@@ -26,7 +26,7 @@ object HandleEnemyCombatBuildings {
    * Shells first: leave now. Any mobile grounded hull except Reavers -
    * the cloak, the verdict and the guns gate below.
    */
-  object ShellsClaim extends TechniqueBehaviorStage("shells", DispatchBand.High) {
+  object ShellsClaim extends BehaviorStage("shells", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
 
@@ -38,7 +38,7 @@ object HandleEnemyCombatBuildings {
    * Anti-air reach second: scouts hold outside it instead of diving in.
    * Scouts only; the umbrella math gates below.
    */
-  object KeepOffClaim extends TechniqueBehaviorStage("keep-off", DispatchBand.High) {
+  object KeepOffClaim extends BehaviorStage("keep-off", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Scout(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
@@ -50,7 +50,7 @@ object HandleEnemyCombatBuildings {
    * ground warriors, never Reavers; the cluster heat and the duel own
    * the rest.
    */
-  object StandClaim extends TechniqueBehaviorStage("stand", DispatchBand.High) {
+  object StandClaim extends BehaviorStage("stand", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.canMove && ! unit.flying && ! unit.unitClass.melee && unit.unitClass.isWarrior && ! Protoss.Reaver(unit)
 
@@ -58,7 +58,7 @@ object HandleEnemyCombatBuildings {
       StaticStandoffBehavior.run(unit, combat)
   }
 
-  private val claims: Vector[TechniqueBehaviorStage] = Vector(
+  private val claims: Vector[BehaviorStage] = Vector(
     ShellsClaim,
     KeepOffClaim,
     StandClaim)

@@ -36,11 +36,11 @@ private[Decisioning] object EngagePipeline {
    * dressing past the kill. Any hull the dispatch sends here - the
    * fight vote and the hittable target gate the shot below.
    */
-  object ContainFireStage extends EngageBehaviorStage("ContainFire", DispatchBand.High) {
+  object ContainFireStage extends BehaviorStage("ContainFire", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] =
-      if (ContainFireBehavior.run(unit)) Some(unit.unready) else None
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      ContainFireBehavior.run(unit)
   }
 
   /**
@@ -49,23 +49,23 @@ private[Decisioning] object EngagePipeline {
    * dressing until the timeout. Unit contract beside the behavior;
    * the map, the target and the verdict gate below.
    */
-  object HuntStage extends EngageBehaviorStage("Hunt", DispatchBand.Medium) {
+  object HuntStage extends BehaviorStage("Hunt", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = HuntBehavior.appliesToUnit(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] =
-      if (HuntBehavior.run(unit)) Some(true) else None
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      HuntBehavior.run(unit)
   }
 
   /**
    * No advance, no prey (third claim): walk the march instead of
    * dueling. Any hull - the gait is the march's, not a duel's.
    */
-  object AdvanceGateStage extends EngageBehaviorStage("AdvanceGate", DispatchBand.Low) {
+  object AdvanceGateStage extends BehaviorStage("AdvanceGate", DispatchBand.Low) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] = {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
       Debugging.Probe.note("Gate", unit.id, s"advance=$advance prey=${preyDrive(unit)} consensus=${combat.fightConsensus} home=${unit.intent.marchHome} commit=${unit.agent.commit}")
-      if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); Some(true) } else None
+      if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); true } else false
     }
   }
 
@@ -76,11 +76,11 @@ private[Decisioning] object EngagePipeline {
    * rushers, suicides and yolo pushes keep their explicit orders, and
    * with no Dragoons mustered there is nothing to leash to.
    */
-  object ZealotLeashStage extends EngageBehaviorStage("ZealotLeash", DispatchBand.Medium) {
+  object ZealotLeashStage extends BehaviorStage("ZealotLeash", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Zealot(unit)
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] =
-      if (leashZealot(unit, combat)) Some(true) else None
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      leashZealot(unit, combat)
   }
 
   /**
@@ -90,37 +90,37 @@ private[Decisioning] object EngagePipeline {
    * explicit orders, the battle state and the contact exemptions gate
    * below.
    */
-  object ClusterRejoinStage extends EngageBehaviorStage("ClusterRejoin", DispatchBand.Medium) {
+  object ClusterRejoinStage extends BehaviorStage("ClusterRejoin", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.unitClass.isWarrior && ! unit.loaded
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] =
-      if (rejoinCluster(unit, combat)) Some(true) else None
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
+      rejoinCluster(unit, combat)
   }
 
-  val stages: Vector[EngageBehaviorStage] = Vector(
+  val stages: Vector[BehaviorStage] = Vector(
     ContainFireStage,
     HuntStage,
     AdvanceGateStage,
     ZealotLeashStage,
     ClusterRejoinStage)
 
-  object PushDuelStage extends DuelBehaviorStage("Push", DispatchBand.Medium) {
+  object PushDuelStage extends BehaviorStage("Push", DispatchBand.Medium) {
     // Grounded hulls only: fliers dance instead of pushing, and the push
     // itself owns mobility - the gate never decides movement.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = ! unit.flying
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
       if ( ! combat.pushThrough) false else { PushBehavior.run(unit, combat); true }
     }
   }
 
-  object ScavengeDuelStage extends DuelBehaviorStage("Scavenge", DispatchBand.Medium) {
+  object ScavengeDuelStage extends BehaviorStage("Scavenge", DispatchBand.Medium) {
     // Any hull the technique assigns: the scavenger check lives in the
     // technique vote, the gate only runs what it is given.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
       if ( ! combat.techniqueIs(Scavenge)) false else { ScavengeBehavior.run(unit, combat); true }
     }
   }
@@ -135,12 +135,12 @@ private[Decisioning] object EngagePipeline {
    * the frame when its inner legs decline, so Reposition never runs
    * behind it. Any hull may close: the trio gates the how below.
    */
-  object CloseDuelStage extends DuelBehaviorStage("Close", DispatchBand.Medium) {
+  object CloseDuelStage extends BehaviorStage("Close", DispatchBand.Medium) {
     // Any hull may close: the hold/approach/kite trio gates the how
     // below, including the immobile hold it never walks into.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
       val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase
       if ( ! outer) false
       else {
@@ -163,18 +163,18 @@ private[Decisioning] object EngagePipeline {
    * Terminal: claim value moot, nothing follows. Any hull the duel
    * leaves behind repositions through it.
    */
-  object RepositionDuelStage extends DuelBehaviorStage("Reposition", DispatchBand.Low) {
+  object RepositionDuelStage extends BehaviorStage("Reposition", DispatchBand.Low) {
     // Any hull the duel leaves behind repositions through here: the
     // terminal claims for everyone, the maneuver handles the rest.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean = {
       if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineCreepBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
       true
     }
   }
 
-  val duelStages: Vector[DuelBehaviorStage] = Vector(
+  val duelStages: Vector[BehaviorStage] = Vector(
     PushDuelStage,
     ScavengeDuelStage,
     CloseDuelStage,
@@ -314,12 +314,12 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       case None          => combat.fightConsensus && ! unit.intent.marchHome
     }) || umsDuelistAdvances
     var i = 0
-    var claimed: Option[Boolean] = None
-    while (i < EngagePipeline.stages.length && claimed.isEmpty) {
+    var claimed = false
+    while (i < EngagePipeline.stages.length && ! claimed) {
       claimed = EngagePipeline.stages(i).shouldRun(unit, combat, advance)
       i += 1
     }
-    if (claimed.isDefined) return claimed.get
+    if (claimed) return true
 
     if (unit.ready) {
       resolveBreakFormation()
@@ -340,16 +340,16 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       if ( ! combat.breakFormationToAttack) {
         unit.agent.perch.clear()
       }
-      dispatchEngage()
+      dispatchEngage(advance)
     }
     unit.unready
   }
 
-  private def dispatchEngage(): Unit = {
+  private def dispatchEngage(advance: Boolean): Unit = {
     var i = 0
     var claimed = false
     while (i < EngagePipeline.duelStages.length && ! claimed) {
-      claimed = EngagePipeline.duelStages(i).shouldRun(unit, combat)
+      claimed = EngagePipeline.duelStages(i).shouldRun(unit, combat, advance)
       i += 1
     }
   }

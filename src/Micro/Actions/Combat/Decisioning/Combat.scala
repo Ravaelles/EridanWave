@@ -49,7 +49,7 @@ private[Decisioning] object TechniquePipeline {
    * its memory, so the dodge claims before Walk, Aim, retreat and fight.
    * Grounded warriors only: flyers pass over both killers untouched.
    */
-  object AvoidStage extends TechniqueBehaviorStage("Avoid", DispatchBand.High) {
+  object AvoidStage extends BehaviorStage("Avoid", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.unitClass.isWarrior
 
@@ -68,7 +68,7 @@ private[Decisioning] object TechniquePipeline {
    * Mobile ground hulls: the formation below walks Reavers and
    * detectors through their own disciplines.
    */
-  object StaticKeepOffStage extends TechniqueBehaviorStage("StaticKeepOff", DispatchBand.High) {
+  object StaticKeepOffStage extends BehaviorStage("StaticKeepOff", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
 
@@ -77,21 +77,21 @@ private[Decisioning] object TechniquePipeline {
   }
 
   /** The technique executes inside the fight its band allows. */
-  object WalkStage extends TechniqueBehaviorStage("Walk", DispatchBand.Medium) {
+  object WalkStage extends BehaviorStage("Walk", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
       combat.technique == Walk && combat.maneuvers.walk()
   }
 
-  object AimStage extends TechniqueBehaviorStage("Aim", DispatchBand.Medium) {
+  object AimStage extends BehaviorStage("Aim", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = ! unit.canMove
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
       combat.technique == Aim && AimBehavior.run(unit, combat)
   }
 
-  object DodgeStage extends TechniqueBehaviorStage("Dodge", DispatchBand.Medium) {
+  object DodgeStage extends BehaviorStage("Dodge", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove && ! unit.loaded
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
@@ -99,7 +99,7 @@ private[Decisioning] object TechniquePipeline {
   }
 
   /** Retreat potshot: Fallback shoots while leaving. */
-  object PotshotStage extends TechniqueBehaviorStage("Potshot", DispatchBand.Medium) {
+  object PotshotStage extends BehaviorStage("Potshot", DispatchBand.Medium) {
     // Any hull the Fallback picks: the pick below owns the gun check,
     // and the stage claims the cadence even with no shot to fire.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
@@ -115,7 +115,7 @@ private[Decisioning] object TechniquePipeline {
    * to finish; the ladder picks, the gun fires, the frame ends here.
    * Grounded warriors: the sky and the helpless never reach for a gun.
    */
-  object AlwaysAttackStage extends TechniqueBehaviorStage("AlwaysAttack", DispatchBand.High) {
+  object AlwaysAttackStage extends BehaviorStage("AlwaysAttack", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.unitClass.isWarrior
 
@@ -130,7 +130,7 @@ private[Decisioning] object TechniquePipeline {
    * in range keeps its duel; Reavers and our own Templars keep
    * their own disciplines.
    */
-  object DarkTemplarHuntStage extends TechniqueBehaviorStage("DarkTemplarHunt", DispatchBand.High) {
+  object DarkTemplarHuntStage extends BehaviorStage("DarkTemplarHunt", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.unitClass.isWarrior && unit.unitClass.attacksGround &&
         ! Protoss.Reaver(unit) && ! Protoss.DarkTemplar(unit)
@@ -143,7 +143,7 @@ private[Decisioning] object TechniquePipeline {
    * A fresh hot Dragoon shoots the Terran in range instead of running
    * from it - but never under siege, the line above already claimed it.
    */
-  object DragoonStandStage extends TechniqueBehaviorStage("DragoonStand", DispatchBand.Medium) {
+  object DragoonStandStage extends BehaviorStage("DragoonStand", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
@@ -154,7 +154,7 @@ private[Decisioning] object TechniquePipeline {
    * A shielded Dragoon answers a Carrier in range and closes a pathed
    * one inside eleven tiles instead of retreating past the kill.
    */
-  object DragoonCarrierStage extends TechniqueBehaviorStage("DragoonCarrier", DispatchBand.Medium) {
+  object DragoonCarrierStage extends BehaviorStage("DragoonCarrier", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
@@ -167,7 +167,7 @@ private[Decisioning] object TechniquePipeline {
    * that can answer inside twelve; under guns the duel owns the
    * frame. Advancing only: a retreating hull keeps running.
    */
-  object DragoonMineDefuseStage extends TechniqueBehaviorStage("DragoonMineDefuse", DispatchBand.Medium) {
+  object DragoonMineDefuseStage extends BehaviorStage("DragoonMineDefuse", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
@@ -180,7 +180,7 @@ private[Decisioning] object TechniquePipeline {
    * nothing to shoot it falls through and retreats with everyone.
    * Any hull the squad covers: the squad owns who holds the line.
    */
-  object RearguardStage extends TechniqueBehaviorStage("Rearguard", DispatchBand.Medium) {
+  object RearguardStage extends BehaviorStage("Rearguard", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
@@ -188,7 +188,7 @@ private[Decisioning] object TechniquePipeline {
   }
 
   /** Retreat owns survival: the walk to safety ends the frame. */
-  object RetreatStage extends TechniqueBehaviorStage("Retreat", DispatchBand.High) {
+  object RetreatStage extends BehaviorStage("Retreat", DispatchBand.High) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
@@ -200,7 +200,7 @@ private[Decisioning] object TechniquePipeline {
    * blows instead of glitching on re-targets. Ranged hulls never
    * reach for it; the duel below owns their fight.
    */
-  object BrawlStage extends TechniqueBehaviorStage("Brawl", DispatchBand.Medium) {
+  object BrawlStage extends BehaviorStage("Brawl", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.canMove && (unit.is(Zerg.Zergling) || unit.unitClass.melee)
 
@@ -213,7 +213,7 @@ private[Decisioning] object TechniquePipeline {
    * trading volleys. Only hulls the doctrine covers - the ladder
    * whitelists abusers, everyone else fights fair.
    */
-  object AbuseStage extends TechniqueBehaviorStage("Abuse", DispatchBand.Medium) {
+  object AbuseStage extends BehaviorStage("Abuse", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.unitClass.abuseAllowed
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Boolean =
@@ -224,7 +224,7 @@ private[Decisioning] object TechniquePipeline {
    * Superkite owns the air duel its hulls were built for: Wraiths and
    * Mutalisks dance instead of trading. Nobody else spins up the dance.
    */
-  object SuperKiteStage extends TechniqueBehaviorStage("SuperKite", DispatchBand.Medium) {
+  object SuperKiteStage extends BehaviorStage("SuperKite", DispatchBand.Medium) {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.isAny(Terran.Wraith, Zerg.Mutalisk)
 
@@ -232,7 +232,7 @@ private[Decisioning] object TechniquePipeline {
       combat.technique == SuperKite && advance && SuperkiteBehavior.run(unit, combat)
   }
 
-  val stages: Vector[TechniqueBehaviorStage] = Vector(
+  val stages: Vector[BehaviorStage] = Vector(
     AvoidStage,
     StaticKeepOffStage,
     WalkStage,

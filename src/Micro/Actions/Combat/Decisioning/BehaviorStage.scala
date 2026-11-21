@@ -4,22 +4,21 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.DispatchBand
 
 /**
- * Dispatched behavior contract (no game beyond the unit): every entry
- * in every combat pipeline is one of these, never a bare lambda - so
- * there is exactly one place where a behavior states which units it
- * ever applies to, and the compiler rejects a behavior without it.
- * The unit gate runs first on every frame; situation logic (targets,
- * votes, bands) stays in execute beside the kernels that pin it.
- * Reorder stages by moving the object, disable by commenting one out -
- * order tables pin the sequence beside the rows.
+ * Dispatched behavior contract (no game beyond the unit): one abstract
+ * parent for every stage in every pipeline. Each stage states which
+ * units it ever applies to; the shared template checks the gate first
+ * and runs the doctrine second. Nobody overrides the template, nobody
+ * dispatches a bare lambda - a new stage without a gate does not
+ * compile, and the registry suite fails on a stage without coverage.
+ * Reorder stages by moving the object, disable by commenting one out.
  */
-abstract class TechniqueBehaviorStage(val name: String, val band: DispatchBand) {
+abstract class BehaviorStage(val name: String, val band: DispatchBand) {
 
   /**
    * Unit context gate (no game beyond the unit itself): race and class,
-   * ground or air, worker or warrior, mobile or not. Map, squad and
-   * enemy state stay in execute - this answers only "could this hull
-   * ever do this", for every hull, before any situation is read.
+   * ground or air, worker or warrior, mobile or held, loaded or free.
+   * Map, squad, targets and verdicts stay in execute - this answers
+   * only which hulls may ever run the stage.
    */
   def appliesToUnit(unit: FriendlyUnitInfo): Boolean
 
@@ -29,39 +28,5 @@ abstract class TechniqueBehaviorStage(val name: String, val band: DispatchBand) 
     if ( ! appliesToUnit(unit)) return false
 
     execute(unit, combat, advance)
-  }
-}
-
-/**
- * Engage-pipeline behavior: same contract, the claim carries the
- * engage result instead of ending the frame.
- */
-abstract class EngageBehaviorStage(val name: String, val band: DispatchBand) {
-
-  def appliesToUnit(unit: FriendlyUnitInfo): Boolean
-
-  protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean]
-
-  final def shouldRun(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): Option[Boolean] = {
-    if ( ! appliesToUnit(unit)) return None
-
-    execute(unit, combat, advance)
-  }
-}
-
-/**
- * Duel-stage behavior: same contract, no advance gate - the duel
- * dispatch runs these once the engage is already claimed.
- */
-abstract class DuelBehaviorStage(val name: String, val band: DispatchBand) {
-
-  def appliesToUnit(unit: FriendlyUnitInfo): Boolean
-
-  protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean
-
-  final def shouldRun(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    if ( ! appliesToUnit(unit)) return false
-
-    execute(unit, combat)
   }
 }
