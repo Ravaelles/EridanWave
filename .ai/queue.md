@@ -35,6 +35,11 @@ Details live in `details/` - the queue keeps one line per item.
   vs 4GateGoon on TauCross: wiped min 7, same known
   gameplan-selection gap as SINK2/REMATCH; unit timeline ordinary -
   duels/approach/abuse, single-digit transitions, no flap).
+  Crona DEFEAT 23/51 (7 min PvZSpeedlot vs ZerglingOnly on TauCross:
+  overrun min 4-5 by 3HatchSpeedling; zealot timeline ordinary -
+  Holding duel/Brawl/ChokeHold/PackRegroup, retreat reasons
+  No/OutOfContact/CantFlee, single-digit transitions, no flap -
+  out-massed composition loss, no mechanism).
 - UMS on the toggle jar: full batch 9W/13L/3NA, then re-run wins
   on 1DragWounded + 1DragLing (flippers flip back); 3DragHydra
   timeouts sit inside its all-time flip distribution (8W/9L);
