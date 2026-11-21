@@ -176,3 +176,19 @@ hysteresis home (rules 9-10).
   (`ArmedCordon`, latched 21 out / 19 in, fogged memories never pin).
   Proved in StarEngine (march + duel contracts) and live (HoldingDuel
   403 vs LoneMarch 1 in the re-run win).
+- Legacy brain starving the W1 pipeline (1DragWounded, 2026-11):
+  `BeDragoonVsSlowlot` (pre-W1 container action, no trace credit) ran
+  inside `Fight.perform` ahead of the W1 `Combat` dispatch and issued
+  an order nearly every execute, so the unit was never `ready` at duel
+  time and the kite/approach/hold legs never ran - Guard auto-acquire
+  only, wounded duels donated for eight straight games while the probe
+  showed a healthy Fight/advance/Duel verdict. Closed by yielding where
+  the shipped kite kernel fires (`yieldsToKite`, same read as
+  `KiteAwayBehavior.shouldKite`): the yield issues nothing, so the
+  technique runs on a ready unit. Diagnosed live (unit-level probes:
+  perma-unready at engage, phantom Retreat claims on unready frames,
+  legacy action firing every execute). Pattern: a legacy action ahead
+  of the new pipeline that issues without crediting starves the
+  pipeline while staying invisible - port or gate it, never leave it
+  ahead and silent. Validated on UMS (Close/KiteAway chains back,
+  wins return, no regressions on 1Drag/16Drag).

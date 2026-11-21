@@ -5,6 +5,7 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Micro.Actions.Action
+import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Heuristics.Potential
@@ -23,6 +24,13 @@ object BeDragoonVsSlowlot extends Action {
     && ! MacroFacts.enemyHasUpgrade(Protoss.ZealotSpeed))
 
   override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    // The W1 duel owns losing duels: where the shipped kite kernel fires,
+    // this legacy dance stands down without issuing (and without sleeping),
+    // so the technique runs on a ready unit and kites on cooldown instead
+    // of being starved by our own margin moves. Same read as
+    // KiteAwayBehavior.shouldKite (live threats in margin, turned-away
+    // melee dismissed); both paths agree by construction.
+    if (yieldsToKite(unit)) return
     val margin    = Maff.min(unit.matchups.threatsInPixels(160).map(t => t.pixelsToGetInRange(unit) + 32 - Maff.or0(16, t.presumptiveTarget.contains(unit)) - 16 * t.dot(unit.pixel))).getOrElse(320d).toInt
     val safety    = DragoonSlowlotPolicy.safety(margin, unit.totalHealth)
 
@@ -65,5 +73,27 @@ object BeDragoonVsSlowlot extends Action {
       unit.agent.decision.set(p)
       Commander.move(unit)
     })
+  }
+
+  /**
+   * Yield gate: the shipped kite kernel owns losing frames. Same read as
+   * KiteAwayBehavior.shouldKite for a ranged hull - live threats in the
+   * margin, turned-away melee dismissed - so the yield and the duel leg
+   * fire on the same frames by construction. Yielding issues nothing, so
+   * the technique runs on a ready unit instead of being slept out by our
+   * own margin moves.
+   */
+  private def yieldsToKite(unit: FriendlyUnitInfo): Boolean = {
+    val marginPixels = KiteAway.enemyMarginTiles * 32.0
+    def inMargin(u: FriendlyUnitInfo) =
+      u.matchups.threatsInPixels(marginPixels).filter(t =>
+        t.likelyStillThere &&
+        ! FacingAway.dismissMelee(t.unitClass.melee,
+          FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
+    KiteAway.shouldRetreat(
+      unit.totalHealth,
+      unit.cooldownLeft,
+      enemyInMargin = inMargin(unit).nonEmpty,
+      hasMeleeNearby = inMargin(unit).exists(_.unitClass.melee))
   }
 }

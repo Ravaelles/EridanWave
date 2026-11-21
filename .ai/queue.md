@@ -17,16 +17,15 @@ Details live in `details/` - the queue keeps one line per item.
   Sunkens ammo, DT detection, mop-up timeouts); post-W1 duel maps
   green (1Drag/16Drag/ZealDrag/Reav_v_Drag wins, TanksVult kills
   rising).
-- 1DragWounded REGRESSION (open): flipped ~50/50 through Nov 21 12:07,
-  then ~2W/10L with k0 every loss. Window: S2 MotionVerdict + audit
-  round (12:36-13:56). Narrowed: the technique duel legs never run on
-  the map - the unit is never `ready` at duel time (sleep refreshed
-  every 2-3f), no stage claims after the f0 Retreat, no attack orders;
-  Guard auto-acquire only (2-13 hits), Move/Guard flap to death. Healthy
-  1Drag still wins on stats. Detector on the losses: zero CROSS, zero
-  HoldingDuel, Retreating+duel mixes absent, Motion held=Duel rock
-  stable. Next: StarEngine repro driving the real dispatch, or bisect
-  the 12:36-13:56 window.
+- 1DragWounded MECHANISM FOUND + FIXED (2026-11-21): the losses were
+  not a kite-tuning gap - the W1 duel legs never ran (legacy
+  `BeDragoonVsSlowlot` issued every execute, unit never `ready`, Guard
+  auto-acquire only). Fix: the legacy dance yields where the shipped
+  kite kernel fires; chains show Close/KiteAway again, wins return
+  (~1/3 in 15 post-fix games vs ~1/10 before; healthy 1Drag and 16Drag
+  still win, ZealDrag mirror flips as before). Residual: fast early
+  deaths + k0/l0 timeouts (kill too slow) - next is hold/approach
+  tuning or accepting the map's variance.
 - Jar: W1 + shouldRun unification (`strings`-verified, slot md5
   matches target).
 
