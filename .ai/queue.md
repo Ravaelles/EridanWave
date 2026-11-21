@@ -40,6 +40,12 @@ Details live in `details/` - the queue keeps one line per item.
   Holding duel/Brawl/ChokeHold/PackRegroup, retreat reasons
   No/OutOfContact/CantFlee, single-digit transitions, no flap -
   out-massed composition loss, no mechanism).
+  Crona DEFEAT 13/31 (6 min PvZ1BaseZealotIntoGoon vs 4Pool ZerglingOnly
+  on TauCross: overrun min 2:30-3:20, but fought - 13 kills vs 1 in
+  the pre-fix game; zero ChokeHold rows, zero HoldingDuel rows, zero
+  have=Duel: the lone holder no longer commits, the line marches,
+  kites and retreats instead of donating under commit. Loss is
+  numbers (flood vs greedy 1-base), not the mechanism).
   Terminus DEFEAT 38/132 (13 min PvTDoubleRobo vs FD on TauCross:
   grind loss with doctrine rows firing (ArtilleryKeepOff, Abuse,
   ZealotLeash); retreats technique-local only, bus never held (sim
