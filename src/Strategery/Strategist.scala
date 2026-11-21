@@ -70,6 +70,15 @@ class Strategist extends StrategyDatabase with RecentFingerprints with GameFeatu
     }
   }
   def swapIn(strategy: Strategy): Unit = {
+    // Testing kill-switches outrank every swap path (initial picks and
+    // reactive swaps alike): a disabled family never enters the selected
+    // set, so activate() below can never pick it up either.
+    if ( ! StrategyToggles.allows(strategy)) {
+      With.logger.debug(f"Not swapping in disabled-by-toggle strategy $strategy")
+
+      return
+    }
+
     if ( ! strategiesSelected.contains(strategy)) {
       With.logger.debug(f"Swapping in strategy $strategy")
       System.out.println(f"OPENING (swap in): $strategy")
