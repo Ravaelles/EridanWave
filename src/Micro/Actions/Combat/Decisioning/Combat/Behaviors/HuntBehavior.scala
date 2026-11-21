@@ -38,7 +38,8 @@ object HuntBehavior {
       hasTarget           = target.isDefined,
       targetVisible       = target.forall(_.visible),
       targetBeyondPursuit = target.exists(t => unit.pixelsToGetInRange(t) > FormationHold.holdPursuitTiles * 32.0),
-      targetBeyondSight   = target.exists(t => ! t.visible && unit.pixelsToGetInRange(t) > unit.sightPixels + sightMarginPixels))) return false
+      targetBeyondSight   = target.exists(t => ! t.visible && unit.pixelsToGetInRange(t) > unit.sightPixels + sightMarginPixels),
+      verdictDuel         = Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame) == Tactic.Squads.Decisions.MotionVerdict.Duel)) return false
 
     val foe = Maff.minBy(huntables(unit))(unit.pixelDistanceCenter(_))
     if (foe.isEmpty) return false
@@ -81,7 +82,9 @@ object HuntBehavior {
    * invisible target past sight plus a margin is a ghost, not a contact
    * (sight-edge flicker inside the margin keeps the line steady instead
    * of flapping). Reavers keep the pair doctrine; immobile, loaded and
-   * non-warrior hulls never reach here.
+   * non-warrior hulls never reach here. A latched duel pins the hull: the
+   * march already holds a live duel under its feet, so chasing a memory
+   * beside it is the flap, not mop-up.
    */
   def shouldHunt(
     umsMode             : Boolean,
@@ -91,7 +94,8 @@ object HuntBehavior {
     hasTarget           : Boolean,
     targetVisible       : Boolean,
     targetBeyondPursuit : Boolean,
-    targetBeyondSight   : Boolean): Boolean =
-    umsMode && isWarrior && ! isReaver && canMove && (
+    targetBeyondSight   : Boolean,
+    verdictDuel         : Boolean): Boolean =
+    umsMode && isWarrior && ! isReaver && canMove && ! verdictDuel && (
       ! hasTarget || targetBeyondPursuit || ( ! targetVisible && targetBeyondSight))
 }

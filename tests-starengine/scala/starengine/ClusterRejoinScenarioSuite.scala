@@ -34,6 +34,8 @@ class ClusterRejoinScenarioSuite extends AnyFunSuite with StarEngineSuite {
         Math.sqrt(dx * dx + dy * dy) / 32.0
       }
       val hasTarget = target.exists(_.alive)
+      // Latched verdict, engine mirror: a picked victim or local contact
+      // means the duel owns the frame, same as production post-tick.
       if (ClusterCohesion.shouldRejoin(
         isWarrior = true,
         hasTarget = hasTarget,
@@ -42,6 +44,7 @@ class ClusterRejoinScenarioSuite extends AnyFunSuite with StarEngineSuite {
         inBattle = inBattle,
         macroGame = true,
         hasLocalContact = contact,
+        verdictDuel = hasTarget || contact,
         distTiles = distTiles)) {
         rejoins += 1
         MoveTo(centroid._1, centroid._2)

@@ -125,14 +125,15 @@ object MarchOrders {
   // pins the sequence row by row.
 
   /**
-   * Duel-owned frames hold position: while a unit duels (it has a target
-   * or is being shot) and no retreat verdict owns it, the march sets the
-   * terminus under its own feet instead of rallying home - the duel moves
-   * or holds through its own orders, and marching away mid-duel is the
-   * approach/retreat flap. Pure flags for the suite.
+   * Duel-owned frames hold position: while the latched motion verdict
+   * says duel and no retreat owns the unit, the march sets the terminus
+   * under its own feet instead of rallying home - the duel moves or
+   * holds through its own orders, and marching away mid-duel is the
+   * approach/retreat flap. Pure flags for the suite; the bus owns which
+   * duel counts, this owns what the hold means.
    */
-  def duelHoldsMarch(verdictRetreat: Boolean, hasAttackTarget: Boolean, engagedUpon: Boolean): Boolean =
-    ! verdictRetreat && (hasAttackTarget || engagedUpon)
+  def duelHoldsMarch(verdictRetreat: Boolean, verdictDuel: Boolean): Boolean =
+    ! verdictRetreat && verdictDuel
 
   /**
    * Far dress-and-wait probe (UMS mirrors, no reavers): arriving at five
@@ -201,7 +202,17 @@ object MarchOrders {
     // phases split the frame between home and the duel.
     val verdictRetreat = RetreatVerdict.held(unit.id, With.frame) &&
       ! ClusterPosture.overrulesRetreat(squad.battlePosture, facts.armyUnitsScore)
-    val (terminus, marchLabel) = MarchGates.select(facts, marchUnit.copy(verdictRetreat = verdictRetreat)) match {
+    // Stage 2 motion verdict: tick the desired owner from the fresh duel
+    // and dressing scans, then every gate and leg below reads the latched
+    // side instead of re-deriving its own - one owner per unit per frame.
+    // Upgrades preempt sharp (contact answers the same frame the march
+    // sees it), downgrades wait out the release, so a one-frame target
+    // flicker never marches the duel out of the map.
+    val wanted = MotionVerdict.desired(verdictRetreat, marchUnit.hasDuel, farWaitHolding(unit))
+    MotionVerdict.update(unit.id, wanted, With.frame)
+    val verdictDuel = MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Duel
+    val latched = marchUnit.copy(verdictRetreat = verdictRetreat, verdictDuel = verdictDuel)
+    val (terminus, marchLabel) = MarchGates.select(facts, latched) match {
       // A lone hull kites better from a set line than from a march: at
       // five tiles outside gun reach it dresses and waits instead of
       // walking into the enemy corner, where there is nowhere left to
@@ -218,21 +229,20 @@ object MarchOrders {
         (getReturn(unit, squad, defaultReturn), MarchLabel.Retreating)
       case None =>
         val finalTravel = getTravel(unit, squad, defaultReturn)
-        marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat)
+        marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat, verdictDuel)
     }
-    // Stage 1 motion observer (zero behavior): the desired owner from the
-    // same inputs, logged against what the march actually ordered. The
-    // change-only probe keeps quiet maps quiet; disagreements (a LoneMarch
-    // where the verdict wants Duel) are the exact frames the single-owner
-    // stage 2 will reclaim. Pack-dress joins the dressing input then.
+    // Stage 2 motion audit: the desired owner, the latched verdict every
+    // reader obeys, and what the march actually ordered. The change-only
+    // probe keeps quiet maps quiet; want-vs-held disagreements inside the
+    // release are the flicker the bus absorbs, have-vs-held ones are the
+    // frames a reader still renegotiates.
     val actual = marchLabel match {
       case MarchLabel.Retreating    => MotionVerdict.Withdraw
       case MarchLabel.HoldingDuel   => MotionVerdict.Duel
       case MarchLabel.WaitingForPack => MotionVerdict.Dress
       case _                        => MotionVerdict.Advance
     }
-    val wanted = MotionVerdict.desired(verdictRetreat, marchUnit.hasDuel, farWaitHolding(unit))
-    Debugging.Probe.note("Motion", unit.id, s"want=${wanted.label} have=${actual.label}")
+    Debugging.Probe.note("Motion", unit.id, s"want=${wanted.label} have=${actual.label} held=${MotionVerdict.held(unit.id, With.frame).label}")
     (terminus, marchLabel)
   }
 
@@ -241,20 +251,18 @@ object MarchOrders {
   // Every leg answers to the slot discipline: a firing gun, fresh wounds
   // or a held retreat vetoes the pose that frame, but contact alone never
   // does - the line only exists if it forms while the enemy is out there.
-  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean): (Pixel, MarchLabel) = {
+  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean, verdictDuel: Boolean): (Pixel, MarchLabel) = {
     // One writer per frame: a dueling unit holds its ground instead of
     // walking the march legs - the duel owns movement while it lasts.
-    // Only a hittable duel pins the march: a warrior staring at what it
-    // could never hit even with detection (zealots under an Overlord) is
-    // not dueling, it is stuck - the legs march on instead.
+    // The duel read is the latched verdict, never the fresh scan (same
+    // vintage the gates obey): a hittable pickup still preempts sharp
+    // through the bus, a one-frame target flicker never releases the
+    // hold. Ghosts never qualify upstream (the recall horizon drops them
+    // before they arm), unhittable watchers neither.
     // Far dress-and-wait outranks a memory duel first: chasing ghosts at
     // five tiles out trickles the line, while a real duel always sits
     // inside gun reach, so the gap guard keeps it untouched.
-    if (duelHoldsMarch(
-      verdictRetreat,
-      hasAttackTarget = unit.agent.toAttack.exists(t =>
-        Micro.Targeting.Target.holdsDuelTarget(unit.unitClass.isWarrior, unit.canAttack(t, assumeDetection = true))),
-      engagedUpon = unit.matchups.engagedUpon)) {
+    if (duelHoldsMarch(verdictRetreat, verdictDuel)) {
       if (farWaitHolding(unit)) return (farCreepPixel(unit), MarchLabel.WaitingForPack)
 
       return (unit.pixel, MarchLabel.HoldingDuel)

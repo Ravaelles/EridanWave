@@ -184,6 +184,7 @@ private[Decisioning] object EngagePipeline {
       inBattle          = unit.battle.isDefined,
       macroGame         = ! With.umsMode,
       hasLocalContact   = unit.matchups.enemies.exists(e => unit.pixelDistanceEdge(e) < unit.pixelRangeMax + contactTiles * 32.0),
+      verdictDuel       = Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame) == Tactic.Squads.Decisions.MotionVerdict.Duel,
       distTiles         = unit.pixelDistanceCenter(centroid) * Maff.inv32)) return false
 
     unit.agent.act("ClusterRejoin")

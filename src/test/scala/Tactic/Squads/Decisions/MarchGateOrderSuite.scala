@@ -40,6 +40,7 @@ class MarchGateOrderSuite extends AnyFunSuite {
     isSuicide           : Boolean = false,
     shouldFight         : Boolean = false,
     verdictRetreat      : Boolean = false,
+    verdictDuel         : Boolean = false,
     hasDuel             : Boolean = false,
     nearestWarriorTiles : Option[Double] = None,
     distHomeTiles       : Option[Double] = None,
@@ -49,7 +50,7 @@ class MarchGateOrderSuite extends AnyFunSuite {
     nextId += 1
     MarchUnit(
       nextId, isDarkTemplar, isCorsair, isDragoon, isWarrior, isLoadedShuttle,
-      isSuicide, shouldFight, verdictRetreat, hasDuel, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles, nearestVisibleArmedTiles)
+      isSuicide, shouldFight, verdictRetreat, verdictDuel, hasDuel, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles, nearestVisibleArmedTiles)
   }
 
   private def check(name: String, f: MarchFacts, u: MarchUnit, want: Option[MarchLabel]): Unit =
@@ -102,7 +103,19 @@ class MarchGateOrderSuite extends AnyFunSuite {
 
   check("a lone duelist holds instead of marching at the goal",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
-    unit(isWarrior = true, shouldFight = true, hasDuel = true,
+    unit(isWarrior = true, shouldFight = true, hasDuel = true, verdictDuel = true,
+      nearestWarriorTiles = None, nearestStaticTiles = Some(5.0)),
+    None)
+
+  check("the gate reads the latched verdict, never the fresh duel",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true, hasDuel = true, verdictDuel = false,
+      nearestWarriorTiles = None, nearestStaticTiles = Some(5.0)),
+    Some(MarchLabel.LoneMarch))
+
+  check("a latched duel blocks the lone march through a target flicker",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true, hasDuel = false, verdictDuel = true,
       nearestWarriorTiles = None, nearestStaticTiles = Some(5.0)),
     None)
 

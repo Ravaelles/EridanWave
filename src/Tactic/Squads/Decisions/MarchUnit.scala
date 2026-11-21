@@ -25,6 +25,7 @@ final case class MarchUnit(
   isSuicide           : Boolean,
   shouldFight         : Boolean,
   verdictRetreat      : Boolean,
+  verdictDuel         : Boolean,
   hasDuel             : Boolean,
   nearestWarriorTiles : Option[Double],
   distHomeTiles       : Option[Double],
@@ -34,7 +35,7 @@ final case class MarchUnit(
 
 object MarchUnit {
 
-  def read(squad: Squad, unit: FriendlyUnitInfo, home: Option[Pixel], verdictRetreat: Boolean): MarchUnit =
+  def read(squad: Squad, unit: FriendlyUnitInfo, home: Option[Pixel], verdictRetreat: Boolean, verdictDuel: Boolean = false): MarchUnit =
     MarchUnit(
       unitId              = unit.id,
       isDarkTemplar       = Protoss.DarkTemplar(unit),
@@ -45,6 +46,7 @@ object MarchUnit {
       isSuicide           = SuicideMission.isActive(unit),
       shouldFight         = unit.agent.shouldFight,
       verdictRetreat      = verdictRetreat,
+      verdictDuel         = verdictDuel,
       // The duel the legs would hold, read here so the gate and the legs
       // agree by construction: a hittable target even with detection on,
       // or incoming fire. Ghosts never qualify (recall horizon drops

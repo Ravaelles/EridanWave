@@ -18,8 +18,11 @@ object ClusterCohesion {
   /**
    * Rejoin when all hold (pure flags for the suite): a warrior with no
    * victim, not retreating, not cooling under fire, inside a macro-game
-   * battle, without local contact, past the drift band. The caller owns
-   * the explicit-order exemptions (scouts, commits, suicides, yolo).
+   * battle, without local contact, past the drift band, and with no
+   * latched duel - the march already holds a live duel under its feet,
+   * so yanking the hull to the centroid is the flap, not cohesion. The
+   * caller owns the explicit-order exemptions (scouts, commits, suicides,
+   * yolo).
    */
   def shouldRejoin(
     isWarrior: Boolean,
@@ -29,7 +32,8 @@ object ClusterCohesion {
     inBattle: Boolean,
     macroGame: Boolean,
     hasLocalContact: Boolean,
+    verdictDuel: Boolean,
     distTiles: Double): Boolean =
     isWarrior && ! hasTarget && ! retreating && ! coolingUnderFire &&
-      inBattle && macroGame && ! hasLocalContact && distTiles > maxDriftTiles
+      inBattle && macroGame && ! hasLocalContact && ! verdictDuel && distTiles > maxDriftTiles
 }

@@ -87,6 +87,16 @@ hysteresis home (rule 14).
 
 ## Closed
 
+- Single motion verdict (`MotionVerdict` bus + `owner` kernel, 2026-11):
+  upgrades preempt sharp (contact answers the frame the march sees it),
+  downgrades wait out a 3-frame release, so a one-frame target flicker
+  never walks the duel out of the map. The march ticks once per frame;
+  the gates, the legs, the technique hunt and the cluster rejoin read
+  the latched side instead of re-deriving it. Same shape as the retreat
+  verdict bus, second instance of the pattern. Pinned in
+  `MotionVerdictSuite` + `MarchGateOrderSuite` + `HuntBehaviorSuite` +
+  `ClusterCohesionSuite` + `ArmyMarchSuite`, proven live (1DragWounded
+  `held=Duel` stable across hundreds of frames, `Dress` blips absorbed).
 - Duel-hold on ghosts (`duelHoldsMarch` + `HoldingDuel` label):
   any `toAttack` (stale memory, unhittable watcher) pinned the march
   while the technique tugged home and out every few frames (Crona

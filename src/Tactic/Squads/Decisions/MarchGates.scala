@@ -46,11 +46,13 @@ object MarchGates {
     // fire falls through to the legs, which hold the duel or walk it
     // out - marching at the goal past guns is how duels never start.
     // Latched both ways (mates 17 out / 13 back, guns 21 out / 19 in):
-    // sharp boundaries jerk destinations, so both hold their side.
+    // sharp boundaries jerk destinations, so both hold their side. The
+    // duel read is the latched verdict, never the fresh scan - a
+    // one-frame target flicker must not march the duel out of the map.
     MarchGate(MarchLabel.LoneMarch, (_, unit) =>
       unit.shouldFight &&
       ! unit.verdictRetreat &&
-      ! unit.hasDuel &&
+      ! unit.verdictDuel &&
       ArmedCordon.clearOfArmed(unit.unitId, unit.nearestVisibleArmedTiles) &&
       unit.nearestWarriorTiles.map(t => LoneMarch.marchAlone(unit.unitId, t)).getOrElse(true)))
 

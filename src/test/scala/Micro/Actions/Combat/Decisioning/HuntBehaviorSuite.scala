@@ -13,7 +13,8 @@ class HuntBehaviorSuite extends AnyFunSuite {
     hasTarget           : Boolean = false,
     targetVisible       : Boolean = true,
     targetBeyondPursuit : Boolean = false,
-    targetBeyondSight   : Boolean = false): Boolean =
+    targetBeyondSight   : Boolean = false,
+    verdictDuel         : Boolean = false): Boolean =
     HuntBehavior.shouldHunt(
       umsMode,
       isWarrior,
@@ -22,7 +23,8 @@ class HuntBehaviorSuite extends AnyFunSuite {
       hasTarget,
       targetVisible,
       targetBeyondPursuit,
-      targetBeyondSight)
+      targetBeyondSight,
+      verdictDuel)
 
   test("a dueling walker with no target hunts") {
     assert(hunt())
@@ -58,6 +60,11 @@ class HuntBehaviorSuite extends AnyFunSuite {
 
   test("sight-edge flicker keeps the line steady instead of flapping") {
     assert( ! hunt(hasTarget = true, targetVisible = false, targetBeyondSight = false))
+  }
+
+  test("a latched duel pins the hull: no memory hunt beside a live duel") {
+    assert( ! hunt(verdictDuel = true))
+    assert( ! hunt(hasTarget = true, targetBeyondPursuit = true, verdictDuel = true))
   }
 
   test("a fresh mobile contact is remembered") {
