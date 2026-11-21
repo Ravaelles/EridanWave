@@ -15,11 +15,14 @@ object AbuseBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     val minimumSpace = minimumSpaceFor(unit, combat)
+    // Live threats only: a remembered ghost at a stale pixel must not
+    // back an outranged hull off ground it owns.
+    val deepThreat = unit.matchups.threatDeepest.filter(_.likelyStillThere)
 
-    if (unit.matchups.threatDeepest.exists(_.pixelsToGetInRange(unit) < minimumSpace)) {
+    if (deepThreat.exists(_.pixelsToGetInRange(unit) < minimumSpace)) {
       Retreat(unit)
     }
-    if ( ! AttackIfReadyBehavior.run(unit, combat) && unit.matchups.threatDeepest.exists(a => a.presumptiveTarget.contains(unit) || a.speedApproaching(unit) > 0)) {
+    if ( ! AttackIfReadyBehavior.run(unit, combat) && deepThreat.exists(a => a.presumptiveTarget.contains(unit) || a.speedApproaching(unit) > 0)) {
       Retreat(unit)
     }
     if (combat.idealDistanceForward > 0) {
