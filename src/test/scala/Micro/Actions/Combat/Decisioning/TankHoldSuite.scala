@@ -17,21 +17,27 @@ class TankHoldSuite extends AnyFunSuite {
   }
 
   test("a dragoon stands off a sieged tank it cannot outrange") {
-    // Sieged reach 12: hold the 12-14 standoff, never inside the
-    // footprint (the withdrawal owns that) and never past it (the
-    // approach owns that).
-    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 12.0, tankReachTiles = 12.0))
-    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 13.0, tankReachTiles = 12.0))
-    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 14.0, tankReachTiles = 12.0))
-    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 11.9, tankReachTiles = 12.0))
-    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 6.0, tankReachTiles = 12.0))
-    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 14.01, tankReachTiles = 12.0))
+    // Sieged reach 12, own reach 4: hold the 12-14 standoff, never
+    // inside the footprint (the withdrawal owns that) and never past
+    // it (the approach owns that).
+    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 12.0, ownRangeTiles = 4.0, tankReachTiles = 12.0))
+    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 13.0, ownRangeTiles = 4.0, tankReachTiles = 12.0))
+    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 14.0, ownRangeTiles = 4.0, tankReachTiles = 12.0))
+    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 11.9, ownRangeTiles = 4.0, tankReachTiles = 12.0))
+    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 6.0, ownRangeTiles = 4.0, tankReachTiles = 12.0))
+    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 14.01, ownRangeTiles = 4.0, tankReachTiles = 12.0))
+  }
+
+  test("inside our own reach we stand and shoot, not close") {
+    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 4.0, ownRangeTiles = 4.0, tankReachTiles = 12.0))
+    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 3.0, ownRangeTiles = 4.0, tankReachTiles = 7.0))
+    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 4.01, ownRangeTiles = 4.0, tankReachTiles = 7.0))
   }
 
   test("an unsieged tank holds its own shorter standoff") {
-    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 8.0, tankReachTiles = 7.0))
-    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 6.0, tankReachTiles = 7.0))
-    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 9.01, tankReachTiles = 7.0))
+    assert(TankHold.shouldHold(targetIsTank = true, distTiles = 8.0, ownRangeTiles = 4.0, tankReachTiles = 7.0))
+    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 6.0, ownRangeTiles = 4.0, tankReachTiles = 7.0))
+    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 9.01, ownRangeTiles = 4.0, tankReachTiles = 7.0))
   }
 
   test("sieged and unsieged tanks both pin the line") {
@@ -45,7 +51,7 @@ class TankHoldSuite extends AnyFunSuite {
   }
 
   test("a parked hull inside the footprint never holds") {
-    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 5.0, tankReachTiles = 12.0))
-    assert( ! TankHold.shouldHold(targetIsTank = false, distTiles = 13.0, tankReachTiles = 12.0))
+    assert( ! TankHold.shouldHold(targetIsTank = true, distTiles = 5.0, ownRangeTiles = 4.0, tankReachTiles = 12.0))
+    assert( ! TankHold.shouldHold(targetIsTank = false, distTiles = 13.0, ownRangeTiles = 4.0, tankReachTiles = 12.0))
   }
 }

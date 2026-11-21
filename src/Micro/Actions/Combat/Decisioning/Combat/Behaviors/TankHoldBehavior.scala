@@ -29,6 +29,7 @@ object TankHoldBehavior {
     if ( ! TankHold.shouldHold(
       targetIsTank = true,
       distTiles = distTiles,
+      ownRangeTiles = unit.pixelRangeAgainst(target.get) * Maff.inv32,
       tankReachTiles = target.get.pixelRangeAgainst(unit) * Maff.inv32)) return false
 
     unit.agent.act("TankHold")
