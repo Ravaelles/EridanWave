@@ -12,20 +12,20 @@ import Utilities.Latch
 /**
  * Artillery keep-off, one rule near the top of every retreat plan (no
  * game in the kernel): a detected ground unit of any class that does
- * not want battle with the guns never closes inside 12.8 tiles of one,
+ * not want battle with the guns never closes inside 13.1 tiles of one,
  * plus up to 2 wound tiles - a dying hull turns at fifteen, a fresh one
  * at thirteen. Siege range is twelve, so the band always clears the
- * shells with the eight-tenths to spare for the frame the spotter
- * blinks. The fallback steps one tile past the line along the ray,
- * recomputed every frame, so the line holds instead of milling. The
- * duel never overrules it: a verdict that says fight walks the hull
- * into the shells it was already dodging, so the keep-off fires
- * regardless and the duel resumes past the line. The deliberate
- * point-blank close keeps its own discipline (TankHug): a cooling gun
- * walking the tank down holds its line instead of bouncing at the
- * band. Reavers keep theirs too and never enter here. Cloaked or
- * burrowed hulls the guns cannot see keep their own plans. The gun set
- * is one predicate: sieged tanks today, the next long gun tomorrow.
+ * shells with 1.1 to spare for the frame the spotter blinks. The fallback
+ * steps one tile past the line along the ray, recomputed every frame, so
+ * the line holds instead of milling. The duel never overrules it: a
+ * verdict that says fight walks the hull into the shells it was already
+ * dodging, so the keep-off fires regardless and the duel resumes past
+ * the line. The deliberate point-blank close keeps its own discipline
+ * (TankHug): a cooling gun walking the tank down holds its line instead
+ * of bouncing at the band. Reavers keep theirs too and never enter here.
+ * Cloaked or burrowed hulls the guns cannot see keep their own plans.
+ * The gun set is one predicate: sieged tanks today, the next long gun
+ * tomorrow.
  */
 object ArtilleryKeepOff {
 
@@ -33,7 +33,7 @@ object ArtilleryKeepOff {
   def isArtillery(enemy: UnitInfo): Boolean = Terran.SiegeTankSieged(enemy)
 
   /** Keep-off of a fresh hull, in tiles: gun range plus a blink margin. */
-  val baseKeepOffTiles: Double = 12.8
+  val baseKeepOffTiles: Double = 13.1
 
   /** Extra keep-off of a fully wounded hull, in tiles. */
   val woundBonusTiles: Double = 2.0
