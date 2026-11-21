@@ -7,6 +7,7 @@ import Micro.Agency.Commander
 import Micro.Actions.Combat.Decisioning.TankHug
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Tactic.Squads.Decisions.TankVerdict
 import Utilities.Latch
 
 /**
@@ -74,6 +75,10 @@ object ArtilleryKeepOff {
     if ( ! unit.canMove) return false
     if (Protoss.Reaver(unit)) return false
     if ( ! unit.visibleToOpponents) return false
+    // Single decider: a committed attack (verdict FIGHT) holds its line
+    // instead of bouncing at the keep-off band - yielding there is what
+    // the in-out dither is made of. Everyone else keeps the old yield.
+    if (TankVerdict.held(unit.id).contains(TankVerdict.Fight)) return false
 
     val shells = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && isArtillery(e))

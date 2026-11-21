@@ -11,18 +11,9 @@ import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
 import Micro.Coordination.Pushing.TrafficPriorities
 import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Utilities.Latch
 import Utilities.UnitFilters.{IsSpeedling, IsSpeedlot}
 
 class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
-
-  /**
-   * Siege-leave latch (auto-registered, reset per game): the footprint
-   * edge is sharp, so an unlatched leave jitters Fallback/Fight every
-   * few frames instead of withdrawing - enter inside 12.5, release
-   * two tiles past it.
-   */
-  private val siegeLeave = new Latch
 
   /**
    * Roaming Dragoons belong to the march: the roam gate already walks
@@ -72,21 +63,37 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
     val hardCounterKnown = MacroFacts.enemyHardCounterKnown
+    // Single tank verdict (one decider for the guns): the nearest tank
+    // of either mode, its reach and dead zone, and the odds on both
+    // fronts. Dead-zone hulls shoot for free and cooling hugs walk the
+    // tank down; inside reach plus standoff the latched odds decide -
+    // commit at two-to-one on both fronts, leave below three-to-two
+    // on either. Past the band the duel has not started and the
+    // verdict abstains, keeping the last call instead of
+    // renegotiating the edge. FIGHT falls through to the normal duel
+    // below; LEAVE walks out through Fallback.
+    val nearestTank = Maff.minBy(unit.matchups.threats.view.filter(t => t.unitClass.isTank))(_.pixelDistanceEdge(unit))
+    val nearestTankTiles = nearestTank.map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    val tankReachTiles = nearestTank.map(_.pixelRangeAgainst(unit) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    val tankMinTiles = nearestTank.map(_.pixelRangeMin * Maff.inv32).getOrElse(0.0)
     val nearestSiegedTiles = Maff.minBy(unit.matchups.threats.view.filter(Terran.SiegeTankSieged))(_.pixelDistanceEdge(unit))
       .map(unit.pixelDistanceEdge(_) * Maff.inv32)
       .getOrElse(Double.PositiveInfinity)
-    // Latched siege leave (fires inside the footprint, releases two
-    // tiles past it): the edge itself is sharp, so the raw desire
-    // would jitter the technique every few frames around it.
-    val leaveSiege = siegeLeave(
-      unit.id,
-      fires = TankHug.shouldLeaveSiege(
-        nearestSiegedTiles,
-        unit.cooldownLeft,
-        unit.agent.shouldFight,
-        unit.canMove,
-        unit.unitClass.melee),
-      releases = nearestSiegedTiles > TankHug.siegeReleaseTiles)
+    val (localUs, localFoe) = unit.combatForecast
+      .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
+      .getOrElse((0.0, 0.0))
+    val (globalUs, globalFoe) = (With.battles.globalAttack.us.skimStrengthUnits, With.battles.globalAttack.enemy.skimStrengthUnits)
+    val fightingTanksNow = Tactic.Squads.Decisions.TankVerdict.held(unit.id).contains(Tactic.Squads.Decisions.TankVerdict.Fight)
+    Tactic.Squads.Decisions.TankVerdict.desire(
+      nearestTankTiles,
+      tankReachTiles,
+      tankMinTiles,
+      TankHug.shouldHug(nearestSiegedTiles, unit.cooldownLeft, unit.agent.shouldFight, unit.canMove),
+      localUs,
+      localFoe,
+      globalUs,
+      globalFoe,
+      fightingTanksNow).foreach(Tactic.Squads.Decisions.TankVerdict.update(unit.id, _))
     val retreatPermitted = Tactic.Squads.Decisions.RetreatAllowed.forUnit(
       unit.totalHealth,
       unitsScore,
@@ -148,16 +155,15 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // holds Flee instead of charging back through the retreat. Fresh
       // fight with no retreat behind it falls through untouched.
       else  if (verdictRetreat)                                      Flee
-      // Proactive siege withdrawal: a sieged tank inside 12.5 tiles
-      // outranges every ground warrior, so standing (or closing) there
-      // donates shells before the first one even lands - walk out now,
-      // not after the shell shock fires. A transition cannot do this:
-      // Fight never transitions into Fallback, so the ladder assigns
-      // it directly. The cooling hug still owns the point-blank duel
-      // it wins; the latched leave owns the release two tiles past the
-      // footprint, and the ReengageLatch extends the withdrawal once it
-      // holds.
-      else  if ( ! standGroundNow && leaveSiege)                     Fallback
+      // Single tank verdict (one decider for the guns): LEAVE walks out
+      // through Fallback - unconditional inside the footprint unless a
+      // dead-zone free kill or a cooling hug says fight, committed past
+      // it only with a stronger local and global army. FIGHT falls
+      // through to the normal duel below, which closes and duels
+      // instead of parking. A transition cannot do this: Fight never
+      // transitions into Fallback, so the ladder assigns it directly.
+      else  if ( ! standGroundNow &&
+        Tactic.Squads.Decisions.TankVerdict.held(unit.id).contains(Tactic.Squads.Decisions.TankVerdict.Leave)) Fallback
       else  if (unit.agent.shouldFight && combat.target.isDefined)   Fight
       else  if (safePassage && combat.target.exists(unit.inRangeToAttack)) Fight
       else  if (safePassage)                                        Walk
@@ -220,14 +226,6 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && ( ! marchingAlone || unit.matchups.targetsInRange.nonEmpty) && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && ! combat.shouldRetreat && combat.framesUntilShot < unit.cooldownMaxAirGround)
     combat.transition(SuperKite, unit.isAny(Terran.Wraith, Zerg.Mutalisk))
     combat.transition(Scavenge,  outmatchedPrey)
-    // Nearest sieged tank, in tiles (Infinity when none shells us).
-    lazy val nearestSiegedTiles = Maff.minBy(unit.matchups.threats.view.filter(Terran.SiegeTankSieged))(_.pixelDistanceEdge(unit))
-      .map(unit.pixelDistanceEdge(_) * Maff.inv32)
-      .getOrElse(Double.PositiveInfinity)
-    combat.transition(Fallback,  ! standGroundNow && unit.matchups.inRangeOfTank && TankHug.shouldWithdraw(
-      With.framesSince(unit.lastFrameTakingDamage) < TankHug.shellShockFrames,
-      nearestSiegedTiles,
-      unit.unitClass.melee))
     combat.transition(Fallback,  ! standGroundNow && unit.isAny(Terran.SiegeTankUnsieged, Terran.Goliath, Protoss.Reaver) && ! unit.airborne)
     // Unit-owned claims (the predicates live with their units; the order
     // lives here because the technique state machine constrains it).
