@@ -1,6 +1,7 @@
 package Micro.Actions.Combat.Decisioning
 
 import Debugging.Probe
+import Information.Battles.ArmyStrength
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Techniques._
@@ -13,6 +14,7 @@ import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Decisions.ClusterCohesion
 import Tactic.Squads.Decisions.ClusterPosture
+import Tactic.Squads.Decisions.RetreatVerdict
 import Tactic.Squads.Decisions.SuicideMission
 import Utilities.DispatchBand
 import Utilities.Latch
@@ -223,15 +225,22 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // rearguard and the Retreat maneuver above already spoke for it,
     // and dispatching it back into the fight is exactly the mixed
     // frame the retreat discipline exists to kill.
-    // UMS committed duelists always advance: the sim forecasts trades,
-    // but a losing trade the unit can kite is still a duel - without
-    // advance the technique never runs and the march walks losing duels
-    // out of the map instead of kiting them. Retreating units keep
-    // marching home.
+    // Committed UMS duelists advance while they want the fight and no
+    // retreat is held: the sim forecasts trades, but a losing trade the
+    // unit can kite is still a duel - without advance the technique never
+    // runs and the march walks losing duels out of the map instead of
+    // kiting them. Mirrors the march's own verdict read so both phases
+    // obey the same held verdict. Retreating units keep marching home.
+    val umsDuelistAdvances = With.umsMode && unit.agent.commit && unit.agent.shouldFight &&
+      ! (RetreatVerdict.held(unit.id, With.frame) && ! ClusterPosture.overrulesRetreat(
+        unit.squad.flatMap(_.battlePosture),
+        ArmyStrength.score(
+          With.battles.globalAttack.us.skimStrengthUnits,
+          With.battles.globalAttack.enemy.skimStrengthUnits)))
     val advance = (unit.squad.flatMap(_.battlePosture) match {
       case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active) && ! unit.intent.marchHome
       case None          => combat.fightConsensus && ! unit.intent.marchHome
-    }) || (With.umsMode && unit.agent.commit && ! unit.intent.marchHome)
+    }) || umsDuelistAdvances
     var i = 0
     var claimed: Option[Boolean] = None
     while (i < EngagePipeline.stages.length && claimed.isEmpty) {
