@@ -21,12 +21,15 @@ object ScoutStaticKeepOff {
 
   /**
    * Hold point (pure geometry): the point on the static->target line at
-   * reach plus margin. When even that point sits past the shooter's weapon
-   * range the target shelters under the umbrella and the duel stays
-   * normal - diving is the caller's decision, not this hold's.
+   * box edge plus reach plus margin. The edge matters: a 2x2 static
+   * measured from its center donates the whole margin tile back to the
+   * guns. When even that point sits past the shooter's weapon range the
+   * target shelters under the umbrella and the duel stays normal -
+   * diving is the caller's decision, not this hold's.
    */
   def holdPoint(
-    staticX: Double, staticY: Double, staticRangePixels: Double,
+    staticX: Double, staticY: Double, staticTileWidth: Int, staticTileHeight: Int,
+    staticRangePixels: Double,
     targetX: Double, targetY: Double,
     weaponRangePixels: Double): Option[(Double, Double)] = {
     val dx = targetX - staticX
@@ -34,9 +37,16 @@ object ScoutStaticKeepOff {
     val dist = Math.sqrt(dx * dx + dy * dy)
     if (dist <= 0.0) return None
 
-    val stand = staticRangePixels + marginTiles * 32.0
-    val hx = staticX + dx / dist * stand
-    val hy = staticY + dy / dist * stand
+    // Box exit along the ray: the line starts where the static ends.
+    val ux = dx / dist
+    val uy = dy / dist
+    val halfW = staticTileWidth * 16.0
+    val halfH = staticTileHeight * 16.0
+    val exitX = if (ux == 0.0) Double.PositiveInfinity else halfW / Math.abs(ux)
+    val exitY = if (uy == 0.0) Double.PositiveInfinity else halfH / Math.abs(uy)
+    val stand = Math.min(exitX, exitY) + staticRangePixels + marginTiles * 32.0
+    val hx = staticX + ux * stand
+    val hy = staticY + uy * stand
     val toTarget = Math.sqrt((targetX - hx) * (targetX - hx) + (targetY - hy) * (targetY - hy))
     if (toTarget > weaponRangePixels) None else Some((hx, hy))
   }
@@ -56,6 +66,7 @@ object ScoutStaticKeepOff {
 
     holdPoint(
       staticX = static.get.pixel.x, staticY = static.get.pixel.y,
+      staticTileWidth = static.get.unitClass.tileWidth, staticTileHeight = static.get.unitClass.tileHeight,
       staticRangePixels = static.get.pixelRangeAgainst(unit),
       targetX = target.get.pixel.x, targetY = target.get.pixel.y,
       weaponRangePixels = unit.pixelRangeAgainst(target.get)) match {
