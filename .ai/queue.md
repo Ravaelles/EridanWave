@@ -31,6 +31,10 @@ Details live in `details/` - the queue keeps one line per item.
   DEFEAT 180/612 (34 min PvT carriers: 1:3.4 grind, 603 ordinary
   votes dominated by OutOfContact/No at advantage, no flap -
   out-comped late loss, toggles N/A outside PvP).
+- S2 jar ladder validation: BetaStar DEFEAT 20/118 (13 min PvPDT
+  vs 4GateGoon on TauCross: wiped min 7, same known
+  gameplan-selection gap as SINK2/REMATCH; unit timeline ordinary -
+  duels/approach/abuse, single-digit transitions, no flap).
 - UMS on the toggle jar: full batch 9W/13L/3NA, then re-run wins
   on 1DragWounded + 1DragLing (flippers flip back); 3DragHydra
   timeouts sit inside its all-time flip distribution (8W/9L);
