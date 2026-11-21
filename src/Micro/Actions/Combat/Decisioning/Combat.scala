@@ -292,12 +292,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     var claimed = false
     while (i < TechniquePipeline.stages.length && ! claimed) {
       claimed = TechniquePipeline.stages(i).run(unit, this, advance)
+      if (claimed) Debugging.Probe.note("Claim", unit.id, TechniquePipeline.stages(i).name)
       i += 1
     }
     // The engage never claims: it runs for side effects when nothing
     // above owned the frame. Probe the gate (change-only): which of the
     // three legs holds the duel out.
-    Debugging.Probe.note("Duel", unit.id, s"claimed=$claimed engage=${shouldEngage && advance}")
+    Debugging.Probe.note("Duel", unit.id, s"claimed=$claimed engage=${shouldEngage && advance} ready=${unit.ready} tech=$technique")
     if ( ! claimed && shouldEngage && advance) engagement.engage()
   }
 
