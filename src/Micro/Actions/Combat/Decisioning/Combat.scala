@@ -278,7 +278,15 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
       Information.Battles.ArmyStrength.score(
         With.battles.globalAttack.us.skimStrengthUnits,
         With.battles.globalAttack.enemy.skimStrengthUnits))
-    val advance = posture.forall(ClusterPosture.advances) && (! RetreatVerdict.held(unit.id, With.frame) || overruled)
+    // Committed UMS duelists advance while no retreat is held: the sim
+    // forecasts trades, but a losing trade the unit can kite is still a
+    // duel, and without advance the technique never runs - the march
+    // walks losing duels out of the map instead of kiting them. Same
+    // held verdict the march obeys, so both phases agree.
+    val umsDuelistAdvances = With.umsMode && unit.agent.commit &&
+      ! (RetreatVerdict.held(unit.id, With.frame) && ! overruled)
+    val advance = (posture.forall(ClusterPosture.advances) && (! RetreatVerdict.held(unit.id, With.frame) || overruled)) ||
+      umsDuelistAdvances
 
     var i = 0
     var claimed = false

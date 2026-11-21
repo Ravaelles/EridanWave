@@ -225,13 +225,13 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // rearguard and the Retreat maneuver above already spoke for it,
     // and dispatching it back into the fight is exactly the mixed
     // frame the retreat discipline exists to kill.
-    // Committed UMS duelists advance while they want the fight and no
-    // retreat is held: the sim forecasts trades, but a losing trade the
-    // unit can kite is still a duel - without advance the technique never
-    // runs and the march walks losing duels out of the map instead of
-    // kiting them. Mirrors the march's own verdict read so both phases
-    // obey the same held verdict. Retreating units keep marching home.
-    val umsDuelistAdvances = With.umsMode && unit.agent.commit && unit.agent.shouldFight &&
+    // Committed UMS duelists advance while no retreat is held: the sim
+    // forecasts trades, but a losing trade the unit can kite is still a
+    // duel - without advance the technique never runs and the march
+    // walks losing duels out of the map instead of kiting them. Same
+    // held verdict the dispatch reads, so both gates agree. Retreating
+    // units keep marching home.
+    val umsDuelistAdvances = With.umsMode && unit.agent.commit &&
       ! (RetreatVerdict.held(unit.id, With.frame) && ! ClusterPosture.overrulesRetreat(
         unit.squad.flatMap(_.battlePosture),
         ArmyStrength.score(
