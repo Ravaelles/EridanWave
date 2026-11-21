@@ -176,6 +176,17 @@ hysteresis home (rules 9-10).
   (`ArmedCordon`, latched 21 out / 19 in, fogged memories never pin).
   Proved in StarEngine (march + duel contracts) and live (HoldingDuel
   403 vs LoneMarch 1 in the re-run win).
+- Dress outranks the duel while the far-wait holds (ZealDrag,
+  2026-11): `MotionVerdict.desired` claimed Duel whenever a target
+  existed, so the technique charged through the dressed line from ten
+  tiles out while the march waited - the split read as a blob. Dress
+  now owns the opening (the wait releases on contact, so the duel
+  loses nothing) and `advance` pauses while Dress is held, so legs and
+  technique never split the frame; ghost hunts and victim shots do not
+  need advance and keep running. Validated live (Waiting-for-pack from
+  f28, Dress held, first blood f203 vs f162, mirrors flip back to
+  wins). Pattern: when the march owns a posture the technique must
+  read it too, or the two phases fight over the same unit.
 - Legacy brain starving the W1 pipeline (1DragWounded, 2026-11):
   `BeDragoonVsSlowlot` (pre-W1 container action, no trace credit) ran
   inside `Fight.perform` ahead of the W1 `Combat` dispatch and issued

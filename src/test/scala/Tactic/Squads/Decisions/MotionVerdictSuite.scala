@@ -9,8 +9,8 @@ class MotionVerdictSuite extends AnyFunSuite {
     assert(MotionVerdict.desired(verdictRetreat = true, hasDuel = false, dressing = false) == MotionVerdict.Withdraw)
   }
 
-  test("contact outranks dressing and the open march") {
-    assert(MotionVerdict.desired(verdictRetreat = false, hasDuel = true, dressing = true) == MotionVerdict.Duel)
+  test("the dressed line outranks the duel until contact releases it") {
+    assert(MotionVerdict.desired(verdictRetreat = false, hasDuel = true, dressing = true) == MotionVerdict.Dress)
     assert(MotionVerdict.desired(verdictRetreat = false, hasDuel = true, dressing = false) == MotionVerdict.Duel)
   }
 

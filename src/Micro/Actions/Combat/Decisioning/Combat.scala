@@ -13,7 +13,9 @@ import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Agency.Commander
 import Micro.Coordination.Pushing.TrafficPriorities
 import Tactic.Squads.Decisions.ClusterPosture
+import Tactic.Squads.Decisions.MotionVerdict
 import Tactic.Squads.Decisions.RetreatVerdict
+import Tactic.Squads.MarchOrders
 import Micro.Targeting.BreakTerranWallIn
 import Micro.Targeting.EnemyWallInDetected
 import Micro.Targeting.ProtossWallIn
@@ -424,8 +426,18 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // held verdict the march obeys, so both phases agree.
     val umsDuelistAdvances = With.umsMode && unit.agent.commit &&
       ! (RetreatVerdict.held(unit.id, With.frame) && ! overruled)
-    val advance = (posture.forall(ClusterPosture.advances) && (! RetreatVerdict.held(unit.id, With.frame) || overruled)) ||
-      umsDuelistAdvances
+    // The dressed line owns the approach: while the far-wait holds, the
+    // duel waits with the march instead of charging through it - first
+    // volley plus concave beats a meeting engagement. Releases on
+    // contact (the wait itself releases), so the duel loses nothing.
+    // Ghost hunts and victim shots do not need advance and keep running.
+    // The held Dress covers the pack dress too: a unit the march holds
+    // for its pack does not duel past the line through its own orders.
+    // The hold lags the release by the bus window; contact answers on
+    // the next ticks, never on the old line.
+    val advance = ((posture.forall(ClusterPosture.advances) && (! RetreatVerdict.held(unit.id, With.frame) || overruled)) ||
+      umsDuelistAdvances) && ! MarchOrders.farWaitHolding(unit) &&
+      MotionVerdict.held(unit.id, With.frame) != MotionVerdict.Dress
 
     var i = 0
     var claimed = false

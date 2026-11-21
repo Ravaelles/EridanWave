@@ -130,7 +130,14 @@ object MarchOrders {
    * ball instead of trickling into it. Cheap gates first so ladder
    * games pay nothing: the scans run only while UMS Protoss stands.
    */
-  private def farWaitHolding(unit: FriendlyUnitInfo): Boolean = {
+  /**
+   * Far dress-and-wait read, shared with the technique: the dispatch
+   * pauses the duel (advance) while the march dresses the line, so the
+   * legs and the technique never split the frame between waiting and
+   * charging. Same latch the march ticks - stateless per tick, so a
+   * second read in the unit phase agrees by construction.
+   */
+  def farWaitHolding(unit: FriendlyUnitInfo): Boolean = {
     // Player records stay empty on UMS (nothing ever assigns them), so
     // read the race off seen units instead: blind at spawn, exact later.
     // Eyes and guns never dress the line: the gap reads warriors only,

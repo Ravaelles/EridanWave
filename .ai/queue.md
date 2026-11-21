@@ -17,6 +17,16 @@ Details live in `details/` - the queue keeps one line per item.
   Sunkens ammo, DT detection, mop-up timeouts); post-W1 duel maps
   green (1Drag/16Drag/ZealDrag/Reav_v_Drag wins, TanksVult kills
   rising).
+- ZealDrag line doctrine (owner order, 2026-11-21): dress early,
+  wait, inch forward - implemented via the existing dress machinery
+  (far-wait + FormationApproach 0.1 steps): Dress outranks Duel while
+  the far-wait holds, advance pauses while Dress is held, and healthy
+  hulls with nothing inside two tiles never kite
+  (`KiteAwayBehavior.shouldKite` gate: shieldWound==0 + no live threat
+  within 2 tiles). Validated on ZealDrag_v_ZealDrag (line dresses from
+  f28, first blood f203 vs f162, 3W/1L k9/l8 k9/l7 k9/l8 k4/l9 vs
+  0W/2L before); no regression on 1DragWounded (V k1/l0) and 16Drag
+  (V 16/12). Ladder validation pending.
 - 1DragWounded MECHANISM FOUND + FIXED (2026-11-21): the losses were
   not a kite-tuning gap - the W1 duel legs never ran (legacy
   `BeDragoonVsSlowlot` issued every execute, unit never `ready`, Guard

@@ -78,8 +78,8 @@ object MotionVerdict extends PerGame {
    */
   def desired(verdictRetreat: Boolean, hasDuel: Boolean, dressing: Boolean): Mode =
     if (verdictRetreat) Withdraw
-    else if (hasDuel) Duel
     else if (dressing) Dress
+    else if (hasDuel) Duel
     else Advance
 
   /**

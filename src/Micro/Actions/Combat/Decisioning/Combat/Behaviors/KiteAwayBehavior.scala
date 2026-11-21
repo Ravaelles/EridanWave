@@ -63,6 +63,13 @@ object KiteAwayBehavior {
   private def shouldKite(unit: FriendlyUnitInfo): Boolean = {
     if (unit.unitClass.melee) return shouldKiteMelee(unit)
 
+    // Healthy hulls with nothing close hold the line: full shields and
+    // no live threat inside two tiles means no reason to yield ground,
+    // even if a squad mate's margin is hot (owner order). Ranged only;
+    // melee answers through the pack gate below.
+    if (unit.unitClass.maxShields > 0 && unit.shieldWound == 0 &&
+      ! unit.matchups.threatsInPixels(64.0).exists(_.likelyStillThere)) return false
+
     val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
     val marginPixels = KiteAway.enemyMarginTiles * 32.0
     // Live threats only: a fogged ghost at a stale pixel must not kite
