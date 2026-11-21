@@ -20,8 +20,10 @@ object DragoonMineDefuseBehavior {
         DragoonMineDefuse.inDefuseRange(unit.tileDistanceEdge(t))).toSeq
     if (mines.isEmpty) return false
 
+    // The veto reads live warriors only: a remembered ghost that already
+    // left must not pin the defusal while the line walks live mines.
     val nearestThreatTiles = Maff.minBy(unit.matchups.threats.view.filter(t =>
-      t.alive && t.canAttack(unit) && ! Terran.SpiderMine(t)))(
+      t.alive && t.likelyStillThere && t.canAttack(unit) && ! Terran.SpiderMine(t)))(
       unit.pixelDistanceEdge(_))
       .map(unit.pixelDistanceEdge(_) * Maff.inv32)
       .getOrElse(Double.PositiveInfinity)
