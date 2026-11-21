@@ -15,6 +15,18 @@ import Utilities.Time.Minutes
 import Utilities.UnitFilters.{IsTank, IsWorker}
 
 object Retreat extends Action {
+
+  /** Never brake into arrival while fleeing: a destination inside this,
+    * in tiles, gets pushed past itself, so the unit keeps running
+    * instead of stopping under fire to re-decide. Precision maneuvers
+    * (boarding, formation offsets) opt out and arrive exactly. */
+  val arrivalPushTiles: Double = 2.0
+
+  /** How far past the stale destination the push lands, in tiles. */
+  val arrivalPushPastTiles: Double = 4.0
+
+  def pushPastArrival(distTiles: Double, preciseArrival: Boolean): Boolean =
+    ! preciseArrival && distTiles < arrivalPushTiles
   
   /** Full retreat planner: picks WHERE a fleeing unit runs (board, shotgun, scatter, path), never WHETHER it flees - that verdict belongs to FightRules. */
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canMove && unit.matchups.threats.nonEmpty
@@ -24,11 +36,12 @@ object Retreat extends Action {
       if (unit.ready) {
         unit.agent.toAttack = None // Affects traffic prioritization
         // Never brake into arrival while fleeing: a destination inside
-        // 1.5 tiles gets pushed past itself, so the unit keeps running
+        // two tiles gets pushed past itself, so the unit keeps running
         // instead of stopping under fire to re-decide. Precision maneuvers
         // (boarding, formation offsets) opt out and arrive exactly.
-        val runTo = ?( ! preciseArrival && unit.pixelDistanceCenter(to) < 1.5 * 32,
-          unit.pixel.project(to, unit.pixelDistanceCenter(to) + 4 * 32).walkablePixel,
+        val distTiles = unit.pixelDistanceCenter(to) * Maff.inv32
+        val runTo = ?(pushPastArrival(distTiles, preciseArrival),
+          unit.pixel.project(to, unit.pixelDistanceCenter(to) + arrivalPushPastTiles * 32).walkablePixel,
           to)
         unit.agent.decision.set(runTo)
         if (With.configuration.debugging) {
