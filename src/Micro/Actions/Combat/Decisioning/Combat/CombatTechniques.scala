@@ -72,28 +72,41 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     // verdict abstains, keeping the last call instead of
     // renegotiating the edge. FIGHT falls through to the normal duel
     // below; LEAVE walks out through Fallback.
+    // fronts. A lonely tank is always walked down to the dead zone;
+    // an escorted one takes two-to-one odds evaluated right at the
+    // guns: our nearby pack against the tank and its escorts.
     val nearestTank = Maff.minBy(unit.matchups.threats.view.filter(t => t.unitClass.isTank))(_.pixelDistanceEdge(unit))
-    val nearestTankTiles = nearestTank.map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
-    val tankReachTiles = nearestTank.map(_.pixelRangeAgainst(unit) * Maff.inv32).getOrElse(Double.PositiveInfinity)
-    val tankMinTiles = nearestTank.map(_.pixelRangeMin * Maff.inv32).getOrElse(0.0)
-    val nearestSiegedTiles = Maff.minBy(unit.matchups.threats.view.filter(Terran.SiegeTankSieged))(_.pixelDistanceEdge(unit))
-      .map(unit.pixelDistanceEdge(_) * Maff.inv32)
-      .getOrElse(Double.PositiveInfinity)
-    val (localUs, localFoe) = unit.combatForecast
-      .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
-      .getOrElse((0.0, 0.0))
-    val (globalUs, globalFoe) = (With.battles.globalAttack.us.skimStrengthUnits, With.battles.globalAttack.enemy.skimStrengthUnits)
-    val fightingTanksNow = Tactic.Squads.Decisions.TankVerdict.held(unit.id).contains(Tactic.Squads.Decisions.TankVerdict.Fight)
-    Tactic.Squads.Decisions.TankVerdict.desire(
-      nearestTankTiles,
-      tankReachTiles,
-      tankMinTiles,
-      TankHug.shouldHug(nearestSiegedTiles, unit.cooldownLeft, unit.agent.shouldFight, unit.canMove),
-      localUs,
-      localFoe,
-      globalUs,
-      globalFoe,
-      fightingTanksNow).foreach(Tactic.Squads.Decisions.TankVerdict.update(unit.id, _))
+    nearestTank match {
+      case None => Tactic.Squads.Decisions.TankVerdict.clear(unit.id)
+      case Some(tank) =>
+        val reachTiles = tank.pixelRangeAgainst(unit) * Maff.inv32
+        val escorts = unit.matchups.threats.view.filter(e =>
+          e.id != tank.id &&
+          e.alive && e.likelyStillThere &&
+          e.unitClass.canAttack(unit) &&
+          e.pixelDistanceEdge(tank.pixel) <= Tactic.Squads.Decisions.TankVerdict.escortRadiusTiles * 32.0).toSeq
+        val usSkim = With.units.ours.view.filter(o =>
+          o.alive && o.unitClass.isWarrior &&
+          o.pixelDistanceCenter(unit.pixel) <= Tactic.Squads.Decisions.TankVerdict.packRadiusTiles * 32.0)
+          .map(_.subjectiveValue).sum
+        val foeSkim = (tank +: escorts).map(_.subjectiveValue).sum
+        val fightingTanksNow = Tactic.Squads.Decisions.TankVerdict.held(unit.id).contains(Tactic.Squads.Decisions.TankVerdict.Fight)
+        val tankDesire = Tactic.Squads.Decisions.TankVerdict.desire(
+          unit.pixelDistanceEdge(tank) * Maff.inv32,
+          reachTiles,
+          tank.pixelRangeMin * Maff.inv32,
+          TankHug.shouldHug(
+            if (Terran.SiegeTankSieged(tank)) unit.pixelDistanceEdge(tank) * Maff.inv32 else Double.PositiveInfinity,
+            unit.cooldownLeft,
+            unit.agent.shouldFight,
+            unit.canMove),
+          unit.unitClass.isWarrior && unit.canAttack(tank),
+          escorts.isEmpty,
+          usSkim,
+          foeSkim,
+          fightingTanksNow)
+        tankDesire.foreach(Tactic.Squads.Decisions.TankVerdict.update(unit.id, _))
+    }
     val retreatPermitted = Tactic.Squads.Decisions.RetreatAllowed.forUnit(
       unit.totalHealth,
       unitsScore,
