@@ -47,8 +47,12 @@ private[Decisioning] object EngagePipeline {
     Stage("Hunt", DispatchBand.Medium, (unit, _, _) =>
       if (HuntBehavior.run(unit)) Some(true) else None),
     // No advance, no prey: walk the march instead of dueling.
-    Stage("AdvanceGate", DispatchBand.Low, (unit, combat, advance) =>
-      if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); Some(true) } else None),
+    // Probe the gate inputs (change-only): when the technique stays
+    // silent for a whole duel, this row says whether advance ever opened.
+    Stage("AdvanceGate", DispatchBand.Low, (unit, combat, advance) => {
+      Debugging.Probe.note("Gate", unit.id, s"advance=$advance prey=${preyDrive(unit)} consensus=${combat.fightConsensus} home=${unit.intent.marchHome} commit=${unit.agent.commit}")
+      if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); Some(true) } else None
+    }),
     // Zealot leash: a Zealot never operates past 5.5 tiles from our
     // Dragoons - a lone charge into their guns while ours fall back is a
     // donation, not pressure. Scouts, committed rushers, suicides and yolo

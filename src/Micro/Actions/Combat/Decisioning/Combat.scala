@@ -245,6 +245,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     techniques.selectBaseTechnique(safePassage)
     techniques.applyTransitions()
     techniques.syncConsensus()
+    Debugging.Probe.note("Tech", unit.id, technique.toString)
   }
 
   private def safePassage: Boolean =
