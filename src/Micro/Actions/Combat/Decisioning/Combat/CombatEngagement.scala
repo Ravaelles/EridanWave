@@ -105,23 +105,42 @@ private[Decisioning] object EngagePipeline {
     ZealotLeashStage,
     ClusterRejoinStage)
 
-  case class DuelStage(name: String, band: DispatchBand, run: (FriendlyUnitInfo, Combat) => Boolean)
+  object PushDuelStage extends DuelBehaviorStage("Push", DispatchBand.Medium) {
+    // Grounded hulls only: fliers dance instead of pushing, and the push
+    // itself owns mobility - the gate never decides movement.
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = ! unit.flying
 
-  val duelStages: Vector[DuelStage] = Vector(
-    // Breaking through beats scavenging: the push owns the frame.
-    DuelStage("Push", DispatchBand.Medium, (unit, combat) =>
-      if ( ! combat.pushThrough) false else { PushBehavior.run(unit, combat); true }),
-    DuelStage("Scavenge", DispatchBand.Medium, (unit, combat) =>
-      if ( ! combat.techniqueIs(Scavenge)) false else { ScavengeBehavior.run(unit, combat); true }),
-    // Closing beats repositioning: the hold/approach/kite trio runs before
-    // the raw charge. No closing or charging while retreating: the march
-    // goes home and the technique walks away, so approaching the guns (or
-    // charging them outright) is exactly the flap. KiteAway keeps its
-    // fighting withdrawal and TankHug keeps its own tank logic - only the
-    // closing leg and the raw charge yield. A taken branch still claims
-    // the frame when its inner legs decline, so Reposition never runs
-    // behind it.
-    DuelStage("Close", DispatchBand.Medium, (unit, combat) => {
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+      if ( ! combat.pushThrough) false else { PushBehavior.run(unit, combat); true }
+    }
+  }
+
+  object ScavengeDuelStage extends DuelBehaviorStage("Scavenge", DispatchBand.Medium) {
+    // Any hull the technique assigns: the scavenger check lives in the
+    // technique vote, the gate only runs what it is given.
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+      if ( ! combat.techniqueIs(Scavenge)) false else { ScavengeBehavior.run(unit, combat); true }
+    }
+  }
+
+  /**
+   * Closing beats repositioning: the hold/approach/kite trio runs before
+   * the raw charge. No closing or charging while retreating: the march
+   * goes home and the technique walks away, so approaching the guns (or
+   * charging them outright) is exactly the flap. KiteAway keeps its
+   * fighting withdrawal and TankHug keeps its own tank logic - only the
+   * closing leg and the raw charge yield. A taken branch still claims
+   * the frame when its inner legs decline, so Reposition never runs
+   * behind it. Any hull may close: the trio gates the how below.
+   */
+  object CloseDuelStage extends DuelBehaviorStage("Close", DispatchBand.Medium) {
+    // Any hull may close: the hold/approach/kite trio gates the how
+    // below, including the immobile hold it never walks into.
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
       val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase
       if ( ! outer) false
       else {
@@ -137,12 +156,29 @@ private[Decisioning] object EngagePipeline {
         }
         true
       }
-    }),
-    // Terminal: claim value moot, nothing follows.
-    DuelStage("Reposition", DispatchBand.Low, (unit, combat) => {
+    }
+  }
+
+  /**
+   * Terminal: claim value moot, nothing follows. Any hull the duel
+   * leaves behind repositions through it.
+   */
+  object RepositionDuelStage extends DuelBehaviorStage("Reposition", DispatchBand.Low) {
+    // Any hull the duel leaves behind repositions through here: the
+    // terminal claims for everyone, the maneuver handles the rest.
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
       if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineCreepBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
       true
-    }))
+    }
+  }
+
+  val duelStages: Vector[DuelBehaviorStage] = Vector(
+    PushDuelStage,
+    ScavengeDuelStage,
+    CloseDuelStage,
+    RepositionDuelStage)
 
   def order: Seq[(String, DispatchBand)] =
     stages.map(s => (s.name, s.band))
@@ -313,7 +349,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     var i = 0
     var claimed = false
     while (i < EngagePipeline.duelStages.length && ! claimed) {
-      claimed = EngagePipeline.duelStages(i).run(unit, combat)
+      claimed = EngagePipeline.duelStages(i).shouldRun(unit, combat)
       i += 1
     }
   }
