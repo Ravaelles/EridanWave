@@ -66,8 +66,12 @@ class CombatDistances(combat: Combat, unit: FriendlyUnitInfo) {
     else if (unit.isAny(Terran.Wraith, Protoss.Corsair, Protoss.Scout, Zerg.Mutalisk) && g.target.flying && ! g.scourgeApproaching && ( ! Zerg.Overlord(g.target) || unit.matchups.pixelsEntangled < -64)) Some(0)
     // Close what cannot hit back: harmless air always, grounded helpless
     // (buildings, fleeing workers) while the shields are at most scratched.
-    // Holed hulls keep their range instead.
-    else if (KiteTo.shouldClose(g.rangeAgainstUs.isEmpty, g.target.flying, unit.shieldWound, unit.pixel.groundPixels(g.target.pixel) * Maff.inv32)) Some(0)
+    // Holed hulls keep their range instead. Flyers read air distance:
+    // the ground path to a Shuttle means nothing to wings, and a far
+    // path reading would pin an air army at max range of helpless air.
+    else if (KiteTo.shouldClose(g.rangeAgainstUs.isEmpty, g.target.flying, unit.shieldWound, ?(unit.flying,
+      unit.pixelDistanceEdge(g.target.pixel) * Maff.inv32,
+      unit.pixel.groundPixels(g.target.pixel) * Maff.inv32))) Some(0)
     else None
   }
 
