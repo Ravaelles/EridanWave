@@ -58,16 +58,18 @@ object MarchUnit {
         .map(a => unit.pixelDistanceCenter(a.pixel) * Maff.inv32),
       distHomeTiles       = home.map(h => unit.pixel.groundPixels(h) * Maff.inv32),
       nearestArmedTiles   = Maff.minBy(With.units.enemy.view.filter(e =>
-        e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
+        e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)))(_.pixelDistanceCenter(unit.pixel))
         .map(e => e.pixelDistanceCenter(unit.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
       nearestStaticTiles  = Maff.minBy(unit.matchups.enemies.view.filter(e =>
         e.likelyStillThere
         && e.unitClass.isStaticDefense
         && e.unitClass.canAttack(unit)))(unit.tileDistanceEdge).map(unit.tileDistanceEdge),
-      // Visible guns that could hit this hull, in tiles: the lone-march
-      // cordon reads only what the hull sees, so fogged memories never
-      // pin it (ghosts own the recall horizon instead).
+      // Visible guns that could hit this hull, in tiles, edge to edge
+      // like the sibling gun scans: centers overstate clearance by up
+      // to a tile against big hulls, and the cordon band is only two.
+      // Reads only what the hull sees, so fogged memories never pin it
+      // (ghosts own the recall horizon instead).
       nearestVisibleArmedTiles = Maff.minBy(With.units.enemy.view.filter(e =>
-        e.alive && e.visible && e.unitClass.canAttack(unit.unitClass)))(_.pixelDistanceCenter(unit.pixel))
-        .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity))
+        e.alive && e.visible && e.unitClass.canAttack(unit.unitClass)))(_.pixelDistanceEdge(unit.pixel))
+        .map(e => unit.pixelDistanceEdge(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity))
 }

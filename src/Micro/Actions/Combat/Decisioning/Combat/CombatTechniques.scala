@@ -68,7 +68,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     val unitsScore = Information.Battles.ArmyStrength.score(
       With.battles.globalAttack.us.skimStrengthUnits,
       With.battles.globalAttack.enemy.skimStrengthUnits)
-    val nearestArmedTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(unit.pixel))
+    val nearestArmedTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)))(_.pixelDistanceCenter(unit.pixel))
       .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
     val hardCounterKnown = MacroFacts.enemyHardCounterKnown

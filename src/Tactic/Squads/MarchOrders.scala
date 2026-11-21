@@ -272,12 +272,18 @@ object MarchOrders {
       firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
       framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),
       verdictHeld       = verdictRetreat)
+    // Dressing veto scans (same vintage as the legs): buildings veto by
+    // plausibility (a wall depot still counts, a confirmed-rubble hall
+    // does not), melee vetoes only by warriors that could still be
+    // there - workers and Overlords never stopped a blade from dressing,
+    // and a remembered ghost must not pin the line.
     val nearEnemyBuildingTiles = Maff.minBy(With.units.enemy.view.filter(e =>
-      e.alive && e.unitClass.isBuilding))(
+      e.alive && e.likelyStillThere && e.unitClass.isBuilding))(
       unit.pixelDistanceEdge(_))
       .map(unit.pixelDistanceEdge(_) * Maff.inv32)
       .getOrElse(Double.PositiveInfinity)
-    val nearEnemyTiles       = Maff.minBy(With.units.enemy.view.filter(_.alive))(
+    val nearEnemyTiles       = Maff.minBy(unit.matchups.threats.view.filter(t =>
+      t.likelyStillThere && t.unitClass.isWarrior))(
       unit.pixelDistanceEdge(_))
       .map(unit.pixelDistanceEdge(_) * Maff.inv32)
       .getOrElse(Double.PositiveInfinity)
