@@ -295,7 +295,9 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
       i += 1
     }
     // The engage never claims: it runs for side effects when nothing
-    // above owned the frame.
+    // above owned the frame. Probe the gate (change-only): which of the
+    // three legs holds the duel out.
+    Debugging.Probe.note("Duel", unit.id, s"claimed=$claimed engage=${shouldEngage && advance}")
     if ( ! claimed && shouldEngage && advance) engagement.engage()
   }
 
