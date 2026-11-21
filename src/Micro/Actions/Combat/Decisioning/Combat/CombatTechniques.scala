@@ -65,16 +65,16 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     val hardCounterKnown = MacroFacts.enemyHardCounterKnown
     // Single tank verdict (one decider for the guns): the nearest tank
     // of either mode, its reach and dead zone, and the odds on both
-    // fronts. Dead-zone hulls shoot for free and cooling hugs walk the
+    // Single tank verdict (one decider for the guns): the nearest tank
+    // of any mode, its reach and dead zone, and the odds evaluated
+    // right at the guns - our nearby pack against the tank plus its
+    // escorts. Dead-zone hulls shoot for free and cooling hugs walk the
     // tank down; inside reach plus standoff the latched odds decide -
-    // commit at two-to-one on both fronts, leave below three-to-two
-    // on either. Past the band the duel has not started and the
-    // verdict abstains, keeping the last call instead of
-    // renegotiating the edge. FIGHT falls through to the normal duel
-    // below; LEAVE walks out through Fallback.
-    // fronts. A lonely tank is always walked down to the dead zone;
-    // an escorted one takes two-to-one odds evaluated right at the
-    // guns: our nearby pack against the tank and its escorts.
+    // commit at two-to-one, leave below three-to-two. Past the band
+    // the duel has not started and the verdict abstains, keeping the
+    // last call instead of renegotiating the edge. FIGHT falls through
+    // to the normal duel below; LEAVE walks out through Fallback.
+    // A lonely tank is always walked down to the dead zone.
     val nearestTank = Maff.minBy(unit.matchups.threats.view.filter(t => t.unitClass.isTank))(_.pixelDistanceEdge(unit))
     nearestTank match {
       case None => Tactic.Squads.Decisions.TankVerdict.clear(unit.id)
