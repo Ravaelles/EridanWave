@@ -105,7 +105,7 @@ private[Decisioning] object TechniquePipeline {
     Stage("Retreat", DispatchBand.High, (unit, combat, _) =>
       combat.shouldRetreat && Retreat(unit)),
     Stage("Brawl", DispatchBand.Medium, (unit, combat, advance) =>
-      combat.shouldEngage && advance && Brawl(unit)),
+      combat.shouldEngage && advance && Brawl.allowed(unit) && Brawl(unit)),
     Stage("Abuse", DispatchBand.Medium, (unit, combat, advance) =>
       combat.technique == Abuse && advance && AbuseBehavior.run(unit, combat)),
     Stage("SuperKite", DispatchBand.Medium, (unit, combat, advance) =>
