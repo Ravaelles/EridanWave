@@ -36,20 +36,30 @@ object KiteAwayBehavior {
 
     val nearest = unit.matchups.targetNearest
     if (nearest.isEmpty) return false
+    // Shared margin read (plant and gate agree by construction): live
+    // threats only, turned-away melee dismissed. A blade pressing any
+    // mate carves a planted hull, so the plant holds volleys against
+    // guns alone - never where melee presses the pack.
+    val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
+    val marginPixels = KiteAway.enemyMarginTiles * 32.0
+    def inMargin(u: FriendlyUnitInfo) =
+      u.matchups.threatsInPixels(marginPixels).filter(t =>
+        t.likelyStillThere &&
+        ! FacingAway.dismissMelee(t.unitClass.melee,
+          FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
+    val enemyInMargin = squadUnits.exists(u => inMargin(u).nonEmpty)
+    val hasMeleeNearby = squadUnits.exists(u => inMargin(u).exists(_.unitClass.melee))
     // Loaded-enough hulls plant the volley instead of entering the kite
     // decision at all: with something hittable inside our reach and the
     // gun inside its window, holding outdamages any ground the yield
-    // would buy. Blades on top carve a planted hull, so the plant holds
-    // volleys against guns, never against contact. Near-dead hulls never
-    // plant - only yield.
-    val meleeNear = unit.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
-    if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, meleeNear)) {
+    // would buy. Near-dead hulls never plant - only yield.
+    if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby)) {
       plantVolley(unit)
 
       return true
     }
 
-    if ( ! shouldKite(unit)) return false
+    if ( ! shouldKite(unit, enemyInMargin, hasMeleeNearby)) return false
     if (holdToShoot(unit, combat)) return true
     // Masonry never chases: kiting away from a building anchor donates
     // DPS and time for nothing, so a building anchor holds instead of
@@ -57,7 +67,7 @@ object KiteAwayBehavior {
     // pressing chaser is still taken.
     if (KiteAway.holdAgainstBuildings(nearest.exists(_.unitClass.isBuilding))) return false
 
-    kiteAway(unit, combat)
+    kiteAway(unit, combat, hasMeleeNearby)
 
     true
   }
@@ -73,7 +83,7 @@ object KiteAwayBehavior {
     true
   }
 
-  private def shouldKite(unit: FriendlyUnitInfo): Boolean = {
+  private def shouldKite(unit: FriendlyUnitInfo, enemyInMargin: Boolean, hasMeleeNearby: Boolean): Boolean = {
     if (unit.unitClass.melee) return shouldKiteMelee(unit)
 
     // Healthy hulls with nothing close hold the line: full shields and
@@ -83,20 +93,6 @@ object KiteAwayBehavior {
     if (unit.unitClass.maxShields > 0 && unit.shieldWound == 0 &&
       ! unit.matchups.threatsInPixels(64.0).exists(_.likelyStillThere)) return false
 
-    val squadUnits = unit.squad.map(_.units).getOrElse(Seq(unit))
-    val marginPixels = KiteAway.enemyMarginTiles * 32.0
-    // Live threats only: a fogged ghost at a stale pixel must not kite
-    // the line or hold it against nothing - the recall horizon owns
-    // memories, the kite answers contact.
-    // Turned-away melee neither chases nor hits: it never counts as the
-    // enemy in margin that triggers the retreat.
-    def inMargin(u: FriendlyUnitInfo) =
-      u.matchups.threatsInPixels(marginPixels).filter(t =>
-        t.likelyStillThere &&
-        ! FacingAway.dismissMelee(t.unitClass.melee,
-          FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
-    val enemyInMargin = squadUnits.exists(u => inMargin(u).nonEmpty)
-    val hasMeleeNearby = squadUnits.exists(u => inMargin(u).exists(_.unitClass.melee))
     // Near-dead hulls kite on melee contact alone: collapsed shields with
     // blades on top mean the next volley kills, so the wound ladder below
     // never gets to hold them for shots they never live to fire. Guns
@@ -186,7 +182,7 @@ object KiteAwayBehavior {
     Commander.hold(unit)
   }
 
-  private def kiteAway(unit: FriendlyUnitInfo, combat: Combat): Unit = {
+  private def kiteAway(unit: FriendlyUnitInfo, combat: Combat, hasMeleeNearby: Boolean): Unit = {
     unit.agent.act("KiteAway")
     // Yield from the feet, never from the pin: a static formation slot
     // brakes the fallback every stride (arrive, guard, re-issue), and
@@ -195,19 +191,19 @@ object KiteAwayBehavior {
     // instead of stopping; the dress leg reclaims it when the gate
     // closes, so the line still gets its hull back.
     val anchor = unit.pixel
-    // Only yield what the cooldown forces against guns: the step never
-    // exceeds the walk-back inside the remaining cooldown, so the return
-    // trip stops eating the next volley. Blades on top keep the full
-    // wound want - distance is life against contact, and undodgeable
-    // guns are the only fight where the yielded ground buys nothing.
-    // Melee on top of a near-dead hull goes far instead - blades carve
-    // what stands, and the wound want understates the exit a dying hull
-    // needs.
+    // Only yield what the cooldown forces against guns alone: the step
+    // never exceeds the walk-back inside the remaining cooldown, so the
+    // return trip stops eating the next volley. Any blade pressure on
+    // the pack keeps the full wound want instead - in a mixed furball
+    // the short step optimizes the ranged sub-duel but donates blade
+    // contact, and distance is life against contact. Melee on top of a
+    // near-dead hull goes far instead - blades carve what stands, and
+    // the wound want understates the exit a dying hull needs.
     val woundWant = WoundMargin(0.0, KiteAway.maxOffsetTiles).pixels(unit.woundPercent())
     val meleeNear = unit.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val nearDeadFar = KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) && meleeNear
     val offsetPixels = if (nearDeadFar) KiteHold.nearDeadOffsetTiles * 32.0
-      else if (meleeNear) woundWant
+      else if (hasMeleeNearby) woundWant
       else KiteYield.offsetPixels(woundWant, unit.cooldownLeft, unit.topSpeed, With.latency.latencyFrames + 2)
     unit.agent.decision.set(anchor.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
     combat.maneuvers.move()

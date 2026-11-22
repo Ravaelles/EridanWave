@@ -260,3 +260,10 @@ hysteresis home (rules 10-11).
   16/9 with waste 4-8f; ZealDrag back to wins 9/2 with a 7/9 loss -
   the mirror is a coin flip, reps decide; 1Drag and Wounded inside
   their variance).
+- Kite shared-margin read (2026-11): the mixed furball caught the next
+  hole - capping a dragoon-pressured hull while zealots closed from
+  outside its margin optimized the ranged sub-duel but donated blade
+  contact. Plant and cap now share one squad-wide dismissed-melee read:
+  any blade pressure on the pack keeps full wound steps and forbids the
+  plant; the cap binds only against guns alone. Validated on UMS
+  (ZealDrag 8/5 and 9/8 back-to-back; 16Drag 16/14 with waste ~1f).
