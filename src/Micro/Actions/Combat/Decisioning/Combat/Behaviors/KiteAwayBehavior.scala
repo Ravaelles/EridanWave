@@ -89,7 +89,10 @@ object KiteAwayBehavior {
     // like the gates around it.
     val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
       t.likelyStillThere && t.unitClass.melee)
-    if (pvpRules && ! unit.unitClass.melee && unit.cooldownLeft > 0 && meleeContact) {
+    // Only with cooling left beyond the move sleep: a step issued on the last
+    // cooldown frames outlives the volley (the order persists through sleep)
+    // and donates the loading frame. The gun about to speak holds instead.
+    if (pvpRules && ! unit.unitClass.melee && unit.cooldownLeft > 2 && meleeContact) {
       kiteAway(unit, combat, hasMeleeNearby = true)
 
       return true
