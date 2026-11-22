@@ -93,7 +93,14 @@ object CommanderMove {
   }
   private[Micro] def move(unit: FriendlyUnitInfo): Unit = move(unit, unit.agent.destinationNext())
   private[Micro] def move(unit: FriendlyUnitInfo, tolerancePixels: Double): Unit = move(unit, unit.agent.destinationNext(), tolerancePixels)
-  private[Micro] def move(unit: FriendlyUnitInfo, destination: Pixel, tolerancePixels: Double = 128): Unit = {
+  /**
+   * Explicit interrupt for gate-proven withdrawals (contact kites): a
+   * standing firing solution never vetoes these - the gate already
+   * proved moving beats the volley, and the gun is cooling anyway.
+   */
+  private[Micro] def moveOverriding(unit: FriendlyUnitInfo): Unit =
+    move(unit, unit.agent.destinationNext(), 128.0, true)
+  private[Micro] def move(unit: FriendlyUnitInfo, destination: Pixel, tolerancePixels: Double = 128, overrideFiringSolution: Boolean = false): Unit = {
     // Adjust even while unready: transport coordination below still needs the destination.
     val to = CommanderOrder.adjustDestination(unit, destination, remember = unit.ready)
     unit.agent.setRideGoal(to)
@@ -112,8 +119,9 @@ object CommanderMove {
     // in range owns the frame - re-issuing a move over it trades the
     // volley for a step. Kiting, retreats and dodges run after the march
     // and interrupt explicitly when they must.
-    if ((unit.order == Orders.AttackUnit || unit.order == Orders.AttackTile)
-      && unit.orderTarget.exists(t => t.alive && t.visible && unit.inRangeToAttack(t))) return
+    if ( ! overrideFiringSolution &&
+      (unit.order == Orders.AttackUnit || unit.order == Orders.AttackTile) &&
+      unit.orderTarget.exists(t => t.alive && t.visible && unit.inRangeToAttack(t))) return
 
     if (CommanderCore.autoUnburrow(unit)) return
 

@@ -33,6 +33,7 @@ object Commander {
   def move(unit: FriendlyUnitInfo): Unit = CommanderMove.move(unit)
   def move(unit: FriendlyUnitInfo, tolerancePixels: Double): Unit = CommanderMove.move(unit, tolerancePixels)
   def move(unit: FriendlyUnitInfo, destination: Pixel, tolerancePixels: Double = 128): Unit = CommanderMove.move(unit, destination, tolerancePixels)
+  def moveOverriding(unit: FriendlyUnitInfo): Unit = CommanderMove.moveOverriding(unit)
   def adjustDestination(unit: FriendlyUnitInfo, argTo: Pixel): Pixel = CommanderOrder.adjustDestination(unit, argTo)
   def rightClick(unit: FriendlyUnitInfo, target: UnitInfo): Unit = CommanderTransport.rightClick(unit, target)
   def useTech(unit: FriendlyUnitInfo, tech: Tech): Unit = CommanderEngage.useTech(unit, tech)

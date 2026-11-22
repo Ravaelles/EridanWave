@@ -290,7 +290,15 @@ object KiteAwayBehavior {
       else if (hasMeleeNearby) contactYield(unit, woundWant)
       else KiteYield.offsetPixels(woundWant, unit.cooldownLeft, unit.topSpeed, With.latency.latencyFrames + 2)
     unit.agent.decision.set(anchor.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
-    combat.maneuvers.move()
+    // Contact kites interrupt the firing solution explicitly: a standing
+    // attack order on a live in-range target vetoes every move, so the
+    // gate-proven yield (cooling hull, blades on top) would pose forever
+    // behind its own volley. Loaded guns never reach this leg, so the
+    // interrupt spends no volleys - it only spends cooling frames.
+    val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
+      t.likelyStillThere && t.unitClass.melee)
+    if (meleeContact) Commander.moveOverriding(unit)
+    else combat.maneuvers.move()
   }
 
   // Static standoff: an idle unit standing inside a defensive building's
