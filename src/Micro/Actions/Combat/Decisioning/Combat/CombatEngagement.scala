@@ -359,7 +359,8 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       // after a step counted as waste even though the shot landed. Only
       // ready frames are judged - a slept frame owns no orders, and its
       // starvation is counted beside it instead.
-      VolleyWaste.bump(unit.id, unit.unitClass.toString, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.order, unit.unitClass.isWarrior)
+      VolleyWaste.bump(unit.id, unit.unitClass.toString, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.order, unit.unitClass.isWarrior,
+        frame = With.frame, staleFrames = With.latency.latencyFrames + 1)
     } else {
       // Tripwire for starved duels: the dispatch voted for the duel but
       // the legs never ran - a sleeping march or a legacy brain issuing

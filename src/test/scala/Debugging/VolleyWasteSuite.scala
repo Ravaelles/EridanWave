@@ -40,13 +40,21 @@ class VolleyWasteSuite extends AnyFunSuite {
 
   test("bumps accumulate per unit and name the worst") {
     VolleyWaste.reset()
-    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true)
-    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true)
-    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 8, hasHittable = true, order = Orders.Move, isWarrior = true)
-    VolleyWaste.bump(9, "Zealot", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 0)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 0)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 100)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 8, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 101)
+    VolleyWaste.bump(9, "Zealot", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 0)
     val report = VolleyWaste.summary()
     assert(report.contains("Dragoon #7"))
-    assert(report.contains("2f"))
-    assert(VolleyWaste.worstTotal == 2)
+    assert(report.contains("1f"))
+    assert(VolleyWaste.worstTotal == 1)
+  }
+
+  test("fresh orders are forgiven until the application window lapses") {
+    assert( ! VolleyWaste.isStaleOrder(sinceFrame = 0, nowFrame = 0, staleFrames = 3))
+    assert( ! VolleyWaste.isStaleOrder(sinceFrame = 0, nowFrame = 2, staleFrames = 3))
+    assert(VolleyWaste.isStaleOrder(sinceFrame = 0, nowFrame = 3, staleFrames = 3))
+    assert(VolleyWaste.isStaleOrder(sinceFrame = 10, nowFrame = 100, staleFrames = 3))
   }
 }

@@ -18,10 +18,12 @@ object VolleyWaste extends PerGame {
 
   private val wastedFrames = new mutable.HashMap[Int, Int]()
   private val classById = new mutable.HashMap[Int, String]()
+  private val orderSince = new mutable.HashMap[Int, (String, Int)]()
 
   override def reset(): Unit = {
     wastedFrames.clear()
     classById.clear()
+    orderSince.clear()
   }
 
   /**
@@ -34,11 +36,25 @@ object VolleyWaste extends PerGame {
     isWarrior && hasHittable && cooldownLeft <= 0 &&
       (order == Orders.Move || order.startsWith("MoveTo"))
 
-  def bump(unitId: Int, unitClass: String, cooldownLeft: Int, hasHittable: Boolean, order: String, isWarrior: Boolean): Unit = {
-    if ( ! isForgone(cooldownLeft, hasHittable, order, isWarrior)) return
+  /**
+   * Stale orders only (pure frames for the suite): an order takes
+   * latency to apply, so the frame that issues a move past a firing
+   * gun still reads Move while the volley it ordered lands. Count the
+   * move only once it sticks past the application window - a glued
+   * Move that never shoots.
+   */
+  def isStaleOrder(sinceFrame: Int, nowFrame: Int, staleFrames: Int): Boolean =
+    nowFrame - sinceFrame >= staleFrames
 
-    val chain = try { Lifecycle.With.units.ours.find(_.id == unitId).map(_.agent.actions.mkString("/")).getOrElse("-") } catch { case _: Exception => "-" }
-    Debugging.Probe.note("WasteDbg", unitId, s"cd=$cooldownLeft order=$order chain=$chain")
+  def bump(unitId: Int, unitClass: String, cooldownLeft: Int, hasHittable: Boolean, order: String, isWarrior: Boolean,
+    frame: Int = Lifecycle.With.frame, staleFrames: Int = 3): Unit = {
+    orderSince.get(unitId) match {
+      case Some((lastOrder, _)) if lastOrder == order =>
+      case _ => orderSince(unitId) = (order, frame)
+    }
+    val sinceFrame = orderSince(unitId)._2
+    if ( ! isForgone(cooldownLeft, hasHittable, order, isWarrior)) return
+    if ( ! isStaleOrder(sinceFrame, frame, staleFrames)) return
 
     wastedFrames(unitId) = wastedFrames.getOrElse(unitId, 0) + 1
     classById(unitId) = unitClass
