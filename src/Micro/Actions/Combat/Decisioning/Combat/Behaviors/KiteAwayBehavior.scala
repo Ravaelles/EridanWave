@@ -257,8 +257,13 @@ object KiteAwayBehavior {
   private def contactYield(unit: FriendlyUnitInfo, woundWant: Double): Double = {
     val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
       t.likelyStillThere && t.unitClass.melee)
-    val paced = KiteYield.offsetPixels(woundWant, unit.cooldownLeft, unit.topSpeed, With.latency.latencyFrames + 2)
-    if (meleeContact) KiteAway.contactYield(woundWant, paced) else woundWant
+    // Walk-back inside the cooldown, wound-independent: the paced cap
+    // takes min() with the wound want, so a fresh hull paces zero and
+    // the floor below it lifts nothing. Contact needs the raw walk-back
+    // (shoot every cycle, spend cooling frames on distance), floored by
+    // the wound want above it, never capped by it.
+    val walkback = Math.max(0, unit.cooldownLeft - (With.latency.latencyFrames + 2)) * unit.topSpeed
+    if (meleeContact) KiteAway.contactYield(woundWant, walkback) else woundWant
   }
 
   private def kiteAway(unit: FriendlyUnitInfo, combat: Combat, hasMeleeNearby: Boolean): Unit = {
