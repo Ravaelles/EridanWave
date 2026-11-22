@@ -267,3 +267,15 @@ hysteresis home (rules 10-11).
   any blade pressure on the pack keeps full wound steps and forbids the
   plant; the cap binds only against guns alone. Validated on UMS
   (ZealDrag 8/5 and 9/8 back-to-back; 16Drag 16/14 with waste ~1f).
+- Natural defense outranks the shell yield (2026-11, owner order):
+  sieged tanks shelling our natural held our dragoons at the 13-tile
+  keep-off while the base died - and the wall mission held wounded
+  hulls under the guns twenty tiles out against superior armies. Now
+  shells at home (20 tiles) with three answering dragoons inside ten
+  are fought, never yielded; holders stand only unpressured, shielded
+  (20+) and within nine tiles of the wall; a held retreat verdict
+  outranks the wall mission outright. Pinned in ArtilleryKeepOffSuite
+  (shells-at-home and answer rows) and ProtossWallInSuite (reach and
+  shields rows). Pattern: base defense is local superiority, not
+  geometry - count the guns that answer before measuring the line.
+  Live judgment pending (needs the ladder games that trigger it).

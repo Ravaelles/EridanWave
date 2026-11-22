@@ -71,6 +71,46 @@ object ArtilleryKeepOff {
   def fallback(own: Pixel, threat: Pixel, keepOffTiles: Double): Pixel =
     own.project(threat, -(keepOffTiles + pastLineTiles) * 32.0)
 
+  /**
+   * Natural-defense radius, in tiles: shells landing this close to home
+   * are answered, never yielded - cowering while tanks shell the
+   * natural donates the base for nothing.
+   */
+  val naturalRadiusTiles: Double = 20.0
+
+  /** Local superiority to answer shells, in dragoons inside ten tiles. */
+  val answerDragoons: Int = 3
+
+  /** Answer radius around the gun, in tiles: only counted hulls fight. */
+  val answerRadiusTiles: Double = 10.0
+
+  def shellsAtHome(distTankToNaturalTiles: Double): Boolean =
+    distTankToNaturalTiles <= naturalRadiusTiles
+
+  def answersUp(dragoonsNear: Int): Boolean =
+    dragoonsNear >= answerDragoons
+
+  /** Fight the guns instead of yielding: shells at home with the
+    * dragoons to answer them. Fewer hulls keep the old yield. */
+  def shouldAnswer(tankAtHome: Boolean, dragoonsNear: Int): Boolean =
+    tankAtHome && answersUp(dragoonsNear)
+
+  /**
+   * Natural defense, game-coupled seam over the pure kernels above:
+   * any sieged tank shelling our natural with three answering dragoons
+   * inside ten tiles of it. The duel owns those frames, never the yield.
+   */
+  private def answersAtHome(shells: Iterable[UnitInfo]): Boolean = {
+    if (With.geography.ourBases.size <= 1) return false
+
+    val home = With.geography.ourNatural.heart.center
+    shells.exists(gun =>
+      shellsAtHome(gun.pixelDistanceCenter(home) * Maff.inv32) &&
+        answersUp(With.units.ours.count(u =>
+          u.alive && Protoss.Dragoon(u) &&
+            u.pixelDistanceCenter(gun.pixel) <= answerRadiusTiles * 32.0)))
+  }
+
   def act(unit: FriendlyUnitInfo): Boolean = {
     if (unit.flying) return false
     if ( ! unit.canMove) return false
@@ -92,6 +132,11 @@ object ArtilleryKeepOff {
 
     val shells = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && isArtillery(e))
+    // Natural defense outranks the yield: shells landing on our natural
+    // with the dragoons to answer them are fought, never yielded - the
+    // duel owns those frames. Fewer hulls keep the old yield.
+    if (answersAtHome(shells)) return false
+
     Maff.minBy(shells)(_.pixelDistanceEdge(unit)).exists(gun => {
       val distTiles = unit.pixelDistanceEdge(gun) * Maff.inv32
       if ( ! yieldLatched(unit.id, distTiles, unit.woundPercent())) false

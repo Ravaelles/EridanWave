@@ -26,8 +26,16 @@ class ArtilleryKeepOffSuite extends AnyFunSuite {
     assert( ! ArtilleryKeepOff.yieldLatched(id, distTiles = 13.5, wound01 = 0.0))
   }
 
-  test("the fallback steps one tile past the line") {
-    val own = Pixel(800, 500)
+  test("shells on the natural are answered with three dragoons, yielded without") {
+    assert(ArtilleryKeepOff.shouldAnswer(tankAtHome = true, dragoonsNear = 3))
+    assert(ArtilleryKeepOff.shouldAnswer(tankAtHome = true, dragoonsNear = 9))
+    assert( ! ArtilleryKeepOff.shouldAnswer(tankAtHome = true, dragoonsNear = 2))
+    assert( ! ArtilleryKeepOff.shouldAnswer(tankAtHome = false, dragoonsNear = 3))
+    assert(ArtilleryKeepOff.shellsAtHome(distTankToNaturalTiles = 20.0))
+    assert( ! ArtilleryKeepOff.shellsAtHome(distTankToNaturalTiles = 20.1))
+  }
+
+  test("the fallback steps one tile past the line") {    val own = Pixel(800, 500)
     val threat = Pixel(800, 500 - 10 * 32)
     val dest = ArtilleryKeepOff.fallback(own, threat, ArtilleryKeepOff.keepOffTiles(0.0))
     val legTiles = own.pixelDistance(dest) / 32.0
