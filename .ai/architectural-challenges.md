@@ -260,6 +260,13 @@ hysteresis home (rules 10-11).
   16/9 with waste 4-8f; ZealDrag back to wins 9/2 with a 7/9 loss -
   the mirror is a coin flip, reps decide; 1Drag and Wounded inside
   their variance).
+- Fresh loaded hulls hold their fire (2026-11, owner order from the
+  ZealDrag mirror): the kite donated the shooting, so at or below 14
+  shield damage with the gun inside 15 frames and nothing inside 2.7
+  tiles the hull never enters the kite decision - it holds and shoots.
+  Ranged-only; melee answers through the pack gate. Pinned in
+  KiteAwaySuite (holdsFire rows), mirrored in the legacy dance yield.
+  Live validation pending (needs the ZealDrag reps now running).
 - Kite shared-margin read (2026-11): the mixed furball caught the next
   hole - capping a dragoon-pressured hull while zealots closed from
   outside its margin optimized the ranged sub-duel but donated blade
