@@ -62,6 +62,13 @@ Details live in `details/` - the queue keeps one line per item.
   coin), 10Zeal 14W/12L (coin - pack brawls together either way),
   1v1Drag 41% (f0 retreat symmetric, harmless delay, needs the
   ladder retreat sink for more).
+- 2v3 counterfactual (StarEngine, MirrorFocusSuite): forced focus and
+  forced plant-and-chase BOTH wipe 3 zealots with 2 dragoons (3-0 and
+  3-0 kills), while live contact-kiting times out at 2/0. Kiting for
+  safety extends duels past the clock on timeout maps. PROPOSAL (no
+  code before owner call): scope the contact kite to separable duels
+  (kite when the pressers can be re-engaged), plant-and-focus when
+  surrounded or outnumbered - stand, share the weakest, trade up.
   Dance spends loaded volleys before footwork (2026-11-22): the W1
   dance repositioned with a loaded gun and a hittable target (Wounded
   waste 28f, starvation with it); a loaded engine-confirmed shot now
