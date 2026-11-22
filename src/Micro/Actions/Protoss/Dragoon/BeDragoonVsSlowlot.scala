@@ -16,7 +16,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.Time.Minutes
 
 object BeDragoonVsSlowlot extends Action {
-  override def isContainer: Boolean = true
+  override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     Protoss.Dragoon(unit)

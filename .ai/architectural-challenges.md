@@ -203,3 +203,16 @@ hysteresis home (rules 10-11).
   pipeline while staying invisible - port or gate it, never leave it
   ahead and silent. Validated on UMS (Close/KiteAway chains back,
   wins return, no regressions on 1Drag/16Drag).
+- Silent legacy brains (P6, 2026-11): thirteen `Be*` brains ran ahead
+  of the technique as credit-less containers, so their orders never
+  showed in the decision chain while the technique credits did.
+  Closed by a pure unit-context gate on `Action` (`appliesToUnit`,
+  enforced in `act` beside `allowed`, game reads stay out) with one
+  override per brain, flipping all thirteen to leaves so claimed frames
+  credit the brain name beside the leg. Pinned in `BeUnitGatesSuite`
+  (gate rows plus leaf rows for all thirteen). Pattern: a dispatch that
+  controls units answers who it applies to and what it claimed, or it
+  does not belong in the chain. Validated live (`BeDetector` in the Act
+  chain beside the technique legs) and on UMS (same verdicts as the
+  pre-P6 baseline on 1DragWounded/1Drag/4+3Zeal, Wounded flips to a win
+  inside its known variance).

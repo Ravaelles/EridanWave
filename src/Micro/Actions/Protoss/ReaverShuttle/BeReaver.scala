@@ -19,7 +19,7 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
  * which already knows how.
  */
 object BeReaver extends Action {
-  override def isContainer: Boolean = true
+  override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Reaver(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Reaver(unit)
 

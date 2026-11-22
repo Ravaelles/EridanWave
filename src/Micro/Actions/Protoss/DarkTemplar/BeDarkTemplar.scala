@@ -22,7 +22,7 @@ import Utilities.?
  * scouting alone.
  */
 object BeDarkTemplar extends Action {
-  override def isContainer: Boolean = true
+  override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.DarkTemplar(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.DarkTemplar(unit)
 

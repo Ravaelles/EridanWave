@@ -21,7 +21,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  * entered Fight either, and stacked watches die together.
  */
 object BeDetector extends Action {
-  override def isContainer: Boolean = true
+  override def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+    unit.unitClass.isDetector && unit.canMove
 
   override def allowed(unit: FriendlyUnitInfo): Boolean =
     unit.unitClass.isDetector && unit.canMove

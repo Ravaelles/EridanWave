@@ -13,6 +13,15 @@ abstract class Action {
   def allowed(unit: FriendlyUnitInfo): Boolean = true
 
   /**
+   * Unit context gate (no game beyond the unit itself): race and class,
+   * ground or air, worker or warrior, mobile or held. The shared template
+   * checks the gate first and runs the doctrine second - a brain without
+   * a gate does not belong in the chain. Game and map reads stay in
+   * allowed and perform.
+   */
+  def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
+
+  /**
    * Verdict contract (owner order): every unit-controlling action states
    * whether it owned the frame. The compiler lists every override, so a
    * new action that forgets its verdict does not compile. Claimed frames
@@ -39,7 +48,7 @@ abstract class Action {
 
   final def act(unit: FriendlyUnitInfo, giveCredit: Boolean): Boolean = {
     With.agents.timeAction(name) {
-      if (( ! requiresReadiness || unit.ready) && allowed(unit)) {
+      if (( ! requiresReadiness || unit.ready) && appliesToUnit(unit) && allowed(unit)) {
         val previousCredit = unit.agent.lastAction
         val verdict = perform(unit)
         if (giveCredit && verdict.claimed) unit.agent.act(name)

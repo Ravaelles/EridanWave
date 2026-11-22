@@ -18,7 +18,7 @@ import Utilities.UnitFilters.IsTank
 
 
 object BeCarrier extends Action {
-  override def isContainer: Boolean = true
+  override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Carrier(unit)
   
   // Carriers are really finicky and demand their own micro.
 

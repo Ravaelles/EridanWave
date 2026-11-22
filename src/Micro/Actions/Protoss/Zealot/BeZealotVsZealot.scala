@@ -11,7 +11,9 @@ import Utilities.Time.Minutes
 import scala.language.postfixOps
 
 object BeZealotVsZealot extends Action {
-  override def isContainer: Boolean = true
+  // Pure decider: sets the fight vote, issues no orders itself - the march
+  // and the technique act on it, so the frame stays with whoever moves.
+  override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Zealot(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     With.frame < Minutes(5)()

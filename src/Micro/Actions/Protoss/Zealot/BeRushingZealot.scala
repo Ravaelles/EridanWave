@@ -19,7 +19,7 @@ import Utilities.UnitFilters.{IsWarrior, IsWorker}
  * picks in ZealotRushTargets and recharges in ZealotShieldBattery.
  */
 object BeRushingZealot extends Action {
-  override def isContainer: Boolean = true
+  override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Zealot(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     Protoss.Zealot(unit)
