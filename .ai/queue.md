@@ -41,8 +41,11 @@ Details live in `details/` - the queue keeps one line per item.
 - Kite discipline (todo #1, owner order: never yield ground for free):
   pre-gate plant + return-capped yield + melee-gated near-dead flight,
   judged by VolleyWaste. Validated on UMS: 16Drag waste 14-17f down to
-  4-5f with wins held (16/12, 16/8, 16/10); 1Drag W; Wounded 1/2 inside
-  its variance; 4+3Zeal still loses (melee mirror, separate unit).
+  4-12f with wins held (16/12, 16/8, 16/10, 16/9, 16/6); plant and cap
+  scoped to ranged pressure after zealot-duel reps (melee keeps the
+  full wound step, only scratched hulls plant). ZealDrag/1Drag/Wounded
+  inside high duel variance (reps decide); 4+3Zeal still loses (melee
+  mirror, separate unit).
 
 ## Needs a live game (code green, jar includes it)
 

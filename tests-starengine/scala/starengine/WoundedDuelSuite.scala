@@ -58,7 +58,9 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
       val f = foe.get
       val hittableNow = me.dist(f) <= me.rangeAgainst(f)
       val meleeNear = f.kind == Protoss.Zealot && me.dist(f) <= me.rangeAgainst(f) + KiteAway.enemyMarginTiles * 32.0
-      if (KiteHold.shouldPlant(me.cooldownLeft, hittableNow, shieldPoints = 80, maxShields = 80, hasMeleeNearby = meleeNear)) return Hold
+      // Wounded 40/80: the plant exercises (whole hulls belong to the
+      // line, the engine has no shields to scratch).
+      if (KiteHold.shouldPlant(me.cooldownLeft, hittableNow, shieldPoints = 40, maxShields = 80, hasMeleeNearby = meleeNear)) return Hold
 
       val inMargin = me.dist(f) <= me.rangeAgainst(f) + KiteAway.enemyMarginTiles * 32.0
       if (KiteAway.shouldRetreat(me.hp.toInt, me.cooldownLeft, inMargin, meleeNear)) {

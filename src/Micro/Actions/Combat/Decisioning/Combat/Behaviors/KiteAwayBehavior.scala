@@ -195,15 +195,19 @@ object KiteAwayBehavior {
     // instead of stopping; the dress leg reclaims it when the gate
     // closes, so the line still gets its hull back.
     val anchor = unit.pixel
-    // Only yield what the cooldown forces: the step never exceeds the
-    // walk-back inside the remaining cooldown, so the return trip stops
-    // eating the next volley. Melee on top of a near-dead hull goes far
-    // instead - blades carve what stands, and the wound want understates
-    // the exit a dying hull needs.
+    // Only yield what the cooldown forces against guns: the step never
+    // exceeds the walk-back inside the remaining cooldown, so the return
+    // trip stops eating the next volley. Blades on top keep the full
+    // wound want - distance is life against contact, and undodgeable
+    // guns are the only fight where the yielded ground buys nothing.
+    // Melee on top of a near-dead hull goes far instead - blades carve
+    // what stands, and the wound want understates the exit a dying hull
+    // needs.
     val woundWant = WoundMargin(0.0, KiteAway.maxOffsetTiles).pixels(unit.woundPercent())
     val meleeNear = unit.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val nearDeadFar = KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) && meleeNear
     val offsetPixels = if (nearDeadFar) KiteHold.nearDeadOffsetTiles * 32.0
+      else if (meleeNear) woundWant
       else KiteYield.offsetPixels(woundWant, unit.cooldownLeft, unit.topSpeed, With.latency.latencyFrames + 2)
     unit.agent.decision.set(anchor.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
     combat.maneuvers.move()

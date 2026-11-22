@@ -249,3 +249,14 @@ hysteresis home (rules 10-11).
   down to 4-5f with wins 16/12, 16/8, 16/10; 1Drag wins return;
   Wounded inside its variance; 4+3Zeal still loses - melee mirror,
   separate unit).
+- Kite scoping: plant and cap are ranged-only (2026-11): the first
+  ZealDrag/1Drag reps after the plant regressed zealot-duels (healthy
+  hulls holding instead of approaching, capped steps donating blade
+  contact), so both halves gate on melee - blades on top keep the full
+  wound step and never plant, and only scratched hulls ever plant
+  (whole hulls belong to the line). The yield is a function of the
+  cooldown against guns, of the wound against blades. Pinned in
+  KiteHoldSuite (wound and melee rows). Validated on UMS (16Drag holds
+  16/9 with waste 4-8f; ZealDrag back to wins 9/2 with a 7/9 loss -
+  the mirror is a coin flip, reps decide; 1Drag and Wounded inside
+  their variance).

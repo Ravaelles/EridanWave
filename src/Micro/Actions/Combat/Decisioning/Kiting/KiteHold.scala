@@ -29,12 +29,19 @@ object KiteHold {
    */
   /**
    * Plant gate: something hittable is inside our reach right now, the gun
-   * loads inside the window, the hull is not near-dead, and no blades
-   * are on top - melee carves a planted hull, so the plant holds
-   * volleys against guns, never against contact.
+   * loads inside the window, the hull is scratched but not near-dead,
+   * and no blades are on top. The plant is a kite-family hold, so only
+   * wounded hulls plant - healthy hulls belong to the line (dress and
+   * approach), never to the duel. Blades carve a planted hull, so the
+   * plant holds volleys against guns, never against contact. Near-dead
+   * hulls never plant - only yield.
    */
   def shouldPlant(cooldownLeft: Int, hasHittable: Boolean, shieldPoints: Int, maxShields: Int, hasMeleeNearby: Boolean): Boolean =
-    hasHittable && ! hasMeleeNearby && ! isNearDead(shieldPoints, maxShields) && cooldownLeft <= plantCooldownFrames
+    hasHittable && ! hasMeleeNearby && ! isNearDead(shieldPoints, maxShields) && isWounded(shieldPoints, maxShields) && cooldownLeft <= plantCooldownFrames
+
+  /** Any shield scratch: the line owns whole hulls, the duel owns marked ones. */
+  def isWounded(shieldPoints: Int, maxShields: Int): Boolean =
+    maxShields > 0 && shieldPoints < maxShields
 
   /**
    * Near-dead flight gate: collapsed shields with melee in contact kite
