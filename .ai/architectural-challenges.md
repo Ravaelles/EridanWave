@@ -274,6 +274,25 @@ hysteresis home (rules 10-11).
   any blade pressure on the pack keeps full wound steps and forbids the
   plant; the cap binds only against guns alone. Validated on UMS
   (ZealDrag 8/5 and 9/8 back-to-back; 16Drag 16/14 with waste ~1f).
+- The terminal must shoot (2026-11, owner order: no silent duels):
+  the duel's fall-through leg only moved, so an in-range loaded healthy
+  hull with no chase to run shuffled instead of firing - and the march
+  re-issued moves over in-flight volleys every frame (the continuation
+  check only covers Move orders). Now the terminal shoots loaded
+  hittable guns first (retreating hulls keep the fallback potshot),
+  and march moves never cancel a firing solution. Pinned in
+  RepositionBehaviorSuite (shouldVolley rows); the sluggish attack-move
+  fallback is gone (owner: never), deliberate attackMoves (approach,
+  hunt, carrier) stay.
+- Why the suites missed the silent duel (testing gap, 2026-11): suites
+  pin kernels, but this bug lived in COMPOSITION - the fall-through
+  order with no shooter, the march overwriting volleys. Order suites
+  pin sequence, not outcomes, and StarEngine pilots call kernels, never
+  the real dispatch chain, so neither could see it. Closed three ways:
+  the shouldVolley kernel (the test that would have caught it), the
+  decision-writers gate (every new Commander.attack/move call needs a
+  pin), and UMS as the composition judge. StarEngine stays out of the
+  pipeline by design; live games are the verdict bus.
 - Kite holds fire, calm blades, pack average (owner order, ZealDrag):
   fresh loaded hulls with nothing in contact never enter the kite (the
   kite donated the shooting); calm zealots (40f unhit, 41+ HP) stand;

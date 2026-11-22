@@ -42,12 +42,13 @@ Details live in `details/` - the queue keeps one line per item.
   pre-gate plant + return-capped yield + melee-gated near-dead flight,
   judged by VolleyWaste. Validated on UMS: 16Drag waste 14-17f down to
   ~1-8f with wins held (16/12, 16/8, 16/10, 16/9, 16/6, 16/14);
-  ZealDrag recovers to 8/5, 9/8, 9/6, 9/5, 9/1 after the shared-margin
-  fix (plant and cap read one squad-wide melee gate now); fresh loaded
-  hulls hold fire, calm blades and pack-average hold (PvP-only), Zerg
-  fresh shields hold instead. 1Drag wins return (1/0, 1/1); Wounded
-  inside high duel variance; 4+3Zeal still loses (melee mirror,
-  separate unit).
+  ZealDrag recovers to 8/5, 9/8, 9/6, 9/5, 9/1, 9/3 after the
+  shared-margin fix (plant and cap read one squad-wide melee gate
+  now); fresh loaded hulls hold fire, calm/pack hold for PvP, Zerg
+  fresh shields hold; the terminal shoots loaded hittable guns (no
+  silent duels) and march moves never cancel volleys or attack-move.
+  1Drag wins return (1/0, 1/1); Wounded inside high duel variance;
+  4+3Zeal still loses (melee mirror, separate unit).
 
 ## Needs a live game (code green, jar includes it)
 

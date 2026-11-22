@@ -7,7 +7,9 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 /**
  * Reposition behavior (was the fallback branch of CombatEngagement.engage):
  * cooling units slide toward the target with urgency while soft-avoiding
- * threat range. Fires when the weapon is not ready to approach with.
+ * threat range; loaded hulls with something hittable shoot instead of
+ * shuffling. Fires when the weapon is not ready to approach with, or
+ * loaded with a hittable target and no retreat to run.
  */
 object RepositionBehavior {
 
@@ -23,8 +25,22 @@ object RepositionBehavior {
     Math.max(0.0, (domain - cooldownLeft).toDouble / domain)
   }
 
+  /**
+   * Terminal volley (pure flags and frames for the suite): a repositioning
+   * hull with a loaded gun and something hittable shoots instead of
+   * shuffling - standing volleys used to die by design here (the
+   * terminal only moved), never by cooldown. Retreating hulls keep
+   * moving: the fallback potshot owns their shots, never this line.
+   * This is the test that would have caught the silent duel.
+   */
+  def shouldVolley(retreating: Boolean, cooldownLeft: Int, hasHittable: Boolean): Boolean =
+    ! retreating && cooldownLeft <= 0 && hasHittable
+
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     unit.agent.act("Reposition")
+    if (shouldVolley(retreating = combat.shouldRetreat, cooldownLeft = unit.cooldownLeft, hasHittable = unit.matchups.targetsInRange.nonEmpty)
+      && AttackIfReadyBehavior.run(unit, combat)) return true
+
     val urgency = urgency01(
       combat.target.map(unit.cooldownMaxAgainst).getOrElse(unit.cooldownMaxAirGround),
       unit.cooldownLeft)

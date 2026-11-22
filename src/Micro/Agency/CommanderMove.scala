@@ -108,6 +108,13 @@ object CommanderMove {
       return
     }
 
+    // Never cancel a firing solution: an attack order on a live target
+    // in range owns the frame - re-issuing a move over it trades the
+    // volley for a step. Kiting, retreats and dodges run after the march
+    // and interrupt explicitly when they must.
+    if ((unit.order == Orders.AttackUnit || unit.order == Orders.AttackTile)
+      && unit.orderTarget.exists(t => t.alive && t.visible && unit.inRangeToAttack(t))) return
+
     if (CommanderCore.autoUnburrow(unit)) return
 
     if (unit.pixelDistanceCenter(to) <= 8) {

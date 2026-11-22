@@ -18,4 +18,11 @@ class RepositionBehaviorSuite extends AnyFunSuite {
     assert(RepositionBehavior.urgency01(cooldownMax = 0, cooldownLeft = 0) == 1.0)
     assert( ! RepositionBehavior.urgency01(cooldownMax = 0, cooldownLeft = 0).isNaN)
   }
+
+  test("the terminal volleys loaded hittable guns instead of shuffling") {
+    assert(RepositionBehavior.shouldVolley(retreating = false, cooldownLeft = 0, hasHittable = true))
+    assert( ! RepositionBehavior.shouldVolley(retreating = true, cooldownLeft = 0, hasHittable = true))
+    assert( ! RepositionBehavior.shouldVolley(retreating = false, cooldownLeft = 8, hasHittable = true))
+    assert( ! RepositionBehavior.shouldVolley(retreating = false, cooldownLeft = 0, hasHittable = false))
+  }
 }

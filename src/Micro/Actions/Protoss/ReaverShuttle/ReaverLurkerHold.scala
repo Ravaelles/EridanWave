@@ -8,7 +8,6 @@ package Micro.Actions.Protoss.ReaverShuttle
  * reads the cover.
  */
 object ReaverLurkerHold {
-
   /** Hold instead of closing: the picked lurker sits under static guns. */
   def shouldHold(isLurker: Boolean, staticCoversFoe: Boolean): Boolean =
     isLurker && staticCoversFoe
