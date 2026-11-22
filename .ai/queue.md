@@ -54,8 +54,19 @@ Details live in `details/` - the queue keeps one line per item.
   Dance spends loaded volleys before footwork (2026-11-22): the W1
   dance repositioned with a loaded gun and a hittable target (Wounded
   waste 28f, starvation with it); a loaded engine-confirmed shot now
-  fires first. Verified live: Wounded waste 28f to none twice,
-  1Drag_v_1Zeal waste none; wins unchanged (coin-flip duels).
+  fires first, an aiming hull holds instead of walking. Verified live:
+  Wounded waste 28f to none twice, 1Drag_v_1Zeal waste none; wins
+  unchanged (coin-flip duels).
+- Contact kite (owner order, 1Drag_v_1Zeal post-mortem): cooling
+  ranged hulls yield melee inside 2.7 tiles, loaded guns always shoot
+  first (every cooldown cycle, zero wasted frames). Fixes that landed
+  it: the paced step capped by wound want stood in place (floor is now
+  the wound-independent walk-back), and the standing attack order
+  vetoed every kite move (contact kites interrupt explicitly). The
+  ledger judges end-of-frame orders now - the pre-dispatch read
+  counted every volley fired after a step as waste. Verified live:
+  1Drag_v_1Zeal from 0/1, 0/0 to 5W/6 with movement on the census;
+  ZealDrag wins hold (9/7, 9/3); no other map regressed.
 
 ## Needs a live game (code green, jar includes it)
 
