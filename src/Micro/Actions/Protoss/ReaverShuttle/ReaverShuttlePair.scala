@@ -48,6 +48,22 @@ object ReaverShuttlePair {
       _.pixelDistanceCenter(shuttle.pixel))
 
   /**
+   * The free ride: nearest live Shuttle with no Reaver aboard that the
+   * order resolves for an unbonded hull. Same three predicates the
+   * arbiter's Reaver side reads on its views (free, squad-gated with
+   * the baseless fallback, nearest) - a leg that boards on the vote's
+   * facts must read the same hull the vote saw, not just the
+   * reservation (baseless maps set none stable) or the loaded
+   * transport (None on foot). Game-side mirror of the resolve filter.
+   */
+  def freeRideFor(reaver: FriendlyUnitInfo): Option[FriendlyUnitInfo] =
+    Maff.minBy(With.units.ours.view.filter(u =>
+      u.alive && Protoss.Shuttle(u) &&
+      passengerOf(u).isEmpty &&
+      mateInSquad(u.squad, reaver.squad, With.geography.ourBases.isEmpty)))(
+      _.pixelDistanceCenter(reaver.pixel))
+
+  /**
    * Squad gate with a restaffing fallback (pure flags for the suite): the
    * ride only escorts its own squad's mate, but a squadless ride cannot
    * evaluate the gate at all - assignments flap through None on

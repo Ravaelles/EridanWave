@@ -326,11 +326,13 @@ object BeReaver extends Action {
    * resolves on - vote and leg agree by construction.
    */
   private def boardStalled(context: GroundContext): Boolean = {
-    // Live ride, not just the reservation: baseless maps set no
-    // reservations, but the order resolves the nearest free ride - the
-    // leg must board the same hull the vote saw, or the vote loads
-    // nothing again.
-    val ride = context.ride.orElse(ReaverShuttlePair.rideOf(context.unit)).getOrElse(return false)
+    // The vote's own hull: reservation, loaded transport, then the
+    // nearest free ride the order resolves - same precedence the
+    // arbiter reads, so vote and leg board one hull.
+    val ride = context.ride
+      .orElse(ReaverShuttlePair.rideOf(context.unit))
+      .orElse(ReaverShuttlePair.freeRideFor(context.unit))
+      .getOrElse(return false)
     // Any static in gun, not just the nearest foe: lings crowd the
     // nearest slot while the sunken holding the duel sits behind them.
     // The vote reads the same any-foe shape - the leg must too.
