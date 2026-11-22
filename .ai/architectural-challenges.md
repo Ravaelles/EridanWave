@@ -274,6 +274,19 @@ hysteresis home (rules 10-11).
   any blade pressure on the pack keeps full wound steps and forbids the
   plant; the cap binds only against guns alone. Validated on UMS
   (ZealDrag 8/5 and 9/8 back-to-back; 16Drag 16/14 with waste ~1f).
+- Why the tests missed the silent duel (testing gap, owner order):
+  suites pin kernels, but the bug lived in COMPOSITION - the
+  fall-through order with no shooter, the march overwriting volleys.
+  Order suites pin sequence, not outcomes, and StarEngine pilots never
+  ran the real dispatch chain. Closed three ways from now on: pure
+  kernels beside their callers with suites that would have caught it
+  (shouldVolley, holdsFire, plant, cap, calm, pack, zerg shield);
+  StarEngine scenarios that mirror the shipped decision order with
+  shipped kernels (HoldVolleys vs AlwaysKite: 249 vs 493 frames to
+  clear - the return trips, measured); UMS + VolleyWaste as the
+  composition verdict. StarEngine stays out of the plumbing by design:
+  move and shoot are separate phases there, so order-cancellation
+  bugs are invisible to it by construction - that class stays live-only.
 - The terminal must shoot (2026-11, owner order: no silent duels):
   the duel's fall-through leg only moved, so an in-range loaded healthy
   hull with no chase to run shuffled instead of firing - and the march

@@ -30,7 +30,10 @@ class EridanWave extends DefaultBWListener {
           // Full speed ahead, no rendering: every frame is still simulated,
           // the wall clock just stops waiting for it. One call does speed,
           // skip and GUI (skip > 150 turns the GUI off by itself).
-          Lifecycle.Keyboard.GameCommands.setSpeed(0, 2000)
+          // ERIDANWAVE_FRAMESKIP overrides for measurement only.
+          val skip = scala.sys.env.get("ERIDANWAVE_FRAMESKIP").flatMap(s =>
+            try Some(s.trim.toInt) catch { case _: NumberFormatException => None }).getOrElse(2000)
+          Lifecycle.Keyboard.GameCommands.setSpeed(0, skip)
         }
         // Tuning params (if --tuning-strategy= was passed): randomize or
         // override before the first frame, Atlantis OnGameStarted parity.
