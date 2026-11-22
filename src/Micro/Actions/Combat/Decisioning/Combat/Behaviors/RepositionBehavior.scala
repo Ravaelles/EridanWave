@@ -1,6 +1,7 @@
 package Micro.Actions.Combat.Decisioning
 
 import Debugging.Visualizations.Forces
+import Micro.Agency.Commander
 import Micro.Heuristics.Potential
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -38,8 +39,14 @@ object RepositionBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     unit.agent.act("Reposition")
-    if (shouldVolley(retreating = combat.shouldRetreat, cooldownLeft = unit.cooldownLeft, hasHittable = unit.matchups.targetsInRange.nonEmpty)
-      && AttackIfReadyBehavior.run(unit, combat)) return true
+    if (shouldVolley(retreating = combat.shouldRetreat, cooldownLeft = unit.cooldownLeft, hasHittable = unit.matchups.targetsInRange.nonEmpty)) {
+      if (AttackIfReadyBehavior.run(unit, combat)) return true
+      // Loaded and hittable but not yet aimed: hold the volley instead
+      // of footworking past it - same rule as the dance and the charge.
+      Commander.hold(unit)
+
+      return true
+    }
 
     val urgency = urgency01(
       combat.target.map(unit.cooldownMaxAgainst).getOrElse(unit.cooldownMaxAirGround),
