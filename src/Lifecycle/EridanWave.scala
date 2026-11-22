@@ -22,22 +22,25 @@ class EridanWave extends DefaultBWListener {
         // no watcher to wait for: kill the GUI and skip frames to the max
         // so games finish as fast as the bot can think. Visible runs and
         // scbw launches (no ERIDANWAVE_HEADLESS in the env) keep defaults.
-        // Map-specific pacing in MapSpecificCommander may still override
-        // the skip per frame for its micro maps.
+        // Headless plays exclusively at speed 0 with frameskip 2000: no
+        // MapSpecific pacing, no explicit --speed override - anything else
+        // just burns wall-clock on watchable pacing nobody watches.
         // (Must run after With.onStart: that is what assigns With.game.)
-        if (scala.sys.env.get("ERIDANWAVE_HEADLESS").contains("1")) {
+        if (Lifecycle.Launch.GameLauncherFactory.isHeadlessRun()) {
           // Full speed ahead, no rendering: every frame is still simulated,
           // the wall clock just stops waiting for it. One call does speed,
           // skip and GUI (skip > 150 turns the GUI off by itself).
-          Lifecycle.Keyboard.GameCommands.setSpeed(0, 1000)
+          Lifecycle.Keyboard.GameCommands.setSpeed(0, 2000)
         }
         // Tuning params (if --tuning-strategy= was passed): randomize or
         // override before the first frame, Atlantis OnGameStarted parity.
         Tuning.Tuning.install()
         // Static per-map pacing and an explicit --speed= live here, not in
         // the first onFrame: the speed setter sleeps for the engine, which
-        // is fine before the frame budget starts ticking.
-        if (Lifecycle.Keyboard.Keyboard.isActive()) {
+        // is fine before the frame budget starts ticking. Headless never
+        // takes this branch: validation games play exclusively at speed 0
+        // with frameskip 2000 (see above).
+        if ( ! Lifecycle.Launch.GameLauncherFactory.isHeadlessRun() && Lifecycle.Keyboard.Keyboard.isActive()) {
           MapSpecificCommander.applyStaticTuning()
           Keyboard.GameCommands.initialSpeed.foreach(Keyboard.GameCommands.setSpeedOnly)
         }

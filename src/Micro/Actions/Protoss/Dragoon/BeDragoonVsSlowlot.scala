@@ -88,7 +88,13 @@ object BeDragoonVsSlowlot extends Action {
    */
   private def yieldsToKite(unit: FriendlyUnitInfo): Boolean = {
     val enemyIsProtoss = With.enemies.exists(_.isProtoss)
-    val zergRules = With.enemies.exists(_.isZerg) && ! enemyIsProtoss
+    val enemyIsZerg = With.enemies.exists(_.isZerg)
+    val enemyIsTerran = With.enemies.exists(_.isTerran)
+    // Terran never kites, on both paths: the dance never stands down
+    // for a kite that will not fire, and the technique never runs one.
+    if (enemyIsTerran && ! enemyIsProtoss && ! enemyIsZerg) return false
+
+    val zergRules = enemyIsZerg && ! enemyIsProtoss
     val pvpRules = enemyIsProtoss
     val marginPixels = KiteAway.enemyMarginTiles * 32.0
     def inMargin(u: FriendlyUnitInfo) =

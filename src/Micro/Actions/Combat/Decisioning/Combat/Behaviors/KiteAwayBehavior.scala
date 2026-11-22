@@ -38,10 +38,15 @@ object KiteAwayBehavior {
     if (nearest.isEmpty) return false
     // Matchup scoping (owner order): the no-kite refinements below are
     // PvP-only. Against Zerg the classic ladder decides, held only by
-    // fresh shields; other matchups run the ladder untouched.
+    // fresh shields. Terran never kites, period - the whole leg stands
+    // down and the duel owns those frames instead (unvalidated so far;
+    // ladder judges). Other matchups run the ladder untouched.
     val enemyIsProtoss = With.enemies.exists(_.isProtoss)
-    val zergRules = With.enemies.exists(_.isZerg) && ! enemyIsProtoss
+    val enemyIsZerg = With.enemies.exists(_.isZerg)
+    val enemyIsTerran = With.enemies.exists(_.isTerran)
+    val zergRules = enemyIsZerg && ! enemyIsProtoss
     val pvpRules = enemyIsProtoss
+    if (enemyIsTerran && ! enemyIsProtoss && ! enemyIsZerg) return false
     // Fresh, loaded and clear hulls hold their fire instead of kiting:
     // the kite donated the shooting on the ZealDrag mirror, so a hull
     // with the gun inside its window, enough hull to trade, and nothing

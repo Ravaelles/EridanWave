@@ -1,6 +1,7 @@
 package Lifecycle
 
 import Lifecycle.Keyboard.GameCommands
+import Lifecycle.Launch.GameLauncherFactory
 
 /**
  * Per-map development tweaks, ported from Atlantis' MapSpecificCommander.
@@ -70,6 +71,11 @@ object MapSpecificCommander extends PerGame {
 
   /** Static per-map tuning, applied once from onStart (never in the frame budget). */
   def applyStaticTuning(): Unit = {
+    // Never in headless runs: validation games play exclusively at
+    // speed 0 with frameskip 2000 - per-map pacing would just burn
+    // wall-clock on watchable speeds nobody watches.
+    if (GameLauncherFactory.isHeadlessRun()) return
+
     tunings.view.filter(t => With.frame <= t.maxFrame && isMap(t.markers: _*)).headOption.foreach(tuning => {
       (tuning.speedMs, tuning.frameSkip) match {
         case (Some(speed), Some(skip)) => GameCommands.setSpeed(speed, skip)
@@ -82,6 +88,7 @@ object MapSpecificCommander extends PerGame {
   }
 
   def onFrame(): Unit = {
+    if (GameLauncherFactory.isHeadlessRun()) return
     if (With.game == null || With.units == null) return
     if ( ! Lifecycle.Keyboard.Keyboard.isActive()) return
 
