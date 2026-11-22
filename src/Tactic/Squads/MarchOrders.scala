@@ -148,6 +148,11 @@ object MarchOrders {
 
     val gapTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceEdge(unit))
       .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    // Opening stand: form up and hold the line from the first frame
+    // instead of trickling at an unseen enemy. Contact hands over to
+    // the duel; the window lapsing hands back to the normal march.
+    if (MarchDress.holdOpening(unit.id, With.frame, unit.unitClass.isWarrior, umsMode = true, enemyInRange = gapTiles <= unit.pixelRangeMax * Maff.inv32)) return true
+
     MarchDress.holdFarWait(
       unit.id,
       unit.unitClass.isWarrior,

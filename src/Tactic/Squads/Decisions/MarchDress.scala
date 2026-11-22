@@ -114,7 +114,7 @@ object MarchDress {
   val resumeFarTiles: Double = 6.0
 
   /** Creep forward this far per step while waiting, in tiles. */
-  val creepTiles: Double = 0.15
+  val creepTiles: Double = 0.2
 
   /** One creep step every this many frames: mostly waiting, barely walking. */
   val creepEveryFrames: Int = 24
@@ -131,6 +131,26 @@ object MarchDress {
     frame % creepEveryFrames < creepFrames
 
   private val farWaiting = new Latch
+
+  /**
+   * Opening stand, in frames: form up and hold the line from the first
+   * frame instead of trickling at an unseen enemy. Owner order from the
+   * ZealDrag mirror (the line never formed, it attacked from the march).
+   * Fires at frame zero on UMS and holds until contact (the duel takes
+   * over) or the window lapses. Warriors only: workers and scouts keep
+   * their jobs. No gap condition: this is the stand before any far-wait
+   * can fire.
+   */
+  val openingHoldFrames: Int = 48
+
+  private val openingHolding = new Latch
+
+  def holdOpening(unitId: Int, frame: Int, isWarrior: Boolean, umsMode: Boolean, enemyInRange: Boolean): Boolean =
+    openingHolding(
+      unitId,
+      fires    = isWarrior && umsMode && frame < openingHoldFrames && ! enemyInRange,
+      releases = enemyInRange || frame >= openingHoldFrames || ! umsMode,
+      initial  = false)
 
   /**
    * Far wait latch (holdDress shape): on UMS mirrors with no reavers the
