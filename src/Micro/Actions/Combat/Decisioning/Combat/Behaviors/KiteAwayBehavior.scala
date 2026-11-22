@@ -44,6 +44,11 @@ object KiteAwayBehavior {
     val enemyIsProtoss = With.enemies.exists(_.isProtoss)
     val enemyIsZerg = With.enemies.exists(_.isZerg)
     val enemyIsTerran = With.enemies.exists(_.isTerran)
+    // ShieldWound gates need shields to read: shieldless hulls (a
+    // drafted Vulture, mind-controlled steel) always read zero, so the
+    // refinements below would pin them standing forever. They keep the
+    // classic ladder instead.
+    val shielded = unit.unitClass.maxShields > 0
     val zergRules = enemyIsZerg && ! enemyIsProtoss
     val pvpRules = enemyIsProtoss
     if (enemyIsTerran && ! enemyIsProtoss && ! enemyIsZerg) return false
@@ -52,7 +57,7 @@ object KiteAwayBehavior {
     // with the gun inside its window, enough hull to trade, and nothing
     // in contact never enters the kite decision at all. PvP-only.
     val contactClose = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(_.likelyStillThere)
-    if (pvpRules && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
+    if (pvpRules && shielded && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
     // Shared margin read (plant and gate agree by construction): live
     // threats only, turned-away melee dismissed. A blade pressing any
     // mate carves a planted hull, so the plant holds volleys against
@@ -76,7 +81,7 @@ object KiteAwayBehavior {
       return true
     }
 
-    if ( ! shouldKite(unit, enemyInMargin, hasMeleeNearby, pvpRules, zergRules)) return false
+    if ( ! shouldKite(unit, enemyInMargin, hasMeleeNearby, pvpRules, zergRules, shielded)) return false
     if (holdToShoot(unit, combat)) return true
     // Masonry never chases: kiting away from a building anchor donates
     // DPS and time for nothing, so a building anchor holds instead of
@@ -100,8 +105,8 @@ object KiteAwayBehavior {
     true
   }
 
-  private def shouldKite(unit: FriendlyUnitInfo, enemyInMargin: Boolean, hasMeleeNearby: Boolean, pvpRules: Boolean, zergRules: Boolean): Boolean = {
-    if (unit.unitClass.melee) return shouldKiteMelee(unit, pvpRules, zergRules)
+  private def shouldKite(unit: FriendlyUnitInfo, enemyInMargin: Boolean, hasMeleeNearby: Boolean, pvpRules: Boolean, zergRules: Boolean, shielded: Boolean): Boolean = {
+    if (unit.unitClass.melee) return shouldKiteMelee(unit, pvpRules, zergRules, shielded)
 
     // Healthy hulls with nothing close hold the line: full shields and
     // no live threat inside two tiles means no reason to yield ground,
@@ -111,13 +116,14 @@ object KiteAwayBehavior {
       ! unit.matchups.threatsInPixels(64.0).exists(_.likelyStillThere)) return false
 
     // Zerg fresh hulls hold: the classic ladder below owns the rest.
-    if (zergRules && unit.shieldWound <= KiteAway.zergShieldWound) return false
+    if (zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound) return false
 
     // Fresh hulls hold their volleys, contact or not: at or below the
     // fresh wound the gun outweighs the yield, so the kite never fires
-    // without real shield damage AND blades in contact. PvP-only: other
-    // matchups run the ladder untouched.
-    if (pvpRules) {
+    // without real shield damage AND blades in contact. PvP-only, and
+    // only where shields exist to read: other matchups run the ladder
+    // untouched.
+    if (pvpRules && shielded) {
       val meleeClose = unit.matchups.threatsInPixels(KiteAway.meleeCloseTiles * 32.0).exists(t =>
         t.likelyStillThere && t.unitClass.melee)
       if ( ! KiteAway.shouldKite(unit.shieldWound, meleeClose)) return false
@@ -138,9 +144,9 @@ object KiteAwayBehavior {
    * only on the kernel's terms - nearby lings, a superior zealot pack,
    * or a dying hull still swinging at melee. Anything else stands.
    */
-  private def shouldKiteMelee(unit: FriendlyUnitInfo, pvpRules: Boolean, zergRules: Boolean): Boolean = {
+  private def shouldKiteMelee(unit: FriendlyUnitInfo, pvpRules: Boolean, zergRules: Boolean, shielded: Boolean): Boolean = {
     // Zerg fresh hulls hold: the classic ladder below owns the rest.
-    if (zergRules && unit.shieldWound <= KiteAway.zergShieldWound) return false
+    if (zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound) return false
 
     if (pvpRules) {
       // Calm healthy-enough blades hold: not hit in forty frames with

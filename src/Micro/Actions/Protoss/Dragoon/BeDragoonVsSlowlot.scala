@@ -93,6 +93,9 @@ object BeDragoonVsSlowlot extends Action {
     // Terran never kites, on both paths: the dance never stands down
     // for a kite that will not fire, and the technique never runs one.
     if (enemyIsTerran && ! enemyIsProtoss && ! enemyIsZerg) return false
+    // ShieldWound gates need shields to read: shieldless hulls always
+    // read zero, so the refinements below would pin them standing.
+    val shielded = unit.unitClass.maxShields > 0
 
     val zergRules = enemyIsZerg && ! enemyIsProtoss
     val pvpRules = enemyIsProtoss
@@ -103,12 +106,12 @@ object BeDragoonVsSlowlot extends Action {
         ! FacingAway.dismissMelee(t.unitClass.melee,
           FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
     // Zerg fresh hulls hold on both paths: the classic ladder owns the rest.
-    if (zergRules && unit.shieldWound <= KiteAway.zergShieldWound) return false
+    if (zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound) return false
     // Fresh, loaded and clear hulls hold their volleys on both paths
     // (PvP-only): the kite donated the shooting, so the dance never
     // stands down for a kite that will not fire.
     val contactClose = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(_.likelyStillThere)
-    if (pvpRules && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
+    if (pvpRules && shielded && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
 
     // Plant owns the frame where it would fire: the dance stands down
     // instead of starving the hold - a loaded volley with something
@@ -118,7 +121,7 @@ object BeDragoonVsSlowlot extends Action {
     // The dance stands down only where the kite would fire: fresh hulls
     // and ranged-only pressure hold their volleys on both paths (PvP),
     // so the yield mirrors the behavior gate exactly.
-    if (pvpRules) {
+    if (pvpRules && shielded) {
       val meleeClose = unit.matchups.threatsInPixels(KiteAway.meleeCloseTiles * 32.0).exists(t =>
         t.likelyStillThere && t.unitClass.melee)
       if ( ! KiteAway.shouldKite(unit.shieldWound, meleeClose)) return false
