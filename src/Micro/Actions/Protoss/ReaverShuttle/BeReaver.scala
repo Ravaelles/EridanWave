@@ -326,7 +326,11 @@ object BeReaver extends Action {
    * resolves on - vote and leg agree by construction.
    */
   private def boardStalled(context: GroundContext): Boolean = {
-    val ride = context.ride.getOrElse(return false)
+    // Live ride, not just the reservation: baseless maps set no
+    // reservations, but the order resolves the nearest free ride - the
+    // leg must board the same hull the vote saw, or the vote loads
+    // nothing again.
+    val ride = context.ride.orElse(ReaverShuttlePair.rideOf(context.unit)).getOrElse(return false)
     val staticInGun = context.foe.exists(t =>
       t.unitClass.isStaticDefense && context.unit.inRangeToAttack(t))
     val stalled = With.framesSince(context.unit.lastFrameStartingAttack) >= ReaverStaticStand.quietFrames
