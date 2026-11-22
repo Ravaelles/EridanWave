@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -31,12 +32,13 @@ object Brawl extends Action {
     framesBeforeReacting >= framesBeforeContact
   }
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     lazy val framesClosest = Maff.min(unit.matchups.targets.map(unit.framesBeforeAttacking))
     lazy val targetsNear = unit.matchups.targets.filter(t => framesClosest.exists(f => unit.framesBeforeAttacking(t) <= f))
     unit.agent.toAttack =
       Target.best(unit, unit.matchups.targetsInRange.filter(_.unitClass.attacksOrCastsOrDetectsOrTransports))
         .orElse(Target.best(unit, targetsNear.filter(_.unitClass.attacksOrCastsOrDetectsOrTransports)))
     Commander.attack(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

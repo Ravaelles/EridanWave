@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics.Potshots
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Targeting.Target
 import Micro.Agency.Commander
@@ -13,8 +14,9 @@ object Potshot extends Action {
     && unit.tile.enemyRangeAgainst(unit) > 0
     && unit.readyForAttackOrder)
   
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     Target.choose(unit, TargetFilterPotshot)
     Commander.attack(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

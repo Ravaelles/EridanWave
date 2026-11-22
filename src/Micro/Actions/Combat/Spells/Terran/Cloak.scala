@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Spells.Terran
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Actions.Combat.Spells.Spell
 import Micro.Agency.Commander
@@ -22,10 +23,11 @@ object Cloak extends Action with Spell {
   override def allowed(unit: FriendlyUnitInfo): Boolean =
     CloakPolicy.hullFor(unit).exists(h => h.cloak(unit) || h.uncloak(unit))
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     CloakPolicy.hullFor(unit).foreach(h => {
       if (unit.cloaked) Commander.decloak(unit, h.tech)
       else Commander.cloak(unit, h.tech)
     })
+    UnitControl.claimedIf(! unit.ready)
   }
 }

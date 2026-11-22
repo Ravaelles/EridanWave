@@ -1,5 +1,6 @@
 package Micro.Actions.Basic
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Terran
@@ -12,7 +13,7 @@ object Bunk extends Action {
     unit.agent.toBoard.exists(Terran.Bunker)
   }
   
-  override def perform(unit: FriendlyUnitInfo) {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     if (unit.loaded) {
       if (unit.transport == unit.agent.toBoard) {
         Commander.doNothing(unit)
@@ -22,5 +23,6 @@ object Bunk extends Action {
     } else {
       Commander.rightClick(unit, unit.agent.toBoard.get)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }

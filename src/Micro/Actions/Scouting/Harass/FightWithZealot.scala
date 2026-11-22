@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Harass
 
+import Micro.Actions.UnitControl
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -15,9 +16,9 @@ object FightWithZealot extends Action {
     Protoss.Probe(unit)
     && unit.matchups.threats.exists(_.isAny(Zerg.Zergling, Terran.Marine)))
 
-  override protected def perform(probe: FriendlyUnitInfo): Unit = {
+  override protected def perform(probe: FriendlyUnitInfo): UnitControl = {
     val zealots = probe.matchups.allies.filter(z => Protoss.Zealot(z) && (probe.zone == z.zone || probe.pixelDistanceEdge(z) < 128))
-    if (zealots.isEmpty) return
+    if (zealots.isEmpty) return UnitControl.Declined
 
     val nearestZealot = zealots.minBy(_.pixelDistanceEdge(probe))
 
@@ -33,5 +34,6 @@ object FightWithZealot extends Action {
       probe.agent.home.set(nearestZealot.projectFrames(-24))
       MicroPathing.tryMovingAlongTilePath(probe, MicroPathing.getThreatAwarePath(probe, preferHome = true))
     }
+    UnitControl.claimedIf(! probe.ready)
   }
 }

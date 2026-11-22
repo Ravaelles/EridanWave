@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Detector
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.{Maff, Separation}
 import Micro.Actions.Action
@@ -25,39 +26,39 @@ object BeDetector extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean =
     unit.unitClass.isDetector && unit.canMove
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // Genuine threats first: a flee order sticks in the engine while a
     // later one is suppressed, so the widest flee must claim before the
     // narrower steering below overwrites its destination.
-    if (fleeAttackers(unit)) return
+    if (fleeAttackers(unit)) return UnitControl.claimedIf(! unit.ready)
     // Compromised eyes run from fast hunters early: with a detector
     // inside eleven tiles the eye is seen, and Scourge, Corsairs,
     // Wraiths and Mutalisks close too fast to outrun once committed.
-    if (fleeFastHunters(unit)) return
+    if (fleeFastHunters(unit)) return UnitControl.claimedIf(! unit.ready)
     // A detected eye never sits inside the guns: with the watch already
     // blown it holds four tiles off their centroid instead of donating
     // the hull for nothing.
-    if (fleeDetected(unit)) return
+    if (fleeDetected(unit)) return UnitControl.claimedIf(! unit.ready)
     // Templar watch: the senior eye sticks to the enemy blade nearest
     // our main while one works inside fifty ground tiles of it. Survival
     // above already claimed guns, so this step only steers a safe eye.
-    if (followTemplar(unit)) return
+    if (followTemplar(unit)) return UnitControl.claimedIf(! unit.ready)
     // Science Vessels see eleven out: the generic six-tile ring would
     // skim inside the sight ring while the escort still pulls the eye
     // in, so the wider Vessel ring claims before the spread below.
-    if (keepOffVessels(unit)) return
+    if (keepOffVessels(unit)) return UnitControl.claimedIf(! unit.ready)
 
     BeFlier(unit)
     // Survival owns the frame: once anything above moved, later claims
     // must not overwrite its destination with a suppressed order.
-    if (unit.unready) return
+    if (unit.unready) return UnitControl.claimedIf(! unit.ready)
 
     // Spread outranks everything but survival: stacked eyes die together,
     // and every Spot/combat step after this one walks them back into the
     // same pile. While spreading the eye moves and reports, nothing else.
-    if (spread(unit)) return
+    if (spread(unit)) return UnitControl.claimedIf(! unit.ready)
 
-    if (keepOffDetectors(unit)) return
+    if (keepOffDetectors(unit)) return UnitControl.claimedIf(! unit.ready)
 
     Spot(unit)
     Recharge(unit)

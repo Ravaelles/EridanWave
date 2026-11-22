@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -11,7 +12,7 @@ object StrategicNuke extends Action {
   override def isContainer: Boolean = true
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.agent.toNuke.isDefined
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val target = unit.agent.toNuke.get
     unit.agent.decision.set(target)
     
@@ -19,5 +20,6 @@ object StrategicNuke extends Action {
     if (unit.tileDistanceCenter(target) < 11.0 && haveANuke) {
       Commander.useTechOnPixel(unit, Terran.NuclearStrike, target)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }

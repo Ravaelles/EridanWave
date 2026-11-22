@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Zealot
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -18,7 +19,7 @@ object BeZealotVsZealot extends Action {
       && With.enemies.exists(_.isProtoss)
       && unit.matchups.threatsInPixels(128).forall(_.isAny(Protoss.Zealot, Protoss.Probe)))
 
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     val obviousTarget = Maff.minBy(unit.matchups.targetsInPixels(16))(t => t.totalHealth / (1.0 + t.matchups.threatsInRange.count(unit!=)))
     unit.agent.toAttack = obviousTarget
     val target = obviousTarget.orElse(unit.matchups.targetNearest)
@@ -33,23 +34,26 @@ object BeZealotVsZealot extends Action {
           ally.friendly.exists(_.agent.shouldFight)
           || unit.totalHealth * (1 + unit.confidence11) > enemy.totalHealth)))) match {
       case DuelDecision.Outnumbered =>
+        // Pure decider: sets the fight vote, issues no orders itself -
+        // the march and the technique act on it, so the claim stays
+        // with whoever moves.
         unit.agent.fightReason = "Outnumbered"
         unit.agent.decideFight(false)
 
-        return
+        return UnitControl.Declined
 
       case DuelDecision.Dying =>
         unit.agent.fightReason = "Dying"
         unit.agent.decideFight(false)
 
-        return
+        return UnitControl.Declined
 
       case DuelDecision.Duelling =>
         unit.agent.fightReason = "Duelling"
         unit.agent.decideFight(true)
         unit.agent.toAttack    = target
 
-        return
+        return UnitControl.Declined
 
       case DuelDecision.Outnumbering =>
         unit.agent.fightReason = "Outnumbering"
@@ -57,6 +61,7 @@ object BeZealotVsZealot extends Action {
         unit.agent.toAttack    = target
       case DuelDecision.Undecided =>
     }
+    UnitControl.Declined
   }
 }
 

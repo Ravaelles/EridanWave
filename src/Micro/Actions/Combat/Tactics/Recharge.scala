@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
@@ -28,13 +29,13 @@ object Recharge extends Action {
     && Protoss.ShieldBattery(unit)
     && unit.energy > 0)
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val missingShields = unit.unitClass.maxShields - unit.shieldPoints
     val batteries = unit.metro.toSeq.flatMap(_.ourUnits.filter(validBattery)).filter(b =>
       b.energy * 2 >= missingShields
       || ! unit.flying && b.pixelDistanceEdge(unit) < 64)
 
-    if (batteries.isEmpty) return
+    if (batteries.isEmpty) return UnitControl.Declined
 
     val battery = batteries.minBy(unit.pixelDistanceEdge)
     val distance = battery.pixelDistanceEdge(unit)
@@ -43,11 +44,11 @@ object Recharge extends Action {
       if (With.units.enemy.forall(e => distance < unit.pixelDistanceEdge(e))) {
         Commander.rightClick(unit, battery)
       }
-      return
+      return UnitControl.claimedIf(! unit.ready)
     }
 
-    if ( ! (unit.totalHealth < unit.unitClass.maxTotalHealth / 3.0 || ! unit.agent.shouldFight || unit.matchups.pixelsToTargetRange.forall(_ > 320))) return
-    if (unit.readyForAttackOrder && unit.matchups.targetsInRange.nonEmpty) return // Particularly to ensure that ramp-holders don't get stuck trying to get to a battery
+    if ( ! (unit.totalHealth < unit.unitClass.maxTotalHealth / 3.0 || ! unit.agent.shouldFight || unit.matchups.pixelsToTargetRange.forall(_ > 320))) return UnitControl.Declined
+    if (unit.readyForAttackOrder && unit.matchups.targetsInRange.nonEmpty) return UnitControl.Declined // Particularly to ensure that ramp-holders don't get stuck trying to get to a battery
 
     unit.agent.decision.set(battery.pixel.project(unit.pixel, 40))
   
@@ -60,5 +61,6 @@ object Recharge extends Action {
 
     Potshot.delegate(unit)
     Commander.move(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

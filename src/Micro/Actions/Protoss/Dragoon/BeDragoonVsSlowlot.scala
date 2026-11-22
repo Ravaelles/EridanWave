@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Dragoon
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Forces
 import Lifecycle.With
 import Macro.Facts.MacroFacts
@@ -23,14 +24,15 @@ object BeDragoonVsSlowlot extends Action {
     && unit.matchups.threats.forall(_.isAny(Protoss.Probe, Protoss.Zealot))
     && ! MacroFacts.enemyHasUpgrade(Protoss.ZealotSpeed))
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // The W1 duel owns losing duels: where the shipped kite kernel fires,
     // this legacy dance stands down without issuing (and without sleeping),
     // so the technique runs on a ready unit and kites on cooldown instead
     // of being starved by our own margin moves. Same read as
     // KiteAwayBehavior.shouldKite (live threats in margin, turned-away
     // melee dismissed); both paths agree by construction.
-    if (yieldsToKite(unit)) return
+    if (yieldsToKite(unit)) return UnitControl.Declined
+
     val margin    = Maff.min(unit.matchups.threatsInPixels(160).map(t => t.pixelsToGetInRange(unit) + 32 - Maff.or0(16, t.presumptiveTarget.contains(unit)) - 16 * t.dot(unit.pixel))).getOrElse(320d).toInt
     val safety    = DragoonSlowlotPolicy.safety(margin, unit.totalHealth)
 
@@ -61,6 +63,7 @@ object BeDragoonVsSlowlot extends Action {
     } else {
       retreat(unit)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 
   def retreat(unit: FriendlyUnitInfo): Unit = {

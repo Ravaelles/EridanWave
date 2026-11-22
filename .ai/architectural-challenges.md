@@ -1,9 +1,9 @@
 # Architectural challenges (living list, newest last)
 
 Named patterns only: one line each (what, where, open or closed).
-Rule 11 (conventions): every solved problem gets one paragraph here.
+Rule 12 (conventions): every solved problem gets one paragraph here.
 Retreats keep one verdict per unit per frame; latches stay the single
-hysteresis home (rules 9-10).
+hysteresis home (rules 10-11).
 
 ## Open
 
@@ -45,7 +45,7 @@ hysteresis home (rules 9-10).
   it permanently, so the only live edge is pre-Bay request churn while
   dragoons hover at the boundary. If a Bay request start/stop saw ever
   shows in trace, the release band goes in the kernel with a
-  gameplan-level latch (open, watch only - rules 9/17). The ratchet
+  gameplan-level latch (open, watch only - rules 10/18). The ratchet
   has since moved into the policy as an explicit committed-play bypass
   (`haveReaver`/`haveBay` flow); the watch stands for pre-commitment
   request churn.
@@ -131,7 +131,7 @@ hysteresis home (rules 9-10).
   2026-11): branch-new code called the slated-for-deletion
   `SquadAutomation` shell. Pattern: the todo already bans shell calls
   from new code - review greps added files for `SquadAutomation`.
-- Single production policy sink (closed: rule #1 live, call-sites
+- Single production policy sink (closed: rule #2 live, call-sites
   dissolved): the reaver bypass proved a gate in one production path
   is not a gate. Veto-by-what-not-by-who - one policy object
   (`Macro.Actions.ProductionPolicy`) consulted inside the mechanical

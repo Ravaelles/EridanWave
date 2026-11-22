@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Maneuvering
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Forces
 import Lifecycle.With
 import Mathematics.Points.Pixel
@@ -58,14 +59,15 @@ object Retreat extends Action {
     }
   }
 
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     // Siege shells outrank every retreat plan: a detected ground unit
     // that does not want the tank battle steps past the shell line
     // first, waypoints second. Hulls with a battle verdict keep the
     // TankHug discipline below instead.
-    if (ArtilleryKeepOff.act(unit)) return
+    if (ArtilleryKeepOff.act(unit)) return UnitControl.Claimed
 
     getRetreat(unit)(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 
   def getRetreat(unit: FriendlyUnitInfo): RetreatPlan = {

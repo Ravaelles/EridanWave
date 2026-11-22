@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Harass
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -18,12 +19,13 @@ object Harass4PoolWorkers extends Action {
     && ! unit.matchups.threats.exists(t => Zerg.Zergling(t) && t.pixelsToGetInRange(unit) < 320)
     && unit.matchups.threats.count(t => Zerg.Drone(t) && t.pixelDistanceEdge(unit) < 48 && t.totalHealth >= unit.totalHealth) < 2)
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val target = Maff.minBy(unit.matchups.targets.filter(Zerg.Drone))(_.pixelDistanceEdge(unit)).filter(_.orderTarget.exists(_.unitClass.isMinerals))
 
     if (target.isDefined) {
       unit.agent.toAttack = target
       Commander.attack(unit)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }

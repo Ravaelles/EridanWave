@@ -50,5 +50,5 @@ StarEngine alone: `scripts/starengine.sh [<Suite>...]`
   `run.sh` refuses them - do not force-launch.
 - Box stuck in NOATTACH: kill leftovers, `wineserver -k`, retry;
   still dead, prove game vs table side once by hand, then resume.
-- Distances are tiles unless the name says pixels (rule 15).
+- Distances are tiles unless the name says pixels (rule 16).
 - Full docs: `.ai/conventions.md`, `.ai/architecture.md`.

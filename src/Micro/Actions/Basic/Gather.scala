@@ -1,5 +1,6 @@
 package Micro.Actions.Basic
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
@@ -35,7 +36,7 @@ object Gather extends Action {
       && e.isNone(IsWorker, Terran.Wraith, Protoss.Arbiter, Protoss.Scout, Zerg.Mutalisk)
       && e.pixelsToGetInRange(miner, resource.pixel) < defenseRadiusPixels)))
   
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
 
     def resource = unit.agent.toGather.get
 
@@ -59,7 +60,7 @@ object Gather extends Action {
         unit.agent.act("helpScout")
         Commander.gather(unit)
 
-        return
+        return UnitControl.Claimed
       }
 
       // Burrow from threats
@@ -111,7 +112,7 @@ object Gather extends Action {
       if (hardThreatNear) {
         Retreat(unit)
 
-        return
+        return UnitControl.Claimed
       }
 
       // Escape dangerous melee units
@@ -126,7 +127,7 @@ object Gather extends Action {
         || WorkerThreatFlee.doomedVsLoneFighter(unit.totalHealth, loneFighterNear, supported))) {
         Retreat(unit)
 
-        return
+        return UnitControl.Claimed
       }
 
       lazy val stabbers        = unit.matchups.threatsInRange.filter(t => t.unitClass.melee && ! t.burrowed)
@@ -199,6 +200,7 @@ object Gather extends Action {
       unit.agent.act(?(unit.carrying, "returnCargo", ?(resource.unitClass.isGas, "gather:Gas", "gather:Minerals")))
       Commander.gather(unit)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }
 

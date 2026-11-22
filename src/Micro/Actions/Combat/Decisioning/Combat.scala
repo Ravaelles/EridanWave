@@ -300,11 +300,12 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
   private[Decisioning] def canAbuse(t: UnitInfo) : Boolean = unit.canAttack(t) && unit.intent.canFight && ( ! t.canAttack(unit) || (unit.topSpeed > t.topSpeed && unit.pixelRangeAgainst(t) > t.pixelRangeAgainst(unit)))
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canMove || unit.canAttack) && unit.intent.canFight
-  override def perform(unused: FriendlyUnitInfo = null): Unit = {
+  override def perform(unused: FriendlyUnitInfo = null): UnitControl = {
     restrained = false
     innerPerform()
     restrainedFrames += ?(restrained, 1.0, -0.5) * With.framesSince(unit.agent.lastFrame)
     restrainedFrames = Math.max(0, restrainedFrames)
+    UnitControl.claimedIf(! unit.ready)
   }
   def innerPerform(): Unit = {
     acquireTarget()

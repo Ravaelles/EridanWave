@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -16,9 +17,10 @@ object PreserveScout extends Action {
       || unit.matchups.threatsInRange.exists(t => ! t.unitClass.isWorker && t.canAttack(unit))
   )
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // FindBuildings can usually safely path around threats
     SearchWhenBored.delegate(unit)
     Retreat.delegate(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Spells.Terran
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Terran
@@ -18,7 +19,8 @@ object Stim extends Action {
     && (unit.matchups.targetsInRange.nonEmpty || unit.matchups.threatsInRange.nonEmpty)
   )
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     Commander.useTech(unit, Terran.Stim)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

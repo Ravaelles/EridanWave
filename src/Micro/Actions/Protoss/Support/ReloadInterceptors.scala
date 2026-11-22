@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Support
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -18,7 +19,8 @@ object ReloadInterceptors extends Action {
     && unit.matchups.framesToLive > Protoss.Interceptor.buildFrames + 48.0
   )
   
-  override def perform(unit: FriendlyUnitInfo) {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     Commander.buildInterceptor(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

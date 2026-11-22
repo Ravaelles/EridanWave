@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Spells
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Pixel
@@ -58,7 +59,7 @@ abstract class TargetedSpell extends Action with Spell {
   
   protected def additionalConditions(unit: FriendlyUnitInfo): Boolean = true
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val safeDistance  = Math.max(0, -unit.matchups.pixelsEntangled)
     val totalRange    = safeDistance + 32.0 * castRangeTiles + bonusSearchPixels // The margin is just some encouragement
     val searchRange   = searchTiles.map(tiles => Math.min(totalRange, tiles * 32.0)).getOrElse(totalRange)
@@ -106,6 +107,7 @@ abstract class TargetedSpell extends Action with Spell {
         }
       })
     }
+    UnitControl.claimedIf(! unit.ready)
   }
   
   // Event handler for when the unit issues a cast

@@ -1,5 +1,6 @@
 package Micro.Actions.Terran
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Pixel
@@ -29,8 +30,8 @@ object GetRepairedMobile extends Action {
     }
     && (unit.matchups.targetsInRange.nonEmpty || unit.matchups.threatsInRange.isEmpty))
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
-    if (unit.unready) return
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
+    if (unit.unready) return UnitControl.Declined
 
     var repairGoal: Option[Pixel] = None
     var repairUnit: Option[FriendlyUnitInfo] = None
@@ -86,5 +87,6 @@ object GetRepairedMobile extends Action {
         }
       }
     })
+    UnitControl.claimedIf(! unit.ready)
   }
 }

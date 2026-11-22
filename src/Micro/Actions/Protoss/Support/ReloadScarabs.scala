@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Support
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Transportation.RequestSafeLanding
@@ -17,10 +18,10 @@ object ReloadScarabs extends Action {
     && With.self.minerals >= Protoss.Scarab.mineralPrice
   )
 
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     val queued = Math.max(unit.trainingQueue.size, unit.bwapiUnit.getTrainingQueueCount)
     val needed = maxScarabCount - unit.scarabs - queued
-    if (needed <= 0) return
+    if (needed <= 0) return UnitControl.Declined
 
     if (unit.airlifted) {
       if (unit.matchups.framesOfSafety > 24 + With.reaction.agencyMax) {
@@ -29,6 +30,7 @@ object ReloadScarabs extends Action {
     } else {
       Commander.buildScarab(unit, Math.min(needed, With.self.minerals / Protoss.Scarab.mineralPrice))
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }
 

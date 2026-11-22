@@ -1,5 +1,6 @@
 package Micro.Actions.Transportation
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Actions.Protoss.ReaverShuttle.BeShuttle
 import Micro.Agency.Commander
@@ -10,7 +11,7 @@ object Transport extends Action {
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.isTransport
   
-  override protected def perform(transport: FriendlyUnitInfo): Unit = {
+  override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
     transport.squad.foreach(squad => {
       squad.accountForCargo(transport)
       squad.abandonUnsafePickups()
@@ -26,8 +27,9 @@ object Transport extends Action {
     })
 
     Evacuate(transport)
-    if (transport.unready) return
+    if (transport.unready) return UnitControl.Claimed // Evacuate already moved
 
     BeShuttle(transport)
+    UnitControl.claimedIf(! transport.ready)
   }
 }

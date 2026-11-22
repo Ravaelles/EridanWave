@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Harass
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -14,8 +15,9 @@ object DroneWarfare extends Action {
     && unit.intent.canFight
     && With.blackboard.droneWarfare())
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     Target.choose(unit)
     Commander.attack(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

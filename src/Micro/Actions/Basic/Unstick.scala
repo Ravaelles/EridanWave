@@ -1,5 +1,6 @@
 package Micro.Actions.Basic
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
@@ -18,7 +19,8 @@ object Unstick extends Action {
     && unit.seeminglyStuck
   )
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     Commander.stop(unit)
+    UnitControl.Claimed
   }
 }

@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics.Potshots
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Forces
 import Information.Geography.Pathfinding.PathfindProfile
 import Lifecycle.With
@@ -21,7 +22,7 @@ object Tickle extends Action {
 
   override def allowed(tickler: FriendlyUnitInfo): Boolean = IsWorker(tickler)
 
-  override protected def perform(tickler: FriendlyUnitInfo): Unit = {
+  override protected def perform(tickler: FriendlyUnitInfo): UnitControl = {
 
     // Return resources now so we can mine again later - but only with the
     // ground clear. Under fire the return trip is a fixed itinerary with the
@@ -32,7 +33,7 @@ object Tickle extends Action {
       Maff.min(tickler.matchups.threats.view.map(_.pixelDistanceEdge(tickler) * Maff.inv32)).getOrElse(Double.PositiveInfinity))) {
       Commander.returnCargo(tickler)
 
-      return
+      return UnitControl.claimedIf(! tickler.ready)
     }
 
     tickler.agent.toAttack =
@@ -62,6 +63,7 @@ object Tickle extends Action {
 
     arson(tickler)
     Commander.move(tickler)
+    UnitControl.claimedIf(! tickler.ready)
   }
 
   private def strengthGlobal(unit: UnitInfo): Double = {

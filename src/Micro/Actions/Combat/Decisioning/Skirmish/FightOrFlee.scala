@@ -1,6 +1,7 @@
 
 package Micro.Actions.Combat.Decisioning.Skirmish
 
+import Micro.Actions.UnitControl
 import Debugging.Probe
 import Lifecycle.{Enemy, With}
 import Mathematics.Maff
@@ -23,10 +24,11 @@ object FightOrFlee extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
   //noinspection NameBooleanParameters
-  override def perform(u: FriendlyUnitInfo): Unit = {
+  override def perform(u: FriendlyUnitInfo): UnitControl = {
     applyVerdict(u, gatherFacts(u))
 
     if (With.configuration.debugging && With.configuration.logCombatForecasts) Debugging.CombatForecastDiagnostics.decision(u)
+    UnitControl.Declined
   }
 
   // The verdict reason (rule label or sim Yes/No) rides the change-only

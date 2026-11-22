@@ -1,5 +1,6 @@
 package Micro.Actions.Basic
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -27,8 +28,9 @@ object Crack extends Action {
     && unit.readyForAttackOrder
     && egg(unit).isDefined)
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     unit.agent.toAttack = egg(unit)
     Commander.attack(unit)
+    UnitControl.Claimed
   }
 }

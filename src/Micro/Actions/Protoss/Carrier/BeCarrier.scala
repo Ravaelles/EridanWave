@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Carrier
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
@@ -61,11 +62,11 @@ object BeCarrier extends Action {
     })
   }
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // Lockdown is instant death for a mechanical hull: a charged Ghost
     // turns the wing before batteries, kites and leashes - nothing the
     // hull owns outvalues moving.
-    if (AvoidDangerousUnits.act(unit)) return
+    if (AvoidDangerousUnits.act(unit)) return UnitControl.claimedIf(! unit.ready)
 
     // Beat hull, empty shields: fly home to a battery instead of trading
     // the wing away. Recharge covers the last mile once it shares the
@@ -78,12 +79,12 @@ object BeCarrier extends Action {
         Commander.move(unit)
       })
 
-      return
+      return UnitControl.claimedIf(! unit.ready)
     }
 
     // Dying carriers kite: below 100 HP a ranged attacker inside fourteen
     // tiles pushes the hull straight out instead of trading the game away.
-    if (carrierKite(unit)) return
+    if (carrierKite(unit)) return UnitControl.claimedIf(! unit.ready)
 
     if (unit.agent.shouldFight) {
       val brawling = CarrierTankHuntSeam.brawlingFor(unit)
@@ -163,4 +164,5 @@ object BeCarrier extends Action {
     } else {
       Retreat(unit)
     }
+    UnitControl.claimedIf(! unit.ready)
   }}

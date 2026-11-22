@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.DarkTemplar
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -25,14 +26,14 @@ object BeDarkTemplar extends Action {
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.DarkTemplar(unit)
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // Detectors outrank everything: a seen Templar is a dead Templar, so
     // evade first and never hunt, snipe or hold through detection.
-    if (evadeDetector(unit)) return
+    if (evadeDetector(unit)) return UnitControl.claimedIf(! unit.ready)
 
     // Shot is seen: while a ranged threat's reach plus the hide band
     // touches the Templar, no re-attack - run first, hunt later.
-    if (revealedHide(unit)) return
+    if (revealedHide(unit)) return UnitControl.claimedIf(! unit.ready)
 
     // Revealed is revealed: the tile sits under enemy detection, or
     // shots have landed - the hide is blown whether the eyes are seen
@@ -40,7 +41,7 @@ object BeDarkTemplar extends Action {
     // above never fires on an unseen eye). Flee the fix if there is
     // one, else fall back to safety - standing revealed is how
     // Templars die. The hide above owns close guns; this owns the rest.
-    if (revealedWithdraw(unit)) return
+    if (revealedWithdraw(unit)) return UnitControl.claimedIf(! unit.ready)
 
     snipeSpiders(unit)
 
@@ -48,9 +49,10 @@ object BeDarkTemplar extends Action {
     // path sideways around their centroid instead of through it. Radial
     // flee walks into the mine behind; a lateral step slips the field.
     // Sniping owns the frame when it answered a lone mine above.
-    if (mineSidestep(unit)) return
+    if (mineSidestep(unit)) return UnitControl.claimedIf(! unit.ready)
 
     if (unit.agent.toAttack.isEmpty) hunt(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 
   private def evadeDetector(unit: FriendlyUnitInfo): Boolean = {

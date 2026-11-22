@@ -1,5 +1,6 @@
 package Micro.Actions.Terran
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Pixel
@@ -20,9 +21,10 @@ object BeVulture extends Action {
     && unit.spiderMines > 0
   )
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     sabotage(unit)
     layTrap(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
   
   protected def placeMine(vulture: FriendlyUnitInfo, target: Pixel): Unit = {

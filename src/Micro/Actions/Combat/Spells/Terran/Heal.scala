@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Spells.Terran
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -17,7 +18,7 @@ object Heal extends Action with Spell {
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = Terran.Medic(unit) && unit.battle.isDefined
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val targets       = Maff.orElse(unit.alliesSquad, unit.alliesBattle).filter(u => u.unitClass.isOrganic && ! Terran.Medic(u) && u.healers.forall(unit==))
     val target  = Maff.orElse(
       Maff.minBy(targets.filter(t => t.hitPoints < t.unitClass.maxHitPoints))(_.pixelDistanceSquared(unit)),
@@ -27,5 +28,6 @@ object Heal extends Action with Spell {
       With.coordinator.healing.heal(unit, target.head)
       Commander.rightClick(unit, target.head)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }

@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics.Bunker
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -16,7 +17,8 @@ object Unbunk extends Action {
     && unit.transport.get.matchups.targetsInRange.isEmpty
     && unit.pixelDistanceTravelling(unit.agent.destinationNext()) > 32.0 * 7.0)
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     Commander.unload(unit.transport.get, unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

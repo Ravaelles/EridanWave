@@ -20,12 +20,13 @@ object Idle extends Action {
   final override def allowed(unit: FriendlyUnitInfo): Boolean = true
 
   @inline
-  final override def perform(unit: FriendlyUnitInfo): Unit = {
+  final override def perform(unit: FriendlyUnitInfo): UnitControl = {
     var i = 0
     while (i < actions.length) {
       actions(i)(unit)
       i += 1
     }
+    UnitControl.Claimed
   }
 
   private val actions = Array[Action](

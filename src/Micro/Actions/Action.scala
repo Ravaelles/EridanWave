@@ -9,9 +9,18 @@ abstract class Action {
   val name: String = ToString(this)
 
   protected def requiresReadiness: Boolean = true
-  
+
   def allowed(unit: FriendlyUnitInfo): Boolean = true
-  protected def perform(unit: FriendlyUnitInfo): Unit
+
+  /**
+   * Verdict contract (owner order): every unit-controlling action states
+   * whether it owned the frame. The compiler lists every override, so a
+   * new action that forgets its verdict does not compile. Claimed frames
+   * carry the action's name into the decision chain beside the behavior
+   * stages - no silent orders. Delegating containers pass through
+   * (their leaves report); order-issuing leaves claim their frames.
+   */
+  protected def perform(unit: FriendlyUnitInfo): UnitControl
 
   /**
    * Chain containers report through their leaves, never under their own
@@ -23,7 +32,7 @@ abstract class Action {
   final def apply(unit: FriendlyUnitInfo): Boolean = {
     act(unit, giveCredit = ! isContainer)
   }
-  
+
   final def delegate(unit: FriendlyUnitInfo): Boolean = {
     act(unit, giveCredit = false)
   }
@@ -32,11 +41,11 @@ abstract class Action {
     With.agents.timeAction(name) {
       if (( ! requiresReadiness || unit.ready) && allowed(unit)) {
         val previousCredit = unit.agent.lastAction
-        if (giveCredit) unit.agent.act(name)
-        if (With.configuration.debugging && ! isContainer) {
+        val verdict = perform(unit)
+        if (giveCredit && verdict.claimed) unit.agent.act(name)
+        if (With.configuration.debugging && ! isContainer && verdict.claimed) {
           unit.agent.actions += name
         }
-        perform(unit)
         if (unit.ready) {
           previousCredit.foreach(unit.agent.act)
         }

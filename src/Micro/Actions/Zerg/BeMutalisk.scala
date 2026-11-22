@@ -1,5 +1,6 @@
 package Micro.Actions.Zerg
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
@@ -34,7 +35,7 @@ object BeMutalisk extends Action {
     }
   }
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     if (unit.cooldownLeft < 24) {
       unit.agent.remove(MutaliskVolley)
     }
@@ -61,5 +62,6 @@ object BeMutalisk extends Action {
         unit.agent.put(MutaliskVolley)
       }
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }

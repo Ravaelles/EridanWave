@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Air
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Forces
 import Lifecycle.With
 import Mathematics.Maff
@@ -19,10 +20,10 @@ object BeFlier extends Action {
     * them here too would give a Shuttle two movement owners in one frame. */
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.airborne && unit.canMove && ! unit.unitClass.isBuilding && ! unit.isTransport
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // Static guns first, always: no flyer ever trades inside a gun
     // building's keep-off, and the jittered leg breaks shared-ray mills.
-    if (AirStaticStandoff.act(unit)) return
+    if (AirStaticStandoff.act(unit)) return UnitControl.claimedIf(! unit.ready)
 
     val scourge = unit.matchups.threats
       .filter(Zerg.Scourge)
@@ -45,6 +46,7 @@ object BeFlier extends Action {
         Commander.move(unit)
       }
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 
 }

@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Harass
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -18,8 +19,9 @@ object KnockKnock extends Action {
       && unit.agent.destinationFinal().zone.edges.exists(_.contains(threat.pixel))
       && unit.totalHealth >= Math.min(11, threat.totalHealth)))
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     unit.agent.toAttack = unit.matchups.threats.headOption
     Commander.attack(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

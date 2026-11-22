@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
+import Debugging.DuelStarvation
 import Debugging.Probe
 import Information.Battles.ArmyStrength
 import Lifecycle.With
@@ -342,6 +343,12 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         unit.agent.perch.clear()
       }
       dispatchEngage(advance)
+    } else {
+      // Tripwire for starved duels: the dispatch voted for the duel but
+      // the legs never ran - a sleeping march or a legacy brain issuing
+      // orders ahead of the technique does exactly this. Counted, not
+      // probed: one integer per frame, read once at game end.
+      DuelStarvation.bump(unit.id, unit.unitClass.toString)
     }
     unit.unready
   }

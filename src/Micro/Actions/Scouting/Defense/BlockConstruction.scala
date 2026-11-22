@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Defense
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
@@ -19,7 +20,7 @@ object BlockConstruction extends Action {
       && ! unit.matchups.threats.exists(IsWarrior)
       && With.geography.enemyBases.nonEmpty)
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val builder         = blockableBuilders(unit).minBy(_.pixelDistanceEdge(unit))
     val builderTarget   = builder.orderTargetPixel.orElse(builder.targetPixel).getOrElse(builder.pixel)
     val destination     = builderTarget.base
@@ -46,6 +47,7 @@ object BlockConstruction extends Action {
     } else {
       Retreat.delegate(unit)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
   
   val constructionOrders: Seq[String] = Vector(

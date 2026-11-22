@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics.Bunker
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -16,7 +17,7 @@ object OccupyBunker extends Action {
     && unit.transport.isEmpty
     && unit.matchups.threatsInRange.isEmpty)
   
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     
     val bunkers = With.units
       .inTileRadius(unit.agent.origin().tile, 5)
@@ -27,5 +28,6 @@ object OccupyBunker extends Action {
         && bunker.friendly.get.loadedUnits.size < 4)
   
     Maff.minBy(bunkers)(_.pixelDistanceEdge(unit)).foreach(Commander.rightClick(unit, _))
+    UnitControl.claimedIf(! unit.ready)
   }
 }

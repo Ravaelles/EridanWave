@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Forces
 import Debugging.Visualizations.Views.Micro.ShowPathfinding
 import Information.Geography.Pathfinding.PathfindProfile
@@ -30,7 +31,7 @@ abstract class AbstractSearch extends Action {
   
   protected val boredomFrames: Int
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // Workers that ignore the scout never pop smooth travel: it runs through
     // them toward the far terminus instead of stuttering on gravity
     // retargets. Real threats (and PreserveScout below) still take the
@@ -44,7 +45,7 @@ abstract class AbstractSearch extends Action {
       Commander.move(unit)
       unit.intent.shouldAdjustXY = correctXY
 
-      return
+      return UnitControl.claimedIf(! unit.ready)
     }
 
     def nearestNeutralBases(count: Int): Iterable[Base] = {
@@ -80,7 +81,7 @@ abstract class AbstractSearch extends Action {
           || tile.creep
           || tile.tileDistanceFast(base.townHallArea.midpoint) < 9.0))
   
-    if (tilesToScout.isEmpty) return
+    if (tilesToScout.isEmpty) return UnitControl.Declined
 
     val force = tilesToScout.view.map(tile => Gravity(tile.center, With.grids.lastSeen.framesSince(tile))).map(_(unit.pixel)).reduce(_ + _)
 
@@ -107,6 +108,7 @@ abstract class AbstractSearch extends Action {
       MicroPathing.tryMovingAlongTilePath(unit, path)
     }
     Commander.move(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }
 

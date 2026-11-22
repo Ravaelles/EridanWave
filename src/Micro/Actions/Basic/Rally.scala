@@ -1,5 +1,6 @@
 package Micro.Actions.Basic
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -18,7 +19,7 @@ object Rally extends Action {
     && unit.canDoAnything
   )
   
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     var shouldRallyToMinerals = false
     
     if (unit.unitClass.isTownHall) {
@@ -37,10 +38,11 @@ object Rally extends Action {
     if (shouldRallyToMinerals) {
       unit.base.map(_.heart.center).foreach(Commander.rally(unit, _))
 
-      return
+      return UnitControl.Claimed
     }
 
     Commander.rally(unit, With.scouting.enemyHome.center)
+    UnitControl.Claimed
   }
 }
 

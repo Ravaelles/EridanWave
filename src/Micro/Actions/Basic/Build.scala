@@ -1,5 +1,6 @@
 package Micro.Actions.Basic
 
+import Micro.Actions.UnitControl
 import Mathematics.Maff
 import Mathematics.Points.Tile
 import Mathematics.Shapes.Spiral
@@ -80,7 +81,7 @@ object Build extends Action {
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.intent.toBuild.nonEmpty
   
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     val intent      = unit.intent.toBuildActive.get
     val building    = intent.unitClass
     val tile        = intent.tile
@@ -95,7 +96,7 @@ object Build extends Action {
         unit.agent.toGather = Maff.minBy(With.geography.ourBases.flatMap(_.minerals))(_.pixelDistanceCenter(unit.pixel))
         Gather(unit)
       }
-      return
+      return UnitControl.Claimed
     }
     
     def blockersForTile(spot: Tile) = spot.units.filter(blocker =>
@@ -131,7 +132,7 @@ object Build extends Action {
       }
     }
     
-    if (unit.unready) return
+    if (unit.unready) return UnitControl.Declined
 
     val pushPixel = buildArea.center
     Commander.defaultEscalation(unit)
@@ -157,7 +158,7 @@ object Build extends Action {
       && affordable) {
       Commander.build(unit, building, ?(building.isAddon, site.add(4, 1), site))
 
-      return
+      return UnitControl.Claimed
     }
 
     if (Protoss.Probe(unit)) {
@@ -180,6 +181,7 @@ object Build extends Action {
     }
 
     Commander.move(unit)
+    UnitControl.Claimed
   }
 }
 

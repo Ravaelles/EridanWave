@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics.Bunker
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -24,7 +25,7 @@ object EmergencyBunk extends Action {
     With.self.isTerran && unit.canMove && openBunkersFor(unit).nonEmpty
   }
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val openBunkers         = openBunkersFor(unit)
     val openBunkersEngaged  = openBunkers.filter(_.matchups.targetsInRange.nonEmpty)
     val openBunkersInForm   = openBunkers.filter(bunker => unit.agent.safety.pixelDistance(bunker.pixel) < 32.0 * 10.0)
@@ -33,5 +34,6 @@ object EmergencyBunk extends Action {
     if (openBunkerToEnter.isDefined) {
       Commander.rightClick(unit, openBunkerToEnter.get)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }

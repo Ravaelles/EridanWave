@@ -1,5 +1,6 @@
 package Tactic.Squads.defense
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Forces
 import Information.Geography.Chokes
 import Information.Geography.Types.{Base, Edge, Zone}
@@ -8,7 +9,7 @@ import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
-import Micro.Actions.{Action, Idle}
+import Micro.Actions.{Action, Idle, UnitControl}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Formation._
@@ -455,16 +456,17 @@ class SquadDefendBase(base: Base) extends Squad {
   }
 
   private case class HugAt(pixel: Pixel) extends Action {
-    override def perform(unit: FriendlyUnitInfo): Unit = {
+    override def perform(unit: FriendlyUnitInfo): UnitControl = {
       unit.agent.decision.set(pixel)
       Potshot.delegate(unit)
       Commander.move(unit)
+      UnitControl.Claimed
     }
   }
 
   private case class Plug(pixel: Pixel) extends Action {
-    override def perform(unit: FriendlyUnitInfo): Unit = {
-      if (unit.matchups.threats.exists(IsWarrior) || (unit.unitClass.ranged && unit.matchups.targets.exists(_.base.exists(_.isMain)))) return Idle.perform(unit)
+    override def perform(unit: FriendlyUnitInfo): UnitControl = {
+      if (unit.matchups.threats.exists(IsWarrior) || (unit.unitClass.ranged && unit.matchups.targets.exists(_.base.exists(_.isMain)))) { Idle(unit); return UnitControl.claimedIf(! unit.ready) }
 
       var to = pixel
       Potshot.delegate(unit)
@@ -475,7 +477,7 @@ class SquadDefendBase(base: Base) extends Squad {
         if (unit.pixel == pixel) {
           Commander.hold(unit)
 
-          return
+          return UnitControl.claimedIf(! unit.ready)
         } else if (unit.seeminglyStuck) {
           to = edgeToPlug().map(_._1.centroid.center.walkablePixel).getOrElse(pixel)
         }
@@ -483,6 +485,7 @@ class SquadDefendBase(base: Base) extends Squad {
         unit.agent.decision.set(to)
         Commander.move(unit)
       }
+      UnitControl.claimedIf(! unit.ready)
     }
   }
 }

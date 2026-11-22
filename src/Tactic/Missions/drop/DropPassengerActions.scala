@@ -1,5 +1,6 @@
 package Tactic.Missions.drop
 
+import Micro.Actions.UnitControl
 import Tactic.Missions.core.MissionDrop
 import Micro.Actions.{Action, Idle}
 import Micro.Actions.Basic.DoNothing
@@ -13,8 +14,8 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 trait DropPassengerActions { self: MissionDrop =>
 
   object ActionAssemblePassenger extends Action {
-    override protected def perform(passenger: FriendlyUnitInfo): Unit = {
-      if (passenger.loaded) return
+    override protected def perform(passenger: FriendlyUnitInfo): UnitControl = {
+      if (passenger.loaded) return UnitControl.Declined
 
       passenger.agent.redoubt.set(
         passenger.agent.decision.set(assignedTransport(passenger).map(_.pixel)))
@@ -22,20 +23,23 @@ trait DropPassengerActions { self: MissionDrop =>
       if (readyForPickup(passenger)) {
         boardSelected(passenger, assembling = true)
       }
+      UnitControl.claimedIf(! passenger.ready)
     }
   }
 
   object ActionLandPassenger extends Action {
-    override protected def perform(unit: FriendlyUnitInfo): Unit = {
+    override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
       if (!unit.loaded || initiallyLanded(unit)) Idle.delegate(unit)
+      UnitControl.claimedIf(! unit.ready)
     }
   }
 
   object ActionEvacuatePassenger extends Action {
-    override protected def perform(passenger: FriendlyUnitInfo): Unit = {
-      if (passenger.loaded) return
+    override protected def perform(passenger: FriendlyUnitInfo): UnitControl = {
+      if (passenger.loaded) return UnitControl.Declined
 
       boardSelected(passenger, assembling = false)
+      UnitControl.claimedIf(! passenger.ready)
     }
   }
 }

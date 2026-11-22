@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Maneuvering
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.WoundMargin
 import Micro.Actions.Action
@@ -21,7 +22,7 @@ object Stealth extends Action {
     && ! unit.alliesBattle.exists(Protoss.Arbiter)
     && unit.matchups.enemies.exists(e => e.complete && ! e.unitClass.isWorker && e.attacksAgainst(unit) > 0))
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     lazy val impendingTurret = unit.matchups.enemies.exists(e =>
       Protoss.PhotonCannon(e)
       && unit.pixelDistanceEdge(e) + unit.topSpeed * e.remainingCompletionFrames < e.unitClass.sightPixels + 48
@@ -37,5 +38,6 @@ object Stealth extends Action {
       Potshot.delegate(unit)
       Retreat.delegate(unit)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }

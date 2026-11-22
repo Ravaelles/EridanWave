@@ -1,5 +1,6 @@
 package Tactic.Missions.drop
 
+import Micro.Actions.UnitControl
 import Tactic.Missions.core.MissionDrop
 import Lifecycle.With
 import Mathematics.Maff
@@ -20,17 +21,17 @@ import Utilities.Time.Seconds
 trait DropTransportActions { self: MissionDrop =>
 
   object ActionAssembleTransport extends Action {
-    override protected def perform(transport: FriendlyUnitInfo): Unit = {
+    override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       accountForCargo(transport)
       transport.agent.passengers.filterNot(passengers.contains).foreach(transport.agent.removePassenger)
       if (unassignedCargo(transport).nonEmpty) {
         if (!unloadUnassignedCargo(transport)) ActionTravelTransport.delegate(transport)
 
-        return
+        return UnitControl.claimedIf(! transport.ready)
       }
 
       val pickup = pickupTarget(transport, assembling = true)
-      if (pickup.isEmpty) return Commander.hold(transport)
+      if (pickup.isEmpty) { Commander.hold(transport); return UnitControl.claimedIf(! transport.ready) }
 
       if (transport.matchups.withinSafetyMargin) {
         val toPickup = pickup.get
@@ -39,27 +40,29 @@ trait DropTransportActions { self: MissionDrop =>
       } else {
         Retreat.delegate(transport)
       }
+      UnitControl.claimedIf(! transport.ready)
     }
   }
 
   object ActionTravelTransport extends Action {
-    override protected def perform(transport: FriendlyUnitInfo): Unit = {
-      if (state == Assembling && unloadUnassignedCargo(transport)) return
+    override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
+      if (state == Assembling && unloadUnassignedCargo(transport)) return UnitControl.claimedIf(! transport.ready)
 
       accountForCargo(transport)
       With.grids.enemyRangeAir.update()
       val recalled = divertIfRecalled(transport)
-      if ( ! recalled && handoffToRaid(transport)) return
+      if ( ! recalled && handoffToRaid(transport)) return UnitControl.claimedIf(! transport.ready)
 
       finishWithdrawal()
       if (transport.intent.action != this) {
         transport.agent.resetDestinations()
         transport.intent.action.delegate(transport)
 
-        return
+        return UnitControl.claimedIf(! transport.ready)
       }
 
       advanceOrHold(transport)
+      UnitControl.claimedIf(! transport.ready)
     }
 
     // Squad updates are slower than micro. Recheck a recall here, before
@@ -115,11 +118,11 @@ trait DropTransportActions { self: MissionDrop =>
   }
 
   object ActionLandTransport extends Action {
-    override protected def perform(transport: FriendlyUnitInfo): Unit = {
+    override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       if (passengersFor(transport).forall(initiallyLanded.contains)) {
         raidTransportAction.delegate(transport)
 
-        return
+        return UnitControl.claimedIf(! transport.ready)
       }
 
       val runway = destinationBase.map(_.heart.center).getOrElse(vicinity)
@@ -133,21 +136,23 @@ trait DropTransportActions { self: MissionDrop =>
       droppables.headOption.foreach(Commander.unload(transport, _))
       transport.agent.decision.set(runway)
       Commander.move(transport)
+      UnitControl.claimedIf(! transport.ready)
     }
   }
 
   object ActionRaidTransport extends Action {
-    override protected def perform(transport: FriendlyUnitInfo): Unit = {
+    override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       val crew = passengersFor(transport)
       if (crew.isEmpty) Commander.hold(transport) else {
         transport.agent.decision.set(Maff.centroid(Maff.orElse(crew.view.filterNot(_.loaded), crew.view).map(_.pixel)))
         Commander.move(transport)
       }
+      UnitControl.claimedIf(! transport.ready)
     }
   }
 
   object ActionEvacuateTransport extends Action {
-    override protected def perform(transport: FriendlyUnitInfo): Unit = {
+    override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       val pickup = pickupTarget(transport, assembling = false)
       if (pickup.isEmpty) {
         if (transport.matchups.threats.nonEmpty && !transport.matchups.withinSafetyMargin) Retreat.delegate(transport)
@@ -163,6 +168,7 @@ trait DropTransportActions { self: MissionDrop =>
         // A nearby rescue takes priority over the Shuttle's own safety margin.
         Commander.rightClick(transport, pickup.get)
       }
+      UnitControl.claimedIf(! transport.ready)
     }
   }
 }

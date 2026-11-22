@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning.Actions
 
+import Micro.Actions.UnitControl
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -16,7 +17,7 @@ object Follow extends Action {
     && unit.agent.leader().exists(unit !=)
     && unit.matchups.threatsInRange.forall(_.inRangeToAttack(unit.agent.leader().get)))
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val maybeLeader = unit.agent.leader()
     unit.agent.decision.set(maybeLeader.map(_.pixel))
     maybeLeader
@@ -25,6 +26,7 @@ object Follow extends Action {
         && ( ! unit.is(Protoss.Carrier) || leader.matchups.threatsInRange.forall(unit.matchups.threatsInRange.contains))
       )
       .foreach(leader => stayWithLeader(unit, leader))
+    UnitControl.claimedIf(! unit.ready)
   }
 
   private def stayWithLeader(unit: FriendlyUnitInfo, leader: FriendlyUnitInfo): Unit = {

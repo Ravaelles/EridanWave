@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Carrier
 
+import Micro.Actions.UnitControl
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -13,7 +14,7 @@ object WarmUpInterceptors extends Action {
     && unit.matchups.targets.isEmpty
     && unit.pixelDistanceCenter(unit.agent.destinationFinal()) < 32.0 * 5.0)
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     def isLegal(target: UnitInfo): Boolean = (
       unit.canAttack(target)
       && target.totalHealth > Protoss.Zealot.maxTotalHealth - 10
@@ -23,5 +24,6 @@ object WarmUpInterceptors extends Action {
       Maff.maxBy(unit.zone.units.filter(u => isLegal(u) && unit.inRangeToAttack(u)))(_.totalHealth)
       .orElse(Maff.minBy(unit.zone.units.filter(u => isLegal(u)))(_.pixelDistanceCenter(unit)))
     Commander.attack(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

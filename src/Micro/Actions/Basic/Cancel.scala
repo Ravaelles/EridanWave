@@ -1,5 +1,6 @@
 package Micro.Actions.Basic
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -54,7 +55,7 @@ object Cancel extends Action {
     output
   }
   
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     // Every actual cancel lands in the log with its progress: repeated
     // cancels of the same morphing base are the order/cancel saw, and
     // the count per game answers whether the veto holds the line.
@@ -64,6 +65,7 @@ object Cancel extends Action {
       With.logger.debug(s"CancelBuilding ${unit.unitClass} #${unit.id} at ${unit.pixel} $pct% frame=${With.frame}")
     }
     Commander.cancel(unit)
+    UnitControl.Claimed
   }
 }
 

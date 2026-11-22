@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Spells.Protoss
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Points.Pixel
 import Micro.Actions.Combat.Spells.{SpellValue, TargetedSpell}
@@ -155,8 +156,8 @@ object PsionicStorm extends TargetedSpell {
     With.grids.psionicStorm.addPsionicStorm(target)
   }
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
-    if (SuicidePsionic.act(unit)) return
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
+    if (SuicidePsionic.act(unit)) return UnitControl.Claimed
 
     super.perform(unit)
   }

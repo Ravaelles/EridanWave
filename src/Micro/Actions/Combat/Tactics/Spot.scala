@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.{Maff, WoundMargin}
 import Mathematics.Points.Pixel
@@ -33,7 +34,7 @@ object Spot extends Action {
 
   private def canEventuallyCloak(unit: UnitInfo): Boolean = unit.isAny(Terran.SpiderMine, Terran.Wraith, Terran.Ghost, Protoss.Arbiter, Zerg.Lurker)
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // TODO: This logic is sloppy and doesn't handle our various use cases well
     if (unit.matchups.threats.exists(shouldRetreatFrom(unit, _)) && unit.totalHealth < 400
         && ( ! Protoss.Observer(unit)
@@ -43,7 +44,7 @@ object Spot extends Action {
         unit.agent.redoubt.set(groupSupported(unit).map(_.attackCentroidKey))
         Retreat.delegate(unit)
       }
-      return
+      return UnitControl.claimedIf(! unit.ready)
     }
 
     val group     = groupSupported(unit).get
@@ -62,7 +63,7 @@ object Spot extends Action {
     if (group.attackers.exists( ! _.flying)) {
       goals += group.attackCentroidKey
     }
-    if (goals.isEmpty) return
+    if (goals.isEmpty) return UnitControl.Declined
 
     goals += unit.pixel
     if (unit.agent.isLeader) {
@@ -73,6 +74,7 @@ object Spot extends Action {
 
     unit.agent.decision.set(spottingPosition(unit, spooky, goals))
     Commander.move(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 
   // An eye keeps this margin inside its detection range when sent to reveal:

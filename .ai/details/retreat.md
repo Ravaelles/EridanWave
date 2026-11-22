@@ -15,5 +15,5 @@ Mechanics (both phases read one permission):
   frame falls to Walk. ASU >= 250 attacks without asking the sim
   (`attackUnitsScore`); lurkers, DTs, carriers and siege keep the vote.
 
-Open band question (rule 17): entry 12 / release 15 proposed, currently
+Open band question (rule 18): entry 12 / release 15 proposed, currently
 a single 12 edge. Needs a game flapping on the edge before coding it.

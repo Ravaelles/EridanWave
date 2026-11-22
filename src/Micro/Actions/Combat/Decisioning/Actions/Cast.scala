@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning.Actions
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Actions.Combat.Spells.Protoss._
@@ -13,7 +14,7 @@ object Cast extends Action {
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.energyMax > 0
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     if (unit.cooldownSpell < With.latency.remainingFrames) {
       spells.foreach(_(unit))
     }
@@ -28,6 +29,7 @@ object Cast extends Action {
         unit.unitClass.spells.exists(s => s() && unit.energy >= s.energyCost - 2)
       unit.agent.decideFight(unit.agent.shouldFight && (spellReady || legacyReady))
     }
+    UnitControl.Declined
   }
 
   val spells: Array[Action with Spell] = Array(

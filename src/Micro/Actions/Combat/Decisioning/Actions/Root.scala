@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Decisioning.Actions
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Targeting.Target
@@ -97,10 +98,11 @@ object Root extends Action {
       && ! unit.morphing
     )
     
-    override def perform(unit: FriendlyUnitInfo): Unit = {
+    override def perform(unit: FriendlyUnitInfo): UnitControl = {
       Target.choose(unit, TargetFilterVisibleInRange)
       if (shouldRoot)   root(unit)
       if (shouldUnroot) unroot(unit)
+      UnitControl.claimedIf(! unit.ready)
     }
     
     private def root(unit: FriendlyUnitInfo): Unit = {
@@ -132,9 +134,10 @@ object Root extends Action {
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.isAny(IsTank,  Zerg.Lurker)
   
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     val rootAction = new RootAction(unit)
-    rootAction.delegate(unit)
+    UnitControl.claimedIf(rootAction.delegate(unit))
   }
+
 }
 

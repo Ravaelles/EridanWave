@@ -1,5 +1,6 @@
 package Micro.Actions.Transportation
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Agency.Commander
@@ -12,8 +13,9 @@ object Evacuate extends Action {
     unit.isTransport && unit.loadedUnits.nonEmpty && unit.matchups.framesToLive < unit.loadedUnits.size * 24
   )
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     unit.loadedUnits.headOption.foreach(Commander.unload(unit, _))
     Retreat.delegate(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

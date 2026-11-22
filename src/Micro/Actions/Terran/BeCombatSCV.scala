@@ -1,5 +1,6 @@
 package Micro.Actions.Terran
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Forces
 import Lifecycle.With
 import Mathematics.Maff
@@ -27,8 +28,8 @@ object BeCombatSCV extends Action {
     && unit.squad               .isDefined
   )
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
-    if ( ! unit.squad.exists(_.repairables.nonEmpty)) return
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
+    if ( ! unit.squad.exists(_.repairables.nonEmpty)) return UnitControl.Declined
 
     unit.intent.canFight = false
 
@@ -39,7 +40,7 @@ object BeCombatSCV extends Action {
       .sortBy(Terran.Battlecruiser)
       .sortBy(_.healers.count(_ != unit))
 
-    if (vips.isEmpty) return
+    if (vips.isEmpty) return UnitControl.Declined
 
     val vip = vips.head
     With.coordinator.healing.heal(unit, vip)
@@ -52,6 +53,7 @@ object BeCombatSCV extends Action {
       unit.agent.forces.put(Forces.pushing, Potential.followPushes(unit))
       MicroPathing.setWaypointForcefully(unit)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
   
   protected def placeMine(vulture: FriendlyUnitInfo, target: Pixel): Unit = {

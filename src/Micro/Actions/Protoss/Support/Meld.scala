@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Support
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Agency.Commander
@@ -14,7 +15,7 @@ object Meld extends Action {
     unit.intent.shouldMeld
     && unit.isAny(Protoss.HighTemplar, Protoss.DarkTemplar))
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     // No return after the retreat: the meld below overrides it whenever a
     // partner is present, so an unsafe pair still Archons on the spot while
     // a lone Templar keeps the retreat move. Whether melding under fire
@@ -38,5 +39,6 @@ object Meld extends Action {
         if (Protoss.HighTemplar(unit)) Protoss.ArchonMeld else Protoss.DarkArchonMeld,
         bestBestie)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 }

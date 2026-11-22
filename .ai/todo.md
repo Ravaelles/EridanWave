@@ -1,3 +1,13 @@
+# Kite discipline (owner direction: never yield ground for free)
+
+Kiting must not leave shooting range when it can fight from it -
+especially against ranged guns, where the yielded ground buys nothing.
+Refactor the kite so a loaded-enough hull holds its volleys inside its
+own reach and only yields what the cooldown forces. Exceptions allowed:
+near-dead hulls (shields <= 5 and falling - be very careful, kite
+early and far). The wasted-frames ledger (shots forgone with a hittable
+enemy in range) judges the refactor: it must fall, kills must not.
+
 # Distance hygiene (owner direction: tiles everywhere)
 
 Convert `.pixelDistance` to tiles where possible

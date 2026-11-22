@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Arbiter
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Forces
 import Lifecycle.With
 import Mathematics.{Maff, Separation, WoundMargin}
@@ -55,23 +56,23 @@ object BeArbiter extends Action {
     })
   }
 
-  override protected def perform(arbiter: FriendlyUnitInfo): Unit = {
+  override protected def perform(arbiter: FriendlyUnitInfo): UnitControl = {
     // Lockdown is instant death for a mechanical hull: a charged Ghost
     // turns the cloak before entanglement and spread - a frozen Arbiter
     // cloaks nothing, so the hull never stands inside lockdown reach.
-    if (AvoidDangerousUnits.act(arbiter)) return
+    if (AvoidDangerousUnits.act(arbiter)) return UnitControl.claimedIf(! arbiter.ready)
 
     if (arbiter.matchups.pixelsEntangled > -16
       || arbiter.matchups.threats.exists(t =>
         arbiter.pixelDistanceEdge(t) < fleeMarginTiles(arbiter.woundPercent()) * 32.0)) {
       Retreat.delegate(arbiter)
 
-      return
+      return UnitControl.claimedIf(! arbiter.ready)
     }
 
     val goal                              = arbiter.team.map(_.vanguardAll()).getOrElse(arbiter.agent.destinationNext())
     val goalDistanceSquared               = arbiter.pixelDistanceSquared(goal)
-    if (spread(arbiter)) return
+    if (spread(arbiter)) return UnitControl.claimedIf(! arbiter.ready)
 
     val seniorArbiters                    = arbiter.alliesSquad.filter(u => Protoss.Arbiter(u) && u.squadAge > arbiter.squadAge)
     val umbrellables                      = arbiter.alliesSquad.filter(needsUmbrella)
@@ -85,6 +86,7 @@ object BeArbiter extends Action {
       Potshot.delegate(arbiter)
     }
     Commander.move(arbiter)
+    UnitControl.claimedIf(! arbiter.ready)
   }
 }
 

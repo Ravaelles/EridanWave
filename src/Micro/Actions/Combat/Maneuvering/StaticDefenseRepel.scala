@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Maneuvering
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -50,7 +51,7 @@ object StaticDefenseRepel extends Action {
     && repeller(unit).isDefined
     && ! locallyAhead(unit))
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     if (underFire(unit)) {
       // Under fire the radial step is not enough: fall back to safety
       // with the rest of the squad instead of bouncing at nine tiles.
@@ -59,7 +60,7 @@ object StaticDefenseRepel extends Action {
       unit.agent.act("StaticRepel")
       Retreat.getRetreat(unit)(unit)
 
-      return
+      return UnitControl.Claimed
     }
 
     weakestInRange(unit).foreach(target => {
@@ -68,7 +69,7 @@ object StaticDefenseRepel extends Action {
       unit.agent.act("StaticRepel")
       Commander.attack(unit, target)
 
-      return
+      return UnitControl.Claimed
     })
 
     repeller(unit).foreach(building => {
@@ -80,6 +81,7 @@ object StaticDefenseRepel extends Action {
       unit.agent.decision.set(?(away.walkable, away, away.walkablePixel))
       Commander.move(unit)
     })
+    UnitControl.claimedIf(! unit.ready)
   }
 
   private def underFire(unit: FriendlyUnitInfo): Boolean =

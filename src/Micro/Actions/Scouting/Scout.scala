@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Actions.Scouting.Defense._
 import Micro.Actions.Scouting.Harass._
@@ -11,7 +12,7 @@ object Scout extends Action {
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.agent.isScout
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     CannonRush(unit)
     PylonTrap(unit)
     FightWithZealot(unit)
@@ -25,5 +26,6 @@ object Scout extends Action {
     Search(unit)
     SearchWhenBored(unit)
     Commander.move(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

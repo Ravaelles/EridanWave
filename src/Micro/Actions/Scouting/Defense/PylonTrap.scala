@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Defense
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.{Tile, TileRectangle}
@@ -25,7 +26,7 @@ object PylonTrap extends Action {
       && With.microSlush.available > 0
       && unit.base.exists(m => m.owner.isEnemy && (m.owner.isTerran || m.owner.isProtoss)))
 
-  override protected def perform(probe: FriendlyUnitInfo): Unit = {
+  override protected def perform(probe: FriendlyUnitInfo): UnitControl = {
     val existingPlan = probe.agent.get[TrapPlan](TrapPlanKey)
     val activePlan = existingPlan
       .filter(plan => plan.target.alive && ! plan.target.flying && plan.target.isEnemy)
@@ -44,7 +45,7 @@ object PylonTrap extends Action {
       if (base.exists(b => b.isEnemy && b.isMain && b.gas.length == 1 && b.gas.forall(_.isNeutral))) {
         buildWhenReady(probe, Protoss.Assimilator, base.get.gas.head.tileTopLeft)
 
-        return
+        return UnitControl.claimedIf(! probe.ready)
       }
     }
 
@@ -79,13 +80,14 @@ object PylonTrap extends Action {
         val building  = ?(loc.canBeBattery && ( ! loc.canBePylon || ! wantPylon), Protoss.ShieldBattery, Protoss.Pylon)
         buildWhenReady(probe, building, loc.tile)
 
-       return
+       return UnitControl.claimedIf(! probe.ready)
       }
     }
 
     if (needSupply) {
       mannerPylon(probe)
     }
+    UnitControl.claimedIf(! probe.ready)
   }
 
   private def locationStarted(location: PylonTrapSearch.Placement): Boolean = {
@@ -101,7 +103,7 @@ object PylonTrap extends Action {
     if (tiles.isEmpty) {
       anyPylon(probe)
 
-      return
+      return UnitControl.claimedIf(! probe.ready)
     }
 
     buildWhenReady(probe, Protoss.Pylon, tiles.minBy(probe.pixelDistanceSquared))
@@ -115,10 +117,11 @@ object PylonTrap extends Action {
     if (tile.isEmpty) {
       With.logger.warn(f"${probe} needs to build a Pylon but found no location.")
 
-      return
+      return UnitControl.Declined
     }
 
     buildWhenReady(probe, Protoss.Pylon, tile.get)
+    UnitControl.claimedIf(! probe.ready)
   }
 
   def gasSteal(probe: FriendlyUnitInfo): Unit = {

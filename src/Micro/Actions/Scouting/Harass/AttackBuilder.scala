@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Harass
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -24,9 +25,10 @@ object AttackBuilder extends Action {
       && (scaries.isEmpty || (unit.totalHealth > 5 && targets.exists(_.totalHealth < unit.totalHealth))))
   }
   
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     unit.agent.toAttack = Maff.maxBy(disruptableBuilders(unit))(t => unit.targetScore(t) * ?(t.orderTarget.exists(_.unitClass.isGas), 0.1, 1.0))
     Commander.attack(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 
   private def scaryThreats(unit: FriendlyUnitInfo): Iterable[UnitInfo] = {

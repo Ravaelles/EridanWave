@@ -1,5 +1,6 @@
 package Micro.Actions.Combat.Tactics.Potshots
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.Pixel
@@ -43,7 +44,7 @@ object Bust extends Action {
         threat.pixelsToGetInRange(unit)
         > Math.max(bunker.pixelsToGetInRange(unit), unit.pixelsToGetInRange(bunker)))))
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     lazy val bunkers    = unit.matchups.targets.filter(Terran.Bunker)
     lazy val repairers  = bunkers.flatMap(_.matchups.healers)
     lazy val goons      = unit.alliesSquad
@@ -77,7 +78,7 @@ object Bust extends Action {
         // https://docs.google.com/spreadsheets/d/1LhC8rdqHTrhze6Gh7HitemGs-g2Xq-hVRDaA6X4bBnM/edit#gid=1092732143
         if (unit.moving) Commander.hold(unit) else Commander.attack(unit)
 
-        return
+        return UnitControl.Claimed
       }
 
       val station = Arc(
@@ -99,6 +100,7 @@ object Bust extends Action {
     }
 
     Commander.attack(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }
 

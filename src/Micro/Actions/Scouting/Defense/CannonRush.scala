@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Defense
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
@@ -19,7 +20,7 @@ object CannonRush extends Action {
 
   val arrivalKey = "CannonRush: Arrived"
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     val base              = With.blackboard.cannonRushBase().get
     val foundations       = With.placement.get(base)
       .filter(_.point.requirement.labels.contains(PlaceLabels.CannonRush))
@@ -32,11 +33,11 @@ object CannonRush extends Action {
         MacroFacts.framesUntilUnit(Protoss.Forge) - Protoss.Pylon.buildFramesFull,
         With.accounting.framesToMineMinerals(Math.max(0, 200 - With.self.minerals)))
 
-    if (cannon.isEmpty) return
+    if (cannon.isEmpty) return UnitControl.Declined
 
     val cannonPixel = cannon.get.tile.topLeftPixel.add(32, 32)
 
-    if ( ! startedRushing && framesUntilReady > Math.max(Seconds(5)(), unit.framesToTravelTo(cannonPixel))) return
+    if ( ! startedRushing && framesUntilReady > Math.max(Seconds(5)(), unit.framesToTravelTo(cannonPixel))) return UnitControl.Declined
 
     val arrived = unit.agent.blackboard.contains(arrivalKey) || unit.pixelDistanceCenter(cannonPixel) < 48
     if (arrived) {
@@ -45,7 +46,7 @@ object CannonRush extends Action {
       unit.agent.decision.set(cannonPixel)
       Commander.move(unit)
 
-      return
+      return UnitControl.claimedIf(! unit.ready)
     }
 
     foundations.foreach(foundation => {
@@ -96,7 +97,7 @@ object CannonRush extends Action {
           unit.agent.decision.set(areaCenter)
           Commander.move(unit)
         }
-        return
+        return UnitControl.claimedIf(! unit.ready)
       }
     })
 
@@ -105,7 +106,7 @@ object CannonRush extends Action {
         unit.agent.toAttack = Some(target)
         Commander.attack(unit)
 
-        return
+        return UnitControl.claimedIf(! unit.ready)
       })
     }
 
@@ -116,9 +117,11 @@ object CannonRush extends Action {
         .foreach(p => {
           Commander.build(unit, Protoss.Pylon, p.tileTopLeft)
 
-          return
+          return UnitControl.claimedIf(! unit.ready)
         })
     }
+
+    UnitControl.claimedIf(! unit.ready)
   }
 }
 

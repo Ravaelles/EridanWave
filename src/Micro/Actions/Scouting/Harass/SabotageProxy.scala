@@ -1,5 +1,6 @@
 package Micro.Actions.Scouting.Harass
 
+import Micro.Actions.UnitControl
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
@@ -15,7 +16,7 @@ object SabotageProxy extends Action {
     && unit.canAttackGround
     && unit.matchups.targets.exists(_.proxied))
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     unit.agent.toAttack = Maff.minBy(unit.matchups.targets.view.filter(u => u.unitClass.isBuilding || (u.unitClass.isWorker && u.visible)))(_.unitClass.maxTotalHealth)
     if (unit.matchups.threats.forall(threat =>
       threat.framesToGetInRange(unit) > 12
@@ -26,5 +27,6 @@ object SabotageProxy extends Action {
       Commander.attack(unit)
     }
     Retreat.delegate(unit)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

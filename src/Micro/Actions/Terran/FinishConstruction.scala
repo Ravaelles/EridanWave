@@ -1,5 +1,6 @@
 package Micro.Actions.Terran
 
+import Micro.Actions.UnitControl
 import Micro.Actions.Action
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -11,7 +12,8 @@ object FinishConstruction extends Action {
     unit.intent.toFinish.isDefined
   }
 
-  override def perform(unit: FriendlyUnitInfo) {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
     Commander.rightClick(unit, unit.intent.toFinish.get)
+    UnitControl.claimedIf(! unit.ready)
   }
 }

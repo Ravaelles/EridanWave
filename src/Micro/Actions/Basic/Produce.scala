@@ -1,5 +1,6 @@
 package Micro.Actions.Basic
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Micro.Actions.Action
 import Micro.Agency.Commander
@@ -16,7 +17,8 @@ object Produce extends Action {
       && (unit.trainingQueue.isEmpty || unit.trainee.exists(_.remainingCompletionFrames <= 1 + With.latency.latencyFrames + With.reaction.agencyMax))
       && unit.trainingQueue.size < 2)
   
-  override def perform(unit: FriendlyUnitInfo): Unit = {
+  override def perform(unit: FriendlyUnitInfo): UnitControl = {
+    val hadOrder = unit.intent.toTrain.isDefined || unit.intent.toTech.isDefined || unit.intent.toUpgrade.isDefined
     if (unit.intent.toTrain.isDefined) {
       if (With.framesSince(unit.intent.frameCreated) < Math.max(128, unit.intent.toTrain.get.buildFrames / 2)) {
         Commander.build(unit, unit.intent.toTrain.get)
@@ -29,5 +31,6 @@ object Produce extends Action {
     unit.intent.toTrain = None // Avoid training repeatedly
     unit.intent.toTech = None // Avoid teching repeatedly (mostly impacts failure to renew the desire to tech)
     unit.intent.toUpgrade = None //Avoid upgrading repeatedly
+    UnitControl.claimedIf(hadOrder)
   }
 }

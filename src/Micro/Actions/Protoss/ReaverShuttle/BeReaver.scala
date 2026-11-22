@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.ReaverShuttle
 
+import Micro.Actions.UnitControl
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Action
@@ -22,19 +23,19 @@ object BeReaver extends Action {
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Reaver(unit)
 
-  override protected def perform(unit: FriendlyUnitInfo): Unit = {
+  override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     if (unit.loaded) {
       // Landing is an order: the arbiter opens the attempt on the band
       // or the mission word, unload() refines it the way it always did.
       if (PairArbiter.reaverOrder(unit) == PairArbiter.UnloadHere) unload(unit)
 
-      return
+      return UnitControl.claimedIf(! unit.ready)
     }
 
     // Survival first, always: a hull inside a static's reach steps
     // out before any order moves or shoots it deeper in. WalkArmy
     // marched a fresh hull straight into a Sunken without firing.
-    if (staticKeepOff(unit)) return
+    if (staticKeepOff(unit)) return UnitControl.claimedIf(! unit.ready)
 
     // Arbiter owns the what, claims own the how: the order gates which
     // family runs, so boarding and fighting never negotiate mid-frame.
@@ -64,7 +65,7 @@ object BeReaver extends Action {
       case PairArbiter.WalkToRide => combatClaims.exists(_.apply(context)) || walkToRide(unit)
       case PairArbiter.WalkToArmy => combatClaims.exists(_.apply(context)) || walkToArmy(unit)
     }
-    if (acted) return
+    if (acted) return UnitControl.claimedIf(! unit.ready)
 
     // Duelist walk (baseless maps, shuttle-less pairs only): with no contacts
     // the squad march stalls, so a Reaver with no ride at all walks at the
@@ -74,6 +75,7 @@ object BeReaver extends Action {
     if (With.geography.ourBases.isEmpty && ! With.units.ours.exists(u => u.alive && Protoss.Shuttle(u))) {
       duelWalk(unit)
     }
+    UnitControl.claimedIf(! unit.ready)
   }
 
   /** One frame of context for the ground claims: the ride and the nearest reachable foe, measured once. */

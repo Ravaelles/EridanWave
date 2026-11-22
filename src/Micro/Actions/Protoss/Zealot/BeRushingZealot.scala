@@ -1,5 +1,6 @@
 package Micro.Actions.Protoss.Zealot
 
+import Micro.Actions.UnitControl
 import Debugging.Visualizations.Rendering.DrawMap
 import Lifecycle.With
 import Micro.Actions.Action
@@ -27,7 +28,7 @@ object BeRushingZealot extends Action {
     && unit.team.forall(u => u.warriorsCasters.forall(u => u.isAny(Protoss.Probe, Protoss.Zealot, Protoss.ShieldBattery) || u.pixelDistanceCenter(unit) > 320))
   )
 
-  override protected def perform(zealot: FriendlyUnitInfo): Unit = {
+  override protected def perform(zealot: FriendlyUnitInfo): UnitControl = {
     val fieldScore            = ZealotRushScoring.fieldScore(zealot)
     val battery               = ZealotShieldBattery.best(zealot)
     zealot.agent.decideFight(ZealotRushAssessment.shouldFight(zealot, fieldScore))
@@ -41,6 +42,7 @@ object BeRushingZealot extends Action {
     } else {
       retreat(zealot)
     }
+    UnitControl.claimedIf(! zealot.ready)
   }
 
   /** Everything shootable in range flies and nothing left on the ground is hunting us. */
