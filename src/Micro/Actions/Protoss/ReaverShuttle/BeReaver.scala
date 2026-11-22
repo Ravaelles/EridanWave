@@ -89,7 +89,7 @@ object BeReaver extends Action {
 
   /** Boarding family, in order; the arbiter gates it behind BoardRide. */
   private val boardingClaims: Seq[GroundContext => Boolean] = Seq(
-    rescueScarab, boardShotless, backOffSiegedTanks, boardRide, boardIdle)
+    rescueScarab, boardShotless, backOffSiegedTanks, boardStalled, boardRide, boardIdle)
 
   /** Combat family, in order; the arbiter gates it behind the fight. */
   private val combatClaims: Seq[GroundContext => Boolean] = Seq(
@@ -316,6 +316,27 @@ object BeReaver extends Action {
       Commander.move(context.unit)
     })
     backOff.isDefined
+  }
+
+  /**
+   * Stalled under a static with the ride at hand: the order votes BoardRide
+   * here, but the rescue legs all decline (no active scarab, no wound
+   * band, targets present), so without this leg the hull walks at a
+   * hovering ride forever and never loads. Same facts the arbiter
+   * resolves on - vote and leg agree by construction.
+   */
+  private def boardStalled(context: GroundContext): Boolean = {
+    val ride = context.ride.getOrElse(return false)
+    val staticInGun = context.foe.exists(t =>
+      t.unitClass.isStaticDefense && context.unit.inRangeToAttack(t))
+    val stalled = With.framesSince(context.unit.lastFrameStartingAttack) >= ReaverStaticStand.quietFrames
+    val inReach = ReaverShuttleReboard.rideInReach(context.unit.pixelDistanceEdge(ride) * Maff.inv32)
+    if ( ! BoardStalled.shouldBoard(stalled, staticInGun, inReach)) return false
+
+    context.unit.agent.act("BoardStalled")
+    Commander.rightClick(context.unit, ride)
+
+    true
   }
 
   /** Board for a real trip, or when the position is lost and the ride is the way out. */
