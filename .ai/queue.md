@@ -47,9 +47,15 @@ Details live in `details/` - the queue keeps one line per item.
   now); fresh loaded hulls hold fire, calm/pack hold for PvP, Zerg
   fresh shields hold, no TvT kite; the terminal shoots loaded hittable
   guns (no silent duels) and march moves never cancel volleys.
-  All-time rates confirm no regression: ZealDrag 44W/93, 16Drag
-  21W/37, 1Drag 25W/57, Wounded 42W/122 (its historic ~1/3);
+  All-time rates confirm no regression: ZealDrag 48W/99, 16Drag
+  23W/41, 1Drag 25W/61, Wounded 42W/126 (its historic ~1/3),
+  3Zeal 15W/29, 1Zeal_v_2Ling 23W/26;
   4+3Zeal always loses 0/5 (melee mirror, separate unit).
+  Dance spends loaded volleys before footwork (2026-11-22): the W1
+  dance repositioned with a loaded gun and a hittable target (Wounded
+  waste 28f, starvation with it); a loaded engine-confirmed shot now
+  fires first. Verified live: Wounded waste 28f to none twice,
+  1Drag_v_1Zeal waste none; wins unchanged (coin-flip duels).
 
 ## Needs a live game (code green, jar includes it)
 
