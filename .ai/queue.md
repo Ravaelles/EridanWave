@@ -62,6 +62,15 @@ Details live in `details/` - the queue keeps one line per item.
   coin), 10Zeal 14W/12L (coin - pack brawls together either way),
   1v1Drag 41% (f0 retreat symmetric, harmless delay, needs the
   ladder retreat sink for more).
+- Coverage sweep (same night): new wins with clean ledgers -
+  1v1Ling, 1v1Hydra, 1ZealDead, 1ZealZoo, 2v2Drag, 1v2LingUpg,
+  2v3HydraUpg, ZealDrag_v_Lings (32/4), LingsHydra2 (43/14),
+  Drag_v_Hydra (15/4), Drag_v_Hydra&Lurker (13/4), P_v_Lurkers2
+  (3/6 objective win), Lings2_easy (26/3); close losses 1v2Hydra
+  1/1, Hydra&Ling 1/1, HydraUpg 3Drag 1/3, Cann_v_HydraUpg 2/6
+  (upgrade disadvantage + statics); ZealDrag2 8/9 (mirror coin).
+  P_v_Lurkers (not 2) errors without fighting - detection-gated
+  like the DT maps, park.
 - 2v3 counterfactual (StarEngine, MirrorFocusSuite): forced focus and
   forced plant-and-chase BOTH wipe 3 zealots with 2 dragoons (3-0 and
   3-0 kills), while live contact-kiting times out at 2/0. Kiting for
