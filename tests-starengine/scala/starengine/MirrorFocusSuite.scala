@@ -78,12 +78,50 @@ class MirrorFocusSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG spread-control ours=$a/3 foes=$b/3")
     assert(a + b < 6, "a spread mirror must trade hulls, not stall")
   }
-
   test("16v16: the shared pick holds at map scale, both seats") {
     val (focusOurs, spreadFoes) = grind(new FocusPilot, new SpreadPilot, n = 16)
     val focusKills = 16 - spreadFoes
     val spreadKills = 16 - focusOurs
     println(s"DIAG 16v16 focus-seat ours=$focusOurs/16 foes=$spreadFoes/16 kills focus=$focusKills spread=$spreadKills")
     assert(focusKills >= spreadKills, "the shared pick must not trade down at map scale")
+  }
+
+  /**
+   * 2v3 outnumbered (2Drag_v_3Zeal post-mortem): two dragoons meet three
+   * zealots. The shared pick needs three shooters in reach, so a pair
+   * never focuses - each hull duels its own blade while the pack chews
+   * them one by one. Forced focus (shared weakest) vs forced spread
+   * (nearest each), kills decide whether the gate costs the map.
+   */
+  private class FocusPairPilot extends Pilot {
+    override def direct(me: Body, world: World): Directive = {
+      val foes = if (world.ours.contains(me)) world.foes else world.ours
+      foes.filter(_.alive).sortBy(_.hp).headOption.map(Chase).getOrElse(Hold)
+    }
+  }
+
+  private class SpreadPairPilot extends Pilot {
+    override def direct(me: Body, world: World): Directive = {
+      val foes = if (world.ours.contains(me)) world.foes else world.ours
+      foes.filter(_.alive).sortBy(me.dist).headOption.map(Chase).getOrElse(Hold)
+    }
+  }
+
+  private def duel2v3(oursP: Body => Pilot): (Int, Int) = {
+    val ours = (0 until 2).map(i => new Body(Protoss.Dragoon, i * 40.0, 900.0, Protoss.Dragoon.maxTotalHealth))
+    val foes = (0 until 3).map(i => new Body(Protoss.Zealot, i * 40.0, 100.0, Protoss.Zealot.maxTotalHealth))
+    val world = new World(ours, foes,
+      (ours.map(o => o -> oursP(o)) ++ foes.map(f => f -> new SpreadPairPilot)).toMap, Seq.empty)
+    world.run(6000)
+    (ours.count(_.alive), foes.count(_.alive))
+  }
+
+  test("2v3: forced focus outkills forced spread") {
+    val (focusOurs, focusFoes) = duel2v3(_ => new FocusPairPilot)
+    val (spreadOurs, spreadFoes) = duel2v3(_ => new SpreadPairPilot)
+    val focusKills = 3 - focusFoes
+    val spreadKills = 3 - spreadFoes
+    println(s"DIAG 2v3 focus ours=$focusOurs/2 foes=$focusFoes/3 kills=$focusKills; spread ours=$spreadOurs/2 foes=$spreadFoes/3 kills=$spreadKills")
+    assert(focusKills >= spreadKills, "sharing the weakest target must not trade down at 2v3")
   }
 }
