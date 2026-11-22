@@ -45,10 +45,11 @@ Details live in `details/` - the queue keeps one line per item.
   ZealDrag recovers to 8/5, 9/8, 9/6, 9/5, 9/1, 9/3 after the
   shared-margin fix (plant and cap read one squad-wide melee gate
   now); fresh loaded hulls hold fire, calm/pack hold for PvP, Zerg
-  fresh shields hold; the terminal shoots loaded hittable guns (no
-  silent duels) and march moves never cancel volleys or attack-move.
-  1Drag wins return (1/0, 1/1); Wounded inside high duel variance;
-  4+3Zeal still loses (melee mirror, separate unit).
+  fresh shields hold, no TvT kite; the terminal shoots loaded hittable
+  guns (no silent duels) and march moves never cancel volleys.
+  All-time rates confirm no regression: ZealDrag 44W/93, 16Drag
+  21W/37, 1Drag 25W/57, Wounded 42W/122 (its historic ~1/3);
+  4+3Zeal always loses 0/5 (melee mirror, separate unit).
 
 ## Needs a live game (code green, jar includes it)
 
