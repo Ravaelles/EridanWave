@@ -38,6 +38,11 @@ Details live in `details/` - the queue keeps one line per item.
   tuning or accepting the map's variance.
 - Jar: W1 + shouldRun unification (`strings`-verified, slot md5
   matches target).
+- Kite discipline (todo #1, owner order: never yield ground for free):
+  pre-gate plant + return-capped yield + melee-gated near-dead flight,
+  judged by VolleyWaste. Validated on UMS: 16Drag waste 14-17f down to
+  4-5f with wins held (16/12, 16/8, 16/10); 1Drag W; Wounded 1/2 inside
+  its variance; 4+3Zeal still loses (melee mirror, separate unit).
 
 ## Needs a live game (code green, jar includes it)
 

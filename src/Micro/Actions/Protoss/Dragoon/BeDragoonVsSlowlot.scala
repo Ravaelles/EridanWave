@@ -6,7 +6,7 @@ import Lifecycle.With
 import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Micro.Actions.Action
-import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway}
+import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway, KiteHold}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Heuristics.Potential
@@ -93,6 +93,11 @@ object BeDragoonVsSlowlot extends Action {
         t.likelyStillThere &&
         ! FacingAway.dismissMelee(t.unitClass.melee,
           FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
+    // Near-dead hulls yield past the wound ladder too where the shipped
+    // kite kites them: collapsed shields with blades on top. Guns alone
+    // hold their last volleys on both paths - neither donates them.
+    if (KiteHold.shouldFleeNearDead(unit.shieldPoints, unit.unitClass.maxShields, enemyInMargin = inMargin(unit).nonEmpty, hasMeleeNearby = inMargin(unit).exists(_.unitClass.melee))) return true
+
     KiteAway.shouldRetreat(
       unit.totalHealth,
       unit.cooldownLeft,

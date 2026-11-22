@@ -228,3 +228,24 @@ hysteresis home (rules 10-11).
   Validated live (Motion mismatch none on Wounded/4+3Zeal; starvation
   named Dragoon #76 for 1084f inside a Wounded win - the next
   investigation).
+- Kite discipline, plant-last and capped yield (todo #1, 2026-11): the
+  kite entered its decision only when already cooling past the wound
+  ladder with fixed wound-scaled steps, so loaded volleys died in the
+  return trip and a plant inside the kite leg could never fire (gate
+  needs cooldown past 10, plant window is 6 - dead on arrival).
+  Closed by three kernels: a pre-gate plant (loaded gun plus hittable
+  target plus no blades on top holds the volley instead of kiting),
+  a return-capped yield (the step never exceeds the walk-back inside
+  the remaining cooldown, so the trip stops eating the next volley),
+  and a near-dead early-and-far flight gated on melee contact. Pinned
+  in KiteHoldSuite/KiteYieldSuite/VolleyWasteSuite, with a plant-last
+  guardrail in WoundedDuelSuite (survival parity-or-better in-engine;
+  superiority judges live). Judged live by VolleyWaste in the
+  end-of-game box. Pattern: the yield is a function of the cooldown,
+  never of the wound alone. Deviation on record (rule 20): near-dead
+  kites far only against melee - equal-speed ranged guns cannot be
+  outrun, so against guns alone the hull holds its last volleys
+  instead of donating them. Validated on UMS (16Drag waste 14-17f
+  down to 4-5f with wins 16/12, 16/8, 16/10; 1Drag wins return;
+  Wounded inside its variance; 4+3Zeal still loses - melee mirror,
+  separate unit).

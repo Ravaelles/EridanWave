@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
+import Micro.Actions.Combat.Decisioning.Kiting.{KiteAway, KiteHold}
 import ProxyBwapi.Races.Protoss
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -43,6 +43,33 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
       world.nearestFoeOf(me, foesOf(me, world), (_, _) => true).map(Chase).getOrElse(Hold)
   }
 
+  /**
+   * Plant-last: a loaded gun plants the volley instead of entering the
+   * kite decision at all, then kites while truly cooling. Engine bodies
+   * carry no shields, so the near-dead half of the doctrine stays
+   * live-only and the plant half proves here: a healthy hull plants,
+   * a dying one would have fled.
+   */
+  private class PlantLastPilot extends Pilot {
+    override def direct(me: Body, world: World): Directive = {
+      val foe = world.nearestFoeOf(me, foesOf(me, world), (_, _) => true)
+      if (foe.isEmpty) return Hold
+
+      val f = foe.get
+      val hittableNow = me.dist(f) <= me.rangeAgainst(f)
+      val meleeNear = f.kind == Protoss.Zealot && me.dist(f) <= me.rangeAgainst(f) + KiteAway.enemyMarginTiles * 32.0
+      if (KiteHold.shouldPlant(me.cooldownLeft, hittableNow, shieldPoints = 80, maxShields = 80, hasMeleeNearby = meleeNear)) return Hold
+
+      val inMargin = me.dist(f) <= me.rangeAgainst(f) + KiteAway.enemyMarginTiles * 32.0
+      if (KiteAway.shouldRetreat(me.hp.toInt, me.cooldownLeft, inMargin, meleeNear)) {
+        val dx = me.x - f.x
+        val dy = me.y - f.y
+        val d = Math.sqrt(dx * dx + dy * dy)
+        if (d > 0) MoveTo(me.x + dx / d * 128.0, me.y + dy / d * 128.0) else Hold
+      } else Chase(f)
+    }
+  }
+
   /** One duel, dragoon doctrine under test, zealot plants. Returns (dragoon alive, zealot dead, dragoon death frame or Int.MaxValue). */
   private def duel(dragoonP: Body => Pilot, dragoonIsOurs: Boolean): (Boolean, Boolean, Int) = {
     val dragoon = new Body(Protoss.Dragoon, 0.0, 900.0, 60.0)
@@ -77,5 +104,27 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG kite alive=$kiteAliveA,$kiteAliveB deadAt=$kiteDeathA,$kiteDeathB kills=$kiteKillsA,$kiteKillsB; plant alive=$plantAliveA,$plantKillsB deadAt=$plantDeathA,$plantDeathB kills=$plantKillsA,$plantKillsB")
     assert(kiteScore >= plantScore, "kiting must not trade down to planting a wounded duel")
     assert(kiteDeathA + kiteDeathB >= plantDeathA + plantDeathB, "kiting must buy time over planting")
+  }
+
+  /**
+   * Plant-last guardrail (engine half of the proof): the unwinnable
+   * seat cannot show kills - the 60-HP hull dies standing or kiting -
+   * so the engine pins what it can: planting the last cooldown frames
+   * never donates the hull faster than raw kiting. A reckless window
+   * (plant everything) dies with the plant seat; the shipped six holds
+   * the kite's death line. Superiority (extra volleys, ledger down,
+   * kills held) judges live - the engine has no facing cost, so the
+   * return trip it saves is invisible here.
+   */
+  test("planting the last cooldown frames never trades down to raw kiting") {
+    val (kiteAliveA, kiteKillsA, kiteDeathA) = duel(_ => new KitePilot, dragoonIsOurs = true)
+    val (kiteAliveB, kiteKillsB, kiteDeathB) = duel(_ => new KitePilot, dragoonIsOurs = false)
+    val (plantLastAliveA, plantLastKillsA, plantLastDeathA) = duel(_ => new PlantLastPilot, dragoonIsOurs = true)
+    val (plantLastAliveB, plantLastKillsB, plantLastDeathB) = duel(_ => new PlantLastPilot, dragoonIsOurs = false)
+    val kiteScore = Seq(kiteAliveA, kiteKillsA, kiteAliveB, kiteKillsB).count(identity)
+    val plantLastScore = Seq(plantLastAliveA, plantLastKillsA, plantLastAliveB, plantLastKillsB).count(identity)
+    println(s"DIAG kite alive=$kiteAliveA,$kiteAliveB deadAt=$kiteDeathA,$kiteDeathB kills=$kiteKillsA,$kiteKillsB; plantLast alive=$plantLastAliveA,$plantLastAliveB deadAt=$plantLastDeathA,$plantLastDeathB kills=$plantLastKillsA,$plantLastKillsB")
+    assert(plantLastScore >= kiteScore, "holding the last cooldown frames must not trade down to raw kiting")
+    assert(plantLastDeathA + plantLastDeathB >= kiteDeathA + kiteDeathB, "planting must not donate the hull faster than kiting")
   }
 }
