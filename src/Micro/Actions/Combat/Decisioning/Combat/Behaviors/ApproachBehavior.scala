@@ -72,6 +72,15 @@ object ApproachBehavior {
 
   private def stepForward(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     unit.agent.act("Dress")
+    // Loaded volley owns the frame: dressing forward past a hittable
+    // shot donates the volley for a step the slot already holds.
+    // Same rule as the dance, the charge and the terminal.
+    if (unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+      Commander.hold(unit)
+
+      return true
+    }
+
     combat.maneuvers.move()
 
     true
@@ -79,6 +88,12 @@ object ApproachBehavior {
 
   private def stepBack(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     unit.agent.act("Dress")
+    if (unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+      Commander.hold(unit)
+
+      return true
+    }
+
     if (With.frame % FormationApproach.correctionCadence == unit.id % FormationApproach.correctionCadence) {
       unit.agent.decision.set(unit.pixel.project(unit.matchups.targetNearest.get.pixel, -FormationApproach.correctionStepTiles * 32))
       combat.maneuvers.move()
