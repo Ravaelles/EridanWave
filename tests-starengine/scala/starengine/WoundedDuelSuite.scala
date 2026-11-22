@@ -73,8 +73,8 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
   }
 
   /** One duel, dragoon doctrine under test, zealot plants. Returns (dragoon alive, zealot dead, dragoon death frame or Int.MaxValue). */
-  private def duel(dragoonP: Body => Pilot, dragoonIsOurs: Boolean): (Boolean, Boolean, Int) = {
-    val dragoon = new Body(Protoss.Dragoon, 0.0, 900.0, 60.0)
+  private def duel(dragoonP: Body => Pilot, dragoonIsOurs: Boolean, dragoonHp: Double = 60.0): (Boolean, Boolean, Int) = {
+    val dragoon = new Body(Protoss.Dragoon, 0.0, 900.0, dragoonHp)
     val zealot = new Body(Protoss.Zealot, 0.0, 100.0, Protoss.Zealot.maxTotalHealth)
     val (ours, foes) = if (dragoonIsOurs) (Seq(dragoon), Seq(zealot)) else (Seq(zealot), Seq(dragoon))
     val world = new World(ours, foes, Map(dragoon -> dragoonP(dragoon), zealot -> new PlantPilot), Seq.empty)
@@ -128,5 +128,23 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG kite alive=$kiteAliveA,$kiteAliveB deadAt=$kiteDeathA,$kiteDeathB kills=$kiteKillsA,$kiteKillsB; plantLast alive=$plantLastAliveA,$plantLastAliveB deadAt=$plantLastDeathA,$plantLastDeathB kills=$plantLastKillsA,$plantLastKillsB")
     assert(plantLastScore >= kiteScore, "holding the last cooldown frames must not trade down to raw kiting")
     assert(plantLastDeathA + plantLastDeathB >= kiteDeathA + kiteDeathB, "planting must not donate the hull faster than kiting")
+  }
+
+  test("at live HP (12) the hull kites for time, never for the trade") {
+    val (kiteAliveA, kiteKillsA, kiteDeathA) = duel(_ => new KitePilot, dragoonIsOurs = true, dragoonHp = 12.0)
+    val (kiteAliveB, kiteKillsB, kiteDeathB) = duel(_ => new KitePilot, dragoonIsOurs = false, dragoonHp = 12.0)
+    val (plantAliveA, plantKillsA, plantDeathA) = duel(_ => new PlantPilot, dragoonIsOurs = true, dragoonHp = 12.0)
+    val (plantAliveB, plantKillsB, plantDeathB) = duel(_ => new PlantPilot, dragoonIsOurs = false, dragoonHp = 12.0)
+    println(s"DIAG 12hp kite alive=$kiteAliveA,$kiteAliveB deadAt=$kiteDeathA,$kiteDeathB kills=$kiteKillsA,$kiteKillsB; plant alive=$plantAliveA,$plantAliveB deadAt=$plantDeathA,$plantDeathB kills=$plantKillsA,$plantKillsB")
+    assert(kiteDeathA + kiteDeathB >= plantDeathA + plantDeathB, "at live HP kiting must buy time over planting")
+  }
+
+  test("healthy hulls kite slow blades to death, both seats") {
+    val hp = Protoss.Dragoon.maxTotalHealth
+    val (kiteAliveA, kiteKillsA, _) = duel(_ => new KitePilot, dragoonIsOurs = true, dragoonHp = hp)
+    val (kiteAliveB, kiteKillsB, _) = duel(_ => new KitePilot, dragoonIsOurs = false, dragoonHp = hp)
+    println(s"DIAG healthy kite alive=$kiteAliveA,$kiteAliveB kills=$kiteKillsA,$kiteKillsB")
+    assert(kiteAliveA && kiteAliveB, "a healthy hull kiting a slow blade must survive both seats")
+    assert(kiteKillsA && kiteKillsB, "a healthy hull kiting a slow blade must clear it both seats")
   }
 }

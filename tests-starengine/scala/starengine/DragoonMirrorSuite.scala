@@ -151,4 +151,81 @@ class DragoonMirrorSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG 1v1 hold-seat holdKills=$holdKillsA kiteKills=$kiteKillsA; kite-seat kiteKills=$kiteKillsB holdKills=$holdKillsB")
     assert(holdKillsA + holdKillsB >= kiteKillsA + kiteKillsB, "a lone hull must not trade down by kiting its mirror")
   }
+
+  /**
+   * Opening donation, first principles (1Drag_v_1Drag post-mortem):
+   * live games open with a retreat before the duel (f0-24 walk home
+   * on even odds), while the UMS script advances. The opener walks
+   * home for 24 frames, then holds volleys like production; the
+   * holder holds from frame zero. Both seats, kills and first blood
+   * decide whether ceding the opening donates the duel.
+   */
+  private class RetreatOpenerPilot extends Pilot {
+    private val hold = new AdvanceThenHoldPilot
+    override def direct(me: Body, world: World): Directive = {
+      if (world.frame >= 24) return hold.direct(me, world)
+
+      val foe = world.nearestFoeOf(me, world.foes, (_, _) => true)
+      foe match {
+        case None => Hold
+        case Some(f) =>
+          val dx = me.x - f.x
+          val dy = me.y - f.y
+          val d = Math.sqrt(dx * dx + dy * dy)
+          if (d > 0) MoveTo(me.x + dx / d * 128.0, me.y + dy / d * 128.0) else Hold
+      }
+    }
+  }
+
+  /**
+   * Production advances before it duels: the march closes until the
+   * guns touch, only then the volley discipline owns the frame. A pure
+   * holder never meets anyone, so the opener question needs legs that
+   * walk first and hold after.
+   */
+  private class AdvanceThenHoldPilot extends Pilot {
+    private val hold = new HoldVolleysPilot
+    override def direct(me: Body, world: World): Directive = {
+      val foe = world.nearestFoeOf(me, world.foes, (_, _) => true)
+      foe match {
+        case None => Hold
+        case Some(f) =>
+          if (me.dist(f) <= me.rangeAgainst(f)) hold.direct(me, world)
+          else Chase(f)
+      }
+    }
+  }
+
+  private def openerDuel(oursP: Body => Pilot, foeP: Body => Pilot, frames: Int = 4000): (Int, Int, Int, String, Double) = {
+    val ours = Seq(new Body(Protoss.Dragoon, 0.0, 500.0, Protoss.Dragoon.maxTotalHealth))
+    val foes = Seq(new Body(Protoss.Dragoon, 400.0, 500.0, Protoss.Dragoon.maxTotalHealth))
+    val world = new World(ours, foes, (ours.map(o => o -> oursP(o)) ++ foes.map(f => f -> foeP(f))).toMap, Seq.empty)
+    var f = 0
+    var blood = (Int.MaxValue, "none")
+    while (f < frames && ours.exists(_.alive) && foes.exists(_.alive)) {
+      world.step()
+      f = world.frame
+      if (blood._1 == Int.MaxValue) {
+        if ( ! ours.head.alive) blood = (f, "ours")
+        else if ( ! foes.head.alive) blood = (f, "foes")
+      }
+    }
+    val winnerHp =
+      if (ours.head.alive && ! foes.head.alive) ours.head.hp
+      else if (foes.head.alive && ! ours.head.alive) foes.head.hp
+      else Double.NaN
+    (1 - foes.count(_.alive), 1 - ours.count(_.alive), blood._1, blood._2, winnerHp)
+  }
+
+  test("winning from a ceded opening takes longer, both seats") {
+    // Seat bias decides 1v1 binaries (ours wins both seatings), so kills
+    // read the seat, not the doctrine. The blood-frame delta through the
+    // same winning seat reads the doctrine: ceding 24 frames costs ~49
+    // (walk back plus walk forward), the whole margin the live duel
+    // loses when the script advances and we walk home.
+    val (_, _, bloodA, _, _) = openerDuel(_ => new AdvanceThenHoldPilot, _ => new RetreatOpenerPilot)
+    val (_, _, bloodB, _, _) = openerDuel(_ => new RetreatOpenerPilot, _ => new AdvanceThenHoldPilot)
+    println(s"DIAG hold-seat blood=$bloodA; ret-seat blood=$bloodB")
+    assert(bloodB > bloodA, "winning from a ceded opening must take longer with the same seat luck")
+  }
 }
