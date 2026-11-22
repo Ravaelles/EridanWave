@@ -114,7 +114,16 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
 
   private[Decisioning] def charge(): Boolean = {
     if (unit.ready && ( ! combat.target.exists(unit.inRangeToAttack) || ! AttackIfReadyBehavior.run(unit, combat))) {
-      if (slidingInFormation) slideInFormation()
+      // Loaded volley owns the frame: walking past a hittable shot to
+      // close distance the hull already holds donates the volley for
+      // positioning. Hold and spend it instead - the charge resumes once
+      // the gun cools. Air dancers keep their dance (motion is their
+      // survival); everyone else stands and shoots.
+      if (unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty && ! dogfightingAir) {
+        unit.agent.act("VolleyHold")
+        Commander.hold(unit)
+      }
+      else if (slidingInFormation) slideInFormation()
       else if (dogfightingAir) dogfightAir()
       else if (combat.breakFormationToAttack) breakToAttack()
       else moveToSlot()
