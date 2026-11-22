@@ -27,7 +27,8 @@ object SquadForming {
       case attack: SquadAttack => attack.huntMarches
       case _                   => false
     }
-    if (SquadMarch.shouldFormMarch(squad.fightConsensus || huntingContact, squad.battleEnemies.nonEmpty)) {
+    if (SquadMarch.shouldFormMarch(squad.fightConsensus || huntingContact, squad.battleEnemies.nonEmpty)
+      || SquadMarch.shouldFormOpening(With.umsMode, squad.battleEnemies.nonEmpty, squad.fightConsensus)) {
       // Contain dressing rides the march formation: melee drops back so the
       // Dragoons keep the inner arc and shoot.
       val meleeBack = squad match {

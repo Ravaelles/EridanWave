@@ -16,7 +16,8 @@ class HuntBehaviorSuite extends AnyFunSuite {
     targetVisible       : Boolean = true,
     targetBeyondPursuit : Boolean = false,
     targetBeyondSight   : Boolean = false,
-    verdictDuel         : Boolean = false): Boolean =
+    verdictDuel         : Boolean = false,
+    dressHeld           : Boolean = false): Boolean =
     HuntBehavior.shouldHunt(
       umsMode,
       isWarrior,
@@ -26,7 +27,8 @@ class HuntBehaviorSuite extends AnyFunSuite {
       targetVisible,
       targetBeyondPursuit,
       targetBeyondSight,
-      verdictDuel)
+      verdictDuel,
+      dressHeld)
 
   test("a dueling walker with no target hunts") {
     assert(hunt())
@@ -67,6 +69,11 @@ class HuntBehaviorSuite extends AnyFunSuite {
   test("a latched duel pins the hull: no memory hunt beside a live duel") {
     assert( ! hunt(verdictDuel = true))
     assert( ! hunt(hasTarget = true, targetBeyondPursuit = true, verdictDuel = true))
+  }
+
+  test("a dressed line holds instead of hunting through the wait") {
+    assert( ! hunt(dressHeld = true))
+    assert( ! hunt(hasTarget = true, targetBeyondPursuit = true, dressHeld = true))
   }
 
   test("a fresh mobile contact is remembered") {

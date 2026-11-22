@@ -50,7 +50,8 @@ object HuntBehavior {
       targetVisible       = target.forall(_.visible),
       targetBeyondPursuit = target.exists(t => unit.pixelsToGetInRange(t) > FormationHold.holdPursuitTiles * 32.0),
       targetBeyondSight   = target.exists(t => ! t.visible && unit.pixelsToGetInRange(t) > unit.sightPixels + sightMarginPixels),
-      verdictDuel         = Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame) == Tactic.Squads.Decisions.MotionVerdict.Duel)) return false
+      verdictDuel         = Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame) == Tactic.Squads.Decisions.MotionVerdict.Duel,
+      dressHeld           = Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame) == Tactic.Squads.Decisions.MotionVerdict.Dress)) return false
 
     val foe = Maff.minBy(huntables(unit))(unit.pixelDistanceCenter(_))
     if (foe.isEmpty) return false
@@ -106,7 +107,8 @@ object HuntBehavior {
     targetVisible       : Boolean,
     targetBeyondPursuit : Boolean,
     targetBeyondSight   : Boolean,
-    verdictDuel         : Boolean): Boolean =
-    umsMode && isWarrior && ! isReaver && canMove && ! verdictDuel && (
+    verdictDuel         : Boolean,
+    dressHeld           : Boolean): Boolean =
+    umsMode && isWarrior && ! isReaver && canMove && ! verdictDuel && ! dressHeld && (
       ! hasTarget || targetBeyondPursuit || ( ! targetVisible && targetBeyondSight))
 }

@@ -15,4 +15,11 @@ class SquadMarchSuite extends AnyFunSuite {
   test("no vote and no enemies mean no march formation") {
     assert( ! SquadMarch.shouldFormMarch(fightConsensus = false, hasEnemiesEnRoute = false))
   }
+
+  test("UMS opens in formation with nothing known yet") {
+    assert(SquadMarch.shouldFormOpening(umsMode = true, hasEnemiesEnRoute = false, fightConsensus = false))
+    assert( ! SquadMarch.shouldFormOpening(umsMode = true, hasEnemiesEnRoute = true, fightConsensus = false))
+    assert( ! SquadMarch.shouldFormOpening(umsMode = true, hasEnemiesEnRoute = false, fightConsensus = true))
+    assert( ! SquadMarch.shouldFormOpening(umsMode = false, hasEnemiesEnRoute = false, fightConsensus = false))
+  }
 }

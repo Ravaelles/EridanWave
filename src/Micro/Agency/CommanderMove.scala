@@ -116,43 +116,39 @@ object CommanderMove {
     if (Terran.Medic(unit) && unit.agent.shouldFight) {
       attackMove(unit, to)
     } else if (unit.pixelDistanceCenter(to) > 3) {
-      // When bot is sluggish, use attack-move
-      if (  ! unit.unitClass.isWorker
-        && unit.agent.shouldFight
-        && With.reaction.sluggishness >= 3
-        && unit.canAttack) {
-        attackMove(unit, to)
+      // Line movement is always an explicit move, never an attack-move
+      // (owner order): attack-move auto-acquire breaks formation slots
+      // and the volley cadence instead of saving them. Shooting stays
+      // with the technique's explicit attacks.
+      // Skip re-issuing an identical Move: re-orders
+      // reset acceleration and break weapon cooldown alignment (Stardust: one order per unit per frame).
+      // Path followers pass a tight tolerance: waypoints advance in small
+      // hops, and a wide deadband lets the unit arrive and idle between hops.
+      // Arrival flow (PurpleWave): inside 1.8 tiles of the move target,
+      // while the final destination lies beyond along the same heading,
+      // aim past the waypoint so the unit flows through instead of braking
+      // into every hop. Backsteps and true arrivals keep braking.
+      val finalPx: Pixel = unit.agent.destinationFinal()
+      val aligned = Math.abs(Maff.normalizePiToPi(unit.pixel.radiansTo(finalPx) - unit.pixel.radiansTo(to))) <= Math.PI / 4
+      val flowPush = ArrivalFlow.pushPast(unit.tileDistanceCenter(to), unit.tileDistanceCenter(finalPx), aligned)
+      val goal = if (flowPush > 0 && unit.order == Orders.Move) unit.pixel.project(to, unit.pixelDistanceCenter(to) + flowPush * 32).walkablePixel else to
+      // Order continuation, not just motion: keep the old order while it
+      // still takes us there - same target, or a far goal on our heading.
+      // A far goal that drifted keeps cruising instead of resetting
+      // acceleration every frame; near goals keep the exact point check,
+      // so kiting and dodges stay responsive. The heading math runs only
+      // past the point check, never on the hot path.
+      val orderTarget = unit.orderTargetPixel
+      lazy val distTiles = unit.pixelDistanceCenter(goal) * Maff.inv32
+      lazy val onCourse = Math.abs(Maff.normalizePiToPi(unit.angleRadians - unit.pixel.radiansTo(goal))) <= OrderContinue.headingConeRadians
+      val continuing = unit.order == Orders.Move && (
+        orderTarget.exists(_.pixelDistance(goal) < tolerancePixels) ||
+          OrderContinue.holdsCourse(distTiles, onCourse))
+      if ( ! continuing || unit.seeminglyStuck) {
+        unit.bwapiUnit.move(goal.bwapi)
       } else {
-        //Like attackMove above, skip re-issuing an identical Move: re-orders
-        // reset acceleration and break weapon cooldown alignment (Stardust: one order per unit per frame).
-        // Path followers pass a tight tolerance: waypoints advance in small
-        // hops, and a wide deadband lets the unit arrive and idle between hops.
-        // Arrival flow (PurpleWave): inside 1.8 tiles of the move target,
-        // while the final destination lies beyond along the same heading,
-        // aim past the waypoint so the unit flows through instead of braking
-        // into every hop. Backsteps and true arrivals keep braking.
-        val finalPx: Pixel = unit.agent.destinationFinal()
-        val aligned = Math.abs(Maff.normalizePiToPi(unit.pixel.radiansTo(finalPx) - unit.pixel.radiansTo(to))) <= Math.PI / 4
-        val flowPush = ArrivalFlow.pushPast(unit.tileDistanceCenter(to), unit.tileDistanceCenter(finalPx), aligned)
-        val goal = if (flowPush > 0 && unit.order == Orders.Move) unit.pixel.project(to, unit.pixelDistanceCenter(to) + flowPush * 32).walkablePixel else to
-        // Order continuation, not just motion: keep the old order while it
-        // still takes us there - same target, or a far goal on our heading.
-        // A far goal that drifted keeps cruising instead of resetting
-        // acceleration every frame; near goals keep the exact point check,
-        // so kiting and dodges stay responsive. The heading math runs only
-        // past the point check, never on the hot path.
-        val orderTarget = unit.orderTargetPixel
-        lazy val distTiles = unit.pixelDistanceCenter(goal) * Maff.inv32
-        lazy val onCourse = Math.abs(Maff.normalizePiToPi(unit.angleRadians - unit.pixel.radiansTo(goal))) <= OrderContinue.headingConeRadians
-        val continuing = unit.order == Orders.Move && (
-          orderTarget.exists(_.pixelDistance(goal) < tolerancePixels) ||
-            OrderContinue.holdsCourse(distTiles, onCourse))
-        if ( ! continuing || unit.seeminglyStuck) {
-          unit.bwapiUnit.move(goal.bwapi)
-        } else {
-          Debugging.Probe.note("Move", unit.id,
-            f"hold gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt}")
-        }
+        Debugging.Probe.note("Move", unit.id,
+          f"hold gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt}")
       }
       if ( ! unit.flying) {
         CommanderCore.pushThrough(unit, to, TrafficPriorities.Freedom)
