@@ -51,6 +51,17 @@ Details live in `details/` - the queue keeps one line per item.
   23W/41, 1Drag 25W/61, Wounded 42W/126 (its historic ~1/3),
   3Zeal 15W/29, 1Zeal_v_2Ling 23W/26;
   4+3Zeal always loses 0/5 (melee mirror, separate unit).
+  Autonomous night session (owner asleep, ~26 games): waste ZERO on
+  every map the ledger can see (3Drag, 1v4, 2Zeal, 1v1Zeal streak,
+  1v1Ling, 2v2Drag, 10Zeal, ZealDrag, 16Drag, 1v1Drag, Wounded).
+  Remaining losses are numbers, not discipline: 3Drag 0W/13L (never
+  won - unwinnable as set up, park), 1Drag_v_4Zeal 0W/3L (1v4,
+  park), 2Zeal 5W/37L (5/2 timeouts - uncatchable speedlings, hunt
+  tempo is the documented separate unit, park), LingsHydra 5W/16L
+  (retreat verdict territory, park), 15Drag 12W/15L (near-parity
+  coin), 10Zeal 14W/12L (coin - pack brawls together either way),
+  1v1Drag 41% (f0 retreat symmetric, harmless delay, needs the
+  ladder retreat sink for more).
   Dance spends loaded volleys before footwork (2026-11-22): the W1
   dance repositioned with a loaded gun and a hittable target (Wounded
   waste 28f, starvation with it); a loaded engine-confirmed shot now
