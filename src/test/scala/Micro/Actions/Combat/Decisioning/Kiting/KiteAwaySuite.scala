@@ -14,6 +14,8 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.kiteVsRangedHp == 61)
     assert(KiteAway.enemyMarginTiles == 1.8)
     assert(KiteAway.maxOffsetTiles == 1.4)
+    assert(KiteAway.freshShieldWound == 14)
+    assert(KiteAway.meleeCloseTiles == 2.6)
   }
 
   test("wound levels follow total HP boundaries") {
@@ -44,8 +46,7 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! retreat(totalHealth = 60, cooldownLeft = 10))
   }
 
-  test("mild wounds hold against ranged guns: only the dying yield") {
-    assert( ! retreat(totalHealth = 120, cooldownLeft = 16))
+  test("mild wounds hold against ranged guns: only the dying yield") {    assert( ! retreat(totalHealth = 120, cooldownLeft = 16))
     assert( ! retreat(totalHealth = 120, cooldownLeft = 22))
     assert( ! retreat(totalHealth = 170, cooldownLeft = 22))
   }
@@ -85,5 +86,22 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! KiteAway.skipKiting(999))
     assert(KiteAway.skipKiting(1000))
     assert(KiteAway.skipKiting(4000))
+  }
+
+  test("fresh hulls and ranged-only pressure never kite") {
+    assert(KiteAway.shouldKite(shieldWound = 15, meleeNearby = true))
+    assert(KiteAway.shouldKite(shieldWound = 80, meleeNearby = true))
+    assert( ! KiteAway.shouldKite(shieldWound = 14, meleeNearby = true))
+    assert( ! KiteAway.shouldKite(shieldWound = 0, meleeNearby = true))
+    assert( ! KiteAway.shouldKite(shieldWound = 15, meleeNearby = false))
+    assert( ! KiteAway.shouldKite(shieldWound = 80, meleeNearby = false))
+  }
+
+  test("fresh, loaded and clear hulls hold their fire instead of kiting") {
+    assert(KiteAway.holdsFire(cooldownLeft = 0, hitPoints = 100, enemyClose = false))
+    assert(KiteAway.holdsFire(cooldownLeft = 15, hitPoints = 80, enemyClose = false))
+    assert( ! KiteAway.holdsFire(cooldownLeft = 16, hitPoints = 80, enemyClose = false))
+    assert( ! KiteAway.holdsFire(cooldownLeft = 0, hitPoints = 79, enemyClose = false))
+    assert( ! KiteAway.holdsFire(cooldownLeft = 0, hitPoints = 80, enemyClose = true))
   }
 }

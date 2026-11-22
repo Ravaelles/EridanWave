@@ -51,6 +51,44 @@ object KiteAway {
   /** Retreat only while an enemy presses within firing range plus this margin (tiles). */
   var enemyMarginTiles: Double = 1.8
 
+  /**
+   * Fresh hulls never kite: at or below this much shield damage the
+   * volley outweighs the yield, so the line holds and shoots instead
+   * of donating DPS for distance. Owner order from the ZealDrag mirror.
+   */
+  var freshShieldWound: Int = 14
+
+  /**
+   * Melee contact radius, in tiles: kite only with blades this close.
+   * Ranged-only pressure never triggers the kite - the plant holds the
+   * loaded volleys, the approach owns the rest.
+   */
+  var meleeCloseTiles: Double = 2.6
+
+  /**
+   * Fresh, loaded and clear hulls hold their fire instead of kiting:
+   * with the gun inside its window, enough hull to trade, and nothing
+   * inside contact range, the volley outweighs any ground the yield
+   * would buy. Owner order from the ZealDrag mirror (the kite donated
+   * the shooting).
+   */
+  var steadyCooldownFrames: Int = 15
+
+  var steadyHullHp: Int = 80
+
+  var steadyContactTiles: Double = 2.7
+
+  def holdsFire(cooldownLeft: Int, hitPoints: Int, enemyClose: Boolean): Boolean =
+    cooldownLeft <= steadyCooldownFrames && hitPoints >= steadyHullHp && ! enemyClose
+
+  /**
+   * Kite gate (pure numbers for the suite): wounded past fresh AND
+   * melee in contact, or stand and shoot. Ranged-only pressure never
+   * kites; the wound ladder below decides the cooling hulls that pass.
+   */
+  def shouldKite(shieldWound: Int, meleeNearby: Boolean): Boolean =
+    shieldWound > freshShieldWound && meleeNearby
+
   /** A banked mineral stock this big buys the trade: skip kiting, keep DPS up. */
   var richBankMinerals: Int = 1000
 

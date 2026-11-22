@@ -58,7 +58,11 @@ Details live in `details/` - the queue keeps one line per item.
   (`details/pending-specs.md`). MineDefuse parked: the mines map
   stalls at 0:00 twice (75-min hang + 40-min timeout) - map-side
   startup issue, not doctrine.
-- 2Zeal parked hard: needs a melee shared pick (unbuilt).
+- 2Zeal shared pick shipped: weakest enemy two pack blades can both
+  reach outranks individual picks (`MeleeFocus`, rule 19). Validated
+  firing live (synchronized picks on the same frames), kills up;
+  2Zeal_v_LingUp wins still need hunt-side coordination (separate
+  unit).
 
 ## Owner decisions (no code before the call)
 

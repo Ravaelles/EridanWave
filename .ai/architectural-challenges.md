@@ -290,3 +290,27 @@ hysteresis home (rules 10-11).
   shields rows). Pattern: base defense is local superiority, not
   geometry - count the guns that answer before measuring the line.
   Live judgment pending (needs the ladder games that trigger it).
+- Melee shared pick in Target (rule 19, 2026-11): pack blades chewed
+  their own targets while lings focus-fired one hull at a time (2Zeal
+  parked at 1W/7L for the lack). Now the weakest enemy two pack mates
+  can both reach outranks each blade's own pick - same first-claims
+  shape as ranged focus, contact instead of volleys. Pinned in
+  MeleeFocusSuite (swings/distance/id rows); the ladder owns legality.
+  Validated on UMS: both zealots pick the same target on the same
+  frames (probe-verified), kills up (2-4 vs ~1), 3Zeal_v_3Zeal 3/0,
+  1Zeal and 10Zeal hold. Wins on 2Zeal_v_LingUp still pending -
+  that needs hunt-side coordination too, separate unit.
+- Decide WHAT centrally, HOW locally (owner direction, 2026-11): one
+  place defines whether to flee, one place whether to go, and the movers
+  only execute (formation or not). Not utopian - it names the convergence
+  already underway: the single retreat verdict (open challenge below),
+  the MotionVerdict owner kernel (closed), pure kernels beside callers.
+  Path, incremental: (a) retreat sink - one pure RetreatVote per unit
+  per frame, both phases read it (blocked on a ladder game reaching
+  lone statics: nearestArmedTiles vs nearestEnemyWarriorTiles); (b)
+  melee shared pick lives in Target as a filter (rule 19), blades read
+  it - unparks 2Zeal; (c) BoardingVote per pair per frame (board /
+  hold-fire / withdraw), read by mission and pair brain, plus the
+  hold-at-range rule for picked lurkers - answers the Sunkens3 ferry
+  question; (d) L2 soft enforcement incidentally, choke point later.
+  No big-bang rewrite: each step ships with its suite and its UMS map.

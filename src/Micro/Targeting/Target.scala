@@ -93,6 +93,9 @@ object Target {
       output = focusedTarget(attacker, allFilters)
       if (output.isDefined) return output
 
+      output = meleeSharedTarget(attacker, allFilters)
+      if (output.isDefined) return output
+
       // Repairer snipe: a healthy unit tasked against a Terran building
       // kills the SCV currently repairing it first (unless the building
       // is nearly dead - then it finishes the building). Enforced even a
@@ -276,6 +279,15 @@ object Target {
   // line. Outside a mass fight this is None and the ladder decides.
   private def focusedTarget(attacker: FriendlyUnitInfo, allFilters: IndexedSeq[TargetFilter]): Option[UnitInfo] =
     FocusFire
+      .sharedTarget(attacker)
+      .filter(target => attacker.inRangeToAttack(target) && legalByFilters(attacker, target, allFilters))
+
+  // Melee shared chew: the pack's weakest reachable target outranks each
+  // blade's own pick, so damage concentrates instead of spreading over
+  // the enemy pack. Same family as the ranged focus above; the kernel
+  // owns the who, the ladder owns the legality.
+  private def meleeSharedTarget(attacker: FriendlyUnitInfo, allFilters: IndexedSeq[TargetFilter]): Option[UnitInfo] =
+    MeleeFocus
       .sharedTarget(attacker)
       .filter(target => attacker.inRangeToAttack(target) && legalByFilters(attacker, target, allFilters))
 

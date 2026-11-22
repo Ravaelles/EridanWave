@@ -36,6 +36,12 @@ object KiteAwayBehavior {
 
     val nearest = unit.matchups.targetNearest
     if (nearest.isEmpty) return false
+    // Fresh, loaded and clear hulls hold their fire instead of kiting:
+    // the kite donated the shooting on the ZealDrag mirror, so a hull
+    // with the gun inside its window, enough hull to trade, and nothing
+    // in contact never enters the kite decision at all.
+    val contactClose = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(_.likelyStillThere)
+    if (KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
     // Shared margin read (plant and gate agree by construction): live
     // threats only, turned-away melee dismissed. A blade pressing any
     // mate carves a planted hull, so the plant holds volleys against
@@ -92,6 +98,15 @@ object KiteAwayBehavior {
     // melee answers through the pack gate below.
     if (unit.unitClass.maxShields > 0 && unit.shieldWound == 0 &&
       ! unit.matchups.threatsInPixels(64.0).exists(_.likelyStillThere)) return false
+
+    // Fresh hulls hold their volleys, contact or not: at or below the
+    // fresh wound the gun outweighs the yield, so the kite never fires
+    // without real shield damage AND blades in contact. Ranged-only
+    // pressure never kites - the plant holds loaded volleys, the
+    // approach owns the rest. Blades answer through melee below.
+    val meleeClose = unit.matchups.threatsInPixels(KiteAway.meleeCloseTiles * 32.0).exists(t =>
+      t.likelyStillThere && t.unitClass.melee)
+    if ( ! KiteAway.shouldKite(unit.shieldWound, meleeClose)) return false
 
     // Near-dead hulls kite on melee contact alone: collapsed shields with
     // blades on top mean the next volley kills, so the wound ladder below

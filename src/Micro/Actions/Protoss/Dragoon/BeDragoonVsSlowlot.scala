@@ -87,6 +87,19 @@ object BeDragoonVsSlowlot extends Action {
    * own margin moves.
    */
   private def yieldsToKite(unit: FriendlyUnitInfo): Boolean = {
+    // Fresh, loaded and clear hulls hold their volleys on both paths:
+    // the kite donated the shooting, so the dance never stands down for
+    // a kite that will not fire.
+    val contactClose = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(_.likelyStillThere)
+    if (KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
+
+    // The dance stands down only where the kite would fire: fresh hulls
+    // and ranged-only pressure hold their volleys on both paths, so the
+    // yield mirrors the behavior gate exactly.
+    val meleeClose = unit.matchups.threatsInPixels(KiteAway.meleeCloseTiles * 32.0).exists(t =>
+      t.likelyStillThere && t.unitClass.melee)
+    if ( ! KiteAway.shouldKite(unit.shieldWound, meleeClose)) return false
+
     val marginPixels = KiteAway.enemyMarginTiles * 32.0
     def inMargin(u: FriendlyUnitInfo) =
       u.matchups.threatsInPixels(marginPixels).filter(t =>

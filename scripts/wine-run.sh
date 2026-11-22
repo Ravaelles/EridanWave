@@ -433,9 +433,25 @@ fi
 # The game ends when the client JVM exits (win or lose): tear the session down.
 say "###############################################"
 while kill -0 "$CLIENT_PID" 2>/dev/null; do sleep 2; done
+# Replay flush grace: StarCraft writes the .rep on game end, but on a
+# manual exit there may be nothing new coming - waiting the full window
+# then just burns wall-clock (Escape took ~15s). Break early once the
+# game processes are gone and a short grace passes with no new replay;
+# a live game still gets the full window for a slow flush.
+REPLAY_WAIT_GRACE=3
+REPLAY_DEAD_COUNT=0
 for _ in $(seq 1 20); do
   CUR_REP="$(ls -t "$REPLAYS_DIR"/*.rep 2>/dev/null | head -1 || true)"
   if [ -n "${CUR_REP:-}" ] && [ "$CUR_REP" != "${PRE_REP:-}" ]; then break; fi
+  if ! kill -0 "${SC_PID:-x}" 2>/dev/null && ! kill -0 "${CHAOS_PID:-x}" 2>/dev/null; then
+    REPLAY_DEAD_COUNT=$((REPLAY_DEAD_COUNT + 1))
+    if [ "$REPLAY_DEAD_COUNT" -ge "$REPLAY_WAIT_GRACE" ]; then
+      say "  game processes gone, no new replay after ${REPLAY_DEAD_COUNT}s - skipping the wait"
+      break
+    fi
+  else
+    REPLAY_DEAD_COUNT=0
+  fi
   sleep 1
 done
 ls -lt "$REPLAYS_DIR"/ 2>/dev/null | head -3
