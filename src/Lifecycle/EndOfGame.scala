@@ -35,6 +35,10 @@ object EndOfGame {
       KillLedger.killedResources,
       KillLedger.lostResources,
       HitCounter.total))
+    // Rivalry ledgers (counted all game, reported once): starved duels
+    // and phase-mismatch streaks, or the all-clear.
+    System.out.println(DuelStarvation.summary())
+    System.out.println(MotionMismatch.summary())
     FormationAudit.finish(With.mapFileName, With.frame)
     CherryVis.CherryVis.finish(isWinner)
     // Tuning score row (fixed-name + dated copy) when a strategy is active.

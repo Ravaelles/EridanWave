@@ -216,3 +216,15 @@ hysteresis home (rules 10-11).
   chain beside the technique legs) and on UMS (same verdicts as the
   pre-P6 baseline on 1DragWounded/1Drag/4+3Zeal, Wounded flips to a win
   inside its known variance).
+- Phase-rivalry tripwires (L1, 2026-11): the technique and the march
+  voted separately with no witness when they fought over a unit (duel
+  legs vs the verdict bus). First of three levels closed by counting
+  the disagreement twice: starved-duel frames (engage voted duel, the
+  unit was not ready) and sustained motion mismatches (duel-under-
+  Withdraw at the engage choke, march-under-Duel at the march audit;
+  twelve consecutive frames, so release noise never reports). Both
+  print in the end-of-game box. Pattern: rivalry between two owners is
+  detected as sustained disagreement, counted, reported once.
+  Validated live (Motion mismatch none on Wounded/4+3Zeal; starvation
+  named Dragoon #76 for 1084f inside a Wounded win - the next
+  investigation).

@@ -240,6 +240,13 @@ object MarchOrders {
       case MarchLabel.WaitingForPack => MotionVerdict.Dress
       case _                        => MotionVerdict.Advance
     }
+    // L1 rivalry tripwire: the march retreats a held duel - the line walks
+    // the fight out of the map. Release noise never reaches the ledger
+    // threshold; sustained streaks report at game end.
+    if (actual == MarchLabel.Retreating && MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Duel) {
+      Debugging.MotionMismatch.bumpMarch(unit.id, unit.unitClass.toString, With.frame)
+    }
+
     Debugging.Probe.note("Motion", unit.id, s"want=${wanted.label} have=${actual.label} held=${MotionVerdict.held(unit.id, With.frame).label}")
     (terminus, marchLabel)
   }

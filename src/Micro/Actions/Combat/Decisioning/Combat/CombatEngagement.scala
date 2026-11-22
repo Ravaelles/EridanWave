@@ -1,6 +1,7 @@
 package Micro.Actions.Combat.Decisioning
 
 import Debugging.DuelStarvation
+import Debugging.MotionMismatch
 import Debugging.Probe
 import Information.Battles.ArmyStrength
 import Lifecycle.With
@@ -16,6 +17,7 @@ import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Decisions.ClusterCohesion
 import Tactic.Squads.Decisions.ClusterPosture
+import Tactic.Squads.Decisions.MotionVerdict
 import Tactic.Squads.Decisions.RetreatVerdict
 import Tactic.Squads.Decisions.SuicideMission
 import Utilities.DispatchBand
@@ -343,6 +345,12 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         unit.agent.perch.clear()
       }
       dispatchEngage(advance)
+      // L1 rivalry tripwire: the duel legs issued while the march holds
+      // Withdraw - the technique fights a walk-home. Release noise never
+      // reaches the ledger threshold; sustained streaks report at game end.
+      if (unit.unready && MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Withdraw) {
+        MotionMismatch.bumpDuel(unit.id, unit.unitClass.toString, With.frame)
+      }
     } else {
       // Tripwire for starved duels: the dispatch voted for the duel but
       // the legs never ran - a sleeping march or a legacy brain issuing
