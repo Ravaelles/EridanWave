@@ -6,6 +6,7 @@ import Mathematics.Maff
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Tactic.Squads.Decisions.RetreatVerdict
 import Utilities.Latch
 import Utilities.Time.Minutes
 
@@ -42,6 +43,21 @@ object ProtossWallIn {
 
   /** A banked line fights wounded: replacements outvalue shields. */
   val fightMinerals: Int = 1000
+
+  /**
+   * Hold and chew only this close to a wall piece, in tiles: marching
+   * twenty tiles to a chew through live guns donates the hull before
+   * it ever shoots. Out of reach the march owns the approach.
+   */
+  val maxEngageTiles: Double = 9.0
+
+  def inReach(distTiles: Double): Boolean = distTiles <= maxEngageTiles
+
+  /** Holders need shields up: below this the hull retreats instead of
+    * standing under the guns. */
+  val minHoldShields: Int = 20
+
+  def shieldsHold(shieldPoints: Int): Boolean = shieldPoints >= minHoldShields
 
   /** Detection only runs this early, in frames: late walls are sieges. */
   def detectFrames: Int = Minutes(9)()
@@ -95,17 +111,33 @@ object ProtossWallIn {
     if ( ! unit.unitClass.isWarrior || unit.flying) return false
     if ( ! Protoss.Dragoon(unit)) return false
     if ( ! active()) return false
+    // Retreat owns the frame when it is held: the wall mission never
+    // outvotes a retreat, it only grinds walls nobody is dying on. The
+    // verdict counts units, never masonry.
+    if (RetreatVerdict.held(unit.id, With.frame)) return false
+
+    val centroid = unit.squad.map(_.centroidGround).getOrElse(unit.pixel)
+    val pieces = Chokes.enemyNaturalChoke.map(wallPiecesNear).getOrElse(Seq.empty)
+      .filter(piece => unit.pixelDistanceEdge(piece) * Maff.inv32 <= maxEngageTiles)
+    // Out of reach the march owns the approach: holding or chewing
+    // twenty tiles out fights the enemy army with a wall mission.
+    if (pieces.isEmpty) return false
 
     val withdrawing = woundLatched(unit.id, woundOf(unit))
     if ( ! shouldFightWall(withdrawing, With.self.supplyUsed200, With.self.minerals)) {
+      // Holders stand only unpressured and shielded: mobile guns on top
+      // or collapsed shields lift the mission - the hull retreats
+      // instead of donating itself under the wall. Static fire alone
+      // never lifts it: grinding under it is the job.
+      val pressedByUnits = unit.matchups.threatsInRange.exists(t => ! t.unitClass.isBuilding)
+      if (pressedByUnits || ! shieldsHold(unit.shieldPoints)) return false
+
       unit.agent.act("ProtossWallHold")
       Commander.hold(unit)
 
       return true
     }
 
-    val centroid = unit.squad.map(_.centroidGround).getOrElse(unit.pixel)
-    val pieces = Chokes.enemyNaturalChoke.map(wallPiecesNear).getOrElse(Seq.empty)
     Maff.minBy(pieces)(_.pixelDistanceCenter(centroid)).foreach(piece => {
       unit.agent.toAttack = Some(piece)
       unit.agent.act("ProtossWallIn")

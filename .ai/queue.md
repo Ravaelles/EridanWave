@@ -50,6 +50,8 @@ Details live in `details/` - the queue keeps one line per item.
 ## Needs a live game (code green, jar includes it)
 
 - Wall-in doctrine. Needs a PvT wall-in (`details/wall-in.md`).
+  PvP hold gates (9 tiles, shields>=20, no unit pressure, retreat
+  priority) need the next ladder PvP wall-in - owner watches.
 - Stalled-duel fetch. Needs Sunkens3 (`details/sunkens.md`).
 - DT leash, MineDefuse, vulture cannons, bank gates, weak-PvP hold,
   HT-vs-rejoin, artillery-vs-duels. Needs the triggering games

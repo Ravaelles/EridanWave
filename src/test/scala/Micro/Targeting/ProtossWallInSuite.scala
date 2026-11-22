@@ -53,4 +53,14 @@ class ProtossWallInSuite extends AnyFunSuite {
     assert(ProtossWallIn.shouldFightWall(withdrawing = true, supplyUsed = 180, minerals = 0))
     assert(ProtossWallIn.shouldFightWall(withdrawing = true, supplyUsed = 0, minerals = 1000))
   }
+
+  test("holders stand only close to the wall, with shields up") {
+    assert(ProtossWallIn.inReach(distTiles = 0.0))
+    assert(ProtossWallIn.inReach(distTiles = 9.0))
+    assert( ! ProtossWallIn.inReach(distTiles = 9.1))
+    assert( ! ProtossWallIn.inReach(distTiles = 20.0))
+    assert(ProtossWallIn.shieldsHold(shieldPoints = 80))
+    assert(ProtossWallIn.shieldsHold(shieldPoints = 20))
+    assert( ! ProtossWallIn.shieldsHold(shieldPoints = 19))
+  }
 }

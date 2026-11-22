@@ -27,6 +27,13 @@
 - Wounded hulls hold off: withdraw at 15 wound (shields plus hull),
   back at 13, or everyone fights at supply >= 180 / minerals >= 1000.
   Holding hulls act `ProtossWallHold` and let normal logic own them.
+- Hold discipline (owner order, 2026-11): holders stand only unpressured
+  and shielded, at most nine tiles out. Mobile guns on top or shields
+  below 20 lift the mission - the hull retreats instead of donating
+  itself under the wall (static fire alone never lifts it: grinding
+  under it is the job). A held retreat verdict outranks the mission
+  outright - the wall never outvotes a retreat. Out of nine tiles the
+  march owns the approach instead of chewing across the map.
 - Chain order in `acquireTarget`: Terran wall-in, then Protoss, then
   the generic breach fallback. No new movement writer (attack and
   hold are both exempt legs).
