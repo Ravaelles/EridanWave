@@ -38,9 +38,9 @@ class MirrorFocusSuite extends AnyFunSuite with StarEngineSuite {
     }
   }
 
-  private def grind(oursPilot: Pilot, foePilot: Pilot): (Int, Int) = {
-    val ours = (0 until 3).map(i => new Body(Protoss.Dragoon, i * 40.0, 900.0, Protoss.Dragoon.maxTotalHealth))
-    val foes = (0 until 3).map(i => new Body(Protoss.Dragoon, i * 40.0, 100.0, Protoss.Dragoon.maxTotalHealth))
+  private def grind(oursPilot: Pilot, foePilot: Pilot, n: Int = 3): (Int, Int) = {
+    val ours = (0 until n).map(i => new Body(Protoss.Dragoon, i * 40.0, 900.0, Protoss.Dragoon.maxTotalHealth))
+    val foes = (0 until n).map(i => new Body(Protoss.Dragoon, i * 40.0, 100.0, Protoss.Dragoon.maxTotalHealth))
     val world = new World(
       ours, foes,
       (ours.map(_ -> oursPilot) ++ foes.map(_ -> foePilot)).toMap,
@@ -77,5 +77,13 @@ class MirrorFocusSuite extends AnyFunSuite with StarEngineSuite {
     val (a, b) = grind(new SpreadPilot, new SpreadPilot)
     println(s"DIAG spread-control ours=$a/3 foes=$b/3")
     assert(a + b < 6, "a spread mirror must trade hulls, not stall")
+  }
+
+  test("16v16: the shared pick holds at map scale, both seats") {
+    val (focusOurs, spreadFoes) = grind(new FocusPilot, new SpreadPilot, n = 16)
+    val focusKills = 16 - spreadFoes
+    val spreadKills = 16 - focusOurs
+    println(s"DIAG 16v16 focus-seat ours=$focusOurs/16 foes=$spreadFoes/16 kills focus=$focusKills spread=$spreadKills")
+    assert(focusKills >= spreadKills, "the shared pick must not trade down at map scale")
   }
 }

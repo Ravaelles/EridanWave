@@ -125,16 +125,16 @@ class DragoonMirrorSuite extends AnyFunSuite with StarEngineSuite {
     }
   }
 
-  private def lineDuel(oursP: Body => Pilot, foeP: Body => Pilot, frames: Int = 4000): (Int, Int, Int) = {
-    val ours = (0 until 3).map(i => new Body(Protoss.Dragoon, i * 40.0, 500.0, Protoss.Dragoon.maxTotalHealth))
-    val foes = (0 until 3).map(i => new Body(Protoss.Dragoon, 400.0 + i * 40.0, 500.0, Protoss.Dragoon.maxTotalHealth))
+  private def lineDuel(oursP: Body => Pilot, foeP: Body => Pilot, frames: Int = 4000, n: Int = 3): (Int, Int, Int) = {
+    val ours = (0 until n).map(i => new Body(Protoss.Dragoon, i * 40.0, 500.0, Protoss.Dragoon.maxTotalHealth))
+    val foes = (0 until n).map(i => new Body(Protoss.Dragoon, 400.0 + i * 40.0, 500.0, Protoss.Dragoon.maxTotalHealth))
     val world = new World(ours, foes, (ours.map(o => o -> oursP(o)) ++ foes.map(f => f -> foeP(f))).toMap, Seq.empty)
     var f = 0
     while (f < frames && ours.exists(_.alive) && foes.exists(_.alive)) {
       world.step()
       f = world.frame
     }
-    (3 - foes.count(_.alive), 3 - ours.count(_.alive), f)
+    (n - foes.count(_.alive), n - ours.count(_.alive), f)
   }
 
   test("holding loaded volleys beats kiting the mirror, both seats") {
@@ -143,5 +143,12 @@ class DragoonMirrorSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG hold-seat holdKills=$holdKillsA kiteKills=$kiteKillsA frames=$holdFramesA; kite-seat kiteKills=$kiteKillsB holdKills=$holdKillsB frames=$kiteFramesB")
     assert(holdKillsA + holdKillsB >= kiteKillsA + kiteKillsB, "holding loaded volleys must not trade down to kiting on cooldown")
     assert(holdFramesA < kiteFramesB, "holding must clear the mirror faster than kiting it - the return trips are the wasted frames")
+  }
+
+  test("1v1: the lone hull holds instead of kiting, both seats") {
+    val (holdKillsA, kiteKillsA, _) = lineDuel(_ => new HoldVolleysPilot, _ => new AlwaysKitePilot, n = 1)
+    val (kiteKillsB, holdKillsB, _) = lineDuel(_ => new AlwaysKitePilot, _ => new HoldVolleysPilot, n = 1)
+    println(s"DIAG 1v1 hold-seat holdKills=$holdKillsA kiteKills=$kiteKillsA; kite-seat kiteKills=$kiteKillsB holdKills=$holdKillsB")
+    assert(holdKillsA + holdKillsB >= kiteKillsA + kiteKillsB, "a lone hull must not trade down by kiting its mirror")
   }
 }

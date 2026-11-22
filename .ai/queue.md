@@ -56,7 +56,13 @@ Details live in `details/` - the queue keeps one line per item.
 - Wall-in doctrine. Needs a PvT wall-in (`details/wall-in.md`).
   PvP hold gates (9 tiles, shields>=20, no unit pressure, retreat
   priority) need the next ladder PvP wall-in - owner watches.
-- Stalled-duel fetch. Needs Sunkens3 (`details/sunkens.md`).
+- Stalled-duel fetch. PARKED by owner (2026-11-22): the pair is broken
+  beyond measure, no more Reaver testing. Sunkens3 stays a grind map;
+  the BoardingVote agreement + BoardStalled leg stay in the tree
+  suite-pinned (the vote fires live, the leg fired 6f once) but
+  unproven - touch only with a new owner order. Terran maps
+  (Vultures_v_Dragoons and the whole terran/ dir) out of scope:
+  Protoss units only - Zealots and Dragoons.
 - DT leash, vulture cannons, bank gates, weak-PvP hold,
   HT-vs-rejoin, artillery-vs-duels. Needs the triggering games
   (`details/pending-specs.md`).
