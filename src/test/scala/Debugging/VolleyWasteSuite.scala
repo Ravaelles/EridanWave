@@ -43,11 +43,25 @@ class VolleyWasteSuite extends AnyFunSuite {
     VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 0)
     VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 0)
     VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 100)
-    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 8, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 101)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 101)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 8, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 102)
     VolleyWaste.bump(9, "Zealot", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 0)
     val report = VolleyWaste.summary()
     assert(report.contains("Dragoon #7"))
     assert(report.contains("1f"))
+    assert(VolleyWaste.worstTotal == 1)
+  }
+
+  test("lone flickers never count, only repeated stale moves") {
+    VolleyWaste.reset()
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 100)
+    assert(VolleyWaste.worstTotal == 0)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 103)
+    assert(VolleyWaste.worstTotal == 0)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 104)
+    assert(VolleyWaste.worstTotal == 1)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.HoldPosition, isWarrior = true, frame = 105)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 106)
     assert(VolleyWaste.worstTotal == 1)
   }
 

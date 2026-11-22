@@ -19,11 +19,13 @@ object VolleyWaste extends PerGame {
   private val wastedFrames = new mutable.HashMap[Int, Int]()
   private val classById = new mutable.HashMap[Int, String]()
   private val orderSince = new mutable.HashMap[Int, (String, Int)]()
+  private val wasteStreak = new mutable.HashMap[Int, Int]()
 
   override def reset(): Unit = {
     wastedFrames.clear()
     classById.clear()
     orderSince.clear()
+    wasteStreak.clear()
   }
 
   /**
@@ -53,8 +55,17 @@ object VolleyWaste extends PerGame {
       case _ => orderSince(unitId) = (order, frame)
     }
     val sinceFrame = orderSince(unitId)._2
-    if ( ! isForgone(cooldownLeft, hasHittable, order, isWarrior)) return
-    if ( ! isStaleOrder(sinceFrame, frame, staleFrames)) return
+    if ( ! isForgone(cooldownLeft, hasHittable, order, isWarrior) || ! isStaleOrder(sinceFrame, frame, staleFrames)) {
+      wasteStreak.remove(unitId)
+
+      return
+    }
+    // Lone flickers are order latency, not skipped volleys: a frame that
+    // fires right after a step reads Move while the shot is already out.
+    // Only a repeated stale Move donates volleys on purpose.
+    val streak = wasteStreak.getOrElse(unitId, 0) + 1
+    wasteStreak(unitId) = streak
+    if (streak < 2) return
 
     wastedFrames(unitId) = wastedFrames.getOrElse(unitId, 0) + 1
     classById(unitId) = unitClass
