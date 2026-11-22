@@ -39,6 +39,7 @@ object EndOfGame {
     // and phase-mismatch streaks, or the all-clear.
     System.out.println(DuelStarvation.summary())
     System.out.println(MotionMismatch.summary())
+    System.out.println(VolleyWaste.summary())
     FormationAudit.finish(With.mapFileName, With.frame)
     CherryVis.CherryVis.finish(isWinner)
     // Tuning score row (fixed-name + dated copy) when a strategy is active.

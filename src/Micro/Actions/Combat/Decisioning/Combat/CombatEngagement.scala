@@ -3,6 +3,7 @@ package Micro.Actions.Combat.Decisioning
 import Debugging.DuelStarvation
 import Debugging.MotionMismatch
 import Debugging.Probe
+import Debugging.VolleyWaste
 import Information.Battles.ArmyStrength
 import Lifecycle.With
 import Mathematics.Maff
@@ -291,6 +292,11 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         || unit.matchups.engagedUpon)
 
   private[Decisioning] def engage(): Boolean = {
+    // Wasted-volley ledger: a loaded gun with a hittable target that ends
+    // the frame moving judges the kite - it must fall, kills must not.
+    // All proxy reads share the last settled game state, so a counted
+    // frame truly moved past a loaded volley.
+    VolleyWaste.bump(unit.id, unit.unitClass.toString, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.order, unit.unitClass.isWarrior)
     // Cluster posture owns the duel (phase 4 of _COMBAT-REFACTOR.md):
     // Withdraw/Regroup walk the march, Fight/HoldLine duel. Explicit
     // all-ins bypass the cluster vote the way prey does: a suicide
