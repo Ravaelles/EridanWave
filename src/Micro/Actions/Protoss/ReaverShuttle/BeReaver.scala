@@ -333,11 +333,13 @@ object BeReaver extends Action {
       .orElse(ReaverShuttlePair.rideOf(context.unit))
       .orElse(ReaverShuttlePair.freeRideFor(context.unit))
       .getOrElse(return false)
-    // Any static in gun, not just the nearest foe: lings crowd the
-    // nearest slot while the sunken holding the duel sits behind them.
-    // The vote reads the same any-foe shape - the leg must too.
-    val staticInGun = context.unit.matchups.targets.exists(t =>
-      t.unitClass.isStaticDefense && context.unit.inRangeToAttack(t))
+    // Nearest foe, pixel metric, exactly like the vote: the order fires
+    // on the nearest foe static inside the gun, so the leg reads the
+    // same hull with the same ruler - engine range disagrees with pixel
+    // range at the band edge, and the leg must not second-guess the vote.
+    val staticInGun = context.foe.exists(t =>
+      t.unitClass.isStaticDefense &&
+      context.unit.pixelDistanceEdge(t) <= context.unit.pixelRangeAgainst(t))
     val stalled = With.framesSince(context.unit.lastFrameStartingAttack) >= ReaverStaticStand.quietFrames
     val inReach = ReaverShuttleReboard.rideInReach(context.unit.pixelDistanceEdge(ride) * Maff.inv32)
     if ( ! BoardStalled.shouldBoard(stalled, staticInGun, inReach)) return false
