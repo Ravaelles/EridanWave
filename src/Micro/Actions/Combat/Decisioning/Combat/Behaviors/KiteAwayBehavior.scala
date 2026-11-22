@@ -81,6 +81,20 @@ object KiteAwayBehavior {
       return true
     }
 
+    // Contact kite (owner order, 1Drag_v_1Zeal post-mortem): melee
+    // inside 2.7 tiles with the gun cooling means distance is life -
+    // yield it, but never past a loaded volley: a ready gun shoots
+    // first, every cooldown cycle, so the kite only ever spends cooling
+    // frames. Ranged hulls only (blades live in contact); PvP-only
+    // like the gates around it.
+    val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
+      t.likelyStillThere && t.unitClass.melee)
+    if (pvpRules && ! unit.unitClass.melee && unit.cooldownLeft > 0 && meleeContact) {
+      kiteAway(unit, combat, hasMeleeNearby = true)
+
+      return true
+    }
+
     if ( ! shouldKite(unit, enemyInMargin, hasMeleeNearby, pvpRules, zergRules, shielded)) return false
     if (holdToShoot(unit, combat)) return true
     // Masonry never chases: kiting away from a building anchor donates
@@ -234,6 +248,19 @@ object KiteAwayBehavior {
     Commander.hold(unit)
   }
 
+  /**
+   * Contact floor (owner order, 1Drag_v_1Zeal post-mortem): under blades
+   * the yield never drops below the paced step. A fresh wound want is
+   * ~zero, and a zero step is standing - the paced step keeps the hull
+   * ahead of the chase while still landing every cooldown cycle.
+   */
+  private def contactYield(unit: FriendlyUnitInfo, woundWant: Double): Double = {
+    val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
+      t.likelyStillThere && t.unitClass.melee)
+    val paced = KiteYield.offsetPixels(woundWant, unit.cooldownLeft, unit.topSpeed, With.latency.latencyFrames + 2)
+    if (meleeContact) KiteAway.contactYield(woundWant, paced) else woundWant
+  }
+
   private def kiteAway(unit: FriendlyUnitInfo, combat: Combat, hasMeleeNearby: Boolean): Unit = {
     unit.agent.act("KiteAway")
     // Yield from the feet, never from the pin: a static formation slot
@@ -255,7 +282,7 @@ object KiteAwayBehavior {
     val meleeNear = unit.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val nearDeadFar = KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) && meleeNear
     val offsetPixels = if (nearDeadFar) KiteHold.nearDeadOffsetTiles * 32.0
-      else if (hasMeleeNearby) woundWant
+      else if (hasMeleeNearby) contactYield(unit, woundWant)
       else KiteYield.offsetPixels(woundWant, unit.cooldownLeft, unit.topSpeed, With.latency.latencyFrames + 2)
     unit.agent.decision.set(anchor.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
     combat.maneuvers.move()

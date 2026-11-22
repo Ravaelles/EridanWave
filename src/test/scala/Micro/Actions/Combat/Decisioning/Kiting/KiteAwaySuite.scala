@@ -21,8 +21,7 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.zergShieldWound == 8)
   }
 
-  test("wound levels follow total HP boundaries") {
-    assert(KiteAway.isCriticallyWounded(25))
+  test("wound levels follow total HP boundaries") {    assert(KiteAway.isCriticallyWounded(25))
     assert( ! KiteAway.isCriticallyWounded(26))
     assert(KiteAway.isSeriouslyWounded(65))
     assert(KiteAway.isSeriouslyWounded(25))
@@ -106,5 +105,11 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! KiteAway.holdsFire(cooldownLeft = 16, hitPoints = 80, enemyClose = false))
     assert( ! KiteAway.holdsFire(cooldownLeft = 0, hitPoints = 79, enemyClose = false))
     assert( ! KiteAway.holdsFire(cooldownLeft = 0, hitPoints = 80, enemyClose = true))
+  }
+
+  test("contact floor never drops below the paced step") {
+    assert(KiteAway.contactYield(woundWantPixels = 0.0, pacedPixels = 96.0) == 96.0)
+    assert(KiteAway.contactYield(woundWantPixels = 120.0, pacedPixels = 96.0) == 120.0)
+    assert(KiteAway.contactYield(woundWantPixels = 96.0, pacedPixels = 96.0) == 96.0)
   }
 }

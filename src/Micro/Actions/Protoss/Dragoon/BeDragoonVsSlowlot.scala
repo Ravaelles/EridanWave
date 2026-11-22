@@ -132,6 +132,13 @@ object BeDragoonVsSlowlot extends Action {
     // hittable outdamages margin footwork on both paths.
     if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby = inMargin(unit).exists(_.unitClass.melee))) return true
 
+    // Contact kite on both paths (PvP): cooling with melee inside 2.7
+    // tiles means the behavior yields real ground - the dance stands
+    // down instead of footworking past the volley.
+    val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
+      t.likelyStillThere && t.unitClass.melee)
+    if (pvpRules && unit.cooldownLeft > 0 && meleeContact) return true
+
     // The dance stands down only where the kite would fire: fresh hulls
     // and ranged-only pressure hold their volleys on both paths (PvP),
     // so the yield mirrors the behavior gate exactly.

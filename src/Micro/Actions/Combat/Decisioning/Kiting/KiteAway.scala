@@ -107,6 +107,15 @@ object KiteAway {
   def woundOffsetTiles(injury01: Double): Double =
     Maff.clamp(injury01, 0.0, 1.0) * maxOffsetTiles
 
+  /**
+   * Contact floor (pure numbers for the suite): under blades the yield
+   * takes the paced step over the wound want, never below it. A fresh
+   * wound want is ~zero and a zero step is standing; the paced step
+   * keeps the hull ahead of the chase while landing every volley.
+   */
+  def contactYield(woundWantPixels: Double, pacedPixels: Double): Double =
+    Math.max(woundWantPixels, pacedPixels)
+
   def shouldRetreat(
     totalHealth: Int,
     cooldownLeft: Int,
