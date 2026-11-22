@@ -16,6 +16,9 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.maxOffsetTiles == 1.4)
     assert(KiteAway.freshShieldWound == 14)
     assert(KiteAway.meleeCloseTiles == 2.6)
+    assert(KiteAway.steadyCooldownFrames == 15)
+    assert(KiteAway.steadyContactTiles == 2.7)
+    assert(KiteAway.zergShieldWound == 8)
   }
 
   test("wound levels follow total HP boundaries") {

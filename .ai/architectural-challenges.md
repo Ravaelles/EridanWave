@@ -274,6 +274,14 @@ hysteresis home (rules 10-11).
   any blade pressure on the pack keeps full wound steps and forbids the
   plant; the cap binds only against guns alone. Validated on UMS
   (ZealDrag 8/5 and 9/8 back-to-back; 16Drag 16/14 with waste ~1f).
+- Kite holds fire, calm blades, pack average (owner order, ZealDrag):
+  fresh loaded hulls with nothing in contact never enter the kite (the
+  kite donated the shooting); calm zealots (40f unhit, 41+ HP) stand;
+  blades whose mates average less HP hold for the pack. All three are
+  PvP-only; vs Zerg fresh shields hold and the classic ladder decides.
+  Pinned in KiteAwaySuite/MeleeKiteAwaySuite. Validated on UMS:
+  ZealDrag 9/6 and 9/5 back-to-back wins, 1Drag wins return, 10Zeal
+  mixed 2/4 (flood variance), 1Zeal mirrors hold.
 - One owner per shuttle (2026-11, owner order: no chaos): the pair
   brain and the drop/ferry missions split frames over one hull -
   mission Travel/Assemble intents interleaved with pair bait/await

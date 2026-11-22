@@ -87,25 +87,37 @@ object BeDragoonVsSlowlot extends Action {
    * own margin moves.
    */
   private def yieldsToKite(unit: FriendlyUnitInfo): Boolean = {
-    // Fresh, loaded and clear hulls hold their volleys on both paths:
-    // the kite donated the shooting, so the dance never stands down for
-    // a kite that will not fire.
-    val contactClose = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(_.likelyStillThere)
-    if (KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
-
-    // The dance stands down only where the kite would fire: fresh hulls
-    // and ranged-only pressure hold their volleys on both paths, so the
-    // yield mirrors the behavior gate exactly.
-    val meleeClose = unit.matchups.threatsInPixels(KiteAway.meleeCloseTiles * 32.0).exists(t =>
-      t.likelyStillThere && t.unitClass.melee)
-    if ( ! KiteAway.shouldKite(unit.shieldWound, meleeClose)) return false
-
+    val enemyIsProtoss = With.enemies.exists(_.isProtoss)
+    val zergRules = With.enemies.exists(_.isZerg) && ! enemyIsProtoss
+    val pvpRules = enemyIsProtoss
     val marginPixels = KiteAway.enemyMarginTiles * 32.0
     def inMargin(u: FriendlyUnitInfo) =
       u.matchups.threatsInPixels(marginPixels).filter(t =>
         t.likelyStillThere &&
         ! FacingAway.dismissMelee(t.unitClass.melee,
           FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
+    // Zerg fresh hulls hold on both paths: the classic ladder owns the rest.
+    if (zergRules && unit.shieldWound <= KiteAway.zergShieldWound) return false
+    // Fresh, loaded and clear hulls hold their volleys on both paths
+    // (PvP-only): the kite donated the shooting, so the dance never
+    // stands down for a kite that will not fire.
+    val contactClose = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(_.likelyStillThere)
+    if (pvpRules && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
+
+    // Plant owns the frame where it would fire: the dance stands down
+    // instead of starving the hold - a loaded volley with something
+    // hittable outdamages margin footwork on both paths.
+    if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby = inMargin(unit).exists(_.unitClass.melee))) return true
+
+    // The dance stands down only where the kite would fire: fresh hulls
+    // and ranged-only pressure hold their volleys on both paths (PvP),
+    // so the yield mirrors the behavior gate exactly.
+    if (pvpRules) {
+      val meleeClose = unit.matchups.threatsInPixels(KiteAway.meleeCloseTiles * 32.0).exists(t =>
+        t.likelyStillThere && t.unitClass.melee)
+      if ( ! KiteAway.shouldKite(unit.shieldWound, meleeClose)) return false
+    }
+
     // Near-dead hulls yield past the wound ladder too where the shipped
     // kite kites them: collapsed shields with blades on top. Guns alone
     // hold their last volleys on both paths - neither donates them.

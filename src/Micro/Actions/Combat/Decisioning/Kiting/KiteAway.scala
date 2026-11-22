@@ -65,6 +65,9 @@ object KiteAway {
    */
   var meleeCloseTiles: Double = 2.6
 
+  /** Zerg fresh hulls hold: the classic ladder decides the rest. */
+  val zergShieldWound: Int = 8
+
   /**
    * Fresh, loaded and clear hulls hold their fire instead of kiting:
    * with the gun inside its window, enough hull to trade, and nothing

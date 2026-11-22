@@ -49,4 +49,20 @@ class MeleeKiteAwaySuite extends AnyFunSuite {
     assert( ! MeleeKiteAway.requiresFormation(melee = true))
     assert(MeleeKiteAway.requiresFormation(melee = false))
   }
+
+  test("calm healthy-enough blades hold instead of kiting") {
+    assert(MeleeKiteAway.holdsWhenCalm(framesSinceDamage = 41, totalHp = 42))
+    assert(MeleeKiteAway.holdsWhenCalm(framesSinceDamage = 400, totalHp = 160))
+    assert( ! MeleeKiteAway.holdsWhenCalm(framesSinceDamage = 40, totalHp = 160))
+    assert( ! MeleeKiteAway.holdsWhenCalm(framesSinceDamage = 41, totalHp = 41))
+    assert( ! MeleeKiteAway.holdsWhenCalm(framesSinceDamage = 0, totalHp = 160))
+  }
+
+  test("blades whose mates average less hold instead of kiting") {
+    assert(MeleeKiteAway.standsWithWeakerPack(mateHpTotal = 60, mateCount = 2, myHp = 100))
+    assert(MeleeKiteAway.standsWithWeakerPack(mateHpTotal = 30, mateCount = 1, myHp = 31))
+    assert( ! MeleeKiteAway.standsWithWeakerPack(mateHpTotal = 0, mateCount = 0, myHp = 100))
+    assert( ! MeleeKiteAway.standsWithWeakerPack(mateHpTotal = 100, mateCount = 2, myHp = 50))
+    assert( ! MeleeKiteAway.standsWithWeakerPack(mateHpTotal = 200, mateCount = 2, myHp = 100))
+  }
 }

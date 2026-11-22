@@ -48,4 +48,33 @@ object MeleeKiteAway {
         (hasSpeedlingNearby && packIntact) ||
         outnumberedByZealots ||
         (totalHp <= woundHp && attackingMelee))
+
+  /**
+   * Calm blades hold: not hit in forty frames with 41+ HP means no
+   * pressure worth yielding to - stand and swing instead of donating
+   * ground (and the volley) for nothing. Owner order from the ZealDrag
+   * mirror. Pure numbers for the suite; the behavior reads the clock.
+   */
+  val calmFrames: Int = 40
+
+  val calmHp: Int = 41
+
+  def holdsWhenCalm(framesSinceDamage: Int, totalHp: Int): Boolean =
+    framesSinceDamage > calmFrames && totalHp > calmHp
+
+  /**
+   * Pack-average hold: blades whose mates average less HP hold the frame
+   * instead of kiting - the healthier hull stands while the pack chews
+   * together, instead of every blade yielding on its own wound and the
+   * pack dissolving into a rout. PvP only (below); needs mates to
+   * compare against.
+   */
+  /**
+   * Pack-mate radius, in tiles: only shoulder-to-shoulder blades count
+   * for the average - the pack that kites together must stand together.
+   */
+  val packMateTiles: Double = 2.0
+
+  def standsWithWeakerPack(mateHpTotal: Int, mateCount: Int, myHp: Int): Boolean =
+    mateCount > 0 && mateHpTotal.toDouble / mateCount < myHp
 }
