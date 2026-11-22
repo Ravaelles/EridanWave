@@ -271,8 +271,10 @@ hysteresis home (rules 10-11).
   sieged tanks shelling our natural held our dragoons at the 13-tile
   keep-off while the base died - and the wall mission held wounded
   hulls under the guns twenty tiles out against superior armies. Now
-  shells at home (20 tiles) with three answering dragoons inside ten
-  are fought, never yielded; holders stand only unpressured, shielded
+  shells at home (20 tiles) are answered on local odds (forty percent
+  of the enemy strength at the gun) or five combat hulls, never yielded;
+  weaker answers keep the old yield, the retreat verdict owns the rest.
+  Holders stand only unpressured, shielded
   (20+) and within nine tiles of the wall; a held retreat verdict
   outranks the wall mission outright. Pinned in ArtilleryKeepOffSuite
   (shells-at-home and answer rows) and ProtossWallInSuite (reach and

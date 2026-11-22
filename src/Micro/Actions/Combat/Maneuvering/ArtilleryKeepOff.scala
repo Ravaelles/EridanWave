@@ -78,37 +78,49 @@ object ArtilleryKeepOff {
    */
   val naturalRadiusTiles: Double = 20.0
 
-  /** Local superiority to answer shells, in dragoons inside ten tiles. */
-  val answerDragoons: Int = 3
-
   /** Answer radius around the gun, in tiles: only counted hulls fight. */
   val answerRadiusTiles: Double = 10.0
+
+  /** Fight when we hold this fraction of the enemy's strength at the gun. */
+  val answerStrengthFraction: Double = 0.4
+
+  /** ...or this many combat hulls answer regardless of the odds. */
+  val answerCombatUnits: Int = 5
 
   def shellsAtHome(distTankToNaturalTiles: Double): Boolean =
     distTankToNaturalTiles <= naturalRadiusTiles
 
-  def answersUp(dragoonsNear: Int): Boolean =
-    dragoonsNear >= answerDragoons
-
-  /** Fight the guns instead of yielding: shells at home with the
-    * dragoons to answer them. Fewer hulls keep the old yield. */
-  def shouldAnswer(tankAtHome: Boolean, dragoonsNear: Int): Boolean =
-    tankAtHome && answersUp(dragoonsNear)
+  /** Fight the guns instead of yielding: shells at home answered with
+    * local odds (forty percent of the enemy strength at the gun) or
+    * five combat hulls answering regardless. Weaker answers keep the
+    * old yield; the retreat verdict owns the rest. */
+  def shouldAnswer(tankAtHome: Boolean, oursValue: Double, theirsValue: Double, combatUnitsNear: Int): Boolean =
+    tankAtHome && (combatUnitsNear >= answerCombatUnits || oursValue >= answerStrengthFraction * theirsValue)
 
   /**
    * Natural defense, game-coupled seam over the pure kernels above:
-   * any sieged tank shelling our natural with three answering dragoons
-   * inside ten tiles of it. The duel owns those frames, never the yield.
+   * any sieged tank shelling our natural answered with local odds or
+   * five combat hulls. The duel owns those frames, never the yield.
    */
   private def answersAtHome(shells: Iterable[UnitInfo]): Boolean = {
     if (With.geography.ourBases.size <= 1) return false
 
     val home = With.geography.ourNatural.heart.center
     shells.exists(gun =>
-      shellsAtHome(gun.pixelDistanceCenter(home) * Maff.inv32) &&
-        answersUp(With.units.ours.count(u =>
-          u.alive && Protoss.Dragoon(u) &&
-            u.pixelDistanceCenter(gun.pixel) <= answerRadiusTiles * 32.0)))
+      shellsAtHome(gun.pixelDistanceCenter(home) * Maff.inv32) && {
+        def strength(u: UnitInfo): Double =
+          u.subjectiveValue * Math.min(1.0, u.totalHealth.toDouble / u.unitClass.maxTotalHealth)
+        val ours = With.units.ours.view.filter(u =>
+          u.alive && u.unitClass.isWarrior && u.pixelDistanceCenter(gun.pixel) <= answerRadiusTiles * 32.0)
+        val theirs = With.units.enemy.view.filter(e =>
+          e.alive && e.likelyStillThere && e.unitClass.isWarrior && ! e.unitClass.isWorker &&
+            e.pixelDistanceCenter(gun.pixel) <= answerRadiusTiles * 32.0)
+        shouldAnswer(
+          tankAtHome      = true,
+          oursValue       = ours.map(strength).sum,
+          theirsValue     = theirs.map(strength).sum,
+          combatUnitsNear = ours.size)
+      })
   }
 
   def act(unit: FriendlyUnitInfo): Boolean = {

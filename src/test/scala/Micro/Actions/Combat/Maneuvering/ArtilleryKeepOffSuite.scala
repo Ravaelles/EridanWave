@@ -26,11 +26,13 @@ class ArtilleryKeepOffSuite extends AnyFunSuite {
     assert( ! ArtilleryKeepOff.yieldLatched(id, distTiles = 13.5, wound01 = 0.0))
   }
 
-  test("shells on the natural are answered with three dragoons, yielded without") {
-    assert(ArtilleryKeepOff.shouldAnswer(tankAtHome = true, dragoonsNear = 3))
-    assert(ArtilleryKeepOff.shouldAnswer(tankAtHome = true, dragoonsNear = 9))
-    assert( ! ArtilleryKeepOff.shouldAnswer(tankAtHome = true, dragoonsNear = 2))
-    assert( ! ArtilleryKeepOff.shouldAnswer(tankAtHome = false, dragoonsNear = 3))
+  test("shells on the natural are answered on odds or five hulls, never under-gunned") {
+    assert(ArtilleryKeepOff.shouldAnswer(tankAtHome = true, oursValue = 40.0, theirsValue = 100.0, combatUnitsNear = 0))
+    assert(ArtilleryKeepOff.shouldAnswer(tankAtHome = true, oursValue = 400.0, theirsValue = 100.0, combatUnitsNear = 0))
+    assert(ArtilleryKeepOff.shouldAnswer(tankAtHome = true, oursValue = 0.0, theirsValue = 100.0, combatUnitsNear = 5))
+    assert( ! ArtilleryKeepOff.shouldAnswer(tankAtHome = true, oursValue = 39.0, theirsValue = 100.0, combatUnitsNear = 0))
+    assert( ! ArtilleryKeepOff.shouldAnswer(tankAtHome = true, oursValue = 0.0, theirsValue = 100.0, combatUnitsNear = 4))
+    assert( ! ArtilleryKeepOff.shouldAnswer(tankAtHome = false, oursValue = 400.0, theirsValue = 0.0, combatUnitsNear = 9))
     assert(ArtilleryKeepOff.shellsAtHome(distTankToNaturalTiles = 20.0))
     assert( ! ArtilleryKeepOff.shellsAtHome(distTankToNaturalTiles = 20.1))
   }
