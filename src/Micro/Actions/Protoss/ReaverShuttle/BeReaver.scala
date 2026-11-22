@@ -43,6 +43,10 @@ object BeReaver extends Action {
     // fact) fights instead of freezing, and a walking hull shoots its
     // way to the ride instead of marching past the guns.
     val order = PairArbiter.reaverOrder(unit)
+    // The order rides the probe chain beside the executing leg: a fetch
+    // and a guard run the same legs, so without the label the Sunkens3
+    // question (does the ride guard while the hull boards?) is invisible.
+    unit.agent.act(order.label)
     val context = GroundContext(
       unit       = unit,
       foe        = Maff.minBy(unit.matchups.targets.view.filter(t => ! t.flying && unit.canAttack(t)))(_.pixelDistanceEdge(unit)),

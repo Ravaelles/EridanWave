@@ -48,16 +48,17 @@ object BeShuttle extends Action {
     if (AvoidDangerousUnits.act(shuttle)) return UnitControl.claimedIf(! shuttle.ready)
 
     PairArbiter.shuttleOrder(shuttle) match {
-      case PairArbiter.Flee       => if ( ! flee(shuttle)) support(shuttle)
+      case order @ PairArbiter.Flee       => shuttle.agent.act(order.label); if ( ! flee(shuttle)) support(shuttle)
       // Glued retreat: hold the mate first (escort/rejoin fly it back
       // into board reach); flee away only with no mate lock left.
-      case PairArbiter.FleeToMate => if ( ! escort(shuttle) && ! rejoin(shuttle) && ! flee(shuttle)) support(shuttle)
-      case PairArbiter.FetchMate  => if ( ! adopt(shuttle) && ! rejoin(shuttle)) support(shuttle)
-      case PairArbiter.GuardMate  => if ( ! escort(shuttle) && ! rejoin(shuttle)) support(shuttle)
-      case PairArbiter.RaidCarry  => if ( ! raid(shuttle)) support(shuttle)
-      case PairArbiter.FollowArmy => support(shuttle)
-      case PairArbiter.Bait       => bait(shuttle)
-      case PairArbiter.AwaitPost  =>
+      case order @ PairArbiter.FleeToMate => shuttle.agent.act(order.label); if ( ! escort(shuttle) && ! rejoin(shuttle) && ! flee(shuttle)) support(shuttle)
+      case order @ PairArbiter.FetchMate  => shuttle.agent.act(order.label); if ( ! adopt(shuttle) && ! rejoin(shuttle)) support(shuttle)
+      case order @ PairArbiter.GuardMate  => shuttle.agent.act(order.label); if ( ! escort(shuttle) && ! rejoin(shuttle)) support(shuttle)
+      case order @ PairArbiter.RaidCarry  => shuttle.agent.act(order.label); if ( ! raid(shuttle)) support(shuttle)
+      case order @ PairArbiter.FollowArmy => shuttle.agent.act(order.label); support(shuttle)
+      case order @ PairArbiter.Bait       => shuttle.agent.act(order.label); bait(shuttle)
+      case order @ PairArbiter.AwaitPost  =>
+        shuttle.agent.act(order.label)
         // No mate, but someone else may hail (a storm-ready Templar):
         // the old chain adopted every frame, so the post keeps one
         // opportunistic adopt before holding.
