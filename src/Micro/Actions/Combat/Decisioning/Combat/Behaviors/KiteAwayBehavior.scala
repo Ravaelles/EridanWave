@@ -81,6 +81,17 @@ object KiteAwayBehavior {
       return true
     }
 
+    // Dying volley first (owner order: shoot every cycle): a near-dead
+    // hull with a loaded gun and something hittable spends the shot
+    // before running - kiting far past a loaded volley donates the only
+    // damage it will ever deal. The escape resumes once the gun cools.
+    if (KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) &&
+      unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+      plantVolley(unit)
+
+      return true
+    }
+
     // Contact kite (owner order, 1Drag_v_1Zeal post-mortem): melee
     // inside 2.7 tiles with the gun cooling means distance is life -
     // yield it, but never past a loaded volley: a ready gun shoots
