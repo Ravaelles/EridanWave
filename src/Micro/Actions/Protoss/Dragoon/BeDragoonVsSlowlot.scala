@@ -33,6 +33,20 @@ object BeDragoonVsSlowlot extends Action {
     // melee dismissed); both paths agree by construction.
     if (yieldsToKite(unit)) return UnitControl.Declined
 
+    // Spend loaded volleys before footwork: a loaded gun with something
+    // hittable outdamages margin positioning on any hull, and the
+    // ledger counts every loaded move past a hittable target as waste.
+    // The plant forbids standing under blades for survival; this rung
+    // only spends the shot the engine confirms, never holds the hull.
+    if (unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+      Target.choose(unit)
+      if (unit.agent.toAttack.isDefined && unit.readyForAttackOrder(unit.agent.toAttack.get)) {
+        Commander.attack(unit)
+
+        return UnitControl.claimedIf(! unit.ready)
+      }
+    }
+
     val margin    = Maff.min(unit.matchups.threatsInPixels(160).map(t => t.pixelsToGetInRange(unit) + 32 - Maff.or0(16, t.presumptiveTarget.contains(unit)) - 16 * t.dot(unit.pixel))).getOrElse(320d).toInt
     val safety    = DragoonSlowlotPolicy.safety(margin, unit.totalHealth)
 
