@@ -46,7 +46,7 @@ object KiteAway {
   var criticalCooldown: Int = 4
 
   /** Mildly wounded withdraw while cooldown exceeds this. */
-  var mildCooldown: Int = 15
+  var mildCooldown: Int = 18
 
   /** Retreat only while an enemy presses within firing range plus this margin (tiles). */
   var enemyMarginTiles: Double = 1.8

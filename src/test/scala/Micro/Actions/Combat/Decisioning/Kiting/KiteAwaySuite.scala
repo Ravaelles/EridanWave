@@ -10,7 +10,7 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.criticalWoundHp == 25)
     assert(KiteAway.seriousCooldown == 10)
     assert(KiteAway.criticalCooldown == 4)
-    assert(KiteAway.mildCooldown == 15)
+    assert(KiteAway.mildCooldown == 18)
     assert(KiteAway.kiteVsRangedHp == 61)
     assert(KiteAway.enemyMarginTiles == 1.8)
     assert(KiteAway.maxOffsetTiles == 1.4)
