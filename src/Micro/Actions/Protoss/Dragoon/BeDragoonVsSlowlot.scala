@@ -45,6 +45,12 @@ object BeDragoonVsSlowlot extends Action {
 
         return UnitControl.claimedIf(! unit.ready)
       }
+      // Loaded but not ready (aiming, turning): hold the volley instead
+      // of footworking past it - the gun speaks the moment it aims,
+      // and no step is worth a donated shot.
+      Commander.hold(unit)
+
+      return UnitControl.claimedIf(! unit.ready)
     }
 
     val margin    = Maff.min(unit.matchups.threatsInPixels(160).map(t => t.pixelsToGetInRange(unit) + 32 - Maff.or0(16, t.presumptiveTarget.contains(unit)) - 16 * t.dot(unit.pixel))).getOrElse(320d).toInt
