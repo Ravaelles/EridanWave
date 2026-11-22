@@ -9,10 +9,10 @@ import scala.collection.mutable
  * Wasted-volley ledger (kite discipline, owner direction: never yield
  * ground for free): frames where a warrior's gun is loaded and a
  * hittable enemy stands inside its reach, yet the frame ends moving.
- * The read is consistently one frame behind (all proxy reads share
- * the last settled game state), so a frame counted here truly moved
- * past a loaded volley. Per-game state (reset with the rest); read
- * the summary, not the frames.
+ * Read after the dispatch owns the frame's end: judging the
+ * pre-dispatch order counts every volley fired after a step as waste,
+ * even though the shot landed. Per-game state (reset with the rest);
+ * read the summary, not the frames.
  */
 object VolleyWaste extends PerGame {
 
@@ -36,6 +36,9 @@ object VolleyWaste extends PerGame {
 
   def bump(unitId: Int, unitClass: String, cooldownLeft: Int, hasHittable: Boolean, order: String, isWarrior: Boolean): Unit = {
     if ( ! isForgone(cooldownLeft, hasHittable, order, isWarrior)) return
+
+    val chain = try { Lifecycle.With.units.ours.find(_.id == unitId).map(_.agent.actions.mkString("/")).getOrElse("-") } catch { case _: Exception => "-" }
+    Debugging.Probe.note("WasteDbg", unitId, s"cd=$cooldownLeft order=$order chain=$chain")
 
     wastedFrames(unitId) = wastedFrames.getOrElse(unitId, 0) + 1
     classById(unitId) = unitClass

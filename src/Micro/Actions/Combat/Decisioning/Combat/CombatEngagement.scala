@@ -292,11 +292,6 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         || unit.matchups.engagedUpon)
 
   private[Decisioning] def engage(): Boolean = {
-    // Wasted-volley ledger: a loaded gun with a hittable target that ends
-    // the frame moving judges the kite - it must fall, kills must not.
-    // All proxy reads share the last settled game state, so a counted
-    // frame truly moved past a loaded volley.
-    VolleyWaste.bump(unit.id, unit.unitClass.toString, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.order, unit.unitClass.isWarrior)
     // Cluster posture owns the duel (phase 4 of _COMBAT-REFACTOR.md):
     // Withdraw/Regroup walk the march, Fight/HoldLine duel. Explicit
     // all-ins bypass the cluster vote the way prey does: a suicide
@@ -357,6 +352,14 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       if (unit.unready && MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Withdraw) {
         MotionMismatch.bumpDuel(unit.id, unit.unitClass.toString, With.frame)
       }
+      // Wasted-volley ledger, end of frame: a loaded gun with a hittable
+      // target that ends the frame moving judges the kite - it must fall,
+      // kills must not. Read after the dispatch, never before it: the
+      // pre-dispatch order belongs to last frame, so every volley fired
+      // after a step counted as waste even though the shot landed. Only
+      // ready frames are judged - a slept frame owns no orders, and its
+      // starvation is counted beside it instead.
+      VolleyWaste.bump(unit.id, unit.unitClass.toString, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.order, unit.unitClass.isWarrior)
     } else {
       // Tripwire for starved duels: the dispatch voted for the duel but
       // the legs never ran - a sleeping march or a legacy brain issuing
