@@ -6,6 +6,7 @@ import Mathematics.Points.Pixel
 import Mathematics.Points.Tile
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Action
+import Micro.Actions.Idle
 import Micro.Actions.Combat.Maneuvering.AirFlee
 import Micro.Actions.Combat.Maneuvering.AvoidDangerousUnits
 import Micro.Actions.Combat.Maneuvering.CornerAntiStuckGuard
@@ -28,6 +29,11 @@ object BeShuttle extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Shuttle(unit)
 
   override protected def perform(shuttle: FriendlyUnitInfo): UnitControl = {
+    // One owner per frame: a mission intent (ferry, drop) owns the frame
+    // outright - the pair brain never outvotes it. Unclaimed hulls (Idle)
+    // stay with the arbiter below, so the two never split a frame.
+    if (shuttle.intent.action != Idle) return UnitControl.Declined
+
     // One order per hull per frame (the arbiter decided, the brain
     // executes - never negotiates). Arm order is load-bearing: ditch
     // hitchhikers first, then the order's own legs from most to least
@@ -85,6 +91,14 @@ object BeShuttle extends Action {
       .filter(p => p.isNone(Protoss.Reaver, Protoss.HighTemplar) && ! p.squad.exists(shuttle.squad.contains))
       .toVector
     if (hitchhikers.isEmpty) return false
+    // Never dump cargo under guns: a hitchhiker dropped into an army
+    // dies on the pad, while aboard a flying hull it lives. The dump
+    // waits for clear ground instead of donating the rescue.
+    val nearestGroundThreatTiles = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && ! e.flying && e.unitClass.attacksGround))(
+      _.pixelDistanceEdge(shuttle)).map(_.pixelDistanceEdge(shuttle) * Maff.inv32)
+      .getOrElse(Double.PositiveInfinity)
+    if ( ! ShuttleDitch.clearToLand(nearestGroundThreatTiles)) return false
 
     hitchhikers.foreach(shuttle.agent.removePassenger)
     hitchhikers.foreach(Commander.unload(shuttle, _))
@@ -95,6 +109,11 @@ object BeShuttle extends Action {
 
   /** Pick up the neediest hailer, plus newborn Reavers for an army squad. */
   private def adopt(shuttle: FriendlyUnitInfo): Boolean = {
+    // No delivery, no pickup: a bait ride (empty hull, no pair cargo
+    // anywhere) collects hailers it can only ditch over the enemy - the
+    // fetch becomes a donation run. Missions recruit their own rides.
+    if (ReaverShuttlePair.isBaitRide(shuttle)) return false
+
     // A Shuttle already carrying a Reaver belongs to the pair: never fetch
     // other passengers for it (no travel/assemble for other units' sake).
     if (shuttle.loadedUnits.exists(Protoss.Reaver(_))) return false

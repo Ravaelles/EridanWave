@@ -267,6 +267,15 @@ hysteresis home (rules 10-11).
   any blade pressure on the pack keeps full wound steps and forbids the
   plant; the cap binds only against guns alone. Validated on UMS
   (ZealDrag 8/5 and 9/8 back-to-back; 16Drag 16/14 with waste ~1f).
+- One owner per shuttle (2026-11, owner order: no chaos): the pair
+  brain and the drop/ferry missions split frames over one hull -
+  mission Travel/Assemble intents interleaved with pair bait/await
+  every ~50 frames, cargo loaded with no delivery and ditched over
+  the enemy. Now a mission intent owns the frame outright (the pair
+  brain stands down), ditch waits for clear ground (never under guns),
+  and bait rides collect nothing (no delivery, no pickup). Pinned in
+  ShuttleDitchSuite; pair and boarding StarEngine suites hold.
+  Live judgment pending (needs a ladder shuttle game).
 - Natural defense outranks the shell yield (2026-11, owner order):
   sieged tanks shelling our natural held our dragoons at the 13-tile
   keep-off while the base died - and the wall mission held wounded

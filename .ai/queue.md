@@ -53,9 +53,11 @@ Details live in `details/` - the queue keeps one line per item.
   PvP hold gates (9 tiles, shields>=20, no unit pressure, retreat
   priority) need the next ladder PvP wall-in - owner watches.
 - Stalled-duel fetch. Needs Sunkens3 (`details/sunkens.md`).
-- DT leash, MineDefuse, vulture cannons, bank gates, weak-PvP hold,
+- DT leash, vulture cannons, bank gates, weak-PvP hold,
   HT-vs-rejoin, artillery-vs-duels. Needs the triggering games
-  (`details/pending-specs.md`).
+  (`details/pending-specs.md`). MineDefuse parked: the mines map
+  stalls at 0:00 twice (75-min hang + 40-min timeout) - map-side
+  startup issue, not doctrine.
 - 2Zeal parked hard: needs a melee shared pick (unbuilt).
 
 ## Owner decisions (no code before the call)
