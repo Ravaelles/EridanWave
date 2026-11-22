@@ -59,9 +59,7 @@ Details live in `details/` - the queue keeps one line per item.
 - Stalled-duel fetch. Needs Sunkens3 (`details/sunkens.md`).
 - DT leash, vulture cannons, bank gates, weak-PvP hold,
   HT-vs-rejoin, artillery-vs-duels. Needs the triggering games
-  (`details/pending-specs.md`). MineDefuse parked: the mines map
-  stalls at 0:00 twice (75-min hang + 40-min timeout) - map-side
-  startup issue, not doctrine.
+  (`details/pending-specs.md`).
 - 2Zeal shared pick shipped: weakest enemy two pack blades can both
   reach outranks individual picks (`MeleeFocus`, rule 19). Validated
   firing live (synchronized picks on the same frames), kills up;

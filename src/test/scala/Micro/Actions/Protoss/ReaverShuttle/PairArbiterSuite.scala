@@ -434,4 +434,35 @@ class PairArbiterSuite extends AnyFunSuite {
       baitRide = false)
     assert(shuttleOut.shuttle == PairArbiter.AwaitPost)
   }
+
+  test("resolve: both sides guard-and-board a stalled static duel in reach") {
+    val foe = PairArbiter.FoeView(distTiles = 5.0, foeGunTiles = 7.0, reaverGunTiles = 8.0, isStatic = true)
+    val shuttleSide = PairArbiter.resolveShuttle(
+      shuttleView(pos = (0.0, 0.0)),
+      Seq(reaverView(pos = (1.0, 0.0), stalledShot = true, foes = Seq(foe))),
+      raid = false,
+      baitRide = false)
+    assert(shuttleSide.shuttle == PairArbiter.GuardMate)
+    val reaverSide = PairArbiter.resolveReaver(
+      reaverView(pos = (0.0, 0.0), bond = Some(shuttleView(pos = (1.0, 0.0))), stalledShot = true, foes = Seq(foe)),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(reaverSide.reaver == PairArbiter.BoardRide)
+    assert(shuttleSide == reaverSide)
+  }
+
+  test("resolve: both sides guard-and-board a real trip in reach") {
+    val shuttleSide = PairArbiter.resolveShuttle(
+      shuttleView(pos = (0.0, 0.0)),
+      Seq(reaverView(pos = (1.0, 0.0), longTrip = true)),
+      raid = false,
+      baitRide = false)
+    assert(shuttleSide.shuttle == PairArbiter.GuardMate)
+    val reaverSide = PairArbiter.resolveReaver(
+      reaverView(pos = (0.0, 0.0), bond = Some(shuttleView(pos = (1.0, 0.0))), longTrip = true),
+      Seq(shuttleView(pos = (1.0, 0.0))),
+      raid = false)
+    assert(reaverSide.reaver == PairArbiter.BoardRide)
+    assert(shuttleSide == reaverSide)
+  }
 }

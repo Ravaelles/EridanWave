@@ -300,6 +300,11 @@ object PairArbiter {
   def resolveShuttle(shuttle: ShuttleView, reavers: Seq[ReaverView], raid: Boolean, baitRide: Boolean, baseless: Boolean = false): PairDirective = {
     val mate = nearestMate(shuttle, reavers, baseless)
     val foe = mate.flatMap(m => nearestFoe(m.foes))
+    // One verdict per pair: the Shuttle reads the same stalled-trip
+    // facts the Reaver resolves on, or the two disagree mid-duel - the
+    // ride fetches a hull that is already boarding, and the Sunkens3
+    // ferry never progresses. StalledMate is the shared read the pin
+    // exception above already trusts.
     decide(
       loaded            = shuttle.hasReaverAboard,
       mateOnFoot        = mate.isDefined,
@@ -313,8 +318,9 @@ object PairArbiter {
       baitRide          = baitRide,
       boardLocked       = mate.exists(_.boardLocked) && ! stalledMate(mate),
       threatTiles       = mate.flatMap(m => Maff.minBy(m.foes)(_.distTiles)).map(_.distTiles).getOrElse(Double.PositiveInfinity),
-      longTrip          = false,
-      wound01           = mate.map(_.wound01).getOrElse(0.0))
+      longTrip          = mate.exists(_.longTrip),
+      wound01           = mate.map(_.wound01).getOrElse(0.0),
+      stalledStaticDuel = stalledMate(mate))
   }
 
   /**
