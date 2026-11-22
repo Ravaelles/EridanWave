@@ -361,11 +361,25 @@ object BeReaver extends Action {
     // the keep-off above holds the line when the road leads past guns.
     Maff.minBy(With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && ! e.flying && unit.canAttack(e) && ! Terran.SiegeTankSieged(e)))(_.pixelDistanceCenter(unit.pixel)).foreach(foe => {
-      unit.agent.act("DuelWalk")
-      unit.agent.forceTo(foe.pixel)
-      Commander.move(unit)
+      // Picked lurker under static cover: hold scarab range instead of
+      // chasing it inside and dying there. The grind works around a
+      // standoff; it cannot work around a donation.
+      if (ReaverLurkerHold.shouldHold(Zerg.Lurker(foe), staticCovers(unit, foe))) {
+        unit.agent.act("LurkerHold")
+        Commander.hold(unit)
+      } else {
+        unit.agent.act("DuelWalk")
+        unit.agent.forceTo(foe.pixel)
+        Commander.move(unit)
+      }
     })
   }
+
+  /** Static guns covering the picked foe: the walk would end inside their reach. */
+  private def staticCovers(unit: FriendlyUnitInfo, foe: UnitInfo): Boolean =
+    With.units.enemy.exists(e =>
+      e.alive && e.likelyStillThere && e.unitClass.isStaticDefense &&
+        e.pixelDistanceEdge(foe) <= e.pixelRangeMax + unit.unitClass.dimensionMax)
 
   /** Never walk onto guns that outrange us: the Reaver or the squad assignment handles those. */
   private def outranges(threat: UnitInfo, unit: FriendlyUnitInfo): Boolean =

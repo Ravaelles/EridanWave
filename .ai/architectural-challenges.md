@@ -276,6 +276,15 @@ hysteresis home (rules 10-11).
   and bait rides collect nothing (no delivery, no pickup). Pinned in
   ShuttleDitchSuite; pair and boarding StarEngine suites hold.
   Live judgment pending (needs a ladder shuttle game).
+- Picked-lurker standoff (Sunkens3 open item, 2026-11): the reaver
+  duel chased a picked Lurker inside static cover and died there
+  (8/7 timeouts). Now a lurker under static guns is held at scarab
+  range instead of closed on - the grind works around a standoff, it
+  cannot work around a donation. Pinned in ReaverLurkerHoldSuite;
+  StarEngine reaver suites hold. Live: mixed (7/3 grind in band, then
+  1/1) with no chain log to attribute the mechanism - Sunkens3 never
+  writes normal.log, so the hold firing is inferred from outcome, not
+  proven. Needs a logging-cooperative run or ladder reaver game.
 - Natural defense outranks the shell yield (2026-11, owner order):
   sieged tanks shelling our natural held our dragoons at the 13-tile
   keep-off while the base died - and the wall mission held wounded
