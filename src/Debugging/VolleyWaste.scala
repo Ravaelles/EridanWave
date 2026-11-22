@@ -67,9 +67,6 @@ object VolleyWaste extends PerGame {
     wasteStreak(unitId) = streak
     if (streak < 2) return
 
-    val chain = try { Lifecycle.With.units.ours.find(_.id == unitId).map(_.agent.actions.mkString("/")).getOrElse("-") } catch { case _: Exception => "-" }
-    Debugging.Probe.note("WasteDbg", unitId, s"f=" + Lifecycle.With.frame + s" cd=$cooldownLeft order=$order chain=$chain")
-
     wastedFrames(unitId) = wastedFrames.getOrElse(unitId, 0) + 1
     classById(unitId) = unitClass
   }

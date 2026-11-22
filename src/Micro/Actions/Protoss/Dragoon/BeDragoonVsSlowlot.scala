@@ -125,6 +125,11 @@ object BeDragoonVsSlowlot extends Action {
         t.likelyStillThere &&
         ! FacingAway.dismissMelee(t.unitClass.melee,
           FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(u.pixel))))
+    // Shared pack read (behavior gate reads the squad too): a hull
+    // whose mate is pressed kites with the pack instead of footworking
+    // through its own duel - one writer per frame on pack maps.
+    val squadMargin = unit.squad.map(_.units).getOrElse(Seq(unit)).view.flatMap(inMargin).toSeq
+    def hasMeleeInMargin: Boolean = squadMargin.exists(_.unitClass.melee)
     // Zerg fresh hulls hold on both paths: the classic ladder owns the rest.
     if (zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound) return false
     // Fresh, loaded and clear hulls hold their volleys on both paths
@@ -136,7 +141,7 @@ object BeDragoonVsSlowlot extends Action {
     // Plant owns the frame where it would fire: the dance stands down
     // instead of starving the hold - a loaded volley with something
     // hittable outdamages margin footwork on both paths.
-    if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby = inMargin(unit).exists(_.unitClass.melee))) return true
+    if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby = hasMeleeInMargin)) return true
 
     // Contact kite on both paths (PvP): cooling with melee inside 2.7
     // tiles means the behavior yields real ground - the dance stands
@@ -157,12 +162,12 @@ object BeDragoonVsSlowlot extends Action {
     // Near-dead hulls yield past the wound ladder too where the shipped
     // kite kites them: collapsed shields with blades on top. Guns alone
     // hold their last volleys on both paths - neither donates them.
-    if (KiteHold.shouldFleeNearDead(unit.shieldPoints, unit.unitClass.maxShields, enemyInMargin = inMargin(unit).nonEmpty, hasMeleeNearby = inMargin(unit).exists(_.unitClass.melee))) return true
+    if (KiteHold.shouldFleeNearDead(unit.shieldPoints, unit.unitClass.maxShields, enemyInMargin = squadMargin.nonEmpty, hasMeleeNearby = hasMeleeInMargin)) return true
 
     KiteAway.shouldRetreat(
       unit.totalHealth,
       unit.cooldownLeft,
-      enemyInMargin = inMargin(unit).nonEmpty,
-      hasMeleeNearby = inMargin(unit).exists(_.unitClass.melee))
+      enemyInMargin = squadMargin.nonEmpty,
+      hasMeleeNearby = hasMeleeInMargin)
   }
 }
