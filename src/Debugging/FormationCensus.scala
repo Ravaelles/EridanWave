@@ -15,7 +15,7 @@ object FormationCensus {
 
   def audit(): Unit = {
     if ( ! Probe.on("Formation")) return
-    if (With.frame % 6 != 0) return // TEMP-FINE: per-6-frame positions for the opening post-mortem
+    if (With.frame % 48 != 0) return
 
     With.units.ours.view.filter(_.alive).foreach(unit => {
       val foeTiles = Maff.minBy(With.units.enemy.view.filter(_.alive))(e => unit.tileDistanceCenter(e.pixel))

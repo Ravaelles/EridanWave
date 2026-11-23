@@ -318,7 +318,6 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active) && ! unit.intent.marchHome
       case None          => combat.fightConsensus && ! unit.intent.marchHome
     }) || umsDuelistAdvances
-    Debugging.Probe.note("EngAdv", unit.id, s"advance=$advance commit=${unit.agent.commit}")
     var i = 0
     var claimed = false
     while (i < EngagePipeline.stages.length && ! claimed) {
