@@ -6,6 +6,7 @@ import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Mathematics.Points.Pixel
 import Micro.Actions.Combat.Spells.Protoss.PsionicStorm
+import Micro.Agency.Commander
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -114,7 +115,14 @@ object MarchOrders {
     // of walking, dueling or retreating, so the chain carries the
     // owner's name instead of the vote it overruled. One credit, from
     // the march that owns the destination - legs stay silent behind it.
-    if (openingHold(unit)) unit.agent.act("DressHold")
+    // The hold is a real order, not just an intent: spawn and map
+    // attack-moves otherwise stand unopposed (every dispatch that
+    // could countermand them is gated off for the window), so the
+    // line would march on foreign orders instead of its own hold.
+    if (openingHold(unit)) {
+      unit.agent.act("DressHold")
+      Commander.hold(unit)
+    }
   }
 
   // The march rules, innermost first: rallying stragglers beat slots,
