@@ -456,6 +456,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // above owned the frame. Probe the gate (change-only): which of the
     // three legs holds the duel out.
     Debugging.Probe.note("Duel", unit.id, s"claimed=$claimed engage=${shouldEngage && advance} ready=${unit.ready} tech=$technique")
+    Debugging.Probe.note("TechAdv", unit.id, s"advance=$advance farWait=${Tactic.Squads.MarchOrders.farWaitHolding(unit)} motion=${Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame)}")
     if ( ! claimed && shouldEngage && advance) engagement.engage()
   }
 
