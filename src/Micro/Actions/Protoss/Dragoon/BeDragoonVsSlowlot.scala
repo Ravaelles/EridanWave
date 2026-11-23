@@ -53,6 +53,11 @@ object BeDragoonVsSlowlot extends Action {
       return UnitControl.claimedIf(! unit.ready)
     }
 
+    // Opening stand owns the frame (never the duel): no margin
+    // footwork through an unformed line. The rung above already shot
+    // what it could; contact hands back to the duel.
+    if (Tactic.Squads.MarchOrders.openingHold(unit)) return UnitControl.claimedIf(! unit.ready)
+
     val margin    = Maff.min(unit.matchups.threatsInPixels(160).map(t => t.pixelsToGetInRange(unit) + 32 - Maff.or0(16, t.presumptiveTarget.contains(unit)) - 16 * t.dot(unit.pixel))).getOrElse(320d).toInt
     val safety    = DragoonSlowlotPolicy.safety(margin, unit.totalHealth)
 
