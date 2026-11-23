@@ -65,6 +65,20 @@ Details live in `details/` - the queue keeps one line per item.
   885->674->0, pack shape held (observers excluded). Live: zero
   Retreat/AttackMove acts f0-60, DressHold from f3, zero Formation
   rows f1-47 (the line stands), win 9/1 with zero waste.
+- Opening hold, final proof (live positions): all 9 units
+  pixel-identical f0-f48 under HoldPosition, zero Retreat/
+  AttackMove/Hunt acts f0-60, DressHold from f3, wins 9/7 9/5
+  9/4 with ~0 waste. The silent attacker was the Idle-list Attack
+  action (acquireTarget picks without acting, closeIn attack-moves),
+  gated for the window; the march holds with a forced HoldPosition
+  (the skip-if-stationary Commander.hold never countermanded map
+  orders); Follow and the dance footwork stand down for the window.
+- VolleyDiscipline (owner order: one verdict, no conflicts):
+  a single shared kernel (shouldVolley) now owns every loaded
+  volley - dance rung, charge VolleyHold, terminal, scavenge,
+  dress steps, dying volley all read it; validated green
+  (StarEngine composition: shipped order kills both seats with
+  zero wasted moves; UMS waste 0 on ZealDrag/1v1Zeal/1Zeal).
 - Opening stand, final cut (owner: still no HoldLine, units move
   from frame one, Retreat+AttackMove overhead): the silent mover was
   the Idle-list Attack action - acquireTarget picks the far seen foe
