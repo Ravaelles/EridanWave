@@ -16,6 +16,8 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.maxOffsetTiles == 1.4)
     assert(KiteAway.freshShieldWound == 14)
     assert(KiteAway.meleeCloseTiles == 2.6)
+    assert(KiteAway.kiteCooldownFrames == 10)
+    assert(KiteAway.kiteEdgeTiles == 0.7)
     assert(KiteAway.steadyCooldownFrames == 15)
     assert(KiteAway.steadyContactTiles == 2.7)
     assert(KiteAway.zergShieldWound == 8)
@@ -111,5 +113,20 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.contactYield(woundWantPixels = 0.0, pacedPixels = 96.0) == 96.0)
     assert(KiteAway.contactYield(woundWantPixels = 120.0, pacedPixels = 96.0) == 120.0)
     assert(KiteAway.contactYield(woundWantPixels = 96.0, pacedPixels = 96.0) == 96.0)
+  }
+
+  test("cooling guns hold their volleys, loaded guns hold the edge") {
+    assert(KiteAway.holdsForVolley(cooldownLeft = 0))
+    assert(KiteAway.holdsForVolley(cooldownLeft = 10))
+    assert( ! KiteAway.holdsForVolley(cooldownLeft = 11))
+    assert(KiteAway.holdsTheEdge(distTiles = 3.3, rangeTiles = 4.0))
+    assert(KiteAway.holdsTheEdge(distTiles = 4.0, rangeTiles = 4.0))
+    assert( ! KiteAway.holdsTheEdge(distTiles = 3.2, rangeTiles = 4.0))
+  }
+
+  test("edge-capped steps never walk out of range") {
+    assert(math.abs(KiteAway.edgeCappedYield(stepPixels = 128.0, distTiles = 2.0, rangeTiles = 4.0, edgeTiles = 0.7) - 1.3 * 32.0) < 1e-9)
+    assert(math.abs(KiteAway.edgeCappedYield(stepPixels = 128.0, distTiles = 3.0, rangeTiles = 4.0, edgeTiles = 0.7) - 0.3 * 32.0) < 1e-9)
+    assert(KiteAway.edgeCappedYield(stepPixels = 128.0, distTiles = 3.5, rangeTiles = 4.0, edgeTiles = 0.7) == 0.0)
   }
 }

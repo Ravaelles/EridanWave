@@ -69,6 +69,26 @@ object KiteAway {
   val zergShieldWound: Int = 8
 
   /**
+   * Loaded window (owner order): a gun at or below this cooldown holds
+   * its volley instead of yielding ground the return trip would eat.
+   * Shoot every cycle - the kite only ever spends cooling frames.
+   */
+  var kiteCooldownFrames: Int = 10
+
+  def holdsForVolley(cooldownLeft: Int): Boolean =
+    cooldownLeft <= kiteCooldownFrames
+
+  /**
+   * Gun's edge, in tiles: already standing this close to max range
+   * means any step out donates the next volley, so the hull holds its
+   * ground instead of yielding it.
+   */
+  var kiteEdgeTiles: Double = 0.7
+
+  def holdsTheEdge(distTiles: Double, rangeTiles: Double): Boolean =
+    distTiles >= rangeTiles - kiteEdgeTiles
+
+  /**
    * Fresh, loaded and clear hulls hold their fire instead of kiting:
    * with the gun inside its window, enough hull to trade, and nothing
    * inside contact range, the volley outweighs any ground the yield
@@ -115,6 +135,15 @@ object KiteAway {
    */
   def contactYield(woundWantPixels: Double, pacedPixels: Double): Double =
     Math.max(woundWantPixels, pacedPixels)
+
+  /**
+   * Edge-capped yield (pure numbers for the suite): the step never
+   * walks past the gun's own reach minus the edge margin. A hull
+   * already at the edge holds instead of donating ground it cannot
+   * shoot back across.
+   */
+  def edgeCappedYield(stepPixels: Double, distTiles: Double, rangeTiles: Double, edgeTiles: Double): Double =
+    Math.min(stepPixels, Math.max(0.0, rangeTiles - edgeTiles - distTiles) * 32.0)
 
   def shouldRetreat(
     totalHealth: Int,

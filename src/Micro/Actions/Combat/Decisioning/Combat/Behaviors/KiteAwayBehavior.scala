@@ -93,18 +93,28 @@ object KiteAwayBehavior {
       return true
     }
 
-    // Contact kite (owner order, 1Drag_v_1Zeal post-mortem): melee
-    // inside 2.7 tiles with the gun cooling means distance is life -
-    // yield it, but never past a loaded volley: a ready gun shoots
-    // first, every cooldown cycle, so the kite only ever spends cooling
-    // frames. Ranged hulls only (blades live in contact); PvP-only
-    // like the gates around it.
-    val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
-      t.likelyStillThere && t.unitClass.melee)
-    // Only with cooling left beyond the move sleep: a step issued on the last
-    // cooldown frames outlives the volley (the order persists through sleep)
-    // and donates the loading frame. The gun about to speak holds instead.
-    if (pvpRules && ! unit.unitClass.melee && unit.cooldownLeft > 2 && meleeContact) {
+    // Owner order (kite while cooling, hold the volley and the edge):
+    // melee pressing a ranged hull inside our reach means distance is
+    // life - but a gun about to speak holds its volley, and a hull
+    // already at the edge holds its ground instead of donating it.
+    // Near-dead hulls keep their own flight below; guns alone keep the
+    // old ladder; Terran never kites above. Zerg fresh hulls keep
+    // their classic hold.
+    val meleePressing = hasMeleeNearby && ! unit.unitClass.melee
+    val zergFresh = zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound
+    if ((pvpRules || zergRules) && ! zergFresh && meleePressing &&
+      ! KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields)) {
+      val edgeTiles = unit.pixelRangeMax * Maff.inv32 - KiteAway.kiteEdgeTiles
+      val nearTiles = Maff.minBy(
+        unit.matchups.threats.view.filter(t => t.likelyStillThere && t.unitClass.melee))(
+        t => unit.pixelDistanceEdge(t))
+        .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+      if (KiteAway.holdsForVolley(unit.cooldownLeft) || KiteAway.holdsTheEdge(nearTiles, edgeTiles)) {
+        plantVolley(unit)
+
+        return true
+      }
+
       kiteAway(unit, combat, hasMeleeNearby = true)
 
       return true
@@ -281,6 +291,21 @@ object KiteAwayBehavior {
     if (meleeContact) KiteAway.contactYield(woundWant, walkback) else woundWant
   }
 
+  /**
+   * Edge-capped contact step (owner order: never walk out of range):
+   * the contact floor can overshoot the gun's own reach, so the step
+   * stops at max range minus the edge margin instead. A hull already
+   * there holds (the gate above), so this only trims the stride.
+   */
+  private def edgedYield(unit: FriendlyUnitInfo, woundWant: Double): Double = {
+    val foe = unit.matchups.targetNearest.get
+    KiteAway.edgeCappedYield(
+      contactYield(unit, woundWant),
+      unit.pixelDistanceEdge(foe) * Maff.inv32,
+      unit.pixelRangeMax * Maff.inv32,
+      KiteAway.kiteEdgeTiles)
+  }
+
   private def kiteAway(unit: FriendlyUnitInfo, combat: Combat, hasMeleeNearby: Boolean): Unit = {
     unit.agent.act("KiteAway")
     // Yield from the feet, never from the pin: a static formation slot
@@ -302,7 +327,7 @@ object KiteAwayBehavior {
     val meleeNear = unit.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val nearDeadFar = KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) && meleeNear
     val offsetPixels = if (nearDeadFar) KiteHold.nearDeadOffsetTiles * 32.0
-      else if (hasMeleeNearby) contactYield(unit, woundWant)
+      else if (hasMeleeNearby) edgedYield(unit, woundWant)
       else KiteYield.offsetPixels(woundWant, unit.cooldownLeft, unit.topSpeed, With.latency.latencyFrames + 2)
     unit.agent.decision.set(anchor.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
     // Contact kites interrupt the firing solution explicitly: a standing
