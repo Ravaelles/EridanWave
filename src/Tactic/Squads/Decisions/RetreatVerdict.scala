@@ -25,6 +25,17 @@ object RetreatVerdict extends PerGame {
   val holdFrames: Int = 24
 
   /**
+   * UMS opening grace, in frames (ten seconds at 24fps): even odds in
+   * the first seconds of a micro map never rout the line - the UMS duel
+   * is always joined, never judged before contact. Ladder games keep
+   * their own verdict from frame zero.
+   */
+  val umsNoRetreatFrames: Int = 240
+
+  def suppressUmsOpening(umsMode: Boolean, frame: Int): Boolean =
+    umsMode && frame < umsNoRetreatFrames
+
+  /**
    * No enemy warriors inside this, in tiles, and there is nothing to
    * retreat from: the vote stays fight no matter what the skirmish
    * verdict just said, so Reinforcements marching through empty ground
@@ -67,11 +78,34 @@ object RetreatVerdict extends PerGame {
   private val fightEdgeFrame = new mutable.HashMap[Int, Int]()
 
   /**
+   * Army-wide bus: one warrior's retreat retreats the whole army - a
+   * split line feeds half its hulls into the grinder while the other
+   * half walks home. Folded from the per-unit ticks below, one frame
+   * behind (a frame's OR is final only once every reader ticked it).
+   * Dead hulls stop ticking, so corpses fall out of the OR by
+   * themselves. Same sharp-enter, timed-release shape as the unit bus.
+   */
+  private var armyFrame = Int.MinValue
+  private var armyRaw = false
+  private var closedRaw = false
+  private var armyEdgeFrame = Int.MinValue
+
+  /**
    * Verdict tick (one call per reader per tick): records the raw verdict
    * for the unit. Both phases call this on their own schedule; the last
-   * writer wins the raw side, the hold below absorbs the skew.
+   * writer wins the raw side, the hold below absorbs the skew. The tick
+   * also folds into the army-wide OR, closed one frame behind.
    */
   def update(id: Int, rawHold: Boolean, frame: Int): Unit = {
+    if (frame != armyFrame) {
+      if (armyFrame != Int.MinValue && armyRaw != closedRaw) {
+        if ( ! armyRaw) armyEdgeFrame = armyFrame
+        closedRaw = armyRaw
+      }
+      armyFrame = frame
+      armyRaw = false
+    }
+    armyRaw ||= rawHold
     if (lastRaw.get(id).contains(rawHold)) return
 
     lastRaw(id) = rawHold
@@ -101,8 +135,24 @@ object RetreatVerdict extends PerGame {
       case Some(raw)  => RetreatHold.held(raw, frame - fightEdgeFrame.getOrElse(id, frame), holdFrames)
     }
 
+  /**
+   * Held army verdict: the last closed frame's OR with the same timed
+   * release. Every warrior retreats together or nobody does; a lone
+   * corpse's stale vote never reaches a closed frame. Before the first
+   * all-clear close there is no edge yet - the closed OR alone decides,
+   * so an army nobody routed reads fight instead of wrapping around
+   * through the minimum integer below the hold window.
+   */
+  def heldArmy(frame: Int): Boolean =
+    if (armyEdgeFrame == Int.MinValue) closedRaw
+    else RetreatHold.held(closedRaw, (frame - 1) - armyEdgeFrame, holdFrames)
+
   override def reset(): Unit = {
     lastRaw.clear()
     fightEdgeFrame.clear()
+    armyFrame = Int.MinValue
+    armyRaw = false
+    closedRaw = false
+    armyEdgeFrame = Int.MinValue
   }
 }

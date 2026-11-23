@@ -321,7 +321,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // held verdict the dispatch reads, so both gates agree. Retreating
     // units keep marching home.
     val umsDuelistAdvances = With.umsMode && unit.agent.commit &&
-      ! (RetreatVerdict.held(unit.id, With.frame) && ! ClusterPosture.overrulesRetreat(
+      ! (RetreatVerdict.heldArmy(With.frame) && ! ClusterPosture.overrulesRetreat(
         unit.squad.flatMap(_.battlePosture),
         ArmyStrength.score(
           With.battles.globalAttack.us.skimStrengthUnits,

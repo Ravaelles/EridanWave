@@ -133,7 +133,8 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         proxyRush,
         hardCounterKnown,
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
-          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)),
+          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)) &&
+        ! Tactic.Squads.Decisions.RetreatVerdict.suppressUmsOpening(With.umsMode, With.frame),
       With.frame)
     // Overwhelming line never routs: when the unit's own squad votes to
     // fight from a clearly superior skim, a latched personal retreat
@@ -148,7 +149,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       Information.Battles.ArmyStrength.score(
         With.battles.globalAttack.us.skimStrengthUnits,
         With.battles.globalAttack.enemy.skimStrengthUnits))
-    val verdictRetreat = Tactic.Squads.Decisions.RetreatVerdict.held(unit.id, With.frame) && ! overwhelmingLine
+    val verdictRetreat = Tactic.Squads.Decisions.RetreatVerdict.heldArmy(With.frame) && ! overwhelmingLine
     combat.technique =
             if ( ! unit.canMove)                                    Fight
       // Latched retreat: once falling back, hold Flee until clear of the
@@ -157,7 +158,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // not flee keep the old ladder untouched below. Committed hunts
       // never latch: the order already bypassed the vote, so holding
       // the retreat would walk a duel it was sent to fight.
-      else  if (unit.intent.canFlee && ! unit.agent.commit && ! standGroundNow && ! overwhelmingLine && ReengageLatch.shouldHoldRetreat(
+      else  if (unit.intent.canFlee && ! unit.agent.commit && ! standGroundNow && ! overwhelmingLine && ! Tactic.Squads.Decisions.RetreatVerdict.suppressUmsOpening(With.umsMode, With.frame) && ReengageLatch.shouldHoldRetreat(
         combat.techniqueIs(Fallback, Flee, Excuse),
         unit.matchups.pixelsEntangled * Maff.inv32,
         unit.agent.shouldFight,

@@ -36,6 +36,13 @@ class RetreatVerdictSuite extends AnyFunSuite {
     assert(RetreatVerdict.retreatLabel("", 80.0, 20.0) == "80vs20")
   }
 
+  test("the UMS opening grace suppresses retreats for ten seconds") {
+    assert(RetreatVerdict.suppressUmsOpening(umsMode = true, frame = 0))
+    assert(RetreatVerdict.suppressUmsOpening(umsMode = true, frame = 239))
+    assert( ! RetreatVerdict.suppressUmsOpening(umsMode = true, frame = 240))
+    assert( ! RetreatVerdict.suppressUmsOpening(umsMode = false, frame = 0))
+  }
+
   test("a beaten warrior with room to run holds the retreat") {
     assert(hold(nearestArmedTiles = 5.0))
   }
@@ -86,6 +93,24 @@ class RetreatVerdictSuite extends AnyFunSuite {
     assert(RetreatVerdict.held(id = 7, frame = 110))
     assert(RetreatVerdict.held(id = 7, frame = 110 + RetreatVerdict.holdFrames - 1))
     assert( ! RetreatVerdict.held(id = 7, frame = 110 + RetreatVerdict.holdFrames))
+  }
+
+  test("one warrior's retreat retreats the whole army") {
+    RetreatVerdict.reset()
+    RetreatVerdict.update(id = 7, rawHold = true, frame = 100)
+    RetreatVerdict.update(id = 8, rawHold = false, frame = 100)
+    RetreatVerdict.update(id = 8, rawHold = false, frame = 101)
+    assert(RetreatVerdict.heldArmy(frame = 101))
+  }
+
+  test("a unanimous fight releases the army past the hold") {
+    RetreatVerdict.reset()
+    RetreatVerdict.update(id = 7, rawHold = true, frame = 100)
+    RetreatVerdict.update(id = 7, rawHold = false, frame = 101)
+    RetreatVerdict.update(id = 8, rawHold = false, frame = 101)
+    for (f <- 102 to 126) RetreatVerdict.update(id = 8, rawHold = false, frame = f)
+    assert(RetreatVerdict.heldArmy(frame = 125))
+    assert( ! RetreatVerdict.heldArmy(frame = 127))
   }
 
   test("re-entering re-arms the window") {

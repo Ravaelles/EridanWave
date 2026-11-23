@@ -207,12 +207,13 @@ object MarchOrders {
         facts.proxyRush,
         MacroFacts.enemyHardCounterKnown,
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
-          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)),
+          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)) &&
+        ! RetreatVerdict.suppressUmsOpening(With.umsMode, With.frame),
       With.frame)
     // An overwhelming line marches instead of going home: the same
     // release that frees the technique owns the march, or the two
     // phases split the frame between home and the duel.
-    val verdictRetreat = RetreatVerdict.held(unit.id, With.frame) &&
+    val verdictRetreat = RetreatVerdict.heldArmy(With.frame) &&
       ! ClusterPosture.overrulesRetreat(squad.battlePosture, facts.armyUnitsScore)
     // Stage 2 motion verdict: tick the desired owner from the fresh duel
     // and dressing scans. The gates read the latched side instead of
