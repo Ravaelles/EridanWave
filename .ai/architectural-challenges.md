@@ -370,3 +370,5 @@ hysteresis home (rules 10-11).
   hold-at-range rule for picked lurkers - answers the Sunkens3 ferry
   question; (d) L2 soft enforcement incidentally, choke point later.
   No big-bang rewrite: each step ships with its suite and its UMS map.
+
+- DT static-gun standoff (closed 2026-11-23, ladder BetaStar: two Dark Templars walked one after another into a Photon Cannon's detection and died): third instance of the approach-into-unseen-guns shape (after the detector-evade latch and StaticDefenseRepel) - solved as a shared-facing read plus a new object, not a third special case. `UnitInfo.showingBackTo` (over `FacingAway`) joins `isOtherUnitFacingUs` as the unit-level facing vocabulary both arms of the stop gate read (velocity closes, facing leaves); `DarkTemplarStaticStandoff` owns the stop/stride verdict with entry and release (rules 10-11), `BeDarkTemplar` only seams remembered gun positions into it. Commit: DT static-gun standoff.

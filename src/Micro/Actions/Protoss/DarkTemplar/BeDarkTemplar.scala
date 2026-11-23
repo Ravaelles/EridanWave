@@ -27,6 +27,11 @@ object BeDarkTemplar extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.DarkTemplar(unit)
 
   override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
+    // Static guns outrank detectors: a remembered Cannon owns the ground
+    // before its eyes are seen, so the standoff holds the approach first
+    // and the evade below only owns live eyes.
+    if (staticStandoff(unit)) return UnitControl.claimedIf(! unit.ready)
+
     // Detectors outrank everything: a seen Templar is a dead Templar, so
     // evade first and never hunt, snipe or hold through detection.
     if (evadeDetector(unit)) return UnitControl.claimedIf(! unit.ready)
@@ -53,6 +58,60 @@ object BeDarkTemplar extends Action {
 
     if (unit.agent.toAttack.isEmpty) hunt(unit)
     UnitControl.claimedIf(! unit.ready)
+  }
+
+  /**
+   * Static-gun standoff (thin game seam over the pure kernel): the nearest
+   * remembered gun sets the band, velocity says closing (the gun sees us
+   * coming through `isOtherUnitFacingUs`), facing says leaving (our back
+   * is turned through `showingBackTo`) - a stop would re-face the guns,
+   * so only the stride owns that frame. A hittable prey in reach still
+   * dies; the hold only owns empty ground.
+   */
+  private def staticStandoff(unit: FriendlyUnitInfo): Boolean = {
+    Maff.minBy(With.units.enemy.view.filter(e =>
+      e.likelyStillThere && (e.unitClass.isCombatBuilding || Terran.Bunker(e))))(
+      unit.pixelDistanceEdge(_)).exists(gun => {
+      val danger = DarkTemplarStaticStandoff.dangerTiles(
+        gun.unitClass.pixelRangeMax * Maff.inv32,
+        gun.detectionRangePixels * Maff.inv32)
+      val dist = unit.pixelDistanceEdge(gun) * Maff.inv32
+      val approaching = gun.isOtherUnitFacingUs(unit)
+      val back = unit.showingBackTo(gun)
+      DarkTemplarStaticStandoff.standoffLatched(unit.id, dist, danger, approaching, back) && (
+        if (DarkTemplarStaticStandoff.shouldStop(dist, danger, approaching, back)) holdStatic(unit)
+        else backOffStatic(unit, gun))
+    })
+  }
+
+  private def holdStatic(unit: FriendlyUnitInfo): Boolean = {
+    // A hittable prey in reach still dies: the hold owns the ground,
+    // not the cooldown - standing inside the band without shooting
+    // donates the very volley the stop was bought to keep.
+    Maff.minBy(unit.matchups.targetsInRange.filter(t => DarkTemplarTargets.isPrey(t.unitClass)))(_.totalHealth) match {
+      case Some(prey) =>
+        unit.agent.toAttack = Some(prey)
+        unit.agent.act("DarkTemplarStaticStop")
+        Commander.attack(unit)
+
+        true
+      case None =>
+        unit.agent.toAttack = None
+        unit.agent.act("DarkTemplarStaticStop")
+        Commander.hold(unit)
+
+        true
+    }
+  }
+
+  private def backOffStatic(unit: FriendlyUnitInfo, gun: UnitInfo): Boolean = {
+    unit.agent.toAttack = None
+    unit.agent.act("DarkTemplarStaticStep")
+    val away = DarkTemplarStaticStandoff.stepAway(unit.pixel, gun.pixel)
+    unit.agent.forceTo(?(away.walkable, away, away.walkablePixel))
+    Commander.move(unit)
+
+    true
   }
 
   private def evadeDetector(unit: FriendlyUnitInfo): Boolean = {

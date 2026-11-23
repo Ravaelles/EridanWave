@@ -10,6 +10,7 @@ import Mathematics.Maff
 import Mathematics.Physics.Force
 import Mathematics.Points._
 import Mathematics.Shapes.Arc
+import Micro.Actions.Combat.Decisioning.Kiting.FacingAway
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Matchups.MatchupAnalysis
 import Micro.Targeting.TargetScoring
@@ -552,6 +553,9 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
 
   /** Whether the other unit is coming at us (closing, not holding or leaving). */
   @inline final def isOtherUnitFacingUs(other: UnitInfo): Boolean = other.speedApproaching(this) > 0.0
+  /** Whether we show our back to the other unit (facing away from it, not at it). */
+  @inline final def showingBackTo(other: UnitInfo): Boolean =
+    FacingAway.showingBack(angleRadians, pixel.radiansTo(other.pixel))
   private val _gatheringOrders = Seq(Orders.WaitForMinerals, Orders.MiningMinerals, Orders.WaitForGas, Orders.HarvestGas, Orders.MoveToMinerals, Orders.MoveToGas, Orders.ReturnGas, Orders.ReturnMinerals, Orders.ResetCollision)
   @inline final def speedApproachingEachOther(other: UnitInfo): Double = speedApproaching(other) + other.speedApproaching(this)
   @inline final def airborne  : Boolean = flying || airlifted
