@@ -27,7 +27,9 @@ class MarchGateOrderSuite extends AnyFunSuite {
     MarchFacts(
       enemyIsTerran, enemyIsProtoss, enemyHasTanks, enemyHasVultures, enemyDragoonSeen,
       bankedMinerals, armyStrength, armyUnitsScore, supplyUsed, proxyRush,
-      home = if (home) Some(null) else None)
+      home = if (home) Some(null) else None,
+      catchUpAnchor = None,
+      alphaAnchorTiles = Double.PositiveInfinity)
 
   private var nextId: Int = 1000
 
@@ -46,11 +48,13 @@ class MarchGateOrderSuite extends AnyFunSuite {
     distHomeTiles       : Option[Double] = None,
     nearestArmedTiles   : Double = Double.PositiveInfinity,
     nearestStaticTiles  : Option[Double] = None,
-    nearestVisibleArmedTiles : Double = Double.PositiveInfinity): MarchUnit = {
+    nearestVisibleArmedTiles : Double = Double.PositiveInfinity,
+    behindAlphaTiles    : Double = Double.NegativeInfinity,
+    hasContact          : Boolean = false): MarchUnit = {
     nextId += 1
     MarchUnit(
       nextId, isDarkTemplar, isCorsair, isDragoon, isWarrior, isLoadedShuttle,
-      isSuicide, shouldFight, verdictRetreat, verdictDuel, hasDuel, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles, nearestVisibleArmedTiles)
+      isSuicide, shouldFight, verdictRetreat, verdictDuel, hasDuel, nearestWarriorTiles, distHomeTiles, nearestArmedTiles, nearestStaticTiles, nearestVisibleArmedTiles, behindAlphaTiles, hasContact)
   }
 
   private def check(name: String, f: MarchFacts, u: MarchUnit, want: Option[MarchLabel]): Unit =
@@ -143,10 +147,53 @@ class MarchGateOrderSuite extends AnyFunSuite {
       nearestWarriorTiles = Some(3.0), nearestStaticTiles = Some(5.0)),
     None)
 
+  check("a reinforcement trailing the alpha outranks the doorstep march",
+    facts(supplyUsed = 100),
+    unit(isWarrior = true, shouldFight = true, distHomeTiles = Some(5.0),
+      nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 30.0, behindAlphaTiles = 10.0),
+    Some(MarchLabel.CatchUp))
+
+  check("a far duel never pins a catching-up reinforcement",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true, hasDuel = true, verdictDuel = true,
+      nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 30.0, behindAlphaTiles = 10.0),
+    Some(MarchLabel.CatchUp))
+
+  check("contact owns the frame even behind the alpha",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true, hasDuel = true, verdictDuel = true, hasContact = true,
+      nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 30.0, behindAlphaTiles = 10.0),
+    None)
+
+  check("a distant gun does not stop the catch-up",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true,
+      nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 10.0, behindAlphaTiles = 10.0),
+    Some(MarchLabel.CatchUp))
+
+  check("a static gun on the path holds the catch-up",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true,
+      nearestWarriorTiles = Some(3.0), nearestStaticTiles = Some(5.0), behindAlphaTiles = 10.0),
+    None)
+
+  check("a leader ahead of the alpha marches the legs",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true,
+      nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 30.0, behindAlphaTiles = -10.0),
+    None)
+
+  check("the catch-up needs five tiles of trail",
+    facts(enemyIsProtoss = true, enemyDragoonSeen = true),
+    unit(isWarrior = true, shouldFight = true,
+      nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 30.0, behindAlphaTiles = 3.0),
+    None)
+
   test("the gate list order is explicit data, not ladder folklore") {
     assert(MarchGates.order == Seq(
       MarchLabel.DarkTemplarHunt,
       MarchLabel.CorsairHunt,
+      MarchLabel.CatchUp,
       MarchLabel.MainMarch,
       MarchLabel.SuicideMission,
       MarchLabel.PairRide,

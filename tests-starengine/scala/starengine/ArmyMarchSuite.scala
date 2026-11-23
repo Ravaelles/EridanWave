@@ -88,7 +88,9 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
         armyUnitsScore = 500.0,
         supplyUsed = 0,
         proxyRush = false,
-        home = None)
+        home = None,
+        catchUpAnchor = None,
+        alphaAnchorTiles = Double.PositiveInfinity)
       // The shipped duel definition, so the gate and the legs agree
       // here exactly like they do in production. The latched verdict
       // mirrors the fresh duel: the engine ticks once, and a first tick
@@ -113,7 +115,8 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
       nearestWarriorTiles = if (mateTiles.isInfinite) None else Some(mateTiles),
         distHomeTiles = None,
         nearestArmedTiles = nearestArmedTiles,
-        nearestStaticTiles = None)
+        nearestStaticTiles = None,
+        behindAlphaTiles = Double.NegativeInfinity)
       if (MarchGates.select(facts, marchUnit).contains(MarchLabel.LoneMarch)) loneMarches += 1
 
       // No duel hold: the line always walks, duels chase through their

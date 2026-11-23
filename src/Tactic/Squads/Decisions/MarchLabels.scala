@@ -15,6 +15,8 @@ object MarchLabel {
 
   case object CorsairHunt extends MarchLabel("CorsairHunt")
 
+  case object CatchUp extends MarchLabel("CatchUp")
+
   case object MainMarch extends MarchLabel("MainMarch")
 
   case object SuicideMission extends MarchLabel("SuicideMission")

@@ -10,7 +10,7 @@ import Micro.Agency.Commander
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{AttackModes, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.Decisions.{AttackModes, CatchUpMarch, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -23,6 +23,13 @@ object MarchOrders {
 
   private def readFacts(): MarchFacts = {
     val home = if (With.geography.ourBases.isEmpty) None else Some(With.geography.ourMain.heart.center)
+    // Catch-up anchor: the nearest ground enemy to the alpha centroid,
+    // measured once - every reinforcement compares against this one pixel.
+    // No ground enemies, no anchor, no catch-up: the legs already march
+    // when there is nothing to dress for.
+    val alphaCentroid = With.tactics.attackSquad.centroidGround
+    val catchUpAnchor = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && ! e.flying))(_.pixelDistanceCenter(alphaCentroid)).map(_.pixel)
     MarchFacts(
       // Races from units on the board, not lobby slots: UMS maps field
       // several enemy races at once while only one ever shows up, and a
@@ -41,7 +48,9 @@ object MarchOrders {
         With.battles.globalAttack.enemy.skimStrengthUnits),
       supplyUsed       = With.self.supplyUsed200,
       proxyRush        = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax(),
-      home             = home)
+      home             = home,
+      catchUpAnchor    = catchUpAnchor,
+      alphaAnchorTiles = catchUpAnchor.map(a => alphaCentroid.pixelDistance(a) * Maff.inv32).getOrElse(Double.PositiveInfinity))
   }
 
   def sendUnits(squad: Squad, units: Iterable[FriendlyUnitInfo], defaultReturn: Option[Pixel] = None): Unit = {
@@ -212,7 +221,7 @@ object MarchOrders {
     // The verdict postdates the read (it needs the armed scan below),
     // so the gate reads it through a copy: the duel and retreat facts
     // ride the same unit, never two vintages.
-    val marchUnit = MarchUnit.read(squad, unit, facts.home, verdictRetreat = false)
+    val marchUnit = MarchUnit.read(squad, unit, facts, verdictRetreat = false)
     // First verdict reader (step 2): the march ticks the shared bus with
     // the unified raw inputs and obeys the held verdict instead of
     // re-deriving retreat. Same vintage as before (shouldFight arrives
@@ -247,7 +256,17 @@ object MarchOrders {
     // the same frame the march sees it), downgrades wait out the
     // release, so a one-frame target flicker never marches the duel
     // out of the map.
-    val wanted = MotionVerdict.desired(verdictRetreat, marchUnit.hasDuel, farWaitHolding(unit))
+    // Catch-up (nadrzędna): a reinforcement trailing the alpha joins at
+    // full speed - a far assigned target is a march, not a duel, so the
+    // verdict reads Advance and both phases march instead of dancing.
+    // Nearby teeth still own the frame (hittable in reach, fire incoming,
+    // statics owning their reach); retreat outranks everything. Same
+    // predicate the gate reads, ticked once here: the latches are
+    // idempotent within the frame, so gate and verdict agree.
+    val catchUpFullSpeed = marchUnit.shouldFight && ! verdictRetreat && ! marchUnit.hasContact &&
+      marchUnit.nearestStaticTiles.forall(_ > MarchDress.staticDressTiles) &&
+      CatchUpMarch.catchUp(marchUnit.unitId, marchUnit.behindAlphaTiles)
+    val wanted = MotionVerdict.desired(verdictRetreat, marchUnit.hasDuel && ! catchUpFullSpeed, farWaitHolding(unit))
     MotionVerdict.update(unit.id, wanted, With.frame)
     val verdictDuel = MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Duel
     val latched = marchUnit.copy(verdictRetreat = verdictRetreat, verdictDuel = verdictDuel)

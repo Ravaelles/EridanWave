@@ -1,5 +1,7 @@
 package Tactic.Squads.Decisions
 
+import Mathematics.Points.Pixel
+
 /**
  * World facts the gates read, measured once per `sendUnits` instead of once
  * per gate per unit: ten gates over forty units used to mean hundreds of
@@ -16,7 +18,9 @@ final case class MarchFacts(
   armyUnitsScore   : Double,
   supplyUsed       : Int,
   proxyRush        : Boolean,
-  home             : Option[Mathematics.Points.Pixel]) {
+  home             : Option[Mathematics.Points.Pixel],
+  catchUpAnchor    : Option[Pixel],
+  alphaAnchorTiles : Double) {
 
   /** A toothless Terran fields nothing worth forming up against. */
   def enemyIsToothless: Boolean = enemyIsTerran && ! enemyHasTanks && ! enemyHasVultures

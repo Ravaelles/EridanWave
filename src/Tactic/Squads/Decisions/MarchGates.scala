@@ -22,6 +22,21 @@ object MarchGates {
     // never dress, rally, or take formation slots, or they mill in
     // place instead of killing Overlords.
     MarchGate(MarchLabel.CorsairHunt, (_, unit) => unit.isCorsair),
+    // CatchUp above, then the doorstep: a reinforcement trailing the
+    // alpha centroid by five tiles joins at full speed instead of
+    // rallying, slotting or dressing - the BetaStar flap was mates
+    // arriving together (LoneMarch needs no company, so it never fired
+    // for them) and dancing on far assigned targets. Nearby teeth still
+    // own the frame (hittable in reach, fire incoming, statics owning
+    // their reach), so a held duel on a far target never pins the march
+    // again. Latched both ways; the MotionVerdict input reads the same
+    // predicate, so gate and verdict agree by construction.
+    MarchGate(MarchLabel.CatchUp, (_, unit) =>
+      unit.shouldFight &&
+      ! unit.verdictRetreat &&
+      ! unit.hasContact &&
+      unit.nearestStaticTiles.forall(_ > MarchDress.staticDressTiles) &&
+      CatchUpMarch.catchUp(unit.unitId, unit.behindAlphaTiles)),
     // Main march: past 90 supply a unit sitting on our doorstep never
     // poses, rallies or walks to a slot - the column just walks out, so
     // the base stops choking on its own formation dance. No bases (UMS

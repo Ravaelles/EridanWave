@@ -2,7 +2,6 @@ package Tactic.Squads.Decisions
 
 import Lifecycle.With
 import Mathematics.Maff
-import Mathematics.Points.Pixel
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Squad
@@ -31,11 +30,13 @@ final case class MarchUnit(
   distHomeTiles       : Option[Double],
   nearestArmedTiles   : Double,
   nearestStaticTiles  : Option[Double],
-  nearestVisibleArmedTiles : Double)
+  nearestVisibleArmedTiles : Double,
+  behindAlphaTiles    : Double,
+  hasContact          : Boolean)
 
 object MarchUnit {
 
-  def read(squad: Squad, unit: FriendlyUnitInfo, home: Option[Pixel], verdictRetreat: Boolean, verdictDuel: Boolean = false): MarchUnit =
+  def read(squad: Squad, unit: FriendlyUnitInfo, facts: MarchFacts, verdictRetreat: Boolean, verdictDuel: Boolean = false): MarchUnit =
     MarchUnit(
       unitId              = unit.id,
       isDarkTemplar       = Protoss.DarkTemplar(unit),
@@ -56,7 +57,7 @@ object MarchUnit {
         unit.matchups.engagedUpon,
       nearestWarriorTiles = Maff.minBy(squad.units.view.filter(u => u != unit && u.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
         .map(a => unit.pixelDistanceCenter(a.pixel) * Maff.inv32),
-      distHomeTiles       = home.map(h => unit.pixel.groundPixels(h) * Maff.inv32),
+      distHomeTiles       = facts.home.map(h => unit.pixel.groundPixels(h) * Maff.inv32),
       nearestArmedTiles   = Maff.minBy(With.units.enemy.view.filter(e =>
         e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)))(_.pixelDistanceCenter(unit.pixel))
         .map(e => e.pixelDistanceCenter(unit.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
@@ -71,5 +72,15 @@ object MarchUnit {
       // (ghosts own the recall horizon instead).
       nearestVisibleArmedTiles = Maff.minBy(With.units.enemy.view.filter(e =>
         e.alive && e.visible && e.unitClass.canAttack(unit.unitClass)))(_.pixelDistanceEdge(unit.pixel))
-        .map(e => unit.pixelDistanceEdge(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity))
+        .map(e => unit.pixelDistanceEdge(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+      // Trail behind the alpha, in tiles, to the shared anchor: positive
+      // means joining from behind. No anchor, no trail - negative
+      // infinity never clears the margin.
+      behindAlphaTiles = facts.catchUpAnchor
+        .map(a => unit.pixelDistanceCenter(a) * Maff.inv32 - facts.alphaAnchorTiles)
+        .getOrElse(Double.NegativeInfinity),
+      // Teeth, not paperwork: a hittable target in reach or incoming fire
+      // owns the frame even behind the alpha - a far assigned target with
+      // clear skies is a march, never a duel.
+      hasContact = unit.matchups.targetsInRange.nonEmpty || unit.matchups.engagedUpon)
 }
