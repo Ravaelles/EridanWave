@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 # StarEngine scenarios, ad hoc only - never in the default suite.
-# Usage: scripts/starengine.sh [--filter tag[,tag...]] [Suite [Suite...]]
+# Usage: scripts/starengine.sh [--watch] [--filter tag[,tag...]] [Suite [Suite...]]
 #   scripts/starengine.sh                         # every scenario (slow)
 #   scripts/starengine.sh SunkensScenarioSuite     # one scenario (fast)
 #   scripts/starengine.sh --filter reaver          # every scenario tagged reaver
 #   scripts/starengine.sh --filter reaver,shuttle  # scenarios tagged either
+#   scripts/starengine.sh --watch DragoonZealotKiteSuite  # live Swing viewer
+#   scripts/starengine.sh --watch                  # checklist picker, then watch in order
+# --watch opens the live viewer: every unit plus its order arrow, labels
+# with kind, order and hit points (the run.sh --visible readout for
+# scenarios). Scenarios run one after another in one JVM and the window
+# retitles to the active game. Keys: space pauses, +/- steps the frame
+# delay, 0 full speed, q quits the window. Needs an X display (the Wine
+# Xvfb on :99 works); headless runs skip the window silently.
 # Suite names take an optional starengine. prefix. Tags take an optional
 # starengine. prefix too (reaver == starengine.reaver); matching is
 # case-insensitive and an unknown tag is an error, never a silent
@@ -20,8 +28,13 @@ export MAVEN_OPTS="--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.
 filter=""
 filter_given=0
 suites=()
+watch=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --watch)
+      watch=1
+      shift
+      ;;
     --filter=*)
       filter="${1#--filter=}"
       filter_given=1
@@ -112,6 +125,42 @@ if [ "$filter_given" -eq 1 ]; then
     args+=("-Dsuites=$tagged")
   fi
   args+=("-DtagsToInclude=$(qualify "$filter")")
+fi
+
+# Live viewer: checklist picker when interactive with nothing to run,
+# then one JVM for the whole order with the window retitling per game.
+pick_suites() {
+  local all=()
+  while IFS= read -r f; do all+=("$(basename "$f" .scala)"); done < <(ls tests-starengine/scala/starengine/*Suite.scala | sort)
+  echo "StarEngine scenarios (space-separated numbers, 'all', or empty to quit):" >&2
+  local i=1
+  for s in "${all[@]}"; do printf '  %2d) %s\n' "$i" "$s" >&2; i=$((i + 1)); done
+  local picked=""
+  read -rp "Watch> " picked
+  if [ -z "$picked" ]; then exit 0; fi
+  if [ "$picked" = "all" ]; then printf '%s\n' "${all[@]}"; return 0; fi
+
+  local n
+  for n in $picked; do
+    if [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -ge 1 ] && [ "$n" -le "${#all[@]}" ]; then
+      echo "starengine.${all[$((n - 1))]}"
+    else
+      echo "starengine: ignoring '$n' (1-${#all[@]} or 'all')" >&2
+    fi
+  done
+}
+
+if [ "$watch" -eq 1 ]; then
+  export STARENGINE_VISUALIZE=1
+  if [ -z "${DISPLAY:-}" ]; then
+    echo "starengine: no DISPLAY set - suites run headless, the window is skipped." >&2
+    echo "starengine: point DISPLAY at an X server (the Wine Xvfb listens on :99) to watch." >&2
+  fi
+  if [ "${#args[@]}" -eq 0 ] && [ -t 0 ]; then
+    mapfile -t picked < <(pick_suites)
+    if [ "${#picked[@]}" -eq 0 ]; then exit 0; fi
+    args+=("-Dsuites=$(IFS=,; echo "${picked[*]}")")
+  fi
 fi
 
 if [ "${#args[@]}" -eq 0 ]; then

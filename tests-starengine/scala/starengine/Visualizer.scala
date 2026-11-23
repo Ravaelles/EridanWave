@@ -10,13 +10,15 @@ import scala.collection.mutable
  * Chase draw the movement arrow toward the order destination, Hold
  * draws none, and every hull carries its kind, order and hit points,
  * the same active-behavior readout `run.sh --visible` paints on the
- * game. Speed lives on the keyboard: space pauses, +/- steps the
- * frame delay, 0 runs full speed, q closes the window and lets the run
- * finish headless. Enabled with `STARENGINE_VISUALIZE=1` (or
- * `-Dstarengine.visualize=true`); headless environments silently skip
+ * game. Buildings render their sprite centered on the building center,
+ * mobiles stay vector dots. Speed lives on the keyboard: space pauses,
+ * +/- steps the frame delay, 0 full speed, q closes the window and lets
+ * the run finish headless, Escape or the window X quits the whole app.
+ * Enabled with `scripts/starengine.sh --watch` (or STARENGINE_VISUALIZE=1
+ * / -Dstarengine.visualize=true); headless environments silently skip
  * it. The scenarios never wait for the window: painting is fire-and-
- * forget on the test thread, and a shutdown hook disposes the frame
- * so the JVM can always exit.
+ * forget on the test thread, and an idle watchdog disposes a forgotten
+ * frame so no zombie window ever pins its JVM.
  *
  * Test-only harness. Production code must never reference it.
  */
@@ -28,11 +30,35 @@ object Visualizer {
 
   def enabled: Boolean = enabledFlag
 
+  /** Sprite home, mirroring Atlantis img/starengine/units; unset to draw boxes. */
+  private lazy val spriteDir: Option[java.io.File] = {
+    val dir = new java.io.File(sys.env.getOrElse("STARENGINE_SPRITES", "/sc-ai/Atlantis/img/starengine/units"))
+    if (dir.isDirectory) Some(dir) else None
+  }
+
+  private val sprites = new mutable.HashMap[String, java.awt.Image]()
+
+  /** Building sprite by unit key, centered later on the building center. Missing files stay missing. */
+  private def spriteFor(key: String): Option[java.awt.Image] = {
+    if (sprites.contains(key)) return Option(sprites(key)).filter(_ != null)
+
+    val loaded = try {
+      spriteDir.flatMap(dir => {
+        val file = new java.io.File(dir, key + ".png")
+        if (file.isFile) Some(javax.imageio.ImageIO.read(file)) else None
+      })
+    } catch { case _: Throwable => None }
+    sprites(key) = loaded.orNull
+    loaded
+  }
+
   @volatile private var delayMs: Long = 10
   @volatile private var paused: Boolean = false
   @volatile private var title: String = "StarEngine"
   @volatile private var paintedFrames: Long = 0
+  @volatile private var lastFrameNanos: Long = 0L
   @volatile private var saidHello: Boolean = false
+  @volatile private var watchdogStarted: Boolean = false
 
   private val pauseLock = new Object
   private var frame: JFrame = _
@@ -54,6 +80,8 @@ object Visualizer {
     if ( ! enabled) return
     if (java.awt.GraphicsEnvironment.isHeadless) return
 
+    lastFrameNanos = System.nanoTime()
+
     val view =
       try snapshot(world)
       catch { case _: Throwable => return }
@@ -70,7 +98,7 @@ object Visualizer {
     } catch { case _: Throwable => return }
     if ( ! saidHello) {
       saidHello = true
-      println("[visual] StarEngine window open (space=pause, +/-=speed, 0=full, q=quit visual)")
+      println("[visual] StarEngine window open (space=pause, +/-=speed, 0=full, q=quit visual, Esc=quit app)")
     }
     try {
       pauseLock.synchronized {
@@ -100,7 +128,7 @@ object Visualizer {
       case Some(Hold)           => ("Hold", None)
       case None                 => ("-", None)
     }
-    Mark(body.x, body.y, kind, ours, body.hp, body.maxHp, body.cloaked, label, arrow)
+    Mark(body.x, body.y, kind, ours, body.hp, body.maxHp, body.cloaked, label, arrow, body.kind.isBuilding, body.kind.asString)
   }
 
   private def shortKind(name: String): String = {
@@ -118,14 +146,19 @@ object Visualizer {
     frame.pack()
     frame.setLocationRelativeTo(null)
     frame.addWindowListener(new java.awt.event.WindowAdapter {
+      override def windowClosing(e: java.awt.event.WindowEvent): Unit = quitApp()
       override def windowClosed(e: java.awt.event.WindowEvent): Unit = teardown()
     })
     panel.addKeyListener(new java.awt.event.KeyAdapter {
-      override def keyPressed(e: java.awt.event.KeyEvent): Unit = onKey(e.getKeyChar)
+      override def keyPressed(e: java.awt.event.KeyEvent): Unit = {
+        if (e.getKeyCode == java.awt.event.KeyEvent.VK_ESCAPE) quitApp()
+        else onKey(e.getKeyChar)
+      }
     })
     panel.setFocusable(true)
     frame.setVisible(true)
     panel.requestFocusInWindow()
+    startWatchdog()
     Runtime.getRuntime.addShutdownHook(new Thread(new Runnable {
       override def run(): Unit = {
         try {
@@ -136,13 +169,61 @@ object Visualizer {
     }))
   }
 
+  /**
+   * Idle watchdog: a forgotten window (crashed run, killed loop) must
+   * never pin its JVM - with no frames for two minutes and no paused
+   * inspection going on, the frame goes away on its own. Daemon, so it
+   * never holds the JVM either.
+   */
+  private def startWatchdog(): Unit = pauseLock.synchronized {
+    if (watchdogStarted) return
+
+    watchdogStarted = true
+    val watch = new Thread(new Runnable {
+      override def run(): Unit = {
+        while (true) {
+          try Thread.sleep(30000)
+          catch { case _: InterruptedException => return }
+          if ( ! enabled) return
+
+          val idleNanos = System.nanoTime() - lastFrameNanos
+          if (frame != null && ! paused && idleNanos > 120000000000L) {
+            try {
+              println("[visual] idle 120s with no frames - closing the window")
+              frame.dispose()
+            } catch { case _: Throwable => }
+            teardown()
+
+            return
+          }
+
+          if (frame == null && ! paused) return
+
+        }
+      }
+    })
+    watch.setDaemon(true)
+    watch.start()
+  }
+
   private def teardown(): Unit = {
     pauseLock.synchronized {
       frame = null
       panel = null
       paused = false
+      watchdogStarted = false
       pauseLock.notifyAll()
     }
+  }
+
+  /** Escape or the window X quits the whole app: there is no other way out of a live run. */
+  private def quitApp(): Unit = {
+    try {
+      println("[visual] quitting on user request")
+      if (frame != null) frame.dispose()
+    } catch { case _: Throwable => }
+    teardown()
+    sys.exit(0)
   }
 
   private def onKey(c: Char): Unit = c match {
@@ -167,7 +248,9 @@ object Visualizer {
     maxHp: Double,
     cloaked: Boolean,
     order: String,
-    arrowTo: Option[(Double, Double)])
+    arrowTo: Option[(Double, Double)],
+    building: Boolean,
+    spriteKey: String)
 
   final case class ViewModel(title: String, frame: Int, bodies: Vector[Mark])
 
@@ -180,7 +263,7 @@ object Visualizer {
       repaint()
     }
 
-    override def getPreferredSize: Dimension = new Dimension(MaxPx, MaxPx + 28)
+    override def getPreferredSize: Dimension = new Dimension(MaxPx, MaxPx + 44)
 
     override protected def paintComponent(g: Graphics): Unit = {
       super.paintComponent(g)
@@ -247,8 +330,18 @@ object Visualizer {
         if (b.ours) gg.setColor(new Color(120, 230, 230)) else gg.setColor(new Color(255, 120, 120))
         val px = sx(b.x)
         val py = sy(b.y)
-        if (b.cloaked) gg.drawOval(px - 4, py - 4, 8, 8)
-        else gg.fillOval(px - 4, py - 4, 8, 8)
+        // Buildings render their sprite centered on the building center;
+        // mobiles stay vector dots. Missing files fall back to boxes.
+        val sprited = b.building && spriteFor(b.spriteKey).exists(img => {
+          gg.drawImage(img, px - img.getWidth(null) / 2, py - img.getHeight(null) / 2, null)
+          true
+        })
+        if ( ! sprited) {
+          if (b.building) {
+            gg.drawRect(px - 8, py - 8, 16, 16)
+          } else if (b.cloaked) gg.drawOval(px - 4, py - 4, 8, 8)
+          else gg.fillOval(px - 4, py - 4, 8, 8)
+        }
         gg.setColor(Color.WHITE)
         gg.drawString(b.kind + " " + b.order + " " + b.hp.toInt + "/" + b.maxHp.toInt, px + 7, py - 5)
       }
@@ -256,7 +349,8 @@ object Visualizer {
       gg.setColor(Color.GRAY)
       val delay = delayMs
       val state = if (paused) "PAUSED" else "delay " + delay + "ms"
-      gg.drawString(v.title + " f" + v.frame + "  [" + state + "]  space=pause +/-=speed 0=full q=quit", 8, MaxPx + 18)
+      gg.drawString(v.title + " f" + v.frame + "  [" + state + "]", 8, MaxPx + 16)
+      gg.drawString("space=pause +/-=speed 0=full q=quit visual Esc=quit app", 8, MaxPx + 32)
       frame match {
         case null =>
         case f => f.setTitle(v.title + " f" + v.frame)

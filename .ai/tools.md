@@ -14,13 +14,14 @@
   through `__GENERIC-RUN-ERIDAN.sh`). No seeds on the Wine path.
 - UMS micro maps self-start headless; UMS writes no CherryVis trace
   (`!umsMode`) - use `probe.py`, never traces.
-- `bash scripts/watch.sh [Suite...]` / `[--filter tag]`: StarEngine
-  scenarios with the live Swing viewer (units, order arrows, labels,
-  frame counter). No args opens a checklist picker, then scenarios run
-  one after another in one JVM with the window retitling to the active
-  game. Keys: space pauses, +/- steps the frame delay, 0 full speed,
-  q quits the window. Needs an X display (the Wine Xvfb on :99 works);
-  without one the suites run headless as usual.
+- `bash scripts/starengine.sh --watch [Suite...]` / `[--filter tag]`: StarEngine
+  scenarios with the live Swing viewer (building sprites centered on
+  their buildings, order arrows, labels, frame counter). No suites plus
+  a TTY opens a checklist picker, then scenarios run one after another
+  in one JVM with the window retitling to the active game. Keys: space
+  pauses, +/- steps the frame delay, 0 full speed, q quits the window,
+  Esc or the window X quits the whole app. Needs an X display (the Wine
+  Xvfb on :99 works); without one the suites run headless as usual.
 
 ## Read a game (cheapest first)
 
