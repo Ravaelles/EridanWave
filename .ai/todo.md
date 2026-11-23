@@ -1,4 +1,4 @@
-# HIGH PRIORITY: order-issuers review (SRP, one question per unit)
+# HIGH PRIORITY: order-issuers review (SRP, one question per unit) - audit done 2026-11-24, fixes in progress on f/phase-j
 
 Review every class that issues orders to combat units
 (Commander*/Combat*/Behaviors/*Behavior, Be* brains, march legs):
@@ -13,7 +13,28 @@ the Retreating label); audit trail in commit messages otherwise.
 Trigger: Close/Guard silent claims, holder-vs-mover thrash, split
 march-vs-technique retreats - all three were multi-writer symptoms.
 
-# 1Drag_v_1Zeal kite duel (IN PROGRESS - uncommitted, owner bar: max 1-3 hits, wins on both maps)
+Audit 2026-11-24 (three subagents, evidence with file:line in session):
+ worst are Combat.scala (orchestrates target+verdicts+technique+dispatch,
+ writes toAttack/perch/technique), CombatTechniques (ticks foreign
+ verdict buses, decision.set(safety)), CombatEngagement (direct
+ forceTo/move, perch.clear, breakFormationToAttack writes),
+ KiteAwayBehavior (6 sub-duels, 3 order channels),
+ ApproachBuildingFormation (nests HoldLineAdvance - documented as
+ delegation, one order per frame by construction),
+ BeDarkTemplar (7 behaviors, toAttack+move per leg),
+ BeCarrier (verdict+destination+7-way order switch),
+ CommanderEngage/CommanderMove (kitchen-sink movers),
+ Target.choose (15 doctrines, writes dispatch-owned toAttack).
+Done: leash/rejoin extracted to Behavior objects (a1d411612);
+ decision-writers pinned (2 own lines; DT gun.pixel line left
+ unlisted for owner review). Deferred as structural (needs owner):
+ Combat.scala split, BeDarkTemplar/BeCarrier breakdowns,
+ Commander* sink slimming, Target ladder ownership, Bust double
+ toAttack write, Retreat.toAttack=None, perch.clear ownership,
+ march-tick removal (load-bearing: marching-only units need a vote),
+ Retreating-label token.
+
+# 1Drag_v_1Zeal kite duel (owner bar: max 1-3 hits, wins on both maps) - LANDED, bar UNMET on variance
 
 Dragoon kites a lone Zealot from first sight (chase 7 tiles), never plants
 or stands in contact (edge-only volleys when loaded), holds committed
@@ -21,40 +42,29 @@ or stands in contact (edge-only volleys when loaded), holds committed
 (leashed, aligned, edge-capped), never flees across the map. All new
 rules are guns-nearby-gated (melee within chase range counts as guns);
 the mirror runs the old discipline untouched.
+Formation (f/phase-j): FormationDuelStage before Close; lone duelist
+duels from f0 (isLone decline), pack dresses (slot-seek/hold/creep
+0.05-0.2 by odds); Abuse votes only with hittable (no ghost approach).
 
-Proven: StarEngine DragoonZealotKiteSuite (new, green) - 0 hits, zealot
-dead in 223f, min gap 2.4 tiles, leash bounds separation (6.1 vs 26.0
-tiles free). UMS ZealDrag_v_ZealDrag: clean wins (9/4, 9/0, 9/2),
-no waste. UMS 1Drag_v_1Zeal: wins most games, never draws/stalemates
-anymore.
+Proven: StarEngine DragoonZealotKiteSuite - 0 hits, kill in 223f.
+UMS mirror: VICTORIES 9/7 9/7 9/4 9/3 9/0 8/5 (one coin-flip 5/9 on
+identical code), waste ~0-4f, no thrash, no silent-idle (Close
+declines instead of silent-claiming; Reposition always signs).
+UMS 1v1: VICTORIES 1/0 x5 (hits 0/2/4/6/8/13, waste 106-221f). Bar met
+twice (0, 2), missed 4x. High run-to-run variance on identical code
+(wins, 0/0 draws historically, losses) - glue fights (v oscillates
+0-8, ~21% full stops) decide the duel, not the decision (kite acts
+every cooling frame; UMS shows KiteAway chains throughout).
 
-NOT met yet: UMS hits 2-25 per duel (budget 1-3), waste 45-230f, high
-run-to-run variance (wins, 0/0 draws, losses on identical code).
+Ledger upgraded 2026-11-24: waste counts stuck guns too (loaded +
+near + standing + silent past a full period), judged by gun events
+not orders. 1v1 waste 106-221f unexplained - next: split the summary
+by shape (move-past vs stuck-hold) and fix the dominant one.
 
-Root cause, measured not guessed (temporary KTRACE probe, remove before
-commit): the dragoon kites every frame but its effective speed collapses
-in contact (v oscillates 0-8, mean ~4 vs 5.0 max, ~21% full stops,
-median gap 0-2 tiles, min 0.0). The zealot matches it and the gap never
-opens. Ruled out: order reissues (Commander dedups within 128px),
-Unstick stops (resetSticking on every kite frame), Reposition/dance
-interference (outer gate forces Close on chase; dance stands down),
-contact plants (edge-only for lone duels now).
-Remaining suspects, in order: (1) per-frame heading recompute turns
-the hull forever in contact - just added per-unit heading hold
-(KiteAway.steadyHoldFrames=8, 45-degree cone, gunsOut-only); 2 measured
-runs still glued (mean v 4.1, 21% stopped, minD 0). (2) shove-fights
-with the glued zealot. (3) walls/corners (deaths at map edges, e.g.
-tile (10,48)).
-Next: verify the heading hold actually reduces turning (needs heading
-trace, not just speed), else escalate to wall-aware kite direction.
-
-Uncommitted in tree (do NOT land as-is): KTRACE Probe.note instrumentation
-in KiteAwayBehavior (measurement only - REMOVE before commit);
-KiteAway.scala + KiteAwayBehavior.scala + BeDragoonVsSlowlot.scala +
-CombatEngagement.scala (chase/leash/escape/commit/steady/outer-gate),
-KiteAwaySuite.scala, DragoonZealotKiteSuite.scala, HitsTaken.scala +
-HitsTakenSuite.scala + EndOfGame hook (UMS hits ledger - the acceptance
-metric; keep).
+Committed: lone-blade kernels, outer gate, HitsTaken ledger,
+kite-gate (cooling kites contact), close-no-silent-claim,
+designation 0.15, formation stage + ApproachBuildingFormation,
+Abuse-hittable gate, loneBladeDuel kernel, slot-seek/hold/leash.
 
 Watch: RetreatVerdictHoldSuite.skewed-readers fails deterministically
 (flips=1, needs >60) on the clean tree too (stash-proven) - pre-existing,

@@ -29,8 +29,22 @@ class VolleyWasteSuite extends AnyFunSuite {
     assert( ! VolleyWaste.isStuckGun(cooldownLeft = 0, hasHittableNear = true, standingStill = true, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2, isWarrior = false))
   }
 
-  test("stuck holds accumulate past the application window") {
+  test("the summary splits move-past from stuck-hold frames") {
     VolleyWaste.reset()
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 100)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 103)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true, frame = 104)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.HoldPosition, isWarrior = true, frame = 110,
+      hasHittableNear = true, standingStill = true, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.HoldPosition, isWarrior = true, frame = 113,
+      hasHittableNear = true, standingStill = true, framesSinceAttack = 43, periodFrames = 30, latencyFrames = 2)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.HoldPosition, isWarrior = true, frame = 114,
+      hasHittableNear = true, standingStill = true, framesSinceAttack = 44, periodFrames = 30, latencyFrames = 2)
+    val report = VolleyWaste.summary()
+    assert(report.contains("move 1f") && report.contains("stuck 1f"), report)
+  }
+
+  test("stuck holds accumulate past the application window") {    VolleyWaste.reset()
     VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.HoldPosition, isWarrior = true, frame = 100,
       hasHittableNear = true, standingStill = true, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2)
     assert(VolleyWaste.worstTotal == 0)

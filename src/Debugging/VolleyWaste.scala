@@ -18,12 +18,16 @@ import scala.collection.mutable
 object VolleyWaste extends PerGame {
 
   private val wastedFrames = new mutable.HashMap[Int, Int]()
+  private val wastedMoveFrames = new mutable.HashMap[Int, Int]()
+  private val wastedStuckFrames = new mutable.HashMap[Int, Int]()
   private val classById = new mutable.HashMap[Int, String]()
   private val orderSince = new mutable.HashMap[Int, (String, Int)]()
   private val wasteStreak = new mutable.HashMap[Int, Int]()
 
   override def reset(): Unit = {
     wastedFrames.clear()
+    wastedMoveFrames.clear()
+    wastedStuckFrames.clear()
     classById.clear()
     orderSince.clear()
     wasteStreak.clear()
@@ -94,6 +98,8 @@ object VolleyWaste extends PerGame {
     if (streak < 2) return
 
     wastedFrames(unitId) = wastedFrames.getOrElse(unitId, 0) + 1
+    if (forgone) wastedMoveFrames(unitId) = wastedMoveFrames.getOrElse(unitId, 0) + 1
+    else wastedStuckFrames(unitId) = wastedStuckFrames.getOrElse(unitId, 0) + 1
     classById(unitId) = unitClass
   }
 
@@ -102,7 +108,7 @@ object VolleyWaste extends PerGame {
     if (wastedFrames.isEmpty) return "### Volley waste: none"
 
     val top = wastedFrames.toSeq.sortBy(-_._2).take(maxRows)
-      .map { case (id, frames) => s"${classById.getOrElse(id, "?")} #$id ${frames}f" }
+      .map { case (id, frames) => s"${classById.getOrElse(id, "?")} #$id ${frames}f (move ${wastedMoveFrames.getOrElse(id, 0)}f, stuck ${wastedStuckFrames.getOrElse(id, 0)}f)" }
       .mkString(", ")
     f"### Volley waste: $top"
   }
