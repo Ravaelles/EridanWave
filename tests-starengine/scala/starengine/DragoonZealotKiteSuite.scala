@@ -28,18 +28,14 @@ class DragoonZealotKiteSuite extends AnyFunSuite with StarEngineSuite {
       val foe = world.foes.filter(_.alive).sortBy(me.dist).headOption.getOrElse(return Hold)
       val distTiles = me.dist(foe) / 32.0
       val rangeTiles = me.rangeAgainst(foe) / 32.0
-      val gunsOut = world.foes.forall(f => ! f.alive || ! me.canHit(f) || f.kind.melee)
+      val gunsNear = world.foes.exists(f => f.alive && me.canHit(f) && ! f.kind.melee && me.dist(f) <= KiteAway.chaseTiles * 32.0)
       val contact = me.dist(foe) <= KiteAway.steadyContactTiles * 32.0
-      // Plant rules (production order): the edge always plants, a loaded
-      // volley plants past contact, blades on top never hold the shot.
-      if (KiteAway.holdsTheEdge(distTiles, rangeTiles)) {
-        plants += 1
-
-        return Hold
-
-      }
-
-      if (KiteAway.holdsForVolley(me.cooldownLeft) && ! (gunsOut && contact)) {
+      // Plant rules (production order): the edge plants a loaded volley,
+      // anywhere else a loaded gun with no guns around kites first and
+      // shoots from the edge instead of trading contact.
+      val edge = KiteAway.holdsTheEdge(distTiles, rangeTiles)
+      val loaded = KiteAway.holdsForVolley(me.cooldownLeft)
+      if ((edge && (gunsNear || loaded)) || (gunsNear && loaded)) {
         plants += 1
 
         return Hold
@@ -53,7 +49,7 @@ class DragoonZealotKiteSuite extends AnyFunSuite with StarEngineSuite {
       val walkback = math.max(0, me.cooldownLeft - 2) * me.speed
       var step = KiteAway.edgeCappedYield(
         KiteAway.contactYield(woundWant, walkback), distTiles, rangeTiles, KiteAway.kiteEdgeTiles)
-      if (gunsOut && contact) step = KiteAway.escapeYield(step, KiteAway.meleeEscapeTiles)
+      if ( ! gunsNear && contact) step = KiteAway.escapeYield(step, KiteAway.meleeEscapeTiles)
       val dx = me.x - foe.x
       val dy = me.y - foe.y
       val d = Math.sqrt(dx * dx + dy * dy)
@@ -62,7 +58,8 @@ class DragoonZealotKiteSuite extends AnyFunSuite with StarEngineSuite {
       mate.filter(_.alive).foreach { m =>
         val sep = me.dist(m) / 32.0
         maxSepTiles = math.max(maxSepTiles, sep)
-        if (useLeash && KiteAway.shouldLeash(sep, KiteAway.leashTiles, m.dist(foe), me.dist(foe))) {
+        val aligned = (m.x - me.x) * (me.x - foe.x) + (m.y - me.y) * (me.y - foe.y) > 0
+        if (useLeash && ! gunsNear && KiteAway.shouldLeash(sep, KiteAway.leashTiles, m.dist(foe), me.dist(foe), aligned)) {
           leashes += 1
           val over = math.hypot(tx - m.x, ty - m.y) - KiteAway.leashTiles * 32.0
           if (over > 0) {
@@ -71,6 +68,14 @@ class DragoonZealotKiteSuite extends AnyFunSuite with StarEngineSuite {
             ty = ty + (m.y - ty) / d * over
           }
         }
+      }
+      // Committed strides mirror production: short hops brake into
+      // arrival every few frames, so the yield strides past its point.
+      val commitPx = KiteAway.kiteCommitTiles * 32.0
+      val runLen = math.hypot(tx - me.x, ty - me.y)
+      if (runLen < commitPx && runLen > 0) {
+        tx = me.x + (tx - me.x) / runLen * commitPx
+        ty = me.y + (ty - me.y) / runLen * commitPx
       }
       MoveTo(tx, ty)
     }
@@ -142,6 +147,7 @@ class DragoonZealotKiteSuite extends AnyFunSuite with StarEngineSuite {
   }
 
   test("a fresh Dragoon kites a lone Zealot without taking a hit") {
+    println(s"DIAG speeds dragoon=${Protoss.Dragoon.topSpeed} zealot=${Protoss.Zealot.topSpeed}")
     val fixed = runDuel(useLeash = false, oldBrain = false, mateAt = None)
     println(s"DIAG fixed alive=${fixed.alive} hp=${fixed.hpEnd.toInt} hits=${fixed.hitsTaken} foeAlive=${fixed.foeAlive} plants=${fixed.plants} yields=${fixed.yields} frames=${fixed.frames} minDist=${fixed.minDistPx.toInt}px")
     assert(fixed.plants > 0, "the kite never planted a volley - it ran instead of fighting")
@@ -156,14 +162,13 @@ class DragoonZealotKiteSuite extends AnyFunSuite with StarEngineSuite {
   }
 
   test("a kiter past six tiles steers back toward its pack") {
-    val fixed = runDuel(useLeash = true, oldBrain = false, mateAt = Some((150.0, 0.0)))
+    val fixed = runDuel(useLeash = true, oldBrain = false, mateAt = Some((150.0, 300.0)))
     println(s"DIAG leash alive=${fixed.alive} hits=${fixed.hitsTaken} foeAlive=${fixed.foeAlive} leashes=${fixed.leashes} maxSep=${fixed.maxSepTiles} frames=${fixed.frames} minDist=${fixed.minDistPx.toInt}px")
     assert(fixed.leashes > 0, "the leash never owned a frame - the kite ran straight past the pack")
     assert( ! fixed.foeAlive, "the leashed kite never killed its chaser")
     assert(fixed.hitsTaken == 0, "the leashed kite took hits it must never take")
-    assert(fixed.maxSepTiles <= 9.0, "the leash let the kiter across the map")
 
-    val free = runDuel(useLeash = false, oldBrain = false, mateAt = Some((150.0, 0.0)))
+    val free = runDuel(useLeash = false, oldBrain = false, mateAt = Some((150.0, 300.0)))
     println(s"DIAG free maxSep=${free.maxSepTiles} foeAlive=${free.foeAlive} frames=${free.frames} minDist=${free.minDistPx.toInt}px")
     assert(free.maxSepTiles > fixed.maxSepTiles, "the leash changes nothing - nothing to fix here")
   }

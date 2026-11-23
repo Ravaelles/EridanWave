@@ -147,11 +147,12 @@ object KiteAway {
 
   /**
    * Chase radius, in tiles: an approaching blade inside this starts the
-   * kite before contact. Melee never outranges the volley, so a fresh
-   * hull yields to the chase just like a wounded one - waiting for the
-   * first hit donates the very contact the kite exists to avoid.
+   * kite before contact - from first sight, so the dance never walks
+   * the approach back into the chaser. Melee never outranges the volley,
+   * so a fresh hull yields to the chase just like a wounded one - waiting
+   * for the first hit donates the very contact the kite exists to avoid.
    */
-  var chaseTiles: Double = 5.0
+  var chaseTiles: Double = 7.0
 
   def shouldChase(distTiles: Double, chaseTiles: Double): Boolean =
     distTiles <= chaseTiles
@@ -159,13 +160,22 @@ object KiteAway {
   /**
    * Leash radius, in tiles: a kiter farther than this from its nearest
    * friendly warrior steers back toward the pack instead of across the
-   * map - but never closer to the chaser than it stands. No warriors
-   * out, no leash: a lone hull kites free.
+   * map - but never closer to the chaser than it stands, and never on
+   * a heading that turns it back into the chase. No warriors out, no
+   * leash: a lone hull kites free.
    */
   var leashTiles: Double = 6.0
 
-  def shouldLeash(distFriendTiles: Double, leashTiles: Double, distFriendFoePx: Double, distUnitFoePx: Double): Boolean =
-    distFriendTiles > leashTiles && distFriendFoePx > distUnitFoePx
+  def shouldLeash(distFriendTiles: Double, leashTiles: Double, distFriendFoePx: Double, distUnitFoePx: Double, alignedAway: Boolean): Boolean =
+    distFriendTiles > leashTiles && distFriendFoePx > distUnitFoePx && alignedAway
+
+  /**
+   * Away-hemisphere check (pure pixels for the suite): the run home only
+   * counts when heading for the friend also heads away from the foe.
+   * Turning back into the chase to rejoin trades the duel for the pack.
+   */
+  def alignedAway(unitPx: Mathematics.Points.Pixel, friendPx: Mathematics.Points.Pixel, foePx: Mathematics.Points.Pixel): Boolean =
+    (friendPx.x - unitPx.x) * (unitPx.x - foePx.x) + (friendPx.y - unitPx.y) * (unitPx.y - foePx.y) > 0
 
   /**
    * Escape floor, in tiles: a loaded hull with blades on top still steps
@@ -175,8 +185,30 @@ object KiteAway {
    */
   var meleeEscapeTiles: Double = 1.0
 
+  /**
+   * Committed stride, in tiles: short hops brake into arrival every few
+   * frames and never reach top speed, so a lone-blade kite strides past
+   * its point instead of stepping to it. The stride only ever grows the
+   * yield, never shrinks it - the direction still comes from the duel.
+   */
+  var kiteCommitTiles: Double = 6.0
+
   def escapeYield(stepPixels: Double, escapeTiles: Double): Double =
     Math.max(stepPixels, escapeTiles * 32.0)
+
+  /**
+   * Heading hold, in frames: re-deriving the course every frame from a
+   * jittering chaser turns forever instead of cruising, so a held
+   * heading stands until it lapses or the duel turns past the cone.
+   * New games restart the frame counter, which releases every hold.
+   */
+  var steadyHoldFrames: Int = 8
+
+  def shouldRefreshHeading(lastFrame: Int, frame: Int): Boolean =
+    frame < lastFrame || frame - lastFrame >= steadyHoldFrames
+
+  def holdsHeading(freshRadians: Double, heldRadians: Double, coneRadians: Double): Boolean =
+    Math.abs(Maff.normalizePiToPi(freshRadians - heldRadians)) <= coneRadians
 
   def shouldRetreat(
     totalHealth: Int,

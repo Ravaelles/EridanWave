@@ -131,22 +131,42 @@ class KiteAwaySuite extends AnyFunSuite {
   }
 
   test("pins the lone-blade chase, leash and escape") {
-    assert(KiteAway.chaseTiles == 5.0)
+    assert(KiteAway.chaseTiles == 7.0)
     assert(KiteAway.leashTiles == 6.0)
     assert(KiteAway.meleeEscapeTiles == 1.0)
+    assert(KiteAway.kiteCommitTiles == 6.0)
+    assert(KiteAway.steadyHoldFrames == 8)
   }
 
   test("an approaching blade starts the kite before contact") {
-    assert(KiteAway.shouldChase(distTiles = 5.0, chaseTiles = 5.0))
-    assert(KiteAway.shouldChase(distTiles = 3.0, chaseTiles = 5.0))
-    assert( ! KiteAway.shouldChase(distTiles = 5.1, chaseTiles = 5.0))
+    assert(KiteAway.shouldChase(distTiles = 7.0, chaseTiles = 7.0))
+    assert(KiteAway.shouldChase(distTiles = 3.0, chaseTiles = 7.0))
+    assert( ! KiteAway.shouldChase(distTiles = 7.1, chaseTiles = 7.0))
+  }
+
+  test("a held heading survives jitter but releases on turns and lapses") {
+    assert( ! KiteAway.shouldRefreshHeading(lastFrame = 10, frame = 12))
+    assert(KiteAway.shouldRefreshHeading(lastFrame = 10, frame = 18))
+    assert(KiteAway.shouldRefreshHeading(lastFrame = 100, frame = 5))
+    assert(KiteAway.holdsHeading(freshRadians = 0.1, heldRadians = 0.0, coneRadians = math.Pi / 4))
+    assert( ! KiteAway.holdsHeading(freshRadians = 1.0, heldRadians = 0.0, coneRadians = math.Pi / 4))
   }
 
   test("the leash pulls home but never toward the chaser") {
-    assert(KiteAway.shouldLeash(distFriendTiles = 6.1, leashTiles = 6.0, distFriendFoePx = 400.0, distUnitFoePx = 100.0))
-    assert( ! KiteAway.shouldLeash(distFriendTiles = 6.0, leashTiles = 6.0, distFriendFoePx = 400.0, distUnitFoePx = 100.0))
-    assert( ! KiteAway.shouldLeash(distFriendTiles = 10.0, leashTiles = 6.0, distFriendFoePx = 100.0, distUnitFoePx = 100.0))
-    assert( ! KiteAway.shouldLeash(distFriendTiles = 10.0, leashTiles = 6.0, distFriendFoePx = 50.0, distUnitFoePx = 100.0))
+    assert(KiteAway.shouldLeash(distFriendTiles = 6.1, leashTiles = 6.0, distFriendFoePx = 400.0, distUnitFoePx = 100.0, alignedAway = true))
+    assert( ! KiteAway.shouldLeash(distFriendTiles = 6.0, leashTiles = 6.0, distFriendFoePx = 400.0, distUnitFoePx = 100.0, alignedAway = true))
+    assert( ! KiteAway.shouldLeash(distFriendTiles = 10.0, leashTiles = 6.0, distFriendFoePx = 100.0, distUnitFoePx = 100.0, alignedAway = true))
+    assert( ! KiteAway.shouldLeash(distFriendTiles = 10.0, leashTiles = 6.0, distFriendFoePx = 50.0, distUnitFoePx = 100.0, alignedAway = true))
+    assert( ! KiteAway.shouldLeash(distFriendTiles = 10.0, leashTiles = 6.0, distFriendFoePx = 400.0, distUnitFoePx = 100.0, alignedAway = false))
+  }
+
+  test("the run home must head away from the foe") {
+    val unit = new Mathematics.Points.Pixel(0, 0)
+    val north = new Mathematics.Points.Pixel(0, 100)
+    val foeSouth = new Mathematics.Points.Pixel(0, -100)
+    assert(KiteAway.alignedAway(unit, north, foeSouth))
+    assert( ! KiteAway.alignedAway(unit, foeSouth, foeSouth))
+    assert( ! KiteAway.alignedAway(unit, new Mathematics.Points.Pixel(100, 0), foeSouth))
   }
 
   test("a loaded hull with blades on top still steps out") {
