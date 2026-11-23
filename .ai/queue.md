@@ -65,6 +65,19 @@ Details live in `details/` - the queue keeps one line per item.
   885->674->0, pack shape held (observers excluded). Live: zero
   Retreat/AttackMove acts f0-60, DressHold from f3, zero Formation
   rows f1-47 (the line stands), win 9/1 with zero waste.
+- Opening stand, final cut (owner: still no HoldLine, units move
+  from frame one, Retreat+AttackMove overhead): the silent mover was
+  the Idle-list Attack action - acquireTarget picks the far seen foe
+  without acting, Commander.attack closes through closeIn as
+  attackMove, and the march never countermands (all its movers are
+  gated). Gated Attack on the window. Then the forced march hold did
+  not stick: nothing in the unit phase countermands, so the last
+  writer wins - added forced HoldPosition in the march hold plus a
+  Fight-top hold for dragoons and zealots (reavers and other
+  doctrines keep their openers). Live proof: all 9 units
+  pixel-identical f0-f48 under HoldPosition orders, enemy closes
+  15->12.7 tiles into the held line, then the duel advances
+  normally (win 9/6, waste 5f).
   Autonomous night session (owner asleep, ~26 games): waste ZERO on
   every map the ledger can see (3Drag, 1v4, 2Zeal, 1v1Zeal streak,
   1v1Ling, 2v2Drag, 10Zeal, ZealDrag, 16Drag, 1v1Drag, Wounded).
