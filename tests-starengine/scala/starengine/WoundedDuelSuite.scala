@@ -72,6 +72,47 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
     }
   }
 
+  /**
+   * Production order, verbatim (KiteAwayBehavior.run): hold loaded
+   * volleys, plant the plantable ones, kite cooling contact, chase
+   * the rest. Counts wasted frames (a move issued while loaded with
+   * something hittable) - the ledger's definition, measured where
+   * shots are undeniable.
+   */
+  private class ProductionOrderPilot extends Pilot {
+    var wasted = 0
+
+    private def kiteFrom(me: Body, f: Body): Directive = {
+      if (me.cooldownLeft <= 0 && me.dist(f) <= me.rangeAgainst(f)) wasted += 1
+
+      val dx = me.x - f.x
+      val dy = me.y - f.y
+      val d = Math.sqrt(dx * dx + dy * dy)
+      if (d > 0) MoveTo(me.x + dx / d * 128.0, me.y + dy / d * 128.0) else Hold
+    }
+
+    override def direct(me: Body, world: World): Directive = {
+      val foe = world.nearestFoeOf(me, foesOf(me, world), (_, _) => true)
+      val f = foe.getOrElse(return Hold)
+      val contactClose = me.dist(f) <= KiteAway.steadyContactTiles * 32.0
+      if (KiteAway.holdsFire(me.cooldownLeft, me.hp.toInt, contactClose)) return Hold
+
+      val hittableNow = me.dist(f) <= me.rangeAgainst(f)
+      val meleeNear = f.kind == Protoss.Zealot && me.dist(f) <= me.rangeAgainst(f) + KiteAway.enemyMarginTiles * 32.0
+      if (KiteHold.shouldPlant(me.cooldownLeft, hittableNow, shieldPoints = 80, maxShields = 80, hasMeleeNearby = meleeNear)) return Hold
+
+      val meleeContact = f.kind == Protoss.Zealot && contactClose
+      if (me.cooldownLeft > 2 && meleeContact) return kiteFrom(me, f)
+
+      if (hittableNow) return Chase(f)
+
+      val meleeClose = f.kind == Protoss.Zealot && me.dist(f) <= KiteAway.meleeCloseTiles * 32.0
+      if ( ! KiteAway.shouldKite(0, meleeClose)) return Chase(f)
+
+      Chase(f)
+    }
+  }
+
   /** One duel, dragoon doctrine under test, zealot plants. Returns (dragoon alive, zealot dead, dragoon death frame or Int.MaxValue). */
   private def duel(dragoonP: Body => Pilot, dragoonIsOurs: Boolean, dragoonHp: Double = 60.0): (Boolean, Boolean, Int) = {
     val dragoon = new Body(Protoss.Dragoon, 0.0, 900.0, dragoonHp)
@@ -86,6 +127,23 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
       if ( ! dragoon.alive && deathAt == Int.MaxValue) deathAt = world.frame
     }
     (dragoon.alive, ! zealot.alive, deathAt)
+  }
+
+  /** Production-order duel that also reports wasted frames (see ProductionOrderPilot). */
+  private def duelCounted(dragoonHp: Double, dragoonIsOurs: Boolean): (Boolean, Boolean, Int) = {
+    val dragoon = new Body(Protoss.Dragoon, 0.0, 900.0, dragoonHp)
+    val zealot = new Body(Protoss.Zealot, 0.0, 100.0, Protoss.Zealot.maxTotalHealth)
+    val pilot = new ProductionOrderPilot
+    val (ours, foes) = if (dragoonIsOurs) (Seq(dragoon), Seq(zealot)) else (Seq(zealot), Seq(dragoon))
+    val world = new World(ours, foes, Map(dragoon -> pilot, zealot -> new PlantPilot), Seq.empty)
+    var remaining = 9000
+    var deathAt = Int.MaxValue
+    while (remaining > 0 && dragoon.alive && zealot.alive) {
+      world.step()
+      remaining -= 1
+      if ( ! dragoon.alive && deathAt == Int.MaxValue) deathAt = world.frame
+    }
+    (dragoon.alive, ! zealot.alive, pilot.wasted)
   }
 
   test("chase math: print the raw speeds and ranges once") {
@@ -146,5 +204,14 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG healthy kite alive=$kiteAliveA,$kiteAliveB kills=$kiteKillsA,$kiteKillsB")
     assert(kiteAliveA && kiteAliveB, "a healthy hull kiting a slow blade must survive both seats")
     assert(kiteKillsA && kiteKillsB, "a healthy hull kiting a slow blade must clear it both seats")
+  }
+
+  test("the shipped order shoots every cycle and never walks a loaded volley, both seats") {
+    val hp = Protoss.Dragoon.maxTotalHealth
+    val (aliveA, killsA, wastedA) = duelCounted(hp, dragoonIsOurs = true)
+    val (aliveB, killsB, wastedB) = duelCounted(hp, dragoonIsOurs = false)
+    println(s"DIAG production alive=$aliveA,$aliveB kills=$killsA,$killsB wasted=$wastedA,$wastedB")
+    assert(killsA && killsB, "the shipped order must clear the duel both seats - every dragoon shoots")
+    assert(wastedA == 0 && wastedB == 0, "the shipped order must never walk a loaded volley")
   }
 }
