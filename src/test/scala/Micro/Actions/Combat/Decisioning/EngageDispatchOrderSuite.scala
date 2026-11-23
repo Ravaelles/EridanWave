@@ -28,13 +28,15 @@ class EngageDispatchOrderSuite extends AnyFunSuite {
       Medium))
   }
 
-  test("the duel serves push, scavenge, close, reposition") {
+  test("the duel serves push, scavenge, formation, close, reposition") {
     assert(EngagePipeline.duelOrder.map(_._1) == Vector(
       "Push",
       "Scavenge",
+      "Formation",
       "Close",
       "Reposition"))
     assert(EngagePipeline.duelOrder.map(_._2) == Vector(
+      Medium,
       Medium,
       Medium,
       Medium,

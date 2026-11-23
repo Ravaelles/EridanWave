@@ -20,7 +20,7 @@ src/Micro/Actions/Combat/Decisioning/Combat/CombatManeuvers.scala :: .decision.s
 src/Micro/Actions/Combat/Decisioning/Combat/CombatManeuvers.scala :: .forceTo(centroid)
 src/Micro/Actions/Combat/Decisioning/Combat/CombatManeuvers.scala :: .forceTo(forceGoal)
 src/Micro/Actions/Combat/Decisioning/Combat/CombatTechniques.scala :: .decision.set(unit.agent.safety)
-src/Micro/Actions/Combat/Decisioning/Skirmish/HoldLineCreepBehavior.scala :: .decision.set(stepped)
+src/Micro/Actions/Combat/Decisioning/Skirmish/HoldLineAdvanceBehavior.scala :: .decision.set(stepped)
 src/Micro/Actions/Combat/Maneuvering/AirStaticStandoff.scala :: .forceTo(dest)
 src/Micro/Actions/Combat/Maneuvering/ArtilleryKeepOff.scala :: .forceTo(dest)
 src/Micro/Actions/Combat/Maneuvering/AvoidDangerousUnits.scala :: .forceTo(CornerAntiStuckGuard.guard( fallback(unit.pixel, ghost.pixel), With.mapPixelWidth, With.mapPixelHeight))

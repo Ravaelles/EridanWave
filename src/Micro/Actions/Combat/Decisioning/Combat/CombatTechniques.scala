@@ -238,8 +238,10 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     combat.transition(Dodge,     unit.agent.receivedPushPriority() >= TrafficPriorities.Dodge && shouldDodge)
     // Abuse never pokes out of a retreat: Fallback already shoots while
     // leaving and the rearguard covers through AlwaysAttack, so the poke
-    // dance would only flap against the Flee it just left.
-    combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && ( ! marchingAlone || unit.matchups.targetsInRange.nonEmpty) && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && ! combat.shouldRetreat && combat.framesUntilShot < unit.cooldownMaxAirGround)
+    // dance would only flap against the Flee it just left. Abuse needs
+    // something hittable: approaching ghosts with attack-move is the
+    // blob charge, not a poke - the duel dresses the line instead.
+    combat.transition(Abuse,     unit.unitClass.abuseAllowed && ! roaming(unit) && unit.matchups.targetsInRange.nonEmpty && unit.agent.receivedPushPriority() == TrafficPriorities.Freedom && unit.matchups.targetNearest.exists(combat.canAbuse) && (combat.hasSpacetimeToPoke || combat.allThreatsAbusable) && ! combat.shouldRetreat && combat.framesUntilShot < unit.cooldownMaxAirGround)
     combat.transition(SuperKite, unit.isAny(Terran.Wraith, Zerg.Mutalisk))
     combat.transition(Scavenge,  outmatchedPrey)
     combat.transition(Fallback,  ! standGroundNow && unit.isAny(Terran.SiegeTankUnsieged, Terran.Goliath, Protoss.Reaver) && ! unit.airborne)

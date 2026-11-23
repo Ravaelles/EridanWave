@@ -37,7 +37,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   var toAttackLast  : Option[UnitInfo]          = None
   var toGather      : Option[UnitInfo]          = None
   var toBoard       : Option[FriendlyUnitInfo]  = None
-  var creepAnchor   : Option[Pixel]             = None // HoldLine creep: the advancing hold position, cleared when not creeping
+  var advanceAnchor   : Option[Pixel]             = None // HoldLine creep: the advancing hold position, cleared when not creeping
   var shouldFight   : Boolean                   = false
   var commit        : Boolean                   = false
   var wantsUnload   : Boolean                   = false

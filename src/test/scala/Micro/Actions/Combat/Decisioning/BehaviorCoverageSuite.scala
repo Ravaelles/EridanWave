@@ -43,6 +43,7 @@ class BehaviorCoverageSuite extends AnyFunSuite {
   private val duel: Map[String, Seq[String]] = Map(
     "Push" -> Seq("Micro.Actions.Combat.Decisioning.DuelStageGatesSuite"),
     "Scavenge" -> Seq("Micro.Actions.Combat.Decisioning.DuelStageGatesSuite"),
+    "Formation" -> Seq("Micro.Actions.Combat.Decisioning.DuelStageGatesSuite"),
     "Close" -> Seq("Micro.Actions.Combat.Decisioning.DuelStageGatesSuite"),
     "Reposition" -> Seq(
       "Micro.Actions.Combat.Decisioning.DuelStageGatesSuite",

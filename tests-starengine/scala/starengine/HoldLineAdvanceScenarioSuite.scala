@@ -1,6 +1,6 @@
 package starengine
 
-import Micro.Actions.Combat.Decisioning.HoldLineCreep
+import Micro.Actions.Combat.Decisioning.HoldLineAdvance
 import ProxyBwapi.Races.{Protoss, Terran}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -10,11 +10,11 @@ import org.scalatest.funsuite.AnyFunSuite
  * instead of freezing until the timeout. The anchor persists across
  * frames and only advances - the hull never re-aims from wherever it
  * drifted and never walks back. The pilot below mirrors the production
- * behavior (shipped shouldCreep gate and stepTiles, anchor advance and
+ * behavior (shipped shouldAdvance gate and stepTiles, anchor advance and
  * release); the suite pins the contract temporally: steady advance at
  * the creep rate, no retreat, clean release when the target closes.
  */
-class HoldLineCreepScenarioSuite extends AnyFunSuite with StarEngineSuite {
+class HoldLineAdvanceScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
   override def tags: Map[String, Set[String]] =
     super.tags.map { case (n, s) => n -> (s + StarEngineTags.Dragoon.name + StarEngineTags.Formation.name) }
@@ -26,7 +26,7 @@ class HoldLineCreepScenarioSuite extends AnyFunSuite with StarEngineSuite {
     override def direct(me: Body, world: World): Directive = {
       val foe = world.foes.find(_.alive)
       val beyondTiles = foe.map(f => (me.dist(f) - me.rangeAgainst(f)) / 32.0).getOrElse(-1.0)
-      val creeping = foe.nonEmpty && HoldLineCreep.shouldCreep(
+      val creeping = foe.nonEmpty && HoldLineAdvance.shouldAdvance(
         hasFormation   = true,
         melee          = false,
         weaponReady    = me.cooldownLeft <= 0,
@@ -43,7 +43,7 @@ class HoldLineCreepScenarioSuite extends AnyFunSuite with StarEngineSuite {
       val dx = t.x - a._1
       val dy = t.y - a._2
       val dist = Math.hypot(dx, dy)
-      val step = HoldLineCreep.stepTiles(beyondTiles) * 32.0
+      val step = HoldLineAdvance.stepTiles(beyondTiles) * 32.0
       val next = if (dist <= 0) a else (a._1 + dx / dist * Math.min(dist, step), a._2 + dy / dist * Math.min(dist, step))
       anchor = Some(next)
       if (me.x < minX) minX = me.x

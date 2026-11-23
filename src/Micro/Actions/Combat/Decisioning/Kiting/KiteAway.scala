@@ -193,6 +193,15 @@ object KiteAway {
    */
   var kiteCommitTiles: Double = 6.0
 
+  /**
+   * Lone-blade duel (pure flags for the suite): with no guns nearby a
+   * chased ranged hull belongs to the duel before contact, never to
+   * the line. One read shared by the Close outer gate and the
+   * formation decline, so vote and leg agree by construction.
+   */
+  def loneBladeDuel(gunsNear: Boolean, meleeChase: Boolean, melee: Boolean): Boolean =
+    ! gunsNear && meleeChase && ! melee
+
   def escapeYield(stepPixels: Double, escapeTiles: Double): Double =
     Math.max(stepPixels, escapeTiles * 32.0)
 

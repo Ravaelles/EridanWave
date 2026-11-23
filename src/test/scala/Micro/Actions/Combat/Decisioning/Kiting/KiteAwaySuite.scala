@@ -144,6 +144,13 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! KiteAway.shouldChase(distTiles = 7.1, chaseTiles = 7.0))
   }
 
+  test("a lone blade with no guns nearby belongs to the duel, not the line") {
+    assert(KiteAway.loneBladeDuel(gunsNear = false, meleeChase = true, melee = false))
+    assert( ! KiteAway.loneBladeDuel(gunsNear = true, meleeChase = true, melee = false))
+    assert( ! KiteAway.loneBladeDuel(gunsNear = false, meleeChase = false, melee = false))
+    assert( ! KiteAway.loneBladeDuel(gunsNear = false, meleeChase = true, melee = true))
+  }
+
   test("a held heading survives jitter but releases on turns and lapses") {
     assert( ! KiteAway.shouldRefreshHeading(lastFrame = 10, frame = 12))
     assert(KiteAway.shouldRefreshHeading(lastFrame = 10, frame = 18))

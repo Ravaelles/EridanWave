@@ -12,7 +12,7 @@ import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, Overwhelmingly
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.UnitControl
 import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway}
-import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineCreepBehavior
+import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineAdvanceBehavior
 import Micro.Actions.Protoss.Zealot.ZealotLeash
 import Micro.Agency.Commander
 import ProxyBwapi.Races.{Protoss, Terran}
@@ -132,6 +132,21 @@ private[Decisioning] object EngagePipeline {
   }
 
   /**
+   * Formation (second claim): a warrior the duel sends to fight with
+   * nothing hittable and no contact dresses the line instead of
+   * attack-moving - slots when scattered, hold when slotted, creep
+   * when dressed with a target past the gun. Fires before Close so the
+   * hold owns outranged frames and the charge only sees duels.
+   */
+  object FormationDuelStage extends BehaviorStage("Formation", DispatchBand.Medium) {
+    // Any hull may form: the behavior gates the how below.
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(ApproachBuildingFormation.run(unit, combat))
+  }
+
+  /**
    * Closing beats repositioning: the hold/approach/kite trio runs before
    * the raw charge. No closing or charging while retreating: the march
    * goes home and the technique walks away, so approaching the guns (or
@@ -158,7 +173,7 @@ private[Decisioning] object EngagePipeline {
       val meleeChase = unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).exists(t =>
         t.likelyStillThere && t.unitClass.melee &&
         ! FacingAway.dismissMelee(isMelee = true, FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(unit.pixel))))
-      val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || (! gunsNear && meleeChase && ! unit.unitClass.melee)
+      val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || KiteAway.loneBladeDuel(gunsNear, meleeChase, unit.unitClass.melee)
       if ( ! outer) UnitControl.Declined
       else {
         // Tanks are never closed: the hold stands off siege and unsieged
@@ -193,7 +208,7 @@ private[Decisioning] object EngagePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
-      if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineCreepBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
+      if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineAdvanceBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
       UnitControl.Claimed
     }
   }
@@ -201,6 +216,7 @@ private[Decisioning] object EngagePipeline {
   val duelStages: Vector[BehaviorStage] = Vector(
     PushDuelStage,
     ScavengeDuelStage,
+    FormationDuelStage,
     CloseDuelStage,
     RepositionDuelStage)
 

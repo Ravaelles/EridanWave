@@ -18,6 +18,12 @@ class DuelStageGatesSuite extends AnyFunSuite {
     assert(EngagePipeline.ScavengeDuelStage.appliesToUnit(TestKit.friendly(UnitType.Zerg_Zergling, 2)))
   }
 
+  test("forming is open to every warrior: the behavior gates the how") {
+    TestKit.seedWorld()
+    assert(EngagePipeline.FormationDuelStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Dragoon, 1)))
+    assert(EngagePipeline.FormationDuelStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Zealot, 2)))
+  }
+
   test("closing is owned by the trio below, not by unit kind") {
     TestKit.seedWorld()
     assert(EngagePipeline.CloseDuelStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Dragoon, 1)))
