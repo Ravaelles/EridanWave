@@ -110,6 +110,11 @@ object MarchOrders {
       // marches on: the label already says home, so the flag must agree
       // with it instead of opening the duel dispatch behind its back.
       .setMarchHome( ! marching || marchLabel == MarchLabel.Retreating)
+    // The opening stand owns the frame outright: the line holds instead
+    // of walking, dueling or retreating, so the chain carries the
+    // owner's name instead of the vote it overruled. One credit, from
+    // the march that owns the destination - legs stay silent behind it.
+    if (openingHold(unit)) unit.agent.act("DressHold")
   }
 
   // The march rules, innermost first: rallying stragglers beat slots,
@@ -144,7 +149,7 @@ object MarchOrders {
     // Opening stand: form up and hold the line from the first frame
     // instead of trickling at an unseen enemy. Contact hands over to
     // the duel; the window lapsing hands back to the normal march.
-    MarchDress.holdOpening(unit.id, With.frame, unit.unitClass.isWarrior, umsMode = true, enemyInRange = gapTiles <= unit.pixelRangeMax * Maff.inv32)
+    MarchDress.holdOpening(unit.id, With.frame, unit.unitClass.isWarrior, umsMode = With.umsMode, enemyInRange = gapTiles <= unit.pixelRangeMax * Maff.inv32)
   }
 
   /**
