@@ -35,5 +35,7 @@ object MarchLabel {
 
   case object MarchingToSlot extends MarchLabel("Marching to formation slot")
 
+  case object UmsHold extends MarchLabel("UmsHold")
+
   case object ReturningToSlot extends MarchLabel("Returning to slot")
 }

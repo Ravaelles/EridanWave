@@ -2,7 +2,12 @@
 
 ## Run games - only these two ways, never bare StarCraft
 
-- `bash scripts/run.sh --map=<path> [--headless ...]`: THE way.
+- `bash build-jar.sh && bash scripts/run.sh --map=<path> [--headless ...]`:
+  THE way, always chained in one command - the foreground build
+  guarantees the game plays the current tree. run.sh also rebuilds in
+  the background, which is exactly how stale-jar confusion starts, so
+  never run a game without the chained build first. No `HELLO` in the
+  log means the build or the launch failed, not the bot.
   Headless+Xvfb is default; builds the jar if missing. Map via
   `bash scripts/list-maps.sh [filter]`.
 - scbw path: `/sc-ai/BOTS/__PlayAsEridan/_<Enemy>.sh` (all route

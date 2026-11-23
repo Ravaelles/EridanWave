@@ -10,7 +10,7 @@ import Micro.Agency.Commander
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{AttackModes, CatchUpMarch, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, WithdrawAnchor}
+import Tactic.Squads.Decisions.{AttackModes, CatchUpMarch, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, UmsHold, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -128,7 +128,10 @@ object MarchOrders {
     // attack-moves otherwise stand unopposed (every dispatch that
     // could countermand them is gated off for the window), so the
     // line would march on foreign orders instead of its own hold.
-    if (openingHold(unit)) {
+    // UmsHold owns UMS frames outright: the line forms up and paces
+    // instead of freezing, so the DressHold freeze below stands down -
+    // the technique still reads the opening hold through farWaitHolding.
+    if ( ! With.umsMode && openingHold(unit)) {
       unit.agent.act("DressHold")
       // Forced hold, bypassing Commander's stationary skip: a standing
       // hull would keep whatever order it already holds (map
@@ -293,7 +296,7 @@ object MarchOrders {
         (getReturn(unit, squad, defaultReturn), MarchLabel.Retreating)
       case None =>
         val finalTravel = getTravel(unit, squad, defaultReturn)
-        marchLegs(squad, unit, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat)
+        marchLegs(squad, unit, facts, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat)
     }
     // Stage 2 motion audit: the desired owner, the latched verdict the
     // technique obeys, and what the march actually ordered. The change-only
@@ -323,7 +326,7 @@ object MarchOrders {
   // Every leg answers to the slot discipline: a firing gun, fresh wounds
   // or a held retreat vetoes the pose that frame, but contact alone never
   // does - the line only exists if it forms while the enemy is out there.
-  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean): (Pixel, MarchLabel) = {
+  private def marchLegs(squad: Squad, unit: FriendlyUnitInfo, facts: MarchFacts, meanDistToGoalTiles: Double, finalTravel: Pixel, suicide: Boolean, verdictRetreat: Boolean): (Pixel, MarchLabel) = {
     val slotOpen             = SlotDiscipline.maySlot(
       firingNow         = unit.matchups.targetsInRange.nonEmpty && unit.cooldownLeft <= 0,
       framesSinceDamage = With.framesSince(unit.lastFrameTakingDamage),
@@ -353,6 +356,7 @@ object MarchOrders {
     val (finalMarch, rallying) = rallyLeg(squad, unit, finalTravel, suicide, slotOpen)
     val joinPixel              = joinLeg(squad, unit, suicide, slotOpen)
     val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, dressOpen)
+    val (umsHolding, umsPixel) = umsHoldLeg(squad, unit, facts)
     // Far dress-and-wait (UMS mirrors, no reavers): arriving at five
     // tiles outside gun reach the line dresses and waits for the enemy
     // ball instead of trickling into it, creeping a step every couple
@@ -362,9 +366,34 @@ object MarchOrders {
     val farWait = ! verdictRetreat && farWaitHolding(unit)
     val farCreep = farCreepPixel(unit)
     val pack                   = ?(unit.flying, squad.centroidAir, squad.centroidGround)
-    val terminus = ?(farWait, farCreep, ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch))))
-    val label    = ?(farWait || holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot))
+    val terminus = ?(umsHolding, umsPixel, ?(farWait, farCreep, ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch)))))
+    val label    = ?(umsHolding, MarchLabel.UmsHold, ?(farWait || holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot)))
     (terminus, label)
+  }
+
+  /**
+   * UmsHold (thin game seam over the pure pace): on UMS the line stands
+   * in formation and shrinks the range instead of freezing or
+   * trickling. The stride scales with the strength score and issues at
+   * most every third frame, and only while four in five hulls stand
+   * still - between strides the formation stands motionless. Warriors
+   * only, and only toward known warriors: eyes and guns never set the
+   * pace. No known warriors, no stride - the line stands.
+   */
+  private def umsHoldLeg(squad: Squad, unit: FriendlyUnitInfo, facts: MarchFacts): (Boolean, Pixel) = {
+    if ( ! With.umsMode || ! unit.unitClass.isWarrior) return (false, unit.pixel)
+
+    val foe = Maff.minBy(With.units.enemy.view.filter(e =>
+      e.alive && e.likelyStillThere && e.unitClass.isWarrior))(_.pixelDistanceEdge(unit.pixel))
+    if (foe.isEmpty) return (true, unit.pixel)
+
+    val settled = UmsHold.settled(
+      squad.units.count(u => u.alive && ! u.moving),
+      squad.units.count(_.alive))
+    if (settled && UmsHold.strideNow(unit.id, With.frame)) {
+      val step = foe.get.pixel
+      (true, unit.pixel.project(step, UmsHold.strideTiles(facts.armyUnitsScore) * 32.0).walkablePixel)
+    } else (true, unit.pixel)
   }
 
   // Straggler rally (Stardust): a unit lagging behind the marching pack

@@ -36,8 +36,10 @@ object Fight extends Action {
     // Opening stand (UMS mirrors): the line holds from frame zero
     // instead of trickling at an unseen enemy. Dragoons and zealots
     // only - other doctrines keep their own openers. Released on
-    // contact, so real fights still belong to the duel below.
-    if ((unit.is(Protoss.Dragoon) || unit.is(Protoss.Zealot)) && Tactic.Squads.MarchOrders.openingHold(unit)) {
+    // contact, so real fights still belong to the duel below. UMS runs
+    // UmsHold instead: the march paces while the Dress verdict below
+    // keeps the duel quiet, so the freeze stands down there.
+    if ( ! With.umsMode && (unit.is(Protoss.Dragoon) || unit.is(Protoss.Zealot)) && Tactic.Squads.MarchOrders.openingHold(unit)) {
       unit.agent.act("DressHold")
       Commander.hold(unit)
 
