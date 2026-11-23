@@ -7,6 +7,7 @@ import Macro.Facts.MacroFacts
 import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway, KiteHold}
+import Micro.Actions.Combat.Decisioning.VolleyDiscipline
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Heuristics.Potential
@@ -38,7 +39,8 @@ object BeDragoonVsSlowlot extends Action {
     // ledger counts every loaded move past a hittable target as waste.
     // The plant forbids standing under blades for survival; this rung
     // only spends the shot the engine confirms, never holds the hull.
-    if (unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+    // Answers through the shared volley verdict - one question, one owner.
+    if (VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)) {
       Target.choose(unit)
       if (unit.agent.toAttack.isDefined && unit.readyForAttackOrder(unit.agent.toAttack.get)) {
         Commander.attack(unit)

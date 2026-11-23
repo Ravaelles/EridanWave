@@ -85,8 +85,9 @@ object KiteAwayBehavior {
     // hull with a loaded gun and something hittable spends the shot
     // before running - kiting far past a loaded volley donates the only
     // damage it will ever deal. The escape resumes once the gun cools.
+    // Answers through the shared volley verdict, like every other leg.
     if (KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) &&
-      unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+      VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)) {
       plantVolley(unit)
 
       return true

@@ -32,10 +32,11 @@ object RepositionBehavior {
    * shuffling - standing volleys used to die by design here (the
    * terminal only moved), never by cooldown. Retreating hulls keep
    * moving: the fallback potshot owns their shots, never this line.
-   * This is the test that would have caught the silent duel.
+   * This is the test that would have caught the silent duel. Answers
+   * through the shared volley verdict now - one question, one owner.
    */
   def shouldVolley(retreating: Boolean, cooldownLeft: Int, hasHittable: Boolean): Boolean =
-    ! retreating && cooldownLeft <= 0 && hasHittable
+    VolleyDiscipline.shouldVolley(retreating, cooldownLeft, hasHittable)
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     unit.agent.act("Reposition")

@@ -28,8 +28,9 @@ object ScavengeBehavior {
     if (framesToAttack >= framesSafe || ! AttackIfReadyBehavior.run(unit, combat)) {
       // Loaded volley owns the frame: lurking past a hittable shot
       // donates the volley for an edge that never outruns the guns.
-      // Same rule as the dance, the charge and the terminal.
-      if (unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+      // Same rule as the dance, the charge and the terminal - one
+      // verdict, shared.
+      if (VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)) {
         Micro.Agency.Commander.hold(unit)
 
         return

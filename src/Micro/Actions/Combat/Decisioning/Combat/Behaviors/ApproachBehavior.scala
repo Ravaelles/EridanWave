@@ -74,8 +74,9 @@ object ApproachBehavior {
     unit.agent.act("Dress")
     // Loaded volley owns the frame: dressing forward past a hittable
     // shot donates the volley for a step the slot already holds.
-    // Same rule as the dance, the charge and the terminal.
-    if (unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+    // Same rule as the dance, the charge and the terminal - one
+    // verdict, shared.
+    if (VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)) {
       Commander.hold(unit)
 
       return true
@@ -88,7 +89,7 @@ object ApproachBehavior {
 
   private def stepBack(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     unit.agent.act("Dress")
-    if (unit.cooldownLeft <= 0 && unit.matchups.targetsInRange.nonEmpty) {
+    if (VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)) {
       Commander.hold(unit)
 
       return true
