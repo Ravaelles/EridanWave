@@ -62,9 +62,6 @@ object CommanderMove {
   // if you waited to issue attack and the tower autotargets before your order arrives, you lose at least 22 frames(cooldown)
   private[Micro] def attackMove(unit: FriendlyUnitInfo): Unit = attackMove(unit, unit.agent.destinationNext())
   private[Micro] def attackMove(unit: FriendlyUnitInfo, destination: Pixel): Unit = {
-    val caller = Thread.currentThread.getStackTrace.map(_.toString).find(s => (s.contains("Micro.") || s.contains("Tactic.")) && ! s.contains("CommanderMove") && ! s.contains("CommanderEngage") && ! s.contains("Commander$"))
-    Debugging.Probe.note("AMove", unit.id, s"by=${caller.getOrElse("-")}")
-
     unit.agent.setRideGoal(destination)
     CommanderCore.leadFollower(unit, attackMove(_, destination))
     unit.agent.tryingToMove = unit.pixelDistanceCenter(destination) > CommanderCore.tryingToMoveThreshold
