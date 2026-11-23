@@ -153,15 +153,17 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     combat.technique =
             if ( ! unit.canMove)                                    Fight
       // Latched retreat: once falling back, hold Flee until clear of the
-      // deepest threat with margin and the verdict says fight (or the
-      // duel is confident enough to turn inside contact). Units that may
+      // deepest threat with margin and the army verdict says fight (or the
+      // duel is confident enough to turn inside contact). The latch derives
+      // from the verdict, never votes beside it: a local skirmish win must
+      // not turn a hull back into a withdrawing army. Units that may
       // not flee keep the old ladder untouched below. Committed hunts
       // never latch: the order already bypassed the vote, so holding
       // the retreat would walk a duel it was sent to fight.
       else  if (unit.intent.canFlee && ! unit.agent.commit && ! standGroundNow && ! overwhelmingLine && ! Tactic.Squads.Decisions.RetreatVerdict.suppressUmsOpening(With.umsMode, With.frame) && ReengageLatch.shouldHoldRetreat(
         combat.techniqueIs(Fallback, Flee, Excuse),
         unit.matchups.pixelsEntangled * Maff.inv32,
-        unit.agent.shouldFight,
+        ! Tactic.Squads.Decisions.RetreatVerdict.heldArmy(With.frame),
         unit.confidence11))                                         Flee
       // Held verdict owns the duel above the fresh skirmish vote: the bus
       // carries the last 24 frames both phases already agreed on, so a
