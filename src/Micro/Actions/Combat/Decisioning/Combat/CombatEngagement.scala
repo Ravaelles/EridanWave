@@ -167,11 +167,18 @@ private[Decisioning] object EngagePipeline {
         // fighting withdrawal - only the closing leg and the raw charge
         // yield to the hold. The act logs the veto, so the trace shows
         // the hold instead of a silent march-in.
-        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! TankHoldBehavior.run(unit, combat) && ! combat.shouldRetreat && ! ApproachBehavior.run(unit, combat)) {
-          unit.agent.act("Engage")
-          combat.maneuvers.charge()
+        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! TankHoldBehavior.run(unit, combat) && ! ApproachBehavior.run(unit, combat)) {
+          // Retreat veto never silent-claims: a retreating hull with no
+          // leg acting hands the frame to Reposition (which always signs)
+          // instead of standing idle under a stale stage label.
+          if (combat.shouldRetreat) UnitControl.Declined
+          else {
+            unit.agent.act("Engage")
+            combat.maneuvers.charge()
+            UnitControl.Claimed
+          }
         }
-        UnitControl.Claimed
+        else UnitControl.Claimed
       }
     }
   }

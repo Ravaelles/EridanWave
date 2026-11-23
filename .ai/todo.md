@@ -1,3 +1,18 @@
+# HIGH PRIORITY: order-issuers review (SRP, one question per unit)
+
+Review every class that issues orders to combat units
+(Commander*/Combat*/Behaviors/*Behavior, Be* brains, march legs):
+each answers exactly ONE question asked BY the unit (which posture,
+do slots stay, where is the hysteresis - rule 9), owns exactly one
+verdict (rule 11), and never sets another owner's state (no
+cross-writes to marchHome/technique/verdict/labels). Where a class
+does two things or answers two questions, split it: separate the
+requirements, separate the responsibilities, keep the old behavior
+behind the split. Enforcement where cheap (token/sealed paths like
+the Retreating label); audit trail in commit messages otherwise.
+Trigger: Close/Guard silent claims, holder-vs-mover thrash, split
+march-vs-technique retreats - all three were multi-writer symptoms.
+
 # 1Drag_v_1Zeal kite duel (IN PROGRESS - uncommitted, owner bar: max 1-3 hits, wins on both maps)
 
 Dragoon kites a lone Zealot from first sight (chase 7 tiles), never plants
