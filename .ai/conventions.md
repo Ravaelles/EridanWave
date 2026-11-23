@@ -86,3 +86,11 @@ Ordered most to least important. Each is one rule; keep them short.
 22. **Minimal diffs, stable line endings.** Default CRLF for new Scala
     unless the file says otherwise; no whitespace-only or
     line-ending-only edits.
+23. **No new edge cases; grow the existing logic.** Before adding a
+    concept (behavior, kernel, gate, holder, picker), name the closest
+    existing object and prove in review that the need cannot be a
+    parameter, branch, or range of it. A second implementation of an
+    existing shape - a second kiter, holder, approacher, or target
+    picker - is rejected in review; extend the first one instead.
+    `TankHug`/`KiteTo` and the half-dozen `HoldPosition` gates are the
+    cautionary tale.

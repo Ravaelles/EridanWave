@@ -8,6 +8,16 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 /** See Commander: role-grouped delegates behind the facade. */
 object CommanderEngage {
+  /**
+   * Designation margin, as a share of our range: inside it the ladder
+   * names a concrete victim instead of attack-moving - the engine's
+   * auto-acquire would open on the nearest, not the weakest. Grows the
+   * existing ladder (Target.choose), never a second picker.
+   */
+  val designateMarginShare: Double = 0.15
+
+  def shouldDesignate(pixelsToGetInRange: Double, rangePixels: Double): Boolean =
+    pixelsToGetInRange <= designateMarginShare * rangePixels
   private[Micro] def acceptableAttackFrom(unit: FriendlyUnitInfo, target: UnitInfo, attackFrom: Pixel): Boolean = {
     if ( ! target.visible && target.pixelDistanceCenter(attackFrom) > 16)                         false
     else if (unit.inRangeToAttackFrom(target, attackFrom))                                        true
@@ -93,6 +103,19 @@ object CommanderEngage {
   // range but cooling) keeps the move path below untouched.
   private def closeIn(unit: FriendlyUnitInfo, target: UnitInfo): Boolean = {
     if ( ! (unit.canMove && ! unit.inRangeToAttack(target))) return false
+
+    // Designation margin: name the ladder's victim and shoot it
+    // deliberately instead of attack-moving into the engine's nearest
+    // auto-acquire. The pick is the existing ladder top (shared
+    // weakest, then score, demise-gated) - in range by construction.
+    // A pick still out of range falls through to the arrival-imminent
+    // raw attack below, never back to the walk.
+    if (shouldDesignate(unit.pixelsToGetInRange(target), unit.pixelRangeAgainst(target))) {
+      val pick = Micro.Targeting.Target.choose(unit)
+      if (pick.exists(unit.inRangeToAttack)) return issueAttack(unit, pick.get)
+
+      return false
+    }
 
     CommanderMove.attackMove(unit, unit.pixelToFireAtExhaustive(target))
 
