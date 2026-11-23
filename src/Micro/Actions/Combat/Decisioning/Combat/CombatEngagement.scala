@@ -13,11 +13,8 @@ import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.UnitControl
 import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway}
 import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineAdvanceBehavior
-import Micro.Actions.Protoss.Zealot.ZealotLeash
-import Micro.Agency.Commander
-import ProxyBwapi.Races.{Protoss, Terran}
+import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.ClusterCohesion
 import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.MotionVerdict
 import Tactic.Squads.Decisions.RetreatVerdict
@@ -86,7 +83,7 @@ private[Decisioning] object EngagePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Zealot(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
-      UnitControl.claimedIf(leashZealot(unit, combat))
+      UnitControl.claimedIf(ZealotLeashBehavior.run(unit))
   }
 
   /**
@@ -101,7 +98,7 @@ private[Decisioning] object EngagePipeline {
       unit.unitClass.isWarrior && ! unit.loaded
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
-      UnitControl.claimedIf(rejoinCluster(unit, combat))
+      UnitControl.claimedIf(ClusterRejoinBehavior.run(unit, combat))
   }
 
   val stages: Vector[BehaviorStage] = Vector(
@@ -239,69 +236,6 @@ private[Decisioning] object EngagePipeline {
       .getOrElse((0.0, 0.0))
 
     PreyDrive.shouldHunt(workersOnly, usSkim, foeSkim)
-  }
-
-  /**
-   * Leash latch (auto-registered, reset per game): the slot leg and the
-   * leash leg share one actuator, so a raw 5.5-tile boundary trades the
-   * Zealot every few frames instead of committing to either leg.
-   */
-  private val zealotLeash = new Latch
-
-  private def leashZealot(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    if ( ! Protoss.Zealot(unit)) return false
-    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
-
-    val anchor = Maff.minBy(With.units.ours.view.filter(u => u != unit && u.alive && Protoss.Dragoon(u)))(
-      _.pixelDistanceCenter(unit.pixel))
-    if (anchor.isEmpty) return false
-
-    val distTiles = anchor.get.pixelDistanceCenter(unit.pixel) * Maff.inv32
-    // A blade on a sieged tank stays on it: the leash would trade a
-    // free point-blank kill for a walk home, the same no-reason retreat
-    // the technique floor already forbids.
-    if (Maff.minBy(unit.matchups.enemies.view.filter(e =>
-      e.alive && Terran.SiegeTankSieged(e)))(
-      _.pixelDistanceEdge(unit)).exists(t => TankHug.holdsTank(unit.pixelDistanceEdge(t) * Maff.inv32, isMelee = true))) return false
-    if ( ! zealotLeash(
-      unit.id,
-      fires = ZealotLeash.shouldRejoin(distTiles),
-      releases = distTiles < ZealotLeash.leashReleaseTiles)) return false
-
-    unit.agent.act("ZealotLeash")
-    unit.agent.forceTo(anchor.get.pixel)
-    Commander.move(unit)
-    true
-  }
-
-  private def rejoinCluster(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    val squad = unit.squad.getOrElse(return false)
-    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
-    if (unit.loaded) return false
-    // A committed cast walk owns the frame: yanking a Templar with a
-    // picked victim back to the centroid every other frame means the
-    // four-frame stand never happens and a full battery circles forever.
-    // The intent expires on its own if the walk goes stale, and the
-    // rejoin resumes - no stuck casters.
-    if (unit.agent.spellIntent.isDefined) return false
-
-    val centroid = ?(unit.flying, squad.centroidAir, squad.centroidGround)
-    val contactTiles = 2.0
-    if ( ! ClusterCohesion.shouldRejoin(
-      isWarrior         = unit.unitClass.isWarrior,
-      hasTarget         = unit.agent.toAttack.isDefined,
-      retreating        = combat.shouldRetreat,
-      coolingUnderFire  = unit.cooldownLeft > 0 && unit.matchups.threatsInRange.nonEmpty,
-      inBattle          = unit.battle.isDefined,
-      macroGame         = ! With.umsMode,
-      hasLocalContact   = unit.matchups.enemies.exists(e => unit.pixelDistanceEdge(e) < unit.pixelRangeMax + contactTiles * 32.0),
-      verdictDuel       = Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame) == Tactic.Squads.Decisions.MotionVerdict.Duel,
-      distTiles         = unit.pixelDistanceCenter(centroid) * Maff.inv32)) return false
-
-    unit.agent.act("ClusterRejoin")
-    unit.agent.forceTo(centroid)
-    Commander.move(unit)
-    true
   }
 }
 
