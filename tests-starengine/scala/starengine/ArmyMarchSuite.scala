@@ -116,7 +116,8 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
         distHomeTiles = None,
         nearestArmedTiles = nearestArmedTiles,
         nearestStaticTiles = None,
-        behindAlphaTiles = Double.NegativeInfinity)
+        behindAlphaTiles = Double.NegativeInfinity,
+        hasContact = hittable.isDefined)
       if (MarchGates.select(facts, marchUnit).contains(MarchLabel.LoneMarch)) loneMarches += 1
 
       // No duel hold: the line always walks, duels chase through their

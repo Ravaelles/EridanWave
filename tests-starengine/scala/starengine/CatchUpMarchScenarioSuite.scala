@@ -31,7 +31,7 @@ class CatchUpMarchScenarioSuite extends AnyFunSuite with StarEngineSuite {
     var catchUps: Int = 0
     var advances: Int = 0
     var duels: Int = 0
-    var duelsWhileClear: Int = 0
+    var duelsWhileTrailing: Int = 0
 
     override def direct(me: Body, world: World): Directive = {
       val foeSet = world.foes.filter(_.alive)
@@ -66,8 +66,7 @@ class CatchUpMarchScenarioSuite extends AnyFunSuite with StarEngineSuite {
       // march: hittable nowhere near, but owned by the squad.
       val hasDuel = true
       val contact = foeSet.exists(f => me.canHit(f) && me.dist(f) <= me.rangeAgainst(f)) || world.underAttack(me)
-      val clear = ArmedCordon.clearOfArmed(id, nearestArmedTiles)
-      val catchUp = useCatchUp && ! verdictRetreat && ! contact && clear &&
+      val catchUp = useCatchUp && ! verdictRetreat && ! contact &&
         CatchUpMarch.catchUp(id, behindTiles)
       val desired = MotionVerdict.desired(verdictRetreat, hasDuel && ! catchUp, dressing = false)
       MotionVerdict.update(id, desired, world.frame)
@@ -75,7 +74,7 @@ class CatchUpMarchScenarioSuite extends AnyFunSuite with StarEngineSuite {
       if (heldNow == MotionVerdict.Advance) advances += 1
       else if (heldNow == MotionVerdict.Duel) {
         duels += 1
-        if ( ! contact) duelsWhileClear += 1
+        if (behindTiles > CatchUpMarch.behindExitTiles) duelsWhileTrailing += 1
       }
 
       val facts = MarchFacts(
@@ -147,9 +146,9 @@ class CatchUpMarchScenarioSuite extends AnyFunSuite with StarEngineSuite {
   test("a reinforcement trailing the alpha joins at full speed, never dueling") {
     val (trailer, pilot) = runJoin(useCatchUp = true)
     val goalDist = Math.hypot(trailer.x - 0.0, trailer.y - 100.0)
-    println(s"DIAG join alive=${trailer.alive} catchUps=${pilot.catchUps} advances=${pilot.advances} duels=${pilot.duels} clearDuels=${pilot.duelsWhileClear} goalDist=${goalDist.toInt}px")
+    println(s"DIAG join alive=${trailer.alive} catchUps=${pilot.catchUps} advances=${pilot.advances} duels=${pilot.duels} trailDuels=${pilot.duelsWhileTrailing} goalDist=${goalDist.toInt}px")
     assert(pilot.catchUps > 0, "the gate never fired with mates nearby - LoneMarch territory, nothing proven")
-    assert(pilot.duelsWhileClear == 0, "a forced far duel owned frames it must never own")
+    assert(pilot.duelsWhileTrailing == 0, "a forced far duel owned joining frames it must never own")
     assert(pilot.advances > 0, "the verdict never read Advance on a joining march")
     assert(trailer.alive, "the reinforcement died joining with clear skies")
     assert(goalDist <= 12 * 32.0, "the reinforcement never reached the pack it was joining")
@@ -157,8 +156,8 @@ class CatchUpMarchScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
   test("without the catch-up a far assigned target owns the march") {
     val (trailer, pilot) = runJoin(useCatchUp = false)
-    println(s"DIAG old catchUps=${pilot.catchUps} advances=${pilot.advances} duels=${pilot.duels}")
-    assert(pilot.catchUps == 0, "the gate fired with its flag off")
-    assert(pilot.duels > 0, "the old brain marches a far duel instead of dancing it - nothing to fix here")
+    println(s"DIAG old catchUps=${pilot.catchUps} advances=${pilot.advances} duels=${pilot.duels} trailDuels=${pilot.duelsWhileTrailing}")
+    assert(pilot.advances == 0, "the old brain marches without the zeroing")
+    assert(pilot.duelsWhileTrailing > 0, "the old brain never dances its far duel on the way in - nothing to fix here")
   }
 }
