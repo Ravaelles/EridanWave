@@ -26,9 +26,13 @@ class ZealDragOpeningSuite extends AnyFunSuite with StarEngineSuite {
     val directives: mutable.ListBuffer[(Int, Int, String)] = mutable.ListBuffer.empty
 
     override def direct(me: Body, world: World): Directive = {
+      // Eyes never count and never chase: hold aside, out of the way.
+      if (me.kind == Protoss.Observer) return Hold
+
       val foe = world.nearestFoeOf(me, world.foes, (_, _) => true)
       val inRange = foe.exists(f => me.dist(f) <= me.rangeAgainst(f))
-      val hold = MarchDress.holdOpening(ids(me), world.frame, isWarrior = true, umsMode = true, enemyInRange = inRange)
+      // Warriors hold the line; eyes keep their own job and never count.
+      val hold = MarchDress.holdOpening(ids(me), world.frame, isWarrior = me.kind != Protoss.Observer, umsMode = true, enemyInRange = inRange)
       val d = if (hold) Hold else foe.map(Chase).getOrElse(Hold)
       directives.append((world.frame, ids(me), d.getClass.getSimpleName))
       d

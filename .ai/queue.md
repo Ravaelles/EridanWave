@@ -51,6 +51,20 @@ Details live in `details/` - the queue keeps one line per item.
   23W/41, 1Drag 25W/61, Wounded 42W/126 (its historic ~1/3),
   3Zeal 15W/29, 1Zeal_v_2Ling 23W/26;
   4+3Zeal always loses 0/5 (melee mirror, separate unit).
+- Opening stand (owner order, ZealDrag_v_ZealDrag 5x reported: no
+  formation, Retreat + AttackMove over units): the shipped 48f
+  holdOpening never fired - the far-wait blind gate (no seen
+  Protoss) sat before it, the f0 retreat verdict marched everything
+  home past it, and RetreatStage walked (it never checked advance).
+  Fixed three ways, verdict untouched (ladder-safe): the stand fires
+  blind from frame zero, outranks the retreat MARCH (hold in place,
+  WaitingForPack), RetreatStage stands down in the window, and the
+  march credits DressHold so the overlay names the hold. Duel was
+  already quiet (technique advance gate). StarEngine mirror pins it:
+  zero displacement f0-47, all Hold at 1.5s, avg ground distance
+  885->674->0, pack shape held (observers excluded). Live: zero
+  Retreat/AttackMove acts f0-60, DressHold from f3, zero Formation
+  rows f1-47 (the line stands), win 9/1 with zero waste.
   Autonomous night session (owner asleep, ~26 games): waste ZERO on
   every map the ledger can see (3Drag, 1v4, 2Zeal, 1v1Zeal streak,
   1v1Ling, 2v2Drag, 10Zeal, ZealDrag, 16Drag, 1v1Drag, Wounded).
