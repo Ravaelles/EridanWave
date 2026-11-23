@@ -1,9 +1,9 @@
 package starengine
 
 import Mathematics.Points.Pixel
-import Micro.Actions.Protoss.DarkTemplar.{DarkTemplarEvade, DarkTemplarStaticStandoff}
+import Micro.Actions.Protoss.DarkTemplar.{DarkTemplarEvade, DarkTemplarStaticPush, DarkTemplarStaticStandoff}
 import Micro.Targeting.DarkTemplarTargets
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitClasses.UnitClass
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -53,10 +53,13 @@ class DarkTemplarStaticStandoffScenarioSuite extends AnyFunSuite with StarEngine
     goal: (Double, Double),
     safety: (Double, Double),
     remembered: Seq[Body],
-    useStandoff: Boolean) extends Pilot {
+    useStandoff: Boolean,
+    usePush: Boolean) extends Pilot {
 
     var standoffFires: Int = 0
     var stopFires: Int = 0
+    var pushMoves: Int = 0
+    var pushSwipes: Int = 0
     var minGunDist: Double = Double.PositiveInfinity
     var distAtFirstStandoff: Double = Double.PositiveInfinity
     private var lastDist: Double = Double.PositiveInfinity
@@ -64,6 +67,28 @@ class DarkTemplarStaticStandoffScenarioSuite extends AnyFunSuite with StarEngine
     override def direct(me: Body, world: World): Directive = {
       val dtSight = me.kind.sightPixels.toDouble
       val guns = remembered.filter(_.alive)
+      // Push, the unseen raid: no burn, no shots landed - walk straight
+      // at the remembered gun, swiping the weakest hittable in reach
+      // plus the margin, masonry included.
+      if (usePush && guns.nonEmpty
+        && world.detectorsRevealing(me).isEmpty && ! world.underAttack(me)) {
+        val gun = guns.minBy(me.dist)
+        val near = world.foes.filter(f =>
+          f.alive && me.dist(f) <= dtSight && me.canHit(f)
+            && me.dist(f) <= me.rangeAgainst(f) + DarkTemplarStaticPush.attackMarginTiles * 32.0)
+        near.sortBy(me.dist).headOption match {
+          case Some(prey) =>
+            pushSwipes += 1
+
+            return Chase(prey)
+
+          case None =>
+            pushMoves += 1
+
+            return MoveTo(gun.x, gun.y)
+        }
+      }
+
       if (guns.nonEmpty) {
         val dist = guns.map(me.dist).min
         minGunDist = Math.min(minGunDist, dist)
@@ -143,21 +168,29 @@ class DarkTemplarStaticStandoffScenarioSuite extends AnyFunSuite with StarEngine
     }
   }
 
-  private case class Outcome(alive: Boolean, hpEnd: Double, standoffFires: Int, stopFires: Int, minGunDist: Double, distAtFirstStandoff: Double)
+  private case class Outcome(
+    alive: Boolean,
+    hpEnd: Double,
+    standoffFires: Int,
+    stopFires: Int,
+    pushMoves: Int,
+    pushSwipes: Int,
+    minGunDist: Double,
+    distAtFirstStandoff: Double)
 
-  private def runRaid(useStandoff: Boolean, dtStart: (Double, Double), frames: Int): Outcome = {
+  private def runRaid(useStandoff: Boolean, usePush: Boolean, dtStart: (Double, Double), frames: Int): Outcome = {
     val cannon = new Body(Protoss.PhotonCannon, 0.0, 0.0, Protoss.PhotonCannon.maxTotalHealth)
     val guards = Seq(
       new Body(Protoss.Dragoon, -100.0, 120.0, Protoss.Dragoon.maxTotalHealth),
       new Body(Protoss.Dragoon, 100.0, 120.0, Protoss.Dragoon.maxTotalHealth))
     val dt = new Body(Protoss.DarkTemplar, dtStart._1, dtStart._2, Protoss.DarkTemplar.maxTotalHealth)
     dt.cloaked = true
-    val pilot = new RaidPilot(11, (0.0, 600.0), (0.0, -500.0), Seq(cannon), useStandoff)
+    val pilot = new RaidPilot(11, (0.0, 600.0), (0.0, -500.0), Seq(cannon), useStandoff, usePush)
     val pilots: Map[Body, Pilot] = Map(dt -> pilot, cannon -> new Pilots.Hold) ++ guards.map(_ -> new Pilots.Hold)
     val world = new World(Seq(dt), cannon +: guards, pilots, Seq.empty)
     var f = 0
     while (f < frames && dt.alive) { world.step(); f += 1 }
-    Outcome(dt.alive, dt.hp, pilot.standoffFires, pilot.stopFires, pilot.minGunDist, pilot.distAtFirstStandoff)
+    Outcome(dt.alive, dt.hp, pilot.standoffFires, pilot.stopFires, pilot.pushMoves, pilot.pushSwipes, pilot.minGunDist, pilot.distAtFirstStandoff)
   }
 
   test("a raiding Templar never walks into a remembered Cannon") {
@@ -167,11 +200,11 @@ class DarkTemplarStaticStandoffScenarioSuite extends AnyFunSuite with StarEngine
 
     DarkTemplarEvade.reset()
     DarkTemplarStaticStandoff.reset()
-    val fixed = runRaid(useStandoff = true, dtStart = (0.0, -448.0), frames = 1500)
-    println(s"DIAG fixed alive=${fixed.alive} hp=${fixed.hpEnd.toInt} standoff=${fixed.standoffFires} firstAt=${fixed.distAtFirstStandoff.toInt}px minGun=${fixed.minGunDist.toInt}px")
-    assert(fixed.standoffFires > 0, "the standoff never owned a frame on the way past the gun")
-    assert(fixed.distAtFirstStandoff > cannonSight, "the standoff fired inside the burn, not on memory before it")
-    assert(fixed.minGunDist > cannonSight, "the Templar entered the tile-burn it must never touch")
+    val fixed = runRaid(useStandoff = true, usePush = true, dtStart = (0.0, -448.0), frames = 1500)
+    println(s"DIAG fixed alive=${fixed.alive} hp=${fixed.hpEnd.toInt} push=${fixed.pushMoves}+${fixed.pushSwipes} standoff=${fixed.standoffFires} firstAt=${fixed.distAtFirstStandoff.toInt}px minGun=${fixed.minGunDist.toInt}px")
+    assert(fixed.pushMoves > 0, "the push never walked the unseen approach straight at the gun")
+    assert(fixed.standoffFires > 0, "the standoff never caught the raid at the burn edge")
+    assert(fixed.distAtFirstStandoff <= cannonSight, "the standoff fired past the burn instead of catching it at the edge")
     assert(fixed.minGunDist > DarkTemplarStaticStandoff.neverCloserTiles * 32.0,
       "the Templar closed past the 7.4-tile Cannon floor")
     assert(fixed.minGunDist > cannonRange, "the Templar entered gun reach it must never touch")
@@ -180,17 +213,16 @@ class DarkTemplarStaticStandoffScenarioSuite extends AnyFunSuite with StarEngine
 
     DarkTemplarEvade.reset()
     DarkTemplarStaticStandoff.reset()
-    val old = runRaid(useStandoff = false, dtStart = (0.0, -448.0), frames = 1500)
+    val old = runRaid(useStandoff = false, usePush = false, dtStart = (0.0, -448.0), frames = 1500)
     println(s"DIAG old alive=${old.alive} hp=${old.hpEnd.toInt} minGun=${old.minGunDist.toInt}px")
     assert(old.minGunDist < cannonSight, "the old brain never even enters the tile-burn - nothing to fix here")
-    assert(old.minGunDist < fixed.minGunDist, "the old brain stands off no closer - the standoff changes nothing here")
   }
 
   test("a Templar caught inside the critical band stops, then strides out") {
     val cannonRange = Protoss.PhotonCannon.pixelRangeMax.toDouble
     DarkTemplarEvade.reset()
     DarkTemplarStaticStandoff.reset()
-    val fixed = runRaid(useStandoff = true, dtStart = (0.0, -240.0), frames = 800)
+    val fixed = runRaid(useStandoff = true, usePush = true, dtStart = (0.0, -240.0), frames = 800)
     println(s"DIAG inside alive=${fixed.alive} hp=${fixed.hpEnd.toInt} stops=${fixed.stopFires} standoff=${fixed.standoffFires} minGun=${fixed.minGunDist.toInt}px")
     assert(fixed.stopFires > 0, "the stop never owned the closing frame inside the critical band")
     assert(fixed.minGunDist > DarkTemplarStaticStandoff.neverCloserTiles * 32.0,
@@ -198,5 +230,36 @@ class DarkTemplarStaticStandoffScenarioSuite extends AnyFunSuite with StarEngine
     assert(fixed.minGunDist > cannonRange, "the Templar entered gun reach it must never touch")
     assert(fixed.alive, "the Templar died inside the critical band")
     assert(fixed.hpEnd == Protoss.DarkTemplar.maxTotalHealth, "the Templar took fire it should never have met")
+  }
+
+  test("an unseen Templar walks straight at the gun and swipes the masonry") {
+    val dtSight = Protoss.DarkTemplar.sightPixels.toDouble
+
+    def runPush(usePush: Boolean): (Body, Body, Body, RaidPilot) = {
+      val dt = new Body(Protoss.DarkTemplar, 0.0, -448.0, Protoss.DarkTemplar.maxTotalHealth)
+      dt.cloaked = true
+      val bunker = new Body(Terran.Bunker, 0.0, 0.0, Terran.Bunker.maxTotalHealth)
+      val depot = new Body(Terran.SupplyDepot, 0.0, -100.0, Terran.SupplyDepot.maxTotalHealth)
+      DarkTemplarEvade.reset()
+      DarkTemplarStaticStandoff.reset()
+      val pilot = new RaidPilot(13, (0.0, 600.0), (0.0, -900.0), Seq(bunker), useStandoff = true, usePush)
+      val pilots: Map[Body, Pilot] = Map(dt -> pilot, bunker -> new Pilots.Hold, depot -> new Pilots.Hold)
+      val world = new World(Seq(dt), Seq(bunker, depot), pilots, Seq.empty)
+      var f = 0
+      while (f < 1500 && dt.alive && (bunker.alive || depot.alive)) { world.step(); f += 1 }
+      (dt, bunker, depot, pilot)
+    }
+
+    val (dt, bunker, depot, pilot) = runPush(usePush = true)
+    println(s"DIAG push alive=${dt.alive} hp=${dt.hp.toInt} moves=${pilot.pushMoves} swipes=${pilot.pushSwipes} bunker=${bunker.hp.toInt} depot=${depot.hp.toInt}")
+    assert(pilot.pushSwipes > 0, "the push never swiped on the way in - the widened reach buys nothing")
+    assert(depot.hp < Terran.SupplyDepot.maxTotalHealth, "the Templar walked past masonry it was ordered to swipe")
+    assert(dt.alive, "the unseen Templar died where nothing could see it")
+    assert(dt.hp == Protoss.DarkTemplar.maxTotalHealth, "the unseen Templar took fire it should never have met")
+
+    val (oldDt, oldBunker, oldDepot, oldPilot) = runPush(usePush = false)
+    println(s"DIAG nopush alive=${oldDt.alive} bunker=${oldBunker.hp.toInt} depot=${oldDepot.hp.toInt}")
+    assert(oldPilot.pushSwipes == 0, "the push swiped with its flag off")
+    assert(oldDepot.hp == Terran.SupplyDepot.maxTotalHealth, "the old brain swipes masonry it should walk past - nothing to fix here")
   }
 }

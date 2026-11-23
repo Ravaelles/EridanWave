@@ -27,6 +27,11 @@ object BeDarkTemplar extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.DarkTemplar(unit)
 
   override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
+    // Unseen is unanswered: with no burn on the tile and no shots landed
+    // the cloak is absolute, so the hunt pushes straight at the gun and
+    // swipes anything in reach - the standoff below only owns live eyes.
+    if (staticPush(unit)) return UnitControl.claimedIf(! unit.ready)
+
     // Static guns outrank detectors: a remembered Cannon owns the ground
     // before its eyes are seen, so the standoff holds the approach first
     // and the evade below only owns live eyes.
@@ -58,6 +63,40 @@ object BeDarkTemplar extends Action {
 
     if (unit.agent.toAttack.isEmpty) hunt(unit)
     UnitControl.claimedIf(! unit.ready)
+  }
+
+  /**
+   * Static-gun push (thin game seam over the pure kernel): while the tile
+   * stays dark and no shot has landed, the cloak answers everything, so
+   * the hunt walks straight at the remembered gun instead of around it -
+   * swiping the weakest hittable in reach plus the margin, masonry
+   * included. The tile burning or a landed shot hands the frame to the
+   * standoff below; the push never argues with live eyes.
+   */
+  private def staticPush(unit: FriendlyUnitInfo): Boolean = {
+    if (unit.tile.enemyDetected || unit.underAttack) return false
+
+    Maff.minBy(With.units.enemy.view.filter(e =>
+      e.likelyStillThere && (e.unitClass.isCombatBuilding || Terran.Bunker(e))))(
+      unit.pixelDistanceEdge(_)).exists(gun => {
+      Maff.minBy(unit.matchups.targets.filter(t =>
+        t.visible && unit.canAttack(t) && DarkTemplarStaticPush.inPushRange(
+          unit.pixelDistanceEdge(t), unit.pixelRangeAgainst(t))))(_.totalHealth) match {
+        case Some(prey) =>
+          unit.agent.toAttack = Some(prey)
+          unit.agent.act("DarkTemplarStaticPush")
+          Commander.attack(unit)
+
+          true
+        case None =>
+          unit.agent.toAttack = None
+          unit.agent.act("DarkTemplarStaticPush")
+          unit.agent.forceTo(gun.pixel)
+          Commander.move(unit)
+
+          true
+      }
+    })
   }
 
   /**

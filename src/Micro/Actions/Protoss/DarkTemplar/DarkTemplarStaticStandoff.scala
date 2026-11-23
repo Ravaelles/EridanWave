@@ -22,10 +22,10 @@ import Utilities.Latch
 object DarkTemplarStaticStandoff {
 
   /** Inside gun eyes plus this margin a closing hull must not advance, in tiles. */
-  val criticalMarginTiles: Double = 1.0
+  val criticalMarginTiles: Double = 0.7
 
   /** Inside gun eyes plus this margin the hull backs off instead, in tiles. */
-  val closeMarginTiles: Double = 2.5
+  val closeMarginTiles: Double = 1.1
 
   /**
    * Hard floor past any gun's reach, in tiles: the ladder bill is two
