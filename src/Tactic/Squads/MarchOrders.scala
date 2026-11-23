@@ -121,7 +121,13 @@ object MarchOrders {
     // line would march on foreign orders instead of its own hold.
     if (openingHold(unit)) {
       unit.agent.act("DressHold")
-      Commander.hold(unit)
+      // Forced hold, bypassing Commander's stationary skip: a standing
+      // hull would keep whatever order it already holds (map
+      // attack-moves, stale marches), so the line would march on
+      // foreign orders. HoldPosition every frame wins the order war
+      // outright; contact hands back to the duel, which re-issues.
+      unit.bwapiUnit.holdPosition()
+      Commander.sleep(unit)
     }
   }
 
