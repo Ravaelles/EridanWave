@@ -74,7 +74,7 @@ object BeDarkTemplar extends Action {
       unit.pixelDistanceEdge(_)).exists(gun => {
       val danger = DarkTemplarStaticStandoff.dangerTiles(
         gun.unitClass.pixelRangeMax * Maff.inv32,
-        gun.detectionRangePixels * Maff.inv32)
+        gun.sightPixels * Maff.inv32)
       val dist = unit.pixelDistanceEdge(gun) * Maff.inv32
       val approaching = gun.isOtherUnitFacingUs(unit)
       val back = unit.showingBackTo(gun)

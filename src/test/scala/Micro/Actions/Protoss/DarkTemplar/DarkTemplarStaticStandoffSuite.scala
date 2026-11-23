@@ -10,12 +10,16 @@ class DarkTemplarStaticStandoffSuite extends AnyFunSuite {
     assert(DarkTemplarStaticStandoff.closeMarginTiles == 2.5)
     assert(DarkTemplarStaticStandoff.exitMarginTiles == 1.0)
     assert(DarkTemplarStaticStandoff.stepTiles == 0.2)
+    assert(DarkTemplarStaticStandoff.neverCloserTiles == 7.4)
   }
 
-  test("danger is the longer of gun reach and detection") {
-    assert(DarkTemplarStaticStandoff.dangerTiles(rangeTiles = 7.0, detectionTiles = 7.0) == 7.0)
-    assert(DarkTemplarStaticStandoff.dangerTiles(rangeTiles = 7.0, detectionTiles = 5.0) == 7.0)
-    assert(DarkTemplarStaticStandoff.dangerTiles(rangeTiles = 4.0, detectionTiles = 7.0) == 7.0)
+  test("danger is the longer of gun reach and eyesight") {
+    assert(DarkTemplarStaticStandoff.dangerTiles(rangeTiles = 7.0, sightTiles = 7.0) == 7.0)
+    assert(DarkTemplarStaticStandoff.dangerTiles(rangeTiles = 7.0, sightTiles = 5.0) == 7.0)
+    // A Cannon sees eleven tiles out while shooting seven: the band opens
+    // past the eyes, never the reach, or the tile burns first.
+    assert(DarkTemplarStaticStandoff.dangerTiles(rangeTiles = 7.0, sightTiles = 11.0) == 11.0)
+    assert(DarkTemplarStaticStandoff.dangerTiles(rangeTiles = 4.0, sightTiles = 7.0) == 7.0)
   }
 
   test("a closing hull inside the critical band stops") {
