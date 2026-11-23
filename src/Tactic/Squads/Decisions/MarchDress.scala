@@ -32,7 +32,7 @@ object MarchDress {
 
   private val dressing = new Latch
 
-  def reset(): Unit = { dressing.reset() }
+  def reset(): Unit = { dressing.reset(); openingHolding.reset() }
 
   def holdDress(unitId: Int, aheadTiles: Double): Boolean =
     dressing(

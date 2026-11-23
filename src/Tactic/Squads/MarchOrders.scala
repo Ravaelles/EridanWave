@@ -131,6 +131,23 @@ object MarchOrders {
    * games pay nothing: the scans run only while UMS Protoss stands.
    */
   /**
+   * Opening stand, shared with the technique: form up and hold the line
+   * from the first frame instead of trickling at an unseen enemy. Fires
+   * on UMS warrior lines inside the opening window until contact (the
+   * duel takes over) or the window lapses. The verdict stays whatever
+   * it is - the march only refuses to walk the line out from under
+   * itself. Same latch the march ticks, so both phases agree.
+   */
+  def openingHold(unit: FriendlyUnitInfo): Boolean = {
+    val gapTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceEdge(unit))
+      .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    // Opening stand: form up and hold the line from the first frame
+    // instead of trickling at an unseen enemy. Contact hands over to
+    // the duel; the window lapsing hands back to the normal march.
+    MarchDress.holdOpening(unit.id, With.frame, unit.unitClass.isWarrior, umsMode = true, enemyInRange = gapTiles <= unit.pixelRangeMax * Maff.inv32)
+  }
+
+  /**
    * Far dress-and-wait read, shared with the technique: the dispatch
    * pauses the duel (advance) while the march dresses the line, so the
    * legs and the technique never split the frame between waiting and
@@ -143,15 +160,16 @@ object MarchOrders {
     // Eyes and guns never dress the line: the gap reads warriors only,
     // so an observer (or a cannon) never holds a column that should
     // march past it.
-    if ( ! With.umsMode || ! With.units.enemy.exists(_.unitClass.isProtoss)) return false
+    if ( ! With.umsMode) return false
+    // Opening stand first, blind: the line forms up from frame zero,
+    // before anybody has seen anything. Contact hands over, the window
+    // lapsing hands back. Warriors only, UMS only.
+    if (openingHold(unit)) return true
+    if ( ! With.units.enemy.exists(_.unitClass.isProtoss)) return false
     if (With.units.enemy.exists(e => e.alive && Protoss.Reaver(e))) return false
 
     val gapTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceEdge(unit))
       .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
-    // Opening stand: form up and hold the line from the first frame
-    // instead of trickling at an unseen enemy. Contact hands over to
-    // the duel; the window lapsing hands back to the normal march.
-    if (MarchDress.holdOpening(unit.id, With.frame, unit.unitClass.isWarrior, umsMode = true, enemyInRange = gapTiles <= unit.pixelRangeMax * Maff.inv32)) return true
 
     MarchDress.holdFarWait(
       unit.id,
@@ -221,6 +239,12 @@ object MarchOrders {
       // kite to. Same gate as the dressed far-wait, same creep.
       case Some(MarchLabel.LoneMarch) if farWaitHolding(unit) => (farCreepPixel(unit), MarchLabel.WaitingForPack)
       case Some(label) => (squad.vicinity, label)
+      // Opening stand outranks the retreat march (never the verdict):
+      // the line forms up and holds from the first frame instead of
+      // walking home on even odds. The verdict stays held, so the duel
+      // stays out - only the feet stay. Contact or the lapsing window
+      // hands back to the normal march.
+      case None if verdictRetreat && openingHold(unit) => (unit.pixel, MarchLabel.WaitingForPack)
       case None if verdictRetreat =>
         // Retreat outranks every formation rule below: the verdict already
         // sent this hull home, so no gate and no leg gets asked - the line
