@@ -50,11 +50,13 @@ Proven: StarEngine DragoonZealotKiteSuite - 0 hits, kill in 223f.
 UMS mirror: VICTORIES 9/7 9/7 9/4 9/3 9/0 8/5 (one coin-flip 5/9 on
 identical code), waste ~0-4f, no thrash, no silent-idle (Close
 declines instead of silent-claiming; Reposition always signs).
-UMS 1v1: VICTORIES 1/0 x5 (hits 0/2/4/6/8/13, waste 106-221f). Bar met
-twice (0, 2), missed 4x. High run-to-run variance on identical code
-(wins, 0/0 draws historically, losses) - glue fights (v oscillates
-0-8, ~21% full stops) decide the duel, not the decision (kite acts
-every cooling frame; UMS shows KiteAway chains throughout).
+UMS 1v1: VICTORIES 1/0 x7 (hits 0/2/4/5/6/8/13/18) plus 0/0 draws
+and-teardown losses on identical code (23-hit draw, 0/1 routs).
+Bar met 2/9. High run-to-run variance on identical code - glue
+fights (v oscillates 0-8, ~21% full stops) decide the duel, not the
+decision (kite acts every cooling frame; UMS shows KiteAway chains
+throughout). Stuck-gun shape fires live (zealot 8f, dragoon 4-5f
+per game) - the old Move-only ledger was blind to it.
 
 Ledger upgraded 2026-11-24: waste counts stuck guns too (loaded +
 near + standing + silent past a full period), judged by gun events
