@@ -1,5 +1,6 @@
 package Tactic.Squads.Decisions
 
+import Lifecycle.With
 import Utilities.Latch
 
 /**
@@ -145,12 +146,15 @@ object MarchDress {
 
   private val openingHolding = new Latch
 
-  def holdOpening(unitId: Int, frame: Int, isWarrior: Boolean, umsMode: Boolean, enemyInRange: Boolean): Boolean =
-    openingHolding(
+  def holdOpening(unitId: Int, frame: Int, isWarrior: Boolean, umsMode: Boolean, enemyInRange: Boolean): Boolean = {
+    val out = openingHolding(
       unitId,
       fires    = isWarrior && umsMode && frame < openingHoldFrames && ! enemyInRange,
       releases = enemyInRange || frame >= openingHoldFrames || ! umsMode,
       initial  = false)
+    if (With.frame < 60 && (unitId == 181 || unitId == 184)) Debugging.Probe.note("LatchDbg", unitId, s"f=$frame war=$isWarrior ums=$umsMode inRange=$enemyInRange out=$out")
+    out
+  }
 
   /**
    * Far wait latch (holdDress shape): on UMS mirrors with no reavers the
