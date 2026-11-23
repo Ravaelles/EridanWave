@@ -20,6 +20,28 @@ class VolleyWasteSuite extends AnyFunSuite {
     assert(VolleyWaste.worstTotal == 0)
   }
 
+  test("a loaded standing gun silent past its period with an enemy at the edge is stuck") {
+    assert(VolleyWaste.isStuckGun(cooldownLeft = 0, hasHittableNear = true, standingStill = true, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2, isWarrior = true))
+    assert( ! VolleyWaste.isStuckGun(cooldownLeft = 0, hasHittableNear = true, standingStill = true, framesSinceAttack = 32, periodFrames = 30, latencyFrames = 2, isWarrior = true))
+    assert( ! VolleyWaste.isStuckGun(cooldownLeft = 5, hasHittableNear = true, standingStill = true, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2, isWarrior = true))
+    assert( ! VolleyWaste.isStuckGun(cooldownLeft = 0, hasHittableNear = true, standingStill = false, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2, isWarrior = true))
+    assert( ! VolleyWaste.isStuckGun(cooldownLeft = 0, hasHittableNear = false, standingStill = true, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2, isWarrior = true))
+    assert( ! VolleyWaste.isStuckGun(cooldownLeft = 0, hasHittableNear = true, standingStill = true, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2, isWarrior = false))
+  }
+
+  test("stuck holds accumulate past the application window") {
+    VolleyWaste.reset()
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.HoldPosition, isWarrior = true, frame = 100,
+      hasHittableNear = true, standingStill = true, framesSinceAttack = 40, periodFrames = 30, latencyFrames = 2)
+    assert(VolleyWaste.worstTotal == 0)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.HoldPosition, isWarrior = true, frame = 104,
+      hasHittableNear = true, standingStill = true, framesSinceAttack = 44, periodFrames = 30, latencyFrames = 2)
+    assert(VolleyWaste.worstTotal == 0)
+    VolleyWaste.bump(7, "Dragoon", cooldownLeft = 0, hasHittable = true, order = Orders.HoldPosition, isWarrior = true, frame = 105,
+      hasHittableNear = true, standingStill = true, framesSinceAttack = 45, periodFrames = 30, latencyFrames = 2)
+    assert(VolleyWaste.worstTotal == 1)
+  }
+
   test("a loaded gun walking past a hittable enemy is a forgone volley") {
     assert(VolleyWaste.isForgone(cooldownLeft = 0, hasHittable = true, order = Orders.Move, isWarrior = true))
     assert(VolleyWaste.isForgone(cooldownLeft = 0, hasHittable = true, order = Orders.MoveToGas, isWarrior = true))

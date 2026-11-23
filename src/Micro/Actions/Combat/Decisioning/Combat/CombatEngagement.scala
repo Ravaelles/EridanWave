@@ -373,13 +373,20 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       }
       // Wasted-volley ledger, end of frame: a loaded gun with a hittable
       // target that ends the frame moving judges the kite - it must fall,
-      // kills must not. Read after the dispatch, never before it: the
+      // kills must not. A loaded gun standing still and silent past a
+      // full period with an enemy at the edge judges the plant the same
+      // way. Read after the dispatch, never before it: the
       // pre-dispatch order belongs to last frame, so every volley fired
       // after a step counted as waste even though the shot landed. Only
       // ready frames are judged - a slept frame owns no orders, and its
       // starvation is counted beside it instead.
       VolleyWaste.bump(unit.id, unit.unitClass.toString, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.order, unit.unitClass.isWarrior,
-        frame = With.frame, staleFrames = With.latency.latencyFrames + 1)
+        frame = With.frame, staleFrames = With.latency.latencyFrames + 1,
+        hasHittableNear = unit.matchups.targets.exists(t => unit.pixelsToGetInRange(t) <= VolleyWaste.stuckMarginPixels),
+        standingStill = unit.speed < 1.0,
+        framesSinceAttack = With.framesSince(unit.lastFrameStartingAttack),
+        periodFrames = unit.cooldownMaxAirGround,
+        latencyFrames = With.latency.latencyFrames)
       // Hits-taken ledger, same frame: every hp drop counts as a landed
       // hit, no matter the guns. The kite answers for it at game end.
       if (unit.unitClass.isWarrior) HitsTaken.bump(unit.id, unit.unitClass.toString, unit.totalHealth)

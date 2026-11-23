@@ -8,11 +8,12 @@ import scala.collection.mutable
 /**
  * Wasted-volley ledger (kite discipline, owner direction: never yield
  * ground for free): frames where a warrior's gun is loaded and a
- * hittable enemy stands inside its reach, yet the frame ends moving.
- * Read after the dispatch owns the frame's end: judging the
- * pre-dispatch order counts every volley fired after a step as waste,
- * even though the shot landed. Per-game state (reset with the rest);
- * read the summary, not the frames.
+ * hittable enemy stands inside its reach, yet the frame ends moving -
+ * or the gun stands loaded, still and silent past a full period with
+ * an enemy at the edge. Read after the dispatch owns the frame's end:
+ * judging the pre-dispatch order counts every volley fired after a
+ * step as waste, even though the shot landed. Per-game state (reset
+ * with the rest); read the summary, not the frames.
  */
 object VolleyWaste extends PerGame {
 
@@ -39,6 +40,26 @@ object VolleyWaste extends PerGame {
       (order == Orders.Move || order.startsWith("MoveTo"))
 
   /**
+   * Stuck-gun predicate (owner order: a ready gun with an enemy at the
+   * edge that stands silent is a forgone volley too): loaded, enemy at
+   * most half a tile past max range, standing still, and silent past a
+   * full period plus latency. Judged by gun events, never by orders -
+   * a hold that auto-fires never counts, whatever it is called.
+   */
+  val stuckMarginPixels: Double = 16.0
+
+  def isStuckGun(
+    cooldownLeft: Int,
+    hasHittableNear: Boolean,
+    standingStill: Boolean,
+    framesSinceAttack: Int,
+    periodFrames: Int,
+    latencyFrames: Int,
+    isWarrior: Boolean): Boolean =
+    isWarrior && hasHittableNear && cooldownLeft <= 0 && standingStill &&
+      framesSinceAttack > periodFrames + latencyFrames
+
+  /**
    * Stale orders only (pure frames for the suite): an order takes
    * latency to apply, so the frame that issues a move past a firing
    * gun still reads Move while the volley it ordered lands. Count the
@@ -49,13 +70,18 @@ object VolleyWaste extends PerGame {
     nowFrame - sinceFrame >= staleFrames
 
   def bump(unitId: Int, unitClass: String, cooldownLeft: Int, hasHittable: Boolean, order: String, isWarrior: Boolean,
-    frame: Int = Lifecycle.With.frame, staleFrames: Int = 3): Unit = {
+    frame: Int = Lifecycle.With.frame, staleFrames: Int = 3,
+    hasHittableNear: Boolean = false, standingStill: Boolean = false,
+    framesSinceAttack: Int = 0, periodFrames: Int = Int.MaxValue, latencyFrames: Int = 0): Unit = {
     orderSince.get(unitId) match {
       case Some((lastOrder, _)) if lastOrder == order =>
       case _ => orderSince(unitId) = (order, frame)
     }
     val sinceFrame = orderSince(unitId)._2
-    if ( ! isForgone(cooldownLeft, hasHittable, order, isWarrior) || ! isStaleOrder(sinceFrame, frame, staleFrames)) {
+    val stale = isStaleOrder(sinceFrame, frame, staleFrames)
+    val forgone = isForgone(cooldownLeft, hasHittable, order, isWarrior) && stale
+    val stuck = isStuckGun(cooldownLeft, hasHittableNear, standingStill, framesSinceAttack, periodFrames, latencyFrames, isWarrior) && stale
+    if ( ! forgone && ! stuck) {
       wasteStreak.remove(unitId)
 
       return
