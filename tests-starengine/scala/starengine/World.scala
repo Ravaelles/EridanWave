@@ -158,6 +158,7 @@ final class World(
     shootSide(foes, ours, orders)
     shootSide(ours, foes, orders)
     frame += 1
+    Visualizer.frame(this)
   }
 
   def run(frames: Int): Unit = {
