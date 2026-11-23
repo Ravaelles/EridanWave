@@ -18,11 +18,6 @@ object Follow extends Action {
     && unit.matchups.threatsInRange.forall(_.inRangeToAttack(unit.agent.leader().get)))
 
   override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
-    // Opening stand owns the frame: the line forms up instead of
-    // trickling after its leader. Warriors only, UMS only, released
-    // on contact - the rejoin resumes after the window lapses.
-    if (Tactic.Squads.MarchOrders.openingHold(unit)) return UnitControl.Declined
-
     val maybeLeader = unit.agent.leader()
     unit.agent.decision.set(maybeLeader.map(_.pixel))
     maybeLeader

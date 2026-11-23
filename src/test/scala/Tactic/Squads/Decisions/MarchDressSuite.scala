@@ -95,11 +95,11 @@ class MarchDressSuite extends AnyFunSuite {
     assert( ! MarchDress.creepNow(26))
   }
 
-  test("the opening stand holds the line from frame zero, contact or window lapsing releases it") {
+  test("the opening stand is retired: the kernel never holds") {
     def hold(id: Int, frame: Int, warrior: Boolean = true, ums: Boolean = true, contact: Boolean = false): Boolean =
       MarchDress.holdOpening(id, frame, warrior, ums, contact)
-    assert(hold(801, frame = 0))
-    assert(hold(801, frame = 47))
+    assert( ! hold(801, frame = 0))
+    assert( ! hold(801, frame = 47))
     assert( ! hold(801, frame = 48))
     assert( ! hold(801, frame = 0, contact = true))
     assert( ! hold(802, frame = 0, warrior = false))

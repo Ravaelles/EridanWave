@@ -195,12 +195,7 @@ private[Decisioning] object TechniquePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
-      // Opening stand outranks the walk home (never the verdict): the
-      // line holds from the first frame instead of trickling out of an
-      // unformed march. UMS warriors only, released on contact - ladder
-      // never sees it fire.
-      if (Tactic.Squads.MarchOrders.openingHold(unit)) UnitControl.Declined
-      else UnitControl.claimedIf(combat.shouldRetreat && Retreat(unit))
+      UnitControl.claimedIf(combat.shouldRetreat && Retreat(unit))
   }
 
   /**

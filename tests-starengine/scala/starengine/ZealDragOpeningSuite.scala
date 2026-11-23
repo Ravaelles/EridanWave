@@ -1,19 +1,15 @@
 package starengine
 
-import Tactic.Squads.Decisions.MarchDress
 import ProxyBwapi.Races.Protoss
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.mutable
 
 /**
- * ZealDrag opening stand (owner order, ZealDrag_v_ZealDrag post-mortem):
- * live games open with Retreat and AttackMove labels over units that
- * never formed - the march walks home on even odds while the hunt
- * attack-moves at ghosts. The shipped order stands the line instead:
- * warriors hold from frame zero for two seconds (48 frames) unless the
- * enemy is already in range, then advance together. The pilot calls the
- * shipped holdOpening kernel with per-hull ids; the engine only steps.
+ * ZealDrag opening (retired stand): the 48-frame freeze masked the line
+ * never forming, so it was removed - one solution for UMS and ladder
+ * alike. The pilot below chases from frame zero; the suite pins that no
+ * freeze returns: hulls move inside the old window and close the gap.
  * Ground units only - the observer rides along but never counts.
  */
 class ZealDragOpeningSuite extends AnyFunSuite with StarEngineSuite {
@@ -21,7 +17,7 @@ class ZealDragOpeningSuite extends AnyFunSuite with StarEngineSuite {
   override def tags: Map[String, Set[String]] =
     super.tags.map { case (n, s) => n -> (s + StarEngineTags.March.name + StarEngineTags.Formation.name + StarEngineTags.Dragoon.name + StarEngineTags.Zealot.name + StarEngineTags.PvP.name) }
 
-  /** Shipped order: hold the opening window, then close. Ground only here. */
+  /** No freeze: chase from frame zero, the stand is retired. Ground only here. */
   private class StandPilot(ids: Map[Body, Int]) extends Pilot {
     val directives: mutable.ListBuffer[(Int, Int, String)] = mutable.ListBuffer.empty
 
@@ -30,10 +26,7 @@ class ZealDragOpeningSuite extends AnyFunSuite with StarEngineSuite {
       if (me.kind == Protoss.Observer) return Hold
 
       val foe = world.nearestFoeOf(me, world.foes, (_, _) => true)
-      val inRange = foe.exists(f => me.dist(f) <= me.rangeAgainst(f))
-      // Warriors hold the line; eyes keep their own job and never count.
-      val hold = MarchDress.holdOpening(ids(me), world.frame, isWarrior = me.kind != Protoss.Observer, umsMode = true, enemyInRange = inRange)
-      val d = if (hold) Hold else foe.map(Chase).getOrElse(Hold)
+      val d = foe.map(Chase).getOrElse(Hold)
       directives.append((world.frame, ids(me), d.getClass.getSimpleName))
       d
     }
@@ -63,7 +56,6 @@ class ZealDragOpeningSuite extends AnyFunSuite with StarEngineSuite {
   }
 
   private def runOpening(): (Opening, Seq[Body], Seq[Body]) = {
-    MarchDress.reset()
     // Spawn-like scatter: two blades and two guns apart, observer aside.
     val z1 = new Body(Protoss.Zealot, -200.0, 100.0, Protoss.Zealot.maxTotalHealth)
     val z2 = new Body(Protoss.Zealot, 200.0, -100.0, Protoss.Zealot.maxTotalHealth)
@@ -101,22 +93,22 @@ class ZealDragOpeningSuite extends AnyFunSuite with StarEngineSuite {
         })
       }
     }
-    val held36 = pilot.directives.filter(_._1 == 36).forall(_._3 == "Hold$")
+    val warriorIds = warriors.map(ids).toSet
+    val held36 = pilot.directives.filter(d => d._1 == 36 && warriorIds.contains(d._2)).forall(_._3 == "Chase")
     val avgEnd = avgDist(ours, foes)
     (Opening(disp.toMap, held36, avg0, avg47, avgEnd, gap0, gap47), ours, foes)
   }
 
-  test("the line stands for two seconds, then closes together") {
+  test("no opening freeze: the line moves inside the old window and closes") {
     val (m, ours, foes) = runOpening()
     println("DIAG moved=" + m.movedBy47.values.map(_.toInt).mkString(",") +
-      " held36=" + m.heldAt36 +
+      " chasing36=" + m.heldAt36 +
       " avg=" + m.avgDist0.toInt + "->" + m.avgDist47.toInt + "->" + m.avgDistEnd.toInt +
       " gap=" + m.allyGap0.toInt + "->" + m.allyGap47.toInt)
     m.movedBy47.foreach { case (id, px) =>
-      assert(px == 0.0, f"hull $id moved ${px.toInt}px inside the opening window")
+      assert(px > 0.0, f"hull $id stood frozen inside the old window")
     }
-    assert(m.heldAt36, "the line was not standing at 1.5 seconds")
-    assert(m.avgDistEnd < m.avgDist47, "the line never closed after the stand")
-    assert(m.allyGap47 <= m.allyGap0 + 1.0, "the pack scattered instead of holding its shape")
+    assert(m.heldAt36, "the line was not chasing at 1.5 seconds")
+    assert(m.avgDistEnd < m.avgDist0, "the line never closed after spawn")
   }
 }

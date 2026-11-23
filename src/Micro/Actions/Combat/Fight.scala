@@ -32,18 +32,6 @@ object Fight extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canAttack || unit.canMove) && ! unit.agent.isScout && ! unit.unitClass.isDetector
 
   override def perform(unit: FriendlyUnitInfo): UnitControl = {
-    // Opening stand (UMS mirrors): the line holds from frame zero
-    // instead of trickling at an unseen enemy. Dragoons and zealots
-    // only - other doctrines keep their own openers. Released on
-    // contact, so real fights still belong to the duel below. UMS runs
-    // UmsHold instead: the march paces while the Dress verdict below
-    // keeps the duel quiet, so the freeze stands down there.
-    if ( ! With.umsMode && (unit.is(Protoss.Dragoon) || unit.is(Protoss.Zealot)) && Tactic.Squads.MarchOrders.openingHold(unit)) {
-      unit.agent.act("DressHold")
-      Commander.hold(unit)
-
-      return UnitControl.Claimed
-    }
     // Templar on the line first: a visible blade near a worker owns the
     // frame through the dedicated move-away manager, never through
     // Retreat - the shortest line out, supported or not.

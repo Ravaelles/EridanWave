@@ -146,13 +146,12 @@ object MarchDress {
 
   private val openingHolding = new Latch
 
+  @deprecated("Opening stand retired: it masked the missing situational formation. Pending full removal.", "")
   def holdOpening(unitId: Int, frame: Int, isWarrior: Boolean, umsMode: Boolean, enemyInRange: Boolean): Boolean =
-    openingHolding(
-      unitId,
-      fires    = isWarrior && umsMode && frame < openingHoldFrames && ! enemyInRange,
-      releases = enemyInRange || frame >= openingHoldFrames || ! umsMode,
-      initial  = false
-    )
+    // Retired outright: the freeze masked the line never forming. Every
+    // caller was unhooked; the latch below ticks no more. One solution
+    // for UMS and ladder alike - no map-gated stands.
+    false
 
   /**
    * Far wait latch (holdDress shape): on UMS mirrors with no reavers the
