@@ -5,7 +5,6 @@ import Micro.Actions.Protoss.Arbiter.BeArbiter
 import Micro.Actions.Protoss.Carrier.BeCarrier
 import Micro.Actions.Protoss.DarkTemplar.BeDarkTemplar
 import Micro.Actions.Protoss.Detector.BeDetector
-import Micro.Actions.Protoss.Dragoon.BeDragoonVsSlowlot
 import Micro.Actions.Protoss.ReaverShuttle.{BeReaver, BeShuttle}
 import Micro.Actions.Protoss.Zealot.{BeRushingZealot, BeZealotVsZealot}
 import Micro.Actions.Terran.{BeCombatSCV, BeVulture}
@@ -27,13 +26,6 @@ import testkit.TestKit
  * airborne positives stay live-only and the flier row pins negatives.
  */
 class BeUnitGatesSuite extends AnyFunSuite {
-
-  test("dragoon slowlot brain: dragoons only, claims its frames") {
-    TestKit.seedWorld()
-    assert(BeDragoonVsSlowlot.appliesToUnit(TestKit.friendly(UnitType.Protoss_Dragoon, 1)))
-    assert( ! BeDragoonVsSlowlot.appliesToUnit(TestKit.friendly(UnitType.Protoss_Zealot, 2)))
-    assert( ! BeDragoonVsSlowlot.isContainer)
-  }
 
   test("rushing zealot brain: zealots only, claims its frames") {
     TestKit.seedWorld()

@@ -17,7 +17,6 @@ import Micro.Actions.Combat.Tactics.Potshots._
 import Micro.Actions.Protoss.Air.BeFlier
 import Micro.Actions.Protoss.Arbiter.BeArbiter
 import Micro.Actions.Protoss.DarkTemplar.BeDarkTemplar
-import Micro.Actions.Protoss.Dragoon.BeDragoonVsSlowlot
 import Micro.Actions.Protoss.Zealot.{BeRushingZealot, BeZealotVsZealot}
 import Micro.Actions.Protoss.Carrier.BeCarrier
 import ProxyBwapi.Races.Protoss
@@ -73,7 +72,6 @@ object Fight extends Action {
     BeVulture(unit)
     BeRushingZealot(unit)
     BeZealotVsZealot(unit)
-    BeDragoonVsSlowlot(unit)
     BeDarkTemplar(unit)
     BeCarrier(unit)
     BeArbiter(unit)
