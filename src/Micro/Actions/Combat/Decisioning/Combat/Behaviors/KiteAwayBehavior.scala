@@ -3,7 +3,7 @@ package Micro.Actions.Combat.Decisioning
 import Lifecycle.With
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldToShoot, KiteAway, KiteHold, KiteYield, MeleeKiteAway}
-import Micro.Agency.Commander
+import Micro.Agency.{Commander, OrderContinue}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.UnitFilters.{IsSlowling, IsSpeedling}
@@ -23,6 +23,9 @@ object KiteAwayBehavior {
    * normal play leaves it on).
    */
   var kiteEnabled: Boolean = true
+
+  /** Held kite headings by unit: re-deriving every frame turns forever. */
+  private val steadyHeadings = new scala.collection.mutable.HashMap[Int, (Double, Int)]()
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! kiteEnabled) return false
@@ -56,18 +59,29 @@ object KiteAwayBehavior {
     // the kite donated the shooting on the ZealDrag mirror, so a hull
     // with the gun inside its window, enough hull to trade, and nothing
     // in contact never enters the kite decision at all. PvP-only. A lone
-    // blade chase is the exception: with no guns on the map the duel is
+    // blade chase is the exception: with no guns nearby the duel is
     // free, so a fresh hull yields before contact instead of after the
     // first hit - the contact kite below owns those frames instead.
-    val gunsOut = ! unit.matchups.threats.exists(t =>
-      t.likelyStillThere && t.canAttack(unit) && ! t.unitClass.melee)
+    // Lone blades press differently depending on ranged company: with no
+    // guns inside the chase radius the duel is free, so a fresh hull
+    // yields before contact instead of after the first hit - the contact
+    // kite below owns those frames instead. Guns nearby keep the mirror
+    // discipline: every tile yielded is paid for in volleys.
+    val gunsNear = unit.matchups.threats.exists(t =>
+      t.likelyStillThere && t.canAttack(unit) && ! t.unitClass.melee &&
+      unit.pixelDistanceEdge(t) * Maff.inv32 <= KiteAway.chaseTiles)
     val meleeChase = unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).exists(t =>
       t.likelyStillThere && t.unitClass.melee &&
       ! FacingAway.dismissMelee(isMelee = true, FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(unit.pixel))))
-    val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
-      t.likelyStillThere && t.unitClass.melee)
     val contactClose = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(_.likelyStillThere)
-    if (pvpRules && shielded && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose) && ! (gunsOut && meleeChase)) return false
+    // Reach reads, measured once so every leg below agrees: the nearest
+    // blade in tiles, and the gun's edge inside its own reach.
+    val edgeTiles = unit.pixelRangeMax * Maff.inv32 - KiteAway.kiteEdgeTiles
+    val nearTiles = Maff.minBy(
+      unit.matchups.threats.view.filter(t => t.likelyStillThere && t.unitClass.melee))(
+      t => unit.pixelDistanceEdge(t))
+      .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    if (pvpRules && shielded && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose) && (gunsNear || ! meleeChase)) return false
     // Shared margin read (plant and gate agree by construction): live
     // threats only, turned-away melee dismissed. A blade pressing any
     // mate carves a planted hull, so the plant holds volleys against
@@ -84,12 +98,11 @@ object KiteAwayBehavior {
     // Loaded-enough hulls plant the volley instead of entering the kite
     // decision at all: with something hittable inside our reach and the
     // gun inside its window, holding outdamages any ground the yield
-    // would buy. Near-dead hulls never plant - only yield. Blades
-    // already on top veto the plant where no guns back them: standing in
-    // contact donates the swing for a volley the next cycle fires from
-    // range for free.
+    // would buy. Near-dead hulls never plant - only yield. Without guns
+    // nearby the plant needs the edge: standing in contact donates the
+    // swing for a volley the next cycle fires from range for free.
     if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby) &&
-      ! (gunsOut && meleeContact)) {
+      (gunsNear || KiteAway.holdsTheEdge(nearTiles, edgeTiles))) {
       plantVolley(unit)
 
       return true
@@ -113,23 +126,25 @@ object KiteAwayBehavior {
     // already at the edge holds its ground instead of donating it.
     // Near-dead hulls keep their own flight below; guns alone keep the
     // old ladder; Terran never kites above. Zerg fresh hulls keep
-    // their classic hold. A lone blade with no guns on the map presses
+    // their classic hold. A lone blade with no guns nearby presses
     // from the chase radius instead of the margin: the duel is free, so
     // the kite starts before contact instead of after the first hit.
-    val meleePressing = ! unit.unitClass.melee && (hasMeleeNearby || (gunsOut && meleeChase))
+    val meleePressing = ! unit.unitClass.melee && (hasMeleeNearby || (! gunsNear && meleeChase))
     val zergFresh = zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound
     if ((pvpRules || zergRules) && ! zergFresh && meleePressing &&
       ! KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields)) {
-      val edgeTiles = unit.pixelRangeMax * Maff.inv32 - KiteAway.kiteEdgeTiles
-      val nearTiles = Maff.minBy(
-        unit.matchups.threats.view.filter(t => t.likelyStillThere && t.unitClass.melee))(
-        t => unit.pixelDistanceEdge(t))
-        .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
-      // Loaded volleys plant - unless blades are already on top with no
-      // guns around: standing in contact donates the swing for a shot
-      // the next cycle fires from range for free. The edge plant stands
-      // regardless: past the edge the contact cannot reach.
-      if ((KiteAway.holdsForVolley(unit.cooldownLeft) && ! (gunsOut && meleeContact)) || KiteAway.holdsTheEdge(nearTiles, edgeTiles)) {
+      // Loaded volleys plant - without guns nearby only at the edge: a
+      // marginal plant donates the swing for a shot the next cycle fires
+      // from range for free. The edge plant stands regardless: past the
+      // edge the contact cannot reach.
+      // Edge plants shoot; anywhere else a loaded gun with no guns around
+      // kites first and shoots from the edge instead of trading contact.
+      // Holding through the cooldown lets the chaser walk into contact
+      // for free, so the walk-back owns cooling frames and the edge owns
+      // only the shot itself.
+      val edge = KiteAway.holdsTheEdge(nearTiles, edgeTiles)
+      val loadedVolley = KiteAway.holdsForVolley(unit.cooldownLeft)
+      if ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley)) {
         plantVolley(unit)
 
         return true
@@ -177,15 +192,17 @@ object KiteAwayBehavior {
     // Zerg fresh hulls hold: the classic ladder below owns the rest.
     if (zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound) return false
 
-    // Fresh hulls hold their volleys, contact or not: at or below the
-    // fresh wound the gun outweighs the yield, so the kite never fires
-    // without real shield damage AND blades in contact. PvP-only, and
+    // Fresh hulls hold their loaded volleys, contact or not: at or below
+    // the fresh wound the gun outweighs the yield, so a loaded gun never
+    // yields without real shield damage AND blades in contact. A cooling
+    // gun holds no volley - standing through the cooldown donates the
+    // contact for nothing, so only a loaded gun may hold. PvP-only, and
     // only where shields exist to read: other matchups run the ladder
     // untouched.
     if (pvpRules && shielded) {
       val meleeClose = unit.matchups.threatsInPixels(KiteAway.meleeCloseTiles * 32.0).exists(t =>
         t.likelyStillThere && t.unitClass.melee)
-      if ( ! KiteAway.shouldKite(unit.shieldWound, meleeClose)) return false
+      if ( ! KiteAway.shouldKite(unit.shieldWound, meleeClose) && KiteAway.holdsForVolley(unit.cooldownLeft)) return false
     }
 
     // Near-dead hulls kite on melee contact alone: collapsed shields with
@@ -328,6 +345,11 @@ object KiteAwayBehavior {
 
   private def kiteAway(unit: FriendlyUnitInfo, combat: Combat, hasMeleeNearby: Boolean): Unit = {
     unit.agent.act("KiteAway")
+    // A commanded withdrawal is not stuckness: the stuck detector reads
+    // a loaded, in-range, non-firing gun as failure and would stop the
+    // hull mid-kite - exactly the stutter that lets chasers close for
+    // free. Withholding fire on purpose is the doctrine, not a stall.
+    unit.resetSticking()
     // Yield from the feet, never from the pin: a static formation slot
     // brakes the fallback every stride (arrive, guard, re-issue), and
     // the stutter lets chasers close for free - the loss pattern on
@@ -346,19 +368,52 @@ object KiteAwayBehavior {
     val woundWant = WoundMargin(0.0, KiteAway.maxOffsetTiles).pixels(unit.woundPercent())
     val meleeNear = unit.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val nearDeadFar = KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) && meleeNear
-    // No guns on the map, blades on top: a loaded hull still steps out
+    // No guns nearby, blades on top: a loaded hull still steps out
     // instead of planting into the swing - the gap reopens and the next
-    // volley fires from range for free.
-    val gunsOut = ! unit.matchups.threats.exists(t => t.likelyStillThere && t.canAttack(unit) && ! t.unitClass.melee)
+    // volley fires from range for free. Guns nearby keep the mirror
+    // discipline: every tile yielded is paid for in volleys.
+    val gunsNear = unit.matchups.threats.exists(t =>
+      t.likelyStillThere && t.canAttack(unit) && ! t.unitClass.melee &&
+      unit.pixelDistanceEdge(t) * Maff.inv32 <= KiteAway.chaseTiles)
     val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val offsetPixels = if (nearDeadFar) KiteHold.nearDeadOffsetTiles * 32.0
       else if (hasMeleeNearby) {
         val edged = edgedYield(unit, woundWant)
-        if (gunsOut && meleeContact) KiteAway.escapeYield(edged, KiteAway.meleeEscapeTiles) else edged
+        if (! gunsNear && meleeContact) KiteAway.escapeYield(edged, KiteAway.meleeEscapeTiles) else edged
       }
       else KiteYield.offsetPixels(woundWant, unit.cooldownLeft, unit.topSpeed, With.latency.latencyFrames + 2)
     val away = anchor.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel
-    unit.agent.decision.set(leashed(unit, unit.matchups.targetNearest.get, away))
+    // The leash stays in the gun-free duel too: dragging the pack into a
+    // gunfight breaks the focus the leash exists to keep. Committed
+    // strides cruise instead of braking into every hop: short steps reset
+    // acceleration faster than the gap opens, so the yield strides past
+    // its point along the same ray and the direction still comes from
+    // the duel.
+    val leashedAway = if (gunsNear) away else leashed(unit, unit.matchups.targetNearest.get, away)
+    // Committed strides cruise instead of braking into every hop, but
+    // only where no guns watch: the mirror paces its volleys inside its
+    // own reach, and dying hulls keep their far flight.
+    val committed =
+      if ( ! gunsNear && hasMeleeNearby && ! nearDeadFar) {
+        val far = unit.pixel.project(leashedAway, KiteAway.kiteCommitTiles * 32.0)
+        if (far.walkable) far else leashedAway.walkablePixel
+      } else leashedAway
+    // Steady the course: re-deriving the heading every frame from a
+    // jittering chaser turns forever instead of cruising, so a held
+    // heading stands until it lapses or the duel turns past the cone.
+    // Lone blades only: the mirror stays twitchy on purpose. New games
+    // restart the frame counter, which releases every hold.
+    val freshHeading = unit.pixel.radiansTo(committed)
+    val steadied = steadyHeadings.get(unit.id) match {
+      case Some((held, heldFrame)) if ! gunsNear && hasMeleeNearby && ! nearDeadFar &&
+        ! KiteAway.shouldRefreshHeading(heldFrame, With.frame) &&
+        KiteAway.holdsHeading(freshHeading, held, OrderContinue.headingConeRadians) =>
+        unit.pixel.radiateRadians(held, KiteAway.kiteCommitTiles * 32.0).walkablePixel
+      case _ =>
+        if ( ! gunsNear && hasMeleeNearby && ! nearDeadFar) steadyHeadings(unit.id) = (freshHeading, With.frame)
+        committed
+    }
+    unit.agent.decision.set(steadied)
     // Contact kites interrupt the firing solution explicitly: a standing
     // attack order on a live in-range target vetoes every move, so the
     // gate-proven yield (cooling hull, blades on top) would pose forever
@@ -371,10 +426,11 @@ object KiteAwayBehavior {
   /**
    * Pack leash (owner order): a kiter that ran more than six tiles from
    * its nearest friendly warrior steers back toward the pack instead of
-   * across the map - but never closer to the chaser than it stands. No
-   * warriors out, no leash: a lone hull kites free. Near-dead hulls keep
-   * their far flight instead of dying among friends. The return lands on
-   * the six-tile ring, never at the friend's feet: the yield keeps its
+   * across the map - but never closer to the chaser than it stands, and
+   * never on a heading that turns it back into the chase. No warriors
+   * out, no leash: a lone hull kites free. Near-dead hulls keep their
+   * far flight instead of dying among friends. The return lands on the
+   * six-tile ring, never at the friend's feet: the yield keeps its
    * distance while the pack stays in sharing range.
    */
   private def leashed(unit: FriendlyUnitInfo, foe: UnitInfo, away: Mathematics.Points.Pixel): Mathematics.Points.Pixel = {
@@ -386,7 +442,8 @@ object KiteAwayBehavior {
         unit.pixelDistanceEdge(f) * Maff.inv32,
         KiteAway.leashTiles,
         f.pixelDistanceEdge(foe),
-        unit.pixelDistanceEdge(foe)))
+        unit.pixelDistanceEdge(foe),
+        KiteAway.alignedAway(unit.pixel, f.pixel, foe.pixel)))
       .map(f => {
         val over = f.pixel.pixelDistance(away) - KiteAway.leashTiles * 32.0
         if (over <= 0) away else away.project(f.pixel, over).walkablePixel
