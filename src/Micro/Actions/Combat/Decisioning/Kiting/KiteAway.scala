@@ -145,6 +145,39 @@ object KiteAway {
   def edgeCappedYield(stepPixels: Double, distTiles: Double, rangeTiles: Double, edgeTiles: Double): Double =
     Math.min(stepPixels, Math.max(0.0, rangeTiles - edgeTiles - distTiles) * 32.0)
 
+  /**
+   * Chase radius, in tiles: an approaching blade inside this starts the
+   * kite before contact. Melee never outranges the volley, so a fresh
+   * hull yields to the chase just like a wounded one - waiting for the
+   * first hit donates the very contact the kite exists to avoid.
+   */
+  var chaseTiles: Double = 5.0
+
+  def shouldChase(distTiles: Double, chaseTiles: Double): Boolean =
+    distTiles <= chaseTiles
+
+  /**
+   * Leash radius, in tiles: a kiter farther than this from its nearest
+   * friendly warrior steers back toward the pack instead of across the
+   * map - but never closer to the chaser than it stands. No warriors
+   * out, no leash: a lone hull kites free.
+   */
+  var leashTiles: Double = 6.0
+
+  def shouldLeash(distFriendTiles: Double, leashTiles: Double, distFriendFoePx: Double, distUnitFoePx: Double): Boolean =
+    distFriendTiles > leashTiles && distFriendFoePx > distUnitFoePx
+
+  /**
+   * Escape floor, in tiles: a loaded hull with blades on top still steps
+   * out instead of planting into the swing. The gap reopens, the next
+   * volley fires from range - one donated shot beats every swing taken
+   * standing in contact.
+   */
+  var meleeEscapeTiles: Double = 1.0
+
+  def escapeYield(stepPixels: Double, escapeTiles: Double): Double =
+    Math.max(stepPixels, escapeTiles * 32.0)
+
   def shouldRetreat(
     totalHealth: Int,
     cooldownLeft: Int,

@@ -129,4 +129,28 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(math.abs(KiteAway.edgeCappedYield(stepPixels = 128.0, distTiles = 3.0, rangeTiles = 4.0, edgeTiles = 0.7) - 0.3 * 32.0) < 1e-9)
     assert(KiteAway.edgeCappedYield(stepPixels = 128.0, distTiles = 3.5, rangeTiles = 4.0, edgeTiles = 0.7) == 0.0)
   }
+
+  test("pins the lone-blade chase, leash and escape") {
+    assert(KiteAway.chaseTiles == 5.0)
+    assert(KiteAway.leashTiles == 6.0)
+    assert(KiteAway.meleeEscapeTiles == 1.0)
+  }
+
+  test("an approaching blade starts the kite before contact") {
+    assert(KiteAway.shouldChase(distTiles = 5.0, chaseTiles = 5.0))
+    assert(KiteAway.shouldChase(distTiles = 3.0, chaseTiles = 5.0))
+    assert( ! KiteAway.shouldChase(distTiles = 5.1, chaseTiles = 5.0))
+  }
+
+  test("the leash pulls home but never toward the chaser") {
+    assert(KiteAway.shouldLeash(distFriendTiles = 6.1, leashTiles = 6.0, distFriendFoePx = 400.0, distUnitFoePx = 100.0))
+    assert( ! KiteAway.shouldLeash(distFriendTiles = 6.0, leashTiles = 6.0, distFriendFoePx = 400.0, distUnitFoePx = 100.0))
+    assert( ! KiteAway.shouldLeash(distFriendTiles = 10.0, leashTiles = 6.0, distFriendFoePx = 100.0, distUnitFoePx = 100.0))
+    assert( ! KiteAway.shouldLeash(distFriendTiles = 10.0, leashTiles = 6.0, distFriendFoePx = 50.0, distUnitFoePx = 100.0))
+  }
+
+  test("a loaded hull with blades on top still steps out") {
+    assert(KiteAway.escapeYield(stepPixels = 0.0, escapeTiles = 1.0) == 32.0)
+    assert(KiteAway.escapeYield(stepPixels = 64.0, escapeTiles = 1.0) == 64.0)
+  }
 }

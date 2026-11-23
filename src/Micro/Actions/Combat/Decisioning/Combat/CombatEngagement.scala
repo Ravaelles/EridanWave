@@ -10,7 +10,7 @@ import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.UnitControl
-import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
+import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway}
 import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineCreepBehavior
 import Micro.Actions.Protoss.Zealot.ZealotLeash
 import Micro.Agency.Commander
@@ -146,7 +146,17 @@ private[Decisioning] object EngagePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
-      val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase
+      // Lone blade chase (owner order, 1Drag_v_1Zeal): with no guns on
+      // the map the duel is free, so a chased hull always enters Close -
+      // otherwise the volley branch above declines healthy hulls while the
+      // dance stands down for a kite that never comes, and Reposition
+      // slides into contact instead.
+      val gunsOut = ! unit.matchups.threats.exists(t =>
+        t.likelyStillThere && t.canAttack(unit) && ! t.unitClass.melee)
+      val meleeChase = unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).exists(t =>
+        t.likelyStillThere && t.unitClass.melee &&
+        ! FacingAway.dismissMelee(isMelee = true, FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(unit.pixel))))
+      val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || (gunsOut && meleeChase && ! unit.unitClass.melee)
       if ( ! outer) UnitControl.Declined
       else {
         // Tanks are never closed: the hold stands off siege and unsieged

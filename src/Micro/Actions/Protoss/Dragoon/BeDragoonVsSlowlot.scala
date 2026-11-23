@@ -126,6 +126,14 @@ object BeDragoonVsSlowlot extends Action {
 
     val zergRules = enemyIsZerg && ! enemyIsProtoss
     val pvpRules = enemyIsProtoss
+    // Lone-blade chase (owner order, 1Drag_v_1Zeal): with no guns on the
+    // map the duel is free, so the chase read below stands the dance down
+    // before contact instead of after the first hit. Same read as the
+    // behavior gate, so vote and leg agree by construction.
+    val gunsOut = ! unit.matchups.threats.exists(t => t.likelyStillThere && t.canAttack(unit) && ! t.unitClass.melee)
+    val meleeChase = unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).exists(t =>
+      t.likelyStillThere && t.unitClass.melee &&
+      ! FacingAway.dismissMelee(isMelee = true, FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(unit.pixel))))
     val marginPixels = KiteAway.enemyMarginTiles * 32.0
     def inMargin(u: FriendlyUnitInfo) =
       u.matchups.threatsInPixels(marginPixels).filter(t =>
@@ -143,20 +151,27 @@ object BeDragoonVsSlowlot extends Action {
     // (PvP-only): the kite donated the shooting, so the dance never
     // stands down for a kite that will not fire.
     val contactClose = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(_.likelyStillThere)
-    if (pvpRules && shielded && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose)) return false
+    if (pvpRules && shielded && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose) && ! (gunsOut && meleeChase)) return false
 
     // Plant owns the frame where it would fire: the dance stands down
     // instead of starving the hold - a loaded volley with something
-    // hittable outdamages margin footwork on both paths.
-    if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby = hasMeleeInMargin)) return true
+    // hittable outdamages margin footwork on both paths. Blades already
+    // on top veto the plant where no guns back them, like the behavior:
+    // standing in contact donates the swing for a free next-cycle shot.
+    val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t =>
+      t.likelyStillThere && t.unitClass.melee)
+    if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby = hasMeleeInMargin) &&
+      ! (gunsOut && meleeContact)) return true
 
     // Owner order mirror: the technique kites cooling hulls inside the
     // edge and holds the rest - the dance stands down for the whole
     // melee-pressure frame family instead of footworking through it.
     // Same read (squad-wide press, fresh Zerg holds, near-dead flies
-    // its own way) so vote and leg agree by construction.
+    // its own way) so vote and leg agree by construction. The lone-blade
+    // chase above joins the family: with no guns around, a fresh hull
+    // yields before contact instead of after the first hit.
     val zergFresh = zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound
-    if ((pvpRules || zergRules) && ! zergFresh && hasMeleeInMargin &&
+    if ((pvpRules || zergRules) && ! zergFresh && (hasMeleeInMargin || (gunsOut && meleeChase)) &&
       ! KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields)) return true
 
     // The dance stands down only where the kite would fire: fresh hulls
