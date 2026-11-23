@@ -99,11 +99,11 @@ class MarchGateOrderSuite extends AnyFunSuite {
     unit(isLoadedShuttle = true, shouldFight = true),
     Some(MarchLabel.PairRide))
 
-  check("a lone hunter outranks a static push",
+  check("a lone hunter without catch-up marches the legs",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
     unit(isWarrior = true, shouldFight = true,
       nearestWarriorTiles = None, nearestStaticTiles = Some(5.0)),
-    Some(MarchLabel.LoneMarch))
+    None)
 
   check("a lone duelist holds instead of marching at the goal",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
@@ -115,7 +115,7 @@ class MarchGateOrderSuite extends AnyFunSuite {
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
     unit(isWarrior = true, shouldFight = true, hasDuel = true, verdictDuel = false,
       nearestWarriorTiles = None, nearestStaticTiles = Some(5.0)),
-    Some(MarchLabel.LoneMarch))
+    None)
 
   check("a latched duel blocks the lone march through a target flicker",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
@@ -135,11 +135,11 @@ class MarchGateOrderSuite extends AnyFunSuite {
       nearestWarriorTiles = None, nearestVisibleArmedTiles = 10.0),
     None)
 
-  check("distant guns let the lone march through",
+  check("distant guns let the catch-up through",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
     unit(isWarrior = true, shouldFight = true,
-      nearestWarriorTiles = None, nearestVisibleArmedTiles = 30.0),
-    Some(MarchLabel.LoneMarch))
+      nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 30.0, behindAlphaTiles = 10.0),
+    Some(MarchLabel.CatchUp))
 
   check("a packed hunter with no fight consensus marches the legs",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
@@ -165,7 +165,7 @@ class MarchGateOrderSuite extends AnyFunSuite {
       nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 30.0, behindAlphaTiles = 10.0),
     None)
 
-  check("a distant gun does not stop the catch-up",
+  check("a visible gun off the contact line does not stop the catch-up",
     facts(enemyIsProtoss = true, enemyDragoonSeen = true),
     unit(isWarrior = true, shouldFight = true,
       nearestWarriorTiles = Some(3.0), nearestVisibleArmedTiles = 10.0, behindAlphaTiles = 10.0),
@@ -196,7 +196,6 @@ class MarchGateOrderSuite extends AnyFunSuite {
       MarchLabel.CatchUp,
       MarchLabel.MainMarch,
       MarchLabel.SuicideMission,
-      MarchLabel.PairRide,
-      MarchLabel.LoneMarch))
+      MarchLabel.PairRide))
   }
 }

@@ -52,24 +52,17 @@ object MarchGates {
     // routing cargo to a rally slot or a formation slot strands it while
     // the park/raid brains wait for a march that never comes. Empty hulls
     // still march the legs (they await the next ride, nothing to strand).
-    MarchGate(MarchLabel.PairRide, (_, unit) => unit.isLoadedShuttle),
-    // Lone march: with no friendly warrior inside ten tiles, no duel,
-    // no held retreat and no visible gun inside the cordon, there is no
-    // line to pose in, so the unit skips rallying to the pack centroid
-    // and slot-marching and walks straight at the squad goal instead of
-    // milling alone. Contact owns the frame instead: a lone hull with a hittable duel or incoming
-    // fire falls through to the legs, which hold the duel or walk it
-    // out - marching at the goal past guns is how duels never start.
-    // Latched both ways (mates 17 out / 13 back, guns 21 out / 19 in):
-    // sharp boundaries jerk destinations, so both hold their side. The
-    // duel read is the latched verdict, never the fresh scan - a
-    // one-frame target flicker must not march the duel out of the map.
-    MarchGate(MarchLabel.LoneMarch, (_, unit) =>
-      unit.shouldFight &&
-      ! unit.verdictRetreat &&
-      ! unit.verdictDuel &&
-      ArmedCordon.clearOfArmed(unit.unitId, unit.nearestVisibleArmedTiles) &&
-      unit.nearestWarriorTiles.map(t => LoneMarch.marchAlone(unit.unitId, t)).getOrElse(true)))
+    MarchGate(MarchLabel.PairRide, (_, unit) => unit.isLoadedShuttle)
+    // LoneMarch DISABLED (owner order: nothing but RallyingToPack - a lone
+    // hull rejoins the pack centroid through the rally leg instead of
+    // marching at the goal past everything). Re-enable by uncommenting.
+    // MarchGate(MarchLabel.LoneMarch, (_, unit) =>
+    //   unit.shouldFight &&
+    //   ! unit.verdictRetreat &&
+    //   ! unit.verdictDuel &&
+    //   ArmedCordon.clearOfArmed(unit.unitId, unit.nearestVisibleArmedTiles) &&
+    //   unit.nearestWarriorTiles.map(t => LoneMarch.marchAlone(unit.unitId, t)).getOrElse(true))
+  )
 
   /** First claim wins, in order; nothing when no gate fires. */
   def select(facts: MarchFacts, unit: MarchUnit): Option[MarchLabel] =

@@ -41,7 +41,7 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
    */
   private class MarchPilot(goal: (Double, Double), dragoon: Boolean) extends Pilot {
     var retreats: Int = 0
-    var loneMarches: Int = 0
+    var catchUps: Int = 0
     var farWaits: Int = 0
 
     override def direct(me: Body, world: World): Directive = {
@@ -118,7 +118,7 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
         nearestStaticTiles = None,
         behindAlphaTiles = Double.NegativeInfinity,
         hasContact = hittable.isDefined)
-      if (MarchGates.select(facts, marchUnit).contains(MarchLabel.LoneMarch)) loneMarches += 1
+      if (MarchGates.select(facts, marchUnit).contains(MarchLabel.CatchUp)) catchUps += 1
 
       // No duel hold: the line always walks, duels chase through their
       // own orders instead of pinning feet to the ground. Ghosts and
@@ -217,11 +217,12 @@ class ArmyMarchSuite extends AnyFunSuite with StarEngineSuite {
     assert( ! stalled(marchers), "no retreats under a spectator")
   }
 
-  test("a lone hull walks at the goal instead of dressing") {
+  test("a lone hull without a gate walks at the goal instead of dressing") {
     val ours = Seq(new Body(Protoss.Dragoon, 0.0, 900.0, Protoss.Dragoon.maxTotalHealth))
     val foes = column(Protoss.Dragoon, 2, -2000.0)
-    val (_, marchers) = grind(ours, foes, _ => new MarchPilot((200.0, 100.0), dragoon = true), _ => new Pilots.Hold, frames = 2000)
-    println(s"DIAG lonemarches=${marchers.map(_.loneMarches).sum}")
-    assert(marchers.exists(_.loneMarches > 0), "a hull with no pack marches alone")
+    val (world, marchers) = grind(ours, foes, _ => new MarchPilot((200.0, 100.0), dragoon = true), _ => new Pilots.Hold, frames = 2000)
+    val arrived = ours.count(o => o.alive && Math.hypot(o.x - 200.0, o.y - 100.0) <= 12 * 32.0)
+    println(s"DIAG lone arrived=$arrived/1")
+    assert(arrived == 1, "a lone hull with no gate must still walk at the goal")
   }
 }
