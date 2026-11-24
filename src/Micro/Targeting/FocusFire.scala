@@ -24,9 +24,9 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 object FocusFire {
 
   /** Fewer shooters than this can't delete a unit in one volley. */
-  val minShooters: Int = 3
+  val minShooters: Int = 2
 
-  /** Enough guns to make a shared target worth it: three delete while two mill. */
+  /** Enough guns to make a shared target worth it: a pair deletes while a loner mills. */
   def enoughShooters(shooterCount: Int): Boolean =
     shooterCount >= minShooters
 
@@ -43,8 +43,11 @@ object FocusFire {
   val minRangePixels: Int = 96
 
   /** At least this many shooters can hit the shared target, or there is no
-    * concentration to win. */
-  val minReach: Int = 3
+    * concentration to win: a lone hitter is just its own pick. */
+  val minReach: Int = 2
+
+  def enoughReach(reach: Int): Boolean =
+    reach >= minReach
 
   /** One candidate target, reduced to the numbers the choice reads. */
   final case class Candidate(shotsToKill: Int, reach: Int, packDistanceTiles: Double, id: Int)
@@ -101,7 +104,7 @@ object FocusFire {
 
     val candidates = targets.map(t => (t, candidate(squad.centroidKey, t, shooters)))
     choose(candidates.map(_._2))
-      .filter(_.reach >= minReach)
+      .filter(c => enoughReach(c.reach))
       .flatMap(chosen => candidates.find(_._2.id == chosen.id).map(_._1))
   }
 

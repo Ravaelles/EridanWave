@@ -67,10 +67,16 @@ class FocusFireSuite extends AnyFunSuite {
     assert(FocusFire.effectiveVolleys(healthWithShields = 100.0, committedDamage = 0.0, avgDamage = 0.0) == Int.MaxValue)
   }
 
-  test("three guns share a target, two mill alone") {
-    assert( ! FocusFire.enoughShooters(2))
-    assert(FocusFire.enoughShooters(3))
+  test("two guns already share a target, one mills alone") {
+    assert( ! FocusFire.enoughShooters(1))
+    assert(FocusFire.enoughShooters(2))
     assert(FocusFire.enoughShooters(14))
+  }
+
+  test("two hitters make a shared target, one is just its own pick") {
+    assert( ! FocusFire.enoughReach(1))
+    assert(FocusFire.enoughReach(2))
+    assert(FocusFire.enoughReach(4))
   }
 
   test("two targets left still share one pick, one is trivially shared") {

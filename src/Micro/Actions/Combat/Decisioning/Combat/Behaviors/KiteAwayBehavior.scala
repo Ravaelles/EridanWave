@@ -408,6 +408,19 @@ object KiteAwayBehavior {
     val woundWant = WoundMargin(0.0, KiteAway.maxOffsetTiles).pixels(unit.woundPercent())
     val meleeNear = unit.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val nearDeadFar = KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) && meleeNear
+    // Most-wounded edge (owner order, dragoon mirrors): the weakest hull
+    // kites out to 3.6-3.9 tiles instead of trading in place - from the
+    // edge it still lands every volley while the pack's focus deletes the
+    // shared target. Blades on this hull keep the old yield (distance is
+    // life against contact); the edge is a ranged-duel shape, and the
+    // near-dead flight above still owns dying hulls.
+    val dragoonDuel = Protoss.Dragoon(unit) &&
+      unit.matchups.threats.exists(t => t.likelyStillThere && Protoss.Dragoon(t))
+    val mateHealths = unit.squad.toSeq.flatMap(_.units)
+      .filter(u => u.id != unit.id && u.alive && u.unitClass.isWarrior)
+      .map(_.totalHealth)
+    val mostWoundedEdge = dragoonDuel && ! meleeNear &&
+      KiteAway.isMostWounded(unit.totalHealth, unit.unitClass.maxTotalHealth, mateHealths)
     // No guns nearby, blades on top: a loaded hull still steps out
     // instead of planting into the swing - the gap reopens and the next
     // volley fires from range for free. Guns nearby keep the mirror
@@ -417,6 +430,10 @@ object KiteAwayBehavior {
       unit.pixelDistanceEdge(t) * Maff.inv32 <= KiteAway.chaseTiles)
     val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val offsetPixels = if (nearDeadFar) KiteHold.nearDeadOffsetTiles * 32.0
+      else if (mostWoundedEdge) {
+        val foe = unit.matchups.targetNearest.get
+        KiteAway.edgeBandStepTiles(unit.pixelDistanceEdge(foe) * Maff.inv32) * 32.0
+      }
       else if (hasMeleeNearby) {
         val edged = edgedYield(unit, woundWant)
         if (! gunsNear && meleeContact) KiteAway.escapeYield(edged, KiteAway.meleeEscapeTiles) else edged
