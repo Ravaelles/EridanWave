@@ -214,7 +214,7 @@ object PvPIdeas extends MacroActions {
         val pylonMinStartFrame  = cannonMinStartFrame - Protoss.Pylon.buildFramesFull
         val naturalPylonNow     = With.units.ours.filter(Protoss.Pylon).forall(_.complete) && With.scouting.weControlOurFoyer && With.units.ours.count(Protoss.Pylon) > 3
         val injectPylon         = ! With.strategy.isMoneyMap
-        val doForgeCannon       = dtArePossibility && (PvPDT() || enemyHasShown(Protoss.CitadelOfAdun))
+        val doForgeCannon       = dtArePossibility && (PvPDT() || enemyHasShown(Protoss.CitadelOfAdun) || enemies(Protoss.DarkTemplar) > 0)
 
         status(f"DTAfterCannon@${Frames(forgeMinStartFrame)}-${Frames(pylonMinStartFrame)}-${Frames(cannonMinStartFrame)}")
         if (naturalPylonNow) status("NaturalPylon")
@@ -226,7 +226,11 @@ object PvPIdeas extends MacroActions {
             requestTower(Protoss.Pylon,       1, With.geography.ourFoyer,   DefendHall,     pylonMinStartFrame)
           }
           val n = Maff.clamp(enemies(Protoss.DarkTemplar) + 1, 2, 4)
-          requestTower(Protoss.PhotonCannon,  n, With.geography.ourFoyer,   DefendHall,     cannonMinStartFrame)
+          // Spread pair (owner order): one cannon holds the base itself,
+          // the rest watch the lane toward the main choke - a DT that
+          // walks around a single cluster kills the line for free.
+          requestTower(Protoss.PhotonCannon, 1, With.geography.ourMain, DefendHall, cannonMinStartFrame)
+          requestTower(Protoss.PhotonCannon, n - 1, With.geography.ourFoyer, DefendEntrance, cannonMinStartFrame)
         } else if (injectPylon) {
           requestTower(Protoss.Pylon,         1, With.geography.ourFoyer,   DefendHall,     ?(naturalPylonNow, 0, pylonMinStartFrame))
         }
