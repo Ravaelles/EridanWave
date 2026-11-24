@@ -37,9 +37,11 @@ the owner's 0.7 (was 0.25, then 0.3 - too slow). Stall nudge (owner):
 a hull with a Formation order that has not changed position in 4
 frames steps 0.5 tiles at the nearest known foe - the back line's
 window steps die in the order-change skip, so it posed while the near
-hulls walked. No position history of its own: `previousPixel(4)` off
-the 48-frame unit proxy ring. Self-limiting (a stepped hull moves),
-no latch.
+hulls walked. Reads `lastChangedPosition` (frames since the last pixel
+change, memorized every frame in `UnitInfo.update`; a moved-and-returned
+hull counts as moved, unlike the old ring scan). Self-limiting (a
+stepped hull moves), no latch. Live: 30 stall nudges outside the window
+on 8Zeal_v_LingUp (VICTORY 18/5).
 Live 2026-11-24: Drag_v_LingsUpg VICTORY 40/3 (713 DressAdvance on 553
 frames); 8Zeal_v_LingUp VICTORY 18/5, f0 Dress/Move only, first brawl
 f208 as the line converges (DressAdvance volume 298 vs ~110 before).

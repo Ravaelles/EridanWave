@@ -147,13 +147,13 @@ object ApproachEnemyFormation {
         true
       case _ =>
         // Stall nudge (owner order): a dressed hull with a Formation
-        // order that has not changed position in four frames steps half
-        // a tile at the nearest known enemy instead of holding forever -
-        // the back line's window steps die in the order-change skip, so
-        // without the nudge the far hulls pose while the near ones walk.
-        // No position history of its own: the unit proxy already keeps
-        // 48 frames of pixels, so the stall reads straight off it.
-        if (unit.pixel == unit.previousPixel(stallFrames)) {
+        // order that stood still for four frames steps half a tile at
+        // the nearest known enemy instead of holding forever - the back
+        // line's window steps die in the order-change skip, so without
+        // the nudge the far hulls pose while the near ones walk. Reads
+        // the per-frame position memory (a moved-and-returned hull counts
+        // as moved); self-limiting, no latch.
+        if (unit.lastChangedPosition >= stallFrames) {
           nearestKnownFoe(unit).foreach { foe =>
             val stepped = unit.pixel.project(foe.pixel, stallStepTiles * 32.0).walkablePixel
             unit.agent.decision.set(stepped)

@@ -59,6 +59,7 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
   var lastFrameHarvested          : Int = - Forever()
   var lastFrameMiningGas          : Int = - Forever()
   var lastFrameCarrying           : Int = - Forever()
+  var lastFramePositionChanged    : Int = - Forever()
   var firstFrameMiningGas         : Int =   Forever()
   var lastHitPoints               : Int = _
   @inline final def completionFrameFull: Int = completionFrame +  unitClass.framesToFinishCompletion
@@ -100,8 +101,17 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
     lastShieldPoints  = shieldPoints
     lastMatrixPoints  = matrixPoints
     lastCooldown      = Math.max(cooldownGround, cooldownAir)
+    // Position-change memory, every frame: the stall logic reads how long
+    // the hull stood still straight off this instead of re-scanning the
+    // pixel ring (a moved-and-returned hull counts as moved). The ring
+    // slot for this frame is written after, so compare against last
+    // frame's slot first - update runs once per frame per unit.
+    if (pixel != previousPixels((With.frame - 1 + previousPixels.length) % previousPixels.length)) lastFramePositionChanged = With.frame
     previousPixels(With.frame % previousPixels.length) = pixel
   }
+
+  /** Frames since this unit last changed position (stallVerdicts read this, not the pixel ring). */
+  @inline final def lastChangedPosition: Int = With.framesSince(lastFramePositionChanged)
 
   @inline final def aliveAndComplete  : Boolean = alive && complete
   @inline final def underAttack        : Boolean = alive && bwapiUnit.isUnderAttack
