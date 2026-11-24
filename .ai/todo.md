@@ -48,8 +48,9 @@ Formation (f/phase-j): FormationDuelStage before Close, lone duelist
 duels from f0 (isLone decline), pack dresses (slot capped 2 tiles,
 explicit HoldPosition, flee-only chase, seen enemy inside 15 (Terran
 siege) / 12 (else) + not overwhelming; farther out the march owns
-the walk), creep 0.15/frame for dressed line (melee too). Formation
-freezes pre-contact verified per-frame (pos+order trace f0+: holds,
+the walk), metronome 0.3 tiles / 15 frames for dressed line (melee
+too; DressAdvance acts verified in traces). Formation freezes
+pre-contact verified per-frame (pos+order trace f0+: holds,
 no overrider; f0-3 ghost twitch accepted per 6-B). Zealot no-kite
 gate ADDED then REVERTED same night (mechanism: only cooling zealots
 ever kite, and standing cooling zealots deal zero damage while
