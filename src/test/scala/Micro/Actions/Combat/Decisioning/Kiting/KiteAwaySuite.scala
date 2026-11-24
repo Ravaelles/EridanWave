@@ -151,6 +151,13 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! KiteAway.loneBladeDuel(gunsNear = false, meleeChase = true, melee = true))
   }
 
+  test("the duel owns contact, hittable guns and seen enemies in range") {
+    assert(KiteAway.duelInReach(hasContact = true, hasHittable = false, seenNear = false))
+    assert(KiteAway.duelInReach(hasContact = false, hasHittable = true, seenNear = false))
+    assert(KiteAway.duelInReach(hasContact = false, hasHittable = false, seenNear = true))
+    assert( ! KiteAway.duelInReach(hasContact = false, hasHittable = false, seenNear = false))
+  }
+
   test("a cooling dragoon with blades on top always yields, loaded or fresh") {
     assert(KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = true))
     assert(KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 30, meleeContact = true))

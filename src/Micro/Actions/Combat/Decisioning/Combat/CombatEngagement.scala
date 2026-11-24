@@ -174,7 +174,15 @@ private[Decisioning] object EngagePipeline {
       val meleeChase = unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).exists(t =>
         t.likelyStillThere && t.unitClass.melee &&
         ! FacingAway.dismissMelee(isMelee = true, FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(unit.pixel))))
-      val outer = combat.distances.readyToApproachTarget || ! unit.matchups.wantsToVolley.contains(true) || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || KiteAway.loneBladeDuel(gunsNear, meleeChase, unit.unitClass.melee)
+      // A volley nobody wants still needs reach: without contact, a
+      // hittable gun or a seen enemy inside formation range the duel
+      // would charge across the map under auto-acquire - the march and
+      // the formation own those frames instead.
+      val noVolley = ! unit.matchups.wantsToVolley.contains(true) && KiteAway.duelInReach(
+        hasContact = unit.matchups.threatsInRange.nonEmpty,
+        hasHittable = unit.matchups.targetsInRange.nonEmpty,
+        seenNear = ApproachBuildingFormation.seenNearFoe(unit))
+      val outer = combat.distances.readyToApproachTarget || noVolley || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || KiteAway.loneBladeDuel(gunsNear, meleeChase, unit.unitClass.melee)
       if ( ! outer) UnitControl.Declined
       else {
         // Tanks are never closed: the hold stands off siege and unsieged

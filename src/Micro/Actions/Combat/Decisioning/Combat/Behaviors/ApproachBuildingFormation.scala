@@ -1,9 +1,11 @@
 package Micro.Actions.Combat.Decisioning
 
+import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.OverwhelminglyStronger
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Agency.Commander
+import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 /**
@@ -24,6 +26,15 @@ object ApproachBuildingFormation {
    * owns stragglers past the leash; inside it the hull holds.
    */
   val dressStepTiles: Double = 2.0
+
+  /**
+   * Formation distance, in tiles (owner order): dress the line once a
+   * seen enemy stands inside it - fifteen against Terran siege tanks
+   * (their shells outrange the line), twelve against everyone else.
+   * Farther out the march owns the walk.
+   */
+  def formationRangeTiles(terranSieged: Boolean): Double =
+    if (terranSieged) 15.0 else 12.0
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! eligible(unit, combat)) return false
@@ -54,6 +65,20 @@ object ApproachBuildingFormation {
   }
 
   /**
+   * Seen enemy warrior inside formation range: the line dresses for it
+   * (fifteen against Terran siege tanks, twelve against everyone
+   * else), never blind and never across the map. Shared with the Close
+   * outer gate, so the duel never charges what the line should dress.
+   */
+  def seenNearFoe(unit: FriendlyUnitInfo): Boolean = {
+    val terranSieged = With.enemies.exists(_.isTerran) &&
+      With.units.enemy.exists(e => e.alive && e.likelyStillThere && Terran.SiegeTankSieged(e))
+    Maff.minBy(unit.matchups.threats.view.filter(t =>
+      t.likelyStillThere && t.visible && t.unitClass.isWarrior))(
+      unit.pixelDistanceEdge(_))
+      .map(unit.pixelDistanceEdge(_) * Maff.inv32).exists(_ <= formationRangeTiles(terranSieged))
+  }
+  /**
    * Formation gate (shared with the Hunt stage): the dressed line owns
    * outranged frames, so a ghost hunt never walks it out of formation.
    */
@@ -79,7 +104,10 @@ object ApproachBuildingFormation {
     // Squadless hulls march: without a pack there is nothing to dress.
     if (unit.squad.isEmpty) return false
     if (farFromPack(unit)) return false
+    // Dress on a seen enemy inside formation range, never blind and
+    // never across the map. Farther out the march owns the walk.
     // Overwhelming lines charge as today.
+    if ( ! seenNearFoe(unit)) return false
     if (OverwhelminglyStronger.skipFormation(unit)) return false
 
     true

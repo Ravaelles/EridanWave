@@ -223,6 +223,15 @@ object KiteAway {
   def loneBladeDuel(gunsNear: Boolean, meleeChase: Boolean, melee: Boolean): Boolean =
     ! gunsNear && meleeChase && ! melee
 
+  /**
+   * Duel in reach (pure flags for the suite): the duel owns contact,
+   * hittable guns and seen enemies inside formation range. Anything
+   * farther out belongs to the march and the formation - closing it
+   * with an attack order walks the line out under auto-acquire.
+   */
+  def duelInReach(hasContact: Boolean, hasHittable: Boolean, seenNear: Boolean): Boolean =
+    hasContact || hasHittable || seenNear
+
   def escapeYield(stepPixels: Double, escapeTiles: Double): Double =
     Math.max(stepPixels, escapeTiles * 32.0)
 
