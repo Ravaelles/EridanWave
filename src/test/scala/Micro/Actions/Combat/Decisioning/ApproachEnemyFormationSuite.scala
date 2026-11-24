@@ -31,4 +31,9 @@ class ApproachEnemyFormationSuite extends AnyFunSuite {
     assert( ! ApproachEnemyFormation.packClear(fired = false, engagedUpon = false, hasHittable = false, hasThreatInRange = false, nearestFoeTiles = 3.5))
     assert( ! ApproachEnemyFormation.packClear(fired = true, engagedUpon = false, hasHittable = false, hasThreatInRange = false, nearestFoeTiles = 99.0))
   }
+
+  test("a stalled dresser nudges forward instead of holding forever") {
+    assert(ApproachEnemyFormation.stallFrames == 4)
+    assert(ApproachEnemyFormation.stallStepTiles == 0.5)
+  }
 }

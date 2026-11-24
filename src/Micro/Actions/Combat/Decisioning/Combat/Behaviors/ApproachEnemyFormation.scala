@@ -6,7 +6,7 @@ import Micro.Actions.Combat.Decisioning.Formation.OverwhelminglyStronger
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Terran
-import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Latch
 
 /**
@@ -54,6 +54,29 @@ object ApproachEnemyFormation {
   val advanceWindowFrames: Int = 8
   val advanceStepTiles: Double = 0.7
 
+  /**
+   * Stall nudge, in tiles: a dressed hull that has not changed position
+   * in this many frames steps forward instead of holding forever. The
+   * back line's window steps die in the order-change skip, so without
+   * the nudge the far hulls pose while the near ones walk. Self-limiting
+   * (a stepped hull moves, so the nudge sleeps until the next stall) -
+   * no latch, no flap band.
+   */
+  val stallFrames: Int = 4
+  val stallStepTiles: Double = 0.5
+
+  /**
+   * Nearest known enemy warrior (game seam for the steps below): visible
+   * foes first - blind steps walk at ghosts, so blind hulls hold.
+   */
+  private def nearestKnownFoe(unit: FriendlyUnitInfo): Option[UnitInfo] = {
+    val foes = unit.matchups.threats.view.filter(t =>
+      t.likelyStillThere && t.unitClass.isWarrior)
+    val seen = foes.filter(_.visible)
+    Maff.minBy(if (seen.nonEmpty) seen else foes)(
+      unit.pixelDistanceEdge(_))
+  }
+
   /** Dress release margin, in tiles: the line holds formation past the
    * edge it formed at, instead of flapping on sight flicker. */
   val releaseMarginTiles: Double = 1.5
@@ -97,16 +120,12 @@ object ApproachEnemyFormation {
 
     unit.agent.act("Dress")
     // Metronome window (owner order): frames 0-8 of every 20-frame
-    // cycle each warrior steps 0.25 tiles at the nearest known enemy,
+    // cycle each warrior steps 0.7 tiles at the nearest known enemy,
     // staggered by id so the line walks without reissuing every order
     // on the same frame. Visible foes first - blind steps walk at
     // ghosts. Blind hulls hold.
     if ((With.frame + unit.id) % advanceEveryFrames <= advanceWindowFrames) {
-      val foes = unit.matchups.threats.view.filter(t =>
-        t.likelyStillThere && t.unitClass.isWarrior)
-      val seen = foes.filter(_.visible)
-      Maff.minBy(if (seen.nonEmpty) seen else foes)(
-        unit.pixelDistanceEdge(_)).foreach { foe =>
+      nearestKnownFoe(unit).foreach { foe =>
         val stepped = unit.pixel.project(foe.pixel, advanceStepTiles * 32.0).walkablePixel
         unit.agent.decision.set(stepped)
         combat.maneuvers.move()
@@ -127,6 +146,23 @@ object ApproachEnemyFormation {
 
         true
       case _ =>
+        // Stall nudge (owner order): a dressed hull with a Formation
+        // order that has not changed position in four frames steps half
+        // a tile at the nearest known enemy instead of holding forever -
+        // the back line's window steps die in the order-change skip, so
+        // without the nudge the far hulls pose while the near ones walk.
+        // No position history of its own: the unit proxy already keeps
+        // 48 frames of pixels, so the stall reads straight off it.
+        if (unit.pixel == unit.previousPixel(stallFrames)) {
+          nearestKnownFoe(unit).foreach { foe =>
+            val stepped = unit.pixel.project(foe.pixel, stallStepTiles * 32.0).walkablePixel
+            unit.agent.decision.set(stepped)
+            combat.maneuvers.move()
+            unit.agent.act("DressAdvance")
+
+            return true
+          }
+        }
         // Explicit hold, not the stationary skip: a standing hull keeps
         // whatever order it already holds (map attack-moves, stale
         // marches), so the freeze must own the order outright.

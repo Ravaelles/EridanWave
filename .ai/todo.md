@@ -27,17 +27,22 @@ too (stash-proven) - pre-existing, not ours.
 Pending ladder confirmation (rule 21): UmsHold paced advance, CatchUp
 full-speed join, lone-blade kite, UMS-restricted Beast/Dragon maps.
 
-# Formation advance (owner order 2026-11-24: 0.25 tiles, frames%20<=8 window)
+# Formation advance (owner orders 2026-11-24: 0.7 tiles window, 0.5 stall nudge)
 
 The dressed line inches toward the nearest known warrior inside a move
 window (`ApproachEnemyFormation`: frames 0-8 of every 20-frame cycle,
-all warriors step 0.25 tiles, staggered by id; the window re-issues
-until the hull moves - a single step after holds never executes).
-History: 20f/0.25 all-hulls -> 15f/0.3 melee-only (froze ranged mirrors)
--> 10f/0.25 all warriors (single ticks swallowed by the one-order skip,
-back units held past the 2-tile slot cap) -> 20f-cycle/9f-window.
-Live 2026-11-24 Drag_v_LingsUpg: DressAdvance on 10 dragoon ids f0-100
-(whole line, front and back), 713 steps on 553 frames, VICTORY 40/3.
+all warriors step, staggered by id; the window re-issues until the
+hull moves - a single step after holds never executes). Window step is
+the owner's 0.7 (was 0.25, then 0.3 - too slow). Stall nudge (owner):
+a hull with a Formation order that has not changed position in 4
+frames steps 0.5 tiles at the nearest known foe - the back line's
+window steps die in the order-change skip, so it posed while the near
+hulls walked. No position history of its own: `previousPixel(4)` off
+the 48-frame unit proxy ring. Self-limiting (a stepped hull moves),
+no latch.
+Live 2026-11-24: Drag_v_LingsUpg VICTORY 40/3 (713 DressAdvance on 553
+frames); 8Zeal_v_LingUp VICTORY 18/5, f0 Dress/Move only, first brawl
+f208 as the line converges (DressAdvance volume 298 vs ~110 before).
 
 Pack brawls together (owner order 2026-11-24, 8Zeal_v_LingUp): one
 fighting blade releases the dress for the whole melee line - firing,
