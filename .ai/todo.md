@@ -30,7 +30,7 @@ full-speed join, lone-blade kite, UMS-restricted Beast/Dragon maps.
 # Formation advance (owner order 2026-11-24: 0.25 tiles, frames%20<=8 window)
 
 The dressed line inches toward the nearest known warrior inside a move
-window (`ApproachBuildingFormation`: frames 0-8 of every 20-frame cycle,
+window (`ApproachEnemyFormation`: frames 0-8 of every 20-frame cycle,
 all warriors step 0.25 tiles, staggered by id; the window re-issues
 until the hull moves - a single step after holds never executes).
 History: 20f/0.25 all-hulls -> 15f/0.3 melee-only (froze ranged mirrors)

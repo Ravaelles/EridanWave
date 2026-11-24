@@ -18,7 +18,7 @@ import Utilities.Latch
  * stay with the duel, overwhelming lines charge as today. Returns true
  * when it moved or held the unit.
  */
-object ApproachBuildingFormation {
+object ApproachEnemyFormation {
 
   /**
    * Dress step, in tiles: walk to a slot only this near - anything
@@ -52,7 +52,7 @@ object ApproachBuildingFormation {
    */
   val advanceEveryFrames: Int = 20
   val advanceWindowFrames: Int = 8
-  val advanceStepTiles: Double = 0.25
+  val advanceStepTiles: Double = 0.7
 
   /** Dress release margin, in tiles: the line holds formation past the
    * edge it formed at, instead of flapping on sight flicker. */

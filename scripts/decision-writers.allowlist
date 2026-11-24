@@ -102,5 +102,5 @@ src/Tactic/Missions/drop/DropTransportActions.scala :: .move(transport, transpor
 src/Tactic/Missions/drop/DropTransportActions.scala :: .move(transport, transport.agent.defaultHome)
 src/Tactic/Squads/defense/SquadDefendBase.scala :: .decision.set(pixel)
 src/Tactic/Squads/defense/SquadDefendBase.scala :: .decision.set(to)
-src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/ApproachBuildingFormation.scala :: .decision.set(slot)
+src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/ApproachEnemyFormation.scala :: .decision.set(slot)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/KiteAwayBehavior.scala :: .decision.set(steadied)

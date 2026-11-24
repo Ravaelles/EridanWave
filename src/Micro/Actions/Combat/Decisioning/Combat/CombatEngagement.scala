@@ -62,7 +62,7 @@ private[Decisioning] object EngagePipeline {
       // The dressed line owns outranged frames: hunting a ghost the line
       // holds against only walks it out of formation. Visible prey and
       // contacts belong to the duel and the hunt below untouched.
-      if (ApproachBuildingFormation.eligible(unit, combat)) UnitControl.Declined
+      if (ApproachEnemyFormation.eligible(unit, combat)) UnitControl.Declined
       else UnitControl.claimedIf(HuntBehavior.run(unit))
   }
 
@@ -147,7 +147,7 @@ private[Decisioning] object EngagePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
-      UnitControl.claimedIf(ApproachBuildingFormation.run(unit, combat))
+      UnitControl.claimedIf(ApproachEnemyFormation.run(unit, combat))
   }
 
   /**
@@ -184,7 +184,7 @@ private[Decisioning] object EngagePipeline {
       val noVolley = ! unit.matchups.wantsToVolley.contains(true) && KiteAway.duelInReach(
         hasContact = unit.matchups.threatsInRange.nonEmpty,
         hasHittable = unit.matchups.targetsInRange.nonEmpty,
-        seenNear = ApproachBuildingFormation.seenNearFoe(unit))
+        seenNear = ApproachEnemyFormation.seenNearFoe(unit))
       val outer = combat.distances.readyToApproachTarget || noVolley || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || KiteAway.loneBladeDuel(gunsNear, meleeChase, unit.unitClass.melee)
       if ( ! outer) UnitControl.Declined
       else {
