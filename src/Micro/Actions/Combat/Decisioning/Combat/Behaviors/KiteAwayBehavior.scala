@@ -39,6 +39,18 @@ object KiteAwayBehavior {
 
     val nearest = unit.matchups.targetNearest
     if (nearest.isEmpty) return false
+    // Absolute contact rule (owner order): a cooling dragoon with blades
+    // on top always yields - bypasses every gate below by construction.
+    // Loaded guns never reach it (their cooldown sits below the bar).
+    if (KiteAway.mustFleeContact(
+      Protoss.Dragoon(unit),
+      unit.cooldownLeft,
+      unit.matchups.threatsInPixels(KiteAway.contactKiteTiles * 32.0).exists(t =>
+        t.likelyStillThere && t.unitClass.melee))) {
+      kiteAway(unit, combat, hasMeleeNearby = true)
+
+      return true
+    }
     // Matchup scoping (owner order): the no-kite refinements below are
     // PvP-only. Against Zerg the classic ladder decides, held only by
     // fresh shields. Terran never kites, period - the whole leg stands

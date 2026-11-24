@@ -3,7 +3,6 @@ package Micro.Actions.Combat.Decisioning
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.OverwhelminglyStronger
 import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway}
-import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineAdvanceBehavior
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -22,10 +21,10 @@ object ApproachBuildingFormation {
     if ( ! eligible(unit, combat)) return false
 
     unit.agent.act("Dress")
-    // Dressed with a target past the gun: the held line advances.
-    if (HoldLineAdvanceBehavior.run(unit, combat)) return true
-    // Scattered with a slot: walk it, never the far goal - marching
-    // across the map strings the line out instead of dressing it.
+    // The dressed advance is suspended (owner order): the line forms
+    // and freezes instead of creeping - advancing before contact is
+    // understood needs stillness as the instrument first. Slots when
+    // scattered, hold otherwise.
     unit.formationEngage.flatMap(_(unit)) match {
       case Some(slot) =>
         unit.agent.decision.set(slot)

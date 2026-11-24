@@ -65,6 +65,27 @@ object KiteAway {
    */
   var meleeCloseTiles: Double = 2.6
 
+  /**
+   * Absolute contact radius, in tiles (owner order): blades this close
+   * always outrun a cooling gun - no volley to hold, no trade to take.
+   */
+  var contactKiteTiles: Double = 2.0
+
+  /**
+   * Absolute contact cooldown, in frames (owner order): at this much
+   * cooldown left the gun holds no volley worth standing for.
+   */
+  var contactKiteCooldown: Int = 15
+
+  /**
+   * Absolute contact rule (pure flags for the suite): a cooling dragoon
+   * with blades on top always yields - no volley to hold, no trade to
+   * take, no gate to consult. Loaded guns never reach it (their
+   * cooldown sits below the bar by construction).
+   */
+  def mustFleeContact(isDragoon: Boolean, cooldownLeft: Int, meleeContact: Boolean): Boolean =
+    isDragoon && meleeContact && cooldownLeft >= contactKiteCooldown
+
   /** Zerg fresh hulls hold: the classic ladder decides the rest. */
   val zergShieldWound: Int = 8
 

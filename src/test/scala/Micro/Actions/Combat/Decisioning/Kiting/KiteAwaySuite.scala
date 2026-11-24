@@ -151,6 +151,14 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! KiteAway.loneBladeDuel(gunsNear = false, meleeChase = true, melee = true))
   }
 
+  test("a cooling dragoon with blades on top always yields, loaded or fresh") {
+    assert(KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = true))
+    assert(KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 30, meleeContact = true))
+    assert( ! KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 14, meleeContact = true))
+    assert( ! KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = false))
+    assert( ! KiteAway.mustFleeContact(isDragoon = false, cooldownLeft = 15, meleeContact = true))
+  }
+
   test("a held heading survives jitter but releases on turns and lapses") {
     assert( ! KiteAway.shouldRefreshHeading(lastFrame = 10, frame = 12))
     assert(KiteAway.shouldRefreshHeading(lastFrame = 10, frame = 18))
