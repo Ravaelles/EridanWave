@@ -7,6 +7,7 @@ import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Utilities.Latch
 
 /**
  * Formation approach (owner order: fight positions, never charges):
@@ -41,19 +42,26 @@ object ApproachBuildingFormation {
    * steps together toward the nearest known enemy instead of freezing
    * in place - a dressed line that never advances parks the map.
    */
-  val advanceEveryFrames: Int = 20
-  val advanceStepTiles: Double = 0.25
+  val advanceEveryFrames: Int = 15
+  val advanceStepTiles: Double = 0.3
+
+  /** Dress release margin, in tiles: the line holds formation past the
+   * edge it formed at, instead of flapping on sight flicker. */
+  val releaseMarginTiles: Double = 1.5
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! eligible(unit, combat)) return false
 
     unit.agent.act("Dress")
-    // Metronome step (owner order): every twentieth frame each hull
-    // steps 0.25 tiles at the nearest known enemy, staggered by id so
-    // the line walks without reissuing every order on the same frame.
-    // A dressed line that never advances parks the map. Visible foes
-    // first - blind steps walk at ghosts. Blind hulls hold.
-    if ((With.frame + unit.id) % advanceEveryFrames == 0) {
+    // Metronome step (owner order): every fifteenth frame each melee
+    // hull steps 0.3 tiles at the nearest known enemy, staggered by id
+    // so the line walks without reissuing every order on the same
+    // frame. Ranged hulls hold their ground and shoot over the line -
+    // marching dragoons into contact is exactly the blob the freeze
+    // was built to kill. A dressed line that never advances parks the
+    // map; a ranged one that advances donates its range instead.
+    // Visible foes first - blind steps walk at ghosts. Blind hulls hold.
+    if (unit.unitClass.melee && (With.frame + unit.id) % advanceEveryFrames == 0) {
       val foes = unit.matchups.threats.view.filter(t =>
         t.likelyStillThere && t.unitClass.isWarrior)
       val seen = foes.filter(_.visible)
@@ -129,13 +137,35 @@ object ApproachBuildingFormation {
     // Squadless hulls march: without a pack there is nothing to dress.
     if (unit.squad.isEmpty) return false
     if (farFromPack(unit)) return false
-    // Dress on a seen enemy inside formation range, never blind and
-    // never across the map. Farther out the march owns the walk.
-    // Overwhelming lines charge as today.
-    if ( ! seenNearFoe(unit)) return false
+    // Dress on a seen enemy inside formation range, and hold the dress
+    // past its edge: sight flicker at the boundary must not flap the
+    // line between dressing and charging every other frame. Farther
+    // out the march owns the walk. Overwhelming lines charge as today.
+    if ( ! dressLatched(unit)) return false
     if (OverwhelminglyStronger.skipFormation(unit)) return false
 
     true
+  }
+
+  /**
+   * Dress latch (sight hysteresis): forms up on a seen enemy inside
+   * the formation range and releases past it with margin - or the
+   * moment the duel owns the frame. Shared with the Close outer gate,
+   * so the duel never charges what the line should dress.
+   */
+  private val dressLatch = new Latch
+
+  private def dressLatched(unit: FriendlyUnitInfo): Boolean = {
+    val terranSieged = With.enemies.exists(_.isTerran) &&
+      With.units.enemy.exists(e => e.alive && e.likelyStillThere && Terran.SiegeTankSieged(e))
+    val nearestSeenFoeTiles = Maff.minBy(unit.matchups.threats.view.filter(t =>
+      t.likelyStillThere && t.visible && t.unitClass.isWarrior))(
+      unit.pixelDistanceEdge(_))
+      .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    dressLatch(
+      unit.id,
+      fires = nearestSeenFoeTiles <= formationRangeTiles(terranSieged),
+      releases = nearestSeenFoeTiles > formationRangeTiles(terranSieged) + releaseMarginTiles)
   }
 
   /** Past the pack leash: the straggler rejoins instead of dressing. */
