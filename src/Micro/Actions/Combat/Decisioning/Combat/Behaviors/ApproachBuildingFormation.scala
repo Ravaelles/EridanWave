@@ -58,6 +58,40 @@ object ApproachBuildingFormation {
    * edge it formed at, instead of flapping on sight flicker. */
   val releaseMarginTiles: Double = 1.5
 
+  /** Pack contact, in tiles: an enemy this close to any blade means the pack brawls. */
+  val packContactTiles: Double = 2.0
+
+  /** Pack release, in tiles: the dress resumes only once every blade stands this clear. */
+  val packReleaseTiles: Double = 3.5
+
+  /**
+   * Pack fight signs (pure booleans for the suite): one fighting mate
+   * releases the dress - firing, engaged upon, holding a hittable
+   * target, standing inside an enemy gun, or with an enemy inside
+   * contact range. The 2.0 edge is the entry; the all-clear below is
+   * the release.
+   */
+  def packMateFights(
+    fired: Boolean,
+    engagedUpon: Boolean,
+    hasHittable: Boolean,
+    hasThreatInRange: Boolean,
+    nearestFoeTiles: Double): Boolean =
+    fired || engagedUpon || hasHittable || hasThreatInRange || nearestFoeTiles <= packContactTiles
+
+  /**
+   * Pack all-clear (pure booleans for the suite): the dress resumes
+   * only with no fight sign on the mate and every foe past the release
+   * band - the 2.0/3.5 hysteresis never flaps the line on the edge.
+   */
+  def packClear(
+    fired: Boolean,
+    engagedUpon: Boolean,
+    hasHittable: Boolean,
+    hasThreatInRange: Boolean,
+    nearestFoeTiles: Double): Boolean =
+    ! fired && ! engagedUpon && ! hasHittable && ! hasThreatInRange && nearestFoeTiles > packReleaseTiles
+
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! eligible(unit, combat)) return false
 
@@ -143,6 +177,12 @@ object ApproachBuildingFormation {
     // Squadless hulls march: without a pack there is nothing to dress.
     if (unit.squad.isEmpty) return false
     if (farFromPack(unit)) return false
+    // The pack brawls together (owner order): a blade whose mate already
+    // fights never dresses - one hull brawling while the rest pose is a
+    // donation in detail. Blades only: ranged lines hold their arc while
+    // individuals kite. Entry on any fight sign, release only once every
+    // blade stands clear (2.0/3.5 band, no boundary flap).
+    if (unit.unitClass.melee && packFighting(unit)) return false
     // Dress on a seen enemy inside formation range, and hold the dress
     // past its edge: sight flicker at the boundary must not flap the
     // line between dressing and charging every other frame. Farther
@@ -180,6 +220,42 @@ object ApproachBuildingFormation {
       val pack = if (unit.flying) squad.centroidAir else squad.centroidGround
       unit.pixelDistanceCenter(pack) * Maff.inv32 > KiteAway.leashTiles
     })
+
+  /**
+   * Pack fight latch (sight hysteresis shape): one fighting mate holds
+   * the whole blade line out of the dress until every blade stands
+   * clear - the release band absorbs the kill-edge flicker the way the
+   * dress latch absorbs sight flicker.
+   */
+  private val packFightLatch = new Latch
+
+  private def packFighting(unit: FriendlyUnitInfo): Boolean = {
+    val mates = unit.squad.map(_.units.toSeq).getOrElse(Seq(unit))
+    packFightLatch(
+      unit.id,
+      fires    = mates.exists(mateFights),
+      releases = mates.forall(mateClear))
+  }
+
+  private def mateFights(mate: FriendlyUnitInfo): Boolean =
+    packMateFights(
+      fired             = mate.cooldownLeft > 0,
+      engagedUpon       = mate.matchups.engagedUpon,
+      hasHittable       = mate.matchups.targetsInRange.nonEmpty,
+      hasThreatInRange  = mate.matchups.threatsInRange.nonEmpty,
+      nearestFoeTiles   = Maff.minBy(mate.matchups.threats.view.filter(_.likelyStillThere))(
+        mate.pixelDistanceEdge(_))
+        .map(mate.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity))
+
+  private def mateClear(mate: FriendlyUnitInfo): Boolean =
+    packClear(
+      fired             = mate.cooldownLeft > 0,
+      engagedUpon       = mate.matchups.engagedUpon,
+      hasHittable       = mate.matchups.targetsInRange.nonEmpty,
+      hasThreatInRange  = mate.matchups.threatsInRange.nonEmpty,
+      nearestFoeTiles   = Maff.minBy(mate.matchups.threats.view.filter(_.likelyStillThere))(
+        mate.pixelDistanceEdge(_))
+        .map(mate.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity))
 
   /** No pack, no line: warriors without another living warrior beside them. */
   private def isLone(unit: FriendlyUnitInfo): Boolean =

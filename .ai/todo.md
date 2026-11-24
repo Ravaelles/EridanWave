@@ -39,6 +39,16 @@ back units held past the 2-tile slot cap) -> 20f-cycle/9f-window.
 Live 2026-11-24 Drag_v_LingsUpg: DressAdvance on 10 dragoon ids f0-100
 (whole line, front and back), 713 steps on 553 frames, VICTORY 40/3.
 
+Pack brawls together (owner order 2026-11-24, 8Zeal_v_LingUp): one
+fighting blade releases the dress for the whole melee line - firing,
+engaged upon, hittable, inside an enemy gun, or enemy inside 2 tiles of
+any mate; release only once every blade stands clear (2.0/3.5 band).
+Blades only: ranged lines hold their arc while individuals kite.
+Live: 22 Dress before contact, ZERO after (was: 3 dressed while 5
+brawled); 13/8 -> 17/8. Pre-contact vanguard split (blind/front units
+Hunt-charge from f0, die alone f173-226 before the line arrives f244)
+is a separate mechanism - Hunt-side, needs an owner call.
+
 # Kite discipline (owner direction: never yield ground for free)
 
 Kiting must not leave shooting range when it can fight from it -
