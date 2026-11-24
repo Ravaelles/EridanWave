@@ -121,7 +121,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     // technique out from under the retreat.
     Tactic.Squads.Decisions.RetreatVerdict.update(
       unit.id,
-      Tactic.Squads.Decisions.RetreatVerdict.shouldHold(
+      (Tactic.Squads.Decisions.RetreatVerdict.shouldHold(
         unit.unitClass.isWarrior,
         Protoss.Reaver(unit),
         unit.intent.canFlee,
@@ -133,7 +133,15 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         proxyRush,
         hardCounterKnown,
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
-          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)) &&
+          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)) ||
+        // PvZ handful retreats to the natural choke: below ten hulls and
+        // two hundred skim the line falls back and receives the wave
+        // there instead of trading in the open. Same gate on both arms.
+        Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
+          With.enemies.exists(_.isZerg),
+          With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
+          unitsScore,
+          nearestArmedTiles)) &&
         // PvP proxy defense owns both verdict arms: with few hulls home
         // and an enemy ground army already inside, neither phase walks
         // the line home - the march and the technique read the same gate.

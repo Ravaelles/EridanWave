@@ -195,7 +195,7 @@ object MarchOrders {
     // that walks or duels beside it.
     RetreatVerdict.update(
       unit.id,
-      RetreatVerdict.shouldHold(
+      (RetreatVerdict.shouldHold(
         unit.unitClass.isWarrior,
         Protoss.Reaver(unit),
         unit.intent.canFlee,
@@ -207,7 +207,15 @@ object MarchOrders {
         facts.proxyRush,
         MacroFacts.enemyHardCounterKnown,
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
-          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)) &&
+          .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)) ||
+        // PvZ handful retreats to the natural choke: below ten hulls and
+        // two hundred skim the line falls back and receives the wave
+        // there instead of trading in the open. Same gate on both arms.
+        Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
+          With.enemies.exists(_.isZerg),
+          With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
+          facts.armyUnitsScore,
+          marchUnit.nearestArmedTiles)) &&
         // PvP proxy defense owns both verdict arms: with few hulls home
         // and an enemy ground army already inside, neither phase walks
         // the line home - the march and the technique read the same gate.
@@ -435,7 +443,25 @@ object MarchOrders {
 
   private def withdrawAnchor(unit: FriendlyUnitInfo, squad: Squad): Pixel = {
     val home = squad.homeConsensus
+    // PvZ handful retreats to the natural choke, not the middle: below
+    // ten hulls and two hundred skim the line receives the wave at the
+    // wall instead of bleeding home through the open map - or worse,
+    // trickling out to meet it past the middle. Same gate the verdict
+    // arms read, so the vote and the feet never disagree.
+    val weakPvZ = Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
+      With.enemies.exists(_.isZerg),
+      With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
+      Information.Battles.ArmyStrength.score(
+        With.battles.globalAttack.us.skimStrengthUnits,
+        With.battles.globalAttack.enemy.skimStrengthUnits),
+      Maff.minBy(With.units.enemy.view.filter(e =>
+        e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)))(_.pixelDistanceCenter(unit.pixel))
+        .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity))
     val choke = Chokes.middleChoke.map(_.pixelCenter)
+    val natural = Chokes.naturalChoke.map(_.pixelCenter)
+    if (weakPvZ && natural.exists(n => With.paths.groundPathExists(unit.tile, n.tile)))
+      return natural.get.walkablePixel
+
     val (ax, ay) = WithdrawAnchor.anchor(
       home.x.toDouble, home.y.toDouble,
       choke.map(c => (c.x.toDouble, c.y.toDouble)),
