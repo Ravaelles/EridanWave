@@ -26,6 +26,10 @@ Watch: RetreatVerdictHoldSuite.skewed-readers fails on the clean tree
 too (stash-proven) - pre-existing, not ours.
 Pending ladder confirmation (rule 21): UmsHold paced advance, CatchUp
 full-speed join, lone-blade kite, UMS-restricted Beast/Dragon maps.
+PvP home defense batch (2026-11-24, needs PvP/PvZ ladder games):
+expansion hold vs pressure, proxy no-retreat, ground choke distance,
+DT natural-choke hold, anti-DT cannon split, PvZ handful retreat,
+RetreatForbidden at/beside the choke.
 
 # Architecture: one governor per line (owner order 2026-11-24 - "bez nich radzilibyśmy sobie lepiej")
 
