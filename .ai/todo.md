@@ -31,8 +31,10 @@ Done: leash/rejoin extracted to Behavior objects (a1d411612);
  Combat.scala split, BeDarkTemplar/BeCarrier breakdowns,
  Commander* sink slimming, Target ladder ownership, Bust double
  toAttack write, Retreat.toAttack=None, perch.clear ownership,
- march-tick removal (load-bearing: marching-only units need a vote),
- Retreating-label token.
+ march-tick removal (load-bearing: marching-only units need a vote).
+Done 2026-11-24: Retreating-label token (compiler-enforced, single
+ construction site); incidental fix - the L1 rivalry tripwire compared
+ a motion label against a march label and never fired.
 
 # 1Drag_v_1Zeal kite duel (owner bar: max 1-3 hits, wins on both maps) - LANDED, bar UNMET on variance
 
