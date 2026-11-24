@@ -13,7 +13,7 @@ class ApproachEnemyFormationSuite extends AnyFunSuite {
     assert(ApproachEnemyFormation.releaseMarginTiles == 1.5)
     assert(ApproachEnemyFormation.advanceEveryFrames == 20)
     assert(ApproachEnemyFormation.advanceWindowFrames == 8)
-    assert(ApproachEnemyFormation.advanceStepTiles == 0.7)
+    assert(ApproachEnemyFormation.advanceStepTiles == 0.85)
   }
 
   test("the pack brawls together: one fighting blade releases the dress") {
@@ -34,6 +34,6 @@ class ApproachEnemyFormationSuite extends AnyFunSuite {
 
   test("a stalled dresser nudges forward instead of holding forever") {
     assert(ApproachEnemyFormation.stallFrames == 4)
-    assert(ApproachEnemyFormation.stallStepTiles == 0.5)
+    assert(ApproachEnemyFormation.stallStepTiles == 1.5)
   }
 }

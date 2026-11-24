@@ -52,7 +52,7 @@ object ApproachEnemyFormation {
    */
   val advanceEveryFrames: Int = 20
   val advanceWindowFrames: Int = 8
-  val advanceStepTiles: Double = 0.7
+  val advanceStepTiles: Double = 0.85
 
   /**
    * Stall nudge, in tiles: a dressed hull that has not changed position
@@ -63,7 +63,7 @@ object ApproachEnemyFormation {
    * no latch, no flap band.
    */
   val stallFrames: Int = 4
-  val stallStepTiles: Double = 0.5
+  val stallStepTiles: Double = 1.5
 
   /**
    * Nearest known enemy warrior (game seam for the steps below): visible
