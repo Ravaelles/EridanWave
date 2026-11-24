@@ -56,7 +56,11 @@ private[Decisioning] object EngagePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = HuntBehavior.appliesToUnit(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
-      UnitControl.claimedIf(HuntBehavior.run(unit))
+      // The dressed line owns outranged frames: hunting a ghost the line
+      // holds against only walks it out of formation. Visible prey and
+      // contacts belong to the duel and the hunt below untouched.
+      if (ApproachBuildingFormation.eligible(unit, combat)) UnitControl.Declined
+      else UnitControl.claimedIf(HuntBehavior.run(unit))
   }
 
   /**

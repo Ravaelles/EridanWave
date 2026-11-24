@@ -2,7 +2,7 @@ package Micro.Actions.Combat.Decisioning
 
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.OverwhelminglyStronger
-import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway}
+import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Agency.Commander
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
@@ -17,29 +17,47 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  */
 object ApproachBuildingFormation {
 
+  /**
+   * Dress step, in tiles: walk to a slot only this near - anything
+   * farther means the formation moved on without this hull, and
+   * chasing it strings the line out instead of dressing it. The rally
+   * owns stragglers past the leash; inside it the hull holds.
+   */
+  val dressStepTiles: Double = 2.0
+
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! eligible(unit, combat)) return false
 
     unit.agent.act("Dress")
     // The dressed advance is suspended (owner order): the line forms
     // and freezes instead of creeping - advancing before contact is
-    // understood needs stillness as the instrument first. Slots when
-    // scattered, hold otherwise.
+    // understood needs stillness as the instrument first. Nearby slots
+    // are walked to, never the far goal: chasing a formation across
+    // the map strings the line out instead of dressing it. A slot past
+    // the leash means the pack moved on without this hull: hold, the
+    // rally owns stragglers. Slotless hulls hold where they stand.
     unit.formationEngage.flatMap(_(unit)) match {
-      case Some(slot) =>
+      case Some(slot) if unit.pixelDistanceCenter(slot) * Maff.inv32 <= dressStepTiles =>
         unit.agent.decision.set(slot)
         combat.maneuvers.move()
 
         true
-      case None =>
-        // Slotted with nothing to shoot, or slotless: hold the line.
+      case _ =>
+        // Explicit hold, not the stationary skip: a standing hull keeps
+        // whatever order it already holds (map attack-moves, stale
+        // marches), so the freeze must own the order outright.
+        if (unit.order != ProxyBwapi.Orders.HoldPosition) unit.bwapiUnit.holdPosition()
         Commander.hold(unit)
 
         true
     }
   }
 
-  private def eligible(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
+  /**
+   * Formation gate (shared with the Hunt stage): the dressed line owns
+   * outranged frames, so a ghost hunt never walks it out of formation.
+   */
+  def eligible(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! unit.unitClass.isWarrior || ! unit.canMove || unit.unitClass.melee) return false
     if (unit.agent.isScout) return false
     // Hittable frames belong to the duel, contact belongs to the kite.
@@ -48,21 +66,13 @@ object ApproachBuildingFormation {
     // Lone warriors duel, never dress: with no pack there are no slots
     // to hold, and holding hands the chaser a free walk-in to our wall.
     if (isLone(unit)) return false
-    // Retreats march home, visible chases stay with the duel - ghosts
-    // dress instead of attack-moving at stale pixels. Lone blades kite,
-    // never dress: a chased hull with no guns nearby belongs to the duel
-    // before contact. Same read as the Close outer gate, so vote and leg
-    // agree by construction.
+    // Retreats march home; visible runners stay with the duel, ghosts
+    // and approachers dress instead of attack-moving at stale pixels.
+    // Let them walk into the dressed line instead of meeting them
+    // halfway - only a visibly fleeing target keeps its chase.
     if (combat.shouldRetreat) return false
-    if (combat.shouldChase && combat.target.exists(t => t.visible && t.likelyStillThere)) return false
+    if (combat.shouldChase && combat.target.exists(t => t.visible && t.likelyStillThere && t.speedApproaching(unit) < 0)) return false
 
-    val gunsNear = unit.matchups.threats.exists(t =>
-      t.likelyStillThere && t.canAttack(unit) && ! t.unitClass.melee &&
-      unit.pixelDistanceEdge(t) * Maff.inv32 <= KiteAway.chaseTiles)
-    val meleeChase = unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).exists(t =>
-      t.likelyStillThere && t.unitClass.melee &&
-      ! FacingAway.dismissMelee(isMelee = true, FacingAway.showingBack(t.angleRadians, t.pixel.radiansTo(unit.pixel))))
-    if (KiteAway.loneBladeDuel(gunsNear, meleeChase, unit.unitClass.melee)) return false
     // Stragglers rally, they never dress: past the leash the march owns
     // the frame (rally, catch-up), inside it the line owns it. Same six
     // tiles the kite leash reads - one distance for pack cohesion.
