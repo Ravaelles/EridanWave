@@ -350,22 +350,6 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         framesSinceAttack = With.framesSince(unit.lastFrameStartingAttack),
         periodFrames = unit.cooldownMaxAirGround,
         latencyFrames = With.latency.latencyFrames)
-      // TEMP-DIAG stuck guns (REMOVE before commit): per-frame gun state
-      // where the ledger counts a stuck volley.
-      if (Debugging.Probe.on("STUCK")) {
-        val near = unit.matchups.targets.filter(t =>
-          t.likelyStillThere && t.visible &&
-          unit.pixelsToGetInRange(t) <= VolleyWaste.stuckMarginPixels)
-        if (near.nonEmpty && unit.cooldownLeft <= 0 && unit.speed < 1.0) {
-          val foe = near.map(t =>
-            t.id + ":" + (unit.pixelDistanceEdge(t) * Mathematics.Maff.inv32).toString.take(4) +
-            (if (t.visible) "v" else "f") + (if (t.alive) "a" else "d") +
-            (if (unit.inRangeToAttack(t)) "R" else "-")).mkString(",")
-          Debugging.Probe.note("STUCK", unit.id,
-            "order=" + unit.order + " cd=" + unit.cooldownLeft +
-            " foe=" + foe + " ready=" + unit.ready)
-        }
-      }
       // Hits-taken ledger, same frame: every hp drop counts as a landed
       // hit, no matter the guns. The kite answers for it at game end.
       if (unit.unitClass.isWarrior) HitsTaken.bump(unit.id, unit.unitClass.toString, unit.totalHealth)
