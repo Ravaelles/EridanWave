@@ -69,8 +69,10 @@ object Retreat extends Action {
       return RetreatPlan(unit, unit.agent.ride.map(_.pixel).getOrElse(unit.pixel), "Hail")
     }
 
-    // Against melee rush: Retreat directly to heart so workers can help
-    if (With.frame < Minutes(6)() && unit.isAny(Terran.Marine, Protoss.Zealot) && unit.squad.forall(_.units.size < 5) && unit.metro.contains(With.geography.ourMetro) && unit.matchups.threats.forall(_.pixelRangeAgainst(unit) < 64)) {
+    // Against melee rush: Retreat directly to heart so workers can help.
+    // Baseless maps (UMS duels) have no heart and no workers: ourMetro
+    // has no answer there, so the branch stays shut instead of crashing.
+    if (With.frame < Minutes(6)() && With.geography.ourBases.nonEmpty && unit.isAny(Terran.Marine, Protoss.Zealot) && unit.squad.forall(_.units.size < 5) && unit.metro.contains(With.geography.ourMetro) && unit.matchups.threats.forall(_.pixelRangeAgainst(unit) < 64)) {
       val baseToRunTo = Maff.orElse(With.geography.ourBases, Seq(With.geography.ourMain)).minBy(_.heart.groundTiles(With.scouting.enemyThreatOrigin))
       return RetreatPlan(unit, baseToRunTo.heart.center, "Run")
     }
