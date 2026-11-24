@@ -62,6 +62,11 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     } else if (unit.agent.receivedPushPriority() > unit.agent.priority) {
       applyForce(Forces.travel, Potential.towards(unit, unit.agent.destinationNext()))
       moveForcefully()
+    } else if (combat.fightConsensus && HuntBehavior.run(unit)) {
+      // Blind mop-up only (zero visible enemy warriors inside the
+      // behavior): with live contact the duel and the formation own the
+      // frame, never a ghost hunt. A consensus walk with a useless
+      // target and nothing live in sight is a parking lot otherwise.
     } else {
       move()
     }

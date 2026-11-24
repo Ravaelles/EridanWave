@@ -47,7 +47,27 @@ private[Decisioning] object EngagePipeline {
   }
 
   /**
-   * No advance, no prey (second claim): walk the march instead of
+   * Blind mop-up (second claim): a warrior with fight consensus but
+   * no useful target walks the nearest remembered hittable enemy down -
+   * with no live enemy in sight the timeout is the only alternative.
+   * Gated on zero visible enemy warriors inside the behavior: any live
+   * contact owns the frame through the duel and the formation, never a
+   * ghost hunt. Unit contract beside the behavior; the map, the target
+   * and the verdict gate below.
+   */
+  object HuntStage extends BehaviorStage("Hunt", DispatchBand.Medium) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = HuntBehavior.appliesToUnit(unit)
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      // The dressed line owns outranged frames: hunting a ghost the line
+      // holds against only walks it out of formation. Visible prey and
+      // contacts belong to the duel and the hunt below untouched.
+      if (ApproachBuildingFormation.eligible(unit, combat)) UnitControl.Declined
+      else UnitControl.claimedIf(HuntBehavior.run(unit))
+  }
+
+  /**
+   * No advance, no prey (third claim): walk the march instead of
    * dueling. Any hull - the gait is the march's, not a duel's.
    */
   object AdvanceGateStage extends BehaviorStage("AdvanceGate", DispatchBand.Low) {
@@ -60,7 +80,7 @@ private[Decisioning] object EngagePipeline {
   }
 
   /**
-   * Zealot leash (third claim): a Zealot never operates past 5.5 tiles
+   * Zealot leash (fourth claim): a Zealot never operates past 5.5 tiles
    * from our Dragoons - a lone charge into their guns while ours fall
    * back is a donation, not pressure. Only blades; scouts, committed
    * rushers, suicides and yolo pushes keep their explicit orders, and
@@ -74,7 +94,7 @@ private[Decisioning] object EngagePipeline {
   }
 
   /**
-   * Cluster cohesion (fourth claim): a warrior moving without a victim,
+   * Cluster cohesion (fifth claim): a warrior moving without a victim,
    * neither retreating nor cooling under fire, never drifts past
    * fourteen tiles from its cluster's centroid. Warriors only; the
    * explicit orders, the battle state and the contact exemptions gate
@@ -90,6 +110,7 @@ private[Decisioning] object EngagePipeline {
 
   val stages: Vector[BehaviorStage] = Vector(
     ContainFireStage,
+    HuntStage,
     AdvanceGateStage,
     ZealotLeashStage,
     ClusterRejoinStage)
@@ -240,19 +261,36 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
    * line breaks for a target past the pursuit horizon it stays broken until
    * contact or incoming fire. Without the memory the cap edge itself
    * becomes the new standoff - the line holds at twelve tiles instead of
-   * twenty-five and the dummy still never dies.
+   * twenty-five and the dummy still never dies. A live enemy pressing the
+   * pack is never pursued: let them walk into the dressed line instead of
+   * meeting them halfway - the vanguard takes its slot and the arc
+   * receives the charge together. Pressing reads pack-relative (toward
+   * the centroid), never per-hull: chargers converge on the pack, so a
+   * per-hull read calls them fleeing from the back line. Passive and
+   * fleeing targets keep the old walk-down.
    */
   private val pursuit = new Latch
 
-  private def pursuing(): Boolean =
+  private def pursuing(): Boolean = {
+    val packCentroid = unit.squad.map(squad =>
+      ?(unit.flying, squad.centroidAir, squad.centroidGround))
+    // Nobody gets left behind: the line walks a dummy down together, so
+    // the pursuit waits until every warrior holds a slot - a straggler
+    // chasing alone is the snake, and its slotless hold already covers
+    // its feet until the arc has room.
+    val unplacedWarriors = unit.squad.map(_.units.count(u =>
+      u.alive && u.unitClass.isWarrior && u.formationEngage.isEmpty)).getOrElse(0)
     pursuit(
       unit.id,
       fires = combat.target.exists(t =>
-        unit.pixelsToGetInRange(t) > FormationHold.holdPursuitTiles * 32.0),
+        unit.pixelsToGetInRange(t) > FormationHold.holdPursuitTiles * 32.0
+        && unplacedWarriors == 0
+        && ! (t.visible && packCentroid.exists(t.speedApproaching(_) > 0))),
       releases = combat.target.forall(t =>
         unit.pixelsToGetInRange(t) <= FormationHold.holdReleaseTiles * 32.0)
         || unit.matchups.threatsInRange.exists(_.cooldownLeft > 0)
         || unit.matchups.engagedUpon)
+  }
 
   private[Decisioning] def engage(): Boolean = {
     // Cluster posture owns the duel (phase 4 of _COMBAT-REFACTOR.md):
@@ -360,22 +398,66 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
   // still that far out while staying a threat, so break and walk it down
   // instead of dressing for a fight that never starts (UMS duels held a
   // twenty-tile standoff against passive hulls until the timeout).
+  // A slotless straggler holds while its formed pack stands calm
+  // (owner order, 8Zeal_v_LingUp): with no pixel of its own, breaking
+  // means walking at the foe alone - the snake. The march owns its feet
+  // (rally home on ladder, hold on UMS) until contact or the pack fight,
+  // then it joins like everyone else. Formless packs fight as before.
   private def resolveBreakFormation(): Unit = {
-    combat.breakFormationToAttack  = unit.formationEngage.isEmpty
+    combat.breakFormationToAttack  = unit.formationEngage.isEmpty && ! slotlessHolds()
     combat.breakFormationToAttack ||= pursuing()
     combat.breakFormationToAttack ||= combat.target.exists(targ =>
       // Maintain formation if we're not ready to attack yet
       combat.distances.readyToApproachTarget
-      // Maintain formation until arriving at a fight or the destinatation
-      && (unit.battle.isDefined || unit.pixelDistanceEdge(targ) <= unit.sightPixels || (unit.pixelDistanceEdge(targ) <= 256 && targ.visible))
+      // Maintain formation until arriving at a fight or the destinatation.
+      // Melee arrives with the pack fight, not at sight or with a merely
+      // assigned battle: a seen target eight tiles out is a slot-walk and
+      // receive, never a charge - the line broke for screens and met the
+      // main force piecemeal. Solo contact still breaks below, ranged
+      // keeps the sight approach.
+      && ((unit.battle.isDefined && ! unit.unitClass.melee)
+        || (! unit.unitClass.melee && (unit.pixelDistanceEdge(targ) <= unit.sightPixels || (unit.pixelDistanceEdge(targ) <= 256 && targ.visible)))
+        || (unit.unitClass.melee && combat.squadEngagedUpon))
       // Maintain formation while flanking
       && ! unit.formationEngage.exists(_.flanking)
       // Maintain formation until battle breaks out
       && ( ! combat.formationHelpsEngage || combat.squadEngagedUpon))
     combat.breakFormationToAttack ||= ! unit.formationEngage.exists(_.flanking) && combat.target.exists(unit.pixelsToGetInRange(_) < Math.max(0, 128 * unit.confidence11))
     combat.breakFormationToAttack ||= With.yolo.active
-    combat.breakFormationToAttack ||= EngagePipeline.preyDrive(unit)
+    combat.breakFormationToAttack ||= breakForPrey()
   }
+
+  /**
+   * Helpless-prey break (owner order, 8Zeal_v_LingUp): workers-only
+   * contacts break at any range (nothing shoots back), but a 3:1 skim
+   * breaks only at contact range - a screen at 8-12 tiles is bait for
+   * the unseen main force, not mop-up, and the audit watched the line
+   * dissolve for it in the first seconds. The dressed line lets the
+   * screen walk in instead of trickling out to meet it.
+   */
+  private def breakForPrey(): Boolean = {
+    if ( ! EngagePipeline.preyDrive(unit)) return false
+
+    val targets = unit.matchups.targets
+    val workersOnly = targets.nonEmpty && targets.forall(_.unitClass.isWorker)
+
+    workersOnly || combat.target.exists(t =>
+      unit.pixelsToGetInRange(t) < Math.max(0, 128 * unit.confidence11))
+  }
+
+  /**
+   * Slotless hold (owner order, 8Zeal_v_LingUp): a warrior with no
+   * placement in a standing formation holds instead of breaking while
+   * its pack stands calm - no pixel means no slot to walk, and breaking
+   * means a lone walk at the foe. Contact and pack fights still break.
+   */
+  private def slotlessHolds(): Boolean =
+    unit.unitClass.isWarrior &&
+      unit.formationEngage.isEmpty &&
+      unit.squad.exists(_.formationEngage.isDefined) &&
+      unit.matchups.targetsInRange.isEmpty &&
+      unit.matchups.threatsInRange.isEmpty &&
+      ! combat.squadEngagedUpon
 
   // Hold the line while a ranged armed combat target is well beyond our
   // firing range (tiles = pixels / 32, as in Atlantis): keep formation

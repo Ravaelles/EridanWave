@@ -47,14 +47,13 @@ Blades only: ranged lines hold their arc while individuals kite.
 Live: 22 Dress before contact, ZERO after (was: 3 dressed while 5
 brawled); 13/8 -> 17/8.
 
-Hunt retired from UMS (owner order 2026-11-24): HuntBehavior assigned
-invisible targets as toAttack, which latched the Duel verdict and the
-chase from frame zero - the "Dueling" 10+ tiles out. Deleted outright
-(object + HuntStage + walk branch + suites + allowlist row): it only
-ever fired on UMS (ladder requires umsMode and never had it), and its
-documented anti-freeze role belongs to visible standoffs, which the
-pursuit latch + breakFormationToAttack still walk down. Zero Hunt acts
-live afterwards.
+Hunt is blind mop-up now (owner order 2026-11-24, 8Zeal_v_LingUp
+11/1 timeout at 4820 frames, visible=0 from f456): deleting Hunt
+paralyzed the endgame - memories expired, nobody walked, both sides
+milled to the clock. Restored with a blind gate (zero visible enemy
+warriors): any live contact owns the frame through duel+formation,
+memories only walk when nothing live is in sight. Live: 3 mop-up acts
+in blind windows, zero hunts beside visible enemies.
 BeRushingZealot gated to ladder (2026-11-24, same map): the
 rush-response brain has no natural to be past on baseless UMS - it
 forceTo'd lone zealots at the enemy main from f0 ahead of the
@@ -62,8 +61,22 @@ technique (the legacy-starves-pipeline shape, third instance).
 `allowed` takes `! umsMode` now. Live: 151 rejoins the pack instead of
 marching alone, first brawl f265 (pack together), VICTORY 18/7 (was
 three straight defeats).
-Watch: PackRegroup/Approach flap on the vanguard (151 alternated
-rejoin-attack f0-88) - won anyway, needs a game that loses on it.
+Formation receives as a line (owner order 2026-11-24, same map -
+"follow the slot"): the line dissolved in the first seconds for a
+3-ling screen (audit: 6 breaks at 4.6-12 tiles, f4-f26) and the
+slotless vanguard charged solo from f0. Four gates, one doctrine -
+melee breaks the line only for the pack fight, never for sight alone
+((c) arrival); a 3:1 skim breaks only at contact range, workers-only
+still break anywhere ((f) prey band); a slotless warrior holds while
+its formed pack stands calm instead of walking out alone ((a)
+slotless hold); pursuit waits until every warrior holds a slot and
+never chases a pack-pressing enemy ((pursuit) unplaced + centroid
+gates). Live: f0 Dress/Move only (zero f0 charges), breaks only at
+contact or pack fight, VICTORY 18/2 with first brawl f445 as a pack.
+Watch: vanguard still pursues retreating screens past 12 (f4 breaks at
+13-18, won this time) - needs a game lost on it.
+Pending ladder confirmation (rule 21): melee (c) arrival, prey band,
+slotless hold, blind mop-up (ladder never hunted, gate keeps it so).
 
 # Kite discipline (owner direction: never yield ground for free)
 
