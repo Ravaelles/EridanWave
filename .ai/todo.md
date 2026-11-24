@@ -54,6 +54,14 @@ Blades only: ranged lines hold their arc while individuals kite.
 Live: 22 Dress before contact, ZERO after (was: 3 dressed while 5
 brawled); 13/8 -> 17/8.
 
+Kite press is personal (owner order 2026-11-24, Drag_v_LingsUpg):
+a pack-wide margin drafted far loaded hulls into plants they could not
+shoot - HoldPosition with nothing in range, frozen for the whole duel
+(Close + HoldPosition, never fights, never moves). Only a press on the
+hull enters the kite decision; far hulls decline and walk to the fight
+through Close. Live: healthy Dress/plant/yield cycles, no eternal
+holds, VICTORY 40/1.
+
 Hunt is blind mop-up now (owner order 2026-11-24, 8Zeal_v_LingUp
 11/1 timeout at 4820 frames, visible=0 from f456): deleting Hunt
 paralyzed the endgame - memories expired, nobody walked, both sides

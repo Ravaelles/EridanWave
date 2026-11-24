@@ -141,7 +141,14 @@ object KiteAwayBehavior {
     // their classic hold. A lone blade with no guns nearby presses
     // from the chase radius instead of the margin: the duel is free, so
     // the kite starts before contact instead of after the first hit.
-    val meleePressing = ! unit.unitClass.melee && (hasMeleeNearby || (! gunsNear && meleeChase))
+    // The press is personal (owner order, Drag_v_LingsUpg): a pack-wide
+    // margin drafted far hulls with loaded guns into plants they could
+    // not shoot - HoldPosition with nothing in range, frozen for the
+    // whole duel while the pack brawled without them. Only a press on
+    // this hull enters the kite decision; far hulls decline and walk to
+    // the fight through Close instead.
+    val meleeNear = inMargin(unit).exists(_.unitClass.melee)
+    val meleePressing = ! unit.unitClass.melee && (meleeNear || (! gunsNear && meleeChase))
     val zergFresh = zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound
     if ((pvpRules || zergRules) && ! zergFresh && meleePressing &&
       ! KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields)) {
