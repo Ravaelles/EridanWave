@@ -41,9 +41,14 @@ object ApproachBuildingFormation {
    * Metronome advance, in tiles, every so many frames: the held line
    * steps together toward the nearest known enemy instead of freezing
    * in place - a dressed line that never advances parks the map.
+   * Every warrior steps, ranged included: outranged frames belong to
+   * the formation, and with no hittable target and no contact there is
+   * no volley to donate - standing still only trades the map for
+   * nothing. The duel takes over the moment anything is hittable or
+   * in contact, so the steps never walk a gun into blades.
    */
-  val advanceEveryFrames: Int = 15
-  val advanceStepTiles: Double = 0.3
+  val advanceEveryFrames: Int = 10
+  val advanceStepTiles: Double = 0.25
 
   /** Dress release margin, in tiles: the line holds formation past the
    * edge it formed at, instead of flapping on sight flicker. */
@@ -53,15 +58,11 @@ object ApproachBuildingFormation {
     if ( ! eligible(unit, combat)) return false
 
     unit.agent.act("Dress")
-    // Metronome step (owner order): every fifteenth frame each melee
-    // hull steps 0.3 tiles at the nearest known enemy, staggered by id
+    // Metronome step (owner order): every tenth frame each warrior
+    // steps 0.25 tiles at the nearest known enemy, staggered by id
     // so the line walks without reissuing every order on the same
-    // frame. Ranged hulls hold their ground and shoot over the line -
-    // marching dragoons into contact is exactly the blob the freeze
-    // was built to kill. A dressed line that never advances parks the
-    // map; a ranged one that advances donates its range instead.
-    // Visible foes first - blind steps walk at ghosts. Blind hulls hold.
-    if (unit.unitClass.melee && (With.frame + unit.id) % advanceEveryFrames == 0) {
+    // frame. Visible foes first - blind steps walk at ghosts. Blind hulls hold.
+    if ((With.frame + unit.id) % advanceEveryFrames == 0) {
       val foes = unit.matchups.threats.view.filter(t =>
         t.likelyStillThere && t.unitClass.isWarrior)
       val seen = foes.filter(_.visible)
