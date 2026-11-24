@@ -45,9 +45,25 @@ engaged upon, hittable, inside an enemy gun, or enemy inside 2 tiles of
 any mate; release only once every blade stands clear (2.0/3.5 band).
 Blades only: ranged lines hold their arc while individuals kite.
 Live: 22 Dress before contact, ZERO after (was: 3 dressed while 5
-brawled); 13/8 -> 17/8. Pre-contact vanguard split (blind/front units
-Hunt-charge from f0, die alone f173-226 before the line arrives f244)
-is a separate mechanism - Hunt-side, needs an owner call.
+brawled); 13/8 -> 17/8.
+
+Hunt retired from UMS (owner order 2026-11-24): HuntBehavior assigned
+invisible targets as toAttack, which latched the Duel verdict and the
+chase from frame zero - the "Dueling" 10+ tiles out. Deleted outright
+(object + HuntStage + walk branch + suites + allowlist row): it only
+ever fired on UMS (ladder requires umsMode and never had it), and its
+documented anti-freeze role belongs to visible standoffs, which the
+pursuit latch + breakFormationToAttack still walk down. Zero Hunt acts
+live afterwards.
+BeRushingZealot gated to ladder (2026-11-24, same map): the
+rush-response brain has no natural to be past on baseless UMS - it
+forceTo'd lone zealots at the enemy main from f0 ahead of the
+technique (the legacy-starves-pipeline shape, third instance).
+`allowed` takes `! umsMode` now. Live: 151 rejoins the pack instead of
+marching alone, first brawl f265 (pack together), VICTORY 18/7 (was
+three straight defeats).
+Watch: PackRegroup/Approach flap on the vanguard (151 alternated
+rejoin-attack f0-88) - won anyway, needs a game that loses on it.
 
 # Kite discipline (owner direction: never yield ground for free)
 

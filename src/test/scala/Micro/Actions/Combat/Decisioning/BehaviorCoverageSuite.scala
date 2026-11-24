@@ -31,9 +31,6 @@ class BehaviorCoverageSuite extends AnyFunSuite {
 
   private val engage: Map[String, Seq[String]] = Map(
     "ContainFire" -> Seq("Micro.Actions.Combat.Decisioning.EngageStageGatesSuite"),
-    "Hunt" -> Seq(
-      "Micro.Actions.Combat.Decisioning.EngageStageGatesSuite",
-      "Micro.Actions.Combat.Decisioning.HuntBehaviorSuite"),
     "AdvanceGate" -> Seq("Micro.Actions.Combat.Decisioning.EngageStageGatesSuite"),
     "ZealotLeash" -> Seq("Micro.Actions.Combat.Decisioning.EngageStageGatesSuite"),
     "ClusterRejoin" -> Seq(

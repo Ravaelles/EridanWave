@@ -62,10 +62,6 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     } else if (unit.agent.receivedPushPriority() > unit.agent.priority) {
       applyForce(Forces.travel, Potential.towards(unit, unit.agent.destinationNext()))
       moveForcefully()
-    } else if (combat.fightConsensus && HuntBehavior.run(unit)) {
-      // UMS consensus walk with a useless target is a parking lot: no
-      // battle means the ignorant technique walks formation slots forever
-      // while a known enemy waits. Hunt it instead of slotting.
     } else {
       move()
     }

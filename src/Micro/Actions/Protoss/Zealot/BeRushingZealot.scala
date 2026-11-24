@@ -24,6 +24,12 @@ object BeRushingZealot extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     Protoss.Zealot(unit)
     && With.frame < Minutes(8)()
+    // Ladder rush-response only: on baseless UMS maps there is no
+    // natural to be past and no rush to answer - the brain walked
+    // lone zealots at the enemy main instead of dueling with the pack
+    // (8Zeal_v_LingUp: forceTo across the map from frame zero while
+    // the dressed line waited). The technique owns UMS blades outright.
+    && ! With.umsMode
     && unit.agent.destinationFinal.pixel.exists(p => ! p.metro.exists(_.isOurs) && p.proximity < 0.5)
     && unit.team.forall(u => u.warriorsCasters.forall(u => u.isAny(Protoss.Probe, Protoss.Zealot, Protoss.ShieldBattery) || u.pixelDistanceCenter(unit) > 320))
   )

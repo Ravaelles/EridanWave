@@ -47,24 +47,7 @@ private[Decisioning] object EngagePipeline {
   }
 
   /**
-   * Target-less hunt (second claim): a warrior with fight consensus but
-   * no useful target picks the nearest known hittable enemy instead of
-   * dressing until the timeout. Unit contract beside the behavior;
-   * the map, the target and the verdict gate below.
-   */
-  object HuntStage extends BehaviorStage("Hunt", DispatchBand.Medium) {
-    def appliesToUnit(unit: FriendlyUnitInfo): Boolean = HuntBehavior.appliesToUnit(unit)
-
-    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
-      // The dressed line owns outranged frames: hunting a ghost the line
-      // holds against only walks it out of formation. Visible prey and
-      // contacts belong to the duel and the hunt below untouched.
-      if (ApproachBuildingFormation.eligible(unit, combat)) UnitControl.Declined
-      else UnitControl.claimedIf(HuntBehavior.run(unit))
-  }
-
-  /**
-   * No advance, no prey (third claim): walk the march instead of
+   * No advance, no prey (second claim): walk the march instead of
    * dueling. Any hull - the gait is the march's, not a duel's.
    */
   object AdvanceGateStage extends BehaviorStage("AdvanceGate", DispatchBand.Low) {
@@ -77,7 +60,7 @@ private[Decisioning] object EngagePipeline {
   }
 
   /**
-   * Zealot leash (fourth claim): a Zealot never operates past 5.5 tiles
+   * Zealot leash (third claim): a Zealot never operates past 5.5 tiles
    * from our Dragoons - a lone charge into their guns while ours fall
    * back is a donation, not pressure. Only blades; scouts, committed
    * rushers, suicides and yolo pushes keep their explicit orders, and
@@ -91,7 +74,7 @@ private[Decisioning] object EngagePipeline {
   }
 
   /**
-   * Cluster cohesion (fifth claim): a warrior moving without a victim,
+   * Cluster cohesion (fourth claim): a warrior moving without a victim,
    * neither retreating nor cooling under fire, never drifts past
    * fourteen tiles from its cluster's centroid. Warriors only; the
    * explicit orders, the battle state and the contact exemptions gate
@@ -107,7 +90,6 @@ private[Decisioning] object EngagePipeline {
 
   val stages: Vector[BehaviorStage] = Vector(
     ContainFireStage,
-    HuntStage,
     AdvanceGateStage,
     ZealotLeashStage,
     ClusterRejoinStage)

@@ -18,15 +18,6 @@ class EngageStageGatesSuite extends AnyFunSuite {
     assert(EngagePipeline.ContainFireStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Probe, 2)))
   }
 
-  test("only mobile warriors hunt, never Reavers") {
-    TestKit.seedWorld()
-    assert(EngagePipeline.HuntStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Dragoon, 1)))
-    assert(EngagePipeline.HuntStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Zealot, 2)))
-    assert( ! EngagePipeline.HuntStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Probe, 3)))
-    assert( ! EngagePipeline.HuntStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Reaver, 4)))
-    assert( ! EngagePipeline.HuntStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Pylon, 5)))
-  }
-
   test("the advance gate is the march's own gait: every hull") {
     TestKit.seedWorld()
     assert(EngagePipeline.AdvanceGateStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Dragoon, 1)))

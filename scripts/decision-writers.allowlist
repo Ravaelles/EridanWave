@@ -4,7 +4,6 @@ src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/ApproachBehavior.scala :: 
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/DragoonCarrierBehavior.scala :: .attack(unit, carrier.get)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/DragoonCarrierBehavior.scala :: .forceTo(goal)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/DragoonStandBehavior.scala :: .attack(unit, prey.get)
-src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/HuntBehavior.scala :: .attackMove(unit, foe.get.pixel)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/KiteAwayBehavior.scala :: .decision.set(anchor.project(unit.matchups.targetNearest.get.pixel, -offsetPixels).walkablePixel)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/KiteAwayBehavior.scala :: .decision.set(unit.pixel)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/KiteAwayBehavior.scala :: .decision.set(unit.pixel.project(threat.pixel, -gap).walkablePixel)
