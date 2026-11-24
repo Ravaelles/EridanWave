@@ -44,10 +44,11 @@ or stands in contact (edge-only volleys when loaded), holds committed
 (leashed, aligned, edge-capped), never flees across the map. All new
 rules are guns-nearby-gated (melee within chase range counts as guns);
 the mirror runs the old discipline untouched.
-Formation (f/phase-j): FormationDuelStage before Close; lone duelist
+Formation (f/phase-j): FormationDuelStage before Close, lone duelist
 duels from f0 (isLone decline), pack dresses (slot capped 2 tiles,
-explicit HoldPosition, flee-only chase, seen enemy inside 15/12 tiles
-+ not overwhelming; farther out the march owns the walk). Formation
+explicit HoldPosition, flee-only chase, seen enemy inside 15 (Terran
+siege) / 12 (else) + not overwhelming; farther out the march owns
+the walk), creep 0.15/frame for dressed line (melee too). Formation
 freezes pre-contact verified per-frame (pos+order trace f0+: holds,
 no overrider; f0-3 ghost twitch accepted per 6-B). Zealots never yield
 to enemy dragoons (stand and chew). Contact-kite bypass: dragoon +
@@ -94,7 +95,12 @@ never fires; kiteAway retreat glues in contact instead of opening
 the gap. Judgment: keep our kite (proven wins), keep the kernels
 as the specified matchup home; re-attempt only with per-frame
 gun-event proof + threat-aware retreat. The fast 23s wins belong
-to the whole old bot (raw orders), not portable alone.
+to the whole old bot (raw orders), not portable alone. Trade-contact
+rule added instead (plant loaded vs unoutrunnable pressers):
+Drag_v_LingsUpg went 0 kills -> 21 kills (still DEFEAT, speedlings
+trade up). Creep 0.15 restored per owner (melee dresses too).
+8Zeal: Formation/Dress 1496 acts vs Brawl 462 (line dresses, then
+brawls; 10/8 first measure).
 
 Committed: lone-blade kernels, outer gate, HitsTaken ledger,
 kite-gate (cooling kites contact), close-no-silent-claim,
