@@ -56,6 +56,17 @@ class FocusFireSuite extends AnyFunSuite {
     assert(FocusFire.volleysToKill(120.0, Seq(0)) == Int.MaxValue)
   }
 
+  test("kill-ease counts the guns already on the target, plus one average volley") {
+    // Nearly-dead with one gun on it dies sooner than fresh with two.
+    assert(FocusFire.effectiveVolleys(healthWithShields = 40.0, committedDamage = 20.0, avgDamage = 20.0) == 1)
+    assert(FocusFire.effectiveVolleys(healthWithShields = 160.0, committedDamage = 40.0, avgDamage = 20.0) == 3)
+    // An untouched fresh hull waits behind a joined-up kill.
+    assert(FocusFire.effectiveVolleys(healthWithShields = 140.0, committedDamage = 0.0, avgDamage = 20.0) == 7)
+    assert(FocusFire.effectiveVolleys(healthWithShields = 150.0, committedDamage = 60.0, avgDamage = 20.0) == 2)
+    // No guns, no average: no kill.
+    assert(FocusFire.effectiveVolleys(healthWithShields = 100.0, committedDamage = 0.0, avgDamage = 0.0) == Int.MaxValue)
+  }
+
   test("three guns share a target, two mill alone") {
     assert( ! FocusFire.enoughShooters(2))
     assert(FocusFire.enoughShooters(3))

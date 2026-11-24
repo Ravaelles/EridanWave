@@ -165,6 +165,11 @@ Details live in `details/` - the queue keeps one line per item.
   Done 2026-11-24: `minTargets` 3->2 (`enoughTargets` kernel + suite) -
   two enemies left still share one pick on 4Drag (pack-wide convergence
   in traces, VolleyWaste none, 4/4 4/1 4/3 4/1 wins + coin-flip 3/4 2/4).
+  Kill-ease (`effectiveVolleys`: committed DPS + one average volley) added
+  the same day: the pack joins the finishing shot instead of spreading -
+  a nearly-dead hull with one gun on it outranks a fresh hull with two.
+  Live 3Drag_v_3Drag: pack-wide convergence on every change (f0 f9 f24
+  f33-37 f104 f187-193 f274), waste none, VICTORY 3/3.
 - Progressing-duel ferry question (`details/sunkens.md`).
 - Carrier vs sieged tank, natural crescent hold
   (`details/pending-specs.md`).

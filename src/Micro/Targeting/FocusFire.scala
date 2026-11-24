@@ -64,6 +64,17 @@ object FocusFire {
     Math.max(1, Math.ceil(healthWithShields / damagePerShot).toInt)
   }
 
+  /**
+   * Kill-ease volleys (pure numbers): time to delete the target given the
+   * damage already pointed at it plus one average volley (mine, if I
+   * join). A nearly-dead hull with one gun on it dies sooner than a
+   * fresh hull with two - so the pack joins the finishing shot instead
+   * of spreading over the line. Unanimous by construction: committed
+   * damage and the squad average are the same numbers for every shooter.
+   */
+  def effectiveVolleys(healthWithShields: Double, committedDamage: Double, avgDamage: Double): Int =
+    shotsToKill(healthWithShields, committedDamage + avgDamage)
+
   /** Widest shared reach first, then fewest volleys, then centroid distance
     * and id for stability. */
   def choose(candidates: Iterable[Candidate]): Option[Candidate] =
@@ -97,10 +108,16 @@ object FocusFire {
   private def candidate(
     pack     : Mathematics.Points.Pixel,
     target   : UnitInfo,
-    shooters : Seq[UnitInfo]): Candidate =
+    shooters : Seq[UnitInfo]): Candidate = {
+    val damages   = shooters.map(_.damageOnNextHitAgainst(target))
+    val committed = shooters
+      .filter(s => s.friendly.exists(_.agent.toAttack.exists(_.id == target.id)))
+      .map(_.damageOnNextHitAgainst(target)).sum
+    val avgDamage = if (shooters.nonEmpty) damages.sum / shooters.size else 0.0
     Candidate(
-      shotsToKill      = volleysToKill(target.totalHealth, shooters.map(_.damageOnNextHitAgainst(target))),
+      shotsToKill      = effectiveVolleys(target.totalHealth, committed, avgDamage),
       reach            = shooters.count(s => s.canAttack(target) && s.inRangeToAttack(target)),
       packDistanceTiles = target.pixelDistanceCenter(pack) / 32.0,
       id               = target.id)
+  }
 }
