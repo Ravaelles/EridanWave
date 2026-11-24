@@ -123,6 +123,16 @@ trait PvPOpeningTimings { self: PvPOpening =>
     shouldHoldNatural ||= shouldAttack
     shouldHoldNatural ||= shouldExpand && bases < 2
 
+    // DT defense (owner order): in a PvPDT game with fewer than a dozen
+    // warriors and no Dark Templar yet, the main army stages at the
+    // natural choke instead of pushing out - the timing dies if the army
+    // donates itself mid-map before the blade arrives. Overrides the
+    // PvPDT drop above, not the attack or expand holds.
+    if (PvPDT() && unitsComplete(IsWarrior) < 12 && unitsComplete(Protoss.DarkTemplar) == 0) {
+      status(true, "DTDefenseHold")
+      shouldHoldNatural = true
+    }
+
     // Chill vs. 2-Gate until we're ready to defend
     if ( ! PvP1012() && With.fingerprints.twoGate() && unitsEver(IsAll(Protoss.Dragoon, IsComplete)) == 0) {
       aggression(0.6)
