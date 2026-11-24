@@ -156,7 +156,15 @@ object KiteAwayBehavior {
       // only the shot itself.
       val edge = KiteAway.holdsTheEdge(nearTiles, edgeTiles)
       val loadedVolley = KiteAway.holdsForVolley(unit.cooldownLeft)
-      if ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley)) {
+      // No outrunning the presser: a blade as fast or faster catches
+      // every yield, so the walk donates the ground for nothing - plant
+      // the loaded volley and trade instead. Slower blades are kited
+      // to the edge and shot for free as before.
+      val fastestBlade = unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).view
+        .filter(t => t.likelyStillThere && t.unitClass.melee)
+        .map(_.topSpeed).foldLeft(0.0)(_ max _)
+      if ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley) ||
+        (loadedVolley && KiteAway.shouldTradeContact(unit.topSpeed, fastestBlade))) {
         plantVolley(unit)
 
         return true

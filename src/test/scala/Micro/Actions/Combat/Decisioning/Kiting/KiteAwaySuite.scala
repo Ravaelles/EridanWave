@@ -151,6 +151,13 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! KiteAway.loneBladeDuel(gunsNear = false, meleeChase = true, melee = true))
   }
 
+  test("unoutrunnable pressers are traded, slower ones are kited to the edge") {
+    assert(KiteAway.shouldTradeContact(unitTopSpeed = 5.0, fastestBladeSpeed = 6.0))
+    assert(KiteAway.shouldTradeContact(unitTopSpeed = 5.0, fastestBladeSpeed = 5.0))
+    assert( ! KiteAway.shouldTradeContact(unitTopSpeed = 5.0, fastestBladeSpeed = 4.0))
+    assert( ! KiteAway.shouldTradeContact(unitTopSpeed = 5.0, fastestBladeSpeed = 0.0))
+  }
+
   test("the duel owns contact, hittable guns and seen enemies in range") {
     assert(KiteAway.duelInReach(hasContact = true, hasHittable = false, seenNear = false))
     assert(KiteAway.duelInReach(hasContact = false, hasHittable = true, seenNear = false))

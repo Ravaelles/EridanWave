@@ -224,6 +224,15 @@ object KiteAway {
     ! gunsNear && meleeChase && ! melee
 
   /**
+   * Trade contact (pure speeds for the suite): a presser as fast or
+   * faster can never be outrun, so yielding ground to it donates both
+   * the ground and the volley - plant and trade instead. Slower blades
+   * are kited to the edge and shot for free as before.
+   */
+  def shouldTradeContact(unitTopSpeed: Double, fastestBladeSpeed: Double): Boolean =
+    fastestBladeSpeed >= unitTopSpeed
+
+  /**
    * Duel in reach (pure flags for the suite): the duel owns contact,
    * hittable guns and seen enemies inside formation range. Anything
    * farther out belongs to the march and the formation - closing it
