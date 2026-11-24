@@ -51,6 +51,18 @@ object KiteAwayBehavior {
 
       return true
     }
+    // Ranged ground-hold (owner order): a scratched loaded-ish dragoon
+    // with no blades on top never enters the kite decision - the duel
+    // below owns the frame through volleys and slots instead. Loaded or
+    // cooling, the hold keeps firing solutions the yield would walk out
+    // of; the kite resumes once the hull is marked, the gun runs cold,
+    // or blades close in.
+    if (KiteAway.holdsRangedGround(
+      Protoss.Dragoon(unit),
+      unit.shieldWound,
+      unit.cooldownLeft,
+      unit.matchups.threatsInPixels(KiteAway.holdMeleeTiles * 32.0).exists(t =>
+        t.likelyStillThere && t.unitClass.melee))) return false
     // Matchup scoping (owner order): the no-kite refinements below are
     // PvP-only. Against Zerg the classic ladder decides, held only by
     // fresh shields. Terran never kites, period - the whole leg stands

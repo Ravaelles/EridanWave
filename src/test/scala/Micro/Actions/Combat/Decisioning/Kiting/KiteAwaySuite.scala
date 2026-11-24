@@ -153,6 +153,18 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(math.abs(KiteAway.edgeBandStepTiles(distTiles = 5.0) - -1.25) < 1e-9)
   }
 
+  test("pins the ranged ground-hold: scratched loaded dragoons with no blades near never kite") {
+    assert(KiteAway.holdShieldWound == 40)
+    assert(KiteAway.holdCooldownFrames == 18)
+    assert(KiteAway.holdMeleeTiles == 2.5)
+    assert(KiteAway.holdsRangedGround(isDragoon = true, shieldWound = 40, cooldownLeft = 18, meleeNearby = false))
+    assert(KiteAway.holdsRangedGround(isDragoon = true, shieldWound = 0, cooldownLeft = 0, meleeNearby = false))
+    assert( ! KiteAway.holdsRangedGround(isDragoon = false, shieldWound = 0, cooldownLeft = 0, meleeNearby = false))
+    assert( ! KiteAway.holdsRangedGround(isDragoon = true, shieldWound = 41, cooldownLeft = 18, meleeNearby = false))
+    assert( ! KiteAway.holdsRangedGround(isDragoon = true, shieldWound = 40, cooldownLeft = 19, meleeNearby = false))
+    assert( ! KiteAway.holdsRangedGround(isDragoon = true, shieldWound = 40, cooldownLeft = 18, meleeNearby = true))
+  }
+
   test("pins the lone-blade chase, leash and escape") {
     assert(KiteAway.chaseTiles == 7.0)
     assert(KiteAway.leashTiles == 6.0)

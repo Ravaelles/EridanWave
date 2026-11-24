@@ -59,6 +59,22 @@ object KiteAway {
   var freshShieldWound: Int = 14
 
   /**
+   * Ranged ground-hold (owner order): a dragoon that is only scratched,
+   * with the gun inside its window and no blades on top, holds its fire
+   * instead of entering the kite decision at all. In an equal-speed
+   * duel every yielded tile is donated for nothing - the walk never
+   * dodges, it only eats volleys - so the line stands and shoots until
+   * the hull is marked, the gun runs cold, or blades arrive. Pure flags
+   * for the suite.
+   */
+  var holdShieldWound: Int = 40
+  var holdCooldownFrames: Int = 18
+  var holdMeleeTiles: Double = 2.5
+
+  def holdsRangedGround(isDragoon: Boolean, shieldWound: Int, cooldownLeft: Int, meleeNearby: Boolean): Boolean =
+    isDragoon && shieldWound <= holdShieldWound && cooldownLeft <= holdCooldownFrames && ! meleeNearby
+
+  /**
    * Melee contact radius, in tiles: kite only with blades this close.
    * Ranged-only pressure never triggers the kite - the plant holds the
    * loaded volleys, the approach owns the rest.
