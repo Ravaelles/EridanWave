@@ -27,15 +27,17 @@ too (stash-proven) - pre-existing, not ours.
 Pending ladder confirmation (rule 21): UmsHold paced advance, CatchUp
 full-speed join, lone-blade kite, UMS-restricted Beast/Dragon maps.
 
-# Formation advance (owner order 2026-11-24: 0.25 tiles every 10 frames)
+# Formation advance (owner order 2026-11-24: 0.25 tiles, frames%20<=8 window)
 
-The dressed line inches toward the nearest known warrior on a metronome
-(`ApproachBuildingFormation`: all warriors step, staggered by id; duel
-takes over on hittable/contact so steps never walk a gun into blades).
-History: 20f/0.25 all-hulls -> 15f/0.3 melee-only (froze ranged mirrors:
-dragoon lines held forever facing each other) -> 10f/0.25 all warriors.
-Live validation pending (needs a UMS mirror: line must dress, then
-shrink the gap instead of parking).
+The dressed line inches toward the nearest known warrior inside a move
+window (`ApproachBuildingFormation`: frames 0-8 of every 20-frame cycle,
+all warriors step 0.25 tiles, staggered by id; the window re-issues
+until the hull moves - a single step after holds never executes).
+History: 20f/0.25 all-hulls -> 15f/0.3 melee-only (froze ranged mirrors)
+-> 10f/0.25 all warriors (single ticks swallowed by the one-order skip,
+back units held past the 2-tile slot cap) -> 20f-cycle/9f-window.
+Live 2026-11-24 Drag_v_LingsUpg: DressAdvance on 10 dragoon ids f0-100
+(whole line, front and back), 713 steps on 553 frames, VICTORY 40/3.
 
 # Kite discipline (owner direction: never yield ground for free)
 

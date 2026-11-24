@@ -38,16 +38,20 @@ object ApproachBuildingFormation {
     if (terranSieged) 15.0 else 12.0
 
   /**
-   * Metronome advance, in tiles, every so many frames: the held line
-   * steps together toward the nearest known enemy instead of freezing
-   * in place - a dressed line that never advances parks the map.
-   * Every warrior steps, ranged included: outranged frames belong to
-   * the formation, and with no hittable target and no contact there is
-   * no volley to donate - standing still only trades the map for
-   * nothing. The duel takes over the moment anything is hittable or
+   * Metronome advance, in tiles, inside a move window each cycle: the
+   * held line steps together toward the nearest known enemy instead of
+   * freezing in place - a dressed line that never advances parks the
+   * map. Every warrior steps, ranged included: outranged frames belong
+   * to the formation, and with no hittable target and no contact there
+   * is no volley to donate - standing still only trades the map for
+   * nothing. The window re-issues the step until the hull actually
+   * moves (a single step frame after holds never executes - the
+   * order-change skips movement), so the line walks instead of
+   * twitching. The duel takes over the moment anything is hittable or
    * in contact, so the steps never walk a gun into blades.
    */
-  val advanceEveryFrames: Int = 10
+  val advanceEveryFrames: Int = 20
+  val advanceWindowFrames: Int = 8
   val advanceStepTiles: Double = 0.25
 
   /** Dress release margin, in tiles: the line holds formation past the
@@ -58,11 +62,12 @@ object ApproachBuildingFormation {
     if ( ! eligible(unit, combat)) return false
 
     unit.agent.act("Dress")
-    // Metronome step (owner order): every tenth frame each warrior
-    // steps 0.25 tiles at the nearest known enemy, staggered by id
-    // so the line walks without reissuing every order on the same
-    // frame. Visible foes first - blind steps walk at ghosts. Blind hulls hold.
-    if ((With.frame + unit.id) % advanceEveryFrames == 0) {
+    // Metronome window (owner order): frames 0-8 of every 20-frame
+    // cycle each warrior steps 0.25 tiles at the nearest known enemy,
+    // staggered by id so the line walks without reissuing every order
+    // on the same frame. Visible foes first - blind steps walk at
+    // ghosts. Blind hulls hold.
+    if ((With.frame + unit.id) % advanceEveryFrames <= advanceWindowFrames) {
       val foes = unit.matchups.threats.view.filter(t =>
         t.likelyStillThere && t.unitClass.isWarrior)
       val seen = foes.filter(_.visible)

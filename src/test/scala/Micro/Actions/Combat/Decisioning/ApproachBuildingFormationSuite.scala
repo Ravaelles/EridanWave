@@ -11,7 +11,8 @@ class ApproachBuildingFormationSuite extends AnyFunSuite {
 
   test("the dress holds past its edge and the line steps together") {
     assert(ApproachBuildingFormation.releaseMarginTiles == 1.5)
-    assert(ApproachBuildingFormation.advanceEveryFrames == 10)
+    assert(ApproachBuildingFormation.advanceEveryFrames == 20)
+    assert(ApproachBuildingFormation.advanceWindowFrames == 8)
     assert(ApproachBuildingFormation.advanceStepTiles == 0.25)
   }
 }
