@@ -60,13 +60,29 @@ per game) - the old Move-only ledger was blind to it.
 
 Ledger upgraded 2026-11-24: waste counts stuck guns too (loaded +
 near + standing + silent past a full period), judged by gun events
-not orders. 1v1 waste 106-221f unexplained - next: split the summary
-by shape (move-past vs stuck-hold) and fix the dominant one.
+not orders. Split by shape 2026-11-24: 1v1 waste is move-past
+(100-220f/duel, the priced-in cost of never-trading-contact), stuck
+~0 (holds are clean). Mirror: dragoon waste ~0-6f, all stuck.
+
+Formation (owner orders 2026-11-24, verified live): FormationDuelStage
+before Close; outranged dragoons dress and HOLD (explicit
+HoldPosition, verified f0+ per-frame pos+order trace - stillness
+holds, no overrider found). Slot seek capped at 2 tiles, leash-gated
+at 6, fleeing-only chase, lone blades duel, charge gated on
+hittable-or-visible. Abuse votes only with hittable (no ghost
+approach). 3-A implemented: seen enemy inside 15 tiles (Terran
+siege) / 12 (else) + not overwhelmingly stronger, else march owns
+the walk. Ghost-chase gate PROPOSED AND REVERTED same night (3/9
+wipe on it; f0-2 ghost drift accepted as engine noise, Hunts per
+6-B). Mirror 9/7 9/3 9/2 9/6 8/9 7/9 5/9 3/9 on identical code -
+coin-flip variance, not discipline. 1v1: 7W + draws, hits 0-23.
 
 Committed: lone-blade kernels, outer gate, HitsTaken ledger,
 kite-gate (cooling kites contact), close-no-silent-claim,
 designation 0.15, formation stage + ApproachBuildingFormation,
-Abuse-hittable gate, loneBladeDuel kernel, slot-seek/hold/leash.
+Abuse-hittable gate, loneBladeDuel kernel, slot-seek/hold/leash,
+seen-range gate, waste split, leash/rejoin extraction, contact-kite
+bypass (dragoon + melee <=2 tiles + cd>=15 = always kite).
 
 Watch: RetreatVerdictHoldSuite.skewed-readers fails deterministically
 (flips=1, needs >60) on the clean tree too (stash-proven) - pre-existing,
