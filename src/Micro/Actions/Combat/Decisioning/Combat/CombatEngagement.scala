@@ -151,17 +151,17 @@ private[Decisioning] object EngagePipeline {
   }
 
   /**
-   * Closing beats repositioning: the hold/approach/kite trio runs before
+   * Closing beats repositioning: the hold/kite duo runs before
    * the raw charge. No closing or charging while retreating: the march
    * goes home and the technique walks away, so approaching the guns (or
    * charging them outright) is exactly the flap. KiteAway keeps its
    * fighting withdrawal and TankHug keeps its own tank logic - only the
-   * closing leg and the raw charge yield. A taken branch still claims
+   * raw charge yields. A taken branch still claims
    * the frame when its inner legs decline, so Reposition never runs
-   * behind it. Any hull may close: the trio gates the how below.
+   * behind it. Any hull may close: the duo gates the how below.
    */
   object CloseDuelStage extends BehaviorStage("Close", DispatchBand.Medium) {
-    // Any hull may close: the hold/approach/kite trio gates the how
+    // Any hull may close: the hold/kite duo gates the how
     // below, including the immobile hold it never walks into.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
@@ -191,10 +191,11 @@ private[Decisioning] object EngagePipeline {
         // Tanks are never closed: the hold stands off siege and unsieged
         // guns alike instead of walking into unanswered fire. TankHug
         // keeps its point-blank exception above, the kite keeps its
-        // fighting withdrawal - only the closing leg and the raw charge
-        // yield to the hold. The act logs the veto, so the trace shows
-        // the hold instead of a silent march-in.
-        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! TankHoldBehavior.run(unit, combat) && ! ApproachBehavior.run(unit, combat)) {
+        // fighting withdrawal - only the raw charge yields to the hold.
+        // The act logs the veto, so the trace shows the hold instead of
+        // a silent march-in. The old Approach leg is gone, merged into
+        // the Formation governor: one line, one advancer.
+        if ( ! TankHugBehavior.run(unit, combat) && ! KiteAwayBehavior.run(unit, combat) && ! TankHoldBehavior.run(unit, combat)) {
           // Retreat veto never silent-claims: a retreating hull with no
           // leg acting hands the frame to Reposition (which always signs)
           // instead of standing idle under a stale stage label.

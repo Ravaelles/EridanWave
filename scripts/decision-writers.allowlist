@@ -1,6 +1,5 @@
 src/Micro/Actions/Basic/Build.scala :: .decision.set(movePixel)
 src/Micro/Actions/Combat/Decisioning/Actions/Follow.scala :: .decision.set(maybeLeader.map(_.pixel))
-src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/ApproachBehavior.scala :: .decision.set(unit.pixel.project(unit.matchups.targetNearest.get.pixel, -FormationApproach.correctionStepTiles * 32))
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/DragoonCarrierBehavior.scala :: .attack(unit, carrier.get)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/DragoonCarrierBehavior.scala :: .forceTo(goal)
 src/Micro/Actions/Combat/Decisioning/Combat/Behaviors/DragoonStandBehavior.scala :: .attack(unit, prey.get)

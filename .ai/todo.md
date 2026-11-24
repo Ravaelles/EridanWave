@@ -27,6 +27,19 @@ too (stash-proven) - pre-existing, not ours.
 Pending ladder confirmation (rule 21): UmsHold paced advance, CatchUp
 full-speed join, lone-blade kite, UMS-restricted Beast/Dragon maps.
 
+# Architecture: one governor per line (owner order 2026-11-24 - "bez nich radzilibyśmy sobie lepiej")
+
+`ApproachBehavior` MERGED into `ApproachEnemyFormation` (2026-11-24):
+dwie bramki dressowały tę samą linię trzema krokami (FormationApproach
+0.1/12f vs metronom 0.7/20f + nudge 0.5/4f) - Formation rościła klatkę
+pierwsza albo celowo odmawiała (dystans/lone/far), a Approach i tak
+szarżował tylnymi drzwiami Close. Usunięte: behavior + kernel
+`FormationApproach` + suite + seam `lineStats` + wiersz allowlist.
+Dowód: smoke 1Drag VICTORY 1/1, 15v16 VICTORY 16/8 (jedna coin-flip
+porażka 8/15 po drodze), LingsUpg VICTORY 40/0 bez strat.
+Następne w kolejce (uzgodnione): Abuse jako noga w Close (za kitem),
+HoldLineAdvance w metronom Formation. Be* nietknięte.
+
 # Formation advance (owner orders 2026-11-24: 0.7 tiles window, 0.5 stall nudge)
 
 The dressed line inches toward the nearest known warrior inside a move
