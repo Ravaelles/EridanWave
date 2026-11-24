@@ -50,9 +50,13 @@ explicit HoldPosition, flee-only chase, seen enemy inside 15 (Terran
 siege) / 12 (else) + not overwhelming; farther out the march owns
 the walk), creep 0.15/frame for dressed line (melee too). Formation
 freezes pre-contact verified per-frame (pos+order trace f0+: holds,
-no overrider; f0-3 ghost twitch accepted per 6-B). Zealots never yield
-to enemy dragoons (stand and chew). Contact-kite bypass: dragoon +
-melee<=2 tiles + cd>=15 always kites (1v1: 0 hits).
+no overrider; f0-3 ghost twitch accepted per 6-B). Zealot no-kite
+gate ADDED then REVERTED same night (mechanism: only cooling zealots
+ever kite, and standing cooling zealots deal zero damage while
+absorbing full contact - zealots died twice as fast with no gain).
+Contact-kite bypass: dragoon + melee<=2 tiles + cd>=15 always kites
+(1v1: 0 hits). ShouldChase ghost-gate proposed + reverted (3/9
+correlation, mechanism unproven - f0 drift accepted as harmless).
 
 Proven: StarEngine DragoonZealotKiteSuite - 0 hits, kill in 223f.
 UMS mirror: VICTORIES 9/7 9/7 9/4 9/3 9/0 8/5 (one coin-flip 5/9 on
