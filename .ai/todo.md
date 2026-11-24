@@ -45,8 +45,13 @@ or stands in contact (edge-only volleys when loaded), holds committed
 rules are guns-nearby-gated (melee within chase range counts as guns);
 the mirror runs the old discipline untouched.
 Formation (f/phase-j): FormationDuelStage before Close; lone duelist
-duels from f0 (isLone decline), pack dresses (slot-seek/hold/creep
-0.05-0.2 by odds); Abuse votes only with hittable (no ghost approach).
+duels from f0 (isLone decline), pack dresses (slot capped 2 tiles,
+explicit HoldPosition, flee-only chase, seen enemy inside 15/12 tiles
++ not overwhelming; farther out the march owns the walk). Formation
+freezes pre-contact verified per-frame (pos+order trace f0+: holds,
+no overrider; f0-3 ghost twitch accepted per 6-B). Zealots never yield
+to enemy dragoons (stand and chew). Contact-kite bypass: dragoon +
+melee<=2 tiles + cd>=15 always kites (1v1: 0 hits).
 
 Proven: StarEngine DragoonZealotKiteSuite - 0 hits, kill in 223f.
 UMS mirror: VICTORIES 9/7 9/7 9/4 9/3 9/0 8/5 (one coin-flip 5/9 on
@@ -78,6 +83,18 @@ the walk. Ghost-chase gate PROPOSED AND REVERTED same night (3/9
 wipe on it; f0-2 ghost drift accepted as engine noise, Hunts per
 6-B). Mirror 9/7 9/3 9/2 9/6 8/9 7/9 5/9 3/9 on identical code -
 coin-flip variance, not discipline. 1v1: 7W + draws, hits 0-23.
+
+Dance experiment + verdict 2026-11-24: original PurpleWave dance
+math pinned as DragoonVsSlowlot kernels (suite-green); wiring it as
+the slowlot leg LOST 4 straight 1v1 (0/1, 25-31 hits, 263-858f
+move-waste, 0 kills) - reverted same night. Root cause: our
+Commander dedups attack reissues (Stardust one-order) and skips
+stationary holds, so the raw-order rhythm the dance was tuned for
+never fires; kiteAway retreat glues in contact instead of opening
+the gap. Judgment: keep our kite (proven wins), keep the kernels
+as the specified matchup home; re-attempt only with per-frame
+gun-event proof + threat-aware retreat. The fast 23s wins belong
+to the whole old bot (raw orders), not portable alone.
 
 Committed: lone-blade kernels, outer gate, HitsTaken ledger,
 kite-gate (cooling kites contact), close-no-silent-claim,
