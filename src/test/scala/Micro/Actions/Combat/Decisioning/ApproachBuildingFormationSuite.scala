@@ -8,4 +8,9 @@ class ApproachBuildingFormationSuite extends AnyFunSuite {
     assert(ApproachBuildingFormation.formationRangeTiles(terranSieged = true) == 15.0)
     assert(ApproachBuildingFormation.formationRangeTiles(terranSieged = false) == 12.0)
   }
+
+  test("the held line steps together every twentieth frame") {
+    assert(ApproachBuildingFormation.advanceEveryFrames == 20)
+    assert(ApproachBuildingFormation.advanceStepTiles == 0.25)
+  }
 }

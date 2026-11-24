@@ -341,14 +341,31 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       // pre-dispatch order belongs to last frame, so every volley fired
       // after a step counted as waste even though the shot landed. Only
       // ready frames are judged - a slept frame owns no orders, and its
-      // starvation is counted beside it instead.
+      // starvation is counted beside it instead. Near means seen: fogged
+      // ghosts cannot be shot, so holding at them counts nothing.
       VolleyWaste.bump(unit.id, unit.unitClass.toString, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.order, unit.unitClass.isWarrior,
         frame = With.frame, staleFrames = With.latency.latencyFrames + 1,
-        hasHittableNear = unit.matchups.targets.exists(t => unit.pixelsToGetInRange(t) <= VolleyWaste.stuckMarginPixels),
+        hasHittableNear = unit.matchups.targets.exists(t => t.visible && unit.pixelsToGetInRange(t) <= VolleyWaste.stuckMarginPixels),
         standingStill = unit.speed < 1.0,
         framesSinceAttack = With.framesSince(unit.lastFrameStartingAttack),
         periodFrames = unit.cooldownMaxAirGround,
         latencyFrames = With.latency.latencyFrames)
+      // TEMP-DIAG stuck guns (REMOVE before commit): per-frame gun state
+      // where the ledger counts a stuck volley.
+      if (Debugging.Probe.on("STUCK")) {
+        val near = unit.matchups.targets.filter(t =>
+          t.likelyStillThere && t.visible &&
+          unit.pixelsToGetInRange(t) <= VolleyWaste.stuckMarginPixels)
+        if (near.nonEmpty && unit.cooldownLeft <= 0 && unit.speed < 1.0) {
+          val foe = near.map(t =>
+            t.id + ":" + (unit.pixelDistanceEdge(t) * Mathematics.Maff.inv32).toString.take(4) +
+            (if (t.visible) "v" else "f") + (if (t.alive) "a" else "d") +
+            (if (unit.inRangeToAttack(t)) "R" else "-")).mkString(",")
+          Debugging.Probe.note("STUCK", unit.id,
+            "order=" + unit.order + " cd=" + unit.cooldownLeft +
+            " foe=" + foe + " ready=" + unit.ready)
+        }
+      }
       // Hits-taken ledger, same frame: every hp drop counts as a landed
       // hit, no matter the guns. The kite answers for it at game end.
       if (unit.unitClass.isWarrior) HitsTaken.bump(unit.id, unit.unitClass.toString, unit.totalHealth)

@@ -245,13 +245,12 @@ object KiteAwayBehavior {
     if (zergRules && shielded && unit.shieldWound <= KiteAway.zergShieldWound) return false
 
     if (pvpRules) {
-      // Blades never yield to guns that outrun them: kiting dragoons
-      // would donate the chase for free - stand and chew instead.
-      // (Owner order: zealots are doomed anyway, make every swing count.)
-      val dragoonsNear = unit.matchups.threats.exists(t =>
-        t.likelyStillThere && Protoss.Dragoon(t) &&
-        unit.pixelDistanceEdge(t) * Maff.inv32 <= KiteAway.chaseTiles)
-      if (dragoonsNear) return false
+      // Do NOT gate melee kiting on nearby guns (measured 2026-11-24):
+      // the kernel below only yields cooling blades, so a guns-nearby
+      // veto forces cooling hulls to stand under fire dealing nothing.
+      // Standing loaded blades already hold through the fresh-hold and
+      // calm gates above. Re-add only with proof that standing cooling
+      // blades out-damage kiting ones.
 
       // Calm healthy-enough blades hold: not hit in forty frames with
       // 41+ HP means no pressure worth yielding to - stand and swing.

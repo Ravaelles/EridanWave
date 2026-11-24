@@ -4,7 +4,6 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.OverwhelminglyStronger
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
-import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineAdvanceBehavior
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -37,13 +36,37 @@ object ApproachBuildingFormation {
   def formationRangeTiles(terranSieged: Boolean): Double =
     if (terranSieged) 15.0 else 12.0
 
+  /**
+   * Metronome advance, in tiles, every so many frames: the held line
+   * steps together toward the nearest known enemy instead of freezing
+   * in place - a dressed line that never advances parks the map.
+   */
+  val advanceEveryFrames: Int = 20
+  val advanceStepTiles: Double = 0.25
+
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! eligible(unit, combat)) return false
 
     unit.agent.act("Dress")
-    // Dressed with a target past the gun: the held line advances at
-    // the owner's pace instead of charging through its own formation.
-    if (HoldLineAdvanceBehavior.run(unit, combat)) return true
+    // Metronome step (owner order): every twentieth frame each hull
+    // steps 0.25 tiles at the nearest known enemy, staggered by id so
+    // the line walks without reissuing every order on the same frame.
+    // A dressed line that never advances parks the map. Visible foes
+    // first - blind steps walk at ghosts. Blind hulls hold.
+    if ((With.frame + unit.id) % advanceEveryFrames == 0) {
+      val foes = unit.matchups.threats.view.filter(t =>
+        t.likelyStillThere && t.unitClass.isWarrior)
+      val seen = foes.filter(_.visible)
+      Maff.minBy(if (seen.nonEmpty) seen else foes)(
+        unit.pixelDistanceEdge(_)).foreach { foe =>
+        val stepped = unit.pixel.project(foe.pixel, advanceStepTiles * 32.0).walkablePixel
+        unit.agent.decision.set(stepped)
+        combat.maneuvers.move()
+        unit.agent.act("DressAdvance")
+
+        return true
+      }
+    }
     // Nearby slots are walked to, never the far goal: chasing a
     // formation across the map strings the line out instead of
     // dressing it. A slot past the leash means the pack moved on
