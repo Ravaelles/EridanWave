@@ -66,14 +66,14 @@ object ApproachEnemyFormation {
   val stallStepTiles: Double = 1.5
 
   /**
-   * Nearest known enemy warrior (game seam for the steps below): visible
-   * foes first - blind steps walk at ghosts, so blind hulls hold.
+   * Nearest seen enemy warrior (game seam for the steps below): visible
+   * foes only - blind hulls hold, never walk at ghosts. The eligible gate
+   * already requires a seen foe inside the dress range, so this always
+   * finds one on the reachable path; None means hold.
    */
   private def nearestKnownFoe(unit: FriendlyUnitInfo): Option[UnitInfo] = {
-    val foes = unit.matchups.threats.view.filter(t =>
-      t.likelyStillThere && t.unitClass.isWarrior)
-    val seen = foes.filter(_.visible)
-    Maff.minBy(if (seen.nonEmpty) seen else foes)(
+    Maff.minBy(unit.matchups.threats.view.filter(t =>
+      t.likelyStillThere && t.visible && t.unitClass.isWarrior))(
       unit.pixelDistanceEdge(_))
   }
 
@@ -120,10 +120,9 @@ object ApproachEnemyFormation {
 
     unit.agent.act("Dress")
     // Metronome window (owner order): frames 0-8 of every 20-frame
-    // cycle each warrior steps 0.7 tiles at the nearest known enemy,
+    // cycle each warrior steps 0.85 tiles at the nearest seen enemy,
     // staggered by id so the line walks without reissuing every order
-    // on the same frame. Visible foes first - blind steps walk at
-    // ghosts. Blind hulls hold.
+    // on the same frame. Blind hulls hold (no seen foe, no step).
     if ((With.frame + unit.id) % advanceEveryFrames <= advanceWindowFrames) {
       nearestKnownFoe(unit).foreach { foe =>
         val stepped = unit.pixel.project(foe.pixel, advanceStepTiles * 32.0).walkablePixel
@@ -147,8 +146,8 @@ object ApproachEnemyFormation {
         true
       case _ =>
         // Stall nudge (owner order): a dressed hull with a Formation
-        // order that stood still for four frames steps half a tile at
-        // the nearest known enemy instead of holding forever - the back
+        // order that stood still for four frames steps 1.5 tiles at
+        // the nearest seen enemy instead of holding forever - the back
         // line's window steps die in the order-change skip, so without
         // the nudge the far hulls pose while the near ones walk. Reads
         // the per-frame position memory (a moved-and-returned hull counts

@@ -1,6 +1,6 @@
 package Micro.Actions.Combat.Decisioning
 
-import Lifecycle.With
+import Lifecycle.{PerGame, With}
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldToShoot, KiteAway, KiteHold, KiteYield, MeleeKiteAway}
 import Micro.Agency.{Commander, OrderContinue}
@@ -16,7 +16,7 @@ import Utilities.UnitFilters.{IsSlowling, IsSpeedling}
  * holds to shoot instead (HoldToShoot); turned-away melee never triggers
  * the retreat (FacingAway). Returns true when it moved or held the unit.
  */
-object KiteAwayBehavior {
+object KiteAwayBehavior extends PerGame {
 
   /**
    * Kill-switch for the whole kite behavior (kept for experiments;
@@ -26,6 +26,8 @@ object KiteAwayBehavior {
 
   /** Held kite headings by unit: re-deriving every frame turns forever. */
   private val steadyHeadings = new scala.collection.mutable.HashMap[Int, (Double, Int)]()
+
+  override def reset(): Unit = { steadyHeadings.clear() }
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     if ( ! kiteEnabled) return false
