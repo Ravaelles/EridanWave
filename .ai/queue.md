@@ -162,6 +162,9 @@ Details live in `details/` - the queue keeps one line per item.
 - Mirror focus gate taken (4->3 everywhere, `FocusFire.minShooters`):
   validated on drag mirrors. If small lines still spread, the next
   suspect is reach (wings out of shared-target range), not the count.
+  Done 2026-11-24: `minTargets` 3->2 (`enoughTargets` kernel + suite) -
+  two enemies left still share one pick on 4Drag (pack-wide convergence
+  in traces, VolleyWaste none, 4/4 4/1 4/3 4/1 wins + coin-flip 3/4 2/4).
 - Progressing-duel ferry question (`details/sunkens.md`).
 - Carrier vs sieged tank, natural crescent hold
   (`details/pending-specs.md`).

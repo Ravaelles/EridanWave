@@ -30,8 +30,14 @@ object FocusFire {
   def enoughShooters(shooterCount: Int): Boolean =
     shooterCount >= minShooters
 
+  /** Fewer reachable targets than this and the line spreads: two enemies
+    * left still share one pick (weakest first), a single enemy is every
+    * hull's pick by construction. */
+  def enoughTargets(targetCount: Int): Boolean =
+    targetCount >= minTargets
+
   /** Fewer reachable targets than this and there is no line to spread over. */
-  val minTargets: Int = 3
+  val minTargets: Int = 2
 
   /** Melee cannot reach a shared target from its own slot; 3 tiles of range. */
   val minRangePixels: Int = 96
@@ -80,7 +86,7 @@ object FocusFire {
     val targets = squad.battleEnemies
       .filter(t => t.alive && ! t.unitClass.isBuilding)
       .filter(t => shooters.exists(s => s.canAttack(t) && s.inRangeToAttack(t)))
-    if (targets.size < minTargets) return None
+    if ( ! enoughTargets(targets.size)) return None
 
     val candidates = targets.map(t => (t, candidate(squad.centroidKey, t, shooters)))
     choose(candidates.map(_._2))

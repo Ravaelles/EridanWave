@@ -61,4 +61,10 @@ class FocusFireSuite extends AnyFunSuite {
     assert(FocusFire.enoughShooters(3))
     assert(FocusFire.enoughShooters(14))
   }
+
+  test("two targets left still share one pick, one is trivially shared") {
+    assert( ! FocusFire.enoughTargets(1))
+    assert(FocusFire.enoughTargets(2))
+    assert(FocusFire.enoughTargets(4))
+  }
 }
