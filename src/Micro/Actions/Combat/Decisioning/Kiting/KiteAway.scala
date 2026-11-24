@@ -59,22 +59,6 @@ object KiteAway {
   var freshShieldWound: Int = 14
 
   /**
-   * Ranged ground-hold (owner order): a dragoon that is only scratched,
-   * with the gun inside its window and no blades on top, holds its fire
-   * instead of entering the kite decision at all. In an equal-speed
-   * duel every yielded tile is donated for nothing - the walk never
-   * dodges, it only eats volleys - so the line stands and shoots until
-   * the hull is marked, the gun runs cold, or blades arrive. Pure flags
-   * for the suite.
-   */
-  var holdShieldWound: Int = 40
-  var holdCooldownFrames: Int = 18
-  var holdMeleeTiles: Double = 2.5
-
-  def holdsRangedGround(isDragoon: Boolean, shieldWound: Int, cooldownLeft: Int, meleeNearby: Boolean): Boolean =
-    isDragoon && shieldWound <= holdShieldWound && cooldownLeft <= holdCooldownFrames && ! meleeNearby
-
-  /**
    * Melee contact radius, in tiles: kite only with blades this close.
    * Ranged-only pressure never triggers the kite - the plant holds the
    * loaded volleys, the approach owns the rest.
@@ -259,38 +243,6 @@ object KiteAway {
 
   def escapeYield(stepPixels: Double, escapeTiles: Double): Double =
     Math.max(stepPixels, escapeTiles * 32.0)
-
-  /**
-   * Most-wounded edge band, in tiles (owner order, dragoon mirrors): the
-   * weakest hull kites out to the edge of its own reach instead of
-   * trading in place - from the edge it still lands every volley while
-   * the pack's focus deletes the shared target. Even duels trade hull
-   * for hull unless the marked hull backs out of focus range while
-   * still shooting. The band sits just inside max dragoon reach (4.0).
-   */
-  val woundEdgeLoTiles: Double = 3.6
-  val woundEdgeHiTiles: Double = 3.9
-
-  def woundEdgeMidTiles: Double = (woundEdgeLoTiles + woundEdgeHiTiles) / 2.0
-
-  /**
-   * Most-wounded gate (pure healths for the suite): scratched and the
-   * weakest of the pack edges out; whole hulls hold the line, and a
-   * worse-off mate owns the edge instead. Tied weakest both edge out
-   * rather than standing in focus fire; lone wounded hulls edge out too.
-   */
-  def isMostWounded(ownHealth: Int, maxHealth: Int, mateHealths: Iterable[Int]): Boolean =
-    ownHealth < maxHealth && mateHealths.forall(_ >= ownHealth)
-
-  /**
-   * Edge-band step, in tiles (pure numbers for the suite): outside the
-   * band walk to its middle (out when close, back in when past it);
-   * inside the band stand and shoot. The band itself is the hysteresis -
-   * no latch, the step shrinks to zero at the edge.
-   */
-  def edgeBandStepTiles(distTiles: Double): Double =
-    if (distTiles >= woundEdgeLoTiles && distTiles <= woundEdgeHiTiles) 0.0
-    else woundEdgeMidTiles - distTiles
 
   /**
    * Heading hold, in frames: re-deriving the course every frame from a

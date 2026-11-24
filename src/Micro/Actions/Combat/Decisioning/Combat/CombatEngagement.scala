@@ -12,7 +12,6 @@ import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, Overwhelmingly
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.UnitControl
 import Micro.Actions.Combat.Decisioning.Kiting.{FacingAway, KiteAway}
-import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineAdvanceBehavior
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Decisions.ClusterPosture
@@ -213,7 +212,8 @@ private[Decisioning] object EngagePipeline {
 
   /**
    * Terminal: claim value moot, nothing follows. Any hull the duel
-   * leaves behind repositions through it.
+   * leaves behind repositions through it. The old HoldLine advancer is
+   * gone, merged into the Formation governor: one line, one stepper.
    */
   object RepositionDuelStage extends BehaviorStage("Reposition", DispatchBand.Low) {
     // Any hull the duel leaves behind repositions through here: the
@@ -221,7 +221,7 @@ private[Decisioning] object EngagePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
-      if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit) && ! HoldLineAdvanceBehavior.run(unit, combat)) RepositionBehavior.run(unit, combat)
+      if ( ! SuicideEngageBehavior.run(unit) && ! IdleEngageBehavior.run(unit)) RepositionBehavior.run(unit, combat)
       UnitControl.Claimed
     }
   }
