@@ -37,8 +37,13 @@ szarżował tylnymi drzwiami Close. Usunięte: behavior + kernel
 `FormationApproach` + suite + seam `lineStats` + wiersz allowlist.
 Dowód: smoke 1Drag VICTORY 1/1, 15v16 VICTORY 16/8 (jedna coin-flip
 porażka 8/15 po drodze), LingsUpg VICTORY 40/0 bez strat.
-Następne w kolejce (uzgodnione): Abuse jako noga w Close (za kitem),
-HoldLineAdvance w metronom Formation. Be* nietknięte.
+Następne w kolejce (uzgodnione): Abuse jako noga w Close (za kitem) -
+WERDYKT NEGATYWNY po bisekcji: fold korelował z serią porażek 15v16
+bez mechanizmu i bez aktów Abuse w śladach; po wycofaniu mirror
+wrócił (16/7, LingsUpg 40/1). Stage zostaje, temat zamknięty do
+ewentualnego dowodu z gry. HoldLineAdvance w metronom Formation -
+ZROBIONE (obiekt + kernel + suita + pole advanceAnchor skasowane,
+terminal woła sam Reposition; smoke zielony); Be* nietknięte.
 
 # Formation advance (owner orders 2026-11-24: 0.7 tiles window, 0.5 stall nudge)
 
