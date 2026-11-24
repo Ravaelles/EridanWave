@@ -137,7 +137,8 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         // PvZ handful retreats to the natural choke: below ten hulls and
         // two hundred skim the line falls back and receives the wave
         // there instead of trading in the open. Same gate on both arms.
-        Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
+        // Ladder homes only: UMS duels are always joined, never judged.
+        ! With.umsMode && Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
           With.enemies.exists(_.isZerg),
           With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
           unitsScore,

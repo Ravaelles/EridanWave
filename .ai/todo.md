@@ -49,15 +49,15 @@ ewentualnego dowodu z gry. HoldLineAdvance w metronom Formation -
 ZROBIONE (obiekt + kernel + suita + pole advanceAnchor skasowane,
 terminal woła sam Reposition; smoke zielony); Be* nietknięte.
 
-# Formation advance (owner orders 2026-11-24: 0.7 tiles window, 0.5 stall nudge)
+# Formation advance (owner orders: 0.85 tiles window, 1.5 tiles stall nudge)
 
 The dressed line inches toward the nearest known warrior inside a move
 window (`ApproachEnemyFormation`: frames 0-8 of every 20-frame cycle,
 all warriors step, staggered by id; the window re-issues until the
 hull moves - a single step after holds never executes). Window step is
-the owner's 0.7 (was 0.25, then 0.3 - too slow). Stall nudge (owner):
+the owner's 0.85 (was 0.25, then 0.3, then 0.7 - too slow). Stall nudge (owner):
 a hull with a Formation order that has not changed position in 4
-frames steps 0.5 tiles at the nearest known foe - the back line's
+frames steps 1.5 tiles at the nearest known foe - the back line's
 window steps die in the order-change skip, so it posed while the near
 hulls walked. Reads `lastChangedPosition` (frames since the last pixel
 change, memorized every frame in `UnitInfo.update`; a moved-and-returned

@@ -9,7 +9,8 @@ import Micro.Actions.Protoss.Dragoon.DragoonBrave
 import Micro.Actions.Protoss.Dragoon.DragoonPackStand
 import Micro.Actions.Protoss.ReaverShuttle.ReaverBrave
 import ProxyBwapi.Races.{Protoss, Terran}
-import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Utilities.Latch
 import Utilities.UnitFilters.IsTank
 
 /**
@@ -115,25 +116,47 @@ object NoRetreat {
 
   /**
    * Forbidden retreat (owner order): an enemy warrior on our natural
-   * choke - or already past it toward the main - with our hull inside
-   * dueling range means the line fights where it stands. Retreating
-   * through the choke donates it and the game walks out the back door
-   * while the duel dances in place - the f14215 Retreat/Engage flap.
-   * PvP and PvZ only; Terran sieges keep their own doctrine.
+   * choke line - or up to four tiles outside it, or already past it
+   * toward the main - with our hull inside dueling range means the line
+   * fights where it stands. Retreating through the choke donates it and
+   * the game walks out the back door while the duel dances in place -
+   * the f14215 Retreat/Engage flap. PvP and PvZ only; Terran sieges keep
+   * their own doctrine. Latched like the dress latch: entry is sharp,
+   * the release band absorbs mill noise so the verdict never flaps on
+   * the boundary. A second, race-blind stand covers the natural itself:
+   * with at least a handful home, any foe at our door is answered.
    */
+  private val forbiddenLatch = new Latch
+
   def retreatForbidden(unit: FriendlyUnitInfo): Boolean = {
+    // Ladder homes only, like the proxy stand above.
+    if (With.umsMode) return false
+
     val choke = Chokes.naturalChoke.map(_.pixelCenter)
     if (choke.isEmpty || With.geography.ourBases.isEmpty) return false
 
-    if ( ! Enemy.protoss() && ! Enemy.zerg()) return false
-
     val home = With.geography.ourMain.heart.center
+    val natural = With.geography.ourNatural.heart.center
     val homeRadius = Information.Geography.Distances.naturalChokeToMainBase()
-    With.units.enemy.view.exists(foe =>
-      foe.alive && foe.likelyStillThere && foe.unitClass.isWarrior &&
-        (foe.pixel.groundPixels(choke.get) * Maff.inv32 <= Tactic.Squads.Decisions.RetreatForbidden.chokeRadiusTiles ||
-          foe.pixel.groundPixels(home) * Maff.inv32 < homeRadius) &&
-        unit.pixelDistanceCenter(foe.pixel) * Maff.inv32 <= Tactic.Squads.Decisions.RetreatForbidden.duelRadiusTiles)
+    val raceOk = Enemy.protoss() || Enemy.zerg()
+    val foes = With.units.enemy.view.filter(foe =>
+      foe.alive && foe.likelyStillThere && foe.unitClass.isWarrior).toSeq
+    val ourWarriors = With.units.ours.count(u => u.alive && u.unitClass.isWarrior)
+    def foeMain(foe: UnitInfo): Double = foe.pixel.groundPixels(home) * Maff.inv32
+    def foeNatural(foe: UnitInfo): Double = foe.pixel.groundPixels(natural) * Maff.inv32
+    def ourDist(foe: UnitInfo): Double = unit.pixelDistanceCenter(foe.pixel) * Maff.inv32
+    forbiddenLatch(unit.id,
+      fires =
+        (raceOk && foes.exists(foe =>
+          Tactic.Squads.Decisions.RetreatForbidden.forbidden(true, foeMain(foe), homeRadius, ourDist(foe)))) ||
+        foes.exists(foe =>
+          Tactic.Squads.Decisions.RetreatForbidden.defendNatural(ourWarriors, foeNatural(foe), homeRadius)),
+      releases =
+        foes.forall(foe =>
+          Tactic.Squads.Decisions.RetreatForbidden.released(foeMain(foe), homeRadius, ourDist(foe))) &&
+        foes.forall(foe =>
+          Tactic.Squads.Decisions.RetreatForbidden.releasedNatural(foeNatural(foe), homeRadius)),
+      initial = false)
   }
 
   /**
@@ -147,6 +170,10 @@ object NoRetreat {
   private var proxyHeld: Boolean = false
 
   def proxyDefense(): Boolean = {
+    // Ladder homes only: UMS micro maps have no main to answer for, and
+    // their duels are always joined, never judged.
+    if (With.umsMode) return false
+
     if (With.frame != proxyFrame) {
       proxyFrame = With.frame
       proxyHeld = With.geography.ourBases.nonEmpty && Enemy.protoss() && {

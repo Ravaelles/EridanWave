@@ -211,7 +211,8 @@ object MarchOrders {
         // PvZ handful retreats to the natural choke: below ten hulls and
         // two hundred skim the line falls back and receives the wave
         // there instead of trading in the open. Same gate on both arms.
-        Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
+        // Ladder homes only: UMS duels are always joined, never judged.
+        ! With.umsMode && Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
           With.enemies.exists(_.isZerg),
           With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
           facts.armyUnitsScore,
@@ -452,7 +453,8 @@ object MarchOrders {
     // wall instead of bleeding home through the open map - or worse,
     // trickling out to meet it past the middle. Same gate the verdict
     // arms read, so the vote and the feet never disagree.
-    val weakPvZ = Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
+    // Ladder homes only (see the verdict gates above).
+    val weakPvZ = ! With.umsMode && Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
       With.enemies.exists(_.isZerg),
       With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
       Information.Battles.ArmyStrength.score(
