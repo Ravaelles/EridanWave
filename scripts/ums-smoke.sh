@@ -26,6 +26,7 @@ done
 MAPS=(
   "ums/rav/protoss/1Drag_v_1Drag.scm"
   "ums/rav/protoss/15Drag_v_16Drag.scm"
+  "ums/rav/protoss/Drag_v_LingsUpg.scm"
 )
 
 FAIL=0

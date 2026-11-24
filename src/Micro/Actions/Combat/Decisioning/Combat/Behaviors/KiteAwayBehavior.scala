@@ -170,8 +170,14 @@ object KiteAwayBehavior {
       val fastestBlade = unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).view
         .filter(t => t.likelyStillThere && t.unitClass.melee)
         .map(_.topSpeed).foldLeft(0.0)(_ max _)
-      if ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley) ||
-        (loadedVolley && KiteAway.shouldTradeContact(unit.topSpeed, fastestBlade))) {
+      // A plant without a hittable is sleep, not a volley: HoldPosition
+      // with nothing in range never fires, so edge-dancing blades freeze
+      // the hull for the whole duel (owner order, Drag_v_LingsUpg: two
+      // dragoons stood 1900 frames silent at the edge). The hull yields
+      // instead and plants the shot once they walk into reach.
+      val hasHittable = unit.matchups.targetsInRange.nonEmpty
+      if (hasHittable && ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley) ||
+        (loadedVolley && KiteAway.shouldTradeContact(unit.topSpeed, fastestBlade)))) {
         plantVolley(unit)
 
         return true
