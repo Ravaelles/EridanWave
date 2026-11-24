@@ -113,6 +113,16 @@ class RetreatVerdictSuite extends AnyFunSuite {
     assert( ! RetreatVerdict.heldArmy(frame = 127))
   }
 
+  test("the retreat token exists exactly while the army holds the retreat") {
+    RetreatVerdict.reset()
+    assert(RetreatVerdict.token(frame = 100).isEmpty)
+    RetreatVerdict.update(id = 7, rawHold = true, frame = 100)
+    RetreatVerdict.update(id = 8, rawHold = false, frame = 101)
+    assert(RetreatVerdict.token(frame = 101).isDefined)
+    for (f <- 102 to 130) RetreatVerdict.update(id = 8, rawHold = false, frame = f)
+    assert(RetreatVerdict.token(frame = 131).isEmpty)
+  }
+
   test("re-entering re-arms the window") {
     RetreatVerdict.reset()
     RetreatVerdict.update(id = 7, rawHold = true, frame = 100)

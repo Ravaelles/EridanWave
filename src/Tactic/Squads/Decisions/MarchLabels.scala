@@ -11,6 +11,11 @@ sealed abstract class MarchLabel(val label: String) {
 
 object MarchLabel {
 
+  /** Routed-home check that survives the token: the label carries no
+    * votable value, only the verdict mints it. */
+  def isRetreating(marchLabel: MarchLabel): Boolean =
+    marchLabel.isInstanceOf[Retreating]
+
   case object DarkTemplarHunt extends MarchLabel("DarkTemplarHunt")
 
   case object CorsairHunt extends MarchLabel("CorsairHunt")
@@ -23,7 +28,8 @@ object MarchLabel {
 
   case object PairRide extends MarchLabel("PairRide")
 
-  case object Retreating extends MarchLabel("Retreating")
+  /** Routed home only with the verdict's token: no token, no retreat. */
+  final case class Retreating private[Decisions](token: RetreatVerdict.RetreatToken) extends MarchLabel("Retreating")
 
   case object MarchingHome extends MarchLabel("Marching home")
 

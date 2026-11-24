@@ -91,6 +91,25 @@ object RetreatVerdict extends PerGame {
   private var armyEdgeFrame = Int.MinValue
 
   /**
+   * Retreat token (effectively private verdict): only the verdict mints
+   * retreat permission, and only while the army holds the retreat. The
+   * Retreating march label takes one to construct, so no other level
+   * can route the army home - the compiler rejects it. Read the token
+   * in the same frame as the guard that allowed the construction.
+   */
+  final class RetreatToken private[Decisions] ()
+
+  object RetreatToken {
+    private[Decisions] val held: RetreatToken = new RetreatToken()
+  }
+
+  def token(frame: Int): Option[RetreatToken] =
+    if (heldArmy(frame)) Some(RetreatToken.held) else None
+
+  def tokenOrThrow(frame: Int): RetreatToken =
+    token(frame).getOrElse(throw new IllegalStateException("retreat label without an army verdict"))
+
+  /**
    * Verdict tick (one call per reader per tick): records the raw verdict
    * for the unit. Both phases call this on their own schedule; the last
    * writer wins the raw side, the hold below absorbs the skew. The tick

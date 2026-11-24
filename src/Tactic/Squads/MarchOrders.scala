@@ -99,7 +99,7 @@ object MarchOrders {
     // a stronger army routing with no enemy in front reads what it
     // voted and at what odds, instead of a bare Retreating.
     val marchReason =
-      if (marchHome == MarchLabel.Retreating)
+      if (MarchLabel.isRetreating(marchHome))
         "Retreating(" + RetreatVerdict.retreatLabel(
           unit.agent.fightReason,
           With.battles.globalAttack.us.skimStrengthUnits,
@@ -119,7 +119,7 @@ object MarchOrders {
       // Retreating counts as marching home even when the consensus
       // marches on: the label already says home, so the flag must agree
       // with it instead of opening the duel dispatch behind its back.
-      .setMarchHome( ! marching || marchLabel == MarchLabel.Retreating)
+      .setMarchHome( ! marching || MarchLabel.isRetreating(marchLabel))
     // The opening stand owns the frame outright: the line holds instead
     // of walking, dueling or retreating, so the chain carries the
     // owner's name instead of the vote it overruled. One credit, from
@@ -250,7 +250,7 @@ object MarchOrders {
         // retreat (strong and clear, or proxy answered, unless dying)
         // falls through to the legs instead, so the line marches instead
         // of milling home.
-        (getReturn(unit, squad, defaultReturn), MarchLabel.Retreating)
+        (getReturn(unit, squad, defaultReturn), MarchLabel.Retreating(RetreatVerdict.tokenOrThrow(With.frame)))
       case None =>
         val finalTravel = getTravel(unit, squad, defaultReturn)
         marchLegs(squad, unit, facts, meanDistToGoalTiles, finalTravel, suicide, verdictRetreat)
@@ -263,14 +263,15 @@ object MarchOrders {
     // so have=Duel never appears and want=Duel against have=Advance is
     // the healthy split, not a flap.
     val actual = marchLabel match {
-      case MarchLabel.Retreating    => MotionVerdict.Withdraw
+      case _: MarchLabel.Retreating => MotionVerdict.Withdraw
       case MarchLabel.WaitingForPack => MotionVerdict.Dress
       case _                        => MotionVerdict.Advance
     }
     // L1 rivalry tripwire: the march retreats a held duel - the line walks
-    // the fight out of the map. Release noise never reaches the ledger
-    // threshold; sustained streaks report at game end.
-    if (actual == MarchLabel.Retreating && MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Duel) {
+    // the fight out of the map. (Was compared against the mapped motion
+    // verdict, which can never equal a march label - the tripwire never
+    // fired. It reads the march label now, as intended.)
+    if (MarchLabel.isRetreating(marchLabel) && MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Duel) {
       Debugging.MotionMismatch.bumpMarch(unit.id, unit.unitClass.toString, With.frame)
     }
 
