@@ -146,6 +146,10 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         // and an enemy ground army already inside, neither phase walks
         // the line home - the march and the technique read the same gate.
         ! Micro.Actions.Combat.Decisioning.Skirmish.NoRetreat.proxyDefense() &&
+        // Forbidden retreat owns them too: an enemy on or past our
+        // natural choke with our hull inside dueling range fights where
+        // it stands instead of walking home through the enemy.
+        ! Micro.Actions.Combat.Decisioning.Skirmish.NoRetreat.retreatForbidden(unit) &&
         ! Tactic.Squads.Decisions.RetreatVerdict.suppressUmsOpening(With.umsMode, With.frame),
       With.frame)
     // Overwhelming line never routs: when the unit's own squad votes to

@@ -82,6 +82,7 @@ object NoRetreat {
   def holdsAny(unit: FriendlyUnitInfo): Boolean =
     homeStand(unit) || tanksAtNatural(unit) || dragoonBrave(unit) ||
       dragoonPack(unit) || reaverBrave(unit) || proxyDefense() ||
+      retreatForbidden(unit) ||
       umsEndgame(With.umsMode, With.frame, unit.matchups.targetsInRange.nonEmpty)
 
   /** Ten seconds in, UMS micro maps stop retreating for good. */
@@ -111,6 +112,29 @@ object NoRetreat {
         t.likelyStillThere && IsTank(t) &&
           threatensNatural(t.tileDistanceEdge(naturalHeart)))
     }
+
+  /**
+   * Forbidden retreat (owner order): an enemy warrior on our natural
+   * choke - or already past it toward the main - with our hull inside
+   * dueling range means the line fights where it stands. Retreating
+   * through the choke donates it and the game walks out the back door
+   * while the duel dances in place - the f14215 Retreat/Engage flap.
+   * PvP and PvZ only; Terran sieges keep their own doctrine.
+   */
+  def retreatForbidden(unit: FriendlyUnitInfo): Boolean = {
+    val choke = Chokes.naturalChoke.map(_.pixelCenter)
+    if (choke.isEmpty || With.geography.ourBases.isEmpty) return false
+
+    if ( ! Enemy.protoss() && ! Enemy.zerg()) return false
+
+    val home = With.geography.ourMain.heart.center
+    val homeRadius = Information.Geography.Distances.naturalChokeToMainBase()
+    With.units.enemy.view.exists(foe =>
+      foe.alive && foe.likelyStillThere && foe.unitClass.isWarrior &&
+        (foe.pixel.groundPixels(choke.get) * Maff.inv32 <= Tactic.Squads.Decisions.RetreatForbidden.chokeRadiusTiles ||
+          foe.pixel.groundPixels(home) * Maff.inv32 < homeRadius) &&
+        unit.pixelDistanceCenter(foe.pixel) * Maff.inv32 <= Tactic.Squads.Decisions.RetreatForbidden.duelRadiusTiles)
+  }
 
   /**
    * PvP proxy defense (owner order): with few hulls home and an enemy
