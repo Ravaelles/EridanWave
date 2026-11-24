@@ -1,7 +1,7 @@
 param(
     [string]$Java = 'java',
     [string]$ScalaRepository = (Join-Path $env:USERPROFILE '.m2/repository/org/scala-lang'),
-    [string]$BotJar = (Join-Path $PSScriptRoot '../target/PurpleWave-1.0.jar'),
+    [string]$BotJar = (Join-Path $PSScriptRoot '../target/EridanWave-1.0.jar'),
     [switch]$UseJarImplementation
 )
 
@@ -21,7 +21,7 @@ New-Item -ItemType Directory -Path $output -Force | Out-Null
 $sources = @((Join-Path $repo 'tests/Placement/PlacementReservationTest.scala'))
 $compilerOptions = @()
 if (!$UseJarImplementation) {
-    $macros = Join-Path $repo 'target/PurpleWave-macros.jar'
+    $macros = Join-Path $repo 'target/EridanWave-macros.jar'
     if (!(Test-Path -LiteralPath $macros)) { throw "Missing dependency: $macros. Build the bot first." }
     $compilerOptions = @('-Ymacro-classpath', "$macros;$BotJar")
     $sources += @(

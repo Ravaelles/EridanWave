@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # List StarCraft maps available to the Wine game, grouped by folder.
 # Prints the exact relative path to pass as --map= to wine-run.sh
-# (or to java -jar PurpleWave.jar --launcher=wine --map=...).
+# (or to java -jar EridanWave.jar --launcher=wine --map=...).
 #
 # Usage: bash scripts/list-maps.sh [--filter=<substring>|<substring>]
 #   --filter protoss   list only maps matching "protoss" (case-insensitive),
@@ -29,11 +29,16 @@ for arg in "$@"; do
   esac
 done
 if [ "$EXPECT_VALUE" = 1 ]; then echo "--filter needs a value" >&2; exit 2; fi
+# Human-only maps: present on disk but never launchable by the bot
+# (dragoons_v_map needs a human player; it idles forever headless).
+HUMAN_ONLY="dragoons_v_map"
 TOTAL=0
 CURRENT_DIR=""
 
 while IFS= read -r map; do
   rel="${map#$GAME_ROOT/}"
+  base=$(basename "$rel")
+  if echo "$base" | grep -qi "$HUMAN_ONLY"; then continue; fi
   if [ -n "$FILTER" ] && ! echo "$rel" | grep -qi "$FILTER"; then
     continue
   fi

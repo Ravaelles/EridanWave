@@ -1,7 +1,7 @@
 param(
     [string]$Java = 'java',
     [string]$ScalaRepository = (Join-Path $env:USERPROFILE '.m2/repository/org/scala-lang'),
-    [string]$BotJar = (Join-Path $PSScriptRoot '../target/PurpleWave-1.0.jar')
+    [string]$BotJar = (Join-Path $PSScriptRoot '../target/EridanWave-1.0.jar')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,7 +10,7 @@ $scalaVersion = '2.12.18'
 $compiler = @('scala-compiler', 'scala-library', 'scala-reflect') | ForEach-Object {
     Join-Path $ScalaRepository "$_/$scalaVersion/$_-$scalaVersion.jar"
 }
-$macros = Join-Path $repo 'target/PurpleWave-macros.jar'
+$macros = Join-Path $repo 'target/EridanWave-macros.jar'
 foreach ($jar in @($BotJar, $macros) + $compiler) {
     if (!(Test-Path -LiteralPath $jar)) { throw "Missing dependency: $jar. Build the bot first." }
 }

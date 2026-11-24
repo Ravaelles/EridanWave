@@ -4,7 +4,7 @@ $repo = Split-Path $PSScriptRoot -Parent
 $compiler = @('scala-compiler', 'scala-library', 'scala-reflect') | ForEach-Object {
     Join-Path $env:USERPROFILE ".m2/repository/org/scala-lang/$_/2.12.18/$_-2.12.18.jar"
 }
-$jar = Join-Path $repo 'target/PurpleWave-1.0.jar'
+$jar = Join-Path $repo 'target/EridanWave-1.0.jar'
 $output = Join-Path $repo 'target/opponent-fixed-build-tests'
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $classpath = (@($jar) + $compiler) -join ';'

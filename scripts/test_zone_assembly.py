@@ -1,4 +1,4 @@
-"""Run frame-limited zone diagnostics using PurpleBench's SC-Docker workflow.
+"""Run frame-limited zone diagnostics using EridanBench's SC-Docker workflow.
 
 Compile WriteZoneAssemblySnapshot.scala (and the implementation under test) into
 --classes first. Only the isolated diagnostic jar replaces WriteMapCSV.
@@ -42,8 +42,8 @@ def main():
     parser.add_argument('--phase', required=True)
     parser.add_argument('--classes', type=Path, required=True)
     parser.add_argument('--scbw-root', type=Path, default=Path('E:/scbw'))
-    parser.add_argument('--jar', type=Path, default=Path('target/PurpleWave-1.0.jar'))
-    parser.add_argument('--runtime-bot', default='PurpleProtoss')
+    parser.add_argument('--jar', type=Path, default=Path('target/EridanWave-1.0.jar'))
+    parser.add_argument('--runtime-bot', default='EridanProtoss')
     parser.add_argument('--workers', type=int, default=3)
     parser.add_argument('--frames', type=int, default=96)
     parser.add_argument('--seed', type=int, default=42)
@@ -52,13 +52,13 @@ def main():
     repo = Path(__file__).resolve().parents[1]
     output = repo / 'target/zone-assembly' / args.phase
     bots = output / 'bots'
-    bot_name = 'PurpleZoneAssembly'
+    bot_name = 'EridanZoneAssembly'
     bot = bots / bot_name
     ai = bot / 'AI'
     ai.mkdir(parents=True, exist_ok=True)
     (bot / 'read').mkdir(exist_ok=True)
     source = args.scbw_root / 'bots' / args.runtime_bot
-    for name in ['jre', 'run32.bat', 'run64.bat', 'PurpleWaveLocalDocker.config.json']:
+    for name in ['jre', 'run32.bat', 'run64.bat', 'EridanWaveLocalDocker.config.json']:
         path = source / 'AI' / name
         if path.is_dir():
             shutil.copytree(path, ai / name, dirs_exist_ok=True)
@@ -74,7 +74,7 @@ def main():
         build_hash.update(name.encode())
         build_hash.update(path.read_bytes())
     signature = build_hash.hexdigest()
-    with zipfile.ZipFile(args.jar) as source_jar, zipfile.ZipFile(ai / 'PurpleWave.jar', 'w', zipfile.ZIP_DEFLATED) as jar:
+    with zipfile.ZipFile(args.jar) as source_jar, zipfile.ZipFile(ai / 'EridanWave.jar', 'w', zipfile.ZIP_DEFLATED) as jar:
         for entry in source_jar.infolist():
             if entry.filename not in overlays:
                 jar.writestr(entry, source_jar.read(entry))
@@ -95,7 +95,7 @@ def main():
     saved.mkdir(exist_ok=True)
     launcher = shutil.which('scbw.play')
     if not launcher:
-        raise RuntimeError('Install SC-Docker / scbw.play as described in PurpleBench.')
+        raise RuntimeError('Install SC-Docker / scbw.play as described in EridanBench.')
 
     def run(item):
         index, map_path = item

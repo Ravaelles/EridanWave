@@ -1,6 +1,6 @@
 param(
     [string]$Java = 'java',
-    [string]$BotJar = (Join-Path $PSScriptRoot '../target/PurpleWave-1.0.jar'),
+    [string]$BotJar = (Join-Path $PSScriptRoot '../target/EridanWave-1.0.jar'),
     [switch]$UseJarImplementation
 )
 
@@ -9,7 +9,7 @@ $repo = Split-Path $PSScriptRoot -Parent
 $compiler = @('scala-compiler', 'scala-library', 'scala-reflect') | ForEach-Object {
     Join-Path $env:USERPROFILE ".m2/repository/org/scala-lang/$_/2.12.18/$_-2.12.18.jar"
 }
-$macros = Join-Path $repo 'target/PurpleWave-macros.jar'
+$macros = Join-Path $repo 'target/EridanWave-macros.jar'
 $variant = if ($UseJarImplementation) { 'baseline' } else { 'patched' }
 $output = Join-Path $repo "target/zone-assembly/$variant-classes"
 New-Item -ItemType Directory -Path $output -Force | Out-Null

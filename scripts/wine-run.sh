@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One command: attach PurpleWave to real StarCraft under Wine and play.
+# One command: attach EridanWave to real StarCraft under Wine and play.
 #
 # Verified mechanics (ported from the Atlantis Wine backend):
 #   1. The bot JVM must run UNDER WINE with a WINDOWS JRE and
@@ -20,7 +20,13 @@
 #   --speed=<0-1000>    default game speed (20 if absent; keyboard presets still work)
 #   --cherryvis[=bool] write the CherryVis viewer trace, 1/true/yes or
 #                       0/false/no (default: enabled). --no-cherryvis disables.
-#   --jar=<path>        bot jar (default: <repo>/target/PurpleWave-1.0.jar)
+#   --formation-audit[=bool] write the behavior tally and formation-break
+#                       distances to bwapi-data/write/formation-audit.txt,
+#                       1/true/yes or 0/false/no (default: disabled).
+#   --tuning-strategy=<name> tuning strategy from Tuning.Strategies
+#                       (absent = default play, no tuning)
+#   --tune-param=NAME=VALUE (repeatable) per-game param override
+#   --jar=<path>        bot jar (default: <repo>/target/EridanWave-1.0.jar)
 #   --headless          Xvfb on :99, nothing ever maps on :0 (default)
 #   --visible           run on the current X display instead of Xvfb
 #   --no-build          play the jar already on disk instead of rebuilding it
@@ -28,7 +34,7 @@
 # Env overrides: WINEPREFIX (default ~/.wine), GAME_ROOT, JAVA_EXE, JAR,
 # REPO (default: script dir/..), LOG_DIR (default: $REPO/out/wine).
 #
-# Exit code 0 = HELLO_PURPLEWAVE seen (bot attached and playing).
+# Exit code 0 = HELLO_ERIDANWAVE seen (bot attached and playing).
 set -u
 
 say() { echo "[wine-run] $*"; }
@@ -40,12 +46,13 @@ REPO="${REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
 WINE_ROOT="${WINEPREFIX:-$HOME/.wine}"
 GAME_ROOT="${GAME_ROOT:-$WINE_ROOT/drive_c/sc}"
 JAVA_EXE="${JAVA_EXE:-$WINE_ROOT/drive_c/Java/bin/java.exe}"
-JAR="${JAR:-$REPO/target/PurpleWave-1.0.jar}"
+JAR="${JAR:-$REPO/target/EridanWave-1.0.jar}"
 LOG_DIR="${LOG_DIR:-$REPO/out/wine}"
 WINE_RUNS_DIR="$REPO/out/wine_runs"
 REPLAYS_DIR="${REPLAYS_DIR:-/sc-ai/REPLAYS}"
 
-MAP=""; RACE=""; ENEMY_RACE=""; GAME_TYPE=""; SPEED=""; BUILD=1; CHERRYVIS="true"
+MAP=""; RACE=""; ENEMY_RACE=""; GAME_TYPE=""; SPEED=""; BUILD=1; CHERRYVIS="true"; FAUDIT="false"
+TUNE_STRATEGY=""; TUNE_PARAMS=()
 parse_bool() {
   case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
     1|true|yes) echo true ;;
@@ -63,6 +70,11 @@ for arg in "$@"; do
     --cherryvis) CHERRYVIS="true" ;;
     --no-cherryvis) CHERRYVIS="false" ;;
     --cherryvis=*) CHERRYVIS="$(parse_bool "${arg#--cherryvis=}" "--cherryvis" "$CHERRYVIS")" ;;
+    --formation-audit) FAUDIT="true" ;;
+    --no-formation-audit) FAUDIT="false" ;;
+    --formation-audit=*) FAUDIT="$(parse_bool "${arg#--formation-audit=}" "--formation-audit" "$FAUDIT")" ;;
+    --tuning-strategy=*) TUNE_STRATEGY="${arg#--tuning-strategy=}" ;;
+    --tune-param=*) TUNE_PARAMS+=("${arg#--tune-param=}") ;;
     --jar=*) JAR="${arg#--jar=}" ;;
     --headless) HIDDEN=1 ;;
     --visible) HIDDEN=0 ;;
@@ -73,7 +85,7 @@ for arg in "$@"; do
 done
 
 # The live bwapi.ini path (Unix side). Known before the client starts so the
-# bot JVM gets it verbatim via -Dpurplewave.bwapiIni (see client launch below)
+# bot JVM gets it verbatim via -Deridanwave.bwapiIni (see client launch below)
 # instead of guessing Wine home layouts at runtime.
 INI="$GAME_ROOT/bwapi-data/bwapi.ini"
 WIN_INI="$(winepath -w "$INI" 2>/dev/null || true)"
@@ -101,11 +113,18 @@ fi
 
 # One Wine game per box: cleanup kills by process name, so a second game
 # alongside a running one murders the first mid-play (and vice versa).
-WINE_GAME_LOCK="/tmp/purplewave-wine-game.lock"
+# WINE_BOX_SHARED=1 skips the lock for coexistence experiments (headless on
+# :99 + visible on the real display): teardown still kills by process name,
+# so whichever run ends first takes the other one down with it.
+WINE_GAME_LOCK="/tmp/eridanwave-wine-game.lock"
+if [ "${WINE_BOX_SHARED:-0}" != "1" ]; then
 exec {WINE_GAME_LOCK_FD}>"$WINE_GAME_LOCK" || { echo "[wine-run] cannot open lock $WINE_GAME_LOCK" >&2; exit 2; }
 if ! flock -n "$WINE_GAME_LOCK_FD" 2>/dev/null; then
   echo "[wine-run] REFUSED: another Wine game holds the box lock; one game at a time" >&2
   exit 2
+fi
+else
+  say "  WARNING: box lock skipped (WINE_BOX_SHARED=1); teardowns will cross-kill"
 fi
 bgs wineserver -p >/dev/null 2>&1 || true
 
@@ -117,9 +136,9 @@ CLIENT_LOG="$LOG_DIR/WINE_LOG"
 # logger flush and write-files fail. Seed a dev config (local metal: debugging
 # + logstd) when AI/ is empty, but never clobber the owner's files.
 mkdir -p "$REPO/bwapi-data/AI" "$REPO/bwapi-data/read" "$REPO/bwapi-data/write"
-if [ -z "$(ls -A "$REPO/bwapi-data/AI" 2>/dev/null)" ] && [ -f "$REPO/configs/PurpleWaveLocalMetal.config.json" ]; then
-  cp -f "$REPO/configs/PurpleWaveLocalMetal.config.json" "$REPO/bwapi-data/AI/"
-  say "  Seeded bwapi-data/AI with PurpleWaveLocalMetal.config.json"
+if [ -z "$(ls -A "$REPO/bwapi-data/AI" 2>/dev/null)" ] && [ -f "$REPO/configs/EridanWaveLocalMetal.config.json" ]; then
+  cp -f "$REPO/configs/EridanWaveLocalMetal.config.json" "$REPO/bwapi-data/AI/"
+  say "  Seeded bwapi-data/AI with EridanWaveLocalMetal.config.json"
 fi
 
 T0=$(date +%s)
@@ -127,43 +146,94 @@ since() { echo "[wine-run]   +$(( $(date +%s) - T0 ))s  $1"; }
 
 cleanup() {
   disown -a 2>/dev/null
-  pkill -9 -x StarCraft.exe 2>/dev/null
-  pkill -9 -f "[C]haoslauncher.exe" 2>/dev/null
-  pkill -9 -x java.exe 2>/dev/null
+  if [ -n "$SC_PID$CHAOS_PID$CLIENT_PID" ]; then
+    kill_pid "$SC_PID"
+    kill_pid "$CHAOS_PID"
+    kill_pid "$CLIENT_PID"
+  else
+    # Nothing of ours ever started (early exit): nothing to kill.
+    # Name-based pkill lives only in reap_leftovers(), never here, so a
+    # failing run can never murder a concurrent game on its way out.
+    :
+  fi
+  rm -f "$RUN_PIDFILE"
 }
 trap cleanup EXIT
+
+# PID-scoped teardown: every run records its own PIDs so concurrent runs
+# never murder each other. Name-based killing lives only in
+# reap_leftovers() below (crashed runs with no pidfile), never in cleanup().
+RUN_PIDFILE="/tmp/eridanwave-wine-run.$$.pid"
+SC_PID=""; CHAOS_PID=""; CLIENT_PID=""
+record_pids() {
+  { echo "SC=$SC_PID"; echo "CHAOS=$CHAOS_PID"; echo "CLIENT=$CLIENT_PID"; } > "$RUN_PIDFILE" 2>/dev/null
+}
+kill_pid() {
+  [ -n "${1:-}" ] && kill -0 "$1" 2>/dev/null && kill -9 "$1" 2>/dev/null
+  return 0
+}
+# Reap pidfiles of dead runs; adopt-and-kill live leftovers of crashed runs,
+# but never when sharing the box (live PIDs then belong to a concurrent game).
+reap_leftovers() {
+  for other in /tmp/eridanwave-wine-run.*.pid; do
+    [ -f "$other" ] || continue
+    [ "$other" = "$RUN_PIDFILE" ] && continue
+    # shellcheck disable=SC1090
+    SC=""; CHAOS=""; CLIENT=""; . "$other"
+    if kill -0 "${SC:-x}" 2>/dev/null || kill -0 "${CHAOS:-x}" 2>/dev/null || kill -0 "${CLIENT:-x}" 2>/dev/null; then
+      if [ "${WINE_BOX_SHARED:-0}" = "1" ]; then
+        say "  WARNING: $other holds live PIDs (concurrent game?) - leaving them alone"
+      else
+        say "  Killing leftovers from crashed run $other"
+        kill_pid "$SC"; kill_pid "$CHAOS"; kill_pid "$CLIENT"
+        rm -f "$other"
+      fi
+    else
+      rm -f "$other"
+    fi
+  done
+  if [ "${WINE_BOX_SHARED:-0}" != "1" ]; then
+    pkill -9 -x StarCraft.exe 2>/dev/null
+    pkill -9 -f "[C]haoslauncher.exe" 2>/dev/null
+    pkill -9 -x java.exe 2>/dev/null
+  fi
+}
 
 # Rebuild the jar from source in the background: StarCraft takes seconds to
 # come up anyway, so the compile hides inside that instead of adding to it.
 if [ "$BUILD" = "1" ]; then
   say "Building the bot jar from source in the background (BUILD=0 to skip)"
-  rm -f /tmp/purplewave-build-jar.done /tmp/purplewave-build-jar.failed
+  rm -f /tmp/eridanwave-build-jar.done /tmp/eridanwave-build-jar.failed
   (
-    if timeout 600 bash "$REPO/build-jar.sh" >/tmp/purplewave-build-jar.log 2>&1; then
-      : > /tmp/purplewave-build-jar.done
+    if timeout 600 bash "$REPO/build-jar.sh" >/tmp/eridanwave-build-jar.log 2>&1; then
+      : > /tmp/eridanwave-build-jar.done
     else
-      echo "failed" > /tmp/purplewave-build-jar.failed
+      echo "failed" > /tmp/eridanwave-build-jar.failed
     fi
   ) &
 fi
 
 say "Killing leftovers"
-pkill -9 -x StarCraft.exe 2>/dev/null
-pkill -9 -f "[C]haoslauncher.exe" 2>/dev/null
-pkill -9 -x java.exe 2>/dev/null
+reap_leftovers
 # Stale relay keys from a killed session would all fire at game start
 # (e.g. a Pause or an Escape) - the client drains the file blindly.
 # Drop them; fresh keys arrive live. Both the current rendezvous and the
 # legacy repo-local path (pre-rendezvous builds may have left one behind).
 rm -f "$GAME_ROOT/bwapi-data/write/keys.txt" "$REPO/out/wine/keys.txt"
+# Stale error ledgers mislead post-game reads (frames from the last game).
+rm -f "$GAME_ROOT/bwapi-data/write/errors.json" "$REPO/bwapi-data/write/errors.json"
 for _ in $(seq 1 30); do
   if ! pgrep -x StarCraft.exe >/dev/null 2>&1 \
       && ! pgrep -f "[C]haoslauncher.exe" >/dev/null 2>&1; then break; fi
   sleep 0.1
 done
 if pgrep -x StarCraft.exe >/dev/null 2>&1 || pgrep -f "[C]haoslauncher.exe" >/dev/null 2>&1; then
-  say "FATAL: a leftover game survived the kill - refusing to attach to a stale map."
-  exit 1
+  if [ "${WINE_BOX_SHARED:-0}" = "1" ]; then
+    say "  WARNING: another game is up - assuming concurrent run, attaching anyway"
+  else
+    say "FATAL: a leftover game survived the kill - refusing to attach to a stale map."
+    exit 1
+  fi
 fi
 
 [ -f "$JAVA_EXE" ] || { say "Windows Java not found at $JAVA_EXE"; exit 1; }
@@ -171,12 +241,12 @@ fi
 
 if [ "$BUILD" = "1" ]; then
   waited=0
-  while [ ! -f /tmp/purplewave-build-jar.done ] && [ ! -f /tmp/purplewave-build-jar.failed ]; do
+  while [ ! -f /tmp/eridanwave-build-jar.done ] && [ ! -f /tmp/eridanwave-build-jar.failed ]; do
     sleep 0.2; waited=$((waited + 1)); [ "$waited" -gt 1500 ] && break
   done
-  if [ -f /tmp/purplewave-build-jar.failed ]; then
-    say "  FAILED to build the jar - see /tmp/purplewave-build-jar.log"
-    tail -20 /tmp/purplewave-build-jar.log | sed 's/^/    /'
+  if [ -f /tmp/eridanwave-build-jar.failed ]; then
+    say "  FAILED to build the jar - see /tmp/eridanwave-build-jar.log"
+    tail -20 /tmp/eridanwave-build-jar.log | sed 's/^/    /'
     exit 1
   fi
   since "jar rebuilt (parallel with game start)"
@@ -186,7 +256,7 @@ say "Step 1/3: jar: $JAR"
 
 # The unix->windows jar translation is cached: winepath spawns a whole Wine
 # process to print it (~0.4 s each run).
-WINEPATH_CACHE="/tmp/purplewave-winepath-cache"
+WINEPATH_CACHE="/tmp/eridanwave-winepath-cache"
 WIN_JAR=""
 if [ -f "$WINEPATH_CACHE" ] && [ "$(head -1 "$WINEPATH_CACHE" 2>/dev/null)" = "$JAR" ]; then
   WIN_JAR="$(tail -1 "$WINEPATH_CACHE" 2>/dev/null)"
@@ -214,34 +284,48 @@ LIVE_OUTPUT="${LIVE_OUTPUT:-1}"
 # Client first: it loops on "Game table mapping not found" until the game is
 # up, which is its normal idle state. -Dos.name="Windows 10" is what makes
 # JBWAPI pick the W32 shared-memory backend under Wine.
-# An explicit --speed= travels as PURPLEWAVE_SPEED (see GameCommands.initialSpeed).
-# --cherryvis= travels as PURPLEWAVE_CHERRYVIS=1/0 (see ConfigurationLoader).
+# An explicit --speed= travels as ERIDANWAVE_SPEED (see GameCommands.initialSpeed).
+# --cherryvis= travels as ERIDANWAVE_CHERRYVIS=1/0 (see ConfigurationLoader).
+# --formation-audit= travels as ERIDANWAVE_FORMATION_AUDIT=1/0 (same channel).
+# Explicit tuning travels as -D flags on the client JVM (same channel as
+# --speed/--cherryvis; no scattered env files - one flag per override).
+TUNE_DEFS=()
+[ -n "${TUNE_STRATEGY:-}" ] && TUNE_DEFS+=("-Deridanwave.tuningStrategy=$TUNE_STRATEGY")
+for kv in ${TUNE_PARAMS[@]+"${TUNE_PARAMS[@]}"}; do TUNE_DEFS+=("-Deridanwave.tune.$kv"); done
 SPEED_ENV=()
-[ -n "${SPEED:-}" ] && SPEED_ENV=(PURPLEWAVE_SPEED="$SPEED")
+[ -n "${SPEED:-}" ] && SPEED_ENV=(ERIDANWAVE_SPEED="$SPEED")
 CVIS_ENV=()
-if [ "$CHERRYVIS" = "true" ]; then CVIS_ENV=(PURPLEWAVE_CHERRYVIS=1); else CVIS_ENV=(PURPLEWAVE_CHERRYVIS=0); fi
+if [ "$CHERRYVIS" = "true" ]; then CVIS_ENV=(ERIDANWAVE_CHERRYVIS=1); else CVIS_ENV=(ERIDANWAVE_CHERRYVIS=0); fi
+FAUDIT_ENV=()
+if [ "$FAUDIT" = "true" ]; then FAUDIT_ENV=(ERIDANWAVE_FORMATION_AUDIT=1); else FAUDIT_ENV=(ERIDANWAVE_FORMATION_AUDIT=0); fi
+# Headless runs ignore the keyboard entirely (see GameLauncherFactory):
+# no hook, no relay drain, so typing space anywhere never pauses the bot.
+HEADLESS_ENV=(ERIDANWAVE_HEADLESS="$HIDDEN")
 if [ "$LIVE_OUTPUT" = "1" ]; then
-  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" \
+  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" "${FAUDIT_ENV[@]}" "${HEADLESS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
-      "-Dpurplewave.bwapiIni=$WIN_INI" \
-      "-Dpurplewave.keyRelay=$KEYS_WIN" \
-      "-Dpurplewave.wineClient=true" \
+      "-Deridanwave.bwapiIni=$WIN_INI" \
+      "-Deridanwave.keyRelay=$KEYS_WIN" \
+      "-Deridanwave.wineClient=true" \
+      ${TUNE_DEFS[@]+"${TUNE_DEFS[@]}"} \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG") 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" >&2) < /dev/null
   CLIENT_PID=$!
 else
-  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" \
+  bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" "${SPEED_ENV[@]}" "${CVIS_ENV[@]}" "${FAUDIT_ENV[@]}" "${HEADLESS_ENV[@]}" \
     wine "$JAVA_EXE" "-Dos.name=Windows 10" \
       -XX:MaxGCPauseMillis=15 -Xms1536m -Xmx2048m \
-      "-Dpurplewave.bwapiIni=$WIN_INI" \
-      "-Dpurplewave.keyRelay=$KEYS_WIN" \
-      "-Dpurplewave.wineClient=true" \
+      "-Deridanwave.bwapiIni=$WIN_INI" \
+      "-Deridanwave.keyRelay=$KEYS_WIN" \
+      "-Deridanwave.wineClient=true" \
+      ${TUNE_DEFS[@]+"${TUNE_DEFS[@]}"} \
       -jar "$WIN_JAR" \
       > >(close_lock_fd; exec tee "$CLIENT_LOG" > /dev/null) 2> >(close_lock_fd; exec tee "$LOG_DIR/WINE_DEBUG" > /dev/null) < /dev/null
   CLIENT_PID=$!
 fi
 say "  Client PID $CLIENT_PID, log: $CLIENT_LOG"
+record_pids
 CLIENT_ALIVE=0
 for _ in $(seq 1 15); do
   if kill -0 "$CLIENT_PID" 2>/dev/null; then CLIENT_ALIVE=1; break; fi
@@ -262,9 +346,13 @@ if [ -n "$MAP" ]; then
   RESOLVED_MAP=$(cd "$GAME_ROOT" && find -L maps -type f -iname "$(basename "$MAP")" 2>/dev/null | head -1)
   if [ -n "$RESOLVED_MAP" ]; then
     say "  Setting map in bwapi.ini to $RESOLVED_MAP"
-    sed -i -E "s|^map *=.*|map=$RESOLVED_MAP|" "$INI"
+    # Escape sed replacement metacharacters: a bare & in a map name
+    # (Reav&Shut_...) would otherwise expand to the matched text and
+    # corrupt bwapi.ini, leaving the game on a dead map with no HELLO.
+    ESCAPED_MAP=$(printf '%s' "$RESOLVED_MAP" | sed 's/[&\|]/\\&/g')
+    sed -i -E "s|^map *=.*|map=$ESCAPED_MAP|" "$INI"
     if [ -z "$GAME_TYPE" ]; then
-      # Keep in sync with BwapiIni.java UMS_MARKERS: scenario content plays
+      # Keep in sync with MapCatalog.scala umsMarkers: scenario content plays
       # USE_MAP_SETTINGS, everything else defaults to MELEE. Explicit
       # --game-type always wins.
       MAP_LOWER=$(echo "$RESOLVED_MAP" | tr '[:upper:]' '[:lower:]')
@@ -287,10 +375,17 @@ fi
 sed -i -E "s|^windowed *=.*|windowed=OFF|" "$INI"
 PRE_REP="$(ls -t "$REPLAYS_DIR"/*.rep 2>/dev/null | head -1 || true)"
 
+# StarCraft always runs silent: the Xvfb desktop is invisible but the sound
+# card is real, and scbw containers have no audio either. Muting Wine's
+# audio drivers for the game process only; the client JVM never needs
+# this (Java is mute).
+AUDIO_ENV=(WINEDLLOVERRIDES="winealsa.drv=d;wineoss.drv=d;winepulse.drv=d;winecoreaudio.drv=d;winemm.drv=d")
 cd "$GAME_ROOT"
-bgs env WINEDEBUG=-all DISPLAY="${DISPLAY:-:0}" \
+bgs env WINEDEBUG=-all "${AUDIO_ENV[@]}" DISPLAY="${DISPLAY:-:0}" \
   wine chaoslauncher/Chaoslauncher.exe \
   > "$LOG_DIR/chaoslauncher.log" 2>&1 < /dev/null
+CHAOS_PID=$!
+record_pids
 
 SC_UP=0
 for _ in $(seq 1 90); do
@@ -299,12 +394,29 @@ for _ in $(seq 1 90); do
 done
 if [ "$SC_UP" -eq 1 ]; then say "  StarCraft is running"; since "StarCraft is up";
 else say "  WARNING: StarCraft not running within 45 s (see $LOG_DIR/chaoslauncher.log)"; fi
+SC_PID=$(pgrep -x StarCraft.exe --newest 2>/dev/null || true)
+record_pids
 
-say "Step 3/3: watching for HELLO_PURPLEWAVE (grace 60s)..."
-END=$(( $(date +%s) + 60 )); ATTACHED=0
+say "Step 3/3: watching for HELLO_ERIDANWAVE (grace 60s)..."
+END=$(( $(date +%s) + 60 )); ATTACHED=0; KEYS=0; LASTKEY=0
 while [ "$(date +%s)" -lt "$END" ]; do
-  if grep -q "HELLO_PURPLEWAVE" "$CLIENT_LOG" 2>/dev/null; then
-    say "SUCCESS: BWAPI attached, PurpleWave is playing!"; ATTACHED=1; break
+  if grep -qE "HELLO_(ERIDAN|PURPLE)WAVE" "$CLIENT_LOG" 2>/dev/null; then
+    say "SUCCESS: BWAPI attached, EridanWave is playing!"; ATTACHED=1; break
+  fi
+  # UMS maps idle in the briefing room: dismiss it so headless runs self-start (max 5 presses).
+  # The key must reach the game window: with no focused window on the Xvfb
+  # desktop an unfocused press goes nowhere, so focus Brood War first and
+  # address the key at its window explicitly.
+  if [ "$KEYS" -lt 5 ] && [ "${GAME_TYPE:-}" = "USE_MAP_SETTINGS" ] && [ "${HIDDEN:-1}" = "1" ] \
+    && [ $(( $(date +%s) - LASTKEY )) -ge 8 ] && command -v xdotool >/dev/null; then
+    SC_WIN=$(DISPLAY=":99" xdotool search --name "^Brood War$" 2>/dev/null | head -1)
+    if [ -n "$SC_WIN" ]; then
+      DISPLAY=":99" xdotool windowfocus --sync "$SC_WIN" >/dev/null 2>&1
+      DISPLAY=":99" xdotool key --window "$SC_WIN" Return 2>/dev/null
+    else
+      DISPLAY=":99" xdotool key Return 2>/dev/null
+    fi
+    LASTKEY=$(date +%s); KEYS=$((KEYS+1))
   fi
   if ! kill -0 "$CLIENT_PID" 2>/dev/null; then
     say "FAILED: client JVM died. Log tail:"; tail -15 "$CLIENT_LOG" | sed 's/^/    /'
@@ -313,7 +425,7 @@ while [ "$(date +%s)" -lt "$END" ]; do
   sleep 1
 done
 if [ "$ATTACHED" -eq 0 ]; then
-  say "FAILED: no HELLO_PURPLEWAVE within the grace period. Client log tail:"
+  say "FAILED: no HELLO_ERIDANWAVE within the grace period. Client log tail:"
   tail -15 "$CLIENT_LOG" | sed 's/^/    /'
   cleanup; exit 1
 fi
@@ -321,9 +433,25 @@ fi
 # The game ends when the client JVM exits (win or lose): tear the session down.
 say "###############################################"
 while kill -0 "$CLIENT_PID" 2>/dev/null; do sleep 2; done
+# Replay flush grace: StarCraft writes the .rep on game end, but on a
+# manual exit there may be nothing new coming - waiting the full window
+# then just burns wall-clock (Escape took ~15s). Break early once the
+# game processes are gone and a short grace passes with no new replay;
+# a live game still gets the full window for a slow flush.
+REPLAY_WAIT_GRACE=3
+REPLAY_DEAD_COUNT=0
 for _ in $(seq 1 20); do
   CUR_REP="$(ls -t "$REPLAYS_DIR"/*.rep 2>/dev/null | head -1 || true)"
   if [ -n "${CUR_REP:-}" ] && [ "$CUR_REP" != "${PRE_REP:-}" ]; then break; fi
+  if ! kill -0 "${SC_PID:-x}" 2>/dev/null && ! kill -0 "${CHAOS_PID:-x}" 2>/dev/null; then
+    REPLAY_DEAD_COUNT=$((REPLAY_DEAD_COUNT + 1))
+    if [ "$REPLAY_DEAD_COUNT" -ge "$REPLAY_WAIT_GRACE" ]; then
+      say "  game processes gone, no new replay after ${REPLAY_DEAD_COUNT}s - skipping the wait"
+      break
+    fi
+  else
+    REPLAY_DEAD_COUNT=0
+  fi
   sleep 1
 done
 ls -lt "$REPLAYS_DIR"/ 2>/dev/null | head -3
@@ -344,5 +472,10 @@ cleanup
   fi
   ln -sfn "$RUN_DIR" "$WINE_RUNS_DIR/latest"
   say "run archived: $RUN_DIR"
+  # Dashboard row + file:// snapshot for every game. Batch runs opt out:
+  # ums-batch.sh records its own richer rows.
+  if [ -z "${ERIDAN_SKIP_DASHBOARD_RECORD:-}" ]; then
+    bash "$REPO/scripts/dashboard-record.sh" "$RUN_DIR" "${MAP:-?}" "${ENEMY_RACE:-?}" || true
+  fi
 } || true
 exit 0

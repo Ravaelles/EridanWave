@@ -10,7 +10,7 @@ $scalaVersion = '2.12.18'
 $compiler = @('scala-compiler', 'scala-library', 'scala-reflect') | ForEach-Object {
     Join-Path $ScalaRepository "$_/$scalaVersion/$_-$scalaVersion.jar"
 }
-$botJar = Join-Path $repo 'target/PurpleWave-1.0.jar'
+$botJar = Join-Path $repo 'target/EridanWave-1.0.jar'
 $output = Join-Path $repo 'target/formation-path-tests'
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 & $Javac -cp $botJar -d $output (Join-Path $repo '3rdparty/jbwapi/src/test/java/bwapi/GameBuilder.java')
