@@ -25,7 +25,6 @@ object HoldLineAdvanceBehavior {
       target.nonEmpty &&
       HoldLineAdvance.shouldAdvance(
         hasFormation    = unit.formationEngage.isDefined,
-        melee           = unit.unitClass.melee,
         weaponReady     = unit.cooldownLeft <= 0,
         fractionInSlot  = combat.formationReadiness,
         beyondRangeTiles = beyondTiles)

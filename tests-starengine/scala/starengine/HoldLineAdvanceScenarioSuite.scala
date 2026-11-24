@@ -28,7 +28,6 @@ class HoldLineAdvanceScenarioSuite extends AnyFunSuite with StarEngineSuite {
       val beyondTiles = foe.map(f => (me.dist(f) - me.rangeAgainst(f)) / 32.0).getOrElse(-1.0)
       val creeping = foe.nonEmpty && HoldLineAdvance.shouldAdvance(
         hasFormation   = true,
-        melee          = false,
         weaponReady    = me.cooldownLeft <= 0,
         fractionInSlot = 1.0,
         beyondRangeTiles = beyondTiles)

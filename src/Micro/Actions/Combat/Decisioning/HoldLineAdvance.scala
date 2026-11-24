@@ -14,7 +14,7 @@ package Micro.Actions.Combat.Decisioning
 object HoldLineAdvance {
 
   /** Formation advance per frame while holding, in tiles. */
-  val advanceTiles: Double = 0.1
+  val advanceTiles: Double = 0.15
 
   /** Dressed enough to advance as one line, in fraction of warriors in slot. */
   val advanceReadyFraction: Double = 0.8
@@ -25,11 +25,10 @@ object HoldLineAdvance {
 
   def shouldAdvance(
     hasFormation: Boolean,
-    melee: Boolean,
     weaponReady: Boolean,
     fractionInSlot: Double,
     beyondRangeTiles: Double): Boolean =
-    hasFormation && ! melee && weaponReady && fractionInSlot >= advanceReadyFraction && beyondRangeTiles > 0.0
+    hasFormation && weaponReady && fractionInSlot >= advanceReadyFraction && beyondRangeTiles > 0.0
 
   /**
    * Step for the odds: our skim over theirs, clamped to the courage

@@ -4,6 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.OverwhelminglyStronger
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
+import Micro.Actions.Combat.Decisioning.Skirmish.HoldLineAdvanceBehavior
 import Micro.Agency.Commander
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -40,13 +41,14 @@ object ApproachBuildingFormation {
     if ( ! eligible(unit, combat)) return false
 
     unit.agent.act("Dress")
-    // The dressed advance is suspended (owner order): the line forms
-    // and freezes instead of creeping - advancing before contact is
-    // understood needs stillness as the instrument first. Nearby slots
-    // are walked to, never the far goal: chasing a formation across
-    // the map strings the line out instead of dressing it. A slot past
-    // the leash means the pack moved on without this hull: hold, the
-    // rally owns stragglers. Slotless hulls hold where they stand.
+    // Dressed with a target past the gun: the held line advances at
+    // the owner's pace instead of charging through its own formation.
+    if (HoldLineAdvanceBehavior.run(unit, combat)) return true
+    // Nearby slots are walked to, never the far goal: chasing a
+    // formation across the map strings the line out instead of
+    // dressing it. A slot past the leash means the pack moved on
+    // without this hull: hold, the rally owns stragglers. Slotless
+    // hulls hold where they stand.
     unit.formationEngage.flatMap(_(unit)) match {
       case Some(slot) if unit.pixelDistanceCenter(slot) * Maff.inv32 <= dressStepTiles =>
         unit.agent.decision.set(slot)
@@ -83,7 +85,7 @@ object ApproachBuildingFormation {
    * outranged frames, so a ghost hunt never walks it out of formation.
    */
   def eligible(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
-    if ( ! unit.unitClass.isWarrior || ! unit.canMove || unit.unitClass.melee) return false
+    if ( ! unit.unitClass.isWarrior || ! unit.canMove) return false
     if (unit.agent.isScout) return false
     // Hittable frames belong to the duel, contact belongs to the kite.
     if (unit.matchups.targetsInRange.nonEmpty) return false
