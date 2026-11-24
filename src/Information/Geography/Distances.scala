@@ -12,7 +12,7 @@ import Mathematics.Maff
 object Distances {
 
   private var key: String = ""
-  private var naturalChokeToMainTiles: Double = 0.0
+  private var naturalChokeToMainBaseTiles: Double = 0.0
   private var enemyKey: String = ""
   private var naturalChokeToEnemyTiles: Double = 0.0
 
@@ -28,13 +28,13 @@ object Distances {
     val now = With.mapFileName + "@" + With.self.startTile.toString
     if (now != key) {
       key = now
-      naturalChokeToMainTiles = (for {
+      naturalChokeToMainBaseTiles = (for {
         choke <- Chokes.naturalChoke
         main  <- BaseLocations.main
-      } yield choke.pixelCenter.pixelDistance(main.heart.center) * Maff.inv32)
+      } yield choke.pixelCenter.groundPixels(main.heart.center) * Maff.inv32)
         .getOrElse(0.0)
     }
-    naturalChokeToMainTiles
+    naturalChokeToMainBaseTiles
   }
 
   /**

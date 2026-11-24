@@ -94,9 +94,22 @@ trait PvPOpeningTimings { self: PvPOpening =>
     // Weak and outnumbered: no natural while behind on army - the base
     // never pays for itself if we cannot hold it. Applies before the
     // hold-natural line below, so the defense stands down with it.
+    // Pressured: an enemy combat unit inside sixty ground tiles of our
+    // main with a thin line means the natural is a donation, not an
+    // economy - same hold, wider army band plus the proximity gate.
+    val nearestEnemyMainTiles = if (With.geography.ourBases.isEmpty) Double.PositiveInfinity else {
+      val mainHeart = With.geography.ourMain.heart.center
+      Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(
+        _.pixel.groundPixels(mainHeart))
+        .map(_.pixel.groundPixels(mainHeart) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    }
     if (PvPWeakHold.holdNatural(
       With.battles.globalAttack.us.skimStrengthUnits,
-      unitsComplete(IsWarrior))) {
+      unitsComplete(IsWarrior)) ||
+      PvPWeakHold.holdNaturalVsPressure(
+        With.battles.globalAttack.us.skimStrengthUnits,
+        unitsComplete(IsWarrior),
+        nearestEnemyMainTiles)) {
       status(true, "WeakHoldNatural")
       shouldExpand = false
     }

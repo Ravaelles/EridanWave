@@ -81,7 +81,7 @@ object NoRetreat {
    */
   def holdsAny(unit: FriendlyUnitInfo): Boolean =
     homeStand(unit) || tanksAtNatural(unit) || dragoonBrave(unit) ||
-      dragoonPack(unit) || reaverBrave(unit) ||
+      dragoonPack(unit) || reaverBrave(unit) || proxyDefense() ||
       umsEndgame(With.umsMode, With.frame, unit.matchups.targetsInRange.nonEmpty)
 
   /** Ten seconds in, UMS micro maps stop retreating for good. */
@@ -111,4 +111,33 @@ object NoRetreat {
         t.likelyStillThere && IsTank(t) &&
           threatensNatural(t.tileDistanceEdge(naturalHeart)))
     }
+
+  /**
+   * PvP proxy defense (owner order): with few hulls home and an enemy
+   * ground army already inside our natural-choke radius, every warrior
+   * stands - a retreat here donates the main while the proxy still
+   * builds up. Frame-memoized like HomeStand: the radius never moves
+   * mid-game, so every reader shares one ground-path walk per frame.
+   */
+  private var proxyFrame: Int = Int.MinValue
+  private var proxyHeld: Boolean = false
+
+  def proxyDefense(): Boolean = {
+    if (With.frame != proxyFrame) {
+      proxyFrame = With.frame
+      proxyHeld = With.geography.ourBases.nonEmpty && Enemy.protoss() && {
+        val mainHeart = With.geography.ourMain.heart.center
+        ProxyDefense.holdsGround(
+          enemyIsProtoss = true,
+          ourWarriors = With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
+          nearestFoeMainTiles = Maff.minBy(With.units.enemy.view.filter(e =>
+            e.alive && e.likelyStillThere && ! e.flying && e.unitClass.isWarrior && e.unitClass.attacksGround))(
+            _.pixel.groundPixels(mainHeart))
+            .map(_.pixel.groundPixels(mainHeart) * Maff.inv32).getOrElse(Double.PositiveInfinity),
+          homeRadiusTiles = Information.Geography.Distances.naturalChokeToMainBase())
+      }
+    }
+
+    proxyHeld
+  }
 }

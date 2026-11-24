@@ -11,4 +11,17 @@ class PvPWeakHoldSuite extends AnyFunSuite {
     assert( ! PvPWeakHold.holdNatural(armyStrengthUnits = 140.0, warriors = 10))
     assert( ! PvPWeakHold.holdNatural(armyStrengthUnits = 500.0, warriors = 30))
   }
+
+  test("pressure at the gates holds the natural even before weakness does") {
+    assert(PvPWeakHold.pressuredTiles == 60.0)
+    assert(PvPWeakHold.pressuredArmyUnits == 190.0)
+    assert(PvPWeakHold.pressuredWarriors == 10)
+    // Enemy on top of our main with a thin line: no second base.
+    assert(PvPWeakHold.holdNaturalVsPressure(armyStrengthUnits = 190.0, warriors = 10, nearestEnemyTiles = 60.0))
+    assert(PvPWeakHold.holdNaturalVsPressure(armyStrengthUnits = 100.0, warriors = 5, nearestEnemyTiles = 0.0))
+    // Strong line, full count, or distant enemy: expand freely.
+    assert( ! PvPWeakHold.holdNaturalVsPressure(armyStrengthUnits = 190.1, warriors = 10, nearestEnemyTiles = 60.0))
+    assert( ! PvPWeakHold.holdNaturalVsPressure(armyStrengthUnits = 190.0, warriors = 11, nearestEnemyTiles = 60.0))
+    assert( ! PvPWeakHold.holdNaturalVsPressure(armyStrengthUnits = 190.0, warriors = 10, nearestEnemyTiles = 60.1))
+  }
 }

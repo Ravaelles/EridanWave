@@ -208,6 +208,10 @@ object MarchOrders {
         MacroFacts.enemyHardCounterKnown,
         Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.unitClass.isWarrior))(_.pixelDistanceCenter(unit.pixel))
           .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)) &&
+        // PvP proxy defense owns both verdict arms: with few hulls home
+        // and an enemy ground army already inside, neither phase walks
+        // the line home - the march and the technique read the same gate.
+        ! Micro.Actions.Combat.Decisioning.Skirmish.NoRetreat.proxyDefense() &&
         ! RetreatVerdict.suppressUmsOpening(With.umsMode, With.frame),
       With.frame)
     // An overwhelming line marches instead of going home: the same
