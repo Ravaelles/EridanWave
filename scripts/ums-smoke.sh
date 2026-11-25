@@ -24,9 +24,10 @@ for arg in "$@"; do
 done
 
 MAPS=(
-  "ums/rav/protoss/1Drag_v_1Drag.scm"
   "ums/rav/protoss/15Drag_v_16Drag.scm"
+  "ums/rav/protoss/1DragWounded_v_1Zeal.scm"
   "ums/rav/protoss/Drag_v_LingsUpg.scm"
+  "ums/rav/protoss/1Drag_v_1Drag.scm"
 )
 
 FAIL=0

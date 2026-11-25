@@ -19,6 +19,27 @@ object KiteHold {
   /** Near-dead step: far, not wound-scaled - the hull gets out, not even. */
   var nearDeadOffsetTiles: Double = 2.8
 
+  /**
+   * Flee-first floor, in tiles (owner order, 1DragWounded): a bleeding
+   * hull never starts a volley with blades this close - it strides out
+   * first and shoots from safety. Doubles as the escape stride below.
+   */
+  var fleeFirstTiles: Double = 2.8
+
+  /** Bleeding hulls hold their loaded volleys outside the floor. */
+  def holdsShot(totalHealth: Int, nearestMeleeTiles: Double): Boolean =
+    ! KiteAway.isSeriouslyWounded(totalHealth) || nearestMeleeTiles >= fleeFirstTiles
+
+  /**
+   * Flee-first trigger (owner order, 1DragWounded): seriously wounded
+   * with melee inside the chase starts running instead of waiting for
+   * contact - a hull two swings from death donates the approach by
+   * standing. Healthy hulls keep the mirror discipline (every tile
+   * yielded is paid for in volleys).
+   */
+  def fleesFirst(totalHealth: Int, nearestMeleeTiles: Double): Boolean =
+    KiteAway.isSeriouslyWounded(totalHealth) && nearestMeleeTiles <= KiteAway.chaseTiles
+
   def isNearDead(shieldPoints: Int, maxShields: Int): Boolean =
     maxShields > 0 && shieldPoints <= nearDeadShields
 

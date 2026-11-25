@@ -103,7 +103,7 @@ object CommanderMove {
    * proved moving beats the volley, and the gun is cooling anyway.
    */
   private[Micro] def moveOverriding(unit: FriendlyUnitInfo): Unit =
-    move(unit, unit.agent.destinationNext(), 128.0, true)
+    move(unit, unit.agent.destinationNext(), 32.0, true)
   private[Micro] def move(unit: FriendlyUnitInfo, destination: Pixel, tolerancePixels: Double = 128, overrideFiringSolution: Boolean = false): Unit = {
     // Adjust even while unready: transport coordination below still needs the destination.
     val to = CommanderOrder.adjustDestination(unit, destination, remember = unit.ready)

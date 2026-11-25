@@ -1,6 +1,8 @@
 package Micro.Actions.Combat.Decisioning
 
 import Debugging.Visualizations.Forces
+import Mathematics.Maff
+import Micro.Actions.Combat.Decisioning.Kiting.KiteHold
 import Micro.Agency.Commander
 import Micro.Heuristics.Potential
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -40,7 +42,12 @@ object RepositionBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     unit.agent.act("Reposition")
-    if (shouldVolley(retreating = combat.shouldRetreat, cooldownLeft = unit.cooldownLeft, hasHittable = unit.matchups.targetsInRange.nonEmpty)) {
+    // Bleeding hulls never start that volley with blades on top (owner
+    // order, 1DragWounded): the fallback potshot below still spends
+    // aimed shots, but the standing hold yields to footwork instead.
+    val nearestMeleeTiles = Maff.minBy(unit.matchups.threats.view.filter(t => t.likelyStillThere && t.unitClass.melee))(
+      unit.pixelDistanceEdge(_)).map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    if (shouldVolley(retreating = combat.shouldRetreat, cooldownLeft = unit.cooldownLeft, hasHittable = unit.matchups.targetsInRange.nonEmpty) && KiteHold.holdsShot(unit.totalHealth, nearestMeleeTiles)) {
       if (AttackIfReadyBehavior.run(unit, combat)) return true
       // Loaded and hittable but not yet aimed: hold the volley instead
       // of footworking past it - same rule as the dance and the charge.

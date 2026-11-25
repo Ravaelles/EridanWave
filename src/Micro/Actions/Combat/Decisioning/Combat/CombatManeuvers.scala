@@ -6,6 +6,7 @@ import Mathematics.Maff
 import Mathematics.Physics.Force
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
+import Micro.Actions.Combat.Decisioning.Kiting.KiteHold
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -35,7 +36,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     move()
   }
 
-  private[Decisioning] def move(): Boolean = {
+  private[Decisioning] def move(tolerancePixels: Double = 128.0): Boolean = {
     if (unit.canMove) {
       if (Protoss.Reaver(unit) && unit.agent.ride.isDefined && ! unit.agent.commit && ! unit.loaded) {
         if (combat.target
@@ -44,7 +45,11 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
           Commander.rightClick(unit, unit.agent.ride.get)
         }
       }
-      Commander.move(unit)
+      // Tight tolerance keeps kites and dodges responsive: the order
+      // dedup below skips re-issues inside the deadband, and a kite
+      // chasing a moving presser must re-aim every step, not cruise
+      // on a stale point while the gap closes for free.
+      Commander.move(unit, unit.agent.destinationNext(), tolerancePixels)
     }
     unit.unready
   }
@@ -119,8 +124,12 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
       // close distance the hull already holds donates the volley for
       // positioning. Hold and spend it instead - the charge resumes once
       // the gun cools. Air dancers keep their dance (motion is their
-      // survival); everyone else stands and shoots. One verdict, shared.
-      if (VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty) && ! dogfightingAir) {
+      // survival); everyone else stands and shoots. Bleeding hulls never
+      // start that volley with blades on top (owner order, 1DragWounded):
+      // they kite first and shoot from safety instead. One verdict, shared.
+      val nearestMeleeTiles = Maff.minBy(unit.matchups.threats.view.filter(t => t.likelyStillThere && t.unitClass.melee))(
+        unit.pixelDistanceEdge(_)).map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+      if (VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty) && KiteHold.holdsShot(unit.totalHealth, nearestMeleeTiles) && ! dogfightingAir) {
         unit.agent.act("VolleyHold")
         Commander.hold(unit)
       }

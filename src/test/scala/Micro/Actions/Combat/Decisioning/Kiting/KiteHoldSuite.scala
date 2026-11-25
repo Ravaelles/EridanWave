@@ -53,4 +53,20 @@ class KiteHoldSuite extends AnyFunSuite {
   test("near-dead hulls hold their last volleys against guns alone") {
     assert( ! KiteHold.shouldFleeNearDead(shieldPoints = 5, maxShields = 80, enemyInMargin = true, hasMeleeNearby = false))
   }
+
+  test("bleeding hulls never start a volley with blades inside 2.8 tiles") {
+    assert(KiteHold.holdsShot(totalHealth = 200, nearestMeleeTiles = 0.0))
+    assert(KiteHold.holdsShot(totalHealth = 66, nearestMeleeTiles = 0.0))
+    assert(KiteHold.holdsShot(totalHealth = 65, nearestMeleeTiles = 2.8))
+    assert( ! KiteHold.holdsShot(totalHealth = 65, nearestMeleeTiles = 2.79))
+    assert( ! KiteHold.holdsShot(totalHealth = 40, nearestMeleeTiles = 0.0))
+  }
+
+  test("bleeding hulls flee first from melee inside the chase") {
+    assert(KiteHold.fleesFirst(totalHealth = 65, nearestMeleeTiles = 7.0))
+    assert(KiteHold.fleesFirst(totalHealth = 65, nearestMeleeTiles = 2.8))
+    assert( ! KiteHold.fleesFirst(totalHealth = 65, nearestMeleeTiles = 7.01))
+    assert( ! KiteHold.fleesFirst(totalHealth = 66, nearestMeleeTiles = 2.0))
+    assert( ! KiteHold.fleesFirst(totalHealth = 65, nearestMeleeTiles = Double.PositiveInfinity))
+  }
 }

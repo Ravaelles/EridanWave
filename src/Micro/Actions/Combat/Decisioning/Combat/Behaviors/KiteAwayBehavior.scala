@@ -116,6 +116,7 @@ object KiteAwayBehavior extends PerGame {
     // nearby the plant needs the edge: standing in contact donates the
     // swing for a volley the next cycle fires from range for free.
     if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby) &&
+      KiteHold.holdsShot(unit.totalHealth, nearTiles) &&
       (gunsNear || KiteAway.holdsTheEdge(nearTiles, edgeTiles))) {
       plantVolley(unit)
 
@@ -126,8 +127,11 @@ object KiteAwayBehavior extends PerGame {
     // hull with a loaded gun and something hittable spends the shot
     // before running - kiting far past a loaded volley donates the only
     // damage it will ever deal. The escape resumes once the gun cools.
-    // Answers through the shared volley verdict, like every other leg.
+    // Never into contact (owner order, 1DragWounded): a blade already
+    // inside the floor carves the hull mid-volley. Answers through the
+    // shared volley verdict, like every other leg.
     if (KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) &&
+      KiteHold.holdsShot(unit.totalHealth, nearTiles) &&
       VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)) {
       plantVolley(unit)
 
@@ -178,7 +182,11 @@ object KiteAwayBehavior extends PerGame {
       // dragoons stood 1900 frames silent at the edge). The hull yields
       // instead and plants the shot once they walk into reach.
       val hasHittable = unit.matchups.targetsInRange.nonEmpty
-      if (hasHittable && ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley) ||
+      // Bleeding hulls never start a volley with blades on top (owner
+      // order, 1DragWounded): the plant waits for distance instead of
+      // donating the swing. Even the cannot-outrun trade waits: a dying
+      // hull spends its volley running, not standing into the swing.
+      if (hasHittable && KiteHold.holdsShot(unit.totalHealth, nearTiles) && ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley) ||
         (loadedVolley && KiteAway.shouldTradeContact(unit.topSpeed, fastestBlade)))) {
         plantVolley(unit)
 
@@ -191,7 +199,10 @@ object KiteAwayBehavior extends PerGame {
     }
 
     if ( ! shouldKite(unit, enemyInMargin, hasMeleeNearby, pvpRules, zergRules, shielded)) return false
-    if (holdToShoot(unit, combat)) return true
+    // Bleeding hulls never hold-to-shoot into blades (owner order,
+    // 1DragWounded): the free shot is not free when the swing lands
+    // first - they kite and let the plant legs take safe shots.
+    if (KiteHold.holdsShot(unit.totalHealth, nearTiles) && holdToShoot(unit, combat)) return true
     // Masonry never chases: kiting away from a building anchor donates
     // DPS and time for nothing, so a building anchor holds instead of
     // yielding. Hold-to-shoot above is untouched: a free shot at a
@@ -410,6 +421,12 @@ object KiteAwayBehavior extends PerGame {
     val woundWant = WoundMargin(0.0, KiteAway.maxOffsetTiles).pixels(unit.woundPercent())
     val meleeNear = unit.matchups.threatsInPixels(KiteAway.enemyMarginTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
     val nearDeadFar = KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) && meleeNear
+    // Flee-first (owner order, 1DragWounded): a bleeding hull with melee
+    // inside the chase runs far instead of edging to zero - the edge cap
+    // assumes a hull that can afford the trade, and a dying hull cannot.
+    val nearestMeleeTiles = Maff.minBy(unit.matchups.threats.view.filter(t => t.likelyStillThere && t.unitClass.melee))(
+      unit.pixelDistanceEdge(_)).map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
+    val runFar = nearDeadFar || KiteHold.fleesFirst(unit.totalHealth, nearestMeleeTiles)
     // No guns nearby, blades on top: a loaded hull still steps out
     // instead of planting into the swing - the gap reopens and the next
     // volley fires from range for free. Guns nearby keep the mirror
@@ -418,7 +435,7 @@ object KiteAwayBehavior extends PerGame {
       t.likelyStillThere && t.canAttack(unit) && ! t.unitClass.melee &&
       unit.pixelDistanceEdge(t) * Maff.inv32 <= KiteAway.chaseTiles)
     val meleeContact = unit.matchups.threatsInPixels(KiteAway.steadyContactTiles * 32.0).exists(t => t.likelyStillThere && t.unitClass.melee)
-    val offsetPixels = if (nearDeadFar) KiteHold.nearDeadOffsetTiles * 32.0
+    val offsetPixels = if (runFar) KiteHold.nearDeadOffsetTiles * 32.0
       else if (hasMeleeNearby) {
         val edged = edgedYield(unit, woundWant)
         if (! gunsNear && meleeContact) KiteAway.escapeYield(edged, KiteAway.meleeEscapeTiles) else edged
@@ -461,8 +478,11 @@ object KiteAwayBehavior extends PerGame {
     // gate-proven yield (cooling hull, blades on top) would pose forever
     // behind its own volley. Loaded guns never reach this leg, so the
     // interrupt spends no volleys - it only spends cooling frames.
+    // Tight deadband (owner order, 1DragWounded): the continuing-order
+    // dedup would otherwise cruise on a stale point while the presser
+    // closes the gap for free - kiting re-aims every step.
     if (meleeContact) Commander.moveOverriding(unit)
-    else combat.maneuvers.move()
+    else combat.maneuvers.move(32.0)
   }
 
   /**

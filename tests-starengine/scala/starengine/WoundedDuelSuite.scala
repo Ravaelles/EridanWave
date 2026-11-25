@@ -44,6 +44,31 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
   }
 
   /**
+   * Flee-first (shipped 1DragWounded doctrine): a bleeding hull with
+   * melee inside the chase runs far instead of edging to zero, and only
+   * starts a volley outside the 2.8 floor. Everywhere else it kites
+   * exactly like the shipped rule.
+   */
+  private class FleeFirstPilot extends Pilot {
+    private val kite = new KitePilot
+
+    override def direct(me: Body, world: World): Directive = {
+      val foe = world.nearestFoeOf(me, foesOf(me, world), (_, _) => true)
+      val f = foe.getOrElse(return Hold)
+      val distTiles = me.dist(f) / 32.0
+      if (KiteHold.fleesFirst(me.hp.toInt, distTiles)) {
+        if (me.cooldownLeft <= 0 && me.dist(f) <= me.rangeAgainst(f) && KiteHold.holdsShot(me.hp.toInt, distTiles)) Chase(f)
+        else {
+          val dx = me.x - f.x
+          val dy = me.y - f.y
+          val d = Math.sqrt(dx * dx + dy * dy)
+          if (d > 0) MoveTo(me.x + dx / d * 128.0, me.y + dy / d * 128.0) else Hold
+        }
+      } else kite.direct(me, world)
+    }
+  }
+
+  /**
    * Plant-last: a loaded gun plants the volley instead of entering the
    * kite decision at all, then kites while truly cooling. Engine bodies
    * carry no shields, so the near-dead half of the doctrine stays
@@ -204,6 +229,17 @@ class WoundedDuelSuite extends AnyFunSuite with StarEngineSuite {
     println(s"DIAG healthy kite alive=$kiteAliveA,$kiteAliveB kills=$kiteKillsA,$kiteKillsB")
     assert(kiteAliveA && kiteAliveB, "a healthy hull kiting a slow blade must survive both seats")
     assert(kiteKillsA && kiteKillsB, "a healthy hull kiting a slow blade must clear it both seats")
+  }
+
+  test("flee-first outlives raw kiting on the bleeding duel, both seats") {
+    val (kiteAliveA, kiteKillsA, kiteDeathA) = duel(_ => new KitePilot, dragoonIsOurs = true)
+    val (kiteAliveB, kiteKillsB, kiteDeathB) = duel(_ => new KitePilot, dragoonIsOurs = false)
+    val (fleeAliveA, fleeKillsA, fleeDeathA) = duel(_ => new FleeFirstPilot, dragoonIsOurs = true)
+    val (fleeAliveB, fleeKillsB, fleeDeathB) = duel(_ => new FleeFirstPilot, dragoonIsOurs = false)
+    println(s"DIAG flee-first alive=$fleeAliveA,$fleeAliveB deadAt=$fleeDeathA,$fleeDeathB kills=$fleeKillsA,$fleeKillsB; kite alive=$kiteAliveA,$kiteAliveB deadAt=$kiteDeathA,$kiteDeathB kills=$kiteKillsA,$kiteKillsB")
+    // Capped: a timeout (Int.MaxValue, nobody died) outlives every death.
+    def capped(deathAt: Int): Int = Math.min(deathAt, 9000)
+    assert(capped(fleeDeathA) + capped(fleeDeathB) >= capped(kiteDeathA) + capped(kiteDeathB), "flee-first must buy at least as much time as kiting")
   }
 
   test("the shipped order shoots every cycle and never walks a loaded volley, both seats") {
