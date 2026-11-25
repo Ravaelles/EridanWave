@@ -1,4 +1,5 @@
 package Micro.Agency
+import Debugging.ErrorLedger
 import Lifecycle.With
 import Mathematics.Maff
 import Mathematics.Points.{Pixel, Points, Tile}
@@ -52,6 +53,29 @@ object CommanderCore {
 
     CommanderTransport.requestUnload(unit)
     true
+  }
+
+  /**
+   * Per-frame issued-order fuse (Stardust DUPLICATE ORDER, phase 0,
+   * log-only): records every BWAPI issuance on the unit and counts a
+   * second issuance in the same frame in the error ledger instead of
+   * failing silently. Log-only on purpose: the callers still issue, the
+   * ledger only names who doubled - the blocking flip waits for one UMS
+   * series proving the legal internal delegations are whitelisted.
+   * Returns whether this issuance is a duplicate (second or later).
+   */
+  private[Micro] def claimOrder(unit: FriendlyUnitInfo, issuer: String): Boolean = {
+    val (stored, duplicate) = IssuedOrderFuse.tryClaim(unit.orderClaim, With.frame, issuer)
+    unit.orderClaim = stored
+    if (duplicate) {
+      val first = stored.map(_.issuer).getOrElse("?")
+      ErrorLedger.note(
+        IssuedOrderFuse.duplicateKey(first, issuer, unit.unitClass.toString),
+        ErrorLedger.Priority.Medium,
+        f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} first $first second $issuer")
+    }
+
+    duplicate
   }
 
   /**

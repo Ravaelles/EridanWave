@@ -26,4 +26,12 @@ object IssuedOrderFuse {
       case Some(Claim(`frame`, _)) => (last, true)
       case _                       => (Some(Claim(frame, issuer)), false)
     }
+
+  /**
+   * Stable ledger key for a duplicate: first-vs-second issuer at the unit
+   * class, greppable beside the exception keys. Pure so the suite pins the
+   * format the end-of-game summary will carry.
+   */
+  def duplicateKey(first: String, second: String, className: String): String =
+    f"duplicateOrder.$first%sVs$second%s.at.$className%s"
 }

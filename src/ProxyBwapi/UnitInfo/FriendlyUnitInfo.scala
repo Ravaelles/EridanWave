@@ -139,6 +139,14 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
   def ready   : Boolean = sleepUntil <= With.frame
   def unready : Boolean = ! ready
 
+  /**
+   * Last BWAPI issuance this frame (Stardust fuse, phase 0): the frame plus
+   * its first issuer. Frame-bound by construction - a record from an older
+   * frame never blocks - so no reset call exists and none can wedge it.
+   * Written only through CommanderCore.claimOrder, beside every issuance.
+   */
+  var orderClaim: Option[Micro.Agency.IssuedOrderFuse.Claim] = None
+
   def trainee: Option[FriendlyUnitInfo] = _traineeCache()
   private val _traineeCache = new Cache(() => ?(training, With.units.ours.find(u => ! u.complete && u.pixel == pixel && is(u.unitClass.whatBuilds._1)), None))
 

@@ -165,7 +165,10 @@ object ApproachEnemyFormation {
         // Explicit hold, not the stationary skip: a standing hull keeps
         // whatever order it already holds (map attack-moves, stale
         // marches), so the freeze must own the order outright.
-        if (unit.order != ProxyBwapi.Orders.HoldPosition) unit.bwapiUnit.holdPosition()
+        if (unit.order != ProxyBwapi.Orders.HoldPosition) {
+          Micro.Agency.CommanderCore.claimOrder(unit, "ApproachEnemyFormation.hold")
+          unit.bwapiUnit.holdPosition()
+        }
         Commander.hold(unit)
 
         true

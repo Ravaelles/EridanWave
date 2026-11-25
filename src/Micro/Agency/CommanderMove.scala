@@ -18,6 +18,7 @@ object CommanderMove {
     CommanderCore.leadFollower(unit, stop)
     if (unit.unready) return
 
+    CommanderCore.claimOrder(unit, "CommanderMove.stop")
     unit.bwapiUnit.stop()
     Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
     CommanderCore.sleep(unit)
@@ -30,6 +31,7 @@ object CommanderMove {
     if ( ! Zerg.Lurker(unit) && CommanderCore.autoUnburrow(unit)) return
 
     if (unit.velocity.lengthSquared > 0 && unit.order != Orders.HoldPosition) {
+      CommanderCore.claimOrder(unit, "CommanderMove.hold")
       unit.bwapiUnit.holdPosition()
       Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
     }
@@ -76,6 +78,7 @@ object CommanderMove {
       unit.order == Orders.AttackUnit && Option(unit.bwapiUnit.getLastCommand).exists(command =>
         command.getType == bwapi.UnitCommandType.Attack_Move && ! command.isQueued && new Pixel(command.getTargetPosition).pixelDistance(to) < 128))
     if ( ! alreadyAttackMovingThere || unit.seeminglyStuck) {
+      CommanderCore.claimOrder(unit, "CommanderMove.attackMove")
       unit.bwapiUnit.attack(to.bwapi)
       Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.AttackMoveKind, With.frame)
     }
@@ -91,6 +94,7 @@ object CommanderMove {
     val to = CommanderOrder.adjustDestination(unit, destination, remember = true)
     if (CommanderCore.autoUnburrowUnlessLurkerInRangeOf(unit, to)) return
 
+    CommanderCore.claimOrder(unit, "CommanderMove.patrol")
     unit.bwapiUnit.patrol(to.bwapi)
     Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
     CommanderCore.sleepAttack(unit)
@@ -169,6 +173,7 @@ object CommanderMove {
         orderTarget.exists(_.pixelDistance(goal) < tolerancePixels) ||
           OrderContinue.holdsCourse(distTiles, onCourse))
       if ( ! continuing || unit.seeminglyStuck) {
+        CommanderCore.claimOrder(unit, "CommanderMove.move")
         unit.bwapiUnit.move(goal.bwapi)
         Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
       } else {

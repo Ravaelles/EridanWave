@@ -33,4 +33,9 @@ class IssuedOrderFuseSuite extends AnyFunSuite {
     assert( ! duplicate)
     assert(stored.contains(IssuedOrderFuse.Claim(101, "CommanderEngage.issueAttack")))
   }
+
+  test("the duplicate key names first-vs-second at the class") {
+    assert(IssuedOrderFuse.duplicateKey("CommanderMove.move", "CommanderEngage.issueAttack", "Dragoon") ==
+      "duplicateOrder.CommanderMove.moveVsCommanderEngage.issueAttack.at.Dragoon")
+  }
 }

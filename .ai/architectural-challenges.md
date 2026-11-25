@@ -67,6 +67,18 @@ hysteresis home (rules 10-11).
 
 ## Closed
 
+- Per-frame issued-order fuse (audit 2026-11, Stardust P0): every
+  `bwapiUnit.*` issuance in `Commander*` claims the frame through one
+  seam (`CommanderCore.claimOrder`, pure kernel `IssuedOrderFuse` beside
+  it), and a second issuance in the same frame lands in the error ledger
+  as `duplicateOrder.<first>Vs<second>.at.<class>` instead of failing
+  silently. Log-only by construction - callers still issue, the ledger
+  only names who doubled. First blood live (4+3Zeal mirror): 10x
+  `ApproachEnemyFormation.holdVsCommanderMove.hold` on Zealots, the
+  bypass-then-hold double the audit predicted. Pattern: authority
+  conflicts become countable before they become preventable - the fuse
+  measures, a later flip blocks.
+
 - Wrong reference frame (audit 2026-11, the TankHold class): a dozen
   kernels measured against the wrong side of the duel - our range
   where the enemy's belonged (HoldToShoot vs Vulture, TankHold seam),
