@@ -427,7 +427,14 @@ object KiteAwayBehavior extends PerGame {
     // assumes a hull that can afford the trade, and a dying hull cannot.
     val nearestMeleeTiles = Maff.minBy(unit.matchups.threats.view.filter(t => t.likelyStillThere && t.unitClass.melee))(
       unit.pixelDistanceEdge(_)).map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
-    val runFar = nearDeadFar || KiteHold.fleesFirst(unit.totalHealth, nearestMeleeTiles)
+    // Fleeing hulls cruise instead of re-aiming every frame: without a
+    // held heading the duel band (outside contact, inside the chase)
+    // re-derives the course off the jittering chaser and never reaches
+    // top speed - exactly where a dying hull needs it most. Same
+    // exclusion as the mirror: guns keep their twitch, near-dead keeps
+    // its far flight.
+    val fleeFirst = KiteHold.fleesFirst(unit.totalHealth, nearestMeleeTiles)
+    val runFar = nearDeadFar || fleeFirst
     // No guns nearby, blades on top: a loaded hull still steps out
     // instead of planting into the swing - the gap reopens and the next
     // volley fires from range for free. Guns nearby keep the mirror
@@ -454,7 +461,7 @@ object KiteAwayBehavior extends PerGame {
     // only where no guns watch: the mirror paces its volleys inside its
     // own reach, and dying hulls keep their far flight.
     val committed =
-      if ( ! gunsNear && hasMeleeNearby && ! nearDeadFar) {
+      if ( ! gunsNear && (hasMeleeNearby || fleeFirst) && ! nearDeadFar) {
         val far = unit.pixel.project(leashedAway, KiteAway.kiteCommitTiles * 32.0)
         if (far.walkable) far else leashedAway.walkablePixel
       } else leashedAway
@@ -465,12 +472,12 @@ object KiteAwayBehavior extends PerGame {
     // restart the frame counter, which releases every hold.
     val freshHeading = unit.pixel.radiansTo(committed)
     val steadied = steadyHeadings.get(unit.id) match {
-      case Some((held, heldFrame)) if ! gunsNear && hasMeleeNearby && ! nearDeadFar &&
+      case Some((held, heldFrame)) if ! gunsNear && (hasMeleeNearby || fleeFirst) && ! nearDeadFar &&
         ! KiteAway.shouldRefreshHeading(heldFrame, With.frame) &&
         KiteAway.holdsHeading(freshHeading, held, OrderContinue.headingConeRadians) =>
         unit.pixel.radiateRadians(held, KiteAway.kiteCommitTiles * 32.0).walkablePixel
       case _ =>
-        if ( ! gunsNear && hasMeleeNearby && ! nearDeadFar) steadyHeadings(unit.id) = (freshHeading, With.frame)
+        if ( ! gunsNear && (hasMeleeNearby || fleeFirst) && ! nearDeadFar) steadyHeadings(unit.id) = (freshHeading, With.frame)
         committed
     }
     unit.agent.decision.set(steadied)
