@@ -9,10 +9,9 @@ import Tactic.Squads.Group.FriendlyUnitGroup
 import Utilities.?
 
 /**
- * Squad targeting (extracted from SquadAutomation): which enemies the
- * squad shoots. One reason to change: the target strata (raid fallback
- * to halls, en-route roadblocks, army ranking). SquadAutomation keeps
- * thin forwarders so call sites do not move.
+ * Squad targeting: which enemies the squad shoots. One reason to change:
+ * the target strata (raid fallback to halls, en-route roadblocks, army
+ * ranking).
  */
 object SquadTargeting {
 

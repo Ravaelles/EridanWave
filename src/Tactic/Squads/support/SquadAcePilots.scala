@@ -18,7 +18,8 @@ import Tactic.Squads.Decisions.AceFleetLogic
 import Tactic.Squads.Decisions.BombingScore
 import Tactic.Squads.defense.SquadDefendBase
 import Tactic.Squads.Squad
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.MarchOrders
+import Tactic.Squads.SquadTargeting
 import Tactic.Squads.Squads
 
 class SquadAcePilots extends Squad {
@@ -103,7 +104,8 @@ class SquadAcePilots extends Squad {
     if (airDivision.isDefined) {
       activity = "AceAir2Air"
       vicinity = airDivision.get.centroidAir
-      SquadAutomation.targetAndSend(this)
+      SquadTargeting.target(this)
+      MarchOrders.sendUnits(this, unintended, Some(homeConsensus))
 
       return
     }
@@ -138,7 +140,8 @@ class SquadAcePilots extends Squad {
       if (bombingTarget.isDefined) {
         activity = "Bombing"
         vicinity = bombingTarget.get._1.heart.center
-        SquadAutomation.targetAndSend(this)
+        SquadTargeting.target(this)
+      MarchOrders.sendUnits(this, unintended, Some(homeConsensus))
 
         return
       }
@@ -164,7 +167,7 @@ class SquadAcePilots extends Squad {
       val base  = (unscoutedEnemy ++ likelyBases).find(_.name == monitorPick.get).get
       vicinity  = base.townHallArea.center
       setTargets(Iterable.empty)
-      SquadAutomation.send(this)
+      MarchOrders.sendUnits(this, this.unintended)
 
       return
     }
@@ -174,7 +177,8 @@ class SquadAcePilots extends Squad {
     if (nearestFlier.isDefined) {
       activity = "AceHunt"
       vicinity = nearestFlier.get.pixel
-      SquadAutomation.targetAndSend(this)
+      SquadTargeting.target(this)
+      MarchOrders.sendUnits(this, unintended, Some(homeConsensus))
 
       return
     }
@@ -201,7 +205,8 @@ class SquadAcePilots extends Squad {
       activity = "AceExplore"
       val base = (explorePool ++ likelyBases).find(_.name == explorePick.get).get
       vicinity = base.townHallArea.center
-      SquadAutomation.targetAndSend(this)
+      SquadTargeting.target(this)
+      MarchOrders.sendUnits(this, unintended, Some(homeConsensus))
 
       return
     }
@@ -234,7 +239,7 @@ class SquadAcePilots extends Squad {
     activity = "AceChill"
     val groundToAir = Maff.exemplarOpt(With.units.ours.filter(u => u.canAttackAir && ! u.flying).map(_.pixel))
     vicinity = groundToAir.getOrElse(homeConsensus)
-    SquadAutomation.target(this)
+    SquadTargeting.target(this)
     units.foreach(_.intend(this).setTerminus(vicinity).setRedoubt(vicinity))
   }
 
@@ -244,9 +249,9 @@ class SquadAcePilots extends Squad {
     val targetsUnsorted = Maff.orElse(
       otherSquad.targets.map(_.filter(_.flying)).getOrElse(Seq.empty),
       base.map(_.enemies.filter(_.flying)).getOrElse(Seq.empty),
-      SquadAutomation.unrankedAround(this, vicinity))
+      SquadTargeting.unrankedAround(this, vicinity))
     setTargets(targetsUnsorted.toVector.sortBy(_.pixelDistanceSquared(base.map(_.heart.center).getOrElse(vicinity))))
-    SquadAutomation.send(this)
+    MarchOrders.sendUnits(this, this.unintended)
   }
 }
 

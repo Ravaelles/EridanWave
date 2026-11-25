@@ -2,7 +2,7 @@ package Tactic.Squads.attack
 
 import Lifecycle.With
 import Mathematics.Maff
-import Tactic.Squads.{Squad, SquadAutomation}
+import Tactic.Squads.{MarchOrders, Squad}
 import Utilities.UnitFilters.IsWarrior
 
 /**
@@ -24,7 +24,7 @@ class SquadRazeExpansion extends Squad {
       vicinity = base.heart.center
       setTargets(base.units.filter(u => u.isEnemy && u.likelyStillThere).toVector)
     })
-    SquadAutomation.send(this)
+    MarchOrders.sendUnits(this, this.unintended)
   }
 }
 

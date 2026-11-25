@@ -13,7 +13,7 @@ import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.SquadTargeting
 import Utilities.Time.Seconds
 import Utilities.Time.Minutes
 import Utilities.UnitCounters.CountOne
@@ -183,7 +183,7 @@ abstract class MissionDrop extends Mission
   }
 
   protected def raid(): Unit = {
-    SquadAutomation.targetRaid(this)
+    SquadTargeting.targetRaid(this)
     transports.foreach(t => {
       if (defaultCombatLanding && !passengersFor(t).exists(requiredPassenger)) intendRoute(t, t.agent.defaultHome.tile)
       else t.intend(this).setTerminus(vicinity).setAction(raidTransportAction)

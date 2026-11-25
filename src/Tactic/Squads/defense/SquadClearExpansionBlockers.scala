@@ -12,7 +12,7 @@ import Utilities.UnitPreferences.PreferClose
 
 import scala.util.Random
 import Tactic.Squads.Squad
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.SquadTargeting
 import Tactic.Squads.Squads
 
 class SquadClearExpansionBlockers extends Squad {
@@ -52,7 +52,7 @@ class SquadClearExpansionBlockers extends Squad {
   def run(): Unit = {
     if (units.isEmpty) return
 
-    setTargets(SquadAutomation.rankedAround(this))
+    setTargets(SquadTargeting.rankedAround(this))
     detectorLock.units.foreach(_.intend(this).setTerminus(vicinity))
     sweeperLock.units.foreach(_.intend(this).setTerminus(vicinity.add(randomPosition())))
   }

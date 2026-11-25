@@ -9,7 +9,9 @@ import ProxyBwapi.Races.{Protoss, Terran, Zerg}
 import Utilities.UnitCounters.CountExactly
 import Utilities.UnitFilters.{IsAll, IsAntiGround, IsMobileDetector, IsWarrior}
 import Utilities.UnitPreferences.PreferClose
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.MarchOrders
+import Tactic.Squads.SquadForming
+import Tactic.Squads.SquadTargeting
 import Utilities.Time.Minutes
 
 class MissionKillExpansion extends Mission {
@@ -63,8 +65,9 @@ class MissionKillExpansion extends Mission {
       detectorLock.setPreference(PreferClose(vicinity)).acquire()
     }
 
-    SquadAutomation.targetRaid(this)
-    SquadAutomation.formAndSend(this)
+    SquadTargeting.targetRaid(this)
+    formations = SquadForming.form(this, homeConsensus, vicinity)
+    MarchOrders.sendUnits(this, unintended, Some(homeConsensus))
     units.foreach(_.intent.setCanSneak(true))
   }
 }

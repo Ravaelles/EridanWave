@@ -10,7 +10,7 @@ import Planning.ResourceLocks.LockUnits
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitTracking.AliveEnemies
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.SquadTargeting
 import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitPreferences.PreferClose
 
@@ -93,7 +93,7 @@ class MissionAssaultFerry extends MissionDrop {
     transports.isEmpty
 
   override def raid(): Unit = {
-    SquadAutomation.targetRaid(this)
+    SquadTargeting.targetRaid(this)
     passengers.foreach(p => if ( ! p.loaded) p.intend(this).setAction(Idle).setTerminus(vicinity))
     passengers.foreach(_.agent.commit = commitWhileRaiding)
     topUpCrew()

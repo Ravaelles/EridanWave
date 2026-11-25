@@ -8,7 +8,7 @@ import Utilities.UnitCounters.CountUpTo
 import Utilities.UnitFilters.{IsAll, IsDetector}
 import Utilities.UnitPreferences.PreferClose
 import ProxyBwapi.Races.Protoss
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.SquadTargeting
 
 class MissionDTDrop extends MissionDrop {
   override protected def additionalFormationConditions: Boolean = With.recruiter.available.exists(MatchDroppableDT)
@@ -35,7 +35,7 @@ class MissionDTDrop extends MissionDrop {
   override def raid(): Unit = {
     transportLock.release()
     transports.clear()
-    SquadAutomation.targetRaid(this)
+    SquadTargeting.targetRaid(this)
   }
 }
 

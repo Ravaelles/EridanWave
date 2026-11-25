@@ -27,7 +27,8 @@ import Tactic.Squads.Group.GenericFriendlyUnitGroup
 import Tactic.Squads.Decisions.MainChokeHold
 import Tactic.Squads.support.SquadAcePilots
 import Tactic.Squads.Squad
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.MarchOrders
+import Tactic.Squads.SquadTargeting
 import Tactic.Squads.Squads
 
 class SquadDefendBase(base: Base) extends Squad {
@@ -212,7 +213,7 @@ class SquadDefendBase(base: Base) extends Squad {
     lastAction = "ChokeHold"
     formations += new FormationStandard(this, FormationStyleGuard, choke.get, None)
     holders.foreach(_.agent.act("ChokeHold"))
-    SquadAutomation.send(this)
+    MarchOrders.sendUnits(this, this.unintended)
     holders.foreach(_.intent.setCanFlee(false))
 
     true
@@ -238,7 +239,7 @@ class SquadDefendBase(base: Base) extends Squad {
     val canGuard        = guardChoke.isDefined && (units.size > 5 || blockZerglings || ! With.enemies.exists(_.isZerg) || With.geography.ourBases.length > 1)
     val targetsUnranked =
       if      (defense.canScour) defense.scourables
-      else if (canWithdraw)      SquadAutomation.unrankedEnRouteTo(this, vicinity).toVector
+      else if (canWithdraw)      SquadTargeting.unrankedEnRouteTo(this, vicinity).toVector
       else                       enemies.filter(threateningBase)
 
     DefensePlan(
@@ -273,7 +274,7 @@ class SquadDefendBase(base: Base) extends Squad {
       formations += formationScour
     }
     formations += formationWithdraw
-    if (plan.canScour) scour() else SquadAutomation.send(this)
+    if (plan.canScour) scour() else MarchOrders.sendUnits(this, this.unintended)
   }
 
   private def scourStance(plan: DefensePlan, formationScour: => Formation, formationGuard: => Formation): Unit = {
@@ -287,7 +288,7 @@ class SquadDefendBase(base: Base) extends Squad {
     lastAction = "Plug Wall"
     formations += FormationSimple(FormationStylePlug, formationBastion.placements ++ wallGaps)
     formations += formationBastion
-    SquadAutomation.send(this)
+    MarchOrders.sendUnits(this, this.unintended)
     wallGaps.foreach { case (unit, pixel) => intendHoldWallGap(unit, pixel) }
     workerLock.setInterruptible(false)
   }
@@ -310,7 +311,7 @@ class SquadDefendBase(base: Base) extends Squad {
       formations += formationScour
     }
     formations += formationGuard
-    SquadAutomation.send(this)
+    MarchOrders.sendUnits(this, this.unintended)
     guardWithoutTargets()
     if (plan.blockZerglings) {
       units.foreach(_.intent.setCanFlee(false))
@@ -320,7 +321,7 @@ class SquadDefendBase(base: Base) extends Squad {
   private def holdStance(formationBastion: Formation): Unit = {
     lastAction = "Hold"
     formations += formationBastion
-    SquadAutomation.send(this)
+    MarchOrders.sendUnits(this, this.unintended)
     units.foreach(_.intent.setCanFlee(false))
   }
 
@@ -359,7 +360,7 @@ class SquadDefendBase(base: Base) extends Squad {
     scourer.intend(this)
       .setTargets(target)
       .setTerminus(where)
-      .setRedoubt(SquadAutomation.getReturn(scourer, squad))
+      .setRedoubt(MarchOrders.getReturn(scourer, squad))
   }
 
   def scour(): Unit = {
@@ -402,7 +403,7 @@ class SquadDefendBase(base: Base) extends Squad {
       }
     })
     excluded.filterNot(unit => targets.get.exists(unit.canAttack)).foreach(unit => {
-      val where = formationDisengage.flatMap(_(unit)).getOrElse(SquadAutomation.getReturn(unit, this))
+      val where = formationDisengage.flatMap(_(unit)).getOrElse(MarchOrders.getReturn(unit, this))
       unit.intend(this)
         .setTargets(Vector.empty)
         .setTerminus(where)

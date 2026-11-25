@@ -9,9 +9,8 @@ import Tactic.Squads.attack.SquadAttack
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Squad formations (extracted from SquadAutomation): which arcs the squad
- * stands in. One reason to change: formation choice per march state.
- * SquadAutomation keeps a thin forwarder so call sites do not move.
+ * Squad formations: which arcs the squad stands in. One reason to
+ * change: formation choice per march state.
  */
 object SquadForming {
 

@@ -3,7 +3,7 @@ package Tactic.Missions.drop
 import Tactic.Missions.core.MissionDrop
 import Micro.Actions.Basic.DoNothing
 import Micro.Actions.{Action, Idle}
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.SquadTargeting
 
 /**
  * Drop phase bodies: what transports and passengers do in each state.
@@ -27,7 +27,7 @@ trait DropPhases { self: MissionDrop =>
   }
 
   private[Missions] def land(): Unit = {
-    SquadAutomation.targetRaid(this)
+    SquadTargeting.targetRaid(this)
     passengers.foreach(_.agent.commit = commitWhileRaiding)
     passengers.foreach(_.intend(this).setTerminus(vicinity))
     transports.foreach(t => {

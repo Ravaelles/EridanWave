@@ -14,10 +14,10 @@ import Tactic.Squads.Decisions.{AttackModes, CatchUpMarch, ClusterPosture, March
 import Utilities.?
 
 /**
- * March orders (extracted from SquadAutomation): where each squad unit
- * walks. One reason to change: the march rules (rally stragglers, close
- * ranks, dress leaders, send Reavers home, never hold a suicide charge).
- * Targeting stays in SquadAutomation, formations in Micro.Formation.
+ * March orders: where each squad unit walks. One reason to change: the
+ * march rules (rally stragglers, close ranks, dress leaders, send Reavers
+ * home, never hold a suicide charge). For target strata see
+ * SquadTargeting, for arcs Micro.Formation.
  */
 object MarchOrders {
 

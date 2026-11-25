@@ -8,7 +8,7 @@ import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.UnitInfo
 import Tactic.Squads.Decisions.MiddleChokeHold
 import Tactic.Squads.Squad
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.MarchOrders
 import Utilities.UnitFilters.IsAny
 
 /**
@@ -79,7 +79,7 @@ class SquadBaseGuards extends Squad {
     val nearest = nearestBaseEnemy
     engagingBase = nearest.isDefined
     setTargets(nearest.toVector ++ guardTargets)
-    SquadAutomation.send(this)
+    MarchOrders.sendUnits(this, this.unintended)
   }
 
   // Nearest enemy by ground travel to any of our bases inside the guard

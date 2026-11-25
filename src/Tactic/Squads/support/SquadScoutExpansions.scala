@@ -10,7 +10,7 @@ import Utilities.UnitCounters.CountOne
 import Utilities.UnitFilters._
 import Utilities.UnitPreferences.{PreferAll, PreferClose, PreferIf}
 import Tactic.Squads.Squad
-import Tactic.Squads.SquadAutomation
+import Tactic.Squads.SquadTargeting
 import Tactic.Squads.Squads
 
 class SquadScoutExpansions extends Squad {
@@ -111,7 +111,7 @@ class SquadScoutExpansions extends Squad {
         .setCanSneak(true)
         .setShouldCorrectXY(false)
         .setTerminus(vicinity)
-        .setTargets(SquadAutomation.rankForArmy(
+        .setTargets(SquadTargeting.rankForArmy(
           this,
           (targetsHere ++ targetsThere)
             .filter(_.caughtBy(u))
