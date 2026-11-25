@@ -43,6 +43,20 @@ public final class ProcessHelper {
         }
     }
 
+    /**
+     * Shuts down the Wine server for this prefix, taking the whole Wine
+     * session (StarCraft, ChaosLauncher and the client JVM) down at once.
+     * One call replaces the three name-based kills above: no process-name
+     * matching, so nothing outside Wine can be hit (docker games live in
+     * their own PID namespaces with their own wineservers and are invisible
+     * to the host). The Linux environment (including WINEPREFIX) is
+     * inherited, so this targets the same prefix the game runs in. Xvfb and
+     * the Linux supervisor JVM survive: neither is a Wine process.
+     */
+    public static void killWineServer() {
+        execQuiet("wineserver", "-k");
+    }
+
     /** Autostart ChaosLauncher on Windows (needs "Run Starcraft on Startup" checked). */
     public static void startChaosLauncherWindows(String chaosLauncherExe) {
         try {
