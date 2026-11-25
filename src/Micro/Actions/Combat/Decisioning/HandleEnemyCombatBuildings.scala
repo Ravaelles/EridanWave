@@ -47,7 +47,8 @@ object HandleEnemyCombatBuildings {
   }
 
   /**
-   * Contain-stand third: hold the 9.1 line and shoot out of it. Ranged
+   * Contain-stand third: hold the matchup line and shoot out of it (7.8
+   * vs Protoss, 9.1 vs Zerg, 6.6 vs Terran, 15.2 under siege). Ranged
    * ground warriors, never Reavers; the cluster heat and the duel own
    * the rest.
    */

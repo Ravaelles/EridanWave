@@ -5,7 +5,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Agency.Commander
 import Micro.Actions.Combat.Decisioning.NearestShot
-import ProxyBwapi.Races.Protoss
+import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 /**
@@ -23,8 +23,24 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
  */
 object StaticStandoff {
 
-  /** Hold the line this close to an enemy static, in tiles. */
-  val standTiles: Double = 9.1
+  /**
+   * Hold the line this close to an enemy static, in tiles, by matchup:
+   * cannons reach seven, sieged shells twelve, bunkered rifles five -
+   * the line holds outside the threat plus a step, never inside it.
+   * Zerg keeps the historical line.
+   */
+  val protossStandTiles: Double = 7.8
+  val zergStandTiles: Double = 9.1
+  val terranStandTiles: Double = 6.6
+  val terranSiegedStandTiles: Double = 15.2
+
+  /** Stand radius by matchup (pure flags for the suite): sieged Terran
+   * first, then race - the guns decide, not the map. */
+  def standTiles(vsTerran: Boolean, siegedTanks: Boolean, vsProtoss: Boolean): Double =
+    if (vsTerran && siegedTanks) terranSiegedStandTiles
+    else if (vsTerran) terranStandTiles
+    else if (vsProtoss) protossStandTiles
+    else zergStandTiles
 
   /** Wounded hulls stand this much further out, in tiles at full wound. */
   val woundBonusTiles: Double = 2.7
@@ -33,7 +49,7 @@ object StaticStandoff {
   val nudgeStepTiles: Double = 0.05
 
   /** Inside the stand radius plus the wound backoff the unit holds instead of closing. */
-  def shouldHold(distTiles: Double, backoffTiles: Double): Boolean =
+  def shouldHold(distTiles: Double, standTiles: Double, backoffTiles: Double): Boolean =
     distTiles <= standTiles + backoffTiles
 
   /** Inside the static's own reach plus the wound backoff the unit eases out instead of standing. */
@@ -63,6 +79,11 @@ object StaticStandoffBehavior {
     // Wounded hulls stand further out: the backoff rides both the nudge
     // and the hold, like the artillery keep-off (same wound math).
     val backoffTiles = unit.woundBonus(0.0, StaticStandoff.woundBonusTiles)
+    // Stand radius by matchup (owner order): the guns decide, not the map.
+    val standTiles = StaticStandoff.standTiles(
+      vsTerran    = With.enemies.exists(_.isTerran),
+      siegedTanks = With.units.enemy.exists(e => e.alive && Terran.SiegeTankSieged(e)),
+      vsProtoss   = With.enemies.exists(_.isProtoss))
     if (unit.matchups.targetsInRange.nonEmpty) {
       unit.agent.act("StaticStandoff")
       NearestShot.take(unit, "StaticStandoff", unit.matchups.targetsInRange)
@@ -71,7 +92,7 @@ object StaticStandoffBehavior {
       unit.agent.decision.set(StaticStandoff.backoff(unit.pixel, gun.pixel).walkablePixel)
       Commander.move(unit)
       true
-    } else if (StaticStandoff.shouldHold(distTiles, backoffTiles)) {
+    } else if (StaticStandoff.shouldHold(distTiles, standTiles, backoffTiles)) {
       unit.agent.act("StaticStandoff")
       Commander.hold(unit)
 
