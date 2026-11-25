@@ -239,37 +239,16 @@ object Target {
     requireCombatPriority: Boolean,
     requireInRange: Boolean,
     requireAcceleratesDemise: Boolean): Option[UnitInfo] = {
-    var best        : UnitInfo = null
-    var bestScore   : Double   = 0.0
-    var found       : Boolean  = false
-    var current     : UnitInfo = null
-    var currentScore: Double   = 0.0
-    // Last frame's pick: the ladder re-picks every frame for order-less
-    // fighters, so without stickiness two near-equal targets trade the
-    // pick on mill noise. toAttack is already the new intent here;
-    // toAttackLast is the pick to keep.
+    // Rows are the snapshot the kernel decides on: legality and score
+    // read here at the seam, the pick itself lives in TargetPick, so the
+    // same verdict answers in game and in a recorded-rows test.
     val currentId   = attacker.agent.toAttackLast.map(_.id)
-    val targetIterator = targets.iterator
-    while (targetIterator.hasNext) {
-      val target = targetIterator.next()
+    val materialized = targets.toVector
+    val rows = materialized.view.map(target => {
       val legal = ( ! requireCombatPriority || hasCombatPriority(target)) && ( ! requireInRange || attacker.inRangeToAttack(target)) && ( ! requireAcceleratesDemise || acceleratesDemise(attacker, target)) && legalByFilters(attacker, target, allFilters)
-      if (legal) {
-        if ( ! rankByScore) return Some(target)
-
-        val score = attacker.targetScore(target)
-        if (currentId.contains(target.id)) {
-          current = target
-          currentScore = score
-        } else if ( ! found || score > bestScore) {
-          found = true
-          best = target
-          bestScore = score
-        }
-      }
-    }
-    if (current != null && ( ! found || KeepCurrent.keepsTarget(currentScore, bestScore))) return Some(current)
-
-    ?(found, Some(best), None)
+      TargetPick.Row(target.id, if (legal && rankByScore) attacker.targetScore(target) else 0.0, currentId.contains(target.id), legal)
+    })
+    TargetPick.pick(rows, rankByScore).flatMap(id => materialized.find(_.id == id))
   }
 
   // Mass fights fire as one: the squad's weakest reachable target outranks
@@ -375,9 +354,6 @@ object Target {
   def shouldDropLifted(isFlyingBuilding: Boolean, canHitAir: Boolean): Boolean =
     isFlyingBuilding && ! canHitAir
 
-  def bestUnfiltered(attacker: FriendlyUnitInfo, targets: Iterable[UnitInfo]): Option[UnitInfo] = {
-    Maff.maxBy(targets.filter(_.alive))(attacker.targetScore)
-  }
 
   def legal(attacker: FriendlyUnitInfo, targets: Seq[UnitInfo], filters: TargetFilter*): Seq[UnitInfo] = {
     legalWithFilters(attacker, targets, filtersRequired(attacker) ++ filters)
