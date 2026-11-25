@@ -92,12 +92,23 @@ object FightOrFlee extends Action {
     // warriors outnumbering ours, and no reach edge over the nearest one -
     // standing in trades the hull for the cover's DPS (BetaStar: 1 goon
     // into 2 goons under cannons). Range advantage still fights.
-    staticOutgunned = staticCovered(u) && locallyOutnumbered(u) && ! outrangesNearest(u))
+    staticOutgunned = staticCovered(u) && locallyOutnumbered(u) && ! outrangesNearest(u),
+    // Sunken trap: a blade inside the colony's reach cannot trade with
+    // it at all - the pack math above needs outnumbering, but a solo
+    // hull dies the same, so it walks home instead of planting volleys
+    // against masonry (PvZ KiteHold/March flap till death).
+    sunkenTrap = FightRules.sunkenTrap(u.unitClass.melee, sunkenNear(u)))
 
   private def staticCovered(u: FriendlyUnitInfo): Boolean =
     u.unitClass.isWarrior && ! u.flying && u.matchups.enemies.exists(e =>
       e.alive && e.likelyStillThere && e.unitClass.isStaticDefense && e.canAttack(u) &&
       u.pixelDistanceEdge(e) <= e.pixelRangeAgainst(u) + FightRules.staticCoverMarginTiles * 32.0)
+
+  /** Nearest live Sunken that can hit us, in tiles - the trap the blade walks home from. */
+  private def sunkenNear(u: FriendlyUnitInfo): Double =
+    Maff.minBy(u.matchups.enemies.view.filter(e =>
+      e.alive && e.likelyStillThere && Zerg.SunkenColony(e) && e.canAttack(u)))(
+      u.pixelDistanceEdge(_)).map(u.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
 
   private def locallyOutnumbered(u: FriendlyUnitInfo): Boolean = {
     // allies excludes self by construction, so the hull counts itself.

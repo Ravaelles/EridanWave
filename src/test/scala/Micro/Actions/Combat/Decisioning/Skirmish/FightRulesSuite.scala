@@ -30,6 +30,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(outmatchedGoon = true), (false, "OutmatchedGoon")),
       (off.copy(loneScout = true), (false, "LoneScout")),
       (off.copy(staticOutgunned = true), (false, "StaticOutgunned")),
+      (off.copy(sunkenTrap = true), (false, "SunkenTrap")),
       (off.copy(outOfContact = true), (false, "OutOfContact")),
       (off.copy(detonated = true),   (true,  "Detonated")),
       (off.copy(hugTank = true),     (true,  "HugTank")),
@@ -51,7 +52,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(miners = true),      (true,  "Miners")),
       (off.copy(reave = true),       (true,  "Reave")),
       (off.copy(energized = true),   (true,  "Energized")))
-    assert(cases.size == 35)
+    assert(cases.size == 36)
     cases.foreach { case (facts, expected) =>
       assert(FightRules.decide(facts).contains(expected), expected)
     }
@@ -111,5 +112,14 @@ class FightRulesSuite extends AnyFunSuite {
 
   test("silence means no rule fired and the estimator decides instead") {
     assert(FightRules.decide(off).isEmpty)
+  }
+
+  test("a blade inside 7.1 tiles of a Sunken walks home, whatever the pack math") {
+    assert(FightRules.sunkenTrapTiles == 7.1)
+    assert(FightRules.sunkenTrap(melee = true, sunkenTiles = 7.09))
+    assert(FightRules.sunkenTrap(melee = true, sunkenTiles = 0.0))
+    assert( ! FightRules.sunkenTrap(melee = true, sunkenTiles = 7.1))
+    assert( ! FightRules.sunkenTrap(melee = true, sunkenTiles = 9.0))
+    assert( ! FightRules.sunkenTrap(melee = false, sunkenTiles = 0.0))
   }
 }

@@ -49,7 +49,8 @@ final case class FightFacts(
   staticOutgunned: Boolean = false,
   homeStand   : Boolean = false,
   tanksAtNatural : Boolean = false,
-  reaverBrave : Boolean = false)
+  reaverBrave : Boolean = false,
+  sunkenTrap  : Boolean = false)
 
 object FightRules {
 
@@ -60,6 +61,16 @@ object FightRules {
   /** Static cover counts this far past its own reach, in tiles: a duel
     * about to step under the guns reads as covered before it bleeds. */
   val staticCoverMarginTiles: Double = 1.5
+
+  /**
+   * Sunken trap, in tiles: a blade this close to a live Sunken is dead -
+   * the colony outranges the swing, so standing trades the hull for
+   * nothing and the line walks home instead.
+   */
+  val sunkenTrapTiles: Double = 7.1
+
+  def sunkenTrap(melee: Boolean, sunkenTiles: Double): Boolean =
+    melee && sunkenTiles < sunkenTrapTiles
 
   /**
    * First matching rule wins, in the historical priority order.
@@ -115,6 +126,10 @@ object FightRules {
     if (f.outmatchedGoon) Some((false, "OutmatchedGoon"))
     else if (f.loneScout) Some((false, "LoneScout"))
     else if (f.staticOutgunned) Some((false, "StaticOutgunned"))
+    // A lone blade under guns it cannot outrange does not wait for the
+    // pack math: the static cover above needs outnumbering, but a solo
+    // hull chewing a Sunken donates itself either way.
+    else if (f.sunkenTrap) Some((false, "SunkenTrap"))
     else None
 
   private def contactState(f: FightFacts): Option[(Boolean, String)] = {    // Ordered onto the enemy hall, the fight is not over just because

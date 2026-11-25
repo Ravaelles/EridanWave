@@ -40,6 +40,12 @@ Details live in `details/` - the queue keeps one line per item.
   take the shared depot when wound <= 13, spent hulls yield the frame
   to the retreat. Needs a ladder PvT: depot chewed instead of
   WallStand/Rallying flap, no spent-hull donations.
+- PvZ SunkenTrap (owner order: a blade inside 7.1 tiles of a Sunken
+  walks home): lone-melee cover gap in staticOutgunned never fired, so
+  the zealot planted volleys against masonry till death - new
+  FightRules leg retreats it before contact, plant and march both
+  stand down. Needs a ladder PvZ: no KiteHold/March flap inside the
+  guns, hull walks home instead.
 - Citadel-sweep sacrifice (owner order: the probe dies confirming the
   Citadel rather than fleeing blind): latched `CitadelSweep` (PvP
   ladder, scout probe in the enemy metro, Core known, Citadel chain
