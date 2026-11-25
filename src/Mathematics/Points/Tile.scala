@@ -190,6 +190,31 @@ final case class Tile(argX: Int, argY: Int) extends AbstractPoint(argX, argY) {
   @inline def adjacent9: Array[Tile] = {
     Array(this, up, down, left, right, up.left, up.right, down.left, down.right)
   }
+  /**
+   * Tiles within a tile-radius square, clipped to the map (dims only,
+   * like valid): the lookup net for clearances wider than adjacent9.
+   * adjacent9 spans ~1 tile, so any wider ring needs this net or far
+   * resources slip the veto while near spots pass.
+   */
+  def tilesInRadius(radiusTiles: Int): Array[Tile] = {
+    val side = 2 * radiusTiles + 1
+    val out = new Array[Tile](side * side)
+    var n = 0
+    var dy = -radiusTiles
+    while (dy <= radiusTiles) {
+      var dx = -radiusTiles
+      while (dx <= radiusTiles) {
+        val t = Tile(x + dx, y + dy)
+        if (t.valid) {
+          out(n) = t
+          n += 1
+        }
+        dx += 1
+      }
+      dy += 1
+    }
+    java.util.Arrays.copyOf(out, n)
+  }
   @inline def metro: Option[Metro] = {
     zone.metro
   }

@@ -147,12 +147,13 @@ object Retreat extends Action {
       case MicroPathing.WaypointForces => "Force"
     }
     // Large land units wedge between fields and die there, so their flee
-    // spots stay 1.2 tiles clear of minerals and 3.1 of geysers (one
-    // shared rule, not a second predicate next to FleeMineralClearance).
-    // The wide geyser ring strides past it to the far side instead of
-    // hugging it - that hug designated the dead spot.
+    // spots stay clear of minerals and geysers by the FleeMineralClearance
+    // knobs (one shared rule, not a second predicate next to it). The net
+    // covers the widest ring (never adjacent9 - a narrow net starves the
+    // veto). The wide geyser ring strides past it to the far side instead
+    // of hugging it - that hug designated the dead spot.
     def resourcesNear(pixel: Pixel): (Seq[Pixel], Seq[Pixel]) = {
-      val nearby = pixel.tile.adjacent9.view.flatMap(_.units).toSeq
+      val nearby = pixel.tile.tilesInRadius(FleeMineralClearance.lookupRadiusTiles).view.flatMap(_.units).toSeq
 
       (nearby.filter(_.unitClass.isMinerals).map(_.pixel),
         nearby.filter(_.unitClass.isGas).map(_.pixel))

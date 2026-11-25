@@ -242,13 +242,24 @@ object Target {
     // Rows are the snapshot the kernel decides on: legality and score
     // read here at the seam, the pick itself lives in TargetPick, so the
     // same verdict answers in game and in a recorded-rows test.
-    val currentId   = attacker.agent.toAttackLast.map(_.id)
+    // The incumbent is the sticky anchor (last pick that WON), never
+    // last frame's pick: a frame of illegality must not move it, or
+    // the duel random-walks (see StickyAnchor).
+    val anchorId = attacker.agent.stickyTarget
     val materialized = targets.toVector
     val rows = materialized.view.map(target => {
       val legal = ( ! requireCombatPriority || hasCombatPriority(target)) && ( ! requireInRange || attacker.inRangeToAttack(target)) && ( ! requireAcceleratesDemise || acceleratesDemise(attacker, target)) && legalByFilters(attacker, target, allFilters)
-      TargetPick.Row(target.id, if (legal && rankByScore) attacker.targetScore(target) else 0.0, currentId.contains(target.id), legal)
+      TargetPick.Row(target.id, if (legal && rankByScore) attacker.targetScore(target) else 0.0, anchorId.contains(target.id), legal)
     })
-    TargetPick.pick(rows, rankByScore).flatMap(id => materialized.find(_.id == id))
+    val pick = TargetPick.pick(rows, rankByScore).flatMap(id => materialized.find(_.id == id))
+    pick.foreach { p =>
+      val anchorAlive = anchorId.forall(id => Lifecycle.With.units.getId(id).exists(_.alive))
+      val anchorLegal = rows.exists(row => anchorId.contains(row.id) && row.legal)
+      attacker.agent.stickyTarget = StickyAnchor.next(anchorId, anchorAlive, anchorLegal, p.id)
+      attacker.agent.stickyFrame = Lifecycle.With.frame
+    }
+
+    pick
   }
 
   // Mass fights fire as one: the squad's weakest reachable target outranks

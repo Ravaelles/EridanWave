@@ -64,6 +64,16 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   val actions     : ArrayBuffer[String] = new ArrayBuffer[String]()
 
   /**
+   * Sticky pick anchor (bug-hunt fix): the last target that WON the
+   * ladder, never the last one forced by a frame of illegality (see
+   * StickyAnchor). Survives across frames by design; the frame stamp
+   * guards id reuse across games (ids restart every game, so a stamp
+   * from the future means a new game and the anchor drops).
+   */
+  var stickyTarget: Option[Int] = None
+  var stickyFrame : Int         = -1
+
+  /**
    * Unit-intention bids (phase 1): posted by the engage pipeline while
    * capturingBids runs, resolved once by CommanderCore.resolveBids.
    * bidReason carries the entering stage's reason (set by the shared
@@ -121,6 +131,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
     bids.clear()
     capturingBids = false
     bidReason = None
+    if (stickyFrame > With.frame) stickyTarget = None
     unit.orderTarget.foreach(_.removeDamage(unit))
 
     ridesharing.reconcileBoarding()

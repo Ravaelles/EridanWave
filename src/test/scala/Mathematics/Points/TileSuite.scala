@@ -28,4 +28,26 @@ class TileSuite extends AnyFunSuite {
     TestKit.seedWorld()
     assert(Tile(10, 10).add(3, -4) == Tile(13, 6))
   }
+
+  test("radius 1 spans the adjacent9 set") {
+    TestKit.seedWorld(mapTiles = 64)
+    assert(Tile(10, 10).tilesInRadius(1).toSet == Tile(10, 10).adjacent9.toSet)
+  }
+
+  test("radius 2 spans five by five") {
+    TestKit.seedWorld(mapTiles = 64)
+    val tiles = Tile(10, 10).tilesInRadius(2)
+    assert(tiles.length == 25)
+    assert(tiles.contains(Tile(8, 8)))
+    assert(tiles.contains(Tile(12, 12)))
+    assert( ! tiles.contains(Tile(13, 10)))
+  }
+
+  test("radius clips at the map edge") {
+    TestKit.seedWorld(mapTiles = 64)
+    val tiles = Tile(0, 0).tilesInRadius(2)
+    assert(tiles.length == 9)
+    assert(tiles.contains(Tile(0, 0)))
+    assert(tiles.contains(Tile(2, 2)))
+  }
 }

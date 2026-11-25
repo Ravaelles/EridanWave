@@ -110,6 +110,14 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! KiteAway.holdsFire(cooldownLeft = 0, hitPoints = 80, enemyClose = true))
   }
 
+  test("cooling-but-healthy hulls hold their volleys in range") {
+    assert(KiteAway.holdsVolley(cooldownLeft = 20, totalHealth = 81))
+    assert(KiteAway.holdsVolley(cooldownLeft = 30, totalHealth = 100))
+    assert( ! KiteAway.holdsVolley(cooldownLeft = 19, totalHealth = 100))
+    assert( ! KiteAway.holdsVolley(cooldownLeft = 20, totalHealth = 80))
+    assert( ! KiteAway.holdsVolley(cooldownLeft = 0, totalHealth = 100))
+  }
+
   test("contact floor never drops below the paced step") {
     assert(KiteAway.contactYield(woundWantPixels = 0.0, pacedPixels = 96.0) == 96.0)
     assert(KiteAway.contactYield(woundWantPixels = 120.0, pacedPixels = 96.0) == 120.0)

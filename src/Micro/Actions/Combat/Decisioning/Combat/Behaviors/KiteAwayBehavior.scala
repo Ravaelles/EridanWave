@@ -111,6 +111,12 @@ object KiteAwayBehavior extends PerGame {
       t => unit.pixelDistanceEdge(t))
       .map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     if (pvpRules && shielded && KiteAway.holdsFire(unit.cooldownLeft, unit.hitPoints, contactClose) && (gunsNear || ! meleeChase)) return false
+    // Cooling-but-healthy hulls hold their volleys in range (owner
+    // order): a long cooldown still to wait with enough hull to tank
+    // it plants instead of yielding - the wait buys no ground worth
+    // the walk-back. PvP-scoped like its fresh-loaded sibling; Zerg
+    // keeps the classic ladder.
+    if (pvpRules && KiteAway.holdsVolley(unit.cooldownLeft, unit.totalHealth) && unit.matchups.targetsInRange.nonEmpty) return false
     // Shared margin read (plant and gate agree by construction): live
     // threats only, turned-away melee dismissed. A blade pressing any
     // mate carves a planted hull, so the plant holds volleys against
@@ -510,17 +516,18 @@ object KiteAwayBehavior extends PerGame {
 
   /**
    * Resource-clear flee spot (owner order): large hulls wedge between
-   * fields and die there, so a flee point inside 1.2 tiles of a mineral
-   * or 3.1 of a geyser slides onto the ring along the away-ray - the
-   * duel's direction survives, only the distance grows. The wide geyser
-   * ring strides past it to the far side instead of hugging it.
+   * fields and die there, so a flee point inside the knob rings slides
+   * onto the ring along the away-ray - the duel's direction survives,
+   * only the distance grows. The wide geyser ring strides past it to
+   * the far side instead of hugging it. The net covers the widest ring
+   * (tilesInRadius, never adjacent9 - a narrow net starves the veto).
    * Deterministic per frame (a settled spot projects onto itself), so
    * the dedup holds the order instead of flapping.
    */
   private def clearFleeSpot(unit: FriendlyUnitInfo, spot: Pixel): Pixel = {
     if ( ! FleeMineralClearance.applies(unit.unitClass.size == ProxyBwapi.Size.Large, unit.flying)) return spot
 
-    val nearby = spot.tile.adjacent9.view.flatMap(_.units).toSeq
+    val nearby = spot.tile.tilesInRadius(FleeMineralClearance.lookupRadiusTiles).view.flatMap(_.units).toSeq
     val minerals = nearby.filter(_.unitClass.isMinerals).map(_.pixel)
     val geysers = nearby.filter(_.unitClass.isGas).map(_.pixel)
     if (FleeMineralClearance.clearOfResources(spot, minerals, geysers)) return spot

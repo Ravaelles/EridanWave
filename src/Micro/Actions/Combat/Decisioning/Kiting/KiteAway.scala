@@ -142,6 +142,20 @@ object KiteAway {
     cooldownLeft <= steadyCooldownFrames && hitPoints >= steadyHullHp && ! enemyClose
 
   /**
+   * Cooling-but-healthy hulls hold their volleys in range instead of
+   * kiting: with a long cooldown still to wait and enough hull to tank
+   * it, yielding ground buys nothing - the hull plants and the next
+   * volley fires from the same ground. Owner order (4+3 grind): hold
+   * iff cooldown>=20 and totalHp>80, never if less.
+   */
+  var volleyHoldCooldownFrames: Int = 20
+
+  var volleyHoldHp: Int = 80
+
+  def holdsVolley(cooldownLeft: Int, totalHealth: Int): Boolean =
+    cooldownLeft >= volleyHoldCooldownFrames && totalHealth > volleyHoldHp
+
+  /**
    * Kite gate (pure numbers for the suite): wounded past fresh AND
    * melee in contact, or stand and shoot. Ranged-only pressure never
    * kites; the wound ladder below decides the cooling hulls that pass.
