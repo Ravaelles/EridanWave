@@ -146,12 +146,21 @@ object Retreat extends Action {
       case MicroPathing.WaypointForces => "Force"
     }
     // Large land units wedge between fields and die there, so their flee
-    // spots stay 1.2 tiles clear of minerals and geysers (one shared
-    // rule, not a second predicate next to FleeMineralClearance).
-    def resourcesNear(pixel: Pixel): Seq[Pixel] =
-      pixel.tile.adjacent9.view.flatMap(_.units).filter(u => u.unitClass.isMinerals || u.unitClass.isGas).map(_.pixel).toSeq
-    def clearOfResources(pixel: Pixel): Boolean =
-      FleeMineralClearance.clearOfResources(pixel, resourcesNear(pixel))
+    // spots stay 1.2 tiles clear of minerals and 3.1 of geysers (one
+    // shared rule, not a second predicate next to FleeMineralClearance).
+    // The wide geyser ring strides past it to the far side instead of
+    // hugging it - that hug designated the dead spot.
+    def resourcesNear(pixel: Pixel): (Seq[Pixel], Seq[Pixel]) = {
+      val nearby = pixel.tile.adjacent9.view.flatMap(_.units).toSeq
+
+      (nearby.filter(_.unitClass.isMinerals).map(_.pixel),
+        nearby.filter(_.unitClass.isGas).map(_.pixel))
+    }
+    def clearOfResources(pixel: Pixel): Boolean = {
+      val (minerals, geysers) = resourcesNear(pixel)
+
+      FleeMineralClearance.clearOfResources(pixel, minerals, geysers)
+    }
     val largeFleer = FleeMineralClearance.applies(unit.unitClass.size == ProxyBwapi.Size.Large, unit.flying)
     val waypoint = ?(largeFleer,
       MicroPathing.bestWaypoints(unit, force, ?(goalOrigin, Some(unit.agent.safety), None), goalSafety && safetyIsSafe, tilePath, adjustPath = true)

@@ -18,14 +18,18 @@ Details live in `details/` - the queue keeps one line per item.
   with Guard/Move alternating the last 14f - the ledger does not count
   Guard, so its all-clear hid the death flap. Gap stuck 126px/final 0
   at the end: push/pathing anomaly, not a plant.
-- Large-fleer resource clearance (owner order 2026-11-25: fleeing
-  large hulls keep 1.2 tiles off minerals and geysers): shared kernel
-  `FleeMineralClearance` (1.2 ring, push onto the away-ray, settles),
-  wired into the duel `kiteAway` flee spot and the `Retreat` waypoint
-  veto (was: minerals-only adjacency). Live: clean volley cadence
-  kept, deaths moved to map edge (0,50) / same pocket (12,48) -
-  cornering, not wedging: corner awareness still open, no new code
-  until the owner scopes it (pocket exit needs pathing, not a push).
+- Large-fleer resource clearance (owner order 2026-11-25, amended:
+  fleeing large hulls keep 1.2 tiles off minerals and 3.1 off geysers
+  - the 1.2 hug designated a dead spot against the geyser while the
+  duel wanted to go behind it; the wide ring strides past instead):
+  shared kernel `FleeMineralClearance` (mineral/geyser rings, push
+  onto the away-ray with a bounded pass, settles), wired into the
+  duel `kiteAway` flee spot and the `Retreat` waypoint veto (was:
+  minerals-only adjacency). Live: clean volley cadence kept, deaths
+  still land in the (12,4x) pocket - cornering, needs the exact
+  geyser-hug game pointed out to verify the push there; corner
+  awareness still open, no new code until the owner scopes it
+  (pocket exit needs pathing, not a push).
 - PvP anti-DT cannon placement (owner order: first cannon at the main
   choke, closest powered slot wins): choke pylon first (unlocks
   near-choke slots), then the choke cannon by proximity to the

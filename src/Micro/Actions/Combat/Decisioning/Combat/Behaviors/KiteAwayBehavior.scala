@@ -498,21 +498,21 @@ object KiteAwayBehavior extends PerGame {
   /**
    * Resource-clear flee spot (owner order): large hulls wedge between
    * fields and die there, so a flee point inside 1.2 tiles of a mineral
-   * or geyser slides onto the ring along the away-ray - the duel's
-   * direction survives, only the distance grows. Deterministic per
-   * frame (a settled spot projects onto itself), so the dedup holds
-   * the order instead of flapping.
+   * or 3.1 of a geyser slides onto the ring along the away-ray - the
+   * duel's direction survives, only the distance grows. The wide geyser
+   * ring strides past it to the far side instead of hugging it.
+   * Deterministic per frame (a settled spot projects onto itself), so
+   * the dedup holds the order instead of flapping.
    */
   private def clearFleeSpot(unit: FriendlyUnitInfo, spot: Pixel): Pixel = {
     if ( ! FleeMineralClearance.applies(unit.unitClass.size == ProxyBwapi.Size.Large, unit.flying)) return spot
 
-    val resources = spot.tile.adjacent9.view.flatMap(_.units)
-      .filter(u => u.unitClass.isMinerals || u.unitClass.isGas).map(_.pixel).toSeq
-    if (FleeMineralClearance.clearOfResources(spot, resources)) return spot
+    val nearby = spot.tile.adjacent9.view.flatMap(_.units).toSeq
+    val minerals = nearby.filter(_.unitClass.isMinerals).map(_.pixel)
+    val geysers = nearby.filter(_.unitClass.isGas).map(_.pixel)
+    if (FleeMineralClearance.clearOfResources(spot, minerals, geysers)) return spot
 
-    Maff.minBy(resources)(_.pixelDistance(spot))
-      .map(near => FleeMineralClearance.pushClear(spot, near).walkablePixel)
-      .getOrElse(spot)
+    FleeMineralClearance.pushClear(spot, minerals, geysers).walkablePixel
   }
 
   /**
