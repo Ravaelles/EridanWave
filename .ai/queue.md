@@ -53,6 +53,12 @@ Details live in `details/` - the queue keeps one line per item.
   tail, brain owns the rest. StarEngine pins both directions; UMS
   DT_v_Protoss flap gone. Needs a ladder PvP: no DT walks into a
   guarded Cannon, workers near the blade die.
+- BE* CARVE-OUT (owner-ordered, one-command revert: git revert this
+  commit): DarkTemplar ghost push walks stale mobiles only (no
+  buildings, nothing seen inside 20s) and targetless hunt marches to
+  the known enemy base instead of holding; labels StaticPush became
+  GhostPush, new March act. Needed: push-at-cannon and hold-forever
+  live inside BeDarkTemplar and have no surroundings equivalent.
 - Loner unit subsets (owner order: pack legs must not grab lone wolves):
   `UnitSubsets` enum (All/Ground/Air/Armed/Workers/LineArmy) + enforced
   `Action.unitSubset` hook (default AllUnits = zero behavior change);

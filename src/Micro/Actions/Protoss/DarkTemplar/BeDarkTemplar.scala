@@ -10,6 +10,7 @@ import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Time.Minutes
+import Utilities.Time.Seconds
 import Utilities.?
 
 /**
@@ -30,7 +31,7 @@ object BeDarkTemplar extends Action {
     // Unseen is unanswered: with no burn on the tile and no shots landed
     // the cloak is absolute, so the hunt pushes straight at the gun and
     // swipes anything in reach - the standoff below only owns live eyes.
-    if (staticPush(unit)) return UnitControl.claimedIf(! unit.ready)
+    if (ghostPush(unit)) return UnitControl.claimedIf(! unit.ready)
 
     // Static guns outrank detectors: a remembered Cannon owns the ground
     // before its eyes are seen, so the standoff holds the approach first
@@ -66,31 +67,31 @@ object BeDarkTemplar extends Action {
   }
 
   /**
-   * Static-gun push (thin game seam over the pure kernel): while the tile
-   * stays dark and no shot has landed, the cloak answers everything, so
-   * the hunt walks straight at the remembered gun instead of around it -
-   * swiping the weakest hittable in reach plus the margin, masonry
-   * included. The tile burning or a landed shot hands the frame to the
-   * standoff below; the push never argues with live eyes.
+   * Mobile-ghost push (thin game seam over the pure kernel): while the tile
+   * stays dark and no shot has landed, stale fog is re-verified instead
+   * of cowered from - a glimpse older than twenty seconds walks, newer
+   * contacts belong to the hunt and the evade. Buildings never qualify:
+   * a remembered gun is walked into, not around, and masonry never moves
+   * to meet us - the raid avoid and the hunt's own tiers own all masonry.
    */
-  private def staticPush(unit: FriendlyUnitInfo): Boolean = {
+  private def ghostPush(unit: FriendlyUnitInfo): Boolean = {
     if (unit.tile.enemyDetected || unit.underAttack) return false
 
     Maff.minBy(With.units.enemy.view.filter(e =>
-      e.likelyStillThere && (e.unitClass.isCombatBuilding || Terran.Bunker(e))))(
+      e.likelyStillThere && e.unitClass.isWarrior && ! e.unitClass.isBuilding && With.framesSince(e.lastSeen) > Seconds(20)()))(
       unit.pixelDistanceEdge(_)).exists(gun => {
       Maff.minBy(unit.matchups.targets.filter(t =>
         t.visible && unit.canAttack(t) && DarkTemplarStaticPush.inPushRange(
           unit.pixelDistanceEdge(t), unit.pixelRangeAgainst(t))))(_.totalHealth) match {
         case Some(prey) =>
           unit.agent.toAttack = Some(prey)
-          unit.agent.act("DarkTemplarStaticPush")
+          unit.agent.act("DarkTemplarGhostPush")
           Commander.attack(unit)
 
           true
         case None =>
           unit.agent.toAttack = None
-          unit.agent.act("DarkTemplarStaticPush")
+          unit.agent.act("DarkTemplarGhostPush")
           unit.agent.forceTo(gun.pixel)
           Commander.move(unit)
 
@@ -292,8 +293,20 @@ object BeDarkTemplar extends Action {
           Commander.move(unit)
         }
       case None =>
-        unit.agent.act("DarkTemplarHold")
-        rejoinSquad(unit)
+        // Lone raiders march on the enemy base instead of holding empty
+        // ground: standing still donates time while the hunt has nothing,
+        // and the squad's rejoin leg does not apply to hunters operating
+        // alone. Only when the base is known; an unscouted map keeps the
+        // old hold-and-rejoin.
+        With.scouting.enemyMain match {
+          case Some(base) =>
+            unit.agent.act("DarkTemplarMarch")
+            unit.agent.forceTo(base.heart.center)
+            Commander.move(unit)
+          case None =>
+            unit.agent.act("DarkTemplarHold")
+            rejoinSquad(unit)
+        }
     }
   }
 
