@@ -1,0 +1,6 @@
+# Line endings: LF everywhere, locked on checkout.
+# Owner order 2026-11-25: the mixed CRLF/LF tree caused edit-tool misses
+# and git warnings, so the whole repo was swept to LF in one isolated
+# commit. Batch files stay CRLF - cmd.exe requires it.
+* text=auto eol=lf
+*.bat text eol=crlf

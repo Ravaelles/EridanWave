@@ -279,4 +279,4 @@ trait MacroActions extends MacroCounting {
   def sneakyCitadel(): Unit = {
     SneakyCitadel()
   }
-}
+}
