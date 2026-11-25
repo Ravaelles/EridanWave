@@ -78,19 +78,21 @@ object KiteAway {
   var contactKiteCooldown: Int = 15
 
   /**
-   * Melee hold bars (owner order, 4+3 grind): healthy blades never kite
-   * like ranged - above this many hit points a blade stands and brawls,
-   * and a swing this close to ready is held, not yielded. Only bleeding
-   * blades with a cold gun yield ground.
+   * Melee hold bars (owner order, 4+3 grind): zealots never kite like
+   * ranged - at or above this many hit points a blade stands and
+   * brawls, and a swing this close to ready is held, not yielded.
+   * Only bleeding blades with a cold gun yield (hp<40, cd>=12).
    */
   var meleeHoldHp: Int = 60
 
   var meleeHoldCooldown: Int = 14
 
   /**
-   * Melee hold (pure flags for the suite): a healthy blade stands and
-   * brawls instead of kiting like ranged, and a swing nearly over is
-   * held, not yielded. Only bleeding blades with a cold gun yield.
+   * Melee hold (pure flags for the suite): a blade above the hold bar
+   * stands and brawls instead of kiting like ranged, and a swing
+   * nearly over is held, not yielded. Only bleeding blades with a
+   * cold gun yield. Tried at 40/12 on 4+3 (owner hypothesis: standing
+   * kills more) - no kill gain over three reps, reverted to 60/14.
    */
   def holdsMeleeGround(totalHealth: Int, cooldownLeft: Int): Boolean =
     totalHealth > meleeHoldHp || cooldownLeft <= meleeHoldCooldown

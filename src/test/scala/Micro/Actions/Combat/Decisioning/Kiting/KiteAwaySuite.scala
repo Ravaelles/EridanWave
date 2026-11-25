@@ -189,7 +189,9 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.holdsMeleeGround(totalHealth = 100, cooldownLeft = 30))
     assert(KiteAway.holdsMeleeGround(totalHealth = 40, cooldownLeft = 14))
     assert(KiteAway.holdsMeleeGround(totalHealth = 40, cooldownLeft = 0))
+    assert(KiteAway.holdsMeleeGround(totalHealth = 20, cooldownLeft = 13))
     assert( ! KiteAway.holdsMeleeGround(totalHealth = 60, cooldownLeft = 15))
+    assert( ! KiteAway.holdsMeleeGround(totalHealth = 60, cooldownLeft = 30))
     assert( ! KiteAway.holdsMeleeGround(totalHealth = 40, cooldownLeft = 30))
   }
 
