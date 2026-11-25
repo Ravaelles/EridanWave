@@ -3,12 +3,14 @@ package Micro.Actions.Protoss.Zealot
 import Micro.Actions.UnitControl
 import Debugging.Visualizations.Rendering.DrawMap
 import Lifecycle.With
+import Mathematics.Maff
 import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Withdraw
 import Micro.Actions.Combat.Tactics.Recharge
 import Micro.Agency.Commander
 import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Tactic.Squads.Decisions.SquadRally
 import Utilities.Time.Minutes
 import Utilities.UnitFilters.{IsWarrior, IsWorker}
 
@@ -32,7 +34,27 @@ object BeRushingZealot extends Action {
     && ! With.umsMode
     && unit.agent.destinationFinal.pixel.exists(p => ! p.metro.exists(_.isOurs) && p.proximity < 0.5)
     && unit.team.forall(u => u.warriorsCasters.forall(u => u.isAny(Protoss.Probe, Protoss.Zealot, Protoss.ShieldBattery) || u.pixelDistanceCenter(unit) > 320))
+    // A trailing hull belongs to the march, never to the rush: the
+    // rally latch already owns these frames on the march side, so the
+    // brain stands down instead of trading move orders with it every
+    // frame (stop-start crawl, never full speed). Same latch, same
+    // inputs - gate and leg agree by construction.
+    && ! rallying(unit)
   )
+
+  /**
+   * Trailing the pack (thin seam over the rally latch): the same
+   * latched distance the rally leg marches on. While it holds, the
+   * march owns the feet at full speed; the rush resumes past it.
+   */
+  private def rallying(unit: FriendlyUnitInfo): Boolean =
+    unit.squad.exists(squad =>
+      squad.fightConsensus &&
+        SquadRally.mayRally(unit.unitClass.isWarrior, unit.agent.shouldFight) &&
+        SquadRally.isRallyingLatched(
+          unit.id,
+          unit.pixelDistanceCenter(squad.centroidGround) * Maff.inv32,
+          SquadRally.rallyRadiusFor(false) * Maff.inv32))
 
   override protected def perform(zealot: FriendlyUnitInfo): UnitControl = {
     val fieldScore            = ZealotRushScoring.fieldScore(zealot)
