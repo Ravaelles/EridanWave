@@ -25,6 +25,14 @@ class AntiDTCannonSuite extends AnyFunSuite {
     assert(tile.tileDistanceChebyshev(Tile(100, 100)) == 5)
   }
 
+  test("the hall cannon sits at the front, two and a half tiles toward the choke") {
+    assert(AntiDTCannon.hallFrontTiles == 2.5)
+    val front = AntiDTCannon.frontAnchor(Pixel(3200, 3200), Pixel(3200, 4480), AntiDTCannon.hallFrontTiles)
+    assert(front.x == 3200)
+    assert(front.y == 3200 + (2.5 * 32).toInt)
+    assert(Tile(100, 102).tileDistanceChebyshev(Tile(100, 100)) >= 1)
+  }
+
   test("urgent Forge fires on suspicion with no Forge, never twice") {
     assert(AntiDTCannon.urgentForgeNow(dtLikely = true, haveForge = false))
     assert( ! AntiDTCannon.urgentForgeNow(dtLikely = true, haveForge = true))

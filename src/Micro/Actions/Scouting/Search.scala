@@ -83,6 +83,13 @@ abstract class AbstractSearch extends Action {
   
     if (tilesToScout.isEmpty) return UnitControl.Declined
 
+    // Forced scout-through (owner order): a scout with chasers that still
+    // has unscouted tiles ahead pushes through instead of turning - the
+    // Citadel spotted under a Zealot's blades is worth more than the
+    // probe. Logged outright, so the trace shows the sacrifice instead
+    // of a silent travel.
+    if (scoutChasers.nonEmpty) unit.agent.act("ForceScout")
+
     val force = tilesToScout.view.map(tile => Gravity(tile.center, With.grids.lastSeen.framesSince(tile))).map(_(unit.pixel)).reduce(_ + _)
 
     val target = unit.pixel.add(force.normalize(64.0).toPoint)

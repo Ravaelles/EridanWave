@@ -1,5 +1,7 @@
 package Gameplans.Protoss.PvP
 
+import Mathematics.Points.Pixel
+
 /**
  * Anti-DT cannon doctrine (pure numbers and flags, no game access):
  * where the choke cannon sits and when the emergency Forge jumps the
@@ -24,6 +26,15 @@ object AntiDTCannon {
    * enough that the placer cannot wander off to a random slot. */
   def inRing(chebyshevTiles: Int): Boolean =
     chebyshevTiles >= chokeRingNearTiles && chebyshevTiles <= chokeRingFarTiles
+
+  /** Hall cannon offset, in tiles from the main hall toward the choke:
+   * between the minerals and the choke, at the front of the base -
+   * never at its back. */
+  val hallFrontTiles: Double = 2.5
+
+  /** Front anchor (pure pixels): the hall pushed toward the choke. */
+  def frontAnchor(hall: Pixel, choke: Pixel, tiles: Double): Pixel =
+    hall.project(choke, tiles * 32.0)
 
   /** Absolute-first Forge (pure flags): DT likely and no Forge started -
    * 150 minerals, every frame behind army pumps risks the game. */
