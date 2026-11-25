@@ -19,6 +19,7 @@ object CommanderMove {
     if (unit.unready) return
 
     unit.bwapiUnit.stop()
+    Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
     CommanderCore.sleep(unit)
     unit.resetSticking()
   }
@@ -30,6 +31,7 @@ object CommanderMove {
 
     if (unit.velocity.lengthSquared > 0 && unit.order != Orders.HoldPosition) {
       unit.bwapiUnit.holdPosition()
+      Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
     }
     if (unit.matchups.targetsInRange.nonEmpty) return CommanderCore.sleepAttack(unit)
 
@@ -75,6 +77,7 @@ object CommanderMove {
         command.getType == bwapi.UnitCommandType.Attack_Move && ! command.isQueued && new Pixel(command.getTargetPosition).pixelDistance(to) < 128))
     if ( ! alreadyAttackMovingThere || unit.seeminglyStuck) {
       unit.bwapiUnit.attack(to.bwapi)
+      Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.AttackMoveKind, With.frame)
     }
     CommanderCore.sleepAttack(unit)
   }
@@ -89,6 +92,7 @@ object CommanderMove {
     if (CommanderCore.autoUnburrowUnlessLurkerInRangeOf(unit, to)) return
 
     unit.bwapiUnit.patrol(to.bwapi)
+    Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
     CommanderCore.sleepAttack(unit)
   }
   private[Micro] def move(unit: FriendlyUnitInfo): Unit = move(unit, unit.agent.destinationNext())
@@ -161,6 +165,7 @@ object CommanderMove {
           OrderContinue.holdsCourse(distTiles, onCourse))
       if ( ! continuing || unit.seeminglyStuck) {
         unit.bwapiUnit.move(goal.bwapi)
+        Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
       } else {
         Debugging.Probe.note("Move", unit.id,
           f"hold gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt}")

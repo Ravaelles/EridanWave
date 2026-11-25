@@ -145,6 +145,7 @@ object CommanderEngage {
         || (target.isFriendly && Protoss.Carrier(unit))) // Carrier warmup; spam attack to avoid actually doing damage
     if (shouldOrder) {
       unit.bwapiUnit.attack(target.bwapiUnit)
+      Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.AttackKind, With.frame)
       target.addFutureAttack(unit)
       CommanderCore.sleepAttack(unit)
     } else {

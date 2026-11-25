@@ -41,6 +41,7 @@ object EndOfGame {
     System.out.println(MotionMismatch.summary())
     System.out.println(VolleyWaste.summary())
     System.out.println(HitsTaken.summary())
+    System.out.println(FlapLedger.summary())
     // Run terminator, last on stdout: who it was and when it ended.
     val now = java.time.LocalTime.now()
     System.out.println(GameSummary.matchOver(
