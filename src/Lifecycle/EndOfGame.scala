@@ -41,6 +41,13 @@ object EndOfGame {
     System.out.println(MotionMismatch.summary())
     System.out.println(VolleyWaste.summary())
     System.out.println(HitsTaken.summary())
+    // Run terminator, last on stdout: who it was and when it ended.
+    val now = java.time.LocalTime.now()
+    System.out.println(GameSummary.matchOver(
+      isWinner,
+      ?(With.enemies.nonEmpty, With.enemies.map(_.name).mkString("+"), With.history.currentEnemyName),
+      now.getHour,
+      now.getMinute))
     FormationAudit.finish(With.mapFileName, With.frame)
     CherryVis.CherryVis.finish(isWinner)
     // Tuning score row (fixed-name + dated copy) when a strategy is active.

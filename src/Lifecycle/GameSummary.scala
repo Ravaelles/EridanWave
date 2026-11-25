@@ -26,4 +26,14 @@ object GameSummary {
     "### Times hit: " + timesHit + " ########\n" +
     "##########################################"
   }
+
+  /**
+   * One-line run terminator with the wall-clock time: the last thing in
+   * the log, so a tailed client log shows who it was and when it ended.
+   * Hour and minute travel as numbers so the zero padding stays pinned.
+   */
+  def matchOver(isWinner: Boolean, enemyName: String, hour: Int, minute: Int): String = {
+    val result = if (isWinner) "VICTORY" else "DEFEAT"
+    f"### Match over: $result vs $enemyName ($hour%02d:$minute%02d)"
+  }
 }
