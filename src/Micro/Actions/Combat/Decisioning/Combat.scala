@@ -514,4 +514,19 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
   }
 
   def tryDodge(): Boolean = maneuvers.tryDodge()
+
+  /**
+   * Pre-chain dodge (phase 2A): emergency movement owns its frame outright,
+   * so it bids Dodge in a local window and resolves at once - a single bid
+   * issues exactly like before, and the reason is live for the future
+   * joint window instead of dormant in the technique table.
+   */
+  def tryDodgeBid(): Boolean = {
+    unit.agent.capturingBids = true
+    unit.agent.bidReason = Some(Micro.Agency.UnitIntentionReason.Dodge)
+    val dodged = maneuvers.tryDodge()
+    Micro.Agency.CommanderCore.resolveBids(unit)
+
+    dodged
+  }
 }

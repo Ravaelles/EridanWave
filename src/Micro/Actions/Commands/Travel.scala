@@ -17,7 +17,12 @@ object Travel extends Action {
       return UnitControl.claimedIf(! unit.ready)
     }
 
+    // Local march window (phase 2A): the line step bids March and
+    // resolves at once - single-bid frames issue exactly like before.
+    unit.agent.capturingBids = true
+    unit.agent.bidReason = Some(Micro.Agency.UnitIntentionReason.March)
     Commander.move(unit)
+    Micro.Agency.CommanderCore.resolveBids(unit)
 
     UnitControl.claimedIf(! unit.ready)
   }
