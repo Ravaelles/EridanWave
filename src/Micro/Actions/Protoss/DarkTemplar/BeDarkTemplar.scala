@@ -23,6 +23,7 @@ import Utilities.?
  * scouting alone.
  */
 object BeDarkTemplar extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.DarkTemplar(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.DarkTemplar(unit)

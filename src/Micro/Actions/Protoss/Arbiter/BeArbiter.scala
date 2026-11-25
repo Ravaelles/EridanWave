@@ -15,6 +15,7 @@ import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object BeArbiter extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Arbiter(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Arbiter(unit)

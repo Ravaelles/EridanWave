@@ -8,6 +8,7 @@ import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object ReloadInterceptors extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean =(

@@ -457,6 +457,7 @@ class SquadDefendBase(base: Base) extends Squad {
   }
 
   private case class HugAt(pixel: Pixel) extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override def perform(unit: FriendlyUnitInfo): UnitControl = {
       unit.agent.decision.set(pixel)
       Potshot.delegate(unit)
@@ -466,6 +467,7 @@ class SquadDefendBase(base: Base) extends Squad {
   }
 
   private case class Plug(pixel: Pixel) extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override def perform(unit: FriendlyUnitInfo): UnitControl = {
       if (unit.matchups.threats.exists(IsWarrior) || (unit.unitClass.ranged && unit.matchups.targets.exists(_.base.exists(_.isMain)))) { Idle(unit); return UnitControl.claimedIf(! unit.ready) }
 

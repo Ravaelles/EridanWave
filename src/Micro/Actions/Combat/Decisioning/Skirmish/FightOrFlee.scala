@@ -17,6 +17,7 @@ import Utilities.Time.Minutes
 import Utilities.UnitFilters.{IsSlowling, IsTank, IsWarrior, IsWorker}
 
 object FightOrFlee extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
 
   val Reave = "Reave"

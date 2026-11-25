@@ -23,6 +23,7 @@ import Utilities.?
  * Pure radius for the suite; the caller gathers the building.
  */
 object StaticDefenseRepel extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   /** Inside this edge distance, in tiles, the static owns the ground. */
   val repelRadiusTiles: Double = 9.0

@@ -24,6 +24,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  * the probe log keeps its vocabulary; the order gated them here.
  */
 object BeShuttle extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Shuttle(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Shuttle(unit)

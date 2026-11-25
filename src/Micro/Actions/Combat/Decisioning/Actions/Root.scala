@@ -12,9 +12,11 @@ import ProxyBwapi.Races.{Terran, Zerg}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object Root extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
   
   private class RootAction(unit: FriendlyUnitInfo) extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     // Be unrooted if there are threats but no targets
     // Be unrooted if we are a tank inside a narrow choke
     // Be unrooted if being picked up

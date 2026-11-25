@@ -24,6 +24,7 @@ object SearchWhenBored extends AbstractSearch {
 }
 
 abstract class AbstractSearch extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   override def isContainer: Boolean = true
 

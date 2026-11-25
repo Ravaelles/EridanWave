@@ -29,10 +29,19 @@ abstract class BehaviorStage(val name: String, val band: DispatchBand) {
    */
   def appliesToUnit(unit: FriendlyUnitInfo): Boolean
 
+  /**
+   * Unit subset gate (no game beyond the class): which family this
+   * stage answers for, enforced beside the unit-context gate below.
+   * Movers stay universal - a stage that walks its hulls must never
+   * strand loners - while rejoiners answer for the line alone.
+   */
+  def unitSubset: Micro.Actions.UnitSubset
+
   protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl
 
   final def shouldRun(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
     if ( ! appliesToUnit(unit)) return UnitControl.Declined
+    if ( ! unitSubset.contains(unit.unitClass)) return UnitControl.Declined
 
     val verdict = execute(unit, combat, advance)
     if (verdict.claimed) unit.agent.act(name)

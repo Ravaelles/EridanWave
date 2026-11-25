@@ -9,6 +9,7 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Time.Minutes
 
 object Crack extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
 
   private def egg(unit: FriendlyUnitInfo): Option[UnitInfo] = {

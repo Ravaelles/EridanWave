@@ -21,6 +21,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  * entered Fight either, and stacked watches die together.
  */
 object BeDetector extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
     unit.unitClass.isDetector && unit.canMove
 

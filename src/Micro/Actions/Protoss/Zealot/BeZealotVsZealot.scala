@@ -11,6 +11,7 @@ import Utilities.Time.Minutes
 import scala.language.postfixOps
 
 object BeZealotVsZealot extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   // Pure decider: sets the fight vote, issues no orders itself - the march
   // and the technique act on it, so the frame stays with whoever moves.
   override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Zealot(unit)

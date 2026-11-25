@@ -14,6 +14,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 trait DropPassengerActions { self: MissionDrop =>
 
   object ActionAssemblePassenger extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override protected def perform(passenger: FriendlyUnitInfo): UnitControl = {
       if (passenger.loaded) return UnitControl.Declined
 
@@ -28,6 +29,7 @@ trait DropPassengerActions { self: MissionDrop =>
   }
 
   object ActionLandPassenger extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
       if (!unit.loaded || initiallyLanded(unit)) Idle.delegate(unit)
       UnitControl.claimedIf(! unit.ready)
@@ -35,6 +37,7 @@ trait DropPassengerActions { self: MissionDrop =>
   }
 
   object ActionEvacuatePassenger extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override protected def perform(passenger: FriendlyUnitInfo): UnitControl = {
       if (passenger.loaded) return UnitControl.Declined
 

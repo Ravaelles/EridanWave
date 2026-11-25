@@ -13,6 +13,7 @@ import ProxyBwapi.UnitClasses.UnitClass
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 abstract class TargetedSpell extends Action with Spell {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   /** Base for single-target and AoE spell casts: walk into range, commit the intent, fire when the spot reconfirms. Subclasses supply only value and thresholds. */
   protected def casterClass       : UnitClass

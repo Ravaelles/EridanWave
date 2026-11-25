@@ -13,6 +13,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.UnitFilters.IsTank
 
 object BeVulture extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Terran.Vulture(unit)
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (

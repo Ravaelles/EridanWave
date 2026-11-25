@@ -20,7 +20,7 @@ abstract class Action {
    * raider lesson - Dark Templars, Corsairs and Scouts never belong to
    * a centroid they do not fight in.
    */
-  def unitSubset: UnitSubset = UnitSubsets.AllUnits
+  def unitSubset: UnitSubset
 
   /**
    * Unit context gate (no game beyond the unit itself): race and class,

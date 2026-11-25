@@ -22,6 +22,7 @@ import Utilities.?
 import Utilities.UnitFilters.IsWorker
 
 object Build extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
 
   /**

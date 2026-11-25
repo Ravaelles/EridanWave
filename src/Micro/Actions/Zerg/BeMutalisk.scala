@@ -11,6 +11,7 @@ import ProxyBwapi.UnitTracking.AliveEnemies
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object BeMutalisk extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Zerg.Mutalisk(unit)
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = Zerg.Mutalisk(unit)

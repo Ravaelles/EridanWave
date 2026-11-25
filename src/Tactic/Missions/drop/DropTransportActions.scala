@@ -21,6 +21,7 @@ import Utilities.Time.Seconds
 trait DropTransportActions { self: MissionDrop =>
 
   object ActionAssembleTransport extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       accountForCargo(transport)
       transport.agent.passengers.filterNot(passengers.contains).foreach(transport.agent.removePassenger)
@@ -45,6 +46,7 @@ trait DropTransportActions { self: MissionDrop =>
   }
 
   object ActionTravelTransport extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       if (state == Assembling && unloadUnassignedCargo(transport)) return UnitControl.claimedIf(! transport.ready)
 
@@ -118,6 +120,7 @@ trait DropTransportActions { self: MissionDrop =>
   }
 
   object ActionLandTransport extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       if (passengersFor(transport).forall(initiallyLanded.contains)) {
         raidTransportAction.delegate(transport)
@@ -141,6 +144,7 @@ trait DropTransportActions { self: MissionDrop =>
   }
 
   object ActionRaidTransport extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       val crew = passengersFor(transport)
       if (crew.isEmpty) Commander.hold(transport) else {
@@ -152,6 +156,7 @@ trait DropTransportActions { self: MissionDrop =>
   }
 
   object ActionEvacuateTransport extends Action {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     override protected def perform(transport: FriendlyUnitInfo): UnitControl = {
       val pickup = pickupTarget(transport, assembling = false)
       if (pickup.isEmpty) {

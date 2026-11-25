@@ -61,9 +61,12 @@ Details live in `details/` - the queue keeps one line per item.
   live inside BeDarkTemplar and have no surroundings equivalent.
 - Loner unit subsets (owner order: pack legs must not grab lone wolves):
   `UnitSubsets` enum (All/Ground/Air/Armed/Workers/LineArmy) + enforced
-  `Action.unitSubset` hook (default AllUnits = zero behavior change);
-  rejoin migrated to LineArmy. Full per-class audit of the 76 Actions
-  is queued - new behaviors must declare, grandfathered list tracks it.
+  abstract `Action`/`BehaviorStage.unitSubset` hook (no default - compile
+  fails on any undeclared class, so the audit is proven complete, not
+  claimed). All 76 Actions + 25 stages declare explicitly (AllUnits
+  everywhere except ClusterRejoinStage: LineArmy); movers stay universal
+  so no loner is ever stranded. New behaviors must pick a family at
+  declaration time.
 - PvP weak-small expansion hold (owner order: army <= 120 and warriors
   < 30 expand never): third leg of the shared expansion veto next to
   the weak and pressured holds. Needs a ladder PvP: WeakHoldNatural

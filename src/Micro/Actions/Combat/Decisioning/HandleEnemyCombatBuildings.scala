@@ -28,6 +28,7 @@ object HandleEnemyCombatBuildings {
    * the cloak, the verdict and the guns gate below.
    */
   object ShellsClaim extends BehaviorStage("shells", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
 
@@ -40,6 +41,7 @@ object HandleEnemyCombatBuildings {
    * Scouts only; the umbrella math gates below.
    */
   object KeepOffClaim extends BehaviorStage("keep-off", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Scout(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -53,6 +55,7 @@ object HandleEnemyCombatBuildings {
    * the rest.
    */
   object StandClaim extends BehaviorStage("stand", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.canMove && ! unit.flying && ! unit.unitClass.melee && unit.unitClass.isWarrior && ! Protoss.Reaver(unit)
 

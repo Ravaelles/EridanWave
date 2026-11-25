@@ -39,6 +39,7 @@ private[Decisioning] object EngagePipeline {
    * fight vote and the hittable target gate the shot below.
    */
   object ContainFireStage extends BehaviorStage("ContainFire", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -55,6 +56,7 @@ private[Decisioning] object EngagePipeline {
    * and the verdict gate below.
    */
   object HuntStage extends BehaviorStage("Hunt", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = HuntBehavior.appliesToUnit(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -70,6 +72,7 @@ private[Decisioning] object EngagePipeline {
    * dueling. Any hull - the gait is the march's, not a duel's.
    */
   object AdvanceGateStage extends BehaviorStage("AdvanceGate", DispatchBand.Low) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
@@ -99,6 +102,7 @@ private[Decisioning] object EngagePipeline {
    * with no Dragoons mustered there is nothing to leash to.
    */
   object ZealotLeashStage extends BehaviorStage("ZealotLeash", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Zealot(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -113,6 +117,7 @@ private[Decisioning] object EngagePipeline {
    * below.
    */
   object ClusterRejoinStage extends BehaviorStage("ClusterRejoin", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.LineArmy
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.unitClass.isWarrior && ! unit.loaded
 
@@ -128,6 +133,7 @@ private[Decisioning] object EngagePipeline {
     ClusterRejoinStage)
 
   object PushDuelStage extends BehaviorStage("Push", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     // Grounded hulls only: fliers dance instead of pushing, and the push
     // itself owns mobility - the gate never decides movement.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = ! unit.flying
@@ -138,6 +144,7 @@ private[Decisioning] object EngagePipeline {
   }
 
   object ScavengeDuelStage extends BehaviorStage("Scavenge", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     // Any hull the technique assigns: the scavenger check lives in the
     // technique vote, the gate only runs what it is given.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
@@ -155,6 +162,7 @@ private[Decisioning] object EngagePipeline {
    * hold owns outranged frames and the charge only sees duels.
    */
   object FormationDuelStage extends BehaviorStage("Formation", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     // Any hull may form: the behavior gates the how below.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
@@ -173,6 +181,7 @@ private[Decisioning] object EngagePipeline {
    * behind it. Any hull may close: the duo gates the how below.
    */
   object CloseDuelStage extends BehaviorStage("Close", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     // Any hull may close: the hold/kite duo gates the how
     // below, including the immobile hold it never walks into.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
@@ -229,6 +238,7 @@ private[Decisioning] object EngagePipeline {
    * gone, merged into the Formation governor: one line, one stepper.
    */
   object RepositionDuelStage extends BehaviorStage("Reposition", DispatchBand.Low) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     // Any hull the duel leaves behind repositions through here: the
     // terminal claims for everyone, the maneuver handles the rest.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true

@@ -10,6 +10,7 @@ import ProxyBwapi.Races.Zerg
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object Brawl extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   
   // In close-quarters fights against other melee units,
   // prefer non-targeted commands to avoid glitching.

@@ -6,6 +6,7 @@ import Micro.Actions.Combat.Maneuvering.Retreat
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object PreserveScout extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (

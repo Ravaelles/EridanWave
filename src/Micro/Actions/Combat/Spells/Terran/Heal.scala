@@ -11,6 +11,7 @@ import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object Heal extends Action with Spell {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   def isCaster(unit: UnitInfo): Boolean = Terran.Medic(unit)
 

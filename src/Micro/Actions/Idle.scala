@@ -15,6 +15,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Production.core.Produce
 
 object Idle extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
 
   @inline

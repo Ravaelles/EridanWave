@@ -8,6 +8,7 @@ import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object Cloak extends Action with Spell {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   // Cloak orders never report under their own name (like the four actions
   // they replace): the cast itself is the leaf, Cast is the container.

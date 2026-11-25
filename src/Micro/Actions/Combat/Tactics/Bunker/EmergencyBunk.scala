@@ -9,6 +9,7 @@ import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object EmergencyBunk extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
   
   // Firebats, Medics, and SCVs can enter bunkers too but it's less obvious when they should

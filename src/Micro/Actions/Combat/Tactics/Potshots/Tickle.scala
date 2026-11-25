@@ -19,6 +19,7 @@ import Utilities.?
 import Utilities.UnitFilters.{IsBuilding, IsWarrior, IsWorker}
 
 object Tickle extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   override def allowed(tickler: FriendlyUnitInfo): Boolean = IsWorker(tickler)
 

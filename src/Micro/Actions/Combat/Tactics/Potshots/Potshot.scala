@@ -8,6 +8,7 @@ import Micro.Targeting.FiltersSituational.TargetFilterPotshot
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Potshot extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     (unit.tile.enemyVulnerabilityGround > 0 || unit.canAttackAir)

@@ -23,6 +23,7 @@ import Utilities.?
  * unit unready, so the brain never re-votes the same frame.
  */
 object DarkTemplarRaid extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   /** Workers this close always die first, in tiles: better than the base. */
   val workerDefaultTiles: Double = 1.05

@@ -53,6 +53,7 @@ private[Decisioning] object TechniquePipeline {
    * shells and duels alike. Any mobile hull; the bullet owns the cell.
    */
   object AvoidEffectsStage extends BehaviorStage("AvoidEffects", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.canMove
 
@@ -67,6 +68,7 @@ private[Decisioning] object TechniquePipeline {
    * Grounded warriors only: flyers pass over both killers untouched.
    */
   object AvoidStage extends BehaviorStage("Avoid", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.unitClass.isWarrior
 
@@ -86,6 +88,7 @@ private[Decisioning] object TechniquePipeline {
    * detectors through their own disciplines.
    */
   object StaticKeepOffStage extends BehaviorStage("StaticKeepOff", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
 
@@ -95,6 +98,7 @@ private[Decisioning] object TechniquePipeline {
 
   /** The technique executes inside the fight its band allows. */
   object WalkStage extends BehaviorStage("Walk", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -102,6 +106,7 @@ private[Decisioning] object TechniquePipeline {
   }
 
   object AimStage extends BehaviorStage("Aim", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = ! unit.canMove
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -109,6 +114,7 @@ private[Decisioning] object TechniquePipeline {
   }
 
   object DodgeStage extends BehaviorStage("Dodge", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove && ! unit.loaded
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -117,6 +123,7 @@ private[Decisioning] object TechniquePipeline {
 
   /** Retreat potshot: Fallback shoots while leaving. */
   object PotshotStage extends BehaviorStage("Potshot", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     // Any hull the Fallback picks: the pick below owns the gun check,
     // and the stage claims the cadence even with no shot to fire.
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
@@ -133,6 +140,7 @@ private[Decisioning] object TechniquePipeline {
    * Grounded warriors: the sky and the helpless never reach for a gun.
    */
   object AlwaysAttackStage extends BehaviorStage("AlwaysAttack", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.unitClass.isWarrior
 
@@ -148,6 +156,7 @@ private[Decisioning] object TechniquePipeline {
    * their own disciplines.
    */
   object DarkTemplarHuntStage extends BehaviorStage("DarkTemplarHunt", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.unitClass.isWarrior && unit.unitClass.attacksGround &&
         ! Protoss.Reaver(unit) && ! Protoss.DarkTemplar(unit)
@@ -161,6 +170,7 @@ private[Decisioning] object TechniquePipeline {
    * from it - but never under siege, the line above already claimed it.
    */
   object DragoonStandStage extends BehaviorStage("DragoonStand", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -172,6 +182,7 @@ private[Decisioning] object TechniquePipeline {
    * one inside eleven tiles instead of retreating past the kill.
    */
   object DragoonCarrierStage extends BehaviorStage("DragoonCarrier", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -185,6 +196,7 @@ private[Decisioning] object TechniquePipeline {
    * frame. Advancing only: a retreating hull keeps running.
    */
   object DragoonMineDefuseStage extends BehaviorStage("DragoonMineDefuse", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Dragoon(unit)
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -198,6 +210,7 @@ private[Decisioning] object TechniquePipeline {
    * Any hull the squad covers: the squad owns who holds the line.
    */
   object RearguardStage extends BehaviorStage("Rearguard", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -206,6 +219,7 @@ private[Decisioning] object TechniquePipeline {
 
   /** Retreat owns survival: the walk to safety ends the frame. */
   object RetreatStage extends BehaviorStage("Retreat", DispatchBand.High) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -218,6 +232,7 @@ private[Decisioning] object TechniquePipeline {
    * reach for it; the duel below owns their fight.
    */
   object BrawlStage extends BehaviorStage("Brawl", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.canMove && (unit.is(Zerg.Zergling) || unit.unitClass.melee)
 
@@ -231,6 +246,7 @@ private[Decisioning] object TechniquePipeline {
    * whitelists abusers, everyone else fights fair.
    */
   object AbuseStage extends BehaviorStage("Abuse", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.unitClass.abuseAllowed
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
@@ -242,6 +258,7 @@ private[Decisioning] object TechniquePipeline {
    * Mutalisks dance instead of trading. Nobody else spins up the dance.
    */
   object SuperKiteStage extends BehaviorStage("SuperKite", DispatchBand.Medium) {
+    override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.isAny(Terran.Wraith, Zerg.Mutalisk)
 
@@ -270,6 +287,7 @@ private[Decisioning] object TechniquePipeline {
 }
 
 final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   var restrained            : Boolean = false
   var restrainedFrames      : Double  = 0.0

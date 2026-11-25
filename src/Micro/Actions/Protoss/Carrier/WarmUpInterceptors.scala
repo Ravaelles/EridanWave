@@ -9,6 +9,7 @@ import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 
 object WarmUpInterceptors extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.interceptors.exists(i => i.complete && i.order == Orders.Nothing)
     && unit.matchups.targets.isEmpty

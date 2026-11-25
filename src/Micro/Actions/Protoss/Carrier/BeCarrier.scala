@@ -18,6 +18,7 @@ import Utilities.UnitFilters.IsTank
 
 
 object BeCarrier extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Carrier(unit)
   
   // Carriers are really finicky and demand their own micro.

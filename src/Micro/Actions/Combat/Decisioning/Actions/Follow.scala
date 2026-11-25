@@ -8,6 +8,7 @@ import ProxyBwapi.Races.{Protoss, Zerg}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 
 object Follow extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.unitClass.followingAllowed

@@ -16,6 +16,7 @@ import Utilities.Time.Minutes
 import Utilities.UnitFilters.{IsTank, IsWorker}
 
 object Retreat extends Action {
+  override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
   /** Never brake into arrival while fleeing: a destination inside this,
     * in tiles, gets pushed past itself, so the unit keeps running
