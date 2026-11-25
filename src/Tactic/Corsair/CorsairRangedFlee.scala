@@ -1,6 +1,7 @@
 package Tactic.Corsair
 
 import Lifecycle.With
+import Mathematics.Maff
 import Micro.Actions.Combat.Maneuvering.{AirFlee, CornerAntiStuckGuard, FleeRelocation}
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -29,14 +30,27 @@ object CorsairRangedFlee {
 
     val threats = With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)).map(_.pixel).toSeq
-    AirFlee.fleeScored(
-      unit.pixel,
-      threats.map(t => (t, corsairTriggerTiles * 32.0 - unit.pixelDistanceCenter(t))),
-      _ > 0.0,
-      AirFlee.marginTiles(unit.woundPercent(), AirFlee.marginLowTiles, AirFlee.marginHighTiles) * 32.0,
-      With.mapPixelWidth,
-      With.mapPixelHeight,
-      CornerAntiStuckGuard.corsairTiles).exists(away => {
+    val marginPixels = AirFlee.marginTiles(unit.woundPercent(), AirFlee.marginLowTiles, AirFlee.marginHighTiles) * 32.0
+    // Cornered corsairs flee the guns and the corner together: inside
+    // the corner zone the escape blends the enemy centroid with the
+    // corner push (guns weighted double), so the leg bends off the trap
+    // instead of hugging it while the guns close in. Outside the zone
+    // the scored worst-threat rule stands untouched.
+    val inTrigger = threats.filter(t => unit.pixelDistanceCenter(t) < corsairTriggerTiles * 32.0)
+    val corner = CornerAntiStuckGuard.nearestCorner(unit.pixel, With.mapPixelWidth, With.mapPixelHeight)
+    val away =
+      if (inTrigger.nonEmpty && CornerAntiStuckGuard.inCornerZone(unit.pixel, With.mapPixelWidth, With.mapPixelHeight, CornerAntiStuckGuard.corsairTiles))
+        Some(CornerAntiStuckGuard.blendedEscape(unit.pixel, Maff.centroid(inTrigger), corner, marginPixels))
+      else
+        AirFlee.fleeScored(
+          unit.pixel,
+          threats.map(t => (t, corsairTriggerTiles * 32.0 - unit.pixelDistanceCenter(t))),
+          _ > 0.0,
+          marginPixels,
+          With.mapPixelWidth,
+          With.mapPixelHeight,
+          CornerAntiStuckGuard.corsairTiles)
+    away.exists(away => {
       // Aired out: fleeing the same line without getting anywhere means
       // cornered or herded, so rotate the escape instead of milling.
       val dest = CornerAntiStuckGuard.guard(

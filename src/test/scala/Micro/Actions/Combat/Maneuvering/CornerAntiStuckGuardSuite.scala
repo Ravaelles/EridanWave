@@ -5,31 +5,34 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class CornerAntiStuckGuardSuite extends AnyFunSuite {
 
-  private val mapW = 4096
-  private val mapH = 4096
-
-  test("a corner destination slides out along the shallower penetration") {
-    assert(CornerAntiStuckGuard.guard(Pixel(10, 10), mapW, mapH, 6.0) == Pixel(10, 192))
-    assert(CornerAntiStuckGuard.guard(Pixel(4086, 10), mapW, mapH, 6.0) == Pixel(4086, 192))
-    assert(CornerAntiStuckGuard.guard(Pixel(10, 4086), mapW, mapH, 6.0) == Pixel(10, mapH - 192))
+  test("the guard slides destinations out of the trap square") {
+    assert(CornerAntiStuckGuard.guard(Pixel(100, 100), 1024, 1024) == Pixel(100, 10 * 32))
+    assert(CornerAntiStuckGuard.guard(Pixel(512, 512), 1024, 1024) == Pixel(512, 512))
   }
 
-  test("edges and center pass through untouched") {
-    assert(CornerAntiStuckGuard.guard(Pixel(2000, 10), mapW, mapH, 6.0) == Pixel(2000, 10))
-    assert(CornerAntiStuckGuard.guard(Pixel(2000, 2000), mapW, mapH, 6.0) == Pixel(2000, 2000))
+  test("corsairs treat 20 tiles as the corner zone") {
+    assert(CornerAntiStuckGuard.corsairTiles == 20.0)
   }
 
-  test("an overshooting flee clamps to the map") {
-    val out = CornerAntiStuckGuard.guard(Pixel(-50, 2000), mapW, mapH, 6.0)
-    assert(out == Pixel(0, 2000))
+  test("the nearest corner is picked by quadrant") {
+    assert(CornerAntiStuckGuard.nearestCorner(Pixel(100, 900), 1024, 1024) == Pixel(0, 1024))
+    assert(CornerAntiStuckGuard.nearestCorner(Pixel(900, 100), 1024, 1024) == Pixel(1024, 0))
   }
 
-  test("a custom corner width keeps clear earlier") {
-    assert(CornerAntiStuckGuard.guard(Pixel(300, 300), mapW, mapH, 6.0) == Pixel(300, 300))
-    assert(CornerAntiStuckGuard.guard(Pixel(300, 300), mapW, mapH, 15.0) == Pixel(300, 480))
+  test("the zone reaches 20 tiles from the corner") {
+    assert(CornerAntiStuckGuard.inCornerZone(Pixel(19 * 32, 0), 4096, 4096, 20.0))
+    assert( ! CornerAntiStuckGuard.inCornerZone(Pixel(21 * 32, 0), 4096, 4096, 20.0))
   }
 
-  test("the shared default keeps every air unit clear of the 10x10 squares") {
-    assert(CornerAntiStuckGuard.guard(Pixel(300, 300), mapW, mapH) == Pixel(300, 320))
+  test("the blended escape bends off the corner, enemies first") {
+    // Threat due south, corner south-west: the pure enemy ray runs dead
+    // north, so any east in the answer is the corner push working.
+    val bent = CornerAntiStuckGuard.blendedEscape(Pixel(640, 100), Pixel(640, 500), Pixel(0, 0), 320.0)
+    assert(bent.y < 100)
+    assert(bent.x > 640)
+    // Threat due east, corner due west: enemies outweigh the corner two
+    // to one, so the escape still runs from the threat, not the corner.
+    val east = CornerAntiStuckGuard.blendedEscape(Pixel(500, 500), Pixel(900, 500), Pixel(100, 500), 300.0)
+    assert(east == Pixel(400, 500))
   }
 }

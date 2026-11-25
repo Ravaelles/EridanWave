@@ -53,6 +53,12 @@ Details live in `details/` - the queue keeps one line per item.
   stale pick and forces the return; brawls, retreats, duels and
   explicit orders keep their frames. Needs a ladder game: no lone
   chase past 8 tiles, no ZealotLeash/AdvanceGate flap on the way out.
+- Corsair corner escape (owner order: the corner counts from 20 tiles,
+  flee guns and corner together with enemies doubled): trap width 6 to
+  20, blended escape (enemy centroid plus corner push, 2:1) inside the
+  zone, worst-threat rule untouched outside it. StarEngine
+  CorsairCornerSuite: pressed hull leaves the zone alive, no dest
+  inside it. Needs a ladder game with corsairs under guns.
 - Citadel-sweep sacrifice (owner order: the probe dies confirming the
   Citadel rather than fleeing blind): latched `CitadelSweep` (PvP
   ladder, scout probe in the enemy metro, Core known, Citadel chain
