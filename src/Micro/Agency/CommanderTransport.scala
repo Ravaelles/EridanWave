@@ -36,7 +36,7 @@ object CommanderTransport {
 
     if ( ! Zerg.Lurker(unit) && CommanderCore.autoUnburrow(unit)) return
 
-    CommanderCore.issueOrder(unit, "CommanderTransport.rightClick") {
+    CommanderCore.issueOrder(unit, OrderIssuer.TransportRightClick) {
       unit.bwapiUnit.rightClick(target.bwapiUnit)
       CommanderCore.sleepAttack(unit)
     }
@@ -55,7 +55,7 @@ object CommanderTransport {
       if (DropSafety.vetoLanding(nearestStatic.map(_.tileDistanceEdge(transport)))) return
     }
 
-    CommanderCore.issueOrder(transport, "CommanderTransport.unload") {
+    CommanderCore.issueOrder(transport, OrderIssuer.TransportUnload) {
       transport.bwapiUnit.unload(passenger.bwapiUnit)
     }
   }

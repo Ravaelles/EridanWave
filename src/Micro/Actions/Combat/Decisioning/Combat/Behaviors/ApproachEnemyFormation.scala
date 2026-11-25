@@ -5,6 +5,7 @@ import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.OverwhelminglyStronger
 import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Agency.Commander
+import Micro.Agency.OrderIssuer
 import ProxyBwapi.Races.Terran
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Latch
@@ -165,7 +166,7 @@ object ApproachEnemyFormation {
         // Explicit hold, not the stationary skip: a standing hull keeps
         // whatever order it already holds (map attack-moves, stale
         // marches), so the freeze must own the order outright.
-        Micro.Agency.CommanderCore.issueOrder(unit, "ApproachEnemyFormation.hold") {
+        Micro.Agency.CommanderCore.issueOrder(unit, OrderIssuer.FormationHold) {
           if (unit.order != ProxyBwapi.Orders.HoldPosition) unit.bwapiUnit.holdPosition()
         }
         Commander.hold(unit)

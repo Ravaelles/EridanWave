@@ -34,7 +34,7 @@ class UnitIntentionRankSuite extends AnyFunSuite {
   }
 
   test("the stood-down key names the direct winner at the class") {
-    assert(UnitIntentionRank.stoodDownKey("CommanderMove.move", "Zealot") ==
+    assert(UnitIntentionRank.stoodDownKey(OrderIssuer.MoveStep, "Zealot") ==
       "bidStoodDown.CommanderMove.move.at.Zealot")
   }
 }

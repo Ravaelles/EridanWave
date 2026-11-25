@@ -64,11 +64,11 @@ object CommanderCore {
    * series proving the legal internal delegations are whitelisted.
    * Returns whether this issuance is a duplicate (second or later).
    */
-  private[Micro] def claimOrder(unit: FriendlyUnitInfo, issuer: String): Boolean = {
+  private[Micro] def claimOrder(unit: FriendlyUnitInfo, issuer: OrderIssuer.Issuer): Boolean = {
     val (stored, duplicate) = IssuedOrderFuse.tryClaim(unit.orderClaim, With.frame, issuer)
     unit.orderClaim = stored
     if (duplicate) {
-      val first = stored.map(_.issuer).getOrElse("?")
+      val first = stored.map(_.issuer).getOrElse(OrderIssuer.MoveStep)
       ErrorLedger.note(
         IssuedOrderFuse.duplicateKey(first, issuer, unit.unitClass.toString),
         ErrorLedger.Priority.Medium,
@@ -88,7 +88,7 @@ object CommanderCore {
    * resolve. Unready units post nothing - a slept frame owns no orders,
    * and the starvation tripwire beside the resolve counts it instead.
    */
-  private[Micro] def issueOrder(unit: FriendlyUnitInfo, issuer: String)(order: => Unit): Unit = {
+  private[Micro] def issueOrder(unit: FriendlyUnitInfo, issuer: OrderIssuer.Issuer)(order: => Unit): Unit = {
     // No readiness gate here on purpose: direct mode keeps Step-0
     // semantics exactly (the formation bypass issues while unready, and
     // the fuse names it if it doubles). Only capture drops slept frames.
@@ -97,7 +97,7 @@ object CommanderCore {
 
       val reason = unit.agent.bidReason.getOrElse({
         ErrorLedger.note(
-          f"bidReasonFallback.at.$issuer%s",
+          f"bidReasonFallback.at.${issuer.key}%s",
           ErrorLedger.Priority.Low,
           f"unit ${unit.id} ${unit.unitClass} frame ${With.frame}")
         UnitIntentionReason.Duel

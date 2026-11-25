@@ -13,6 +13,7 @@ import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Maneuvering.ArtilleryKeepOff
 import Micro.Actions.Combat.Tactics.Brawl
 import Micro.Agency.Commander
+import Micro.Agency.CommanderCore
 import Micro.Coordination.Pushing.TrafficPriorities
 import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.MotionVerdict
@@ -477,6 +478,13 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
 
     var i = 0
     var claimed = false
+    // The arbitration window opens here, not in engage(): technique bids
+    // (retreats, dodges, stands) and duel bids resolve together, once,
+    // by reason rank - a retreating hull never duels on the way out
+    // because Survival outranks Duel, not because two buses agree by
+    // hand. engage() re-opens idempotently and resolves on every path.
+    unit.agent.capturingBids = true
+    unit.agent.bidReason = None
     while (i < TechniquePipeline.stages.length && ! claimed) {
       claimed = TechniquePipeline.stages(i).shouldRun(unit, this, advance).claimed
       i += 1
@@ -486,6 +494,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // three legs holds the duel out.
     Debugging.Probe.note("Duel", unit.id, s"claimed=$claimed engage=${shouldEngage && advance} ready=${unit.ready} tech=$technique")
     if ( ! claimed && shouldEngage && advance) engagement.engage()
+    else CommanderCore.resolveBids(unit)
   }
 
   private[Decisioning] def techniqueIs(candidates: Technique*): Boolean = candidates.contains(technique)

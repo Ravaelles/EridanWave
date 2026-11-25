@@ -57,8 +57,8 @@ object UnitIntentionRank {
     f"outrankedBid.$loser%sVs$winner%s.at.$className%s"
 
   /** Stable ledger key for bids stood down before an already-issued order. */
-  def stoodDownKey(directIssuer: String, className: String): String =
-    f"bidStoodDown.$directIssuer%s.at.$className%s"
+  def stoodDownKey(directIssuer: OrderIssuer.Issuer, className: String): String =
+    f"bidStoodDown.${directIssuer.key}%s.at.$className%s"
 }
 
 /**
@@ -68,4 +68,4 @@ object UnitIntentionRank {
  * everything else (destinations, votes, pushes, probes) already ran while
  * posting, exactly once. Bids live on the Agent, cleared every frame.
  */
-case class UnitIntention(reason: UnitIntentionReason.Reason, issuer: String, order: () => Unit)
+case class UnitIntention(reason: UnitIntentionReason.Reason, issuer: OrderIssuer.Issuer, order: () => Unit)

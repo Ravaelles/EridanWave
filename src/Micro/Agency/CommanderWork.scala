@@ -14,7 +14,7 @@ object CommanderWork {
     target.friendly.foreach(With.coordinator.healing.heal(unit, _))
     unit.agent.setRideGoal(target.pixel)
     CommanderCore.ready(unit) {
-      CommanderCore.issueOrder(unit, "CommanderWork.repair") {
+      CommanderCore.issueOrder(unit, OrderIssuer.WorkRepair) {
         unit.bwapiUnit.repair(target.bwapiUnit)
         CommanderCore.sleep(unit, 24)
       }
@@ -23,7 +23,7 @@ object CommanderWork {
   private[Micro] def returnCargo(unit: FriendlyUnitInfo): Unit = {
     CommanderCore.ready(unit) {
       if (unit.carrying) {
-        CommanderCore.issueOrder(unit, "CommanderWork.returnCargo") {
+        CommanderCore.issueOrder(unit, OrderIssuer.WorkReturnCargo) {
           unit.bwapiUnit.returnCargo()
           CommanderCore.sleepReturnCargo(unit)
         }
@@ -42,7 +42,7 @@ object CommanderWork {
         if (incompleteHall.exists(hall => nextClosestFrames.forall(_ * 2 > hall.remainingCompletionFrames))) {
           CommanderMove.move(unit, incompleteHall.get.pixel)
         } else {
-          CommanderCore.issueOrder(unit, "CommanderWork.returnCargo") {
+          CommanderCore.issueOrder(unit, OrderIssuer.WorkReturnCargo) {
             unit.bwapiUnit.returnCargo()
           }
         }
@@ -51,7 +51,7 @@ object CommanderWork {
       CommanderMove.move(unit, resource.pixel)
     } else {
       def doGather(): Unit = {
-        CommanderCore.issueOrder(unit, "CommanderWork.gather") {
+        CommanderCore.issueOrder(unit, OrderIssuer.WorkGather) {
           unit.bwapiUnit.rightClick(resource.bwapiUnit)
         }
       }
@@ -98,7 +98,7 @@ object CommanderWork {
   private[Micro] def build(unit: FriendlyUnitInfo, unitClass: UnitClass): Unit = {
     // Don't auto-unload! We have a separate process for building Scarabs in loaded Reavers
     CommanderCore.ready(unit, unload = false) {
-      CommanderCore.issueOrder(unit, "CommanderWork.build") {
+      CommanderCore.issueOrder(unit, OrderIssuer.WorkBuild) {
         unit.bwapiUnit.build(unitClass.bwapiType)
         CommanderCore.sleepBuild(unit)
       }
@@ -111,12 +111,12 @@ object CommanderWork {
         CommanderMove.move(unit, tile.center)
       } else {
         if (unitClass.isAddon) {
-          CommanderCore.issueOrder(unit, "CommanderWork.build") {
+          CommanderCore.issueOrder(unit, OrderIssuer.WorkBuild) {
             unit.bwapiUnit.buildAddon(unitClass.bwapiType)
             CommanderCore.sleepBuild(unit)
           }
         } else {
-          CommanderCore.issueOrder(unit, "CommanderWork.build") {
+          CommanderCore.issueOrder(unit, OrderIssuer.WorkBuild) {
             unit.bwapiUnit.build(unitClass.bwapiType, tile.bwapi)
             CommanderCore.sleepBuild(unit)
           }
@@ -127,7 +127,7 @@ object CommanderWork {
   private[Micro] def tech(unit: FriendlyUnitInfo, tech: Tech): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderWork.tech") {
+    CommanderCore.issueOrder(unit, OrderIssuer.WorkTech) {
       unit.bwapiUnit.research(tech.bwapiTech)
       CommanderCore.sleep(unit)
     }
@@ -135,7 +135,7 @@ object CommanderWork {
   private[Micro] def upgrade(unit: FriendlyUnitInfo, upgrade: Upgrade): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderWork.upgrade") {
+    CommanderCore.issueOrder(unit, OrderIssuer.WorkUpgrade) {
       unit.bwapiUnit.upgrade(upgrade.bwapiType)
       CommanderCore.sleep(unit)
     }
@@ -143,7 +143,7 @@ object CommanderWork {
   private[Micro] def cancel(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderWork.cancel") {
+    CommanderCore.issueOrder(unit, OrderIssuer.WorkCancel) {
       if (unit.teching) {
         unit.bwapiUnit.cancelResearch()
       } else if (unit.upgrading) {
@@ -159,7 +159,7 @@ object CommanderWork {
   private[Micro] def rally(unit: FriendlyUnitInfo, pixel: Pixel): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderWork.rally") {
+    CommanderCore.issueOrder(unit, OrderIssuer.WorkRally) {
       unit.bwapiUnit.setRallyPoint(pixel.bwapi)
       unit.lastSetRally = With.frame
       CommanderCore.sleep(unit)
@@ -168,7 +168,7 @@ object CommanderWork {
   private[Micro] def addon(unit: FriendlyUnitInfo, unitClass: UnitClass): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderWork.addon") {
+    CommanderCore.issueOrder(unit, OrderIssuer.WorkAddon) {
       unit.bwapiUnit.buildAddon(unitClass.bwapiType)
       CommanderCore.sleep(unit)
     }

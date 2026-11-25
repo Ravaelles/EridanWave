@@ -18,7 +18,7 @@ object CommanderMove {
     CommanderCore.leadFollower(unit, stop)
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderMove.stop") {
+    CommanderCore.issueOrder(unit, OrderIssuer.MoveStop) {
       unit.bwapiUnit.stop()
       Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
       CommanderCore.sleep(unit)
@@ -34,7 +34,7 @@ object CommanderMove {
     // The sleep below rides inside the bid on purpose: in capture mode a
     // slept frame must stay open for the other bidders, the resolve puts
     // the frame to sleep through the winner instead.
-    CommanderCore.issueOrder(unit, "CommanderMove.hold") {
+    CommanderCore.issueOrder(unit, OrderIssuer.MoveHold) {
       if (unit.velocity.lengthSquared > 0 && unit.order != Orders.HoldPosition) {
         unit.bwapiUnit.holdPosition()
         Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
@@ -81,7 +81,7 @@ object CommanderMove {
       unit.order == Orders.AttackUnit && Option(unit.bwapiUnit.getLastCommand).exists(command =>
         command.getType == bwapi.UnitCommandType.Attack_Move && ! command.isQueued && new Pixel(command.getTargetPosition).pixelDistance(to) < 128))
     if ( ! alreadyAttackMovingThere || unit.seeminglyStuck) {
-      CommanderCore.issueOrder(unit, "CommanderMove.attackMove") {
+      CommanderCore.issueOrder(unit, OrderIssuer.MoveAttackMove) {
         unit.bwapiUnit.attack(to.bwapi)
         Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.AttackMoveKind, With.frame)
         CommanderCore.sleepAttack(unit)
@@ -98,7 +98,7 @@ object CommanderMove {
     val to = CommanderOrder.adjustDestination(unit, destination, remember = true)
     if (CommanderCore.autoUnburrowUnlessLurkerInRangeOf(unit, to)) return
 
-    CommanderCore.issueOrder(unit, "CommanderMove.patrol") {
+    CommanderCore.issueOrder(unit, OrderIssuer.MovePatrol) {
       unit.bwapiUnit.patrol(to.bwapi)
       Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
       CommanderCore.sleepAttack(unit)
@@ -178,7 +178,7 @@ object CommanderMove {
         orderTarget.exists(_.pixelDistance(goal) < tolerancePixels) ||
           OrderContinue.holdsCourse(distTiles, onCourse))
       if ( ! continuing || unit.seeminglyStuck) {
-        CommanderCore.issueOrder(unit, "CommanderMove.move") {
+        CommanderCore.issueOrder(unit, OrderIssuer.MoveStep) {
           unit.bwapiUnit.move(goal.bwapi)
           Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
           if ( ! unit.flying) {

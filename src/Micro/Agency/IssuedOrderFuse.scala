@@ -12,8 +12,8 @@ package Micro.Agency
  */
 object IssuedOrderFuse {
 
-  /** The last BWAPI issuance recorded on one unit: frame plus first issuer. */
-  case class Claim(frame: Int, issuer: String)
+  /** The last BWAPI issuance recorded on one unit: frame plus first door. */
+  case class Claim(frame: Int, issuer: OrderIssuer.Issuer)
 
   /**
    * Attempt to record an issuance. Returns the stored claim and whether this
@@ -21,7 +21,7 @@ object IssuedOrderFuse {
    * from any issuer - a re-issue from the same site is still a second order.
    * Duplicates keep the first claim, so the ledger names first-vs-second.
    */
-  def tryClaim(last: Option[Claim], frame: Int, issuer: String): (Option[Claim], Boolean) =
+  def tryClaim(last: Option[Claim], frame: Int, issuer: OrderIssuer.Issuer): (Option[Claim], Boolean) =
     last match {
       case Some(Claim(`frame`, _)) => (last, true)
       case _                       => (Some(Claim(frame, issuer)), false)
@@ -32,6 +32,6 @@ object IssuedOrderFuse {
    * class, greppable beside the exception keys. Pure so the suite pins the
    * format the end-of-game summary will carry.
    */
-  def duplicateKey(first: String, second: String, className: String): String =
-    f"duplicateOrder.$first%sVs$second%s.at.$className%s"
+  def duplicateKey(first: OrderIssuer.Issuer, second: OrderIssuer.Issuer, className: String): String =
+    f"duplicateOrder.${first.key}%sVs${second.key}%s.at.$className%s"
 }

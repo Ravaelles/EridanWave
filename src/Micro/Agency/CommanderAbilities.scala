@@ -13,7 +13,7 @@ object CommanderAbilities {
     // The caller gates on needed > 0, so the loop normally issues; a lost
     // resource race may still issue nothing and claim the frame - rare,
     // and the ledger names it honestly.
-    CommanderCore.issueOrder(unit, "CommanderAbilities.buildScarab") {
+    CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesScarab) {
       while (queued < count && unit.bwapiUnit.build(Protoss.Scarab.bwapiType)) queued += 1
       if (queued > 0) CommanderCore.sleep(unit)
     }
@@ -21,7 +21,7 @@ object CommanderAbilities {
   private[Micro] def buildInterceptor(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderAbilities.buildInterceptor") {
+    CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesInterceptor) {
       unit.bwapiUnit.build(Protoss.Interceptor.bwapiType)
       CommanderCore.sleep(unit)
     }
@@ -31,7 +31,7 @@ object CommanderAbilities {
     if (unit.unready) return
 
     unit.agent.lastCloak = With.frame
-    CommanderCore.issueOrder(unit, "CommanderAbilities.cloak") {
+    CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesCloak) {
       unit.bwapiUnit.cloak()
       CommanderCore.sleep(unit)
     }
@@ -40,7 +40,7 @@ object CommanderAbilities {
     CommanderCore.leadFollower(unit, decloak(_, tech))
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderAbilities.decloak") {
+    CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesDecloak) {
       unit.bwapiUnit.decloak()
       CommanderCore.sleep(unit)
     }
@@ -48,7 +48,7 @@ object CommanderAbilities {
   private[Micro] def burrow(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderAbilities.burrow") {
+    CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesBurrow) {
       unit.bwapiUnit.burrow()
       CommanderCore.sleep(unit)
     }
@@ -56,7 +56,7 @@ object CommanderAbilities {
   private[Micro] def unburrow(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderAbilities.unburrow") {
+    CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesUnburrow) {
       unit.bwapiUnit.unburrow()
       CommanderCore.sleep(unit)
     }
@@ -64,7 +64,7 @@ object CommanderAbilities {
   private[Micro] def lift(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
 
-    CommanderCore.issueOrder(unit, "CommanderAbilities.lift") {
+    CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesLift) {
       unit.bwapiUnit.lift()
       CommanderCore.sleep(unit)
     }
@@ -74,12 +74,12 @@ object CommanderAbilities {
 
     val destination = unit.unitClass.tileArea.add(tile).center
     if (unit.pixelDistanceCenter(destination) > 2) {
-      CommanderCore.issueOrder(unit, "CommanderAbilities.land") {
+      CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesLand) {
         unit.bwapiUnit.move(destination.bwapi)
         CommanderCore.sleep(unit)
       }
     } else {
-      CommanderCore.issueOrder(unit, "CommanderAbilities.land") {
+      CommanderCore.issueOrder(unit, OrderIssuer.AbilitiesLand) {
         unit.bwapiUnit.land(tile.bwapi)
         CommanderCore.sleep(unit)
       }

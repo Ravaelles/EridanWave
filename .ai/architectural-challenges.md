@@ -93,6 +93,15 @@ hysteresis home (rules 10-11).
   1Drag clean. Loser pushes stay advisory (traffic votes were never
   orders) - documented, not fixed.
 
+- Doors plus technique-wide window (2026-11): the 35 issuance sites
+  are compile-checked `OrderIssuer` doors (dotted ledger keys
+  unchanged), and the capture window opens in `dispatchByTechnique`,
+  so technique bids resolve together with duel bids - retreats own
+  the frame by rank (Survival>Duel), not by bus agreement. Live:
+  1DragWounded inside its variance band, 4+3Zeal 48 ties, zero
+  duplicates, tripwires silent. Pattern: authority moves to the
+  narrowest choke that sees all bidders.
+
 - Wrong reference frame (audit 2026-11, the TankHold class): a dozen
   kernels measured against the wrong side of the duel - our range
   where the enemy's belonged (HoldToShoot vs Vulture, TankHold seam),
