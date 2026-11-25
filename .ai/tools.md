@@ -58,7 +58,8 @@ StarEngine alone: `scripts/starengine.sh [<Suite>...]`
 ## Gotchas
 
 - Never edit `scripts/wine-run.sh` mid-run (bash reparses, kills teardown).
-- New Scala = CRLF, scripts = LF; blank line after `return`.
+- New files are LF, like everything else (`.gitattributes` locks it;
+  only `*.bat` stays CRLF for cmd.exe). Blank line after `return`.
 - Human-only UMS maps idle headless: `list-maps.sh` hides them,
   `run.sh` refuses them - do not force-launch.
 - Box stuck in NOATTACH: kill leftovers, `wineserver -k`, retry;

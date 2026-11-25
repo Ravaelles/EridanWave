@@ -83,8 +83,10 @@ Ordered most to least important. Each is one rule; keep them short.
     the smallest investigation that unblocks a confident fix.
 21. **UMS and StarEngine judge behavior; ladder validates.** Maps and
     suites are the source of truth, ladder games only confirm.
-22. **Minimal diffs, stable line endings.** Default CRLF for new Scala
-    unless the file says otherwise; no whitespace-only or
+22. **Line endings are LF, locked by `.gitattributes`.** The tree was
+    mixed CRLF/LF and the friction (edit misses, git warnings) cost more
+    than the one-time sweep, so everything is LF now - except `*.bat`,
+    which stays CRLF because cmd.exe requires it. No whitespace-only or
     line-ending-only edits.
 23. **No new edge cases; grow the existing logic.** Before adding a
     concept (behavior, kernel, gate, holder, picker), name the closest
