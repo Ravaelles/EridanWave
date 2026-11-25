@@ -11,7 +11,7 @@ object Travel extends Action {
   override def isContainer: Boolean = true
   override def allowed(unit: FriendlyUnitInfo): Boolean = unit.canMove
   override def perform(unit: FriendlyUnitInfo): UnitControl = {
-    if (unit.intent.canSneak) {
+    if (unit.squadIntent.canSneak) {
       MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getSneakyPath(unit))
 
       return UnitControl.claimedIf(! unit.ready)

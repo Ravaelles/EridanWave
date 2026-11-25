@@ -30,9 +30,9 @@ object CorsairHunt {
 
     huntTarget(unit).exists(overlord => {
       if (unit.cooldownLeft >= 10 && unit.tileDistanceCenter(overlord.pixel) >= 5) {
-        unit.intend(squad).setTerminus(overlord.pixel)
+        unit.squadIntend(squad).setTerminus(overlord.pixel)
       } else {
-        unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
+        unit.squadIntend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
       }
       unit.agent.act("CorsairHunt")
       true

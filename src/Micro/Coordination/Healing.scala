@@ -22,7 +22,7 @@ class Healing {
   def heal(healer: UnitInfo, patient: UnitInfo): Unit = {
     healer.presumedHealing = Some(patient)
     patient.healers.include(healer)
-    healer.friendly.foreach(_.intent.setHeal(patient))
+    healer.friendly.foreach(_.squadIntent.setHeal(patient))
     nextHealing(healer) = patient
   }
 
@@ -52,7 +52,7 @@ class Healing {
       }
     })
 
-    (lastHealing ++ nextHealing).foreach(p => p._1.friendly.foreach(_.intent.setHeal(p._2)))
+    (lastHealing ++ nextHealing).foreach(p => p._1.friendly.foreach(_.squadIntent.setHeal(p._2)))
   }
 
 }

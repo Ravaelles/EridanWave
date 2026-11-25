@@ -46,7 +46,7 @@ class ProduceUnitMorphed(requestArg: RequestBuildable, expectedFramesArg: Int) e
       morpherLock.acquire()
       morpher = morpherLock.units.headOption
       val shouldHide = Seq(Zerg.Lurker, Zerg.Guardian, Zerg.Devourer).contains(classOutput)
-      morpher.foreach(_.intend(this)
+      morpher.foreach(_.squadIntend(this)
         .setTrain(classOutput)
         .setCanFlee(shouldHide)
         .setCanFight( ! shouldHide))

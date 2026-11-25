@@ -34,7 +34,7 @@ object Bust extends Action {
     && Protoss.DragoonRange()
     && unit.shieldPoints > 12 // Don't take hull damage
     && unit.totalHealth > 24
-    && unit.intent.canFight
+    && unit.squadIntent.canFight
     && With.enemies.exists(e => e.isTerran && ! Terran.MarineRange(e))
     && unit.matchups.threatDeepest.exists(Terran.Bunker)
     && unit.matchups.threats.forall(safeFromThreat(unit, _, unit.pixel))

@@ -12,26 +12,26 @@ object Produce extends Action {
   override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
-    (unit.intent.toTrain.isDefined
-      || unit.intent.toTech.isDefined
-      || unit.intent.toUpgrade.isDefined)
+    (unit.squadIntent.toTrain.isDefined
+      || unit.squadIntent.toTech.isDefined
+      || unit.squadIntent.toUpgrade.isDefined)
       && (unit.trainingQueue.isEmpty || unit.trainee.exists(_.remainingCompletionFrames <= 1 + With.latency.latencyFrames + With.reaction.agencyMax))
       && unit.trainingQueue.size < 2)
   
   override def perform(unit: FriendlyUnitInfo): UnitControl = {
-    val hadOrder = unit.intent.toTrain.isDefined || unit.intent.toTech.isDefined || unit.intent.toUpgrade.isDefined
-    if (unit.intent.toTrain.isDefined) {
-      if (With.framesSince(unit.intent.frameCreated) < Math.max(128, unit.intent.toTrain.get.buildFrames / 2)) {
-        Commander.build(unit, unit.intent.toTrain.get)
+    val hadOrder = unit.squadIntent.toTrain.isDefined || unit.squadIntent.toTech.isDefined || unit.squadIntent.toUpgrade.isDefined
+    if (unit.squadIntent.toTrain.isDefined) {
+      if (With.framesSince(unit.squadIntent.frameCreated) < Math.max(128, unit.squadIntent.toTrain.get.buildFrames / 2)) {
+        Commander.build(unit, unit.squadIntent.toTrain.get)
       }
-    } else if (unit.intent.toTech.isDefined) {
-      Commander.tech(unit, unit.intent.toTech.get)
-    } else if (unit.intent.toUpgrade.isDefined) {
-      Commander.upgrade(unit, unit.intent.toUpgrade.get)
+    } else if (unit.squadIntent.toTech.isDefined) {
+      Commander.tech(unit, unit.squadIntent.toTech.get)
+    } else if (unit.squadIntent.toUpgrade.isDefined) {
+      Commander.upgrade(unit, unit.squadIntent.toUpgrade.get)
     }
-    unit.intent.toTrain = None // Avoid training repeatedly
-    unit.intent.toTech = None // Avoid teching repeatedly (mostly impacts failure to renew the desire to tech)
-    unit.intent.toUpgrade = None //Avoid upgrading repeatedly
+    unit.squadIntent.toTrain = None // Avoid training repeatedly
+    unit.squadIntent.toTech = None // Avoid teching repeatedly (mostly impacts failure to renew the desire to tech)
+    unit.squadIntent.toUpgrade = None //Avoid upgrading repeatedly
     UnitControl.claimedIf(hadOrder)
   }
 }

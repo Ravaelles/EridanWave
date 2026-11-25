@@ -50,7 +50,7 @@ object MonitorWatch {
     val naturals = With.geography.enemyBases.flatMap(_.natural.filter(b =>
       With.framesSince(b.lastFrameScoutedByUs) > Seconds(25)()))
     val bases = Maff.orElse(naturals, With.geography.enemyBases).toVector
-    eye.intend(monitor)
+    eye.squadIntend(monitor)
       .setTerminus(With.geography.home.center)
       .setScout(bases.flatMap(_.zone.tiles.filter(t =>
         t.enemyRangeAir <= 0 && ( ! cloaked || ! t.enemyDetectedUnchecked))))

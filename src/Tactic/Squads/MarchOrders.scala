@@ -108,7 +108,7 @@ object MarchOrders {
     Debugging.CherryVis.CherryVis.decision(unit.id, marchReason)
     Debugging.Probe.note("March", unit.id,
       f"$marchHome terminus=${terminus.tx},${terminus.ty}")
-    unit.intend(squad)
+    unit.squadIntend(squad)
       .setTerminus(?(marching || holdShuttle, terminus, finalReturn))
       .setRedoubt(finalReturn)
       // The march-home verdict rides the frame-fresh intention: a unit the
@@ -131,7 +131,7 @@ object MarchOrders {
   // a gated march above. The gate table holds travel overrides (lone
   // and main-march columns walk at the goal instead of rallying home),
   // missions (suicide, pair rides) and the slotless hunters - battle
-  // intent lives in the cluster posture now, not in gate-skipped legs.
+  // squadIntent lives in the cluster posture now, not in gate-skipped legs.
   // Order is load-bearing (first gate wins, like every first-claims
   // chain in the tree).
   // The gate table lives in Decisions.MarchGates (pure predicates over
@@ -198,7 +198,7 @@ object MarchOrders {
       (RetreatVerdict.shouldHold(
         unit.unitClass.isWarrior,
         Protoss.Reaver(unit),
-        unit.intent.canFlee,
+        unit.squadIntent.canFlee,
         Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit),
         unit.agent.shouldFight,
         unit.totalHealth,

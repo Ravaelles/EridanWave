@@ -26,7 +26,7 @@ class ProduceTech(requestArg: RequestBuildable, expectedFramesArg: Int) extends 
   override def onUpdate(): Unit = {
     if (hasSpent || currencyLock.acquire()) {
       techers.acquire()
-      techers.units.foreach(_.intend(this).setTech(tech))
+      techers.units.foreach(_.squadIntend(this).setTech(tech))
     }
   }
 }

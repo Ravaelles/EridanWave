@@ -77,7 +77,7 @@ class TacticInitialOverlordScout extends Tactic {
       val i = s._2
       val base = bases()(i % bases().size)
       val goal = base.townHallArea.tiles.minBy(overlord.pixelDistanceTravelling)
-      overlord.intend(this)
+      overlord.squadIntend(this)
         .setTerminus(goal.center)
         .setScout(?(goal.explored, base.tiles.view.filter(_.buildable).toVector, Seq.empty))
     })

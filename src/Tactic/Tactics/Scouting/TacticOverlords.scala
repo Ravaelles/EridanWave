@@ -69,13 +69,13 @@ class TacticOverlords extends Tactic {
 
     val overlord = available.minBy(_.pixelDistanceCenter(pixel))
     available -= overlord
-    overlord.intend(this).setTerminus(pixel)
+    overlord.squadIntend(this).setTerminus(pixel)
   }
   
   private def chillOut(overlord: FriendlyUnitInfo, count: Int): Unit = {
     val base = Maff.minBy(With.geography.ourBases.map(_.heart.center))(overlord.pixelDistanceSquared)
     val tile = base.map(b => Maff.sample(Circle(Math.sqrt(count).toInt).map(b.tile.add))).getOrElse(With.geography.home)
-    overlord.intend(this).setTerminus(tile.center)
+    overlord.squadIntend(this).setTerminus(tile.center)
   }
 }
 

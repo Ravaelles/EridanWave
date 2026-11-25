@@ -93,7 +93,7 @@ case class MatchupAnalysis(me: UnitInfo) {
   private val _withinSafetyMargin   = new Cache(() => pixelsEntangled <= ?(me.flying && me.topSpeed > groupVs.maxAttackerSpeedVsAir, -64, -safetyMargin))
   private val _threateningMiners    = new Cache(() => me.metro.exists(m => m.units.exists(t =>
     t.isEnemyOf(me) && IsWorker(t) && {
-      val gathered = t.friendly.flatMap(_.intent.toGather).orElse(t.orderTarget)
+      val gathered = t.friendly.flatMap(_.squadIntent.toGather).orElse(t.orderTarget)
         .filter(r => r.unitClass.isResource && r.base.exists(t.base.contains))
       MinerThreat.threatened(
         metroOurs         = m.owner == me.player,
@@ -131,7 +131,7 @@ case class MatchupAnalysis(me: UnitInfo) {
     allies.view.filter(a =>
       Terran.SCV(a)
       && a.friendly
-        .map(_.intent.toHeal.contains(me))
+        .map(_.squadIntent.toHeal.contains(me))
         .getOrElse(a.orderTarget.contains(me)))
   }
 }

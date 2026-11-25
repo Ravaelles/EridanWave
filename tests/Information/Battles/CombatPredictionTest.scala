@@ -1351,7 +1351,7 @@ object CombatPredictionTest extends App {
   check("inactive unit matchup caches do not retain retired battle forecasts") {
     val worker = positioned(Protoss.Probe, 64)
     set(worker, "_tile", worker.pixel.tile)
-    set(worker, "_intent", new Micro.Agency.Intention)
+    set(worker, "_intent", new Micro.Agency.SquadIntention)
     set(zone, "units", new ProxyBwapi.UnitTracking.UnorderedBuffer[UnitInfo])
     val foe = positioned(Terran.Marine, 100, enemy = true)
     val previousAnalysis = worker.matchups
@@ -1464,7 +1464,7 @@ object CombatPredictionTest extends App {
   check("matchup groups follow a replaced physical battle in the same frame") {
     val worker = positioned(Protoss.Probe, 64)
     set(worker, "_tile", worker.pixel.tile)
-    set(worker, "_intent", new Micro.Agency.Intention)
+    set(worker, "_intent", new Micro.Agency.SquadIntention)
     set(zone, "units", new ProxyBwapi.UnitTracking.UnorderedBuffer[UnitInfo])
     val foe = positioned(Terran.Marine, 100, enemy = true)
     val before = new Battle(Vector(worker), Vector(foe), isGlobal = false)

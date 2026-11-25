@@ -45,7 +45,7 @@ object CorsairBrain {
       .map(u => Separation.Neighbor(u.id, u.pixel, unit.tileDistanceEdge(u))).toSeq
     Separation.partner(unit.id, others).exists(older => {
       if (Separation.shouldSpread(unit.id, older.id, older.distTiles, minSpreadTiles)) {
-        unit.intend(squad).setTerminus(Separation.awayFrom(unit.pixel, older.pixel, minSpreadTiles))
+        unit.squadIntend(squad).setTerminus(Separation.awayFrom(unit.pixel, older.pixel, minSpreadTiles))
         unit.agent.act("CorsairSpread")
         true
       } else false

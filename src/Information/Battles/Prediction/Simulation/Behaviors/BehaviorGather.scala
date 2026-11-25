@@ -5,7 +5,7 @@ import Utilities.Time.Forever
 object BehaviorGather extends SimulacrumBehavior {
   val fighting: Boolean = false
   override def act(simulacrum: Simulacrum): Unit = {
-    val intentGather = if (simulacrum.isFriendlyCached) simulacrum.realUnit.friendly.flatMap(_.intent.toGather) else None
+    val intentGather = if (simulacrum.isFriendlyCached) simulacrum.realUnit.friendly.flatMap(_.squadIntent.toGather) else None
     if (intentGather.isDefined) return gather(simulacrum, intentGather.get.pixel)
 
     val bases = simulacrum.player.bases

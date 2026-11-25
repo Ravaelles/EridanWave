@@ -40,7 +40,7 @@ class TacticEjectScout extends Tactic {
       .acquire()
 
     lock.units.foreach(ejector =>
-      ejector.intend(this)
+      ejector.squadIntend(this)
         .setTerminus(destination())
         .setAttack(?(ejector.matchups.targets.forall(targetScout().contains), targetScout(), None))
         .setScout(?(targetScout().exists(_.likelyStillThere), Seq.empty, tilesToConsider())))

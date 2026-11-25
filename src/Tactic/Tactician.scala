@@ -346,7 +346,7 @@ final class Tactician extends TimedTask {
       val home = Maff.minBy(breached)(_.heart.center.pixelDistanceSquared(c.pixel)).getOrElse(breached.head)
       val raiders = With.units.enemy.filter(e => ! e.flying && home.heart.center.tile.tileDistanceFast(e.tile) <= OurBaseUnderAttack.breachRadiusTiles)
       intruders += raiders.size
-      c.intend(this).setTerminus(home.heart.center).setTargets(raiders)
+      c.squadIntend(this).setTerminus(home.heart.center).setTargets(raiders)
       freelancers -= c
     })
     noteDefenseStaffed("breach", before - freelancers.size, f"ground($intruders)")
@@ -501,7 +501,7 @@ final class Tactician extends TimedTask {
     // The previous guard compared the freelancer value against itself, so
     // it never vetoed anything. The initial value it meant to compare
     // against was read before defense assignment and never kept; staff on
-    // intent alone until "enough remain" has a real measure.
+    // squadIntent alone until "enough remain" has a real measure.
     (With.blackboard.wantToAttack() || With.umsMode) && (With.blackboard.yoloing() || freelancers.nonEmpty)
   }
 

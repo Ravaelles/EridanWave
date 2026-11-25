@@ -17,7 +17,7 @@ class DefendAgainstWorkerRush extends Tactic {
       .flatMap(_.enemies.filter(u =>
         u.unitClass.isWorker
         && u.matchups.targets.exists(ally =>
-          (ally.unitClass.isBuilding || ally.friendly.exists(_.intent.toBuild.nonEmpty))
+          (ally.unitClass.isBuilding || ally.friendly.exists(_.squadIntent.toBuild.nonEmpty))
           && u.framesToGetInRange(ally) < 24 * 3)))
       .distinct
 
@@ -34,7 +34,7 @@ class DefendAgainstWorkerRush extends Tactic {
     defenders
       .setCounter(CountUpTo(workersToDefend))
       .acquire()
-      .foreach(_.intend(this)
+      .foreach(_.squadIntend(this)
         .setCanFlee(false)
         .setTerminus(attackingCentroid))
   }

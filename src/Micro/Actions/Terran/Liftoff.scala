@@ -10,7 +10,7 @@ object Liftoff extends Action {
   override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = {
-    unit.intent.shouldLiftoff && ! unit.flying
+    unit.squadIntent.shouldLiftoff && ! unit.flying
   }
   
   override def perform(unit: FriendlyUnitInfo): UnitControl = {

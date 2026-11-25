@@ -33,7 +33,7 @@ The Planning package makes decisions about what we want to do. The Macro package
 
 The Planning package makes decisions about what goals unit should try to achieve. The Micro package determines how units should try to achieve them.
  
-When a Plan wants a unit to achieve a goal, it gives that unit an Intention. That Intention might say "go attack the enemy's base" or "mine these minerals" or "block this ramp". The Intention is a very loose statement of purpose which, executed literally, would lead to fairly naive behavior.
+When a Plan wants a unit to achieve a goal, it gives that unit a SquadIntention. That SquadIntention might say "go attack the enemy's base" or "mine these minerals" or "block this ramp". The SquadIntention is a very loose statement of purpose which, executed literally, would lead to fairly naive behavior.
 
 The Micro package empowers each unit to intelligently pursue the goal it's been given.
 * The Behavior package chooses the consensus best action for each unit.

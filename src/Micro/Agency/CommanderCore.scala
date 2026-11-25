@@ -10,13 +10,13 @@ import Utilities.?
 object CommanderCore {
   private[Micro] val tryingToMoveThreshold = 32
   private[Micro] def defaultEscalation(unit: FriendlyUnitInfo): Unit = {
-    lazy val buildDistance = unit.pixelDistanceCenter(unit.intent.toBuildActive.map(b => b.unitClass.tileArea.add(b.tile).center).get)
+    lazy val buildDistance = unit.pixelDistanceCenter(unit.squadIntent.toBuildActive.map(b => b.unitClass.tileArea.add(b.tile).center).get)
     if (unit.flying) return
 
-    if (unit.intent.toScoutTiles.nonEmpty)                      unit.agent.escalatePriority(TrafficPriorities.Pardon)
-    if (unit.intent.toFinish.isDefined)                         unit.agent.escalatePriority(TrafficPriorities.Bump)
-    if (unit.intent.toHeal.isDefined)                           unit.agent.escalatePriority(TrafficPriorities.Bump)
-    if (unit.intent.toBuild.nonEmpty)                           unit.agent.escalatePriority(?(buildDistance < 128, TrafficPriorities.Shove, TrafficPriorities.Bump))
+    if (unit.squadIntent.toScoutTiles.nonEmpty)                      unit.agent.escalatePriority(TrafficPriorities.Pardon)
+    if (unit.squadIntent.toFinish.isDefined)                         unit.agent.escalatePriority(TrafficPriorities.Bump)
+    if (unit.squadIntent.toHeal.isDefined)                           unit.agent.escalatePriority(TrafficPriorities.Bump)
+    if (unit.squadIntent.toBuild.nonEmpty)                           unit.agent.escalatePriority(?(buildDistance < 128, TrafficPriorities.Shove, TrafficPriorities.Bump))
     if (unit.agent.toAttack.exists( ! unit.inRangeToAttack(_))) unit.agent.escalatePriority(TrafficPriorities.Nudge)
     if (unit.battle.isDefined && ! unit.agent.shouldFight) {    unit.agent.escalatePriority(TrafficPriorities.Pardon)
       if (unit.matchups.pixelsEntangled > -80)                  unit.agent.escalatePriority(TrafficPriorities.Nudge)

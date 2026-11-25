@@ -114,7 +114,7 @@ class DefendFFEWithProbesEarly extends Tactic {
       val targets = With.units.enemy
         .filter(e => e.canAttack && defensePoints.exists(e.pixelDistanceEdge(_) < 96))
         .toVector
-      workers.foreach(_.intend(this)
+      workers.foreach(_.squadIntend(this)
         .setCanFlee(false)
         .setTerminus(toDefend)
         .setRedoubt(toDefend)

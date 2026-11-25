@@ -484,7 +484,7 @@ class SquadAttack extends Squad {
         .take(3)
         .foreach(base =>
         Maff.minBy(unintended.filter(_.canAttackGround))(_.framesToTravelTo(base.heart.center)).foreach(camper =>
-          camper.intend(this)
+          camper.squadIntend(this)
             .setTerminus(base.heart.center)
             .setTargets(base.enemies)))
     }

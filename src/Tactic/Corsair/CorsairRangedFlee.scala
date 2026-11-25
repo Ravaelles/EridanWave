@@ -58,7 +58,7 @@ object CorsairRangedFlee {
         With.mapPixelWidth,
         With.mapPixelHeight,
         CornerAntiStuckGuard.corsairTiles)
-      unit.intend(squad).setTerminus(dest)
+      unit.squadIntend(squad).setTerminus(dest)
       unit.agent.act("CorsairFleeRanged")
       true
     })

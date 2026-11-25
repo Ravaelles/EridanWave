@@ -29,7 +29,7 @@ class ProduceAddon(buildableAddon: RequestBuildable, expectedFramesArg: Int) ext
     if (hasSpent || currencyLock.acquire()) {
       builderLock.acquire()
       if (trainee.isEmpty) {
-        builder.foreach(b => b.intend(this).addBuild(BuildIntent(addonClass, b.tileTopLeft, startNow = true)))
+        builder.foreach(b => b.squadIntend(this).addBuild(BuildIntent(addonClass, b.tileTopLeft, startNow = true)))
       }
     }
   }

@@ -55,11 +55,11 @@ class SquadAcePilots extends Squad {
    * Fresh shields while attacking: hold position instead of fleeing ground
    * fire (FightOrFlee CantFlee forces the fight). Past 16 shield damage the
    * normal flee logic resumes next frame - canFlee is set both ways here,
-   * so no stale intent survives.
+   * so no stale squadIntent survives.
    */
   private def holdFreshAttackers(): Unit = {
     val attacking = targets.exists(_.nonEmpty)
-    units.foreach(u => u.intend(this).setCanFlee( ! (attacking && u.unitClass.maxShields - u.shieldPoints <= 16)))
+    units.foreach(u => u.squadIntend(this).setCanFlee( ! (attacking && u.unitClass.maxShields - u.shieldPoints <= 16)))
   }
 
   private def chooseActivity(): Unit = {
@@ -240,7 +240,7 @@ class SquadAcePilots extends Squad {
     val groundToAir = Maff.exemplarOpt(With.units.ours.filter(u => u.canAttackAir && ! u.flying).map(_.pixel))
     vicinity = groundToAir.getOrElse(homeConsensus)
     SquadTargeting.target(this)
-    units.foreach(_.intend(this).setTerminus(vicinity).setRedoubt(vicinity))
+    units.foreach(_.squadIntend(this).setTerminus(vicinity).setRedoubt(vicinity))
   }
 
   private def followSquad(otherSquad: Squad): Unit = {

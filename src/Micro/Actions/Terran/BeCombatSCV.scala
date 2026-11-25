@@ -22,17 +22,17 @@ object BeCombatSCV extends Action {
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     Terran.SCV(unit)
-    && unit.intent.toBuild      .isEmpty
-    && unit.intent.toGather     .isEmpty
-    && unit.intent.toHeal       .isEmpty
-    && unit.intent.toScoutTiles .isEmpty
+    && unit.squadIntent.toBuild      .isEmpty
+    && unit.squadIntent.toGather     .isEmpty
+    && unit.squadIntent.toHeal       .isEmpty
+    && unit.squadIntent.toScoutTiles .isEmpty
     && unit.squad               .isDefined
   )
   
   override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
     if ( ! unit.squad.exists(_.repairables.nonEmpty)) return UnitControl.Declined
 
-    unit.intent.canFight = false
+    unit.squadIntent.canFight = false
 
     val vips = unit.squad.get.repairableVIPs.flatMap(_.friendly).toVector
       .sortBy(t => t.pixelDistanceSquared(unit) + t.matchups.pixelsToThreatRange.getOrElse(LightYear().toDouble))

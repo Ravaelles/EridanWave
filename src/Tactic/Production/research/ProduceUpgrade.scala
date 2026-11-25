@@ -28,7 +28,7 @@ class ProduceUpgrade(requestArg: RequestBuildable, expectedFramesArg: Int) exten
     if (hasSpent || currencyLock.acquire()) {
       upgraders.acquire()
       if ( ! hasSpent) {
-        upgraders.units.foreach(_.intend(this).setUpgrade(upgrade))
+        upgraders.units.foreach(_.squadIntend(this).setUpgrade(upgrade))
       }
     }
   }

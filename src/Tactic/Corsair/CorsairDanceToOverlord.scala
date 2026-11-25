@@ -82,9 +82,9 @@ object CorsairDanceToOverlord {
       if ( ! dance) return false
 
       if (shouldDance(unit.cooldownLeft, distTiles, unit.woundPercent(), sporeCover)) {
-        unit.intend(squad).setTargets(Seq(overlord)).setTerminus(unit.pixel)
+        unit.squadIntend(squad).setTargets(Seq(overlord)).setTerminus(unit.pixel)
       } else {
-        unit.intend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
+        unit.squadIntend(squad).setTargets(Seq(overlord)).setTerminus(overlord.pixel)
       }
       unit.agent.act("CorsairDance")
       true

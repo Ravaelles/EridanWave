@@ -110,12 +110,12 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
 
     ridesharing.reconcileBoarding()
 
-    toAttack  = unit.intent.toAttack
-    toGather  = unit.intent.toGather
-    toBoard   = unit.intent.toBoard.orElse(toBoard)
-    toNuke    = unit.intent.toNuke
-    if ( ! combat.tryDodge()) unit.intent.action(unit)
-    Debugging.CherryVis.CherryVis.noteBehavior(unit.id, unit.intent.action)
+    toAttack  = unit.squadIntent.toAttack
+    toGather  = unit.squadIntent.toGather
+    toBoard   = unit.squadIntent.toBoard.orElse(toBoard)
+    toNuke    = unit.squadIntent.toNuke
+    if ( ! combat.tryDodge()) unit.squadIntent.action(unit)
+    Debugging.CherryVis.CherryVis.noteBehavior(unit.id, unit.squadIntent.action)
     flushDecisionChain()
   }
 
@@ -184,7 +184,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   // Other //
   ///////////
 
-  def isScout: Boolean = unit.intent.toScoutTiles.nonEmpty
+  def isScout: Boolean = unit.squadIntent.toScoutTiles.nonEmpty
 
   def choosePerch(): Destination = perch.set(perch.pixel.orElse(toAttack.map(unit.pixelToFireAtExhaustive)))
 

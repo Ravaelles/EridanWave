@@ -40,7 +40,7 @@ trait DropManifestOps { self: MissionDrop =>
       With.logger.debug(s"$this retaining carried passenger $p aboard $transport")
       p.setSquad(Some(this))
       transport.agent.addPassenger(p)
-      p.intend(this).setTerminus(vicinity).setAction(if (state == Raiding || raidingTransports(transport)) Idle else DoNothing)
+      p.squadIntend(this).setTerminus(vicinity).setAction(if (state == Raiding || raidingTransports(transport)) Idle else DoNothing)
     })
   }
 
@@ -84,8 +84,8 @@ trait DropManifestOps { self: MissionDrop =>
         p.agent.toBoard = None
         p.agent.wantsPickup = false
         p.setSquad(None)
-        val intent = p.intend(this).setAction(Idle).setTerminus(p.agent.defaultHome).setStation(None).setRedoubt(None).setBoard(None).setAttack(None)
-        intent.targets = None
+        val squadIntent = p.squadIntend(this).setAction(Idle).setTerminus(p.agent.defaultHome).setStation(None).setRedoubt(None).setBoard(None).setAttack(None)
+        squadIntent.targets = None
         p.agent.resetDestinations()
       })
       passengers --= stranded

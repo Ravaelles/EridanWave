@@ -42,7 +42,7 @@ package Tactic.Missions {
   import Micro.Actions.Combat.Maneuvering.Retreat
   import Micro.Actions.Protoss.BeReaver
   import Micro.Actions.Transportation.Transport
-  import Micro.Agency.{Agency, Intention}
+  import Micro.Agency.{Agency, SquadIntention}
   import Micro.Matchups.MatchupAnalysis
   import Performance.{Cache, Latency, ReactionTimes}
   import Planning.Blackboard
@@ -77,7 +77,7 @@ package Tactic.Missions {
     def performIntent(unit: FriendlyUnitInfo): Unit = {
       unit.agent.forces.clear()
       unit.agent.resetDestinations()
-      unit.intent.action(unit)
+      unit.squadIntent.action(unit)
     }
     var passed = 0
     def check(name: String)(body: => Unit): Unit = { body; passed += 1; println("PASS " + name) }
@@ -180,7 +180,7 @@ package Tactic.Missions {
       set(u, "_orderTarget", None)
       set(u, "_scarabs", 3); set(u, "_trainingQueue", Vector.empty[UnitClass])
       set(u, "_squad", None); set(u, "friendly", Some(u)); set(u, "damageQueue", ArrayBuffer.empty)
-      set(u, "_intent", new Intention)
+      set(u, "_intent", new SquadIntention)
       set(u, "_loadedUnitsCache", new Cache(() => observations.filter(_.transport.contains(u)).toVector, refreshPeriod = 0))
       set(u, "_cooldownLeft", new Cache(() => 60))
       set(u, "canMoveCache", new Cache(() => true))
@@ -397,7 +397,7 @@ package Tactic.Missions {
           m.run()
         }
         assert(m.state == m.Travelling)
-        assert(t.intent.action == m.ActionTravelTransport)
+        assert(t.squadIntent.action == m.ActionTravelTransport)
       }
     }
     check("a drop still needs an enabled mission and a completed transportable Reaver") {
@@ -556,7 +556,7 @@ package Tactic.Missions {
       recruited.foreach(_.setSquad(Some(m))); set(m, "_unitsNow", ArrayBuffer(recruited: _*))
       m.run(); assert(m.state == m.Assembling && m.passengers.contains(filler))
       val raidGoal = first.heart.center
-      filler.intend(m).setTerminus(raidGoal).setStation(raidGoal).setRedoubt(raidGoal).setBoard(t).setTargets(Vector(r))
+      filler.squadIntend(m).setTerminus(raidGoal).setStation(raidGoal).setRedoubt(raidGoal).setBoard(t).setTargets(Vector(r))
       filler.agent.toBoard = Some(t); filler.agent.wantsPickup = true; filler.agent.commit = true
       set(filler, "_order", ProxyBwapi.Orders.EnterTransport)
       load(extra, Some(t)); performIntent(t)
@@ -566,26 +566,26 @@ package Tactic.Missions {
       assert(filler.squad.isEmpty && filler.agent.ride.isEmpty && !t.agent.passengers.contains(filler))
       assert(!With.recruiter.lockedBy(m).exists(_ == filler) && With.recruiter.available.exists(_ == filler))
       assert(filler.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].stopped && !filler.agent.wantsPickup && !filler.agent.commit)
-      assert(filler.intent.action == Idle && filler.intent.terminus.contains(filler.agent.defaultHome))
-      assert(filler.agent.toBoard.isEmpty && filler.intent.toBoard.isEmpty && filler.intent.station.isEmpty &&
-        filler.intent.redoubt.isEmpty && filler.intent.targets.isEmpty)
+      assert(filler.squadIntent.action == Idle && filler.squadIntent.terminus.contains(filler.agent.defaultHome))
+      assert(filler.agent.toBoard.isEmpty && filler.squadIntent.toBoard.isEmpty && filler.squadIntent.station.isEmpty &&
+        filler.squadIntent.redoubt.isEmpty && filler.squadIntent.targets.isEmpty)
       assert(filler.agent.destinationNext() == filler.agent.defaultHome)
       With.frame += 25; m.run()
-      assert(filler.squad.isEmpty && filler.intent.terminus.contains(filler.agent.defaultHome), "Departure must not restore the filler unit's raid orders")
+      assert(filler.squad.isEmpty && filler.squadIntent.terminus.contains(filler.agent.defaultHome), "Departure must not restore the filler unit's raid orders")
       set(With.geography, "_baseByTile", previousMapping)
     }
     check("ending a failed pickup releases grounded filler and its boarding orders") {
       val t = unit(Protoss.Shuttle); val r = unit(Protoss.Reaver); val filler = unit(Protoss.Zealot)
       val m = new MissionProbe(first); m.configure(Vector(t), Vector(r, filler)); m.launched = true
       With.recruiter.lockTo(m.lock, Vector(t, r, filler))
-      filler.intend(m).setBoard(t).setTerminus(first.heart.center)
+      filler.squadIntend(m).setBoard(t).setTerminus(first.heart.center)
       filler.agent.toBoard = Some(t); filler.agent.wantsPickup = true
       set(filler, "_order", ProxyBwapi.Orders.Move)
       set(t, "_alive", false); m.run()
       assert(!m.launched && With.recruiter.lockedBy(m).isEmpty)
-      assert(filler.squad.isEmpty && filler.agent.ride.isEmpty && filler.intent.toBoard.isEmpty && filler.agent.toBoard.isEmpty)
+      assert(filler.squad.isEmpty && filler.agent.ride.isEmpty && filler.squadIntent.toBoard.isEmpty && filler.agent.toBoard.isEmpty)
       assert(filler.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].stopped && !filler.agent.wantsPickup)
-      assert(filler.intent.action == Idle && filler.intent.terminus.contains(filler.agent.defaultHome))
+      assert(filler.squadIntent.action == Idle && filler.squadIntent.terminus.contains(filler.agent.defaultHome))
     }
     check("extra assembly cargo returns to friendly ground before unloading") {
       val previousMapping = With.geography.allTiles.map(_.base).toArray
@@ -599,7 +599,7 @@ package Tactic.Missions {
       val m = new MissionProbe(first); m.configure(Vector(t), Vector(r))
       Vector(r, extra).foreach(load(_, Some(t)))
       m.run(); performIntent(t)
-      assert(m.state == m.Assembling && t.intent.terminus.contains(home), s"Extra cargo became ${m.state} with destination ${t.intent.terminus} instead of $home")
+      assert(m.state == m.Assembling && t.squadIntent.terminus.contains(home), s"Extra cargo became ${m.state} with destination ${t.squadIntent.terminus} instead of $home")
       assert(t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].unloaded == null && t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].movedTo != null)
       set(t, "_pixel", home); set(t, "_tile", home.tile); With.frame += 25; t.sleepUntil = 0
       performIntent(t)
@@ -735,7 +735,7 @@ package Tactic.Missions {
         m.run()
         assert(m.state == m.Raiding && m.launched, "The departure threshold must not interrupt the current raid")
         cleared = true; m.run()
-        assert(m.state == m.Evacuating && m.launched && r.intent.action == m.ActionEvacuatePassenger)
+        assert(m.state == m.Evacuating && m.launched && r.squadIntent.action == m.ActionEvacuatePassenger)
         load(r, Some(t)); m.run()
         if (hp + sp > half) {
           assert(m.state == m.Travelling && m.vicinity == a.heart.center && m.launched)
@@ -748,7 +748,7 @@ package Tactic.Missions {
           set(With.geography, "_baseByTile", Array.fill[Option[Base]](With.mapTileArea)(None))
           m.run()
           assert(!m.launched && With.recruiter.lockedBy(m).isEmpty)
-          assert(Vector(t, r).forall(u => u.squad.isEmpty && u.intent.action == Idle))
+          assert(Vector(t, r).forall(u => u.squad.isEmpty && u.squadIntent.action == Idle))
         }
       }
     }
@@ -796,13 +796,13 @@ package Tactic.Missions {
       assert(m.launched && m.state == m.Raiding, "Disabling harassment does not interrupt the current stop")
       cleared = true; m.run()
       assert(m.itinerary.isEmpty && m.state == m.Evacuating && m.launched)
-      assert(r.intent.action == m.ActionEvacuatePassenger, "Recover the grounded Reaver before terminating")
+      assert(r.squadIntent.action == m.ActionEvacuatePassenger, "Recover the grounded Reaver before terminating")
       load(r, Some(t)); m.run()
       assert(m.state == m.Escaping && m.launched)
       set(With.geography, "_baseByTile", Array.fill[Option[Base]](With.mapTileArea)(None))
       m.run()
       assert(!m.launched && With.recruiter.lockedBy(m).isEmpty)
-      assert(Vector(t, r).forall(u => u.squad.isEmpty && u.intent.action == Idle))
+      assert(Vector(t, r).forall(u => u.squad.isEmpty && u.squadIntent.action == Idle))
       With.blackboard.wantToHarass.set(true)
       set(With.geography, "_baseByTile", previousMapping)
     }
@@ -1074,7 +1074,7 @@ package Tactic.Missions {
       val rs = Vector.fill(4)(unit(Protoss.Reaver))
       val m = new MissionProbe(first); m.configure(ts, rs); m.state = m.Raiding
       m.run()
-      assert((ts ++ rs).forall(_.intent.action == Idle))
+      assert((ts ++ rs).forall(_.squadIntent.action == Idle))
       assert(rs.forall(r => !r.agent.commit && r.agent.ride == m.assignedTransport(r)))
       assert(ts.forall(_.agent.passengerSize == 8))
       val rides = rs.map(_.agent.ride)
@@ -1092,15 +1092,15 @@ package Tactic.Missions {
       With.frame += Seconds(181)()
       m.run()
       assert(m.launched && m.state == m.Evacuating)
-      assert(t.intent.action == m.ActionEvacuateTransport && r.intent.action == m.ActionEvacuatePassenger)
+      assert(t.squadIntent.action == m.ActionEvacuateTransport && r.squadIntent.action == m.ActionEvacuatePassenger)
       load(r, Some(t)); m.run()
       assert(m.launched && m.state == m.Escaping)
-      assert(t.intent.action == m.ActionTravelTransport)
+      assert(t.squadIntent.action == m.ActionTravelTransport)
       set(With.geography, "_baseByTile", Array.fill[Option[Base]](With.mapTileArea)(None))
       m.run()
       assert(!m.launched && With.recruiter.lockedBy(m).isEmpty)
-      assert(Vector(t, r).forall(u => u.intent.action == Idle && u.squad.isEmpty && u.intent.station.isEmpty &&
-        u.intent.redoubt.isEmpty && u.intent.targets.isEmpty && u.intent.terminus.contains(u.agent.defaultHome)))
+      assert(Vector(t, r).forall(u => u.squadIntent.action == Idle && u.squad.isEmpty && u.squadIntent.station.isEmpty &&
+        u.squadIntent.redoubt.isEmpty && u.squadIntent.targets.isEmpty && u.squadIntent.terminus.contains(u.agent.defaultHome)))
       assert(r.loaded && r.agent.ride.contains(t), "Normal micro retains the recovered crew")
       r.agent.wantsUnload = true; t.agent.run = 0; t.sleepUntil = With.frame + 10
       perform(Transport, t)
@@ -1591,7 +1591,7 @@ package Tactic.Missions {
       at(33); m.run()
       assert(!m.controlsCombat(t) && r.loaded && z.loaded)
       at(32); m.run()
-      assert(m.controlsCombat(t) && Vector(t, r, z).forall(_.intent.action == Idle))
+      assert(m.controlsCombat(t) && Vector(t, r, z).forall(_.squadIntent.action == Idle))
     }
     check("nearby anti-air outside weapon range cannot interrupt a clear arrival") {
       val (m, t, r, z, _) = combatMission(approaching = true)
@@ -1752,11 +1752,11 @@ package Tactic.Missions {
       m.run()
       assert(m.itinerary.head == target && m.state == m.Travelling && r.loaded)
       target.owner = enemy; target.units = Vector(nexus); m.run()
-      assert(m.state == m.Landing && !m.controlsCombat(t) && t.intent.terminus.contains(target.heart.center),
+      assert(m.state == m.Landing && !m.controlsCombat(t) && t.squadIntent.terminus.contains(target.heart.center),
         "Discovering ownership must finish the flight to the mineral line")
       Vector(t, r).foreach(u => { set(u, "_pixel", target.heart.center); set(u, "_tile", target.heart) })
       m.run()
-      assert(m.state == m.Raiding && m.vicinity == target.heart.center && t.intent.terminus.contains(m.vicinity))
+      assert(m.state == m.Raiding && m.vicinity == target.heart.center && t.squadIntent.terminus.contains(m.vicinity))
       assert(r.loaded && t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].unloaded == null)
       set(With.units, "bufferFriendly", new ProxyBwapi.UnitTracking.UnorderedBuffer(previous))
     }
@@ -1811,11 +1811,11 @@ package Tactic.Missions {
       m.configure(Vector(t), Vector(r)); load(r, Some(t))
       m.itinerary.clear(); m.appendTargets(Vector(a, b)); m.itinerary.clear(); m.itinerary += b
       m.updateState(false); m.state = m.Travelling; m.launched = true
-      t.intend(m).setAction(m.ActionTravelTransport).setTerminus(b.heart.center)
+      t.squadIntend(m).setAction(m.ActionTravelTransport).setTerminus(b.heart.center)
       defend(m, t, r, 12, None)
       performIntent(t)
       assert(m.launched && m.state == m.Travelling && m.itinerary.toVector == Vector(a))
-      assert(t.intent.action == m.ActionTravelTransport && t.intent.terminus.contains(a.heart.center) && r.loaded)
+      assert(t.squadIntent.action == m.ActionTravelTransport && t.squadIntent.terminus.contains(a.heart.center) && r.loaded)
       With.frame += 6; t.sleepUntil = 0; performIntent(t)
       assert(m.itinerary.toVector == Vector(a) && m.state == m.Travelling,
         "Threats at the previous stop cannot cancel the return visit from far away")
@@ -1885,7 +1885,7 @@ package Tactic.Missions {
         val (m, t, r, z, _) = combatMission(approaching = true)
         defend(m, t, r, 1, judgment)
         m.run()
-        assert(m.state == m.Raiding && Vector(t, r, z).forall(_.intent.action == Idle), s"Weaker defense became ${m.state} with $judgment")
+        assert(m.state == m.Raiding && Vector(t, r, z).forall(_.squadIntent.action == Idle), s"Weaker defense became ${m.state} with $judgment")
         assert(r.loaded && z.loaded && t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].unloaded == null)
       }
     }
@@ -2002,10 +2002,10 @@ package Tactic.Missions {
       val (m, t, r, z, _) = combatMission()
       m.run()
       assert(m.state == m.Raiding && m.controlsCombat(t))
-      assert(Vector(t, r, z).forall(_.intent.action == Idle) && r.loaded && z.loaded)
+      assert(Vector(t, r, z).forall(_.squadIntent.action == Idle) && r.loaded && z.loaded)
       assert(t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].unloaded == null)
       load(r, None); m.run(); load(r, Some(t)); m.run()
-      assert(m.state == m.Raiding && t.intent.action == Idle && z.loaded,
+      assert(m.state == m.Raiding && t.squadIntent.action == Idle && z.loaded,
         "A recovered Reaver cannot restart initial landing to deploy filler")
     }
     check("a fighting grounded Reaver requests both Zealots through normal Shuttle unloading") {
@@ -2021,7 +2021,7 @@ package Tactic.Missions {
           "The mission must request each Zealot without requiring its own attack or delivery goal")
         load(passenger, None)
       }
-      assert(t.intent.action == Idle && Vector(r, z, other).forall(_.intent.action == Idle))
+      assert(t.squadIntent.action == Idle && Vector(r, z, other).forall(_.squadIntent.action == Idle))
     }
     check("mission Zealot unloading stops when the Reaver boards, retreats, or the mission recovers") {
       val (m, t, r, z, _) = combatMission(); m.run()
@@ -2088,14 +2088,14 @@ package Tactic.Missions {
       Vector(other, otherReaver).foreach(_.setSquad(Some(m))); load(otherReaver, Some(other))
       m.run()
       assert(m.state == m.Landing && m.controlsCombat(t) && !m.controlsCombat(other))
-      assert(t.intent.action == Idle && r.intent.action == Idle)
-      assert(other.intent.action == m.ActionTravelTransport && otherReaver.intent.action == Micro.Actions.Basic.DoNothing)
-      assert(other.intent.station.isEmpty && other.intent.terminus.contains(m.approach(other)))
+      assert(t.squadIntent.action == Idle && r.squadIntent.action == Idle)
+      assert(other.squadIntent.action == m.ActionTravelTransport && otherReaver.squadIntent.action == Micro.Actions.Basic.DoNothing)
+      assert(other.squadIntent.station.isEmpty && other.squadIntent.terminus.contains(m.approach(other)))
       set(other, "_pixel", t.pixel); set(other, "_tile", t.tile)
       set(otherReaver, "_pixel", t.pixel); set(otherReaver, "_tile", t.tile)
       m.run()
-      assert(m.state == m.Raiding && Vector(other, otherReaver).forall(_.intent.action == Idle))
-      assert(other.intent.station.isEmpty, "Combat must not inherit the delivery waypoint")
+      assert(m.state == m.Raiding && Vector(other, otherReaver).forall(_.squadIntent.action == Idle))
+      assert(other.squadIntent.station.isEmpty, "Combat must not inherit the delivery waypoint")
     }
     check("an empty Shuttle returning home cannot cancel the other crews' approach") {
       val (m, _, _, _, _) = combatMission()
@@ -2129,7 +2129,7 @@ package Tactic.Missions {
       set(r, "_alive", false); set(z, "_alive", false)
       m.run()
       assert(m.launched && m.passengers.isEmpty && m.state == m.Escaping)
-      assert(t.intent.action == m.ActionTravelTransport && m.transports.contains(t))
+      assert(t.squadIntent.action == m.ActionTravelTransport && m.transports.contains(t))
     }
     check("assembly keeps both Zealots until the entire crew has boarded") {
       val (m, t, r, z, _) = combatMission(); load(z, None)
@@ -2171,7 +2171,7 @@ package Tactic.Missions {
         if (phase != "assembly") { load(z, Some(t)); m.run(); load(z, None) }
         if (phase == "combat") m.state = m.Raiding
         if (phase == "evacuation") m.itinerary.clear()
-        z.intend(m).setBoard(t).setTerminus(m.target.heart.center)
+        z.squadIntend(m).setBoard(t).setTerminus(m.target.heart.center)
         z.agent.toBoard = Some(t); z.agent.wantsPickup = true
         set(z, "_order", ProxyBwapi.Orders.EnterTransport)
         set(t, "_orderTarget", Some(z))
@@ -2184,7 +2184,7 @@ package Tactic.Missions {
         assert(!With.recruiter.lockedBy(m).exists(_ == z) && With.recruiter.available.exists(_ == z))
         assert(z.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].stopped && !z.agent.wantsPickup)
         assert(t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].stopped, "Cancel the Shuttle's old pickup order too")
-        assert(z.agent.toBoard.isEmpty && z.intent.toBoard.isEmpty && z.intent.action == Idle)
+        assert(z.agent.toBoard.isEmpty && z.squadIntent.toBoard.isEmpty && z.squadIntent.action == Idle)
         assert(m.state != m.Assembling && m.state != m.Evacuating, "Abandoned filler must not delay departure")
       }
     }
@@ -2255,15 +2255,15 @@ package Tactic.Missions {
         }
         m.run()
         assert(m.state == (if (recovering) m.Evacuating else m.Assembling))
-        assert(t.intent.action == m.ActionTravelTransport && t.intent.station.isEmpty && t.intent.terminus.contains(r.tile.center))
+        assert(t.squadIntent.action == m.ActionTravelTransport && t.squadIntent.station.isEmpty && t.squadIntent.terminus.contains(r.tile.center))
         assert(t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].movedTo == null, "Planning must not issue movement commands")
         performIntent(t)
         assert(t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].movedTo != null)
         assert(t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].clicked == null)
         set(t, "_pixel", r.pixel.add(-100, 0)); set(t, "_tile", t.pixel.tile)
         m.run()
-        assert(t.intent.station.isEmpty)
-        assert(t.intent.action == (if (recovering) m.ActionEvacuateTransport else m.ActionAssembleTransport))
+        assert(t.squadIntent.station.isEmpty)
+        assert(t.squadIntent.action == (if (recovering) m.ActionEvacuateTransport else m.ActionAssembleTransport))
       }
     }
     check("a stalled mission clears the flight waypoint and holds without nearby threats") {
@@ -2271,7 +2271,7 @@ package Tactic.Missions {
       val t = unit(Protoss.Shuttle, 160, 160)
       val r = unit(Protoss.Reaver, 760, 160)
       val m = new MissionProbe(base(110)); m.configure(Vector(t), Vector(r)); m.run()
-      assert(t.intent.action == m.ActionTravelTransport && t.intent.station.isEmpty)
+      assert(t.squadIntent.action == m.ActionTravelTransport && t.squadIntent.station.isEmpty)
       performIntent(t)
       t.bwapiUnit.asInstanceOf[bwapi.DropTestUnit].movedTo = null
       With.frame += Seconds(8)(); t.sleepUntil = 0
@@ -2328,7 +2328,7 @@ package Tactic.Missions {
       avoidsThreat(t, turret, escaped)
       set(t, "_pixel", escaped); set(t, "_tile", escaped.tile)
       With.frame += 1; m.run()
-      assert(!m.launched && t.intent.action == Idle && t.squad.isEmpty)
+      assert(!m.launched && t.squadIntent.action == Idle && t.squad.isEmpty)
     }
     check("post-pickup mission travel clears anti-air before following the next target") {
       val (t, turret) = turretEscape()

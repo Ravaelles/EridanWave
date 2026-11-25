@@ -36,7 +36,7 @@ object ClusterRejoinBehavior {
     // A committed cast walk owns the frame: yanking a Templar with a
     // picked victim back to the centroid every other frame means the
     // four-frame stand never happens and a full battery circles forever.
-    // The intent expires on its own if the walk goes stale, and the
+    // The squadIntent expires on its own if the walk goes stale, and the
     // rejoin resumes - no stuck casters.
     if (unit.agent.spellIntent.isDefined) return false
 

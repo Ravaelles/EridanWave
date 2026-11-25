@@ -107,7 +107,7 @@ class SquadScoutExpansions extends Squad {
       val targetsHere   = u.base.toSeq.filter(_.isEnemy).flatMap(_.enemies)
       val targetsThere  = vicinity.base.toSeq.flatMap(_.enemies)
       // Smooth travel like worker scouts: one far order, no waypoint hops.
-      u.intend(this)
+      u.squadIntend(this)
         .setCanSneak(true)
         .setShouldCorrectXY(false)
         .setTerminus(vicinity)

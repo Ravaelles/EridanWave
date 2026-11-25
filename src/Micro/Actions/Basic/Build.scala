@@ -27,9 +27,9 @@ object Build extends Action {
 
   /**
    * Stalled-builder ledger (one read per frame, reset per game): failed
-   * placements accumulate per builder until the base lands or the intent
+   * placements accumulate per builder until the base lands or the squadIntent
    * moves on, so the shift below walks outward instead of retrying one
-   * blocked tile forever. Keyed by tile index, so a reissued intent
+   * blocked tile forever. Keyed by tile index, so a reissued squadIntent
    * starts clean without any identity bookkeeping.
    */
   private object BuildStall extends PerGame {
@@ -80,20 +80,20 @@ object Build extends Action {
       u.unitClass.isBuilding && u.unitClass == building && ! u.complete &&
         u.pixelDistanceCenter(unit.pixel) <= 10 * 32.0)
 
-  override def allowed(unit: FriendlyUnitInfo): Boolean = unit.intent.toBuild.nonEmpty
+  override def allowed(unit: FriendlyUnitInfo): Boolean = unit.squadIntent.toBuild.nonEmpty
   
   override def perform(unit: FriendlyUnitInfo): UnitControl = {
-    val intent      = unit.intent.toBuildActive.get
-    val building    = intent.unitClass
-    val tile        = intent.tile
+    val squadIntent      = unit.squadIntent.toBuildActive.get
+    val building    = squadIntent.unitClass
+    val tile        = squadIntent.tile
 
     // Blocked-base shift: a town hall ordered onto an unseen blocker
     // re-seats up to five tiles out instead of waiting on the spot.
-    val site = shiftedSite(unit, tile, building, intent.startNow).getOrElse(tile)
+    val site = shiftedSite(unit, tile, building, squadIntent.startNow).getOrElse(tile)
 
     // If building already started (here or at a shifted seat), get a head start on mining
     if (unit.unitClass.isWorker && (site.units.exists(u => u.isOurs && u.unitClass.isBuilding && (u.complete || u.unitClass.isProtoss)) || inProgressNearby(unit, building))) {
-      if (unit.intent.toScoutTiles.isEmpty) {
+      if (unit.squadIntent.toScoutTiles.isEmpty) {
         unit.agent.toGather = Maff.minBy(With.geography.ourBases.flatMap(_.minerals))(_.pixelDistanceCenter(unit.pixel))
         Gather(unit)
       }
@@ -119,7 +119,7 @@ object Build extends Action {
     if (blockersMineral.nonEmpty && blockersEnemy.isEmpty) {
       unit.agent.toGather = Some(blockersMineral.head)
       Gather.delegate(unit)
-    } else if(unit.intent.canFight && blockersToKill.nonEmpty) {
+    } else if(unit.squadIntent.canFight && blockersToKill.nonEmpty) {
       lazy val noThreats  = unit.matchups.threats.isEmpty
       lazy val allWorkers = unit.matchups.threats.size == 1 && unit.matchups.threats.head.unitClass.isWorker
       lazy val healthy    = unit.totalHealth > 10 || unit.totalHealth >= unit.matchups.threats.head.totalHealth
@@ -143,17 +143,17 @@ object Build extends Action {
 
     var movePixel = site.topLeftPixel.add(building.tileWidth * 16, building.tileHeight * 16)
 
-    // Builder stages for the trace: assigned (has intent, not cleared to
+    // Builder stages for the trace: assigned (has squadIntent, not cleared to
     // build yet), moveToConstruct (traveling in), waiting (at the site but
     // cannot start), issueBuild:X (placing the order). Change-only logging
     // shows each transition once.
     val atSite = unit.pixelDistanceCenter(pushPixel) < 128
     lazy val affordable = With.self.minerals >= building.mineralPrice - 8 && With.self.gas >= building.gasPrice - 8
     unit.agent.act(?(atSite,
-      ?(intent.startNow && site.visible && affordable, f"issueBuild:${Tactic.Missions.evaluation.KillCredits.shortName(building)}", "waiting"),
-      ?(intent.startNow, "moveToConstruct", "assigned")))
+      ?(squadIntent.startNow && site.visible && affordable, f"issueBuild:${Tactic.Missions.evaluation.KillCredits.shortName(building)}", "waiting"),
+      ?(squadIntent.startNow, "moveToConstruct", "assigned")))
 
-    if (intent.startNow
+    if (squadIntent.startNow
       && site.visible
       && unit.pixelDistanceCenter(movePixel) < 112 // Addtl reference: McRave uses 96
       && affordable) {
@@ -177,7 +177,7 @@ object Build extends Action {
       MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getSneakyPath(unit))
     }
 
-    if ( ! intent.startNow && unit.matchups.pixelsEntangled > -64) {
+    if ( ! squadIntent.startNow && unit.matchups.pixelsEntangled > -64) {
       MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getThreatAwarePath(unit, preferHome = false))
     }
 

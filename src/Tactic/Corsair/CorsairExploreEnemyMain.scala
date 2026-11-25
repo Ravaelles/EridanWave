@@ -19,7 +19,7 @@ object CorsairExploreEnemyMain {
     if ( ! Protoss.Corsair(unit) || ! applies(unit)) return false
 
     With.scouting.enemyMain.exists(main => {
-      unit.intend(squad).setTargets(Iterable.empty).setTerminus(main.heart.center)
+      unit.squadIntend(squad).setTargets(Iterable.empty).setTerminus(main.heart.center)
       unit.agent.act("CorsairExploreMain")
       true
     })

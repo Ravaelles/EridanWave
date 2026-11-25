@@ -15,11 +15,11 @@ trait AgencySortOrder {
     threatOrder = unit.matchups.pixelsToThreatRange.getOrElse(1e5)
 
     categoryOrder = unit.unitClass.agencySortOrder
-    if (unit.intent.toBuild.nonEmpty) {
+    if (unit.squadIntent.toBuild.nonEmpty) {
       categoryOrder = 1e6
-    } else if (unit.intent.toHeal.isDefined || (Terran.SCV(unit) && unit.orderTarget.exists(u => u.isOurs && u.unitClass.isMechanical))) {
+    } else if (unit.squadIntent.toHeal.isDefined || (Terran.SCV(unit) && unit.orderTarget.exists(u => u.isOurs && u.unitClass.isMechanical))) {
       categoryOrder = 3e6
-    } else if (unit.intent.toScoutTiles.nonEmpty) {
+    } else if (unit.squadIntent.toScoutTiles.nonEmpty) {
       categoryOrder = 9e6
     }
     sortOrder = threatOrder + categoryOrder

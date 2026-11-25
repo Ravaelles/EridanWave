@@ -56,9 +56,9 @@ trait DropTransportActions { self: MissionDrop =>
       if ( ! recalled && handoffToRaid(transport)) return UnitControl.claimedIf(! transport.ready)
 
       finishWithdrawal()
-      if (transport.intent.action != this) {
+      if (transport.squadIntent.action != this) {
         transport.agent.resetDestinations()
-        transport.intent.action.delegate(transport)
+        transport.squadIntent.action.delegate(transport)
 
         return UnitControl.claimedIf(! transport.ready)
       }
@@ -96,7 +96,7 @@ trait DropTransportActions { self: MissionDrop =>
     }
 
     private def advanceOrHold(transport: FriendlyUnitInfo): Unit = {
-      val destination = transport.intent.terminus.getOrElse(transport.agent.defaultHome).tile
+      val destination = transport.squadIntent.terminus.getOrElse(transport.agent.defaultHome).tile
       val waypoint = routeWaypoint(transport, destination)
       if (!threatenedOnApproach(transport, waypoint) && waypoint.nonEmpty) {
         transport.agent.decision.set(waypoint.get)

@@ -52,6 +52,6 @@ class SquadCatchDTs extends Squad {
   override def run(): Unit = {
     val darkTemplar = enemies.filter(dt => dt.proximity > 0.5 || dt.metro.exists(_.isOurs))
     vicinity = Maff.minBy(darkTemplar.map(_.pixel))(_.groundPixels(vicinity)).getOrElse(vicinity)
-    units.foreach(_.intend(this).setTerminus(vicinity))
+    units.foreach(_.squadIntend(this).setTerminus(vicinity))
   }
 }

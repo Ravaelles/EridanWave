@@ -33,6 +33,6 @@ class TacticRemoveMineralBlocks extends Tactic {
       .setCounter(CountUpTo(workersToUse))
       .acquire()
       .zipWithIndex
-      .foreach(p => p._1.intend(this).setGather(ourMineralBlocks(p._2 % ourMineralBlocks.length)))
+      .foreach(p => p._1.squadIntend(this).setGather(ourMineralBlocks(p._2 % ourMineralBlocks.length)))
   }
 }

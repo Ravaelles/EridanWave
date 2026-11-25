@@ -112,7 +112,7 @@ class MaximumCannonRush extends Tactic {
       return
     }
 
-    lock.units.foreach(_.intend(this)
+    lock.units.foreach(_.squadIntend(this)
       .setCanFight(false)
       .setCanFlee( ! With.units.existsEnemy(Terran.Marine, Protoss.Dragoon, Zerg.Hydralisk, Zerg.Mutalisk))
       .setScout(goal.zone.tiles.toSeq))
@@ -139,7 +139,7 @@ class MaximumCannonRush extends Tactic {
         builtUpon ++= new TileRectangle(tile, 2, 2).tiles
         val builder = builders.minBy(b => b.pixelDistanceTravelling(tile.add(1, 1).topLeftPixel) - 64 * Maff.fromBoolean(b.agent.actions.contains(Build.name)))
         builders -= builder
-        builder.intend(this).setScout(Seq.empty).addBuild(BuildIntent(building, tile))
+        builder.squadIntend(this).setScout(Seq.empty).addBuild(BuildIntent(building, tile))
         pylonsMaking += Maff.fromBoolean(building.powers)
         DrawMap.tileRectangle(new TileRectangle(tile, 2, 2), ?(building.powers, Colors.BrightGreen, Colors.BrightBlue))
         DrawMap.label(building.toString, tile.add(1, 1).topLeftPixel)

@@ -13,7 +13,7 @@ object Meld extends Action {
   override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
-    unit.intent.shouldMeld
+    unit.squadIntent.shouldMeld
     && unit.isAny(Protoss.HighTemplar, Protoss.DarkTemplar))
   
   override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
@@ -30,7 +30,7 @@ object Meld extends Action {
       .getOrElse(unit.zone.units)
       .filter(other =>
         other != unit
-        && other.friendly.exists(_.intent.shouldMeld)
+        && other.friendly.exists(_.squadIntent.shouldMeld)
         && other.unitClass == unit.unitClass)
     
     if (besties.nonEmpty) {

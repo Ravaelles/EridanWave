@@ -22,7 +22,7 @@ package Micro.Formation {
   import Lifecycle.Configure.Configuration
   import Mathematics.Points.{Pixel, Point, Tile}
   import Micro.Actions.Idle
-  import Micro.Agency.Intention
+  import Micro.Agency.SquadIntention
   import Performance.{Cache, Latency}
   import Placement.Placement
   import Placement.Access.PlaceLabels
@@ -225,17 +225,17 @@ package Micro.Formation {
         val api = defender.bwapiUnit.asInstanceOf[bwapi.WallGapTestUnit]
         Vector(target.add(40, 40), target).foreach { position =>
           set(defender, "_pixel", position)
-          set(defender, "_intent", new Intention)
+          set(defender, "_intent", new SquadIntention)
           squad.intendHoldWallGap(defender, target)
           assert(defender.client == squad)
-          assert(defender.intent.terminus.contains(target))
-          assert(defender.intent.station.contains(target))
-          assert(defender.intent.redoubt.contains(target))
-          assert(defender.intent.targets.exists(_.isEmpty))
-          assert(! defender.intent.shouldAdjustXY)
-          assert(! defender.intent.canFlee)
-          assert(defender.intent.canFight)
-          assert(defender.intent.action == Idle)
+          assert(defender.squadIntent.terminus.contains(target))
+          assert(defender.squadIntent.station.contains(target))
+          assert(defender.squadIntent.redoubt.contains(target))
+          assert(defender.squadIntent.targets.exists(_.isEmpty))
+          assert(! defender.squadIntent.shouldAdjustXY)
+          assert(! defender.squadIntent.canFlee)
+          assert(defender.squadIntent.canFight)
+          assert(defender.squadIntent.action == Idle)
           assert(api.movedTo == null && api.holds == 0 && api.stops == 0)
         }
       }
@@ -308,7 +308,7 @@ package Micro.Formation {
       set(u, "_powered", true)
       set(u, "_flying", kind.isFlyer)
       set(u, "_squad", None)
-      set(u, "_intent", new Intention)
+      set(u, "_intent", new SquadIntention)
       set(u, "canAttackCache", new Cache(() => kind.rawCanAttack))
       set(u, "canBeAttackedCache", new Cache(() => true))
       set(u, "_effectivelyCloaked", new Cache(() => false))
@@ -322,7 +322,7 @@ package Micro.Formation {
     val enemyZealot = recruit(32, Protoss.Zealot)
     val firebat = recruit(33, ProxyBwapi.Races.Terran.Firebat)
     class RecruitmentSquad extends SquadDefendBase(recruitmentBase) {
-      override def run(): Unit = units.foreach(_.intend(this).setTerminus(recruitmentBase.townHallTile.center))
+      override def run(): Unit = units.foreach(_.squadIntend(this).setTerminus(recruitmentBase.townHallTile.center))
     }
     val squadsRun = classOf[Tactic.Squads.Squads].getDeclaredMethods.find(_.getName == "onRun").get
     squadsRun.setAccessible(true)
@@ -358,7 +358,7 @@ package Micro.Formation {
       squadsRun.invoke(With.squads, Long.box(1000))
       assert(squad.units.toSet == pulled)
       assert(squad.enemies == Vector(marine))
-      assert(pulled.forall(u => u.squad.contains(squad) && u.client == squad && u.intent.frameCreated == With.frame))
+      assert(pulled.forall(u => u.squad.contains(squad) && u.client == squad && u.squadIntent.frameCreated == With.frame))
     }
     check("defense recruitment respects workers already claimed by priority tactics") {
       val (squad, _) = resetRecruitment()

@@ -12,8 +12,8 @@ object DroneWarfare extends Action {
   override def isContainer: Boolean = true
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
-    unit.intent.toScoutTiles.nonEmpty
-    && unit.intent.canFight
+    unit.squadIntent.toScoutTiles.nonEmpty
+    && unit.squadIntent.canFight
     && With.blackboard.droneWarfare())
 
   override protected def perform(unit: FriendlyUnitInfo): UnitControl = {

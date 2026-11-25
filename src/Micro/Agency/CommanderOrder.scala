@@ -56,7 +56,7 @@ object CommanderOrder {
   // Planning queries leave fallback state unchanged; command methods record it when ready.
   private[Micro] def adjustDestination(unit: FriendlyUnitInfo, argTo: Pixel): Pixel = adjustDestination(unit, argTo, remember = false)
   private[Micro] def adjustDestination(unit: FriendlyUnitInfo, argTo: Pixel, remember: Boolean): Pixel = {
-    if ( ! unit.intent.shouldAdjustXY) return argTo
+    if ( ! unit.squadIntent.shouldAdjustXY) return argTo
 
     var to: Pixel = argTo
     // Send some units past their destination to maximize acceleration

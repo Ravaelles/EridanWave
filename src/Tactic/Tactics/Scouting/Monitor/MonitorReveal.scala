@@ -21,6 +21,6 @@ object MonitorReveal {
     })
 
   def act(monitor: TacticMonitor, eye: FriendlyUnitInfo, site: Base): Unit = {
-    eye.intend(monitor).setTerminus(site.heart.center)
+    eye.squadIntend(monitor).setTerminus(site.heart.center)
   }
 }

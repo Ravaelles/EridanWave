@@ -78,7 +78,7 @@ class TacticRalph extends Tactic with MacroActions {
       status("Ralph")
     }
     lock.units.foreach(ralph =>
-      ralph.intend(this)
+      ralph.squadIntend(this)
         .setTerminus(vicinity)
         .setCanFight(ralph.canAttackGround && ralph.matchups.threatDeepest.forall(IsWorker))
         .setCanSneak(true)

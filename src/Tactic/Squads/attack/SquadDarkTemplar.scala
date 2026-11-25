@@ -118,8 +118,8 @@ class SquadDarkTemplar extends Squad {
     val nearestMiner    = Maff.min(workers
       .filter(w => w.base.exists(b => w.pixelDistanceCenter(b.townHallArea.center) < 256))
       .map(w => dt.pixelDistanceTravelling(w.pixel))).getOrElse(LightYear().toDouble)
-    val goBerserk       = (nearestMiner < 256 || nearestMiner < nearestDetector + 64 || nearestMiner < nearestThreat + 64) && ( ! dt.intent.canFlee || MacroFacts.enemiesComplete(Terran.MissileTurret, Protoss.PhotonCannon) == 0)
-    dt.intend(this)
+    val goBerserk       = (nearestMiner < 256 || nearestMiner < nearestDetector + 64 || nearestMiner < nearestThreat + 64) && ( ! dt.squadIntent.canFlee || MacroFacts.enemiesComplete(Terran.MissileTurret, Protoss.PhotonCannon) == 0)
+    dt.squadIntend(this)
       .setCanFlee( ! goBerserk)
       .setTerminus(base.heart.center)
       .setTargets(baseTargets)
@@ -127,7 +127,7 @@ class SquadDarkTemplar extends Squad {
 
   private def intendDTToDivision(dt: FriendlyUnitInfo, divisions: Vector[Division]): Unit = {
     val division = divisions.minBy(_.keyDistanceTo(dt.pixel))
-    dt.intend(this).setTerminus(division.centroidGround).setTargets(division.enemies)
+    dt.squadIntend(this).setTerminus(division.centroidGround).setTargets(division.enemies)
   }
 
   def run(): Unit = {
@@ -136,7 +136,7 @@ class SquadDarkTemplar extends Squad {
       if (divisions.isEmpty) { lock.release(); return }
 
       units.foreach(intendDTToDivision(_, divisions))
-      units.headOption.flatMap(_.intent.terminus).foreach(vicinity = _)
+      units.headOption.flatMap(_.squadIntent.terminus).foreach(vicinity = _)
 
       return
     }
@@ -173,7 +173,7 @@ class SquadDarkTemplar extends Squad {
       // Division-bound Templars burn nothing; backstab picks may miss.
       if (baseTaken && bases.contains(base)) bases -= base
       if (iDt == 0) {
-        vicinity = dt.intent.terminus.get
+        vicinity = dt.squadIntent.terminus.get
       }
       iDt += 1
       dts.remove(dt)

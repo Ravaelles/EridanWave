@@ -17,7 +17,7 @@ object Stealth extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.cloaked
     && unit.canMove
-    && unit.intent.canFlee
+    && unit.squadIntent.canFlee
     && ! With.yolo.active
     && ! unit.presumptiveTarget.exists(_.base.exists(_.owner.isUs))
     && ! unit.alliesBattle.exists(Protoss.Arbiter)

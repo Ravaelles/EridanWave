@@ -25,7 +25,7 @@ object UpdateBase {
     // Most of this logic is ensuring we don't count buildings placed just to *block* expansions, eg. Pylons
     if (base.owner.isNeutral) {
       var planningExpo = false
-      planningExpo ||= With.units.ours.exists(_.intent.toBuild.exists(b => b.tile.base.contains(base) && (b.unitClass.isTownHall || ! base.townHallArea.contains(b.tile))))
+      planningExpo ||= With.units.ours.exists(_.squadIntent.toBuild.exists(b => b.tile.base.contains(base) && (b.unitClass.isTownHall || ! base.townHallArea.contains(b.tile))))
       planningExpo ||= base.ourUnits.filter(IsBuilding).exists( ! _.tileArea.intersects(base.townHallArea))
       if (planningExpo) {
         base.lastPlannedExpo = With.frame

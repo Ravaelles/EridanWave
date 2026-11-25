@@ -32,7 +32,7 @@ object CorsairHuntMutas {
 
   def act(squad: SquadAcePilots, unit: FriendlyUnitInfo): Boolean = {
     mutaFor(unit).exists(muta => {
-      unit.intend(squad).setTargets(Seq(muta)).setTerminus(muta.pixel)
+      unit.squadIntend(squad).setTargets(Seq(muta)).setTerminus(muta.pixel)
       unit.agent.act("CorsairHuntMutas")
       true
     })

@@ -42,7 +42,7 @@ class MissionAssaultFerry extends MissionDrop {
       Protoss.Shuttle(t) &&
         FerryIdleDraft.shouldDraft(
           healthFraction = t.totalHealth.toDouble / t.unitClass.maxTotalHealth,
-          hasTask = t.intent.action != Idle,
+          hasTask = t.squadIntent.action != Idle,
           hasMoveOrder = t.order == Orders.Move))
 
   val goonLock: LockUnits = new LockUnits(this, u => Protoss.Dragoon(u) && recruitablePassenger(u)).setCounter(CountUpTo(6))
@@ -94,7 +94,7 @@ class MissionAssaultFerry extends MissionDrop {
 
   override def raid(): Unit = {
     SquadTargeting.targetRaid(this)
-    passengers.foreach(p => if ( ! p.loaded) p.intend(this).setAction(Idle).setTerminus(vicinity))
+    passengers.foreach(p => if ( ! p.loaded) p.squadIntend(this).setAction(Idle).setTerminus(vicinity))
     passengers.foreach(_.agent.commit = commitWhileRaiding)
     topUpCrew()
     transports.foreach(ferryCycle)
@@ -146,14 +146,14 @@ class MissionAssaultFerry extends MissionDrop {
       if (transport.pixelDistanceCenter(goal) <= 64) {
         aboard.sortBy(_.id).headOption.foreach(p => Commander.unload(transport, p))
       } else {
-        transport.intend(this).setTerminus(goal).setAction(ActionTravelTransport)
+        transport.squadIntend(this).setTerminus(goal).setAction(ActionTravelTransport)
       }
     } else {
       val staging = stagingPoint
       if (transport.pixelDistanceCenter(staging) > 384) {
-        transport.intend(this).setTerminus(staging).setAction(ActionTravelTransport)
+        transport.squadIntend(this).setTerminus(staging).setAction(ActionTravelTransport)
       } else {
-        transport.intend(this).setAction(ActionEvacuateTransport)
+        transport.squadIntend(this).setAction(ActionEvacuateTransport)
       }
     }
   }

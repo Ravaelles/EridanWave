@@ -11,7 +11,7 @@ object KnockKnock extends Action {
 
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.agent.isScout
-    && unit.intent.canFight
+    && unit.squadIntent.canFight
     && (unit.zone != unit.agent.destinationFinal().zone || unit.agent.destinationFinal().zone.edges.exists(_.contains(unit.pixel)))
     && unit.matchups.threats.size == 1
     && unit.matchups.threats.forall(threat =>

@@ -40,7 +40,7 @@ object PsionicStorm extends TargetedSpell {
   /**
    * Storm hunt radius, in tiles: just inside the nine-tile cast range.
    * The old leash reached three tiles past it, so a Templar picked a pack
-   * it could not hit, committed the intent, and walked into Hydralisk
+   * it could not hit, committed the squadIntent, and walked into Hydralisk
    * range to land the cast - five Templars died that way with a full
    * battery. A storm is a standoff weapon: only pick victims already in
    * reach, and the small box-centre step is all the walking left.

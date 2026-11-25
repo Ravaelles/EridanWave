@@ -171,7 +171,7 @@ abstract class MissionDrop extends Mission
     updateState(shouldGoHome || (expired && !renewed))
     if (finishWithdrawal()) return
 
-    transports.foreach(_.intend(this).setStation(None))
+    transports.foreach(_.squadIntend(this).setStation(None))
     state match {
       case Assembling => assemble()
       case Travelling => travel()
@@ -186,9 +186,9 @@ abstract class MissionDrop extends Mission
     SquadTargeting.targetRaid(this)
     transports.foreach(t => {
       if (defaultCombatLanding && !passengersFor(t).exists(requiredPassenger)) intendRoute(t, t.agent.defaultHome.tile)
-      else t.intend(this).setTerminus(vicinity).setAction(raidTransportAction)
+      else t.squadIntend(this).setTerminus(vicinity).setAction(raidTransportAction)
     })
-    passengers.foreach(_.intend(this).setAction(Idle).setTerminus(vicinity))
+    passengers.foreach(_.squadIntend(this).setAction(Idle).setTerminus(vicinity))
     passengers.foreach(_.agent.commit = commitWhileRaiding)
   }
 }

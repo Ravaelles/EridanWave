@@ -69,13 +69,13 @@ object CherryVis {
   }
 
   /**
-   * Who drives the unit (the tactic/client that claimed it via intend()).
+   * Who drives the unit (the tactic/client that claimed it via squadIntend()).
    * Change-only: steady ownership costs one map lookup, never a row
    * (same client object short-circuits before any string is built).
    */
   def noteOwner(unitId: Int, owner: Any): Unit = {
     // Manager changes ride the probe too: UMS games emit no trace, so
-    // the active intend-client would otherwise be invisible there.
+    // the active squadIntend-client would otherwise be invisible there.
     // Change-only like the trace channel below (the probe dedups).
     Debugging.Probe.note("Owner", unitId, shortName(owner))
     if ( ! enabled) return
@@ -97,12 +97,12 @@ object CherryVis {
   }
 
   /**
-   * What the unit is doing (the top-level intent action).
+   * What the unit is doing (the top-level squadIntent action).
    * Change-only like the owner above.
    */
   def noteBehavior(unitId: Int, behavior: Any): Unit = {
     // Actions ride the probe too: UMS games emit no trace, so the top-level
-    // intent action would otherwise be invisible there (same as owners).
+    // squadIntent action would otherwise be invisible there (same as owners).
     Debugging.Probe.note("Action", unitId, shortName(behavior))
     if ( ! enabled) return
 

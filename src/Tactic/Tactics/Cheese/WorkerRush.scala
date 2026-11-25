@@ -107,7 +107,7 @@ class WorkerRush extends Tactic {
   }
 
   private def tickle(unit: FriendlyUnitInfo, target: Pixel): Unit = {
-    unit.intend(this)
+    unit.squadIntend(this)
       .setTerminus(target)
       .setAction(Tickle)
   }

@@ -15,7 +15,7 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 abstract class TargetedSpell extends Action with Spell {
   override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
 
-  /** Base for single-target and AoE spell casts: walk into range, commit the intent, fire when the spot reconfirms. Subclasses supply only value and thresholds. */
+  /** Base for single-target and AoE spell casts: walk into range, commit the squadIntent, fire when the spot reconfirms. Subclasses supply only value and thresholds. */
   protected def casterClass       : UnitClass
   protected def tech              : Tech
 
@@ -48,7 +48,7 @@ abstract class TargetedSpell extends Action with Spell {
   // casts no matter how red the neighborhood is.
   protected def vetoBox(units: Iterable[UnitInfo], caster: FriendlyUnitInfo): Boolean = false
 
-  /** Confirm radius, in tiles: a fresh pick this close re-affirms the intent. */
+  /** Confirm radius, in tiles: a fresh pick this close re-affirms the squadIntent. */
   val intentConfirmTiles: Double = 2.0
 
   /** Intent expiry, in frames: a spot unreachable this long goes stale. */
@@ -66,16 +66,16 @@ abstract class TargetedSpell extends Action with Spell {
     val searchRange   = searchTiles.map(tiles => Math.min(totalRange, tiles * 32.0)).getOrElse(totalRange)
 
     if (aoe) {
-      // Committed cast point: out of range we hold the intent and walk to
+      // Committed cast point: out of range we hold the squadIntent and walk to
       // it instead of re-picking every frame; in range we recalculate and
-      // cast only a spot that still holds, otherwise the intent dies and
+      // cast only a spot that still holds, otherwise the squadIntent dies and
       // the next frame picks a new spot or stands down. The leash keeps
       // the walk short: spots past it are never picked.
       def pick(): Option[Pixel] =
         new SpellTargetAOE().chooseTargetPixel(unit, searchRange, thresholdValue, valueTarget, pixelWidth = pixelWidth, pixelHeight = pixelHeight, projectionFrames = leadTiles * 32.0, vetoBox = vetoBox(_, unit))
       def inCastRange(target: Pixel): Boolean =
         unit.pixelDistanceCenter(target) <= castRangePixels
-      unit.agent.spellIntent.filter(_._1 == tech).filterNot(intent => TargetedSpell.intentExpired(With.frame - intent._3, intentExpiryFrames)) match {
+      unit.agent.spellIntent.filter(_._1 == tech).filterNot(squadIntent => TargetedSpell.intentExpired(With.frame - squadIntent._3, intentExpiryFrames)) match {
         case Some((_, spot, _)) if inCastRange(spot) =>
           pick() match {
             case Some(fresh) if TargetedSpell.confirmSpot(fresh.pixelDistance(spot) * Maff.inv32, intentConfirmTiles) =>

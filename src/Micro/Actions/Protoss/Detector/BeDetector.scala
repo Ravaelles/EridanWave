@@ -16,7 +16,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
  * Detector driver: eyes never belonged in Fight - they cannot shoot, so a
  * combat chain dispatching on them is a category error. This runs instead:
  * Scourge-dodge first, then the Spot and Recharge duties Fight used to
- * cover, then the nine-tile spread, then intent execution. Same duties as
+ * cover, then the nine-tile spread, then squadIntent execution. Same duties as
  * before, honest dispatch. Monitor eyes (isScout) ride along: they never
  * entered Fight either, and stacked watches die together.
  */

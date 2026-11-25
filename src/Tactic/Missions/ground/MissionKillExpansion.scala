@@ -68,7 +68,7 @@ class MissionKillExpansion extends Mission {
     SquadTargeting.targetRaid(this)
     formations = SquadForming.form(this, homeConsensus, vicinity)
     MarchOrders.sendUnits(this, unintended, Some(homeConsensus))
-    units.foreach(_.intent.setCanSneak(true))
+    units.foreach(_.squadIntent.setCanSneak(true))
   }
 }
 

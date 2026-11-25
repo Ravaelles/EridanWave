@@ -9,7 +9,7 @@ object Addon extends Action {
   override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
 
-  def addonIntent(unit: FriendlyUnitInfo): Option[BuildIntent] = unit.intent.toBuild.find(b => b.unitClass.isAddon && b.startNow)
+  def addonIntent(unit: FriendlyUnitInfo): Option[BuildIntent] = unit.squadIntent.toBuild.find(b => b.unitClass.isAddon && b.startNow)
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = addonIntent(unit).isDefined
   

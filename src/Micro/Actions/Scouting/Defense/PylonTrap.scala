@@ -140,12 +140,12 @@ object PylonTrap extends Action {
 
   def buildWhenReady(probe: FriendlyUnitInfo, building: UnitClass, tile: Tile): Unit = {
     if (With.microSlush.available >= 76) {
-      probe.intent.addBuild(BuildIntent(building, tile))
+      probe.squadIntent.addBuild(BuildIntent(building, tile))
       Build.perform(probe)
       // TODO: Spending needs to resync every agent cycle before we can actually spend properly
       //With.microSlush.spend(100)
     } else {
-      probe.intent.setScout(Spiral(8).map(tile.add))
+      probe.squadIntent.setScout(Spiral(8).map(tile.add))
     }
   }
 }

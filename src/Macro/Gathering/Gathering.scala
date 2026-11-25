@@ -82,7 +82,7 @@ class Gathering extends TimedTask with AccelerantMinerals with Zippers {
     bases = With.geography.bases.filter(isValidBase) // Geography.ourBases may not be valid on frame 0
     if (bases.isEmpty) { // Yikes. Wait for a base to finish or just go attack
       val goal = Maff.minBy(With.units.ours.filter(_.unitClass.isTownHall))(u => 10000 * u.remainingCompletionFrames + u.id).map(_.pixel).getOrElse(With.scouting.enemyHome.center)
-      workers.foreach(_.intend(this).setTerminus(goal))
+      workers.foreach(_.squadIntend(this).setTerminus(goal))
 
       return
     }
@@ -200,14 +200,14 @@ class Gathering extends TimedTask with AccelerantMinerals with Zippers {
 
   private def issueCommands(): Unit = {
     lazy val longDistanceMinerals = longDistanceBases.flatMap(_.minerals).filter(_.mineralsLeft > 0)
-    unassigned.foreach(worker => worker.intend(this)
+    unassigned.foreach(worker => worker.squadIntend(this)
       .setCanFight(false)
       .setGather(
         ?(longDistanceMinerals.isEmpty,
           Maff.minBy(With.units.ours.filter(_.unitClass.isGas))(gas => worker.pixelDistanceTravelling(gas.pixel.walkableTile)),
           Some(longDistanceMinerals(worker.id % longDistanceMinerals.length)))) // TODO: If we use multiple distance bases this logic will cause long-distance-distance mining
       .setTerminus(Maff.sampleSet(nearestBase(worker).metro.bases.maxBy(_.heart.groundPixels(With.scouting.enemyThreatOrigin)).tiles).center))
-    assignments.foreach(a => a._1.intend(this).setGather(a._2.resource))
+    assignments.foreach(a => a._1.squadIntend(this).setGather(a._2.resource))
   }
 
   private def doInitialSplit(): Boolean = {

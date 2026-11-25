@@ -72,8 +72,8 @@ trait DropLifecycle { self: MissionDrop =>
       u.agent.commit = false
       u.agent.toBoard = None
       u.setSquad(None)
-      val intent = u.intend(this).setAction(Idle).setTerminus(u.agent.defaultHome).setStation(None).setRedoubt(None).setBoard(None)
-      intent.targets = None
+      val squadIntent = u.squadIntend(this).setAction(Idle).setTerminus(u.agent.defaultHome).setStation(None).setRedoubt(None).setBoard(None)
+      squadIntent.targets = None
       u.agent.resetDestinations()
     })
     terminate(reason)

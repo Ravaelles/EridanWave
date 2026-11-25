@@ -15,7 +15,7 @@ trait TFriendlyUnitGroup {
   def confidence11          : Double                = _confidence11()
   def fightConsensus        : Boolean               = _fightConsensus()
   def homeConsensus         : Pixel                 = _homeConsensus()
-  def unintended            : Seq[FriendlyUnitInfo] = groupFriendlyOrderable.filter(_.intent.frameCreated < With.frame)
+  def unintended            : Seq[FriendlyUnitInfo] = groupFriendlyOrderable.filter(_.squadIntent.frameCreated < With.frame)
 
   private val _restrainedFrames     = new Cache(() => Maff.mean(groupFriendlyAttackers.filter(_.battle.isDefined).map(_.agent.combat.restrainedFrames)))
   private val _confidence11         = new Cache(() => Maff.mean(Maff.orElse(groupFriendlyOrderable.filter(_.battle.isDefined), groupFriendlyOrderable).map(_.confidence11)))

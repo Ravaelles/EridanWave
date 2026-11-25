@@ -13,7 +13,7 @@ class TacticMeldDarchons extends Tactic {
     if (With.blackboard.makeDarkArchons()) {
       lock.acquire()
       val partyCentral = Maff.minBy(With.geography.ourBases)(_.groundPixels(With.scouting.ourMuscleOrigin)).map(_.heart).getOrElse(With.geography.home).center
-      units.foreach(_.intend(this)
+      units.foreach(_.squadIntend(this)
         .setShouldMeld(true)
         .setTerminus(partyCentral))
     }

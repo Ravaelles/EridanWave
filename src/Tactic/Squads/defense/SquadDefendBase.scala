@@ -214,7 +214,7 @@ class SquadDefendBase(base: Base) extends Squad {
     formations += new FormationStandard(this, FormationStyleGuard, choke.get, None)
     holders.foreach(_.agent.act("ChokeHold"))
     MarchOrders.sendUnits(this, this.unintended)
-    holders.foreach(_.intent.setCanFlee(false))
+    holders.foreach(_.squadIntent.setCanFlee(false))
 
     true
   }
@@ -297,7 +297,7 @@ class SquadDefendBase(base: Base) extends Squad {
     val plugPixel = edgeToPlug().get._2.get.pixelCenter
     lastAction = "Plug Edge"
     formations += FormationSimple(FormationStylePlug, units.map((_, plugPixel)).toMap)
-    units.foreach(_.intend(this)
+    units.foreach(_.squadIntend(this)
       .setCanFlee(false)
       .setRedoubt(plugPixel)
       .setTerminus(plugPixel)
@@ -314,7 +314,7 @@ class SquadDefendBase(base: Base) extends Squad {
     MarchOrders.sendUnits(this, this.unintended)
     guardWithoutTargets()
     if (plan.blockZerglings) {
-      units.foreach(_.intent.setCanFlee(false))
+      units.foreach(_.squadIntent.setCanFlee(false))
     }
   }
 
@@ -322,7 +322,7 @@ class SquadDefendBase(base: Base) extends Squad {
     lastAction = "Hold"
     formations += formationBastion
     MarchOrders.sendUnits(this, this.unintended)
-    units.foreach(_.intent.setCanFlee(false))
+    units.foreach(_.squadIntent.setCanFlee(false))
   }
 
   private def threateningBase(enemy: UnitInfo): Boolean = {
@@ -340,7 +340,7 @@ class SquadDefendBase(base: Base) extends Squad {
   }
 
   def intendHoldWallGap(unit: FriendlyUnitInfo, pixel: Pixel): Unit = {
-    unit.intend(this)
+    unit.squadIntend(this)
       .setTargets(Vector.empty)
       .setShouldCorrectXY(false)
       .setCanFlee(false)
@@ -357,7 +357,7 @@ class SquadDefendBase(base: Base) extends Squad {
       .orElse(slot.map(p => target.pixel.project(p, scourer.pixelsToGetInRange(target))))
       .getOrElse(target.pixel)
       .traversiblePixel(scourer)
-    scourer.intend(this)
+    scourer.squadIntend(this)
       .setTargets(target)
       .setTerminus(where)
       .setRedoubt(MarchOrders.getReturn(scourer, squad))
@@ -392,7 +392,7 @@ class SquadDefendBase(base: Base) extends Squad {
   private def guardWithoutTargets(): Unit = {
     val excluded = units.filter(unit => targets.flatMap(_.headOption).exists(t => ! unit.canAttack(t))).toSet
     if (excluded.isEmpty) return
-    // The engage formation pursues the first target and supersedes intent destinations.
+    // The engage formation pursues the first target and supersedes squadIntent destinations.
     // Units unable to hit it must pursue their own compatible target or keep guarding.
     formations.indices.dropRight(1).foreach(i => {
       val formation = formations(i)
@@ -404,7 +404,7 @@ class SquadDefendBase(base: Base) extends Squad {
     })
     excluded.filterNot(unit => targets.get.exists(unit.canAttack)).foreach(unit => {
       val where = formationDisengage.flatMap(_(unit)).getOrElse(MarchOrders.getReturn(unit, this))
-      unit.intend(this)
+      unit.squadIntend(this)
         .setTargets(Vector.empty)
         .setTerminus(where)
         .setRedoubt(where)
@@ -451,7 +451,7 @@ class SquadDefendBase(base: Base) extends Squad {
       val target    = Maff.minBy(inOurBase.map(_.pixel))(_.groundPixels(With.geography.home)).getOrElse(Maff.orElse(With.geography.ourBases, Seq(With.geography.ourMain)).map(_.zone.exitNowOrHeart.center).minBy(_.proximity))
       val pixels    = With.units.ours.filter(u => u.unitClass.isDetector && ! u.flying).map(_.pixel).toSeq ++ Seq(target)
       val pixel     = pixels.minBy(p => dts.map(_.pixelDistanceTravelling(p)).min)
-      units.foreach(_.intend(this).setAction(HugAt(pixel)))
+      units.foreach(_.squadIntend(this).setAction(HugAt(pixel)))
     }
     shouldHug
   }

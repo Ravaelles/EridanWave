@@ -38,7 +38,7 @@ object GetRepairedMobile extends Action {
     var repairUnit: Option[FriendlyUnitInfo] = None
 
     lazy val squire     = Maff.minBy(unit.healers)(h => unit.pixelDistanceTravelling(h.pixel))
-    lazy val fieldMedic = Maff.minBy(unit.squad.view.flatMap(_.units.view.filter(u => Terran.SCV(u) && u.intent.toHeal.forall(h => h == unit || (h.hitPoints >= h.unitClass.maxHitPoints && h.healers.length > 1)))))(scv => unit.pixelDistanceTravelling(scv.pixel))
+    lazy val fieldMedic = Maff.minBy(unit.squad.view.flatMap(_.units.view.filter(u => Terran.SCV(u) && u.squadIntent.toHeal.forall(h => h == unit || (h.hitPoints >= h.unitClass.maxHitPoints && h.healers.length > 1)))))(scv => unit.pixelDistanceTravelling(scv.pixel))
     lazy val hospital   = Maff.minBy(With.geography.ourBases.filter(_.ourUnits.exists(Terran.SCV)))(b => unit.pixelDistanceTravelling(b.heart))
 
     if (squire.isDefined) {
@@ -60,8 +60,8 @@ object GetRepairedMobile extends Action {
           repairUnit = Maff.minBy(hospital.get.ourUnits.view
             .flatMap(_.friendly)
             .filter(u =>
-              u.intent.toGather.isDefined
-              && u.intent.toHeal.forall(unit==)))(scv =>
+              u.squadIntent.toGather.isDefined
+              && u.squadIntent.toHeal.forall(unit==)))(scv =>
             scv.pixelDistanceTravelling(unit.pixel))
         }
       })
@@ -71,7 +71,7 @@ object GetRepairedMobile extends Action {
     repairUnit.foreach(With.coordinator.healing.heal(_, unit))
 
     if (repairGoal.isDefined) {
-      unit.intent.setCanFight(false)
+      unit.squadIntent.setCanFight(false)
       unit.agent.decideFight(false, "GetRepaired")
     }
 

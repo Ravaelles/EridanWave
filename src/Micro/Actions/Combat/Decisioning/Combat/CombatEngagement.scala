@@ -76,7 +76,7 @@ private[Decisioning] object EngagePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = true
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
-      Debugging.Probe.note("Gate", unit.id, s"advance=$advance prey=${preyDrive(unit)} consensus=${combat.fightConsensus} home=${unit.intent.marchHome} commit=${unit.agent.commit}")
+      Debugging.Probe.note("Gate", unit.id, s"advance=$advance prey=${preyDrive(unit)} consensus=${combat.fightConsensus} home=${unit.squadIntent.marchHome} commit=${unit.agent.commit}")
       // A loaded gun with something hittable never march-moves: the move
       // resets the firing solution on every consensus-off frame and the
       // volley never lands (BetaStar: VolleyHold/March flap till death).
@@ -344,7 +344,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           With.battles.globalAttack.us.skimStrengthUnits,
           With.battles.globalAttack.enemy.skimStrengthUnits)))
     val advance = (unit.squad.flatMap(_.battlePosture) match {
-      case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.held(unit) || With.yolo.active) && ! unit.intent.marchHome
+      case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.held(unit) || With.yolo.active) && ! unit.squadIntent.marchHome
       case None =>
         // Latched feet-owner, not the raw consensus (owner order): a held
         // duel rides through the sim seesaw instead of flapping the march
@@ -353,7 +353,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         EngageAdvance.posturelessAdvance(
           MotionVerdict.held(unit.id, With.frame),
           combat.fightConsensus,
-          unit.intent.marchHome)
+          unit.squadIntent.marchHome)
     }) || umsDuelistAdvances
     var i = 0
     var claimed = false

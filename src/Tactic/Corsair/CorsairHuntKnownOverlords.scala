@@ -33,7 +33,7 @@ object CorsairHuntKnownOverlords {
     if ( ! Protoss.Corsair(unit)) return false
 
     overlord(unit).exists(target => {
-      unit.intend(squad).setTargets(Seq(target)).setTerminus(target.pixel)
+      unit.squadIntend(squad).setTargets(Seq(target)).setTerminus(target.pixel)
       unit.agent.act("CorsairHuntKnown")
       true
     })

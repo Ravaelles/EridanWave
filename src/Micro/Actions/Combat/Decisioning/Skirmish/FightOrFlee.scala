@@ -52,8 +52,8 @@ object FightOrFlee extends Action {
 
   private def personalFacts(u: FriendlyUnitInfo): FightFacts = FightFacts(
     pacifist    = ! u.canAttack && ! u.unitClass.castsSpells,
-    cantFight   = ! u.intent.canFight,
-    cantFlee    = ! u.intent.canFlee,
+    cantFight   = ! u.squadIntent.canFight,
+    cantFlee    = ! u.squadIntent.canFlee,
     static      = ! u.canMove,
     committed   = u.agent.commit,
     hallTargeted = u.agent.toAttack.exists(_.unitClass.isTownHall),

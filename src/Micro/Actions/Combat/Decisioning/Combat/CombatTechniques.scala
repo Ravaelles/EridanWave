@@ -124,7 +124,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       (Tactic.Squads.Decisions.RetreatVerdict.shouldHold(
         unit.unitClass.isWarrior,
         Protoss.Reaver(unit),
-        unit.intent.canFlee,
+        unit.squadIntent.canFlee,
         Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit),
         unit.agent.shouldFight,
         unit.totalHealth,
@@ -177,7 +177,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
       // not flee keep the old ladder untouched below. Committed hunts
       // never latch: the order already bypassed the vote, so holding
       // the retreat would walk a duel it was sent to fight.
-      else  if (unit.intent.canFlee && ! unit.agent.commit && ! standGroundNow && ! overwhelmingLine && ! Tactic.Squads.Decisions.RetreatVerdict.suppressUmsOpening(With.umsMode, With.frame) && ReengageLatch.shouldHoldRetreat(
+      else  if (unit.squadIntent.canFlee && ! unit.agent.commit && ! standGroundNow && ! overwhelmingLine && ! Tactic.Squads.Decisions.RetreatVerdict.suppressUmsOpening(With.umsMode, With.frame) && ReengageLatch.shouldHoldRetreat(
         combat.techniqueIs(Fallback, Flee, Excuse),
         unit.matchups.pixelsEntangled * Maff.inv32,
         ! Tactic.Squads.Decisions.RetreatVerdict.heldArmy(With.frame),
@@ -216,7 +216,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         unit.squad.exists(_.fightConsensus),
         With.units.enemy.exists(e =>
           e.alive && e.likelyStillThere && Terran.SiegeTankSieged(e)))) Fight
-      else  if ( ! unit.intent.canFlee)                             Walk
+      else  if ( ! unit.squadIntent.canFlee)                             Walk
       // Standing ground never retreats: the verdict above already
       // voted fight, but with no target picked yet the ladder below
       // would fall through to Flee - hold the line instead and let

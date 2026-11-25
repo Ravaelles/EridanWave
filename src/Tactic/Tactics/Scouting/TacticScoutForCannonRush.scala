@@ -45,6 +45,6 @@ class TacticScoutForCannonRush extends Tactic {
     scouts
       .setPreference(PreferClose(scouts.units.headOption.map(_.pixel).getOrElse(With.geography.home.center)))
       .acquire()
-      .foreach(_.intend(this).setTerminus(With.geography.home.center).setScout(tilesToScout))
+      .foreach(_.squadIntend(this).setTerminus(With.geography.home.center).setScout(tilesToScout))
   }
 }

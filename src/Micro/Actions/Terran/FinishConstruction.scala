@@ -10,11 +10,11 @@ object FinishConstruction extends Action {
   override def isContainer: Boolean = true
   
   override def allowed(unit: FriendlyUnitInfo): Boolean = {
-    unit.intent.toFinish.isDefined
+    unit.squadIntent.toFinish.isDefined
   }
 
   override def perform(unit: FriendlyUnitInfo): UnitControl = {
-    Commander.rightClick(unit, unit.intent.toFinish.get)
+    Commander.rightClick(unit, unit.squadIntent.toFinish.get)
     UnitControl.claimedIf(! unit.ready)
   }
 }

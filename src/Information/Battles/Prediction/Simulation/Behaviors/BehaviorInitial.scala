@@ -5,7 +5,7 @@ import ProxyBwapi.Races.{Protoss, Terran}
 object BehaviorInitial extends SimulacrumBehavior {
   val fighting: Boolean = true
   @inline override def act(simulacrum: Simulacrum): Unit = {
-    if (simulacrum.canMove && simulacrum.realUnit.friendly.exists( ! _.intent.canFight)) {
+    if (simulacrum.canMove && simulacrum.realUnit.friendly.exists( ! _.squadIntent.canFight)) {
       simulacrum.doBehavior(BehaviorFlee)
 
       return

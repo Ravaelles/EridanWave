@@ -48,13 +48,13 @@ class SquadMindControl extends Squad {
         unready.add(darchon)
       } else {
         val destination = Some(targets.head(i).pixel.walkablePixel)
-        darchon.intend(this).setTerminus(destination)
+        darchon.squadIntend(this).setTerminus(destination)
       }
       i += 1
     })
 
     lazy val safety = Maff.maxBy(With.geography.ourBases)(_.heart.tileDistanceSquared(With.scouting.enemyThreatOrigin)).map(_.heart).getOrElse(With.geography.home).center
-    unready.foreach(_.intend(this).setTerminus(safety))
+    unready.foreach(_.squadIntend(this).setTerminus(safety))
   }
 }
 

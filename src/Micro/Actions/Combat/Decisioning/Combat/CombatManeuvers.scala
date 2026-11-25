@@ -62,7 +62,7 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     unit.agent.fightReason = "Walking"
 
     unit.agent.perch.clear() // We're not picking a fight just yet
-    if (unit.intent.canSneak) {
+    if (unit.squadIntent.canSneak) {
       MicroPathing.tryMovingAlongTilePath(unit, MicroPathing.getSneakyPath(unit))
     } else if (unit.agent.receivedPushPriority() > unit.agent.priority) {
       applyForce(Forces.travel, Potential.towards(unit, unit.agent.destinationNext()))

@@ -40,7 +40,7 @@ class DefendFightersAgainstRush extends Tactic {
       .setCounter(CountUpTo(workersToFight.toInt))
       .setPreference((unit: FriendlyUnitInfo) => PreferClose(target)(unit) * (1.0 - unit.totalHealth.toDouble / unit.unitClass.maxTotalHealth))
       .acquire()
-      .foreach(_.intend(this)
+      .foreach(_.squadIntend(this)
         .setCanFlee(false)
         .setTerminus(target)
         .setTargets(aggressors))

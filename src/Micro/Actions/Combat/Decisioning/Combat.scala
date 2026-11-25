@@ -330,9 +330,9 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
   private[Decisioning] def ground10              : Double  = ?(unit.flying, 0, 1)
   private[Decisioning] def shouldRetreat         : Boolean = techniqueIs(Fallback, Flee, Excuse)
   private[Decisioning] def shouldEngage          : Boolean = techniqueIs(Fight, Abuse, Scavenge)
-  private[Decisioning] def canAbuse(t: UnitInfo) : Boolean = unit.canAttack(t) && unit.intent.canFight && ( ! t.canAttack(unit) || (unit.topSpeed > t.topSpeed && unit.pixelRangeAgainst(t) > t.pixelRangeAgainst(unit)))
+  private[Decisioning] def canAbuse(t: UnitInfo) : Boolean = unit.canAttack(t) && unit.squadIntent.canFight && ( ! t.canAttack(unit) || (unit.topSpeed > t.topSpeed && unit.pixelRangeAgainst(t) > t.pixelRangeAgainst(unit)))
 
-  override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canMove || unit.canAttack) && unit.intent.canFight
+  override def allowed(unit: FriendlyUnitInfo): Boolean = (unit.canMove || unit.canAttack) && unit.squadIntent.canFight
   override def perform(unused: FriendlyUnitInfo = null): UnitControl = {
     restrained = false
     innerPerform()

@@ -17,7 +17,7 @@ object MonitorEscort {
 
   def act(monitor: TacticMonitor, eye: FriendlyUnitInfo): Unit = {
     Debugging.CherryVis.CherryVis.decision(eye.id, "Escorting attack squad")
-    eye.intend(monitor)
+    eye.squadIntend(monitor)
       .setTerminus(anchor())
       .setRedoubt(With.geography.home.center)
   }

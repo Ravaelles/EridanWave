@@ -52,7 +52,7 @@ class TacticScan extends Tactic {
     }
     
     val blockedBuilders = With.units.ours.filter(u =>
-      u.intent.toBuild.exists(b => b.unitClass.isTownHall && u.pixelDistanceCenter(b.unitClass.tileArea.add(b.tile).center)  < 96)
+      u.squadIntent.toBuild.exists(b => b.unitClass.isTownHall && u.pixelDistanceCenter(b.unitClass.tileArea.add(b.tile).center)  < 96)
       && u.seeminglyStuck)
     
     if (blockedBuilders.nonEmpty) {
@@ -64,7 +64,7 @@ class TacticScan extends Tactic {
   
   def scan(targetPixel: Pixel): Unit = {
     Maff.maxBy(scanners.acquire())(_.energy).foreach(scanner => {
-      scanner.intend(this).setScan(targetPixel)
+      scanner.squadIntend(this).setScan(targetPixel)
       lastScan = With.frame
     })
   }

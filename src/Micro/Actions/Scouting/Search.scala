@@ -28,7 +28,7 @@ abstract class AbstractSearch extends Action {
 
   override def isContainer: Boolean = true
 
-  override def allowed(unit: FriendlyUnitInfo): Boolean =  With.geography.enemyBases.nonEmpty || unit.intent.toScoutTiles.nonEmpty
+  override def allowed(unit: FriendlyUnitInfo): Boolean =  With.geography.enemyBases.nonEmpty || unit.squadIntent.toScoutTiles.nonEmpty
   
   protected val boredomFrames: Int
   
@@ -40,11 +40,11 @@ abstract class AbstractSearch extends Action {
     // only, so machinery and flee keep clip, snap and noise afterwards.
     val scoutChasers = unit.matchups.threats.filter(t =>
       ! t.unitClass.isWorker || t.orderTarget.contains(unit))
-    if (scoutChasers.isEmpty && ! unit.intent.toScoutTiles.exists(_.explored)) {
-      val correctXY = unit.intent.shouldAdjustXY
-      unit.intent.shouldAdjustXY = false
+    if (scoutChasers.isEmpty && ! unit.squadIntent.toScoutTiles.exists(_.explored)) {
+      val correctXY = unit.squadIntent.shouldAdjustXY
+      unit.squadIntent.shouldAdjustXY = false
       Commander.move(unit)
-      unit.intent.shouldAdjustXY = correctXY
+      unit.squadIntent.shouldAdjustXY = correctXY
 
       return UnitControl.claimedIf(! unit.ready)
     }
@@ -59,17 +59,17 @@ abstract class AbstractSearch extends Action {
     }
 
     val bannedTiles: Set[Tile] = ?(unit.flying,
-      unit.intent.toScoutTiles
+      unit.squadIntent.toScoutTiles
         .filter(_.enemyRangeAir > 0)
         .toSet,
-      unit.intent.toScoutTiles
+      unit.squadIntent.toScoutTiles
         .view
         .flatMap(_.base)
         .toSet
         .filter(b => b.isEnemy && b.scoutedByUs)
         .flatMap(_.harvestingTrafficTiles))
 
-    val tilesToScout = unit.intent.toScoutTiles
+    val tilesToScout = unit.squadIntent.toScoutTiles
       .filter(tile =>
         With.grids.lastSeen.framesSince(tile) > boredomFrames
         && tile.buildableTerrain

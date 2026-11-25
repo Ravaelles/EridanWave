@@ -26,7 +26,7 @@ class SquadClearExpansionBlockers extends Squad {
     if ( ! With.enemies.exists(_.isZerg) &&   With.enemies.forall(With.unitsShown(_, Terran.SpiderMine) == 0)) return
 
     val target = With.units.ours
-      .flatMap(_.intent.toBuild)
+      .flatMap(_.squadIntent.toBuild)
       .find(b => b.unitClass.isTownHall && ! b.unitClass.isLairlike)
       .map(_.tile.topLeftPixel.add(64, 48))
 
@@ -53,8 +53,8 @@ class SquadClearExpansionBlockers extends Squad {
     if (units.isEmpty) return
 
     setTargets(SquadTargeting.rankedAround(this))
-    detectorLock.units.foreach(_.intend(this).setTerminus(vicinity))
-    sweeperLock.units.foreach(_.intend(this).setTerminus(vicinity.add(randomPosition())))
+    detectorLock.units.foreach(_.squadIntend(this).setTerminus(vicinity))
+    sweeperLock.units.foreach(_.squadIntend(this).setTerminus(vicinity.add(randomPosition())))
   }
 }
 

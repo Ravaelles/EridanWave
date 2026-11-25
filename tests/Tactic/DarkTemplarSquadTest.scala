@@ -9,7 +9,7 @@ import Information.Grids.Grids
 import Information.Grids.Movement.{GridUnwalkableUnits, GridWalkable, GridWalkableTerrain}
 import Lifecycle.With
 import Mathematics.Points.{Pixel, Tile}
-import Micro.Agency.{DestinationStack, Intention}
+import Micro.Agency.{DestinationStack, SquadIntention}
 import Micro.Matchups.MatchupAnalysis
 import Planning.Blackboard
 import Planning.ResourceLocks.LockUnits
@@ -82,7 +82,7 @@ object DarkTemplarSquadTest extends App {
     set(u, "_alive", true); set(u, "_complete", true)
     set(u, "canMoveCache", new Cache(() => kind.canMove && kind.topSpeed > 0 && u.aliveAndComplete))
     set(u, "_orderTarget", None); set(u, "_orderTargetPixel", None)
-    set(u, "_squad", None); set(u, "_intent", new Intention)
+    set(u, "_squad", None); set(u, "_intent", new SquadIntention)
     u.matchups = new MatchupAnalysis(u) {
       override def enemyDetectorDeepest: Option[UnitInfo] = None
       override def threatDeepest: Option[UnitInfo] = None
@@ -123,10 +123,10 @@ object DarkTemplarSquadTest extends App {
     destinations.destinationNext()
   }
   def attacksDivision(dt: FriendlyUnitInfo, d: Division): Unit = {
-    assert(dt.intent.targets.exists(_.toSet == d.enemies.toSet))
-    assert(dt.intent.terminus.contains(d.centroidGround))
+    assert(dt.squadIntent.targets.exists(_.toSet == d.enemies.toSet))
+    assert(dt.squadIntent.terminus.contains(d.centroidGround))
     assert(nextDestination(dt) == d.centroidGround)
-    assert(dt.intent.canFight && dt.intent.canFlee)
+    assert(dt.squadIntent.canFight && dt.squadIntent.canFlee)
   }
 
   check("vulnerable armies replace empty-base assignments") {
@@ -191,8 +191,8 @@ object DarkTemplarSquadTest extends App {
     With.battles.divisions = Vector(division(Pixel(300, 300), unit(Protoss.Dragoon)))
     val (s, _) = squad(Vector(dt), b)
     s.run()
-    assert(dt.intent.terminus.contains(b.heart.center))
-    assert(dt.intent.targets.exists(_.isEmpty))
+    assert(dt.squadIntent.terminus.contains(b.heart.center))
+    assert(dt.squadIntent.targets.exists(_.isEmpty))
   }
   check("without a vulnerable division the existing base fallback remains") {
     val dt = unit(Protoss.DarkTemplar)
@@ -200,7 +200,7 @@ object DarkTemplarSquadTest extends App {
     With.battles.divisions = Vector.empty
     val (s, _) = squad(Vector(dt), b)
     s.run()
-    assert(dt.intent.terminus.contains(b.heart.center))
+    assert(dt.squadIntent.terminus.contains(b.heart.center))
   }
   check("a squad awaiting its first DT can run with only a vulnerable division") {
     With.battles.divisions = Vector(division(Pixel(300, 300), unit(Protoss.Dragoon)))

@@ -47,7 +47,7 @@ class TacticPylonBlock extends Tactic {
     bases.headOption.foreach(base => {
       val tile = base.townHallTile.add(1, 1)
       lastWorker = lock.setPreference(PreferClose(tile.center)).acquire().headOption
-      lock.units.foreach(_.intend(this)
+      lock.units.foreach(_.squadIntend(this)
         .setCanSneak(true)
         .setTerminus(tile.center)
         .setScout(Seq(tile)))

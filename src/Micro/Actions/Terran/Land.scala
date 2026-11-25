@@ -12,10 +12,10 @@ object Land extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = (
     unit.unitClass.isFlyingBuilding
     && unit.flying
-    && unit.intent.toLand.isDefined)
+    && unit.squadIntent.toLand.isDefined)
 
   override protected def perform(unit: FriendlyUnitInfo): UnitControl = {
-    unit.intent.toLand.foreach(Commander.land(unit, _))
+    unit.squadIntent.toLand.foreach(Commander.land(unit, _))
     UnitControl.claimedIf(! unit.ready)
   }
 }

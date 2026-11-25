@@ -24,6 +24,6 @@ trait DropRouting { self: MissionDrop =>
   }
 
   private[Missions] def intendRoute(transport: FriendlyUnitInfo, destination: Tile): Unit = {
-    transport.intend(this).setTerminus(destination.center).setAction(ActionTravelTransport)
+    transport.squadIntend(this).setTerminus(destination.center).setAction(ActionTravelTransport)
   }
 }

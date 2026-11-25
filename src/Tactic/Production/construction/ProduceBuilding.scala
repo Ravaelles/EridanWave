@@ -37,8 +37,8 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
     builderMatcher == Protoss.Probe && ! foundation.flatMap(_.tile.metro).exists(_.bases.exists(b => b.isOurs && b.workerCount >= 6)),
     Maff.minBy(With.units.ours.filter(u =>
       Protoss.Probe(u)
-        && (  u.intent.toScoutTiles .exists(t =>  foundation.exists(_.tile.groundTiles(t)       < 40))
-          ||  u.intent.toBuild      .exists(b =>  foundation.exists(_.tile.groundTiles(b.tile)  < 40)))))(u => foundation.map(f => u.pixelDistanceTravelling(f.tile)).getOrElse(0.0)),
+        && (  u.squadIntent.toScoutTiles .exists(t =>  foundation.exists(_.tile.groundTiles(t)       < 40))
+          ||  u.squadIntent.toBuild      .exists(b =>  foundation.exists(_.tile.groundTiles(b.tile)  < 40)))))(u => foundation.map(f => u.pixelDistanceTravelling(f.tile)).getOrElse(0.0)),
     None))
   private val proposedBuilder = new Cache(() => recycledBuilder().orElse(builderLock.inquire().flatMap(_.headOption)))
 
@@ -182,7 +182,7 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
     }
     
     if (recycledBuilder().isDefined || builderLock.satisfied) {
-      val intent = recycledBuilder().map(_.intent).filter(_.frameCreated >= With.frame).getOrElse(builder.get.intend(this))
+      val squadIntent = recycledBuilder().map(_.squadIntent).filter(_.frameCreated >= With.frame).getOrElse(builder.get.squadIntend(this))
       if (trainee.isEmpty) {
         if (orderedTile.exists( ! desiredTile.contains(_))) {
           // The building placement has changed. This puts us at risk of building the same building twice.
@@ -194,20 +194,20 @@ class ProduceBuilding(requestArg: RequestBuildable, expectedFramesArg: Int) exte
           // 1. Recall the builder
           // 2. Wait for the order to take effect
           intendAfter = Some(With.frame + 24)
-          intent
+          squadIntent
             .setCanFight(false)
             .addBuild(BuildIntent(buildingClass, desiredTile.get, startNow = false))
             .setTerminus(desiredTile.map(_.center))
         } else {
           orderedTile = desiredTile
-          intent
+          squadIntent
             .setCanFight(false)
             .addBuild(BuildIntent(buildingClass, desiredTile.get, startNow = hasSpent || currencyLock.satisfied))
             .setTerminus(orderedTile.map(_.center))
           builder.filter(Zerg.Drone).foreach(drone => _trainee = Some(drone))
         }
       } else if (buildingClass.isTerran) {
-        intent
+        squadIntent
           .setCanFight(false)
           .setFinish(trainee)
       }

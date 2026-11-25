@@ -30,10 +30,10 @@ object BeShuttle extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean = Protoss.Shuttle(unit)
 
   override protected def perform(shuttle: FriendlyUnitInfo): UnitControl = {
-    // One owner per frame: a mission intent (ferry, drop) owns the frame
+    // One owner per frame: a mission squadIntent (ferry, drop) owns the frame
     // outright - the pair brain never outvotes it. Unclaimed hulls (Idle)
     // stay with the arbiter below, so the two never split a frame.
-    if (shuttle.intent.action != Idle) return UnitControl.Declined
+    if (shuttle.squadIntent.action != Idle) return UnitControl.Declined
 
     // One order per hull per frame (the arbiter decided, the brain
     // executes - never negotiates). Arm order is load-bearing: ditch
@@ -78,10 +78,10 @@ object BeShuttle extends Action {
    * they opt out of the XY correction for one move, like Search does.
    */
   private def movePrecise(shuttle: FriendlyUnitInfo): Unit = {
-    val correctXY = shuttle.intent.shouldAdjustXY
-    shuttle.intent.shouldAdjustXY = false
+    val correctXY = shuttle.squadIntent.shouldAdjustXY
+    shuttle.squadIntent.shouldAdjustXY = false
     Commander.move(shuttle)
-    shuttle.intent.shouldAdjustXY = correctXY
+    shuttle.squadIntent.shouldAdjustXY = correctXY
   }
 
   /** Drop passengers that are not ours to ferry. */

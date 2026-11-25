@@ -592,8 +592,8 @@ abstract class UnitInfo(val bwapiUnit: bwapi.Unit, val id: Int) extends UnitProx
     () =>
               friendly.flatMap(_.agent.toAttack)
       .orElse(friendly.flatMap(_.agent.toAttackLast))
-      .orElse(friendly.flatMap(_.intent.toAttack))
-      .orElse(friendly.flatMap(_.intent.toHeal))
+      .orElse(friendly.flatMap(_.squadIntent.toAttack))
+      .orElse(friendly.flatMap(_.squadIntent.toHeal))
       .orElse(target)
       .orElse(orderTarget)
       .orElse(friendly.flatMap(_.targetsAssigned).flatMap(_.headOption))

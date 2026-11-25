@@ -71,7 +71,7 @@ object UmsMode {
         && unit.canMove
         && ! unit.unitClass.isWorker
         && unit.squad.isEmpty) {
-        destinationFor(unit, enemies).foreach(unit.intent.setTerminus)
+        destinationFor(unit, enemies).foreach(unit.squadIntent.setTerminus)
       }
     })
     Debugging.FormationCensus.audit()

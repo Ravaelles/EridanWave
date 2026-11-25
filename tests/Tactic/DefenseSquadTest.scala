@@ -2,7 +2,7 @@ package Tactic.Squads
 
 import Lifecycle.With
 import Mathematics.Points.Pixel
-import Micro.Agency.{DestinationStack, Intention}
+import Micro.Agency.{DestinationStack, SquadIntention}
 import Micro.Formation.{Formation, FormationSimple, FormationStyleDisengage, FormationStyleGuard, FormationStyleMarch}
 import Performance.Cache
 import ProxyBwapi.ProxyBWAPI
@@ -16,7 +16,7 @@ import scala.collection.mutable.ArrayBuffer
 class ScourTestSquad extends SquadDefendBase(null) {
   override def intendScouring(unit: FriendlyUnitInfo, target: UnitInfo): Unit = {
     assert(unit.canAttack(target), s"${unit.unitClass} cannot attack ${target.unitClass}")
-    unit.intend(this).setTargets(target).setTerminus(target.pixel)
+    unit.squadIntend(this).setTargets(target).setTerminus(target.pixel)
   }
   override def homeConsensus: Pixel = Pixel(64, 64)
 }
@@ -48,7 +48,7 @@ object DefenseSquadTest extends App {
     set(u, "_pixel", Pixel(600 + nextId, 600))
     set(u, "_flying", kind.isFlyer)
     set(u, "_squad", None)
-    set(u, "_intent", new Intention)
+    set(u, "_intent", new SquadIntention)
     set(u, "canAttackCache", new Cache(() => kind.rawCanAttack))
     set(u, "canBeAttackedCache", new Cache(() => true))
     set(u, "canMoveCache", new Cache(() => true))
@@ -82,10 +82,10 @@ object DefenseSquadTest extends App {
     destinations.destinationNext()
   }
   def staysAtPost(u: FriendlyUnitInfo, at: Pixel = post): Unit = {
-    assert(u.intent.targets.exists(_.isEmpty))
-    assert(u.intent.terminus.contains(at))
-    assert(u.intent.redoubt.contains(at))
-    assert(u.intent.canFight && u.intent.canFlee)
+    assert(u.squadIntent.targets.exists(_.isEmpty))
+    assert(u.squadIntent.terminus.contains(at))
+    assert(u.squadIntent.redoubt.contains(at))
+    assert(u.squadIntent.canFight && u.squadIntent.canFlee)
     assert(nextDestination(u) == at, s"Defender still moves to ${nextDestination(u)}")
   }
   check("an Overlord draws only the Dragoon; Zealots retain their defensive destination") {
@@ -101,7 +101,7 @@ object DefenseSquadTest extends App {
     }
     s.scour()
     assert(s.formations.head.flanking)
-    assert(dragoon.intent.targets.exists(_.contains(overlord)))
+    assert(dragoon.squadIntent.targets.exists(_.contains(overlord)))
     assert(dragoon.stationEngage.contains(pursuit))
     zealots.foreach(staysAtPost(_))
   }
@@ -110,7 +110,7 @@ object DefenseSquadTest extends App {
     val corsair = unit(Protoss.Corsair)
     val zergling = unit(Zerg.Zergling)
     squad(Vector(corsair, zealot), zergling).scour()
-    assert(zealot.intent.targets.exists(_.contains(zergling)))
+    assert(zealot.squadIntent.targets.exists(_.contains(zergling)))
     staysAtPost(corsair)
   }
   check("surplus units choose a compatible target even after every allocation pass is full") {
@@ -120,10 +120,10 @@ object DefenseSquadTest extends App {
     val zergling = unit(Zerg.Zergling)
     squad(zealots ++ corsairs, overlord, zergling).scour()
     zealots.foreach(u => {
-      assert(u.intent.targets.exists(_.contains(zergling)))
+      assert(u.squadIntent.targets.exists(_.contains(zergling)))
       assert(nextDestination(u) == zergling.pixel, "Ground defenders must not follow the Overlord's formation")
     })
-    corsairs.foreach(u => assert(u.intent.targets.exists(_.contains(overlord))))
+    corsairs.foreach(u => assert(u.squadIntent.targets.exists(_.contains(overlord))))
   }
   check("allocation checks the actual target, including ground enemies under Dark Swarm") {
     val dragoon = unit(Protoss.Dragoon)
@@ -133,7 +133,7 @@ object DefenseSquadTest extends App {
     assert(!dragoon.canAttack(zergling) && zealot.canAttack(zergling))
     squad(Vector(dragoon, zealot), zergling).scour()
     staysAtPost(dragoon)
-    assert(zealot.intent.targets.exists(_.contains(zergling)))
+    assert(zealot.squadIntent.targets.exists(_.contains(zergling)))
   }
   check("an unattackable target does not exhaust or loop the allocation pool") {
     val zealot = unit(Protoss.Zealot)
@@ -155,7 +155,7 @@ object DefenseSquadTest extends App {
     val zealot = unit(Protoss.Zealot)
     val dragoon = unit(Protoss.Dragoon)
     val s = squad(Vector(zealot, dragoon), unit(Zerg.Overlord))
-    zealot.intent.setTerminus(pursuit)
+    zealot.squadIntent.setTerminus(pursuit)
     guardWithoutTargets.invoke(s)
     staysAtPost(zealot)
     assert(dragoon.stationEngage.contains(pursuit))
@@ -174,9 +174,9 @@ object DefenseSquadTest extends App {
     s.scour()
     staysAtPost(zealot, s.homeConsensus)
     s.setTargets(Vector.empty)
-    zealot.intent.setTerminus(post)
+    zealot.squadIntent.setTerminus(post)
     guardWithoutTargets.invoke(s)
-    assert(zealot.intent.terminus.contains(post))
+    assert(zealot.squadIntent.terminus.contains(post))
   }
   println(s"$passed defense squad tests passed")
 }

@@ -18,7 +18,7 @@ object AttackBuilder extends Action {
     lazy val scaries = scaryThreats(unit)
     lazy val targets = disruptableBuilders(unit)
     (unit.canAttack
-      && unit.intent.canFight
+      && unit.squadIntent.canFight
       && With.scouting.enemyMainFullyScouted
       && With.enemies.exists(_.raceCurrent == Race.Terran)
       && targets.nonEmpty

@@ -3,7 +3,7 @@ package Utilities
 /**
  * Dispatch band (one home for the arbitration vocabulary): every stage of
  * every first-claims chain declares which band it fights in. Bands
- * document intent - survival before duels, duels before leftovers - but
+ * document squadIntent - survival before duels, duels before leftovers - but
  * the ORDER is the contract: each chain exposes its stage list as data
  * and an order suite pins the exact sequence. Reorder by moving a line,
  * disable by commenting one out. New bands arrive here, never as

@@ -20,11 +20,11 @@ final class TacticExpandByLiftoff extends Tactic {
     if (mapping.isEmpty) return
 
     lock.setMatcher(mapping.keySet.contains).acquire().foreach(cc => {
-      cc.intend(this)
+      cc.squadIntend(this)
       if (cc.flying) {
-        cc.intent.setLand(mapping(cc))
+        cc.squadIntent.setLand(mapping(cc))
       } else {
-        cc.intent.setShouldLiftoff(true)
+        cc.squadIntent.setShouldLiftoff(true)
       }
     })
   }

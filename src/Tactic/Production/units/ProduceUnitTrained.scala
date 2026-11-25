@@ -50,7 +50,7 @@ class ProduceUnitTrained(requestArg: RequestBuildable, expectedFramesArg: Int) e
     trainerLock.acquire()
     trainee.foreach(_.setProducer(this))
     if (hasSpent) {
-      trainer.foreach(_.intend(this)) // Do nothing, mainly; possibly cancel if needed
+      trainer.foreach(_.squadIntend(this)) // Do nothing, mainly; possibly cancel if needed
 
       return
     }
@@ -59,7 +59,7 @@ class ProduceUnitTrained(requestArg: RequestBuildable, expectedFramesArg: Int) e
       if (trainer.exists(_.remainingOccupationFrames > 0)) {
         trainerLock.reacquire()
       }
-      trainer.filter(_.trainingQueue.size < 2).foreach(_.intend(this).setTrain(traineeClass))
+      trainer.filter(_.trainingQueue.size < 2).foreach(_.squadIntend(this).setTrain(traineeClass))
     }
   }
 }

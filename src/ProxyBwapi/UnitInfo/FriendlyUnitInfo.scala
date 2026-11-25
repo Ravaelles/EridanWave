@@ -4,7 +4,7 @@ import Information.Battles.Types.{FriendlyTeam, Hysteresis}
 import Information.Grids.Floody.AbstractGridFloody
 import Lifecycle.With
 import Mathematics.Points.Pixel
-import Micro.Agency.{Agent, Intention}
+import Micro.Agency.{Agent, SquadIntention}
 import Micro.Formation.Formation
 import Performance.Cache
 import ProxyBwapi.Orders
@@ -41,7 +41,7 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
     super.update()
     lazy val tryingToAttackHere = canAttack && target.exists(t => t.player.isEnemy &&   inRangeToAttack(t))
     // A parked unit is not a stuck unit: only count frames with an active
-    // movement order behind them. Counting mere attack intent (a far
+    // movement order behind them. Counting mere attack squadIntent (a far
     // assigned target while holding still) let Unstick own the unit
     // forever: it stopped the line, which kept the line still, which kept
     // it "stuck" - while the pinned target never released. Movers still
@@ -84,9 +84,9 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
     agent.act(label)
     Debugging.CherryVis.CherryVis.decision(id, label)
   }
-  private var _intent : Intention  = new Intention
+  private var _intent : SquadIntention  = new SquadIntention
   def client: Any       = _client
-  def intent: Intention = _intent
+  def squadIntent: SquadIntention = _intent
   /**
    * Authoring phases: tactics (squads, missions) author intentions; micro
    * narrows them through destinations and forces but never re-authors them.
@@ -94,9 +94,9 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
    * frame overwrites silently - the contest rides the Owner probe instead
    * of failing loudly.
    */
-  def intend(intendingClient: Any): Intention = {
-    val newIntent = ?(intent.frameCreated >= With.frame, intent, new Intention)
-    if (newIntent == intent && _client != intendingClient) {
+  def squadIntend(intendingClient: Any): SquadIntention = {
+    val newIntent = ?(squadIntent.frameCreated >= With.frame, squadIntent, new SquadIntention)
+    if (newIntent == squadIntent && _client != intendingClient) {
       Debugging.Probe.note("Owner", id, f"contested ${_client} vs $intendingClient")
     }
     _client = intendingClient
@@ -116,7 +116,7 @@ final class FriendlyUnitInfo(base: bwapi.Unit, id: Int) extends BWAPICachedUnitP
       _lastSquadChange = With.frame
     }
   }
-  def targetsAssigned     : Option[IndexedSet[UnitInfo]]  = intent.targets.orElse(squad.flatMap(_.targets))
+  def targetsAssigned     : Option[IndexedSet[UnitInfo]]  = squadIntent.targets.orElse(squad.flatMap(_.targets))
   def formations          : Iterable[Formation]           = squad.map(_.formations).getOrElse(Seq.empty)  .filter(_(this).isDefined)
   def formationEngage     : Option[Formation]             = squad.flatMap(_.formationEngage)              .filter(_(this).isDefined)
   def formationDisengage  : Option[Formation]             = squad.flatMap(_.formationDisengage)           .filter(_(this).isDefined)

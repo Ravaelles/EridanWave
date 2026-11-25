@@ -102,7 +102,7 @@ object CannonRush extends Action {
       }
     })
 
-    if (unit.intent.canFight) {
+    if (unit.squadIntent.canFight) {
       Maff.minBy(With.units.enemy.filter(_.orderTarget.contains(unit)))(_.totalHealth).foreach(target => {
         unit.agent.toAttack = Some(target)
         Commander.attack(unit)

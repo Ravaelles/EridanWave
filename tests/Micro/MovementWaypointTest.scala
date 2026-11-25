@@ -17,7 +17,7 @@ package Micro {
   import Macro.Allocation.Prioritized
   import Mathematics.Points.{Pixel, Tile}
   import Micro.Actions.Combat.Maneuvering.DownhillPathfinder
-  import Micro.Agency.{Commander, Intention}
+  import Micro.Agency.{Commander, SquadIntention}
   import Performance.{Cache, ReactionTimes}
   import Planning.ResourceLocks.LockUnits
   import ProxyBwapi.ProxyBWAPI
@@ -87,7 +87,7 @@ package Micro {
       set(u, "_flying", kind.isFlyer)
       set(u, "_transport", None); set(u, "friendly", Some(u))
       set(u, "_loadedUnitsCache", new Cache(() => Vector.empty[FriendlyUnitInfo]))
-      set(u, "_intent", new Intention)
+      set(u, "_intent", new SquadIntention)
       u
     }
     def building(x: Int, y: Int, width: Int, height: Int): Unit = {

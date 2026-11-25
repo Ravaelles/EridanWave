@@ -10,7 +10,7 @@ object Repair extends Action {
   override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
   override def isContainer: Boolean = true
   
-  override def allowed(unit: FriendlyUnitInfo): Boolean = Terran.SCV(unit) && unit.intent.toHeal.exists(t => t.hitPoints < t.unitClass.maxTotalHealth)
+  override def allowed(unit: FriendlyUnitInfo): Boolean = Terran.SCV(unit) && unit.squadIntent.toHeal.exists(t => t.hitPoints < t.unitClass.maxTotalHealth)
   
   override def perform(unit: FriendlyUnitInfo): UnitControl = {
     if (unit.loaded) {
@@ -19,7 +19,7 @@ object Repair extends Action {
       return UnitControl.claimedIf(! unit.ready)
     }
 
-    unit.intent.toHeal.foreach(patient =>
+    unit.squadIntent.toHeal.foreach(patient =>
       if (patient.hitPoints < patient.unitClass.maxHitPoints) {
         Commander.repair(unit, patient)
       } else {
