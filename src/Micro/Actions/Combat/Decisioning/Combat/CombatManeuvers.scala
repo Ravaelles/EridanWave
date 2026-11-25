@@ -6,7 +6,7 @@ import Mathematics.Maff
 import Mathematics.Physics.Force
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
-import Micro.Actions.Combat.Decisioning.Kiting.KiteHold
+import Micro.Actions.Combat.Decisioning.Kiting.{KiteAway, KiteHold}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -129,7 +129,8 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
       // they kite first and shoot from safety instead. One verdict, shared.
       val nearestMeleeTiles = Maff.minBy(unit.matchups.threats.view.filter(t => t.likelyStillThere && t.unitClass.melee))(
         unit.pixelDistanceEdge(_)).map(unit.pixelDistanceEdge(_) * Maff.inv32).getOrElse(Double.PositiveInfinity)
-      if (VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty) && KiteHold.holdsShot(unit.totalHealth, nearestMeleeTiles) && ! dogfightingAir) {
+      val atEdge = combat.target.exists(t => KiteAway.holdsTheEdge(unit.pixelDistanceEdge(t) * Maff.inv32, unit.pixelRangeAgainst(t) * Maff.inv32))
+      if (VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty) && KiteHold.holdsShot(unit.totalHealth, nearestMeleeTiles) && KiteHold.plantsFromEdge(unit.totalHealth, nearestMeleeTiles, atEdge) && ! dogfightingAir) {
         unit.agent.act("VolleyHold")
         Commander.hold(unit)
       }

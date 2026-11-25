@@ -119,13 +119,18 @@ object CommanderMove {
       return
     }
 
-    // Never cancel a firing solution: an attack order on a live target
-    // in range owns the frame - re-issuing a move over it trades the
-    // volley for a step. Kiting, retreats and dodges run after the march
-    // and interrupt explicitly when they must.
+    // Never cancel an imminent volley: an attack order on a live target
+    // in range owns the frame while the shot is about to leave -
+    // re-issuing a move over it trades the volley for a step. A cooling
+    // gun owns nothing: the shot already fired, and standing through the
+    // whole cooldown under it pins kiting hulls in place while the
+    // presser walks in (1DragWounded: the dragoon stood every cooldown
+    // behind its own order and died standing). Kiting, retreats and
+    // dodges run after the march and interrupt explicitly when they must.
     if ( ! overrideFiringSolution &&
       (unit.order == Orders.AttackUnit || unit.order == Orders.AttackTile) &&
-      unit.orderTarget.exists(t => t.alive && t.visible && unit.inRangeToAttack(t))) return
+      unit.orderTarget.exists(t => t.alive && t.visible && unit.inRangeToAttack(t) &&
+        unit.framesToBeReadyForAttackOrder(t) <= With.latency.latencyFrames + 2)) return
 
     if (CommanderCore.autoUnburrow(unit)) return
 

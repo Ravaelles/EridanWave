@@ -115,9 +115,11 @@ object KiteAwayBehavior extends PerGame {
     // would buy. Near-dead hulls never plant - only yield. Without guns
     // nearby the plant needs the edge: standing in contact donates the
     // swing for a volley the next cycle fires from range for free.
+    val atEdge = KiteAway.holdsTheEdge(nearTiles, edgeTiles)
     if (KiteHold.shouldPlant(unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty, unit.shieldPoints, unit.unitClass.maxShields, hasMeleeNearby) &&
       KiteHold.holdsShot(unit.totalHealth, nearTiles) &&
-      (gunsNear || KiteAway.holdsTheEdge(nearTiles, edgeTiles))) {
+      KiteHold.plantsFromEdge(unit.totalHealth, nearTiles, atEdge) &&
+      (gunsNear || atEdge)) {
       plantVolley(unit)
 
       return true
@@ -132,6 +134,7 @@ object KiteAwayBehavior extends PerGame {
     // shared volley verdict, like every other leg.
     if (KiteHold.isNearDead(unit.shieldPoints, unit.unitClass.maxShields) &&
       KiteHold.holdsShot(unit.totalHealth, nearTiles) &&
+      KiteHold.plantsFromEdge(unit.totalHealth, nearTiles, KiteAway.holdsTheEdge(nearTiles, edgeTiles)) &&
       VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)) {
       plantVolley(unit)
 
@@ -182,11 +185,9 @@ object KiteAwayBehavior extends PerGame {
       // dragoons stood 1900 frames silent at the edge). The hull yields
       // instead and plants the shot once they walk into reach.
       val hasHittable = unit.matchups.targetsInRange.nonEmpty
-      // Bleeding hulls never start a volley with blades on top (owner
-      // order, 1DragWounded): the plant waits for distance instead of
-      // donating the swing. Even the cannot-outrun trade waits: a dying
-      // hull spends its volley running, not standing into the swing.
-      if (hasHittable && KiteHold.holdsShot(unit.totalHealth, nearTiles) && ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley) ||
+      // Bleeding hulls hold their loaded volleys for the edge: without it
+      // the volley costs contact, and contact kills a hull this hurt.
+      if (hasHittable && KiteHold.holdsShot(unit.totalHealth, nearTiles) && KiteHold.plantsFromEdge(unit.totalHealth, nearTiles, edge) && ((edge && (gunsNear || loadedVolley)) || (gunsNear && loadedVolley) ||
         (loadedVolley && KiteAway.shouldTradeContact(unit.topSpeed, fastestBlade)))) {
         plantVolley(unit)
 
@@ -201,8 +202,8 @@ object KiteAwayBehavior extends PerGame {
     if ( ! shouldKite(unit, enemyInMargin, hasMeleeNearby, pvpRules, zergRules, shielded)) return false
     // Bleeding hulls never hold-to-shoot into blades (owner order,
     // 1DragWounded): the free shot is not free when the swing lands
-    // first - they kite and let the plant legs take safe shots.
-    if (KiteHold.holdsShot(unit.totalHealth, nearTiles) && holdToShoot(unit, combat)) return true
+    // first - they kite and let the edge plants take safe shots.
+    if (KiteHold.holdsShot(unit.totalHealth, nearTiles) && KiteHold.plantsFromEdge(unit.totalHealth, nearTiles, KiteAway.holdsTheEdge(nearTiles, edgeTiles)) && holdToShoot(unit, combat)) return true
     // Masonry never chases: kiting away from a building anchor donates
     // DPS and time for nothing, so a building anchor holds instead of
     // yielding. Hold-to-shoot above is untouched: a free shot at a

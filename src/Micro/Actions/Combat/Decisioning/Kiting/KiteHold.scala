@@ -40,6 +40,14 @@ object KiteHold {
   def fleesFirst(totalHealth: Int, nearestMeleeTiles: Double): Boolean =
     KiteAway.isSeriouslyWounded(totalHealth) && nearestMeleeTiles <= KiteAway.chaseTiles
 
+  /**
+   * Fleeing plant discipline (owner order, 1DragWounded): a bleeding hull
+   * with blades on top holds its volleys for the edge - below it the
+   * volley costs contact. Healthy hulls keep every leg untouched.
+   */
+  def plantsFromEdge(totalHealth: Int, nearestMeleeTiles: Double, atEdge: Boolean): Boolean =
+    ! fleesFirst(totalHealth, nearestMeleeTiles) || atEdge
+
   def isNearDead(shieldPoints: Int, maxShields: Int): Boolean =
     maxShields > 0 && shieldPoints <= nearDeadShields
 

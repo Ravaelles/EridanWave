@@ -69,4 +69,11 @@ class KiteHoldSuite extends AnyFunSuite {
     assert( ! KiteHold.fleesFirst(totalHealth = 66, nearestMeleeTiles = 2.0))
     assert( ! KiteHold.fleesFirst(totalHealth = 65, nearestMeleeTiles = Double.PositiveInfinity))
   }
+
+  test("fleeing hulls hold volleys for the edge, healthy hulls keep every leg") {
+    assert(KiteHold.plantsFromEdge(totalHealth = 200, nearestMeleeTiles = 0.0, atEdge = false))
+    assert(KiteHold.plantsFromEdge(totalHealth = 65, nearestMeleeTiles = 5.0, atEdge = true))
+    assert( ! KiteHold.plantsFromEdge(totalHealth = 65, nearestMeleeTiles = 5.0, atEdge = false))
+    assert( ! KiteHold.plantsFromEdge(totalHealth = 40, nearestMeleeTiles = 2.0, atEdge = false))
+  }
 }
