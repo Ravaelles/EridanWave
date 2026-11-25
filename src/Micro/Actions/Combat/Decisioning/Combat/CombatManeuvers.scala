@@ -6,7 +6,7 @@ import Mathematics.Maff
 import Mathematics.Physics.Force
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Decisioning.Formation.{FormationHold, OverwhelminglyStronger}
-import Micro.Actions.Combat.Decisioning.Kiting.{KiteAway, KiteHold}
+import Micro.Actions.Combat.Decisioning.Kiting.{KiteAway, KiteHold, MeleeKiteAway}
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
 import Micro.Coordination.Pushing.TrafficPriorities
@@ -231,7 +231,21 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     val (usSkim, foeSkim) = unit.combatForecast
       .map(battle => (battle.us.skimStrengthTotal, battle.enemy.skimStrengthTotal))
       .getOrElse((0.0, 0.0))
-    if ( ! ZealotPack.shouldRegroup(onlyZealots = true, warriors.size, mateTiles, usSkim, foeSkim, inContact, enemyClosing)) return false
+    val nearestFoeTiles = Maff.minBy(unit.matchups.threats.view)(_.pixelDistanceEdge(unit.pixel))
+      .map(_.pixelDistanceEdge(unit.pixel) * Maff.inv32)
+      .getOrElse(Double.PositiveInfinity)
+    // Vanguard hold (owner order, 4+3Zeal): a detached blade holds for
+    // the pack instead of dueling alone a screen away - the mutual
+    // approach is exactly when the vanguard feeds, so the closing veto
+    // above is lifted here. Contact still owns the frame (checked
+    // above), and a two-to-one skim still walks through.
+    val overwhelm = foeSkim > 0 && usSkim / foeSkim >= ZealotPack.overwhelmRatio
+    val vanguardHold = ! overwhelm && MeleeKiteAway.holdsForPack(
+      isMelee = true,
+      hasPack = mates.nonEmpty,
+      nearestMateTiles = mateTiles,
+      nearestFoeTiles = nearestFoeTiles)
+    if ( ! ZealotPack.shouldRegroup(onlyZealots = true, warriors.size, mateTiles, usSkim, foeSkim, inContact, enemyClosing) && ! vanguardHold) return false
 
     unit.agent.act("PackRegroup")
     unit.agent.forceTo(centroid)

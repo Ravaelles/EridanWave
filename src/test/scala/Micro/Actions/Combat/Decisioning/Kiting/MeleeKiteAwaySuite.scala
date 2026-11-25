@@ -65,4 +65,13 @@ class MeleeKiteAwaySuite extends AnyFunSuite {
     assert( ! MeleeKiteAway.standsWithWeakerPack(mateHpTotal = 100, mateCount = 2, myHp = 50))
     assert( ! MeleeKiteAway.standsWithWeakerPack(mateHpTotal = 200, mateCount = 2, myHp = 100))
   }
+
+  test("a detached blade holds formation instead of dueling alone") {
+    assert(MeleeKiteAway.holdsForPack(isMelee = true, hasPack = true, nearestMateTiles = 6.1, nearestFoeTiles = 7.0))
+    assert(MeleeKiteAway.holdsForPack(isMelee = true, hasPack = true, nearestMateTiles = 60.0, nearestFoeTiles = 0.0))
+    assert( ! MeleeKiteAway.holdsForPack(isMelee = false, hasPack = true, nearestMateTiles = 6.1, nearestFoeTiles = 7.0))
+    assert( ! MeleeKiteAway.holdsForPack(isMelee = true, hasPack = false, nearestMateTiles = 99.0, nearestFoeTiles = 7.0))
+    assert( ! MeleeKiteAway.holdsForPack(isMelee = true, hasPack = true, nearestMateTiles = 6.0, nearestFoeTiles = 7.0))
+    assert( ! MeleeKiteAway.holdsForPack(isMelee = true, hasPack = true, nearestMateTiles = 60.0, nearestFoeTiles = 7.1))
+  }
 }

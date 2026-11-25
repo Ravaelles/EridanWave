@@ -77,4 +77,22 @@ object MeleeKiteAway {
 
   def standsWithWeakerPack(mateHpTotal: Int, mateCount: Int, myHp: Int): Boolean =
     mateCount > 0 && mateHpTotal.toDouble / mateCount < myHp
+
+  /**
+   * Vanguard hold, in tiles: detached past this, a blade holds formation
+   * instead of walking alone at the enemy - the line arrives together or
+   * not at all. Shares the pack leash band, so the hold never disagrees
+   * with it by a tile.
+   */
+  val vanguardHoldTiles: Double = 6.0
+
+  /**
+   * Vanguard hold (pure tiles): a blade detached from its pack holds
+   * formation instead of dueling alone a screen away. Only with a pack
+   * to wait for (lone hulls regroup home instead), and only when the
+   * enemy ball is already here (a far walk is the march's, and mop-up
+   * chases keep the old walk-down).
+   */
+  def holdsForPack(isMelee: Boolean, hasPack: Boolean, nearestMateTiles: Double, nearestFoeTiles: Double): Boolean =
+    isMelee && hasPack && nearestMateTiles > vanguardHoldTiles && nearestFoeTiles <= KiteAway.chaseTiles
 }

@@ -28,8 +28,12 @@ object MeleeFocus {
 
   /**
    * The pack's shared chew for this blade, if the pack is on: weakest
-   * enemy the blade can hit now that a pack mate can also reach.
-   * None means "chew normally".
+   * enemy the pack can hit now that a pack mate can also reach.
+   * None means "chew normally". Candidates come from the squad's
+   * battle, not the hull's own targets - per-hull sets flap as sight
+   * lines cross, while one squad-wide set gives every blade the same
+   * answer by construction, so the pack converges instead of
+   * fanning out.
    */
   def sharedTarget(attacker: FriendlyUnitInfo): Option[UnitInfo] = {
     val squad = attacker.squad.getOrElse(return None)
@@ -39,8 +43,8 @@ object MeleeFocus {
       u.alive && u.unitClass.melee && u.unitClass.canAttack && u.friendly.exists(_ != attacker)).toSeq
     if (pack.isEmpty) return None
 
-    val candidates = attacker.matchups.targets.view.filter(t =>
-      t.alive && ! t.unitClass.isBuilding && attacker.inRangeToAttack(t)).map(t => {
+    val candidates = squad.battleEnemies.filter(t =>
+      t.alive && t.visible && ! t.unitClass.isBuilding && pack.exists(m => m.canAttack(t))).map(t => {
       val hitters = pack.filter(m => m.inRangeToAttack(t) || m.pixelDistanceEdge(t) <= packReachTiles * 32.0)
       (t, hitters)
     }).filter(_._2.size >= 1).map { case (t, hitters) =>
