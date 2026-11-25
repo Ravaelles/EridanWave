@@ -86,6 +86,22 @@ object KiteAway {
   def mustFleeContact(isDragoon: Boolean, cooldownLeft: Int, meleeContact: Boolean): Boolean =
     isDragoon && meleeContact && cooldownLeft >= contactKiteCooldown
 
+  /**
+   * Hide-away cooldown, frames (owner order): an unseen swing never
+   * lands, so any real cooldown runs instead of standing for a volley
+   * the hull cannot fire - six, not the contact fifteen, because a
+   * blade already on top needs no windup to carve.
+   */
+  val hideAwayCooldown: Int = 6
+
+  /**
+   * Absolute hide-away (pure flags for the suite): a cooling dragoon
+   * with templars pressing always yields - no edge to hold, no volley
+   * to wait for, no facing to consult. Zealots keep their own duel.
+   */
+  def mustHideFromTemplar(isDragoon: Boolean, cooldownLeft: Int, templarNear: Boolean): Boolean =
+    isDragoon && templarNear && cooldownLeft >= hideAwayCooldown
+
   /** Zerg fresh hulls hold: the classic ladder decides the rest. */
   val zergShieldWound: Int = 8
 

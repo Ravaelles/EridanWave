@@ -118,4 +118,6 @@ Details live in `details/` - the queue keeps one line per item.
   dragoon-as-mate counting.
 - Contain carve-out, C6 profiling, krasi0, Sunkens2 mission fallback,
   refresh-hop timing. Goon_v_DT + DT_v_Protoss unwinnable without
-  detection: leave alone.
+  detection: leave alone (hide-away 2026-11-25 killed the Guard/Move
+  flap there, dragoons now flee on cooldown - still unwinnable, no
+  further testing).

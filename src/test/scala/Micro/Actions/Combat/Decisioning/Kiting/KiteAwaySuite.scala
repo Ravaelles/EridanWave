@@ -21,6 +21,7 @@ class KiteAwaySuite extends AnyFunSuite {
     assert(KiteAway.steadyCooldownFrames == 15)
     assert(KiteAway.steadyContactTiles == 2.7)
     assert(KiteAway.zergShieldWound == 8)
+    assert(KiteAway.hideAwayCooldown == 6)
   }
 
   test("wound levels follow total HP boundaries") {    assert(KiteAway.isCriticallyWounded(25))
@@ -201,5 +202,13 @@ class KiteAwaySuite extends AnyFunSuite {
   test("a loaded hull with blades on top still steps out") {
     assert(KiteAway.escapeYield(stepPixels = 0.0, escapeTiles = 1.0) == 32.0)
     assert(KiteAway.escapeYield(stepPixels = 64.0, escapeTiles = 1.0) == 64.0)
+  }
+
+  test("a cooling dragoon always hides from templars, cooldown six and up") {
+    assert(KiteAway.mustHideFromTemplar(isDragoon = true, cooldownLeft = 6, templarNear = true))
+    assert(KiteAway.mustHideFromTemplar(isDragoon = true, cooldownLeft = 30, templarNear = true))
+    assert( ! KiteAway.mustHideFromTemplar(isDragoon = true, cooldownLeft = 5, templarNear = true))
+    assert( ! KiteAway.mustHideFromTemplar(isDragoon = true, cooldownLeft = 30, templarNear = false))
+    assert( ! KiteAway.mustHideFromTemplar(isDragoon = false, cooldownLeft = 30, templarNear = true))
   }
 }

@@ -43,6 +43,19 @@ object KiteAwayBehavior extends PerGame {
 
     val nearest = unit.matchups.targetNearest
     if (nearest.isEmpty) return false
+    // Absolute templar hide-away (owner order): a cooling dragoon with
+    // templars pressing always yields - standing holds no volley an
+    // unseen swing could land, and the chase prods below never outrun
+    // blades they cannot see. Bypasses every gate below by construction.
+    if (KiteAway.mustHideFromTemplar(
+      Protoss.Dragoon(unit),
+      unit.cooldownLeft,
+      unit.matchups.threatsInPixels(KiteAway.chaseTiles * 32.0).exists(t =>
+        t.likelyStillThere && Protoss.DarkTemplar(t)))) {
+      kiteAway(unit, combat, hasMeleeNearby = true)
+
+      return true
+    }
     // Absolute contact rule (owner order): a cooling dragoon with blades
     // on top always yields - bypasses every gate below by construction.
     // Loaded guns never reach it (their cooldown sits below the bar).

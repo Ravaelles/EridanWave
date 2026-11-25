@@ -2,6 +2,7 @@ package Micro.Actions.Combat.Decisioning
 
 import Lifecycle.With
 import Mathematics.Maff
+import Micro.Actions.Combat.Decisioning.Kiting.KiteAway
 import Micro.Targeting.DarkTemplarHunt
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
@@ -26,6 +27,10 @@ object DarkTemplarHuntBehavior {
     if ( ! unit.unitClass.isWarrior) return false
     if ( ! unit.unitClass.attacksGround) return false
     if (Protoss.Reaver(unit) || Protoss.DarkTemplar(unit)) return false
+    // Cooling guns walk, never chew (owner order): a dragoon that cannot
+    // answer this cycle yields instead of standing into the blades - the
+    // kite leg below owns the escape, the hunt resumes off cooldown.
+    if (KiteAway.mustHideFromTemplar(Protoss.Dragoon(unit), unit.cooldownLeft, templarNear = true)) return false
     if (unit.agent.toAttack.exists(t => Protoss.DarkTemplar(t) && unit.inRangeToAttack(t))) return false
 
     val main =
