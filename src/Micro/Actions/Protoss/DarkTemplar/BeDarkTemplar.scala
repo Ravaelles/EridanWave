@@ -331,6 +331,21 @@ object BeDarkTemplar extends Action {
     val open = unit.matchups.targets.filter(t =>
       t.visible && unit.canAttack(t) && DarkTemplarTargets.isPrey(t.unitClass) && ! coveredByDetector(unit, t) && ! raidLeashed(unit, t))
     val brave = open.filter(t => packDuelWorthIt(unit, t, open))
+    // Unfinished static defense first: a morphing cannon or raising
+    // turret never shoots back, so the blade walks it down from anywhere
+    // instead of chewing the base past it (and letting it finish into
+    // detection). Coverage and raid range already gated above.
+    val unfinished = brave.view.map(t => (t,
+      DarkTemplarTargets.Mark(
+        unit.tileDistanceEdge(t),
+        t.totalHealth,
+        isTank = false,
+        isWarrior = false,
+        isUnfinishedStatic = DarkTemplarTargets.isUnfinishedStatic(t.unitClass.isStaticDefense, t.complete)))).toSeq
+    DarkTemplarTargets.pickUnfinished(unfinished.map(_._2)) match {
+      case Some(i) => return Some(unfinished(i)._1)
+      case None =>
+    }
     val close = brave.filter(t =>
       unit.tileDistanceEdge(t) <= DarkTemplarTargets.closeTiles).toVector
     if (unit.cooldownLeft <= 0 && close.nonEmpty) {
@@ -357,7 +372,12 @@ object BeDarkTemplar extends Action {
     val ourDps = groundDps(unit.unitClass) + unit.squad.toSeq.flatMap(_.units)
       .filter(u => u != unit && u.alive && u.unitClass.isWarrior && pick.pixelDistanceEdge(u) * Maff.inv32 <= DarkTemplarBravery.packTiles)
       .map(u => groundDps(u.unitClass)).sum
-    val foeDps = ?(unit.effectivelyCloaked, 0.0, pack.map(f => groundDps(f.unitClass)).sum)
+    // Unfinished statics deal nothing: a morphing cannon prices like a
+    // live gun by class, so the duel would veto the free kill. Zero it
+    // and the pack math approves walking it down; live guns guarding it
+    // still veto through the rest of the pack.
+    val foeDps = ?(unit.effectivelyCloaked, 0.0, pack.map(f =>
+      ?(f.unitClass.isStaticDefense && ! f.complete, 0.0, groundDps(f.unitClass))).sum)
     DarkTemplarBravery.shouldDuel(
       unit.totalHealth, ourDps,
       pack.map(_.totalHealth).sum, foeDps)

@@ -161,9 +161,10 @@ suites green, no behavior change.
 
 Pin pure kernels beside the caller with a `*Suite`. Game-coupled
 strata stay thin and delegate. `testkit.TestKit` covers geometry;
-matchups/battles stay game-only - next seam on demand. Atlantis
-ports (`TargetLadderTest`, `AcquireTargetTest`, `FocusFireTest`, ...)
-need per-stratum MatchupSnapshot views first.
+matchups/battles stay game-only. Done 2026-11-25: `TargetPick` owns
+the ladder's atom (scored legal rows + current pick in, one pick
+out) - `bestInStratum` only reads legality/score at the seam; dead
+`bestUnfiltered` removed. Next: port ladder-shape tests onto rows.
 
 # Open ends (each needs a game to prove)
 

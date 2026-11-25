@@ -15,7 +15,10 @@ import ProxyBwapi.UnitClasses.UnitClass
  * to one swipe instead of trading with the healthy pack. Then tanks, then
  * warriors, then workers, then anything else hittable. Nearest inside
  * each tier; only real units inside closeTiles count, fogged contacts
- * keep the old nearest-hittable hunt. Distances in tiles.
+ * keep the old nearest-hittable hunt. An unfinished static (morphing
+ * cannon, raising turret) outranks every tier at any distance: it cannot
+ * shoot back, so the blade takes it before chewing the base past it.
+ * Distances in tiles.
  */
 object DarkTemplarTargets {
 
@@ -38,10 +41,11 @@ object DarkTemplarTargets {
       unitClass.isWarrior ||
       unitClass == Terran.Bunker
 
-  final case class Mark(distTiles: Double, totalHealth: Int, isTank: Boolean, isWarrior: Boolean)
+  final case class Mark(distTiles: Double, totalHealth: Int, isTank: Boolean, isWarrior: Boolean, isUnfinishedStatic: Boolean = false)
 
   def tier(mark: Mark): Int =
-    if (mark.totalHealth <= weakHp) 0
+    if (mark.isUnfinishedStatic) -1
+    else if (mark.totalHealth <= weakHp) 0
     else if (mark.isTank) 1
     else if (mark.isWarrior) 2
     else 3
@@ -50,4 +54,24 @@ object DarkTemplarTargets {
   def pick(marks: Seq[Mark]): Option[Int] =
     if (marks.isEmpty) None
     else Some(marks.indices.minBy(i => (tier(marks(i)), marks(i).distTiles)))
+
+  /**
+   * Unfinished static defense (pure flags): a morphing cannon or raising
+   * turret never shoots back, so it outranks every tier at any distance.
+   */
+  def isUnfinishedStatic(isStaticDefense: Boolean, complete: Boolean): Boolean =
+    isStaticDefense && ! complete
+
+  /**
+   * Unfinished static defense first (owner order: a morphing cannon or
+   * turret never shoots back, so the blade takes it before anything
+   * else instead of chewing the base past it). Nearest unfinished wins;
+   * nothing when there is none. The caller still gates coverage and
+   * raid range - this only orders the pick, never the suicide.
+   */
+  def pickUnfinished(marks: Seq[Mark]): Option[Int] = {
+    val todo = marks.indices.filter(i => marks(i).isUnfinishedStatic)
+    if (todo.isEmpty) None
+    else Some(todo.minBy(i => marks(i).distTiles))
+  }
 }
