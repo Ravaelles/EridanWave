@@ -78,7 +78,11 @@ trait PvPOpeningBuilds { self: PvPOpening =>
     // React against DT //
     //////////////////////
 
-    if ( ! greedyDT) {
+    // Mirror DT still defends while racing: greedyDT mutes the race cost,
+    // never the answer to an incoming blade. Observed 2026-11-25 vs
+    // BetaStar: our own DT plan muted everything, enemy DT finished a
+    // minute before ours and carved the probes (first cannon f7890).
+    if ( ! greedyDT || enemyDarkTemplarLikely) {
       PvPIdeas.requireTimelyDetection()
     }
   }

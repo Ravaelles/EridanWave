@@ -151,7 +151,13 @@ object PvPIdeas extends MacroActions {
     lazy val goObserver = (
       With.units.existsOurs(Protoss.RoboticsFacility) // It's part of our plan already
         || ( ! dtPrecedesObserver && ! PvPDT()) // Observers are just better if we can swing them
-        || (dtPrecedesCannon && ! With.units.existsOurs(Protoss.Forge)) // Cannons are awful once DTs are already inside your base; Obs is better
+        // Imminent DT with no Forge wants the emergency cannon spam below,
+        // not a Robo chain from scratch: the chain (Robo+Tory+Obs, gas-hungry
+        // beside our own DT tech) never materializes before the swipe, while
+        // the spam branch orders Forge and cannons immediately. Observed
+        // 2026-11-25 vs BetaStar: Citadel seen f5018, zero Robo/Obs ever built,
+        // first cannon f7890 after the DT was already inside.
+        || (dtPrecedesCannon && ! With.units.existsOurs(Protoss.Forge) && With.units.existsOurs(Protoss.RoboticsFacility)) // Cannons are awful once DTs are already inside your base; Obs is better
         || (cannonsAreReady && enemyHasShown(Protoss.DarkTemplar) && ! With.geography.ourFoyer.ourUnits.exists(Protoss.PhotonCannon))) // We need to leave our base sooner rather than later
 
     if (auditing) return goObserver
@@ -202,7 +208,10 @@ object PvPIdeas extends MacroActions {
         if (bases > 1) {
           requestTower(Protoss.PhotonCannon, 4, With.geography.ourFoyer,  DefendEntrance)
         } else {
-          requestTower(Protoss.PhotonCannon, 2, With.geography.ourFoyer,  DefendEntrance)
+          // One base scrambles at home, never at the unheld natural: two
+          // cannons toward the main choke and one over the minerals - a
+          // DT that walks around a forward cluster kills the line free.
+          requestTower(Protoss.PhotonCannon, 2, With.geography.ourMain,   DefendEntrance)
           requestTower(Protoss.PhotonCannon, 1, With.geography.ourMain,   DefendEntrance)
           requestTower(Protoss.PhotonCannon, 1, With.geography.ourMain,   DefendHall)
         }
@@ -214,7 +223,13 @@ object PvPIdeas extends MacroActions {
         val pylonMinStartFrame  = cannonMinStartFrame - Protoss.Pylon.buildFramesFull
         val naturalPylonNow     = With.units.ours.filter(Protoss.Pylon).forall(_.complete) && With.scouting.weControlOurFoyer && With.units.ours.count(Protoss.Pylon) > 3
         val injectPylon         = ! With.strategy.isMoneyMap
-        val doForgeCannon       = dtArePossibility && (PvPDT() || enemyHasShown(Protoss.CitadelOfAdun) || enemies(Protoss.DarkTemplar) > 0)
+        // Suspicion opens the queue, not the confirmation: a likely DT
+        // (dtRush prints, speedlots with no robo answer) starts Forge
+        // and cannon on the arrival timing instead of waiting for a
+        // shown Citadel - waiting donated the whole game to the first
+        // swipe. The minStartFrames below still pace the spend, so an
+        // early scare never bankrupts the build.
+        val doForgeCannon       = dtArePossibility && (PvPDT() || enemyDarkTemplarLikely || enemyHasShown(Protoss.CitadelOfAdun) || enemies(Protoss.DarkTemplar) > 0)
 
         status(f"DTAfterCannon@${Frames(forgeMinStartFrame)}-${Frames(pylonMinStartFrame)}-${Frames(cannonMinStartFrame)}")
         if (naturalPylonNow) status("NaturalPylon")
@@ -228,9 +243,12 @@ object PvPIdeas extends MacroActions {
           val n = Maff.clamp(enemies(Protoss.DarkTemplar) + 1, 2, 4)
           // Spread pair (owner order): one cannon holds the base itself,
           // the rest watch the lane toward the main choke - a DT that
-          // walks around a single cluster kills the line for free.
+          // walks around a single cluster kills the line for free. One
+          // base keeps both cannons home (minerals + main choke side);
+          // the foyer split only defends a natural we actually hold.
           requestTower(Protoss.PhotonCannon, 1, With.geography.ourMain, DefendHall, cannonMinStartFrame)
-          requestTower(Protoss.PhotonCannon, n - 1, With.geography.ourFoyer, DefendEntrance, cannonMinStartFrame)
+          val chokeBase = ?(bases > 1, With.geography.ourFoyer, With.geography.ourMain)
+          requestTower(Protoss.PhotonCannon, n - 1, chokeBase, DefendEntrance, cannonMinStartFrame)
         } else if (injectPylon) {
           requestTower(Protoss.Pylon,         1, With.geography.ourFoyer,   DefendHall,     ?(naturalPylonNow, 0, pylonMinStartFrame))
         }

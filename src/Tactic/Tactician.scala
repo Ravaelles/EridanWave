@@ -189,17 +189,31 @@ final class Tactician extends TimedTask {
     Debugging.CherryVis.CherryVis.board("DefenseWhy", defenseReasons.mkString(" + "))
   }
 
-  // Enemy picture for the trace: what we believe the enemy is doing, plus
-  // the hard intel that changes rarely. Boards are change-only, so a
-  // steady picture costs nothing and every recognition lands on the frame
-  // it happened: unknown at the start, guesses in the middle, the real
-  // thing once the fingerprints confirm it.
+  // Matchup-specific picture for the trace: only the cloaks that can
+  // actually appear in this matchup, never the full roster. PvP has no
+  // lurkers, PvZ has no DTs, PvT has neither - Terran hides mines and
+  // siege instead. Boards are change-only, so a steady picture costs
+  // nothing and every recognition lands on the frame it happened.
   private def publishEnemyBoards(): Unit = {
     val strategy = With.fingerprints.status.mkString(" ")
     Debugging.CherryVis.CherryVis.board("EnemyStrategy", if (strategy.isEmpty) "Unknown" else strategy)
 
-    val intel = f"dt=${MacroFacts.enemyDarkTemplarLikely} lurkers=${MacroFacts.enemyLurkersLikely} bases=${With.geography.enemyBases.size}"
-    Debugging.CherryVis.CherryVis.board("EnemyIntel", intel)
+    val vsProtoss = With.enemies.exists(_.isProtoss)
+    val vsZerg    = With.enemies.exists(_.isZerg)
+    val vsTerran  = With.enemies.exists(_.isTerran)
+    val parts = new ArrayBuffer[String]()
+    if (vsProtoss) parts += f"dt=${MacroFacts.enemyDarkTemplarLikely}"
+    if (vsZerg)    parts += f"lurkers=${MacroFacts.enemyLurkersLikely}"
+    if (vsTerran) {
+      parts += f"mines=${MacroFacts.enemyHasShown(Terran.MachineShop, Terran.Vulture, Terran.SpiderMine)}"
+      parts += f"siege=${MacroFacts.enemyHasShown(Terran.SiegeTankUnsieged, Terran.SiegeTankSieged)}"
+    }
+    if (parts.isEmpty) {
+      parts += f"dt=${MacroFacts.enemyDarkTemplarLikely}"
+      parts += f"lurkers=${MacroFacts.enemyLurkersLikely}"
+    }
+    parts += f"bases=${With.geography.enemyBases.size}"
+    Debugging.CherryVis.CherryVis.board("EnemyIntel", parts.mkString(" "))
   }
 
   private def defendDivisions(): Seq[(DefenseDivision, SquadDefendBase)] = {
