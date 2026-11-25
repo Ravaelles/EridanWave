@@ -4,7 +4,7 @@ import Gameplans.All.GameplanImperative
 import Lifecycle.With
 import Placement.Access.PlaceLabels.DefendEntrance
 import Placement.Access.PlacementQuery
-import PvPIdeas.{cancelBaseVsDarkTemplar, requireTimelyDetection}
+import PvPIdeas.{cancelBaseVsDarkTemplar, requireTimelyDetection, urgentForgeVsDT}
 import ProxyBwapi.Races.Protoss
 import Strategery.Strategies.Protoss.PvPNexusFirst
 
@@ -22,6 +22,7 @@ class PvPNexusFirst extends GameplanImperative {
   private def fearDT      = ! enemyStrategy(With.fingerprints.nexusFirst, With.fingerprints.forgeFe, With.fingerprints.gatewayFe, With.fingerprints.robo, With.fingerprints.threeGateGoon, With.fingerprints.fourGateGoon) || enemyStrategy(With.fingerprints.dtRush)
 
   override def executeBuild(): Unit = {
+    urgentForgeVsDT()
     scoutOn(Protoss.Gateway)
     once(8, Protoss.Probe)
     get(Protoss.Pylon)

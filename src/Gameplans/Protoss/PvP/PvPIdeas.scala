@@ -1,11 +1,13 @@
 package Gameplans.Protoss.PvP
 
 import Information.Battles.ArmyStrength
+import Information.Geography.Chokes
 import Information.Geography.Types.Base
 import Lifecycle.With
 import Macro.Actions.{ExpandForbidden, MacroActions}
 import Macro.Requests.RequestUnit
 import Mathematics.Maff
+import Mathematics.Points.Tile
 import Placement.Access.PlaceLabels._
 import Placement.Access.PlacementQuery
 import ProxyBwapi.Races.Protoss
@@ -52,6 +54,51 @@ object PvPIdeas extends MacroActions {
   val lateOneBaseDTFrame  : Int = GameTime(7, 30)()
   val twoBaseDTFrame      : Int = GameTime(15, 30)()
   val cannonSafetyFrames  : Int = Seconds(10)()
+
+  /**
+   * Absolute-first Forge vs suspected DT (owner order 2026-11-25): the
+   * moment DT is likely, Forge jumps the whole scheduler queue - 150
+   * minerals, and every frame behind army pumps risks the game (BetaStar
+   * 2026-11-25: suspicion ~3:12, Forge f6030). Called first in every PvP
+   * executeBuild, so MacroSim inserts it before anything that could
+   * steal the minerals. On our own DT plan the Citadel and Archives
+   * follow in the same order - race kept, defense first.
+   */
+  def urgentForgeVsDT(): Unit = {
+    if ( ! enemyDarkTemplarLikely) return
+    if ( ! have(Protoss.Forge)) get(Protoss.Forge)
+    else if (PvPDT() && ! have(Protoss.CitadelOfAdun)) get(Protoss.CitadelOfAdun)
+    else if (PvPDT() && ! have(Protoss.TemplarArchives)) get(Protoss.TemplarArchives)
+  }
+
+  /**
+   * Choke cannon anchor (owner order 2026-11-25): the anti-DT cannon sits
+   * five tiles off the main choke center toward the main base - close
+   * enough to cover the choke, inside to cover the mineral line.
+   */
+  val chokeCannonTiles: Double = 5.0
+
+  private def chokeCannonTile: Option[Tile] =
+    Chokes.mainChoke.map(choke =>
+      choke.pixelCenter.project(With.geography.ourMain.heart.center, chokeCannonTiles * 32.0).walkableTile)
+
+  /**
+   * Choke cannon order (owner order): one cannon five tiles off the main
+   * choke toward the main, base-scoped to ourMain. Lifts only the choke
+   * ban, so eligibility is today's set plus the near-choke slots - it
+   * cannot fail where today's query succeeds, it just prefers closer.
+   * The query is frame-stable (fixed anchor, radius and tile), so the
+   * production matcher never sees it as a new request.
+   */
+  private def requestChokeCannon(quantity: Int, startFrame: Int = 0): Unit = {
+    val query = new PlacementQuery(Protoss.PhotonCannon)
+      .requireBase(With.geography.ourMain)
+      .requireLabelYes(Defensive)
+      .allowMainChoke()
+      .preferLabelYes(Defensive)
+    chokeCannonTile.foreach(query.preferTile(_))
+    get(RequestUnit(Protoss.PhotonCannon, quantity, minStartFrameArg = startFrame, placementQueryArg = Some(query)))
+  }
 
   private def makeObservers(): Unit = {
     pump(Protoss.Observer, ?(enemyHasShown(Protoss.DarkTemplar), 2, 1))
@@ -196,6 +243,7 @@ object PvPIdeas extends MacroActions {
         status(f"DTHere-Hold${?(holdNatural, "Nat", "Main")}-${?(cannonsAreReady, "Prepared", "Scrambling")}")
         get(RequestUnit(Protoss.PhotonCannon, ?(enemiesHaveComplete(Protoss.DarkTemplar, Protoss.TemplarArchives), ?(cannonsAreReady, 3, 4), 1),
           placementQueryArg = Some(new PlacementQuery(Protoss.PhotonCannon)
+            .allowMainChoke()
             .preferBase(bestBase)
             .preferTile(bestTile)
             .preferLabelYes(Defensive, DefendGround, label))))
@@ -208,11 +256,11 @@ object PvPIdeas extends MacroActions {
         if (bases > 1) {
           requestTower(Protoss.PhotonCannon, 4, With.geography.ourFoyer,  DefendEntrance)
         } else {
-          // One base scrambles at home, never at the unheld natural: two
-          // cannons toward the main choke and one over the minerals - a
-          // DT that walks around a forward cluster kills the line free.
-          requestTower(Protoss.PhotonCannon, 2, With.geography.ourMain,   DefendEntrance)
-          requestTower(Protoss.PhotonCannon, 1, With.geography.ourMain,   DefendEntrance)
+          // One base scrambles at home, never at the unheld natural: three
+          // cannons toward the main choke (five tiles off it) and one over
+          // the minerals - a DT that walks around a forward cluster kills
+          // the line free.
+          requestChokeCannon(3)
           requestTower(Protoss.PhotonCannon, 1, With.geography.ourMain,   DefendHall)
         }
 
@@ -238,17 +286,20 @@ object PvPIdeas extends MacroActions {
           status("DoForgeCannon")
           get(RequestUnit(Protoss.Forge,                                 minStartFrameArg = forgeMinStartFrame))
           if (injectPylon) {
-            requestTower(Protoss.Pylon,       1, With.geography.ourFoyer,   DefendHall,     pylonMinStartFrame)
+            requestTower(Protoss.Pylon,       1, ?(bases > 1, With.geography.ourFoyer, With.geography.ourMain),   DefendHall,     pylonMinStartFrame)
           }
           val n = Maff.clamp(enemies(Protoss.DarkTemplar) + 1, 2, 4)
           // Spread pair (owner order): one cannon holds the base itself,
           // the rest watch the lane toward the main choke - a DT that
           // walks around a single cluster kills the line for free. One
-          // base keeps both cannons home (minerals + main choke side);
+          // base pins the choke cannons five tiles off the main choke;
           // the foyer split only defends a natural we actually hold.
           requestTower(Protoss.PhotonCannon, 1, With.geography.ourMain, DefendHall, cannonMinStartFrame)
-          val chokeBase = ?(bases > 1, With.geography.ourFoyer, With.geography.ourMain)
-          requestTower(Protoss.PhotonCannon, n - 1, chokeBase, DefendEntrance, cannonMinStartFrame)
+          if (bases > 1) {
+            requestTower(Protoss.PhotonCannon, n - 1, With.geography.ourFoyer, DefendEntrance, cannonMinStartFrame)
+          } else {
+            requestChokeCannon(n - 1, cannonMinStartFrame)
+          }
         } else if (injectPylon) {
           requestTower(Protoss.Pylon,         1, With.geography.ourFoyer,   DefendHall,     ?(naturalPylonNow, 0, pylonMinStartFrame))
         }

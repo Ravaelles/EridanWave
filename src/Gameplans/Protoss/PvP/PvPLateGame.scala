@@ -46,6 +46,7 @@ class PvPLateGame extends GameplanImperative {
   private def skimEquivalent(unit: UnitInfo): Double = unit.subjectiveValue * Protoss.Zealot.skimulationValue / Protoss.Zealot.subjectiveValue
 
   override def executeBuild(): Unit = {
+    urgentForgeVsDT()
     expectCarriers = enemyCarriersLikely || (With.fingerprints.forgeFe() && ! enemiesHave(IsWarrior) && (With.frame > Minutes(8)() || enemies(Protoss.PhotonCannon) > 3))
 
     lazy val nonStrengthUs              = unitsNotStrengthening(With.self).map(skimEquivalent).sum

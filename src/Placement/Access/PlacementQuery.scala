@@ -127,6 +127,22 @@ class PlacementQuery {
     query
   }
   def preferWidth         (value: Int)          : PlacementQuery = { preferences.width      = Some(value);  this }
+  /**
+   * Main-choke exemption (owner order, anti-DT choke cannon): lift the
+   * six-tile main-choke ban so a cannon can sit five tiles off the choke
+   * toward the main. Targeted - the ban stays for every other query.
+   * Matches the ban anchor and radius exactly, so unrelated keep-off
+   * rules (Pylon rings, natural hugs) survive untouched.
+   */
+  def allowMainChoke(): PlacementQuery = {
+    Chokes.mainChoke.foreach(choke => {
+      val anchor = choke.pixelCenter.walkableTile
+      requirements.farTiles = requirements.farTiles.filterNot {
+        case (tile, tiles) => tile == anchor && tiles == PlacementQuery.mainChokeClearTiles
+      }
+    })
+    this
+  }
   def preferHeight        (value: Int)          : PlacementQuery = { preferences.height     = Some(value);  this }
   def preferBuilding      (value: UnitClass)    : PlacementQuery = { preferences.building   = Some(value);  this }
   def preferLabelYes      (value: PlaceLabel*)  : PlacementQuery = { preferences.labelYes   = value;        this }
