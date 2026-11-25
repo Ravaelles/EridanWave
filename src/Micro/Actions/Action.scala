@@ -13,6 +13,16 @@ abstract class Action {
   def allowed(unit: FriendlyUnitInfo): Boolean = true
 
   /**
+   * Unit subset gate (no game beyond the class): the coarse family this
+   * brain answers for, enforced beside the unit-context gate below. The
+   * default keeps the caller's own gate untouched; pack-assuming legs
+   * narrow it to the line so a future rejoin cannot re-learn the lone
+   * raider lesson - Dark Templars, Corsairs and Scouts never belong to
+   * a centroid they do not fight in.
+   */
+  def unitSubset: UnitSubset = UnitSubsets.AllUnits
+
+  /**
    * Unit context gate (no game beyond the unit itself): race and class,
    * ground or air, worker or warrior, mobile or held. The shared template
    * checks the gate first and runs the doctrine second - a brain without
@@ -48,7 +58,7 @@ abstract class Action {
 
   final def act(unit: FriendlyUnitInfo, giveCredit: Boolean): Boolean = {
     With.agents.timeAction(name) {
-      if (( ! requiresReadiness || unit.ready) && appliesToUnit(unit) && allowed(unit)) {
+      if (( ! requiresReadiness || unit.ready) && appliesToUnit(unit) && unitSubset.contains(unit.unitClass) && allowed(unit)) {
         val previousCredit = unit.agent.lastAction
         val verdict = perform(unit)
         if (giveCredit && verdict.claimed) unit.agent.act(name)

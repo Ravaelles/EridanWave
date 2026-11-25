@@ -53,6 +53,11 @@ Details live in `details/` - the queue keeps one line per item.
   tail, brain owns the rest. StarEngine pins both directions; UMS
   DT_v_Protoss flap gone. Needs a ladder PvP: no DT walks into a
   guarded Cannon, workers near the blade die.
+- Loner unit subsets (owner order: pack legs must not grab lone wolves):
+  `UnitSubsets` enum (All/Ground/Air/Armed/Workers/LineArmy) + enforced
+  `Action.unitSubset` hook (default AllUnits = zero behavior change);
+  rejoin migrated to LineArmy. Full per-class audit of the 76 Actions
+  is queued - new behaviors must declare, grandfathered list tracks it.
 - PvP weak-small expansion hold (owner order: army <= 120 and warriors
   < 30 expand never): third leg of the shared expansion veto next to
   the weak and pressured holds. Needs a ladder PvP: WeakHoldNatural

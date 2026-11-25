@@ -3,7 +3,6 @@ package Micro.Actions.Combat.Decisioning
 import Lifecycle.With
 import Mathematics.Maff
 import Micro.Agency.Commander
-import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Decisions.{ClusterCohesion, MotionVerdict, SuicideMission}
 import Utilities.Latch
@@ -28,12 +27,11 @@ object ClusterRejoinBehavior {
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     val squad = unit.squad.getOrElse(return false)
     if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.held(unit)) return false
-    // Solo raiders never rejoin: a Dark Templar's whole mission is lone
-    // operation thirty tiles out, so the pack legs would yank it off the
-    // hunt every other frame instead (E_16:11:02: ForceRejoin acts every
-    // second frame for eighty frames while the hunt pulls the other
-    // way). Same shape as the scout exemption above.
-    if (Protoss.DarkTemplar(unit)) return false
+    // Lone raiders never rejoin: hunters, skirmishers, transports and
+    // eyes do not fight in the pack line, so the centroid means nothing
+    // to them - E_16:11:02 showed a Templar traded every other frame
+    // against its own hunt before this gate existed.
+    if ( ! Micro.Actions.UnitSubsets.LineArmy.contains(unit.unitClass)) return false
     if (unit.loaded) return false
     // A committed cast walk owns the frame: yanking a Templar with a
     // picked victim back to the centroid every other frame means the
