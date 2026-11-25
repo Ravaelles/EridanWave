@@ -4,14 +4,17 @@ import Lifecycle.With
 import Mathematics.Maff
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Tactic.Squads.Group.FriendlyUnitGroup
+import Utilities.Latch
 
 /**
  * Single suicide-mission detector (renamed from SuicideChargeSeam): a ground
  * warrior inside the enemy base never retreats, holds formation or dresses
  * the line - it only attacks, workers first. Thin on purpose: the distances
- * stay in the pure tested kernel (SuicideAssault); this only
- * reads the world. assign commits the unit, isActive reads live with no
- * stored state to go stale.
+ * stay in the pure tested kernel (SuicideAssault). assign commits the unit,
+ * isActive reads live with no stored state to go stale - and held latches
+ * the verdict for every gate, so a hull jittering on the 15-tile line stays
+ * committed instead of flapping the march and the duel every other frame
+ * (and splitting the army in half).
  */
 object SuicideMission {
 
@@ -34,6 +37,23 @@ object SuicideMission {
   /** Live read, no stored state: true while the unit sits in the enemy base. */
   def isActive(unit: FriendlyUnitInfo): Boolean =
     inZone(unit) || inMainAssault(unit)
+
+  /**
+   * Latched mission (one verdict for every gate): entry is the sharp
+   * detector above, release only past both bands. Every movement-owning
+   * gate reads this, never the raw edge - the release absorbs the
+   * mill jitter the detector cannot see.
+   */
+  private val mission = new Latch
+
+  def held(unit: FriendlyUnitInfo): Boolean =
+    mission(unit.id, fires = isActive(unit), releases = released(unit))
+
+  private def released(unit: FriendlyUnitInfo): Boolean =
+    unit.flying || ! unit.unitClass.isWarrior || mainHeart.forall(heart =>
+      SuicideAssault.released(
+        unit.tileDistanceCenter(heart),
+        unit.pixel.groundPixels(heart) * Maff.inv32))
 
   def squadInZone(squad: FriendlyUnitGroup): Boolean =
     enemyIsZerg && mainHeart.exists(heart =>

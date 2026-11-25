@@ -17,4 +17,13 @@ class SuicideAssaultSuite extends AnyFunSuite {
     assert( ! SuicideAssault.assaulting(15.01))
     assert( ! SuicideAssault.assaulting(200.0))
   }
+
+  test("release waits two tiles past both bands, one side out still holds") {
+    assert(SuicideAssault.assaultReleaseTiles == 17.0)
+    assert(SuicideAssault.chargeReleaseTiles == 32.0)
+    assert(SuicideAssault.released(assaultTiles = 17.01, chargeTiles = 32.01))
+    assert( ! SuicideAssault.released(assaultTiles = 17.0, chargeTiles = 32.01))
+    assert( ! SuicideAssault.released(assaultTiles = 17.01, chargeTiles = 32.0))
+    assert( ! SuicideAssault.released(assaultTiles = 0.0, chargeTiles = 0.0))
+  }
 }

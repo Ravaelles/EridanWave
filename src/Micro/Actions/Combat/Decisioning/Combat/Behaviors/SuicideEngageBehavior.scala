@@ -3,6 +3,7 @@ package Micro.Actions.Combat.Decisioning
 import Lifecycle.With
 import Mathematics.Maff
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Tactic.Squads.Decisions.SuicideMission
 
 /**
  * Suicide-attack behavior: a suicide unit idle past ten seconds without
@@ -14,7 +15,7 @@ import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 object SuicideEngageBehavior {
 
   def run(unit: FriendlyUnitInfo): Boolean = {
-    if ( ! unit.isSuicideMission) return false
+    if ( ! SuicideMission.held(unit)) return false
 
     if ( ! unit.agent.shouldFight) return false
 

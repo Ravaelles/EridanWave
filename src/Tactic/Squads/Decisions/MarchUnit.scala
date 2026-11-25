@@ -44,7 +44,7 @@ object MarchUnit {
       isDragoon           = Protoss.Dragoon(unit),
       isWarrior           = unit.unitClass.isWarrior,
       isLoadedShuttle     = Protoss.Shuttle(unit) && unit.loadedUnitCount > 0,
-      isSuicide           = SuicideMission.isActive(unit),
+      isSuicide           = SuicideMission.held(unit),
       shouldFight         = unit.agent.shouldFight,
       verdictRetreat      = verdictRetreat,
       verdictDuel         = verdictDuel,

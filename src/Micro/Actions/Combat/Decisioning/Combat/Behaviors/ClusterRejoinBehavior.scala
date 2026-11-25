@@ -18,7 +18,7 @@ object ClusterRejoinBehavior {
 
   def run(unit: FriendlyUnitInfo, combat: Combat): Boolean = {
     val squad = unit.squad.getOrElse(return false)
-    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
+    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.held(unit)) return false
     if (unit.loaded) return false
     // A committed cast walk owns the frame: yanking a Templar with a
     // picked victim back to the centroid every other frame means the

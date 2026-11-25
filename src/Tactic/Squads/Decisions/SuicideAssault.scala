@@ -18,9 +18,25 @@ object SuicideAssault {
   /** At or below this tile distance to the enemy main the assault is on. */
   val assaultTiles: Double = 15.0
 
+  /** Release past this tile distance: the assault lets go two tiles past
+   * the edge instead of flapping on it. */
+  val assaultReleaseTiles: Double = 17.0
+
+  /** Release past this land distance: the charge lets go two tiles past
+   * the edge instead of flapping on it. */
+  val chargeReleaseTiles: Double = 32.0
+
   def charging(distLandTiles: Double): Boolean =
     distLandTiles <= chargeTiles
 
   def assaulting(distTiles: Double): Boolean =
     distTiles <= assaultTiles
+
+  /**
+   * Fully clear (pure tiles for the suite): past both release bands the
+   * mission lets go; inside either it holds. One side out is still in -
+   * the other mode may still own the hull.
+   */
+  def released(assaultTiles: Double, chargeTiles: Double): Boolean =
+    assaultTiles > assaultReleaseTiles && chargeTiles > chargeReleaseTiles
 }

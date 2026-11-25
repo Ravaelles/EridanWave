@@ -68,7 +68,7 @@ object MarchOrders {
     if (unit.squad.exists(_ != squad)) return
 
     val finalReturn = getReturn(unit, squad, defaultReturn)
-    val assault = SuicideMission.isActive(unit)
+    val assault = SuicideMission.held(unit)
     // A toothless Terran fields nothing worth dressing against: the
     // posture vote below attacks instead of posing, and the legs walk
     // the line out instead of trickling it.

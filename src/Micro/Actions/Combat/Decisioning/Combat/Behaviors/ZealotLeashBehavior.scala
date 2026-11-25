@@ -28,7 +28,7 @@ object ZealotLeashBehavior {
 
   def run(unit: FriendlyUnitInfo): Boolean = {
     if ( ! Protoss.Zealot(unit)) return false
-    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.isActive(unit)) return false
+    if (unit.agent.isScout || unit.agent.commit || With.yolo.active || SuicideMission.held(unit)) return false
 
     val anchor = Maff.minBy(With.units.ours.view.filter(u => u != unit && u.alive && Protoss.Dragoon(u)))(
       _.pixelDistanceCenter(unit.pixel))

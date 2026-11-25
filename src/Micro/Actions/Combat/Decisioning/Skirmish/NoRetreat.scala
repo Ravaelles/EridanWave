@@ -10,6 +10,7 @@ import Micro.Actions.Protoss.Dragoon.DragoonPackStand
 import Micro.Actions.Protoss.ReaverShuttle.ReaverBrave
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
+import Tactic.Squads.Decisions.SuicideMission
 import Utilities.Latch
 import Utilities.UnitFilters.IsTank
 
@@ -24,7 +25,7 @@ object NoRetreat {
 
   /** In the enemy main the mission owns the unit, never the sim. */
   def suicideMission(unit: FriendlyUnitInfo): Boolean =
-    unit.isSuicideMission
+    SuicideMission.held(unit)
 
   /** Early shielded Dragoons trade Marines instead of kiting them. */
   def dragoonBrave(unit: FriendlyUnitInfo): Boolean =

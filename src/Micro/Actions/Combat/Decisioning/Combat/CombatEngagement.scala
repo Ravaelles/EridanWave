@@ -328,7 +328,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           With.battles.globalAttack.us.skimStrengthUnits,
           With.battles.globalAttack.enemy.skimStrengthUnits)))
     val advance = (unit.squad.flatMap(_.battlePosture) match {
-      case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active) && ! unit.intent.marchHome
+      case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.held(unit) || With.yolo.active) && ! unit.intent.marchHome
       case None =>
         // Latched feet-owner, not the raw consensus (owner order): a held
         // duel rides through the sim seesaw instead of flapping the march
