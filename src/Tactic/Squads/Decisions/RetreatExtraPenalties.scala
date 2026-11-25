@@ -30,7 +30,8 @@ object RetreatExtraPenalties {
     if (framesSinceWithdraw < 24) 0.6
     else if (framesSinceWithdraw < 48) 0.7
     else if (framesSinceWithdraw < 72) 0.8
-    else if (framesSinceWithdraw <= 144) 0.85
+    else if (framesSinceWithdraw <= 100) 0.85
+    else if (framesSinceWithdraw <= 180) 0.9
     else 1.0
 
   /**

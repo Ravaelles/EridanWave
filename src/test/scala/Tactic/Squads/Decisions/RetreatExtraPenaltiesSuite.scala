@@ -19,8 +19,11 @@ class RetreatExtraPenaltiesSuite extends AnyFunSuite {
     assert(RetreatExtraPenalties.advantageMultiplier(48) == 0.8)
     assert(RetreatExtraPenalties.advantageMultiplier(71) == 0.8)
     assert(RetreatExtraPenalties.advantageMultiplier(72) == 0.85)
-    assert(RetreatExtraPenalties.advantageMultiplier(144) == 0.85)
-    assert(RetreatExtraPenalties.advantageMultiplier(145) == 1.0)
+    assert(RetreatExtraPenalties.advantageMultiplier(100) == 0.85)
+    assert(RetreatExtraPenalties.advantageMultiplier(101) == 0.9)
+    assert(RetreatExtraPenalties.advantageMultiplier(144) == 0.9)
+    assert(RetreatExtraPenalties.advantageMultiplier(180) == 0.9)
+    assert(RetreatExtraPenalties.advantageMultiplier(181) == 1.0)
     assert(RetreatExtraPenalties.advantageMultiplier(10000) == 1.0)
   }
 
