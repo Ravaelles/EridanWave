@@ -14,17 +14,19 @@ object CommanderWork {
     target.friendly.foreach(With.coordinator.healing.heal(unit, _))
     unit.agent.setRideGoal(target.pixel)
     CommanderCore.ready(unit) {
-      CommanderCore.claimOrder(unit, "CommanderWork.repair")
-      unit.bwapiUnit.repair(target.bwapiUnit)
-      CommanderCore.sleep(unit, 24)
+      CommanderCore.issueOrder(unit, "CommanderWork.repair") {
+        unit.bwapiUnit.repair(target.bwapiUnit)
+        CommanderCore.sleep(unit, 24)
+      }
     }
   }
   private[Micro] def returnCargo(unit: FriendlyUnitInfo): Unit = {
     CommanderCore.ready(unit) {
       if (unit.carrying) {
-        CommanderCore.claimOrder(unit, "CommanderWork.returnCargo")
-        unit.bwapiUnit.returnCargo()
-        CommanderCore.sleepReturnCargo(unit)
+        CommanderCore.issueOrder(unit, "CommanderWork.returnCargo") {
+          unit.bwapiUnit.returnCargo()
+          CommanderCore.sleepReturnCargo(unit)
+        }
       }
     }
   }
@@ -40,16 +42,18 @@ object CommanderWork {
         if (incompleteHall.exists(hall => nextClosestFrames.forall(_ * 2 > hall.remainingCompletionFrames))) {
           CommanderMove.move(unit, incompleteHall.get.pixel)
         } else {
-          CommanderCore.claimOrder(unit, "CommanderWork.returnCargo")
-          unit.bwapiUnit.returnCargo()
+          CommanderCore.issueOrder(unit, "CommanderWork.returnCargo") {
+            unit.bwapiUnit.returnCargo()
+          }
         }
       }
     } else if ( ! resource.visible) {
       CommanderMove.move(unit, resource.pixel)
     } else {
       def doGather(): Unit = {
-        CommanderCore.claimOrder(unit, "CommanderWork.gather")
-        unit.bwapiUnit.rightClick(resource.bwapiUnit)
+        CommanderCore.issueOrder(unit, "CommanderWork.gather") {
+          unit.bwapiUnit.rightClick(resource.bwapiUnit)
+        }
       }
       if (resource.unitClass.isGas) {
         if ( ! unit.orderTarget.contains(resource)) {
@@ -94,9 +98,10 @@ object CommanderWork {
   private[Micro] def build(unit: FriendlyUnitInfo, unitClass: UnitClass): Unit = {
     // Don't auto-unload! We have a separate process for building Scarabs in loaded Reavers
     CommanderCore.ready(unit, unload = false) {
-      CommanderCore.claimOrder(unit, "CommanderWork.build")
-      unit.bwapiUnit.build(unitClass.bwapiType)
-      CommanderCore.sleepBuild(unit)
+      CommanderCore.issueOrder(unit, "CommanderWork.build") {
+        unit.bwapiUnit.build(unitClass.bwapiType)
+        CommanderCore.sleepBuild(unit)
+      }
     }
   }
   private[Micro] def build(unit: FriendlyUnitInfo, unitClass: UnitClass, tile: Tile): Unit = {
@@ -106,59 +111,67 @@ object CommanderWork {
         CommanderMove.move(unit, tile.center)
       } else {
         if (unitClass.isAddon) {
-          CommanderCore.claimOrder(unit, "CommanderWork.build")
-          unit.bwapiUnit.buildAddon(unitClass.bwapiType)
+          CommanderCore.issueOrder(unit, "CommanderWork.build") {
+            unit.bwapiUnit.buildAddon(unitClass.bwapiType)
+            CommanderCore.sleepBuild(unit)
+          }
         } else {
-          CommanderCore.claimOrder(unit, "CommanderWork.build")
-          unit.bwapiUnit.build(unitClass.bwapiType, tile.bwapi)
+          CommanderCore.issueOrder(unit, "CommanderWork.build") {
+            unit.bwapiUnit.build(unitClass.bwapiType, tile.bwapi)
+            CommanderCore.sleepBuild(unit)
+          }
         }
-        CommanderCore.sleepBuild(unit)
       }
     }
   }
   private[Micro] def tech(unit: FriendlyUnitInfo, tech: Tech): Unit = {
     if (unit.unready) return
 
-    CommanderCore.claimOrder(unit, "CommanderWork.tech")
-    unit.bwapiUnit.research(tech.bwapiTech)
-    CommanderCore.sleep(unit)
+    CommanderCore.issueOrder(unit, "CommanderWork.tech") {
+      unit.bwapiUnit.research(tech.bwapiTech)
+      CommanderCore.sleep(unit)
+    }
   }
   private[Micro] def upgrade(unit: FriendlyUnitInfo, upgrade: Upgrade): Unit = {
     if (unit.unready) return
 
-    CommanderCore.claimOrder(unit, "CommanderWork.upgrade")
-    unit.bwapiUnit.upgrade(upgrade.bwapiType)
-    CommanderCore.sleep(unit)
+    CommanderCore.issueOrder(unit, "CommanderWork.upgrade") {
+      unit.bwapiUnit.upgrade(upgrade.bwapiType)
+      CommanderCore.sleep(unit)
+    }
   }
   private[Micro] def cancel(unit: FriendlyUnitInfo): Unit = {
     if (unit.unready) return
 
-    CommanderCore.claimOrder(unit, "CommanderWork.cancel")
-    if (unit.teching) {
-      unit.bwapiUnit.cancelResearch()
-    } else if (unit.upgrading) {
-      unit.bwapiUnit.cancelUpgrade()
-    } else if (unit.training) {
-      unit.bwapiUnit.cancelTrain()
-    } else {
-      unit.bwapiUnit.cancelConstruction()
+    CommanderCore.issueOrder(unit, "CommanderWork.cancel") {
+      if (unit.teching) {
+        unit.bwapiUnit.cancelResearch()
+      } else if (unit.upgrading) {
+        unit.bwapiUnit.cancelUpgrade()
+      } else if (unit.training) {
+        unit.bwapiUnit.cancelTrain()
+      } else {
+        unit.bwapiUnit.cancelConstruction()
+      }
+      CommanderCore.sleep(unit)
     }
-    CommanderCore.sleep(unit)
   }
   private[Micro] def rally(unit: FriendlyUnitInfo, pixel: Pixel): Unit = {
     if (unit.unready) return
 
-    CommanderCore.claimOrder(unit, "CommanderWork.rally")
-    unit.bwapiUnit.setRallyPoint(pixel.bwapi)
-    unit.lastSetRally = With.frame
-    CommanderCore.sleep(unit)
+    CommanderCore.issueOrder(unit, "CommanderWork.rally") {
+      unit.bwapiUnit.setRallyPoint(pixel.bwapi)
+      unit.lastSetRally = With.frame
+      CommanderCore.sleep(unit)
+    }
   }
   private[Micro] def addon(unit: FriendlyUnitInfo, unitClass: UnitClass): Unit = {
     if (unit.unready) return
 
-    CommanderCore.claimOrder(unit, "CommanderWork.addon")
-    unit.bwapiUnit.buildAddon(unitClass.bwapiType)
-    CommanderCore.sleep(unit)
+    CommanderCore.issueOrder(unit, "CommanderWork.addon") {
+      unit.bwapiUnit.buildAddon(unitClass.bwapiType)
+      CommanderCore.sleep(unit)
+    }
   }
 }
 

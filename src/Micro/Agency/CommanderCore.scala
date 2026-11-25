@@ -79,6 +79,73 @@ object CommanderCore {
   }
 
   /**
+   * The only BWAPI door (phase 1): every issuance in Commander* runs
+   * through here. Direct mode (outside the engage capture window) claims
+   * the fuse and issues at once, exactly like before. Capture mode
+   * (engage pipeline) defers: the call plus its adjacent bookkeeping
+   * (sleep, flap note) is stored as a UnitIntention bid under the
+   * entering stage's reason and runs once, only if the bid wins the
+   * resolve. Unready units post nothing - a slept frame owns no orders,
+   * and the starvation tripwire beside the resolve counts it instead.
+   */
+  private[Micro] def issueOrder(unit: FriendlyUnitInfo, issuer: String)(order: => Unit): Unit = {
+    // No readiness gate here on purpose: direct mode keeps Step-0
+    // semantics exactly (the formation bypass issues while unready, and
+    // the fuse names it if it doubles). Only capture drops slept frames.
+    if (unit.agent.capturingBids) {
+      if (unit.unready) return
+
+      val reason = unit.agent.bidReason.getOrElse({
+        ErrorLedger.note(
+          f"bidReasonFallback.at.$issuer%s",
+          ErrorLedger.Priority.Low,
+          f"unit ${unit.id} ${unit.unitClass} frame ${With.frame}")
+        UnitIntentionReason.Duel
+      })
+      unit.agent.bids += UnitIntention(reason, issuer, () => order)
+    } else {
+      claimOrder(unit, issuer)
+      order
+    }
+  }
+
+  /**
+   * Ends the engage capture window: picks the highest-ranked bid (first
+   * posted wins ties) and issues it through the normal door - so the
+   * fuse, the sleep and the flap note all see one issuance, not two.
+   * Losers count themselves in the ledger (Low: arbitration working as
+   * designed, not an error). A direct issuance that already claimed this
+   * frame keeps today's semantics outright: the bids stand down and name
+   * the direct winner instead.
+   */
+  private[Micro] def resolveBids(unit: FriendlyUnitInfo): Unit = {
+    unit.agent.capturingBids = false
+    val bids = unit.agent.bids.toVector
+    unit.agent.bids.clear()
+    unit.agent.bidReason = None
+    if (bids.isEmpty) return
+
+    unit.orderClaim.filter(_.frame == With.frame) match {
+      case Some(claim) =>
+        ErrorLedger.note(
+          UnitIntentionRank.stoodDownKey(claim.issuer, unit.unitClass.toString),
+          ErrorLedger.Priority.Low,
+          f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} direct ${claim.issuer} stood down ${bids.size}")
+      case None =>
+        val winner = UnitIntentionRank.winnerIndex(bids)
+        bids.zipWithIndex.foreach { case (bid, i) =>
+          if (i == winner) bid.order()
+          else {
+            ErrorLedger.note(
+              UnitIntentionRank.outrankedKey(bid.reason, bids(winner).reason, unit.unitClass.toString),
+              ErrorLedger.Priority.Low,
+              f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} loser ${bid.issuer} winner ${bids(winner).issuer}")
+          }
+        }
+    }
+  }
+
+  /**
    * Readiness ladder (one home for the command prologue): readiness,
    * unburrow, optional unload, in that order. `build` passes unload=false -
    * loaded Reavers build Scarabs through their own process, never by

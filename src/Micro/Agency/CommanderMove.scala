@@ -18,10 +18,11 @@ object CommanderMove {
     CommanderCore.leadFollower(unit, stop)
     if (unit.unready) return
 
-    CommanderCore.claimOrder(unit, "CommanderMove.stop")
-    unit.bwapiUnit.stop()
-    Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
-    CommanderCore.sleep(unit)
+    CommanderCore.issueOrder(unit, "CommanderMove.stop") {
+      unit.bwapiUnit.stop()
+      Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
+      CommanderCore.sleep(unit)
+    }
     unit.resetSticking()
   }
   private[Micro] def hold(unit: FriendlyUnitInfo): Unit = {
@@ -30,14 +31,16 @@ object CommanderMove {
     if (unit.unready) return
     if ( ! Zerg.Lurker(unit) && CommanderCore.autoUnburrow(unit)) return
 
-    if (unit.velocity.lengthSquared > 0 && unit.order != Orders.HoldPosition) {
-      CommanderCore.claimOrder(unit, "CommanderMove.hold")
-      unit.bwapiUnit.holdPosition()
-      Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
+    // The sleep below rides inside the bid on purpose: in capture mode a
+    // slept frame must stay open for the other bidders, the resolve puts
+    // the frame to sleep through the winner instead.
+    CommanderCore.issueOrder(unit, "CommanderMove.hold") {
+      if (unit.velocity.lengthSquared > 0 && unit.order != Orders.HoldPosition) {
+        unit.bwapiUnit.holdPosition()
+        Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.HoldKind, With.frame)
+      }
+      if (unit.matchups.targetsInRange.nonEmpty) CommanderCore.sleepAttack(unit) else CommanderCore.sleep(unit)
     }
-    if (unit.matchups.targetsInRange.nonEmpty) return CommanderCore.sleepAttack(unit)
-
-    CommanderCore.sleep(unit)
   }
   // We used to refuse to issue commands to Photon Cannons due to inadvertent attack cancelling.
   // It looks like we've fixed that by using a 6-frame stopFrame
@@ -78,11 +81,12 @@ object CommanderMove {
       unit.order == Orders.AttackUnit && Option(unit.bwapiUnit.getLastCommand).exists(command =>
         command.getType == bwapi.UnitCommandType.Attack_Move && ! command.isQueued && new Pixel(command.getTargetPosition).pixelDistance(to) < 128))
     if ( ! alreadyAttackMovingThere || unit.seeminglyStuck) {
-      CommanderCore.claimOrder(unit, "CommanderMove.attackMove")
-      unit.bwapiUnit.attack(to.bwapi)
-      Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.AttackMoveKind, With.frame)
-    }
-    CommanderCore.sleepAttack(unit)
+      CommanderCore.issueOrder(unit, "CommanderMove.attackMove") {
+        unit.bwapiUnit.attack(to.bwapi)
+        Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.AttackMoveKind, With.frame)
+        CommanderCore.sleepAttack(unit)
+      }
+    } else CommanderCore.sleepAttack(unit)
   }
   private[Micro] def patrol(unit: FriendlyUnitInfo): Unit = patrol(unit, unit.agent.destinationNext())
   private[Micro] def patrol(unit: FriendlyUnitInfo, destination: Pixel): Unit = {
@@ -94,10 +98,11 @@ object CommanderMove {
     val to = CommanderOrder.adjustDestination(unit, destination, remember = true)
     if (CommanderCore.autoUnburrowUnlessLurkerInRangeOf(unit, to)) return
 
-    CommanderCore.claimOrder(unit, "CommanderMove.patrol")
-    unit.bwapiUnit.patrol(to.bwapi)
-    Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
-    CommanderCore.sleepAttack(unit)
+    CommanderCore.issueOrder(unit, "CommanderMove.patrol") {
+      unit.bwapiUnit.patrol(to.bwapi)
+      Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
+      CommanderCore.sleepAttack(unit)
+    }
   }
   private[Micro] def move(unit: FriendlyUnitInfo): Unit = move(unit, unit.agent.destinationNext())
   private[Micro] def move(unit: FriendlyUnitInfo, tolerancePixels: Double): Unit = move(unit, unit.agent.destinationNext(), tolerancePixels)
@@ -173,21 +178,24 @@ object CommanderMove {
         orderTarget.exists(_.pixelDistance(goal) < tolerancePixels) ||
           OrderContinue.holdsCourse(distTiles, onCourse))
       if ( ! continuing || unit.seeminglyStuck) {
-        CommanderCore.claimOrder(unit, "CommanderMove.move")
-        unit.bwapiUnit.move(goal.bwapi)
-        Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
+        CommanderCore.issueOrder(unit, "CommanderMove.move") {
+          unit.bwapiUnit.move(goal.bwapi)
+          Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.MoveKind, With.frame)
+          if ( ! unit.flying) {
+            CommanderCore.pushThrough(unit, to, TrafficPriorities.Freedom)
+          }
+          CommanderCore.sleep(unit)
+        }
       } else {
         Debugging.Probe.note("Move", unit.id,
           f"hold gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt}")
-      }
-      if ( ! unit.flying) {
-        CommanderCore.pushThrough(unit, to, TrafficPriorities.Freedom)
+        CommanderCore.sleep(unit)
       }
     } else if (unit.pixelDistanceCenter(unit.agent.destinationFinal()) > 3 * 32) {
       Debugging.Probe.note("Move", unit.id,
         f"arrived gap ${unit.pixelDistanceCenter(to).toInt} final ${unit.pixelDistanceCenter(unit.agent.destinationFinal()).toInt}")
-    }
-    CommanderCore.sleep(unit)
+      CommanderCore.sleep(unit)
+    } else CommanderCore.sleep(unit)
   }
 }
 

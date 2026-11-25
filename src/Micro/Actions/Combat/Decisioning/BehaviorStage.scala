@@ -18,8 +18,14 @@ import Utilities.DispatchBand
  * that forgets its verdict does not compile. Claiming credits the
  * stage name to the decision chain beside it - visibility is part of
  * claiming, not an afterthought.
+ *
+ * The third half is the reason (owner order, phase 1): WHY this stage
+ * wants the frame, from the closed UnitIntentionReason vocabulary.
+ * The shared template stamps it on the unit before executing, so every
+ * BWAPI bid the stage posts below carries its reason into the resolve -
+ * the Commander owns the rank table, behaviors never pass numbers.
  */
-abstract class BehaviorStage(val name: String, val band: DispatchBand) {
+abstract class BehaviorStage(val name: String, val band: DispatchBand, val reason: Micro.Agency.UnitIntentionReason.Reason) {
 
   /**
    * Unit context gate (no game beyond the unit itself): race and class,
@@ -43,6 +49,7 @@ abstract class BehaviorStage(val name: String, val band: DispatchBand) {
     if ( ! appliesToUnit(unit)) return UnitControl.Declined
     if ( ! unitSubset.contains(unit.unitClass)) return UnitControl.Declined
 
+    unit.agent.bidReason = Some(reason)
     val verdict = execute(unit, combat, advance)
     if (verdict.claimed) unit.agent.act(name)
     verdict

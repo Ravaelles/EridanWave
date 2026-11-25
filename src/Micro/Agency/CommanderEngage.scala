@@ -144,11 +144,12 @@ object CommanderEngage {
         || (overdueToAttack && (moving || alreadyInRange))
         || (target.isFriendly && Protoss.Carrier(unit))) // Carrier warmup; spam attack to avoid actually doing damage
     if (shouldOrder) {
-      CommanderCore.claimOrder(unit, "CommanderEngage.issueAttack")
-      unit.bwapiUnit.attack(target.bwapiUnit)
-      Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.AttackKind, With.frame)
-      target.addFutureAttack(unit)
-      CommanderCore.sleepAttack(unit)
+      CommanderCore.issueOrder(unit, "CommanderEngage.issueAttack") {
+        unit.bwapiUnit.attack(target.bwapiUnit)
+        Debugging.FlapLedger.note(unit.id, unit.unitClass.toString, Debugging.FlapLedger.AttackKind, With.frame)
+        target.addFutureAttack(unit)
+        CommanderCore.sleepAttack(unit)
+      }
     } else {
       CommanderCore.sleep(unit)
     }
@@ -163,25 +164,28 @@ object CommanderEngage {
     if (TechCooldowns.recastFrames(tech) > 0) unit.agent.lastStim = With.frame
 
     CommanderCore.ready(unit) {
-      CommanderCore.claimOrder(unit, "CommanderEngage.useTech")
-      unit.bwapiUnit.useTech(tech.bwapiTech)
-      CommanderCore.sleep(unit)
+      CommanderCore.issueOrder(unit, "CommanderEngage.useTech") {
+        unit.bwapiUnit.useTech(tech.bwapiTech)
+        CommanderCore.sleep(unit)
+      }
     }
   }
   private[Micro] def useTechOnUnit(unit: FriendlyUnitInfo, tech: Tech, target: UnitInfo): Unit = {
     unit.agent.setRideGoal(target.pixel)
     CommanderCore.ready(unit) {
-      CommanderCore.claimOrder(unit, "CommanderEngage.useTechOnUnit")
-      unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapiUnit)
-      TechCooldowns.after(tech).map(CommanderCore.sleep(unit, _)).getOrElse(CommanderCore.sleep(unit))
+      CommanderCore.issueOrder(unit, "CommanderEngage.useTechOnUnit") {
+        unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapiUnit)
+        TechCooldowns.after(tech).map(CommanderCore.sleep(unit, _)).getOrElse(CommanderCore.sleep(unit))
+      }
     }
   }
   private[Micro] def useTechOnPixel(unit: FriendlyUnitInfo, tech: Tech, target: Pixel): Unit = {
     unit.agent.setRideGoal(target)
     CommanderCore.ready(unit) {
-      CommanderCore.claimOrder(unit, "CommanderEngage.useTechOnPixel")
-      unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapi)
-      TechCooldowns.after(tech).map(CommanderCore.sleep(unit, _)).getOrElse(CommanderCore.sleepAttack(unit))
+      CommanderCore.issueOrder(unit, "CommanderEngage.useTechOnPixel") {
+        unit.bwapiUnit.useTech(tech.bwapiTech, target.bwapi)
+        TechCooldowns.after(tech).map(CommanderCore.sleep(unit, _)).getOrElse(CommanderCore.sleepAttack(unit))
+      }
     }
   }
 }

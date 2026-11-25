@@ -79,6 +79,20 @@ hysteresis home (rules 10-11).
   conflicts become countable before they become preventable - the fuse
   measures, a later flip blocks.
 
+- Reason-ranked unit arbitration (owner order 2026-11, Stardust queued
+  intent): behaviors post `UnitIntention` bids (reason, never a number),
+  one Commander-owned rank kernel decides
+  (Survival>Dodge>Duel>Formation>March>Macro, suite-pinned), the
+  engage-pipeline resolve issues the winner once. Every `Commander*`
+  issuance runs through one door (`CommanderCore.issueOrder`); every
+  stage declares its reason in the shared template beside name and band.
+  Loop control stays first-claims on purpose - the rank arbitrates true
+  overlaps only, cross-stage arbitration waits on UMS evidence. Live:
+  39 same-rank ties arbitrated on 4+3Zeal (20x Formation hold-double,
+  19x Duel volley-vs-hold), zero `duplicateOrder`, zero new tripwires;
+  1Drag clean. Loser pushes stay advisory (traffic votes were never
+  orders) - documented, not fixed.
+
 - Wrong reference frame (audit 2026-11, the TankHold class): a dozen
   kernels measured against the wrong side of the duel - our range
   where the enemy's belonged (HoldToShoot vs Vulture, TankHold seam),
