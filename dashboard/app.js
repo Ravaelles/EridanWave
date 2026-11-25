@@ -63,6 +63,8 @@ function summarize(rows) {
     // · = undecided (TIMEOUT / NOATTACH / UNKNOWN).
     const last5 = rs.slice(-5).map((r) =>
       WIN.has(r.result) ? "V" : (LOSS.has(r.result) ? "X" : "·"));
+    const last5Wins = last5.filter((m) => m === "V").length;
+    const last5Decided = last5.filter((m) => m !== "·").length;
     return {
       map,
       kind: rs[0].kind || "?",
@@ -71,13 +73,29 @@ function summarize(rows) {
       losses,
       winPct: decided > 0 ? (100 * wins / decided) : null,
       last5,
+      last5Pct: last5Decided > 0 ? (100 * last5Wins / last5Decided) : null,
       avgFrames: frames.length > 0
         ? Math.round(frames.reduce((a, b) => a + b, 0) / frames.length)
         : null,
       last: rs[rs.length - 1].result,
       lastDate: rs[rs.length - 1].date,
     };
-  }).sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses) || a.map.localeCompare(b.map));
+  }).sort((a, b) =>
+    // Worst-first: lowest Last-5 rate on top, ties broken by lowest
+    // overall Win %, undecided maps sink below every known rate.
+    cmpRateAsc(a.last5Pct, b.last5Pct) ||
+    cmpRateAsc(a.winPct, b.winPct) ||
+    a.map.localeCompare(b.map));
+}
+
+// Ascending rate comparison with unknown (null) sinking below every
+// known rate: a map with no decided games carries no losing signal,
+// so it must not top the "where we lose" list.
+function cmpRateAsc(a, b) {
+  if (a === null && b === null) return 0;
+  if (a === null) return 1;
+  if (b === null) return -1;
+  return a - b;
 }
 
 function fmt(v) {
