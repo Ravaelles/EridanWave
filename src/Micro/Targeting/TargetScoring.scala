@@ -89,8 +89,19 @@ object TargetScoring {
       -   cooldownPixelCost)
   }
 
-  @inline private def attackValue(targetValue: Double, injury: Double, pixelCost: Double, efficacy: Double): Double = {
-    val value = targetValue + 4.0 * injury
+  /**
+   * Injury weight, in tiles of reach: how many tiles of extra distance
+   * a fully wounded target is worth over a fresh one beside the gun.
+   * At 4.0 (shipped) four tiles of range outweigh a full wound, so a
+   * moving ball picks nearest and spreads over regenerating shields;
+   * at 8.0 a dying target anywhere in gun reach outranks a fresh
+   * adjacent one, so the line finishes. Owner-ordered experiment
+   * (4+3 grind): tune against UMS flips, never by feel.
+   */
+  var injuryWeightTiles: Double = 4.0
+
+  @inline private[Targeting] def attackValue(targetValue: Double, injury: Double, pixelCost: Double, efficacy: Double, injuryWeight: Double = injuryWeightTiles): Double = {
+    val value = targetValue + injuryWeight * injury
     ?(value > 0, efficacy, 1.0) * value - Maff.inv32 * pixelCost
   }
   @inline private def hitChance(guaranteedToHit: Boolean): Double = {

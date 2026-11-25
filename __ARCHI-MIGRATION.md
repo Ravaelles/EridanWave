@@ -54,26 +54,27 @@ opened in `dispatchByTechnique` so technique bids (Retreat Survival,
 Avoid Dodge) resolve together with duel bids. Live: 48 ties, zero
 duplicates, 1DragWounded kite chains healthy.
 
-## Step 3 - rank decides across stages (C: ANALYSIS DONE, OWNER GATE)
+## Step 3 - rank decides across stages (C: SHADOW SHIPPED, FLIP IS AN OWNER CALL)
 
-Status: the mechanism is ready (rank kernel, doors, windows,
-resolve); the flip is NOT shipped, on purpose. Worked pair proving
-a naive relaxation breaks doctrine:
-
-- Formation-vs-Close, outranged frame with a seen enemy and no
-  volley: `FormationDuelStage` claims (dress the line - the header
-  says the hold owns outranged frames), and `CloseDuelStage.outer`
-  is simultaneously true through `noVolley`. Rank says Duel(3) >
-  Formation(2), so the line would charge from ten tiles out instead
-  of dressing. The pipeline ORDER encodes context (outranged goes
-  to the line, in-reach to the duel) that a context-free rank does
-  not see.
-- Conclusion: cross-stage arbitration needs contextual rank (rank
-  conditioned on contact/reach, or split reasons such as
-  DuelInReach) - a doctrine redesign, not a mechanical flip.
-  Rule 20: owner doctrine call required before any loop-control
-  change. Until then loop control stays first-claims and the rank
-  arbitrates true within-stage overlaps only (proven live).
+Status: the shadow instrument runs on every engage window (silent
+except divergences), first-claims loop control RESTORED after a
+revert-proven finding (see below). Live divergence data, 4+3Zeal:
+exactly one contested pair - `divergeBid.DuelVsFormation` on
+zealots, 34x/game, frames 0-2482 (a Formation slot-walk bid vs a
+Close kite-move bid; rank would kite, order dresses). No other
+pair diverges anywhere measured.
+- Negative result with teeth: relaxing the loops to measure changed
+  the game it measured (1Drag waste 117f band to 200-254f with three
+  straight defeats; recovery to wins and 125-144f after revert).
+  Cause: post-claim bodies carry load-bearing side effects (pushes,
+  ride goals, decisions), so the shadow cannot run bodies to
+  measure. Lesson: cross-stage arbitration cannot be observed for
+  free - it needs per-pair flip experiments behind a revert, never
+  a global relax.
+- The DuelVsFormation flip is the first candidate: rank kites where
+  order dresses, 34 frames/game. Flipping breaks "the hold owns
+  outranged frames" - owner doctrine call with this count attached,
+  not a blind flip.
 
 ## Step 2 - every governor bids (A plus B)
 

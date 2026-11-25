@@ -175,11 +175,13 @@ class KiteAwaySuite extends AnyFunSuite {
   }
 
   test("a cooling dragoon with blades on top always yields, loaded or fresh") {
-    assert(KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = true))
-    assert(KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 30, meleeContact = true))
-    assert( ! KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 14, meleeContact = true))
-    assert( ! KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = false))
-    assert( ! KiteAway.mustFleeContact(isDragoon = false, cooldownLeft = 15, meleeContact = true))
+    assert(KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = true, totalHealth = 54))
+    assert(KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 30, meleeContact = true, totalHealth = 40))
+    assert( ! KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = true, totalHealth = 55))
+    assert( ! KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = true, totalHealth = 100))
+    assert( ! KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 14, meleeContact = true, totalHealth = 40))
+    assert( ! KiteAway.mustFleeContact(isDragoon = true, cooldownLeft = 15, meleeContact = false, totalHealth = 40))
+    assert( ! KiteAway.mustFleeContact(isDragoon = false, cooldownLeft = 15, meleeContact = true, totalHealth = 40))
   }
 
   test("a held heading survives jitter but releases on turns and lapses") {

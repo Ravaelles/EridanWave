@@ -63,7 +63,8 @@ object KiteAwayBehavior extends PerGame {
       Protoss.Dragoon(unit),
       unit.cooldownLeft,
       unit.matchups.threatsInPixels(KiteAway.contactKiteTiles * 32.0).exists(t =>
-        t.likelyStillThere && t.unitClass.melee))) {
+        t.likelyStillThere && t.unitClass.melee),
+      unit.totalHealth)) {
       kiteAway(unit, combat, hasMeleeNearby = true)
 
       return true

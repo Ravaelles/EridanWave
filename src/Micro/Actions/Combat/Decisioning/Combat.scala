@@ -478,11 +478,12 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
 
     var i = 0
     var claimed = false
-    // The arbitration window opens here, not in engage(): technique bids
-    // (retreats, dodges, stands) and duel bids resolve together, once,
-    // by reason rank - a retreating hull never duels on the way out
-    // because Survival outranks Duel, not because two buses agree by
-    // hand. engage() re-opens idempotently and resolves on every path.
+    // Shadow Step 3: loop control stays first-claims on purpose -
+    // later bodies carry load-bearing side effects (pushes, ride
+    // goals, decisions), so running them all to measure would pollute
+    // the game. The resolve issues today's first-posted bid and counts
+    // rank-vs-order divergences among posted bids instead.
+    // engage() re-opens idempotently and resolves on every path.
     unit.agent.capturingBids = true
     unit.agent.bidReason = None
     while (i < TechniquePipeline.stages.length && ! claimed) {
@@ -494,7 +495,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // three legs holds the duel out.
     Debugging.Probe.note("Duel", unit.id, s"claimed=$claimed engage=${shouldEngage && advance} ready=${unit.ready} tech=$technique")
     if ( ! claimed && shouldEngage && advance) engagement.engage()
-    else CommanderCore.resolveBids(unit)
+    else CommanderCore.resolveBids(unit, shadow = true)
   }
 
   private[Decisioning] def techniqueIs(candidates: Technique*): Boolean = candidates.contains(technique)

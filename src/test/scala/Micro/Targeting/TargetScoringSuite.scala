@@ -23,6 +23,22 @@ class TargetScoringSuite extends AnyFunSuite {
     assert(TargetScoring.creepColonyBonus(isCreepColony = false, morphing = false) == 0.0)
   }
 
+  test("at weight 4 a fresh adjacent target outranks a dying one five tiles out") {
+    // Documents the shipped tradeoff: four tiles of range outweigh a
+    // full wound, so a moving ball picks nearest and spreads.
+    val freshNear = TargetScoring.attackValue(targetValue = 1.0, injury = 0.0, pixelCost = 0.0, efficacy = 1.0, injuryWeight = 4.0)
+    val dyingFar = TargetScoring.attackValue(targetValue = 1.0, injury = 1.0, pixelCost = 5.0 * 32.0, efficacy = 1.0, injuryWeight = 4.0)
+    assert(freshNear > dyingFar)
+  }
+
+  test("at weight 8 a dying target in reach outranks a fresh adjacent one") {
+    // The experiment direction: a full wound buys eight tiles, so the
+    // line finishes instead of spreading. Tune against UMS flips.
+    val freshNear = TargetScoring.attackValue(targetValue = 1.0, injury = 0.0, pixelCost = 0.0, efficacy = 1.0, injuryWeight = 8.0)
+    val dyingFar = TargetScoring.attackValue(targetValue = 1.0, injury = 1.0, pixelCost = 5.0 * 32.0, efficacy = 1.0, injuryWeight = 8.0)
+    assert(dyingFar > freshNear)
+  }
+
   test("lone far Ling baits nothing while buildings stand") {
     assert(TargetScoring.loneLingScatteredOnMapLurePenalty(isLing = true, packNear = false, farFromHome = true, betterTargets = true) == -10000.0)
     assert(TargetScoring.loneLingScatteredOnMapLurePenalty(isLing = true, packNear = true, farFromHome = true, betterTargets = true) == 0.0)

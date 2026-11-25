@@ -78,13 +78,23 @@ object KiteAway {
   var contactKiteCooldown: Int = 15
 
   /**
-   * Absolute contact rule (pure flags for the suite): a cooling dragoon
-   * with blades on top always yields - no volley to hold, no trade to
-   * take, no gate to consult. Loaded guns never reach it (their
-   * cooldown sits below the bar by construction).
+   * Absolute contact hull cap, in HP (owner order): healthy hulls stand
+   * and trade blades in contact instead of kiting like melee - at or
+   * above this many hit points the trade beats the yield, so only
+   * bleeding hulls flee contact.
    */
-  def mustFleeContact(isDragoon: Boolean, cooldownLeft: Int, meleeContact: Boolean): Boolean =
-    isDragoon && meleeContact && cooldownLeft >= contactKiteCooldown
+  var contactKiteHp: Int = 55
+
+  /**
+   * Absolute contact rule (pure flags for the suite): a cooling,
+   * bleeding dragoon with blades on top always yields - no volley to
+   * hold, no trade a hurt hull can take, no gate to consult. Loaded
+   * guns never reach it (their cooldown sits below the bar by
+   * construction); healthy hulls never reach it either (they stand
+   * and trade - see contactKiteHp).
+   */
+  def mustFleeContact(isDragoon: Boolean, cooldownLeft: Int, meleeContact: Boolean, totalHealth: Int): Boolean =
+    isDragoon && meleeContact && cooldownLeft >= contactKiteCooldown && totalHealth < contactKiteHp
 
   /**
    * Hide-away cooldown, frames (owner order): an unseen swing never
