@@ -113,9 +113,17 @@ object FocusFire {
     // Pack-level trace (one note per squad per frame): the latched id
     // stays put while hulls walk in and out of its reach - when hull
     // picks flip under a steady pack id, the splitter is the per-hull
-    // reach filter in Target, not the vote.
+    // reach filter in Target, not the vote. The why tag names the
+    // release: fresh/dead/unreached/kept/freekill/none.
     FocusMemory.noteOnce(squad, Lifecycle.With.frame) {
-      Debugging.Probe.note("FocusPack", attacker.id, f"pack ${held.map(_.id).getOrElse(-1)} chose ${chosen.map(_.id).getOrElse(-1)}")
+      val mem = FocusMemory.read(squad)
+      val why = if (chosen.isEmpty) "none"
+        else if (mem.isEmpty) "fresh"
+        else if ( ! bids.exists(_.id == mem.get)) "dead"
+        else if (bids.find(_.id == mem.get).exists(_.reach == 0)) "unreached"
+        else if (chosen.exists(_.id == mem.get)) "kept"
+        else "freekill"
+      Debugging.Probe.note("FocusPack", attacker.id, f"pack ${mem.getOrElse(-1)} chose ${chosen.map(_.id).getOrElse(-1)} why $why")
     }
     chosen match {
       case Some(c) =>

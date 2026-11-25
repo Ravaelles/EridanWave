@@ -7,30 +7,34 @@ hysteresis home (rules 10-11).
 
 ## Open
 
-- Shared focus has no quorum on a kiting ball (found 2026-11, live
-  4+3Zeal): FocusFire/MeleeFocus seams run ~3 frames per 3000-frame
-  mirror (entry needs combat-priority targets in range, squad
-  engagement, shooter/target quorum plus per-hull reach), so the
-  pack never focuses - not churn, absence. Per-hull ladder picks
-  flip every ~10f across 7 targets (both weapon classes, 2.0
-  stickiness can't anchor: any illegal frame resets toAttackLast
-  and the pick random-walks), volleys spread over regenerating
-  shields, the grind loses (1/7 with ~190 hits taken, 1 kill;
-  MirrorFocusSuite proves focus would win). The SharedFocus latch
-  (pack-level memory, hold while reach>=1, release on death/
-  zero-reach, free-kill preempt) is shipped and suite-pinned and
-  harmless (tripwires silent, 3/0 holds) but engages only when
-  entry does - the bottleneck is upstream. Two candidate roots,
-  owner call: (a) kite doctrine vs focus doctrine - kiting
-  dragoons leave shared reach by design, no in-reach quorum can
-  fire; fix is fight-in-reach or quorum-free assignment (walk the
-  line to one pick), both doctrine; (b) anchor reset on illegal
-  frames - stable-incumbent stickiness instead of toAttackLast,
-  mechanical, needs a release timer (Latch idiom). Evidence:
-  FocusPack pack/chose notes (one row per squad per frame),
-  focusHeldPastBetter Low counter for staleness tuning.
-  Next: one instrumented game per candidate gate, then ladder
-  proof (rule 21) - UMS mirrors never march, never decide.
+- Shared focus quorum on a kiting ball (found 2026-11, live
+  4+3Zeal/14Drag): seams ran ~3 frames per 3000-frame mirror before
+  the latch (entry needs combat-priority targets in range, squad
+  engagement, shooter/target quorum plus per-hull reach). The
+  SharedFocus latch (pack-level memory, hold while reach>=1,
+  release on death/zero-reach, free-kill preempt) now holds through
+  churn - 14v16 why-tags: 140 kept / 23 dead / 11 freekill /
+  3 fresh / 4 none, kills up 7 to 11/6/10 across three reps.
+  Dead releases are finished kills, freekills taken - correct
+  behavior, no staleness (focusHeldPastBetter silent). Ladders
+  stopped random-walking too (StickyAnchor: last pick that WON).
+  What remains is per-hull reach: kiting hulls leave the shared
+  target's reach and fall back to the ladder. Open owner calls:
+  (a) kite vs focus doctrine (stand in reach vs quorum-free
+  focus); (b) score-term rebalancing (range vs kill-ease) - weight
+  8.0 tested, early convergence but no outcome gain, kept at 4.0;
+  (c) 40/12 melee no-kite tested, no kill gain (1/7,1/7,2/7),
+  kept at 60/14. Evidence: FocusPack pack/chose/why notes (one
+  row per squad per frame). Ladder games validate (rule 21).
+
+- 1DragWounded corner pocket (owner-verified (12,4x) hug): the veto
+  net now covers the widest ring (tilesInRadius, never adjacent9 -
+  the old net silently unenforced any knob above ~1 tile, which is
+  why widening it never worked). Live: three VICTORY 1/0 plus one
+  flawless (0 hits), zero hug signatures (no stuck waste, kite
+  chains healthy; the one loss died fighting in the open at f692,
+  not wedged). Corner awareness (don't kite INTO dead-ends) stays
+  open - that needs pathing, not a push, and the owner scopes it.
 
 - Single retreat verdict: `FightOrFlee`, `RetreatVerdict` (+bus),
   `ReengageLatch`, `ClusterPosture` floor, `NoRetreat`, technique

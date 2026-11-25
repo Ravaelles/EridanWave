@@ -81,7 +81,7 @@ object KiteAway {
    * Melee hold bars (owner order, 4+3 grind): zealots never kite like
    * ranged - at or above this many hit points a blade stands and
    * brawls, and a swing this close to ready is held, not yielded.
-   * Only bleeding blades with a cold gun yield (hp<40, cd>=12).
+   * Only bleeding blades with a cold gun yield (hp<=60, cd>14).
    */
   var meleeHoldHp: Int = 60
 
