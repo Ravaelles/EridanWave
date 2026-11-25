@@ -7,6 +7,31 @@ hysteresis home (rules 10-11).
 
 ## Open
 
+- Shared focus has no quorum on a kiting ball (found 2026-11, live
+  4+3Zeal): FocusFire/MeleeFocus seams run ~3 frames per 3000-frame
+  mirror (entry needs combat-priority targets in range, squad
+  engagement, shooter/target quorum plus per-hull reach), so the
+  pack never focuses - not churn, absence. Per-hull ladder picks
+  flip every ~10f across 7 targets (both weapon classes, 2.0
+  stickiness can't anchor: any illegal frame resets toAttackLast
+  and the pick random-walks), volleys spread over regenerating
+  shields, the grind loses (1/7 with ~190 hits taken, 1 kill;
+  MirrorFocusSuite proves focus would win). The SharedFocus latch
+  (pack-level memory, hold while reach>=1, release on death/
+  zero-reach, free-kill preempt) is shipped and suite-pinned and
+  harmless (tripwires silent, 3/0 holds) but engages only when
+  entry does - the bottleneck is upstream. Two candidate roots,
+  owner call: (a) kite doctrine vs focus doctrine - kiting
+  dragoons leave shared reach by design, no in-reach quorum can
+  fire; fix is fight-in-reach or quorum-free assignment (walk the
+  line to one pick), both doctrine; (b) anchor reset on illegal
+  frames - stable-incumbent stickiness instead of toAttackLast,
+  mechanical, needs a release timer (Latch idiom). Evidence:
+  FocusPack pack/chose notes (one row per squad per frame),
+  focusHeldPastBetter Low counter for staleness tuning.
+  Next: one instrumented game per candidate gate, then ladder
+  proof (rule 21) - UMS mirrors never march, never decide.
+
 - Single retreat verdict: `FightOrFlee`, `RetreatVerdict` (+bus),
   `ReengageLatch`, `ClusterPosture` floor, `NoRetreat`, technique
   ladder, march legs all vote retreat separately today and must be

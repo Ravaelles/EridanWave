@@ -85,7 +85,10 @@ object FocusFire {
 
   /**
    * The squad's shared target for this attacker, if a mass fight is on and
-   * the attacker could join in. None means "target normally".
+   * the attacker could join in. None means "target normally". The committed
+   * pick rides FocusMemory through reach churn (SharedFocus.hold): the pack
+   * finishes instead of re-voting every frame. Entry keeps its quorum gates
+   * untouched; only the hold is latched.
    */
   def sharedTarget(attacker: FriendlyUnitInfo): Option[UnitInfo] = {
     val squad = attacker.squad.getOrElse(return None)
@@ -102,10 +105,40 @@ object FocusFire {
       .filter(t => shooters.exists(s => s.canAttack(t) && s.inRangeToAttack(t)))
     if ( ! enoughTargets(targets.size)) return None
 
-    val candidates = targets.map(t => (t, candidate(squad.centroidKey, t, shooters)))
-    choose(candidates.map(_._2))
-      .filter(c => enoughReach(c.reach))
-      .flatMap(chosen => candidates.find(_._2.id == chosen.id).map(_._1))
+    val candidates = targets.map(t => (t, candidate(squad.centroidKey, t, shooters))).toSeq
+    val bids = candidates.map { case (t, c) => SharedFocus.Bid(c.id, c.reach, c.shotsToKill) }
+    val held = SharedFocus.hold(FocusMemory.read(squad).flatMap(id => bids.find(_.id == id)), bids)
+    val chosen = held.flatMap(h => candidates.find(_._2.id == h.id).map(_._2))
+      .orElse(choose(candidates.map(_._2)).filter(c => enoughReach(c.reach)))
+    // Pack-level trace (one note per squad per frame): the latched id
+    // stays put while hulls walk in and out of its reach - when hull
+    // picks flip under a steady pack id, the splitter is the per-hull
+    // reach filter in Target, not the vote.
+    FocusMemory.noteOnce(squad, Lifecycle.With.frame) {
+      Debugging.Probe.note("FocusPack", attacker.id, f"pack ${held.map(_.id).getOrElse(-1)} chose ${chosen.map(_.id).getOrElse(-1)}")
+    }
+    chosen match {
+      case Some(c) =>
+        FocusMemory.write(squad, c.id)
+        held.foreach(h => {
+          // Tuning signal, not an error: holding past a strictly cheaper
+          // grind. Counts once per squad per frame; a rising count means
+          // the hold band wants review, not that the hold misfires.
+          if (bids.exists(b => b.id != h.id && b.costToKill < h.costToKill)) {
+            FocusMemory.noteOnce(squad, Lifecycle.With.frame) {
+              Debugging.ErrorLedger.note(
+                "focusHeldPastBetter.at." + attacker.unitClass.toString,
+                Debugging.ErrorLedger.Priority.Low,
+                f"pack holds ${h.id} over a cheaper grind, frame ${Lifecycle.With.frame}")
+            }
+          }
+        })
+
+        candidates.find(_._2.id == c.id).map(_._1)
+      case None =>
+        FocusMemory.clear(squad)
+        None
+    }
   }
 
   private def candidate(

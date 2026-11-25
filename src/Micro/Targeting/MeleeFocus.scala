@@ -33,7 +33,8 @@ object MeleeFocus {
    * battle, not the hull's own targets - per-hull sets flap as sight
    * lines cross, while one squad-wide set gives every blade the same
    * answer by construction, so the pack converges instead of
-   * fanning out.
+   * fanning out. The committed chew rides FocusMemory through the
+   * same churn the guns hold through (SharedFocus.hold).
    */
   def sharedTarget(attacker: FriendlyUnitInfo): Option[UnitInfo] = {
     val squad = attacker.squad.getOrElse(return None)
@@ -46,12 +47,26 @@ object MeleeFocus {
     val candidates = squad.battleEnemies.filter(t =>
       t.alive && t.visible && ! t.unitClass.isBuilding && pack.exists(m => m.canAttack(t))).map(t => {
       val hitters = pack.filter(m => m.inRangeToAttack(t) || m.pixelDistanceEdge(t) <= packReachTiles * 32.0)
-      (t, hitters)
-    }).filter(_._2.size >= 1).map { case (t, hitters) =>
       val damage = (attacker +: hitters).map(_.damageOnNextHitAgainst(t)).sum.toDouble
-      (t, Candidate(swingsToKill(t.totalHealth, damage), t.pixelDistanceCenter(squad.centroidGround) * Maff.inv32, t.id))
+      (t, hitters.size, Candidate(swingsToKill(t.totalHealth, damage), t.pixelDistanceCenter(squad.centroidGround) * Maff.inv32, t.id))
+    }).filter(_._2 >= 1).toSeq
+    val bids = candidates.map { case (t, hitters, c) => SharedFocus.Bid(c.id, hitters, c.swingsToKill) }
+    val held = SharedFocus.hold(
+      FocusMemory.read(squad).flatMap(id => bids.find(_.id == id)),
+      bids)
+    val chosen = held.flatMap(h => candidates.find(_._3.id == h.id).map(_._3))
+      .orElse(choose(candidates.map(_._3)))
+    FocusMemory.noteOnce(squad, Lifecycle.With.frame) {
+      Debugging.Probe.note("FocusPack", attacker.id, f"pack ${held.map(_.id).getOrElse(-1)} chose ${chosen.map(_.id).getOrElse(-1)}")
     }
-    choose(candidates.map(_._2)).flatMap(chosen =>
-      candidates.find(_._2.id == chosen.id).map(_._1))
+    chosen match {
+      case Some(c) =>
+        FocusMemory.write(squad, c.id)
+
+        candidates.find(_._3.id == c.id).map(_._1)
+      case None =>
+        FocusMemory.clear(squad)
+        None
+    }
   }
 }
