@@ -114,6 +114,30 @@ Watch: vanguard still pursues retreating screens past 12 (f4 breaks at
 13-18, won this time) - needs a game lost on it.
 Pending ladder confirmation (rule 21): melee (c) arrival, prey band,
 slotless hold, blind mop-up (ladder never hunted, gate keeps it so).
+PvP don't-die batch (2026-11-25, needs ladder PvP): StaticOutgunned
+retreat, FFE exit (foeCannonedExpo + cancel), urgent Forge order,
+choke-cannon ring slots, aim guard + latched advance, storm leave,
+hot-line evacuation.
+
+# Don't stand and die (owner orders 2026-11-25 - "najważniejsza zasada")
+
+BetaStar flaps (VolleyHold/March till death, 1v2 under cannons,
+workers bled by an unseen DT) share one shape: the feet flap between
+owners while the hull stands in killing damage. Fixes, all suite-pinned:
+AdvanceGate yields loaded hittable volleys to the duel (no march-move
+mid-aim); engage() advance reads latched MotionVerdict for postureless
+squads (`EngageAdvance`: held Duel rides the sim seesaw, Withdraw never
+duels out, Dress/open keep the consensus gate); FightRules StaticOutgunned
+(outnumbered locals, no reach edge, live static cover can hit us -
+range advantage still fights, commitments still overrule); VsFE fires on
+foeCannonedExpo (complete enemy cannon on enemy ground) and cancels
+Citadel/Archives (+DTs into detection); Forge jumps the queue first via
+urgentForgeVsDT behind the opener; choke cannons pinned 5-6 off the
+main choke (`allowMainChoke`, ChokeCannonNoSlot tripwire if the ring is
+empty); AvoidEffects first in the pipeline (live storm cells outrank
+everything); workers flee fresh DT memories straight and evacuate hot
+lines to the hall until 480 quiet frames (`MineralLineHeat`). Live so
+far: 1Drag VICTORY 1/0, 4Drag VICTORY 18/1 (new pipeline order).
 
 # Kite discipline (owner direction: never yield ground for free)
 

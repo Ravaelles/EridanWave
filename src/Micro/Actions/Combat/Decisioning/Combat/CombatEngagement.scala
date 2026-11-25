@@ -305,7 +305,11 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     // Withdraw/Regroup walk the march, Fight/HoldLine duel. Explicit
     // all-ins bypass the cluster vote the way prey does: a suicide
     // mission or a yolo charge never walks home on a forecast.
-    // Squads without a posture keep the old consensus gate untouched.
+    // Squads without a posture read the latched feet-owner (MotionVerdict)
+    // instead of the raw consensus: a held duel owns the frame through
+    // the sim seesaw, exactly like the dispatch gate above reads the
+    // held retreat. One latched advance shared by both gates, so no
+    // threshold inside either can flap the march against the duel.
     // A unit the march sent home does not duel on the way out even
     // when the cluster advances: its destination is home, the
     // rearguard and the Retreat maneuver above already spoke for it,
@@ -325,7 +329,15 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           With.battles.globalAttack.enemy.skimStrengthUnits)))
     val advance = (unit.squad.flatMap(_.battlePosture) match {
       case Some(posture) => (ClusterPosture.advances(posture) || SuicideMission.isActive(unit) || With.yolo.active) && ! unit.intent.marchHome
-      case None          => combat.fightConsensus && ! unit.intent.marchHome
+      case None =>
+        // Latched feet-owner, not the raw consensus (owner order): a held
+        // duel rides through the sim seesaw instead of flapping the march
+        // and the duel every other frame. Withdraw never duels on the way
+        // out; Dress and the open march keep the old consensus gate.
+        EngageAdvance.posturelessAdvance(
+          MotionVerdict.held(unit.id, With.frame),
+          combat.fightConsensus,
+          unit.intent.marchHome)
     }) || umsDuelistAdvances
     var i = 0
     var claimed = false
