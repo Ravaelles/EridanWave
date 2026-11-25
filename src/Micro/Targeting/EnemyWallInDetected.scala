@@ -10,34 +10,35 @@ import ProxyBwapi.UnitInfo.UnitInfo
 
 /**
  * Detected Terran wall-in fight (thin seam over pure predicates): when a
- * Depot-plus-Rax sits on the enemy natural choke, zealots chew the Depot
- * nearest our cluster instead of milling in front of it - a shared pick
- * keeps the whole line on one piece instead of each hull re-picking.
- * Ranged warriors hold outside the wall instead of walking in: they
- * shoot what comes out while the blades do the chewing.
- * Only while healthy enough to trade: below 31 hit points the hull
- * walks home instead, and with tanks on the map and shields at ten or
- * less it yields too - a weak hull trades the line for nothing.
+ * Depot-plus-Rax sits on the enemy natural choke, the line chews the Depot
+ * nearest our cluster instead of standing before it - a shared pick keeps
+ * the whole line on one piece instead of each hull re-picking. Blades
+ * and fresh guns alike: ranged warriors in range trade into the wall
+ * instead of posing before it while the rally drags them back and forth
+ * (PvT WallStand/Rallying flap). Only while the hull can trade: below 31
+ * hit points it walks home instead, and under tanks only shields fresh
+ * to thirteen or less attack - a spent hull under guns yields the frame
+ * to the retreat instead of donating the line.
  */
 object EnemyWallInDetected {
 
   /** Fight the wall down to this many red hit points, no lower. */
   val fightHp: Int = 31
 
-  /** Yield to tanks at or below this many shields. */
-  val yieldShieldHp: Int = 10
-
-  /** Ranged hulls hold instead of marching inside this band, in tiles. */
-  val holdWallTiles: Double = 8.0
-
-  def shouldHoldVsWall(distTiles: Double): Boolean =
-    distTiles <= holdWallTiles
+  /** Fresh shields that still trade into the wall, as shield wound. */
+  val attackShieldWound: Int = 13
 
   def shouldFightDepot(hitPoints: Int): Boolean =
     hitPoints >= fightHp
 
-  def shouldYieldToTanks(enemyHasTanks: Boolean, shields: Int): Boolean =
-    enemyHasTanks && shields <= yieldShieldHp
+  /**
+   * Take the wall (pure flags for the suite): without tanks always -
+   * the wall is the game - and under tanks only on fresh shields, so a
+   * blade or gun in range chews while it can still trade, and a spent
+   * hull under guns retreats instead of posing.
+   */
+  def shouldTakeWall(enemyHasTanks: Boolean, shieldWound: Int): Boolean =
+    ! enemyHasTanks || shieldWound <= attackShieldWound
 
   /** Nearest standing depot to our cluster: one shared victim, no flap. */
   def pickDepot[T](marks: Seq[(T, Double)]): Option[T] =
@@ -59,9 +60,11 @@ object EnemyWallInDetected {
 
     if ( ! shouldFightDepot(unit.hitPoints)) return false
 
-    if (shouldYieldToTanks(
-      With.units.enemy.exists(e => e.alive && (Terran.SiegeTankSieged(e) || Terran.SiegeTankUnsieged(e))),
-      unit.shieldPoints)) return false
+    // Tanks (sieged or not) open the retreat question - but a hull in
+    // range on fresh shields still chews instead of posing: the wound
+    // decides, not the tanks alone.
+    val enemyHasTanks = With.units.enemy.exists(e => e.alive && (Terran.SiegeTankSieged(e) || Terran.SiegeTankUnsieged(e)))
+    if ( ! shouldTakeWall(enemyHasTanks, unit.shieldWound)) return false
 
     val centroid = unit.squad.map(_.centroidGround).getOrElse(unit.pixel)
     val depot = pickDepot(
@@ -70,11 +73,14 @@ object EnemyWallInDetected {
         (d, d.pixelDistanceCenter(centroid))).toSeq)
     if (depot.isEmpty) return false
 
-    if (unit.isAny(Protoss.Zealot)) {
+    if (unit.unitClass.melee && ! unit.isAny(Protoss.Reaver)) {
       // A dueling blade keeps its duel: only the idle marchers take the
       // depot, so the line converges on one piece instead of flip-flopping
-      // between chewing and chasing. A Barracks duel is not a duel: the
-      // doctrine is depot-only, so a blade chewing the Rax re-points.
+      // between chewing and chasing - templars on the hunt included, as
+      // long as the hunt has nothing hittable (the brain only hunts on
+      // an empty slot, so the depot assignment below sticks).
+      // A Barracks duel is not a duel: the doctrine is depot-only, so a
+      // blade chewing the Rax re-points.
       if (unit.agent.toAttack.exists(t =>
         t.alive && ! Terran.Barracks(t) && unit.matchups.targetsInRange.exists(_.id == t.id))) return false
 
@@ -98,13 +104,16 @@ object EnemyWallInDetected {
 
       true
     } else if ( ! unit.unitClass.melee && ! unit.isAny(Protoss.Reaver)) {
-      // Ranged hulls never walk into the wall: dueling ones keep their
-      // duel, the idle ones hold the line and shoot what comes out.
+      // Fresh guns chew with the blades: a hull in range with shields
+      // to trade attacks the shared depot instead of holding before it -
+      // the stand donated the volleys while the rally dragged the hull
+      // back and forth. Dueling hulls keep their duel; spent hulls never
+      // reach this leg (the wound gate above yields them to the retreat).
       if (unit.matchups.targetsInRange.nonEmpty) return false
-      if ( ! shouldHoldVsWall(unit.pixelDistanceEdge(depot.get) * Maff.inv32)) return false
 
-      unit.agent.act("WallStand")
-      Commander.hold(unit)
+      unit.agent.toAttack = depot
+      unit.agent.act("EnemyWallIn")
+      Commander.attack(unit, depot.get)
 
       true
     } else false

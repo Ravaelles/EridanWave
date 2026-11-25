@@ -10,11 +10,21 @@ class EnemyWallInDetectedSuite extends AnyFunSuite {
     assert( ! EnemyWallInDetected.shouldFightDepot(30))
   }
 
-  test("tanks plus ten or fewer shields yield the wall") {
-    assert(EnemyWallInDetected.shouldYieldToTanks(enemyHasTanks = true, shields = 10))
-    assert(EnemyWallInDetected.shouldYieldToTanks(enemyHasTanks = true, shields = 0))
-    assert( ! EnemyWallInDetected.shouldYieldToTanks(enemyHasTanks = true, shields = 11))
-    assert( ! EnemyWallInDetected.shouldYieldToTanks(enemyHasTanks = false, shields = 0))
+  test("fresh shields trade into the wall: wound at or below 13") {
+    assert(EnemyWallInDetected.attackShieldWound == 13)
+  }
+
+  test("without tanks the wall is always taken, whatever the wound") {
+    assert(EnemyWallInDetected.shouldTakeWall(enemyHasTanks = false, shieldWound = 0))
+    assert(EnemyWallInDetected.shouldTakeWall(enemyHasTanks = false, shieldWound = 13))
+    assert(EnemyWallInDetected.shouldTakeWall(enemyHasTanks = false, shieldWound = 80))
+  }
+
+  test("under tanks only fresh shields trade: wound 13 attacks, 14 yields") {
+    assert(EnemyWallInDetected.shouldTakeWall(enemyHasTanks = true, shieldWound = 0))
+    assert(EnemyWallInDetected.shouldTakeWall(enemyHasTanks = true, shieldWound = 13))
+    assert( ! EnemyWallInDetected.shouldTakeWall(enemyHasTanks = true, shieldWound = 14))
+    assert( ! EnemyWallInDetected.shouldTakeWall(enemyHasTanks = true, shieldWound = 80))
   }
 
   test("the pack chews one shared depot: nearest to its centroid") {
@@ -23,11 +33,5 @@ class EnemyWallInDetectedSuite extends AnyFunSuite {
     assert(EnemyWallInDetected.pickDepot(Seq(a, b)).contains(101))
     assert(EnemyWallInDetected.pickDepot(Seq(b, a)).contains(101))
     assert(EnemyWallInDetected.pickDepot(Seq.empty[(Int, Double)]).isEmpty)
-  }
-
-  test("ranged hulls hold inside eight tiles instead of marching in") {
-    assert(EnemyWallInDetected.shouldHoldVsWall(7.9))
-    assert(EnemyWallInDetected.shouldHoldVsWall(8.0))
-    assert( ! EnemyWallInDetected.shouldHoldVsWall(8.1))
   }
 }

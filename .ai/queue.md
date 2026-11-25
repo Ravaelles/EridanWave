@@ -35,6 +35,11 @@ Details live in `details/` - the queue keeps one line per item.
   near-choke slots), then the choke cannon by proximity to the
   five-tile anchor, then the hall cannon at the front. Needs a ladder
   PvP with DTs: check tile distance to the choke + no ChokeCannonNoSlot.
+- PvT wall chew (owner order: always attack the wall, never WallStand;
+  under tanks only fresh shields trade): dragoons and melee (incl. DTs)
+  take the shared depot when wound <= 13, spent hulls yield the frame
+  to the retreat. Needs a ladder PvT: depot chewed instead of
+  WallStand/Rallying flap, no spent-hull donations.
 - Citadel-sweep sacrifice (owner order: the probe dies confirming the
   Citadel rather than fleeing blind): latched `CitadelSweep` (PvP
   ladder, scout probe in the enemy metro, Core known, Citadel chain

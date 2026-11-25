@@ -379,8 +379,9 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     }
 
     WallBreachTarget.run(unit)
-    // Detected wall-in fight first: zealots chew the depot nearest the
-    // cluster and ranged hulls hold outside it instead of marching in.
+    // Detected wall-in fight first: blades and fresh guns chew the depot
+    // nearest the cluster instead of posing before it - spent hulls
+    // yield the frame to the retreat instead.
     // A Protoss wall gets the same treatment one step down: dragoons
     // chew the building nearest the cluster, wounded hulls hold off.
     // The old breach logic below stays as the fallback for everything
