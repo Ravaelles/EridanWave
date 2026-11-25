@@ -35,6 +35,14 @@ Details live in `details/` - the queue keeps one line per item.
   near-choke slots), then the choke cannon by proximity to the
   five-tile anchor, then the hall cannon at the front. Needs a ladder
   PvP with DTs: check tile distance to the choke + no ChokeCannonNoSlot.
+- Citadel-sweep sacrifice (owner order: the probe dies confirming the
+  Citadel rather than fleeing blind): latched `CitadelSweep` (PvP
+  ladder, scout probe in the enemy metro, Core known, Citadel chain
+  unseen, base unswept) vetoes PreserveScout and the helpScout
+  pull-home - the Search sweep owns every frame until answered,
+  swept, walked out or dead. Needs a ladder PvP: probe must sweep
+  instead of flap-retreating (no Retreat/helpScout interleaves in
+  behavior.log), then Forge follows the confirm.
 - Zealot rally vs rush flap (owner order: no stop-start crawl):
   BeRushingZealot yields to the latched rally - one owner per frame.
   Needs a ladder PvP opening to confirm full-speed rejoins.

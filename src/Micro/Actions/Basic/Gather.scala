@@ -7,6 +7,7 @@ import Micro.Actions.Action
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Maneuvering.WorkerThreatFlee
 import Micro.Actions.Combat.Tactics.Potshots.Potshot
+import Micro.Actions.Scouting.CitadelSweep
 import Micro.Targeting.Target
 import Micro.Agency.Commander
 import Micro.Coordination.Pathing.MicroPathing
@@ -56,7 +57,7 @@ object Gather extends Action {
       }
 
       // Help initial scout get home
-      if (With.frame < Minutes(8)() && unit.metro.exists(_.bases.exists(_.isEnemy)) && unit.matchups.threats.exists( ! _.unitClass.melee) && unit.visibleToOpponents) {
+      if (With.frame < Minutes(8)() && ! CitadelSweep.held(unit) && unit.metro.exists(_.bases.exists(_.isEnemy)) && unit.matchups.threats.exists( ! _.unitClass.melee) && unit.visibleToOpponents) {
         unit.agent.act("helpScout")
         Commander.gather(unit)
 
