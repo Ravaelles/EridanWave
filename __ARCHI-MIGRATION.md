@@ -89,13 +89,17 @@ B. Parked, still direct under the fuse, each needing its own UMS map
    plus owner call: Gather plus economy, Be* legacy brains,
    transport missions, scouts. They migrate never opportunistically.
 
-## Step 3 - rank decides across stages (C)
+## Step 3 - rank decides across stages (C: LIVE, OWNER-VOTED FLIP)
 
-Relax first-claims loop control under capture (keep running stages
-after a claim), so the rank table - not pipeline order - picks the
-winner. The table mirrors the band doctrine by construction
-(HIGH survival/kills, MEDIUM duel, LOW march), so most frames
-reproduce today; every differing pair needs a UMS game (rule 4)
-before it ships. The fuse stays as the enforcing tripwire; direct
-mode disappears only when its last issuer migrates, never by flag
-day. Ladder games validate the whole (rule 21).
+Relaxing the loops to measure changed the game (1Drag waste 117f
+band to 200-254f with three straight defeats; recovery after
+revert) - post-claim bodies carry load-bearing side effects, so no
+global relax. Instead: first-claims loop control stays, every
+window resolves live by rank (ties go to the first bid, i.e.
+today's order). Shadow instrument stays in the code for future
+measurement. Live divergence data that motivated the flip:
+`divergeBid.DuelVsFormation` on zealots, 34x/game. Flip sample on
+4+3: 5/7, 3/7, 1/7, 4/7 (mean 3.25 vs ~2.2 shadow era),
+tripwires/flap/waste silent - not worse anywhere, mildly better.
+Kept per owner vote; the remaining 4+3 gap is the focus quorum,
+not arbitration.

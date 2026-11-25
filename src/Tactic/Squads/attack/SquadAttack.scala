@@ -27,7 +27,7 @@ import Tactic.Squads.Decisions.MarchDress
 import Tactic.Squads.Decisions.NoTankAttack
 import Tactic.Squads.Decisions.StrongMarch
 import Tactic.Squads.Decisions.ToothlessMarch
-import Tactic.Squads.Decisions.RetreatDiscipline
+import Tactic.Squads.Decisions.RetreatExtraPenalties
 import Tactic.Squads.Decisions.RetreatAllowed
 import Tactic.Squads.ContainStatus
 import Tactic.Squads.Decisions.VoteConfirmation
@@ -352,17 +352,21 @@ class SquadAttack extends Squad {
     val rawAdvantage = ArmyStrength.score(
       With.battles.globalAttack.us.skimStrengthTotal,
       With.battles.globalAttack.enemy.skimStrengthTotal) / 100.0
-    val advantage = rawAdvantage * RetreatDiscipline.advantageMultiplier(With.frame - withdrawStartFrame)
+    val advantage = rawAdvantage * RetreatExtraPenalties.advantageMultiplier(With.frame - withdrawStartFrame)
     val contact = battleEnemies.nonEmpty
     val unitsAdvantage = ArmyStrength.score(
       With.battles.globalAttack.us.skimStrengthUnits,
       With.battles.globalAttack.enemy.skimStrengthUnits)
+    // Weak far expedition (owner order): same penalized score as the
+    // technique and march arms, or the trio drifts apart.
+    val (expeditionWarriors, expeditionDist) = RetreatExtraPenalties.expeditionReads()
+    val expeditionAdvantage = RetreatExtraPenalties.penalizedScore(unitsAdvantage, expeditionWarriors, expeditionDist)
     val nearestArmed = Maff.minBy(With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(centroidGround))
       .map(e => e.pixelDistanceCenter(centroidGround) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
     val next = ClusterPosture.next(posture, fighting, coverage, advantage, contact, With.frame - withdrawStartFrame, ! With.umsMode,
-      RetreatAllowed.forCluster(unitsAdvantage, nearestArmed, proxyRush, MacroFacts.enemyHardCounterKnown),
+      RetreatAllowed.forCluster(expeditionAdvantage, nearestArmed, proxyRush, MacroFacts.enemyHardCounterKnown),
       forceFight = With.umsMode)
     // Tankless force: Dragoons attack a Terran with no tanks instead of
     // posing for guns that are not there. This votes posture Fight - the

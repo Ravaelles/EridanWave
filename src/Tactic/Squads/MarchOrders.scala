@@ -10,7 +10,7 @@ import Micro.Agency.Commander
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{AttackModes, CatchUpMarch, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, UmsHold, WithdrawAnchor}
+import Tactic.Squads.Decisions.{AttackModes, CatchUpMarch, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatExtraPenalties, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, UmsHold, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -193,6 +193,11 @@ object MarchOrders {
     // from the unit phase); only the inputs unify - a committed hull or
     // a storm-holding Templar no longer marches home under a technique
     // that walks or duels beside it.
+    // Weak far expedition (owner order): a thin force deep out counts
+    // three quarters of its skim, so it walks home instead of trading.
+    // Same penalized score on all three arms, or the trio drifts apart.
+    val (expeditionWarriors, expeditionDist) = RetreatExtraPenalties.expeditionReads()
+    val expeditionScore = RetreatExtraPenalties.penalizedScore(facts.armyUnitsScore, expeditionWarriors, expeditionDist)
     RetreatVerdict.update(
       unit.id,
       (RetreatVerdict.shouldHold(
@@ -202,7 +207,7 @@ object MarchOrders {
         Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit),
         unit.agent.shouldFight,
         unit.totalHealth,
-        facts.armyUnitsScore,
+        expeditionScore,
         marchUnit.nearestArmedTiles,
         facts.proxyRush,
         MacroFacts.enemyHardCounterKnown,

@@ -60,7 +60,7 @@ object ClusterPosture {
 
   /**
    * Next posture (pure numbers for the suite): the caller penalizes the
-   * advantage through RetreatDiscipline first, so a fresh wound reads
+   * advantage through RetreatExtraPenalties first, so a fresh wound reads
    * weaker than the sim claims without this kernel knowing about frames.
    * Baseless maps never withdraw, but they may hold: with nowhere to
    * regroup to, contact reads the same band as everywhere else - an
@@ -91,7 +91,7 @@ object ClusterPosture {
     if ( ! canWithdraw) return if (inContact) band(current, advantageRatio, inContact) else Regroup
 
     if (current == Withdraw) {
-      if (RetreatDiscipline.shouldHoldWithdraw(framesSinceWithdraw)) return Withdraw
+      if (RetreatExtraPenalties.shouldHoldWithdraw(framesSinceWithdraw)) return Withdraw
 
       if (fightingFraction > stopWithdrawAbove && advantageRatio >= withdrawBelowAdvantage) return band(current, advantageRatio, inContact)
 

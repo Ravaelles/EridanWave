@@ -59,6 +59,12 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     val unitsScore = Information.Battles.ArmyStrength.score(
       With.battles.globalAttack.us.skimStrengthUnits,
       With.battles.globalAttack.enemy.skimStrengthUnits)
+    // Weak far expedition (owner order): a thin force deep out counts
+    // three quarters of its skim, so it walks home instead of trading.
+    // Same penalized score on all three arms, or the trio drifts apart.
+    // NaturalChoke keeps the raw score - it owns its own weak thresholds.
+    val (expeditionWarriors, expeditionDist) = Tactic.Squads.Decisions.RetreatExtraPenalties.expeditionReads()
+    val expeditionScore = Tactic.Squads.Decisions.RetreatExtraPenalties.penalizedScore(unitsScore, expeditionWarriors, expeditionDist)
     val nearestArmedTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)))(_.pixelDistanceCenter(unit.pixel))
       .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()
@@ -109,7 +115,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     }
     val retreatPermitted = Tactic.Squads.Decisions.RetreatAllowed.forUnit(
       unit.totalHealth,
-      unitsScore,
+      expeditionScore,
       nearestArmedTiles,
       proxyRush,
       hardCounterKnown)
@@ -128,7 +134,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
         Protoss.HighTemplar(unit) && PsionicStorm.canCast(unit),
         unit.agent.shouldFight,
         unit.totalHealth,
-        unitsScore,
+        expeditionScore,
         nearestArmedTiles,
         proxyRush,
         hardCounterKnown,
