@@ -13,6 +13,11 @@ Details live in `details/` - the queue keeps one line per item.
   StarEngine: flee-first outlives kiting both seats. Live: 68f deaths
   to 200-700f fighting retreats, no flap. NOT passing yet: needs
   winning volley cadence or corner awareness. Next: re-run the map.
+  2026-11-25 reps: VICTORY 895f + DEFEAT 676f (1-1 variance, not a
+  regression). Death came fleeing (Close/KiteAway straight from f546)
+  with Guard/Move alternating the last 14f - the ledger does not count
+  Guard, so its all-clear hid the death flap. Gap stuck 126px/final 0
+  at the end: push/pathing anomaly, not a plant.
 - PvP anti-DT cannon placement (owner order: first cannon at the main
   choke, closest powered slot wins): choke pylon first (unlocks
   near-choke slots), then the choke cannon by proximity to the
@@ -28,6 +33,14 @@ Details live in `details/` - the queue keeps one line per item.
 - TargetPick kernel: the ladder's atom as data (row pick + stickiness),
   bestInStratum delegates, dead bestUn () removed. Next on demand:
   port ladder-shape tests onto rows.
+- 4Drag_v_Zeal endgame (2026-11-25, 0-2, both timeouts at 4820f):
+  NOT flee-gate DPS loss - Walk<->Hunt/Walk flips 5-6k per game from
+  ~f1700 with zero visible enemies (hunt pulls to the memory, Walk
+  pulls back, nobody commits). Early KiteHold<->KiteAway flicker every
+  2-3f at first contact (f62-74 both games, ledger 12-24x) is the
+  smaller tax. Fix direction (latch the hunt target / hunt over Walk
+  while the memory stays huntable) borders parked stalled-duel fetch:
+  proposal only, no code until the owner calls it.
 
 ## Needs a live game (code green, jar includes it)
 
