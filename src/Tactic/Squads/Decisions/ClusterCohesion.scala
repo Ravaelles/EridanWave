@@ -16,6 +16,41 @@ object ClusterCohesion {
   val maxDriftTiles: Double = 14.0
 
   /**
+   * Farthest any warrior may operate from its cluster, in tiles, victim
+   * or not: past this line a lone chase is a donation, not pressure -
+   * the hull walks home even with a victim assigned, instead of dueling
+   * alone a screen away while the pack fights without it.
+   */
+  val maxOperateTiles: Double = 8.0
+
+  /**
+   * Operate release band, in tiles: a forced hull walks all the way back
+   * inside this before the duel may take it again, so the chase and the
+   * leash cannot trade the unit every frame on the boundary.
+   */
+  val operateReleaseTiles: Double = 7.0
+
+  /**
+   * Forced return (pure flags for the suite): the drift band above needs
+   * an empty slot, but a chase victim is exactly what walks blades out
+   * alone - so past the operate line the victim stops mattering and the
+   * hull comes home anyway. Every other gate of the drift band stays:
+   * explicit orders, retreats, withdrawals, marches, raids in contact
+   * and latched duels keep their frames.
+   */
+  def mustRejoin(
+    isWarrior: Boolean,
+    retreating: Boolean,
+    coolingUnderFire: Boolean,
+    inBattle: Boolean,
+    macroGame: Boolean,
+    hasLocalContact: Boolean,
+    verdictDuel: Boolean,
+    distTiles: Double): Boolean =
+    isWarrior && ! retreating && ! coolingUnderFire &&
+      inBattle && macroGame && ! hasLocalContact && ! verdictDuel && distTiles > maxOperateTiles
+
+  /**
    * Rejoin when all hold (pure flags for the suite): a warrior with no
    * victim, not retreating, not cooling under fire, inside a macro-game
    * battle, without local contact, past the drift band, and with no
