@@ -8,24 +8,15 @@ import Mathematics.Points.Pixel
  * queue. Pinned by AntiDTCannonSuite; the game-coupled callers
  * (PvPIdeas.requestChokeCannon, urgentForgeVsDT) only translate live
  * state into these predicates, so no two paths can disagree about the
- * ring or the order again.
+ * anchor or the order again.
  */
 object AntiDTCannon {
 
-  /** Choke cannon anchor, in tiles off the main choke toward the main. */
+  /** Choke cannon anchor, in tiles off the main choke toward the main.
+   * The placer takes the closest powered Defensive slot to this point -
+   * on maps with a near-choke slot that lands at the anchor, elsewhere
+   * at the closest the base offers (never nothing). */
   val chokeCannonTiles: Double = 5.0
-
-  /** Ring inner edge, in tiles (Chebyshev) from the main choke center. */
-  val chokeRingNearTiles: Int = 5
-
-  /** Ring outer edge, in tiles (Chebyshev) from the main choke center. */
-  val chokeRingFarTiles: Int = 6
-
-  /** Ring membership (pure tile distance): the cannon sits between five
-   * and six tiles off the choke - close enough to cover it, constrained
-   * enough that the placer cannot wander off to a random slot. */
-  def inRing(chebyshevTiles: Int): Boolean =
-    chebyshevTiles >= chokeRingNearTiles && chebyshevTiles <= chokeRingFarTiles
 
   /** Hall cannon offset, in tiles from the main hall toward the choke:
    * between the minerals and the choke, at the front of the base -

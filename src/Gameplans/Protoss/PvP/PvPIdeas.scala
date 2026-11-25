@@ -82,12 +82,15 @@ object PvPIdeas extends MacroActions {
       choke.pixelCenter.project(With.geography.ourMain.heart.center, chokeCannonTiles * 32.0).walkableTile)
 
   /**
-   * Choke cannon order (owner order): one cannon five tiles off the main
-   * choke toward the main, base-scoped to ourMain. Lifts only the choke
-   * ban, so eligibility is today's set plus the near-choke slots - it
-   * cannot fail where today's query succeeds, it just prefers closer.
-   * The query is frame-stable (fixed anchor, radius and tile), so the
-   * production matcher never sees it as a new request.
+   * Choke cannon order (owner order): the cannon goes as close to the
+   * main choke as possible, out of the places that exist. The six-tile
+   * main-choke ban is lifted for this query only, and the five-tile
+   * anchor scores the choice - with every candidate a Defensive slot the
+   * nearest one to the anchor wins by construction, so on maps without a
+   * near-choke slot the cannon still lands at the closest powered
+   * alternative instead of stalling silently. The query is frame-stable
+   * (fixed anchor), so the production matcher never sees it as a new
+   * request.
    */
   private def requestChokeCannon(quantity: Int, startFrame: Int = 0): Unit = {
     val query = new PlacementQuery(Protoss.PhotonCannon)
@@ -95,20 +98,29 @@ object PvPIdeas extends MacroActions {
       .requireLabelYes(Defensive)
       .allowMainChoke()
       .preferLabelYes(Defensive)
-    // Hard ring (owner order 2026-11-25): five to six tiles off the main
-    // choke, so the placer cannot wander off to a random slot. Fixed
-    // anchor and radii, so the query stays frame-stable for the matcher.
-    Chokes.mainChoke.foreach(choke => {
-      val anchor = choke.pixelCenter.walkableTile
-      query.requireFar(anchor, AntiDTCannon.chokeRingNearTiles)
-      query.requireNear(anchor, AntiDTCannon.chokeRingFarTiles)
-    })
     chokeCannonTile.foreach(query.preferTile(_))
-    // Placement tripwire: the ring is hard, so an empty ring means this
-    // map has no slot there - lands on the board instead of stalling
-    // silently while the Hall cannon covers alone.
+    // Placement tripwire: no Defensive slot at all means this map has
+    // nothing to place - lands on the board instead of stalling silently
+    // while the Hall cannon covers alone. Power gaps do NOT trip here;
+    // the choke pylon below owns them (an unpowered ring slot reads as
+    // empty to the builder, which retries instead of building elsewhere).
     if (query.foundations.isEmpty) status("ChokeCannonNoSlot")
     get(RequestUnit(Protoss.PhotonCannon, quantity, minStartFrameArg = startFrame, placementQueryArg = Some(query)))
+  }
+
+  /**
+   * Choke pylon (owner order): power has to exist where the choke cannon
+   * needs it, or the placement filter drops every near-choke slot and the
+   * cannon never starts. Requested before the cannon in the same branch,
+   * so the future-power window covers the cannon's placement. Same
+   * anchor, same ban lift; the four-tile choke ring for pylons stays.
+   */
+  private def requestChokePylon(startFrame: Int = 0): Unit = {
+    val query = new PlacementQuery(Protoss.Pylon)
+      .requireBase(With.geography.ourMain)
+      .allowMainChoke()
+    chokeCannonTile.foreach(query.preferTile(_))
+    get(RequestUnit(Protoss.Pylon, 1, minStartFrameArg = startFrame, placementQueryArg = Some(query)))
   }
 
   private def makeObservers(): Unit = {
@@ -277,10 +289,12 @@ object PvPIdeas extends MacroActions {
         if (bases > 1) {
           requestTower(Protoss.PhotonCannon, 4, With.geography.ourFoyer,  DefendEntrance)
         } else {
-          // One base scrambles at home, never at the unheld natural: three
-          // cannons toward the main choke (five tiles off it) and one over
-          // the minerals from the front - a DT that walks around a forward
-          // cluster kills the line free.
+          // One base scrambles at home, never at the unheld natural: power
+          // at the choke first, then three cannons toward it (as close as
+          // the available slots allow) and one over the minerals from the
+          // front - a DT that walks around a forward cluster kills the
+          // line free.
+          requestChokePylon()
           requestChokeCannon(3)
           requestTower(Protoss.PhotonCannon, 1, With.geography.ourMain,   DefendHall, 0, hallFrontTile)
         }
@@ -307,7 +321,16 @@ object PvPIdeas extends MacroActions {
           status("DoForgeCannon")
           get(RequestUnit(Protoss.Forge,                                 minStartFrameArg = forgeMinStartFrame))
           if (injectPylon) {
-            requestTower(Protoss.Pylon,       1, ?(bases > 1, With.geography.ourFoyer, With.geography.ourMain),   DefendHall,     pylonMinStartFrame)
+            // Power where the cannons need it: the choke pylon on one
+            // base (it unlocks the choke slots above), the foyer split
+            // where we actually hold a natural. Timed with the cannon -
+            // a paced pylon behind an immediate cannon stalls the cannon
+            // on power instead of starting it.
+            if (bases > 1) {
+              requestTower(Protoss.Pylon, 1, With.geography.ourFoyer, DefendHall, pylonMinStartFrame)
+            } else {
+              requestChokePylon(?(dtTimingConfirmed, 0, pylonMinStartFrame))
+            }
           }
           val n = Maff.clamp(enemies(Protoss.DarkTemplar) + 1, 2, 4)
           // Choke first, hall second (owner order): the first cannon built
