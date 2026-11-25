@@ -22,7 +22,6 @@ class PvPNexusFirst extends GameplanImperative {
   private def fearDT      = ! enemyStrategy(With.fingerprints.nexusFirst, With.fingerprints.forgeFe, With.fingerprints.gatewayFe, With.fingerprints.robo, With.fingerprints.threeGateGoon, With.fingerprints.fourGateGoon) || enemyStrategy(With.fingerprints.dtRush)
 
   override def executeBuild(): Unit = {
-    urgentForgeVsDT()
     scoutOn(Protoss.Gateway)
     once(8, Protoss.Probe)
     get(Protoss.Pylon)
@@ -37,6 +36,7 @@ class PvPNexusFirst extends GameplanImperative {
     once(16, Protoss.Probe)
     get(Protoss.Assimilator)
     once(17, Protoss.Probe)
+    urgentForgeVsDT()
     if (fearMuscle) {
       once(Protoss.Zealot)
     }

@@ -136,10 +136,7 @@ class PlacementQuery {
    */
   def allowMainChoke(): PlacementQuery = {
     Chokes.mainChoke.foreach(choke => {
-      val anchor = choke.pixelCenter.walkableTile
-      requirements.farTiles = requirements.farTiles.filterNot {
-        case (tile, tiles) => tile == anchor && tiles == PlacementQuery.mainChokeClearTiles
-      }
+      requirements.dropFarAnchor(choke.pixelCenter.walkableTile, PlacementQuery.mainChokeClearTiles)
     })
     this
   }

@@ -21,6 +21,11 @@ class PlacementQueryParameters {
   // Keep-off anchors (choke centers for Pylons): every entry bans the
   // Chebyshev disc below its radius, same cheap metric as nearTile.
   var farTiles  : Seq[(Tile, Int)] = Seq.empty
+  /** Drop one keep-off anchor (pure tiles): the targeted counterpart of
+   * requireFar, so exemptions stay exact and other anchors survive. */
+  def dropFarAnchor(anchor: Tile, radius: Int): Unit = {
+    farTiles = farTiles.filterNot { case (tile, tiles) => tile == anchor && tiles == radius }
+  }
   // Hug rules (Pylons at the natural): inside the anchor rectangle's reach
   // a foundation must touch it, outside it is unconstrained. Cheap
   // rectangle gaps, no path queries.

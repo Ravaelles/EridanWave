@@ -65,10 +65,9 @@ object PvPIdeas extends MacroActions {
    * follow in the same order - race kept, defense first.
    */
   def urgentForgeVsDT(): Unit = {
-    if ( ! enemyDarkTemplarLikely) return
-    if ( ! have(Protoss.Forge)) get(Protoss.Forge)
-    else if (PvPDT() && ! have(Protoss.CitadelOfAdun)) get(Protoss.CitadelOfAdun)
-    else if (PvPDT() && ! have(Protoss.TemplarArchives)) get(Protoss.TemplarArchives)
+    if (AntiDTCannon.urgentForgeNow(enemyDarkTemplarLikely, have(Protoss.Forge))) get(Protoss.Forge)
+    else if (AntiDTCannon.urgentCitadelNow(enemyDarkTemplarLikely, PvPDT(), have(Protoss.Forge), have(Protoss.CitadelOfAdun))) get(Protoss.CitadelOfAdun)
+    else if (AntiDTCannon.urgentArchivesNow(enemyDarkTemplarLikely, PvPDT(), have(Protoss.Forge), have(Protoss.CitadelOfAdun), have(Protoss.TemplarArchives))) get(Protoss.TemplarArchives)
   }
 
   /**
@@ -76,7 +75,7 @@ object PvPIdeas extends MacroActions {
    * five tiles off the main choke center toward the main base - close
    * enough to cover the choke, inside to cover the mineral line.
    */
-  val chokeCannonTiles: Double = 5.0
+  val chokeCannonTiles: Double = AntiDTCannon.chokeCannonTiles
 
   private def chokeCannonTile: Option[Tile] =
     Chokes.mainChoke.map(choke =>
@@ -96,7 +95,19 @@ object PvPIdeas extends MacroActions {
       .requireLabelYes(Defensive)
       .allowMainChoke()
       .preferLabelYes(Defensive)
+    // Hard ring (owner order 2026-11-25): five to six tiles off the main
+    // choke, so the placer cannot wander off to a random slot. Fixed
+    // anchor and radii, so the query stays frame-stable for the matcher.
+    Chokes.mainChoke.foreach(choke => {
+      val anchor = choke.pixelCenter.walkableTile
+      query.requireFar(anchor, AntiDTCannon.chokeRingNearTiles)
+      query.requireNear(anchor, AntiDTCannon.chokeRingFarTiles)
+    })
     chokeCannonTile.foreach(query.preferTile(_))
+    // Placement tripwire: the ring is hard, so an empty ring means this
+    // map has no slot there - lands on the board instead of stalling
+    // silently while the Hall cannon covers alone.
+    if (query.foundations.isEmpty) status("ChokeCannonNoSlot")
     get(RequestUnit(Protoss.PhotonCannon, quantity, minStartFrameArg = startFrame, placementQueryArg = Some(query)))
   }
 

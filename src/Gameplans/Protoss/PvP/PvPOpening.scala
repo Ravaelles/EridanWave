@@ -32,7 +32,6 @@ class PvPOpening extends GameplanImperative
   }
 
   override def executeBuild(): Unit = {
-    PvPIdeas.urgentForgeVsDT()
     initSequence()
     PvPGateCore() // Make sure we activate it if selected
     updateStrategySwaps()
@@ -42,6 +41,7 @@ class PvPOpening extends GameplanImperative
     orderScouting()
     orderZealotRush()
     orderSharedOpener()
+    PvPIdeas.urgentForgeVsDT()
     orderDetection()
     orderProxyDefense()
     orderMainBuilds(orderForgeExpandResponse())
