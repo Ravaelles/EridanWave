@@ -46,6 +46,13 @@ Details live in `details/` - the queue keeps one line per item.
   donates the wave before it arrives. Same bus, consensus never
   outranks the empty roster. Needs a ladder PvZ: no lone CatchUp out
   of the base while weak.
+- DarkTemplar raid preempt (owner order: never dive cannons unless the
+  duel is clearly positive; workers <= 1.05 always die first): new
+  pre-Fight action, Be* untouched - avoid arcs past the release band on
+  a negative duel (latched), workers fall to the shared nearest-shot
+  tail, brain owns the rest. StarEngine pins both directions; UMS
+  DT_v_Protoss flap gone. Needs a ladder PvP: no DT walks into a
+  guarded Cannon, workers near the blade die.
 - PvP weak-small expansion hold (owner order: army <= 120 and warriors
   < 30 expand never): third leg of the shared expansion veto next to
   the weak and pressured holds. Needs a ladder PvP: WeakHoldNatural

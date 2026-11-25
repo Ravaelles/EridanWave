@@ -6,6 +6,7 @@ import Micro.Actions.Combat.Fight
 import Micro.Actions.Combat.Tactics.Bunker.Unbunk
 import Micro.Actions.Commands.{Attack, Travel}
 import Micro.Actions.Protoss.Detector.BeDetector
+import Micro.Actions.Protoss.DarkTemplar.DarkTemplarRaid
 import Micro.Actions.Protoss.Support.{Meld, ReloadInterceptors, ReloadScarabs}
 import Micro.Actions.Scouting.Scout
 import Micro.Actions.Terran.{FinishConstruction, GetRepairedMobile, Land, Liftoff, Repair, Scan}
@@ -53,6 +54,7 @@ object Idle extends Action {
     Bunk,
     Crack,
     BeDetector,
+    DarkTemplarRaid,
     Fight,
     Attack,
     Travel
