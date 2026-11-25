@@ -20,4 +20,15 @@ object NaturalChokeRetreat {
 
   def shouldRetreat(enemyIsZerg: Boolean, ourWarriors: Int, armyUnitsScore: Double, nearestArmedTiles: Double): Boolean =
     enemyIsZerg && ourWarriors < maxWarriors && armyUnitsScore < weakArmyUnits && nearestArmedTiles <= foeNearTiles
+
+  /**
+   * Weak handful holds home (owner order, PvZ): below ten hulls and two
+   * hundred skim the line does not leave the base at all - without an
+   * armed enemy in sight there is nothing to retreat from, but marching
+   * blind into Zerg territory donates the wave before it arrives. Same
+   * count and strength as the retreat above, minus the proximity gate;
+   * the consensus never outranks it, only recovery releases it.
+   */
+  def shouldHoldHome(enemyIsZerg: Boolean, ourWarriors: Int, armyUnitsScore: Double): Boolean =
+    enemyIsZerg && ourWarriors < maxWarriors && armyUnitsScore < weakArmyUnits
 }

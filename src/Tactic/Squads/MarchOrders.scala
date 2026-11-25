@@ -211,12 +211,20 @@ object MarchOrders {
         // PvZ handful retreats to the natural choke: below ten hulls and
         // two hundred skim the line falls back and receives the wave
         // there instead of trading in the open. Same gate on both arms.
-        // Ladder homes only: UMS duels are always joined, never judged.
-        ! With.umsMode && Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
+        // A weak handful holds home outright, enemy sighted or not:
+        // marching blind out of the base donates the wave before it
+        // arrives, and no consensus outranks the empty roster - only
+        // recovery releases it. Ladder homes only: UMS duels are always
+        // joined, never judged.
+        ! With.umsMode && (Tactic.Squads.Decisions.NaturalChokeRetreat.shouldRetreat(
           With.enemies.exists(_.isZerg),
           With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
           facts.armyUnitsScore,
-          marchUnit.nearestArmedTiles)) &&
+          marchUnit.nearestArmedTiles) ||
+          Tactic.Squads.Decisions.NaturalChokeRetreat.shouldHoldHome(
+            With.enemies.exists(_.isZerg),
+            With.units.ours.count(u => u.alive && u.unitClass.isWarrior),
+            facts.armyUnitsScore))) &&
         // PvP proxy defense owns both verdict arms: with few hulls home
         // and an enemy ground army already inside, neither phase walks
         // the line home - the march and the technique read the same gate.

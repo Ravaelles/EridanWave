@@ -40,6 +40,12 @@ Details live in `details/` - the queue keeps one line per item.
   take the shared depot when wound <= 13, spent hulls yield the frame
   to the retreat. Needs a ladder PvT: depot chewed instead of
   WallStand/Rallying flap, no spent-hull donations.
+- PvZ weak handful holds home (owner order: <10 warriors and <200 skim
+  never leave the base, enemy sighted or not): proximity-blind leg next
+  to the natural-choke retreat - marching blind into Zerg territory
+  donates the wave before it arrives. Same bus, consensus never
+  outranks the empty roster. Needs a ladder PvZ: no lone CatchUp out
+  of the base while weak.
 - PvP weak-small expansion hold (owner order: army <= 120 and warriors
   < 30 expand never): third leg of the shared expansion veto next to
   the weak and pressured holds. Needs a ladder PvP: WeakHoldNatural

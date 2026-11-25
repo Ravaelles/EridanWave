@@ -18,4 +18,12 @@ class NaturalChokeRetreatSuite extends AnyFunSuite {
     assert( ! NaturalChokeRetreat.shouldRetreat(enemyIsZerg = true, ourWarriors = 9, armyUnitsScore = 200.0, nearestArmedTiles = 12.0))
     assert( ! NaturalChokeRetreat.shouldRetreat(enemyIsZerg = true, ourWarriors = 9, armyUnitsScore = 199.9, nearestArmedTiles = 12.01))
   }
+
+  test("a weak handful holds home even with no enemy in sight") {
+    assert(NaturalChokeRetreat.shouldHoldHome(enemyIsZerg = true, ourWarriors = 9, armyUnitsScore = 199.9))
+    assert(NaturalChokeRetreat.shouldHoldHome(enemyIsZerg = true, ourWarriors = 0, armyUnitsScore = 0.0))
+    assert( ! NaturalChokeRetreat.shouldHoldHome(enemyIsZerg = false, ourWarriors = 9, armyUnitsScore = 199.9))
+    assert( ! NaturalChokeRetreat.shouldHoldHome(enemyIsZerg = true, ourWarriors = 10, armyUnitsScore = 199.9))
+    assert( ! NaturalChokeRetreat.shouldHoldHome(enemyIsZerg = true, ourWarriors = 9, armyUnitsScore = 200.0))
+  }
 }
