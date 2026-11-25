@@ -178,8 +178,12 @@ need per-stratum MatchupSnapshot views first.
 
 # Code health
 
+- `SquadAutomation` shell DELETED (2026-11-25): 29 forwarder calls
+  across 14 files now go to `SquadTargeting`/`MarchOrders`/`SquadForming`
+  directly (combined sites expanded inline); stale comments in the
+  halves updated. Live: 4Drag VICTORY 18/1 after the cut.
+- `StaticStandoff` radius by matchup (2026-11-25): 7.8 PvP, 9.1 PvZ,
+  6.6 Terran, 15.2 under siege - the guns decide, not the map.
 - `docs/longest-files.md`: cut cheapest first (`WallFinder`,
   `SimulationGrid`, painters); controllers need a game per cut.
-- `Tactic.Squads.SquadAutomation` is a forwarder shell over
-  `SquadTargeting`/`SquadForming`/`MarchOrders`: migrate callers to
-  the halves and delete it. New code calls the halves, never the shell.
+- Distance hygiene: 251 `.pixelDistance` hits left; convert per package.
