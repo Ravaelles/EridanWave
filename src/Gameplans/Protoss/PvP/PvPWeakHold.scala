@@ -34,4 +34,18 @@ object PvPWeakHold {
 
   def holdNaturalVsPressure(armyStrengthUnits: Double, warriors: Int, nearestEnemyTiles: Double): Boolean =
     armyStrengthUnits <= pressuredArmyUnits && warriors <= pressuredWarriors && nearestEnemyTiles <= pressuredTiles
+
+  /**
+   * Weak small army (owner order): at or below this army strength with
+   * fewer than this many warriors, no expansion at all - not just the
+   * unpressured natural above. A thin weak line cannot staff a second
+   * base while the mirror keeps its count, so the Nexus waits.
+   */
+  val weakExpandArmyUnits: Double = 120.0
+
+  /** Weak small army: fewer than this many complete warriors. */
+  val weakExpandWarriors: Int = 30
+
+  def holdExpansion(armyStrengthUnits: Double, warriors: Int): Boolean =
+    armyStrengthUnits <= weakExpandArmyUnits && warriors < weakExpandWarriors
 }

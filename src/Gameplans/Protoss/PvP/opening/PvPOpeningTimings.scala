@@ -109,7 +109,10 @@ trait PvPOpeningTimings { self: PvPOpening =>
       PvPWeakHold.holdNaturalVsPressure(
         With.battles.globalAttack.us.skimStrengthUnits,
         unitsComplete(IsWarrior),
-        nearestEnemyMainTiles)) {
+        nearestEnemyMainTiles) ||
+      PvPWeakHold.holdExpansion(
+        With.battles.globalAttack.us.skimStrengthUnits,
+        unitsComplete(IsWarrior))) {
       status(true, "WeakHoldNatural")
       shouldExpand = false
     }

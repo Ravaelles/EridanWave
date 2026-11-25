@@ -40,6 +40,10 @@ Details live in `details/` - the queue keeps one line per item.
   take the shared depot when wound <= 13, spent hulls yield the frame
   to the retreat. Needs a ladder PvT: depot chewed instead of
   WallStand/Rallying flap, no spent-hull donations.
+- PvP weak-small expansion hold (owner order: army <= 120 and warriors
+  < 30 expand never): third leg of the shared expansion veto next to
+  the weak and pressured holds. Needs a ladder PvP: WeakHoldNatural
+  stands while the count recovers, no donated Nexus.
 - PvZ SunkenTrap (owner order: a blade inside 7.1 tiles of a Sunken
   walks home): lone-melee cover gap in staticOutgunned never fired, so
   the zealot planted volleys against masonry till death - new

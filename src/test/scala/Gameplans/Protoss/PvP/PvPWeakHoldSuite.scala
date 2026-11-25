@@ -24,4 +24,16 @@ class PvPWeakHoldSuite extends AnyFunSuite {
     assert( ! PvPWeakHold.holdNaturalVsPressure(armyStrengthUnits = 190.0, warriors = 11, nearestEnemyTiles = 60.0))
     assert( ! PvPWeakHold.holdNaturalVsPressure(armyStrengthUnits = 190.0, warriors = 10, nearestEnemyTiles = 60.1))
   }
+
+  test("a weak small army holds any expansion, not just an unpressured natural") {
+    assert(PvPWeakHold.weakExpandArmyUnits == 120.0)
+    assert(PvPWeakHold.weakExpandWarriors == 30)
+    // Thin weak line: no second base.
+    assert(PvPWeakHold.holdExpansion(armyStrengthUnits = 120.0, warriors = 29))
+    assert(PvPWeakHold.holdExpansion(armyStrengthUnits = 0.0, warriors = 0))
+    // Strong line or full count: expand freely.
+    assert( ! PvPWeakHold.holdExpansion(armyStrengthUnits = 120.1, warriors = 0))
+    assert( ! PvPWeakHold.holdExpansion(armyStrengthUnits = 120.0, warriors = 30))
+    assert( ! PvPWeakHold.holdExpansion(armyStrengthUnits = 500.0, warriors = 40))
+  }
 }
