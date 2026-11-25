@@ -176,6 +176,16 @@ object PvPIdeas extends MacroActions {
 
   def enemyDarkTemplarPossible: Boolean = enemyDarkTemplarLikely || ( ! enemyRobo && ! With.fingerprints.fourGateGoon())
 
+  /**
+   * Cannon-backed expo (owner order): a complete enemy cannon on enemy
+   * ground means static detection is up - any DT plan behind it is dead.
+   * Location disambiguates from cannon rushes (which sit on our ground)
+   * and from contain cannons (which sit on nobody's).
+   */
+  def foeCannonedExpo: Boolean =
+    With.units.enemy.exists(e => e.alive && Protoss.PhotonCannon(e) && e.complete &&
+      e.base.exists(b => With.geography.enemyBases.contains(b)))
+
   private def detectWithObserverOrCannon(auditing: Boolean): Boolean = {
     // Performance shortcut
     if (With.units.existsOurs(Protoss.Observer, Protoss.Observatory)) {

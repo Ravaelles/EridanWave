@@ -46,6 +46,7 @@ final case class FightFacts(
   dragoonPack: Boolean = false,
   outmatchedGoon: Boolean = false,
   loneScout     : Boolean = false,
+  staticOutgunned: Boolean = false,
   homeStand   : Boolean = false,
   tanksAtNatural : Boolean = false,
   reaverBrave : Boolean = false)
@@ -55,6 +56,10 @@ object FightRules {
   /** No enemy within this many tiles beyond its firing range of any squad
     * unit means contact is lost: disengage unconditionally and reform. */
   val contactMarginTiles: Double = 1.5
+
+  /** Static cover counts this far past its own reach, in tiles: a duel
+    * about to step under the guns reads as covered before it bleeds. */
+  val staticCoverMarginTiles: Double = 1.5
 
   /**
    * First matching rule wins, in the historical priority order.
@@ -99,14 +104,17 @@ object FightRules {
    * Outmatched early mirrors stand down: an outnumbered handful of
    * Dragoons facing enemy Dragoons breaks off instead of trading into
    * a superior line; a lone Scout in a Protoss mirror holds with the
-   * line instead of feeding a Carrier alone. Both sit below the
-   * will-to-fight ladder on purpose - explicit fight reasons
-   * (commitments, home ground, tank hunts) keep their say; this only
-   * stops the anonymous advance.
+   * line instead of feeding a Carrier alone. A lone hull trading equal
+   * range under enemy static cover breaks off too - without a reach
+   * edge the cover's DPS decides every trade (BetaStar: 1v2 goons under
+   * cannons). Range advantage still fights (goons over Marines); explicit
+   * fight reasons keep their say below as above - these only stop the
+   * anonymous advance.
    */
   private def outmatched(f: FightFacts): Option[(Boolean, String)] =
     if (f.outmatchedGoon) Some((false, "OutmatchedGoon"))
     else if (f.loneScout) Some((false, "LoneScout"))
+    else if (f.staticOutgunned) Some((false, "StaticOutgunned"))
     else None
 
   private def contactState(f: FightFacts): Option[(Boolean, String)] = {    // Ordered onto the enemy hall, the fight is not over just because

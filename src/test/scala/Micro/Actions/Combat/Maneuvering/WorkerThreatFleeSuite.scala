@@ -61,4 +61,11 @@ class WorkerThreatFleeSuite extends AnyFunSuite {
     assert( ! WorkerThreatFlee.safeToReturnCargo(nearestEnemyTiles = 12.0))
     assert( ! WorkerThreatFlee.safeToReturnCargo(nearestEnemyTiles = 0.0))
   }
+
+  test("only hot templar memories steer, stale ones evacuate on damage instead") {
+    assert(WorkerThreatFlee.freshTemplarMemory(0))
+    assert(WorkerThreatFlee.freshTemplarMemory(WorkerThreatFlee.templarMemoryFrames))
+    assert( ! WorkerThreatFlee.freshTemplarMemory(WorkerThreatFlee.templarMemoryFrames + 1))
+    assert(WorkerThreatFlee.visibleEnemyTiles == 5.0)
+  }
 }

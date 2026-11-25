@@ -30,6 +30,18 @@ object WorkerThreatFlee {
    */
   val darkTemplarReleaseTiles: Double = 4.0
 
+  /** Remembered-blade memory, in frames: past this the position lies too
+   * much to run straight away from - the line evacuates on damage instead. */
+  val templarMemoryFrames: Int = 48
+
+  /** Fresh enough to flee straight away from, in frames since seen. */
+  def freshTemplarMemory(framesSinceSeen: Int): Boolean =
+    framesSinceSeen <= templarMemoryFrames
+
+  /** Visible enemies inside this radius, in tiles, spoil the evacuation -
+   * a seen fight owns the miner through the normal paths, not the hot line. */
+  val visibleEnemyTiles: Double = 5.0
+
   def fleeDarkTemplarStraight(distTiles: Double): Boolean =
     distTiles <= darkTemplarTiles
 

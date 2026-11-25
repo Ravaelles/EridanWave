@@ -6,6 +6,13 @@ import testkit.TestKit
 
 class TechniqueStageGatesSuite extends AnyFunSuite {
 
+  test("live storms turn any mobile hull, never buildings") {
+    TestKit.seedWorld()
+    assert(TechniquePipeline.AvoidEffectsStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Dragoon, 1)))
+    assert(TechniquePipeline.AvoidEffectsStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Probe, 2)))
+    assert( ! TechniquePipeline.AvoidEffectsStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Pylon, 3)))
+  }
+
   test("unseen killers turn grounded warriors, never the sky") {
     TestKit.seedWorld()
     assert(TechniquePipeline.AvoidStage.appliesToUnit(TestKit.friendly(UnitType.Protoss_Dragoon, 1)))

@@ -1,6 +1,7 @@
 package Gameplans.Protoss.PvP.opening
 
 import Gameplans.Protoss.PvP.PvPOpening
+import Gameplans.Protoss.PvP.PvPIdeas
 import Gameplans.Protoss.PvP.DragoonsBeforeReavers
 import Lifecycle.With
 import ProxyBwapi.Races.Protoss
@@ -131,7 +132,10 @@ trait PvPOpeningReactions { self: PvPOpening =>
     }
     if ( ! PvPDT()) {
       cancel(Protoss.CitadelOfAdun, Protoss.TemplarArchives)
-      if (enemiesHave(Protoss.Observer, Protoss.Observatory)) {
+      // Invisible units donate into detection: observers, or cannons
+      // already up on the enemy's ground (FFE). Cannon rushes on ours
+      // keep their DT answer - only the expo cannons void the plan.
+      if (enemiesHave(Protoss.Observer, Protoss.Observatory) || PvPIdeas.foeCannonedExpo) {
         cancel(Protoss.DarkTemplar)
       }
     }

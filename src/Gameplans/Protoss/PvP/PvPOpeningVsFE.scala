@@ -18,12 +18,12 @@ class PvPOpeningVsFE extends GameplanImperative {
   override def activated: Boolean = {
     if (PvPNexusFirstStrategy()) return false
     if (PvPCoreExpand()) return false
-    if ( ! enemyStrategy(With.fingerprints.nexusFirst, With.fingerprints.forgeFe)) return false
+    if ( ! enemyStrategy(With.fingerprints.nexusFirst, With.fingerprints.forgeFe) && ! PvPIdeas.foeCannonedExpo) return false
 
-    if (response.isEmpty && (enemiesHaveComplete(Protoss.PhotonCannon) || With.scouting.enemyNatural.exists(_.townHallTile.lastSeen > 0))) {
+    if (response.isEmpty && (enemiesHaveComplete(Protoss.PhotonCannon) || With.scouting.enemyNatural.exists(_.townHallTile.lastSeen > 0) || PvPIdeas.foeCannonedExpo)) {
       if (With.frame < GameTime(2, 0)() + Seconds(10)() * enemies(Protoss.PhotonCannon, Protoss.Forge)) {
         response = Some(NexusFirst)
-      } else if (With.fingerprints.forgeFe()) {
+      } else if (With.fingerprints.forgeFe() || PvPIdeas.foeCannonedExpo) {
         if (unitsComplete(Protoss.Gateway) > 1) {
           response = Some(Robo)
         } else if (haveComplete(Protoss.Assimilator)) {
@@ -65,6 +65,13 @@ class PvPOpeningVsFE extends GameplanImperative {
   override def completed: Boolean = bases >= 2 && units(Protoss.Gateway) + units(Protoss.RoboticsSupportBay) >= 4
 
   override def executeBuild(): Unit = {
+    // Cannon-backed expo kills the DT plan wherever it runs: the opening
+    // that swapped out of it may no longer execute, so the cancel lives
+    // here too - detection up means invisible units donate.
+    if (response.isDefined) {
+      cancel(Protoss.CitadelOfAdun, Protoss.TemplarArchives)
+      if (enemiesHaveComplete(Protoss.PhotonCannon) || PvPIdeas.foeCannonedExpo) cancel(Protoss.DarkTemplar)
+    }
     scout(1)
     once(8, Protoss.Probe)
     once(Protoss.Pylon)

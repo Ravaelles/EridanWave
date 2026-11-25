@@ -12,6 +12,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class BehaviorCoverageSuite extends AnyFunSuite {
 
   private val technique: Map[String, Seq[String]] = Map(
+    "AvoidEffects" -> Seq("Micro.Actions.Combat.Decisioning.TechniqueStageGatesSuite"),
     "Avoid" -> Seq("Micro.Actions.Combat.Decisioning.TechniqueStageGatesSuite"),
     "StaticKeepOff" -> Seq("Micro.Actions.Combat.Decisioning.TechniqueStageGatesSuite"),
     "Walk" -> Seq("Micro.Actions.Combat.Decisioning.TechniqueStageGatesSuite"),

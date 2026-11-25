@@ -74,7 +74,14 @@ private[Decisioning] object EngagePipeline {
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl = {
       Debugging.Probe.note("Gate", unit.id, s"advance=$advance prey=${preyDrive(unit)} consensus=${combat.fightConsensus} home=${unit.intent.marchHome} commit=${unit.agent.commit}")
-      if ( ! advance && ! preyDrive(unit)) { combat.maneuvers.move(); UnitControl.Claimed } else UnitControl.Declined
+      // A loaded gun with something hittable never march-moves: the move
+      // resets the firing solution on every consensus-off frame and the
+      // volley never lands (BetaStar: VolleyHold/March flap till death).
+      // The duel owns the frame instead - it holds or fires, never walks.
+      // Retreating hulls keep the march home; non-warriors keep walking.
+      val aimingVolley = unit.unitClass.isWarrior && ! combat.shouldRetreat &&
+        VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)
+      if ( ! advance && ! preyDrive(unit) && ! aimingVolley) { combat.maneuvers.move(); UnitControl.Claimed } else UnitControl.Declined
     }
   }
 

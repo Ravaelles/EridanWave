@@ -87,7 +87,29 @@ object FightOrFlee extends Action {
     hugTank     = ! u.flying && u.agent.ride.isEmpty && With.enemies.exists(_.isTerran) && u.matchups.targetsInRange.exists(t => Terran.SiegeTankSieged(t) && t.visible && t.canAttack(u)),
     archon      = Protoss.Archon(u) && u.matchups.targetsInRange.exists(_.unitClass.attacksOrCastsOrDetectsOrTransports),
     coverFire   = u.unitClass.supportsAnchor && u.combatAllies.exists(ally => ! ally.loaded && ally.unitClass.isAnchor && u.matchups.threatDeepest.exists(enemy => u.canAttack(enemy) && ally.canAttack(enemy) && enemy.pixelsToGetInRange(ally) <= Math.min(32 * 8, 16 + u.pixelsToGetInRange(enemy)) && u.pixelDistanceEdge(ally) < 32 * 10)),
-    berzerk     = With.frame < Minutes(6)() && u.isAny(Protoss.Zealot, IsSlowling) && ! u.team.exists(_.catchesGround) && u.matchups.threatDeepest.exists(td => Terran.Vulture(td) && td.matchups.targetNearest.exists(tn => td.pixelsToGetInRange(tn) < 32 && tn.unitClass == u.unitClass)))
+    berzerk     = With.frame < Minutes(6)() && u.isAny(Protoss.Zealot, IsSlowling) && ! u.team.exists(_.catchesGround) && u.matchups.threatDeepest.exists(td => Terran.Vulture(td) && td.matchups.targetNearest.exists(tn => td.pixelsToGetInRange(tn) < 32 && tn.unitClass == u.unitClass)),
+    // Outgunned under cover: an enemy static that can already hit us, local
+    // warriors outnumbering ours, and no reach edge over the nearest one -
+    // standing in trades the hull for the cover's DPS (BetaStar: 1 goon
+    // into 2 goons under cannons). Range advantage still fights.
+    staticOutgunned = staticCovered(u) && locallyOutnumbered(u) && ! outrangesNearest(u))
+
+  private def staticCovered(u: FriendlyUnitInfo): Boolean =
+    u.unitClass.isWarrior && ! u.flying && u.matchups.enemies.exists(e =>
+      e.alive && e.likelyStillThere && e.unitClass.isStaticDefense && e.canAttack(u) &&
+      u.pixelDistanceEdge(e) <= e.pixelRangeAgainst(u) + FightRules.staticCoverMarginTiles * 32.0)
+
+  private def locallyOutnumbered(u: FriendlyUnitInfo): Boolean = {
+    // allies excludes self by construction, so the hull counts itself.
+    val foes = u.matchups.threats.count(t => t.alive && t.unitClass.isWarrior && t.canAttack(u))
+    val ours = u.matchups.allies.count(a => a.alive && a.unitClass.isWarrior) + 1
+    foes > ours
+  }
+
+  private def outrangesNearest(u: FriendlyUnitInfo): Boolean =
+    Maff.minBy(u.matchups.threats.view.filter(t => t.alive && t.unitClass.isWarrior && t.canAttack(u)))(
+      u.pixelDistanceEdge(_)).exists(foe =>
+      u.pixelRangeAgainst(foe) > foe.pixelRangeAgainst(u))
 
   private def cloakFacts(u: FriendlyUnitInfo, base: FightFacts): FightFacts = base.copy(
     cloaked     = u.effectivelyCloaked && u.isAny(Terran.Wraith, Protoss.DarkTemplar) && ( ! Terran.Wraith(u) || u.energy > 10),

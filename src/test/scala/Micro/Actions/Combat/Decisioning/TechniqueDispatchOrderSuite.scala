@@ -15,6 +15,7 @@ class TechniqueDispatchOrderSuite extends AnyFunSuite {
   test("the pipeline serves survival before duels before leftovers") {
     val order = TechniquePipeline.stages.map(s => (s.name, s.band))
     assert(order.map(_._1) == Vector(
+      "AvoidEffects",
       "Avoid",
       "StaticKeepOff",
       "Walk",
@@ -32,6 +33,7 @@ class TechniqueDispatchOrderSuite extends AnyFunSuite {
       "Abuse",
       "SuperKite"))
     assert(order.map(_._2) == Vector(
+      High,
       High,
       High,
       Medium,

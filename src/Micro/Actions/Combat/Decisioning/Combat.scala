@@ -8,6 +8,7 @@ import Micro.Actions.UnitControl
 import Micro.Actions.Combat.Decisioning.Techniques._
 import Micro.Actions.Combat.Maneuvering.AvoidDarkTemplar
 import Micro.Actions.Combat.Maneuvering.AvoidLurkers
+import Micro.Actions.Combat.Maneuvering.AvoidStorm
 import Micro.Actions.Combat.Maneuvering.Retreat
 import Micro.Actions.Combat.Maneuvering.ArtilleryKeepOff
 import Micro.Actions.Combat.Tactics.Brawl
@@ -45,6 +46,19 @@ import Utilities.?
  * never the behavior.
  */
 private[Decisioning] object TechniquePipeline {
+
+  /**
+   * Live storms outrank everything: a hull standing in the cell trades
+   * its volley for burn ticks, so the leave claims before killers,
+   * shells and duels alike. Any mobile hull; the bullet owns the cell.
+   */
+  object AvoidEffectsStage extends BehaviorStage("AvoidEffects", DispatchBand.High) {
+    def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
+      unit.canMove
+
+    protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
+      UnitControl.claimedIf(AvoidStorm.act(unit))
+  }
 
   /**
    * Unseen killers outrank every formation and duel: a remembered Lurker
@@ -236,6 +250,7 @@ private[Decisioning] object TechniquePipeline {
   }
 
   val stages: Vector[BehaviorStage] = Vector(
+    AvoidEffectsStage,
     AvoidStage,
     StaticKeepOffStage,
     WalkStage,

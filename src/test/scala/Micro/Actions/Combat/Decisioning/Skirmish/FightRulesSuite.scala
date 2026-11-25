@@ -29,6 +29,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(dragoonPack = true), (true,  "DragoonPack")),
       (off.copy(outmatchedGoon = true), (false, "OutmatchedGoon")),
       (off.copy(loneScout = true), (false, "LoneScout")),
+      (off.copy(staticOutgunned = true), (false, "StaticOutgunned")),
       (off.copy(outOfContact = true), (false, "OutOfContact")),
       (off.copy(detonated = true),   (true,  "Detonated")),
       (off.copy(hugTank = true),     (true,  "HugTank")),
@@ -50,7 +51,7 @@ class FightRulesSuite extends AnyFunSuite {
       (off.copy(miners = true),      (true,  "Miners")),
       (off.copy(reave = true),       (true,  "Reave")),
       (off.copy(energized = true),   (true,  "Energized")))
-    assert(cases.size == 34)
+    assert(cases.size == 35)
     cases.foreach { case (facts, expected) =>
       assert(FightRules.decide(facts).contains(expected), expected)
     }
@@ -69,6 +70,11 @@ class FightRulesSuite extends AnyFunSuite {
   test("commitment outranks enthusiasm: committed before YOLO, YOLO before reasons to stay") {
     assert(FightRules.decide(off.copy(committed = true, yolo = true)).contains((true, "Committed")))
     assert(FightRules.decide(off.copy(yolo = true, safe = true)).contains((true, "YOLO")))
+  }
+
+  test("explicit fight reasons outrank the static cover veto") {
+    assert(FightRules.decide(off.copy(committed = true, staticOutgunned = true)).contains((true, "Committed")))
+    assert(FightRules.decide(off.copy(dragoonBrave = true, staticOutgunned = true)).contains((true, "DragoonBrave")))
   }
 
   test("the false-block keeps its order: scourge before casters, casters before siege") {
