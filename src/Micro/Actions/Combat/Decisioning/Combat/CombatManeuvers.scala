@@ -134,6 +134,13 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
         unit.agent.act("VolleyHold")
         Commander.hold(unit)
       }
+      // A blade with masonry hittable swings instead of repositioning:
+      // its only play against buildings is contact, so walking to a slot
+      // donates the swing it already holds - the shared nearest-shot tail
+      // owns the order (deduped while the victim lives), never the march.
+      // Live units keep the legacy slotting - only masonry is exempt.
+      else if (unit.unitClass.melee && Maff.minBy(unit.matchups.targetsInRange)(
+        _.pixelDistanceEdge(unit)).exists(_.unitClass.isBuilding)) meleeContact()
       else if (slidingInFormation) slideInFormation()
       else if (dogfightingAir) dogfightAir()
       else if (combat.breakFormationToAttack) breakToAttack()
@@ -142,8 +149,16 @@ class CombatManeuvers(combat: Combat, unit: FriendlyUnitInfo) {
     unit.unready
   }
 
-  private def slidingInFormation: Boolean =
-    // If we have an attack formation
+  /**
+   * Blade contact (shared nearest-shot tail): swing at the nearest
+   * hittable instead of walking to a slot - the order dedups while the
+   * victim lives, so the march cannot steal the frame mid-swing.
+   */
+  private def meleeContact(): Unit = {
+    NearestShot.take(unit, "MeleeContact", unit.matchups.targetsInRange)
+  }
+
+  private def slidingInFormation: Boolean =    // If we have an attack formation
     ! OverwhelminglyStronger.skipFormation(unit) && unit.formationEngage.isDefined && ! unit.flying && combat.shouldChase && combat.formationHelpsChase && FormationHold.shouldAdvanceInFormation(combat.formationReadiness)
 
   private def dogfightingAir: Boolean =

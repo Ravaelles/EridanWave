@@ -59,6 +59,13 @@ Details live in `details/` - the queue keeps one line per item.
   zone, worst-threat rule untouched outside it. StarEngine
   CorsairCornerSuite: pressed hull leaves the zone alive, no dest
   inside it. Needs a ladder game with corsairs under guns.
+- Melee contact attack (owner order: idle blade with hittable in range
+  attacks, never marches): AdvanceGate no longer march-moves melee with
+  anything hittable, and charge() swings at the nearest hittable via
+  the shared NearestShot tail instead of sliding to a slot - the
+  VolleyHold/March flap at zero tiles owned no frame. Melee only,
+  ranged kite/reposition untouched, retreating hulls keep the march.
+  Needs a ladder game (any melee at a base) + UMS ZealDrag reps.
 - Citadel-sweep sacrifice (owner order: the probe dies confirming the
   Citadel rather than fleeing blind): latched `CitadelSweep` (PvP
   ladder, scout probe in the enemy metro, Core known, Citadel chain

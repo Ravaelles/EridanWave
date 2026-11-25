@@ -78,10 +78,16 @@ private[Decisioning] object EngagePipeline {
       // resets the firing solution on every consensus-off frame and the
       // volley never lands (BetaStar: VolleyHold/March flap till death).
       // The duel owns the frame instead - it holds or fires, never walks.
-      // Retreating hulls keep the march home; non-warriors keep walking.
+      // A blade with masonry hittable never march-moves either: its only
+      // play against buildings is contact, so marching to a slot donates
+      // while the hold below waits for a cooldown that never comes (PvZ:
+      // VolleyHold/March flap at zero tiles). Retreating hulls keep the
+      // march home; non-warriors keep walking.
       val aimingVolley = unit.unitClass.isWarrior && ! combat.shouldRetreat &&
         VolleyDiscipline.shouldVolley(retreating = false, unit.cooldownLeft, unit.matchups.targetsInRange.nonEmpty)
-      if ( ! advance && ! preyDrive(unit) && ! aimingVolley) { combat.maneuvers.move(); UnitControl.Claimed } else UnitControl.Declined
+      val meleeStatic = unit.unitClass.melee && ! combat.shouldRetreat && Maff.minBy(unit.matchups.targetsInRange)(
+        _.pixelDistanceEdge(unit)).exists(_.unitClass.isBuilding)
+      if ( ! advance && ! preyDrive(unit) && ! aimingVolley && ! meleeStatic) { combat.maneuvers.move(); UnitControl.Claimed } else UnitControl.Declined
     }
   }
 
