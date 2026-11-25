@@ -478,11 +478,11 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
 
     var i = 0
     var claimed = false
-    // Shadow Step 3: loop control stays first-claims on purpose -
-    // later bodies carry load-bearing side effects (pushes, ride
-    // goals, decisions), so running them all to measure would pollute
-    // the game. The resolve issues today's first-posted bid and counts
-    // rank-vs-order divergences among posted bids instead.
+    // Arbitration window (live since Step 3): technique bids and
+    // duel bids resolve together, once, by reason rank - first posted
+    // wins ties. Loop control stays first-claims: later bodies carry
+    // load-bearing side effects, so the rank only arbitrates posted
+    // bids, never runs new stages.
     // engage() re-opens idempotently and resolves on every path.
     unit.agent.capturingBids = true
     unit.agent.bidReason = None
@@ -495,7 +495,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // three legs holds the duel out.
     Debugging.Probe.note("Duel", unit.id, s"claimed=$claimed engage=${shouldEngage && advance} ready=${unit.ready} tech=$technique")
     if ( ! claimed && shouldEngage && advance) engagement.engage()
-    else CommanderCore.resolveBids(unit, shadow = false)
+    else CommanderCore.resolveBids(unit)
   }
 
   private[Decisioning] def techniqueIs(candidates: Technique*): Boolean = candidates.contains(technique)
@@ -515,19 +515,4 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
   }
 
   def tryDodge(): Boolean = maneuvers.tryDodge()
-
-  /**
-   * Pre-chain dodge (phase 2A): emergency movement owns its frame outright,
-   * so it bids Dodge in a local window and resolves at once - a single bid
-   * issues exactly like before, and the reason is live for the future
-   * joint window instead of dormant in the technique table.
-   */
-  def tryDodgeBid(): Boolean = {
-    unit.agent.capturingBids = true
-    unit.agent.bidReason = Some(Micro.Agency.UnitIntentionReason.Dodge)
-    val dodged = maneuvers.tryDodge()
-    Micro.Agency.CommanderCore.resolveBids(unit)
-
-    dodged
-  }
 }

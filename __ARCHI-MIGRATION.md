@@ -54,32 +54,11 @@ opened in `dispatchByTechnique` so technique bids (Retreat Survival,
 Avoid Dodge) resolve together with duel bids. Live: 48 ties, zero
 duplicates, 1DragWounded kite chains healthy.
 
-## Step 3 - rank decides across stages (C: SHADOW SHIPPED, FLIP IS AN OWNER CALL)
+## Step 2 - every governor bids (A plus B, then consolidated in Step 4)
 
-Status: the shadow instrument runs on every engage window (silent
-except divergences), first-claims loop control RESTORED after a
-revert-proven finding (see below). Live divergence data, 4+3Zeal:
-exactly one contested pair - `divergeBid.DuelVsFormation` on
-zealots, 34x/game, frames 0-2482 (a Formation slot-walk bid vs a
-Close kite-move bid; rank would kite, order dresses). No other
-pair diverges anywhere measured.
-- Negative result with teeth: relaxing the loops to measure changed
-  the game it measured (1Drag waste 117f band to 200-254f with three
-  straight defeats; recovery to wins and 125-144f after revert).
-  Cause: post-claim bodies carry load-bearing side effects (pushes,
-  ride goals, decisions), so the shadow cannot run bodies to
-  measure. Lesson: cross-stage arbitration cannot be observed for
-  free - it needs per-pair flip experiments behind a revert, never
-  a global relax.
-- The DuelVsFormation flip is the first candidate: rank kites where
-  order dresses, 34 frames/game. Flipping breaks "the hold owns
-  outranged frames" - owner doctrine call with this count attached,
-  not a blind flip.
-
-## Step 2 - every governor bids (A plus B)
-
-A. Local windows (DONE): `tryDodgeBid` (Dodge), `Travel` (March),
-   `Attack` (Duel) open capture, stamp the reason, resolve at once.
+A. Local windows (SHIPPED then CUT as vacuous in Step 4):
+   `tryDodgeBid` (Dodge), `Travel` (March), `Attack` (Duel) opened
+   capture, stamped the reason, resolved at once.
    Single-bid frames issue exactly like before; the reasons are live
    for the future joint window. Live: 1Drag V/V/D/V/V - the defeat
    inside the documented glue-fight variance (only arbitration that
@@ -91,15 +70,55 @@ B. Parked, still direct under the fuse, each needing its own UMS map
 
 ## Step 3 - rank decides across stages (C: LIVE, OWNER-VOTED FLIP)
 
-Relaxing the loops to measure changed the game (1Drag waste 117f
-band to 200-254f with three straight defeats; recovery after
-revert) - post-claim bodies carry load-bearing side effects, so no
-global relax. Instead: first-claims loop control stays, every
-window resolves live by rank (ties go to the first bid, i.e.
-today's order). Shadow instrument stays in the code for future
-measurement. Live divergence data that motivated the flip:
-`divergeBid.DuelVsFormation` on zealots, 34x/game. Flip sample on
-4+3: 5/7, 3/7, 1/7, 4/7 (mean 3.25 vs ~2.2 shadow era),
-tripwires/flap/waste silent - not worse anywhere, mildly better.
-Kept per owner vote; the remaining 4+3 gap is the focus quorum,
-not arbitration.
+Status: every window resolves live by rank (ties go to the first
+bid, i.e. today's order) - the flip the shadow below measured.
+The shadow instrument has since been deleted (Step 4); the live
+divergence data that motivated the flip: exactly one contested
+pair - `divergeBid.DuelVsFormation` on zealots, 34x/game,
+frames 0-2482 (a Formation slot-walk bid vs a Close kite-move bid).
+No other pair diverged anywhere measured.
+- Negative result with teeth: relaxing the loops to measure changed
+  the game it measured (1Drag waste 117f band to 200-254f with three
+  straight defeats; recovery to wins and 125-144f after revert).
+  Cause: post-claim bodies carry load-bearing side effects (pushes,
+  ride goals, decisions), so cross-stage arbitration cannot be
+  observed for free - it needs per-pair flip experiments behind a
+  revert, never a global relax.
+- Flip sample on 4+3: 5/7, 3/7, 1/7, 4/7 (mean 3.25 vs ~2.2 shadow
+  era), tripwires/flap/waste silent - not worse anywhere, mildly
+  better. Kept per owner vote; the remaining 4+3 gap is the focus
+  quorum, not arbitration.
+
+## Step 4 - consolidation: what the audit kept vs cut (DONE)
+
+An audit of the whole authority mechanism (every seam, window and
+ledger after Steps 0-3) kept what measures and cut what does not:
+- CUT: the shadow resolve path (resolveShadow), the divergeKey
+  ledger key and its suite row, the shadow flag on every resolve
+  call. The flip it was built to measure shipped live instead; the
+  instrument served, then left. Re-adding it is one commit from
+  git history if a future pair needs counting first.
+- CUT: the single-bid local windows (Travel/March, Attack/Duel,
+  tryDodge/Dodge). Proven vacuous by construction: one posted bid
+  always wins, the act gate already skips unready frames, so the
+  stood-down path could never fire - the resolve issued exactly
+  what the direct door would. A future joint window stamps reasons
+  at the Action level if it ever comes; these ad-hoc lines would
+  be replaced by it, not reused.
+- KEPT: the fuse (log-only tripwire - it caught the hold double
+  and still watches every direct issuer: economy, Be* legacy,
+  transports, scouts), the engage+technique joint window (the only
+  place multi-bid frames actually occur), outranked/stood-down
+  ledgers, FocusMemory, StickyAnchor, OrderIssuer doors.
+- DELIBERATELY NOT MERGED: rank table vs pipeline order stay two
+  artifacts on purpose. Phase order (technique before duel) and
+  within-window rank answer different questions; unifying them
+  would need contextual rank (reach/contact), which is doctrine,
+  not plumbing.
+- DELIBERATELY NOT FLIPPED: the fuse stays log-only. Blocking a
+  duplicate drops intent that no dedup owns today (unload-then-move
+  has no sleep between them); same-issuer skips are unsafe too,
+  because sites are shared across actions. Blocking needs per-pair
+  evidence that does not exist yet.
+Live: 1Drag + Wounded VICTORY 1/0 (waste in band), 4+3 in band,
+zero tripwires, suite green.

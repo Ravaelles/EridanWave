@@ -92,6 +92,21 @@ hysteresis home (rules 10-11).
 
 ## Closed
 
+- Authority-mechanism consolidation (audit 2026-11, owner order):
+  the fuse-plus-bids program ended with a review that cut ceremony
+  and kept tripwires. Deleted: the shadow resolve path (the flip it
+  measured shipped live - measure, flip behind a revert, delete the
+  scaffold), the single-bid local windows (Travel/Attack/tryDodge -
+  proven vacuous: one posted bid always wins, act gates already skip
+  unready frames, so the stood-down path could never fire).
+  Deliberately kept separate: rank table vs pipeline order (phase
+  order vs within-window rank), and the fuse log-only (blocking
+  drops intent no dedup owns - unload-then-move has no sleep
+  between issuances, and sites are shared across actions, so even
+  same-issuer skips are unsafe without per-pair evidence).
+  Pattern: scaffolding that proved its point leaves the tree;
+  tripwires that still watch stay.
+
 - Per-frame issued-order fuse (audit 2026-11, Stardust P0): every
   `bwapiUnit.*` issuance in `Commander*` claims the frame through one
   seam (`CommanderCore.claimOrder`, pure kernel `IssuedOrderFuse` beside

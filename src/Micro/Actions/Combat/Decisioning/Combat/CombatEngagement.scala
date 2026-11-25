@@ -356,10 +356,11 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
           combat.fightConsensus,
           unit.squadIntent.marchHome)
     }) || umsDuelistAdvances
-    // Shadow Step 3: loop control stays first-claims on purpose -
-    // later bodies carry load-bearing side effects, so only the
-    // winner's predecessors run. The resolve issues today's
-    // first-posted bid and counts divergences among posted bids.
+    // Arbitration window (live since Step 3): the stages stamp their
+    // reason in the shared template and post UnitIntention bids; the
+    // resolve issues the winner once - highest rank wins, first posted
+    // wins ties. Loop control stays first-claims (later bodies carry
+    // load-bearing side effects).
     unit.agent.capturingBids = true
     unit.agent.bidReason = None
     var i = 0
@@ -369,7 +370,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       i += 1
     }
     if (claimed) {
-      CommanderCore.resolveBids(unit, shadow = false)
+      CommanderCore.resolveBids(unit)
 
       return true
     }
@@ -394,7 +395,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         unit.agent.perch.clear()
       }
       dispatchEngage(advance)
-      CommanderCore.resolveBids(unit, shadow = false)
+      CommanderCore.resolveBids(unit)
       // L1 rivalry tripwire: the duel legs issued while the march holds
       // Withdraw - the technique fights a walk-home. Release noise never
       // reaches the ledger threshold; sustained streaks report at game end.
@@ -424,7 +425,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     } else {
       // Unready on entry: no bids were posted (the seam drops slept
       // frames), the resolve only clears the window for the next unit.
-      CommanderCore.resolveBids(unit, shadow = false)
+      CommanderCore.resolveBids(unit)
       // Tripwire for starved duels: the dispatch voted for the duel but
       // the legs never ran - a sleeping march or a legacy brain issuing
       // orders ahead of the technique does exactly this. Counted, not

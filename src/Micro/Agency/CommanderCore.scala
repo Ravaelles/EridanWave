@@ -117,25 +117,13 @@ object CommanderCore {
    * designed, not an error). A direct issuance that already claimed this
    * frame keeps today's semantics outright: the bids stand down and name
    * the direct winner instead.
-   *
-   * Shadow mode (Step 3 instrument): issues today's first-posted bid
-   * whatever the rank says, and counts rank-vs-order divergences
-   * instead of arbitrating them. Zero behavior change by
-   * construction - every divergence key is a doctrine decision with
-   * a count, waiting for a game that proves which side owns it.
    */
-  private[Micro] def resolveBids(unit: FriendlyUnitInfo, shadow: Boolean = false): Unit = {
+  private[Micro] def resolveBids(unit: FriendlyUnitInfo): Unit = {
     unit.agent.capturingBids = false
     val bids = unit.agent.bids.toVector
     unit.agent.bids.clear()
     unit.agent.bidReason = None
     if (bids.isEmpty) return
-
-    if (shadow) {
-      resolveShadow(unit, bids)
-
-      return
-    }
 
     unit.orderClaim.filter(_.frame == With.frame) match {
       case Some(claim) =>
@@ -153,27 +141,6 @@ object CommanderCore {
               ErrorLedger.Priority.Low,
               f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} loser ${bid.issuer} winner ${bids(winner).issuer}")
           }
-        }
-    }
-  }
-
-  /** Shadow resolve: today's first-posted bid issues; rank divergences count. */
-  private def resolveShadow(unit: FriendlyUnitInfo, bids: Vector[UnitIntention]): Unit = {
-    unit.orderClaim.filter(_.frame == With.frame) match {
-      case Some(claim) =>
-        ErrorLedger.note(
-          UnitIntentionRank.stoodDownKey(claim.issuer, unit.unitClass.toString),
-          ErrorLedger.Priority.Low,
-          f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} direct ${claim.issuer} stood down ${bids.size}")
-      case None =>
-        val rankWinner = UnitIntentionRank.winnerIndex(bids)
-        bids.head.order()
-        if (rankWinner != 0) {
-          val rankBid = bids(rankWinner)
-          ErrorLedger.note(
-            UnitIntentionRank.divergeKey(rankBid.reason, bids.head.reason, unit.unitClass.toString),
-            ErrorLedger.Priority.Low,
-            f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} rank ${rankBid.issuer} order ${bids.head.issuer}")
         }
     }
   }

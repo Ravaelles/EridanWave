@@ -59,15 +59,6 @@ object UnitIntentionRank {
   /** Stable ledger key for bids stood down before an already-issued order. */
   def stoodDownKey(directIssuer: OrderIssuer.Issuer, className: String): String =
     f"bidStoodDown.${directIssuer.key}%s.at.$className%s"
-
-  /**
-   * Stable ledger key for a shadow divergence: the rank table would
-   * pick a different winner than today's first-claims order. Counted,
-   * never acted on - each key is a doctrine decision waiting for a
-   * game that proves which side owns the frame.
-   */
-  def divergeKey(rankReason: UnitIntentionReason.Reason, orderReason: UnitIntentionReason.Reason, className: String): String =
-    f"divergeBid.$rankReason%sVs$orderReason%s.at.$className%s"
 }
 
 /**

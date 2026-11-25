@@ -37,9 +37,4 @@ class UnitIntentionRankSuite extends AnyFunSuite {
     assert(UnitIntentionRank.stoodDownKey(OrderIssuer.MoveStep, "Zealot") ==
       "bidStoodDown.CommanderMove.move.at.Zealot")
   }
-
-  test("the diverge key names rank-vs-order at the class") {
-    assert(UnitIntentionRank.divergeKey(UnitIntentionReason.Duel, UnitIntentionReason.Formation, "Dragoon") ==
-      "divergeBid.DuelVsFormation.at.Dragoon")
-  }
 }

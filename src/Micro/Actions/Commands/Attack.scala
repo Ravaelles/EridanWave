@@ -11,12 +11,7 @@ object Attack extends Action {
   override def allowed(unit: FriendlyUnitInfo): Boolean =
     unit.canAttack && unit.agent.toAttack.isDefined
   override def perform(unit: FriendlyUnitInfo): UnitControl = {
-    // Local duel window (phase 2A): the deliberate attack bids Duel and
-    // resolves at once - single-bid frames issue exactly like before.
-    unit.agent.capturingBids = true
-    unit.agent.bidReason = Some(Micro.Agency.UnitIntentionReason.Duel)
     Commander.attack(unit)
-    Micro.Agency.CommanderCore.resolveBids(unit)
 
     UnitControl.claimedIf(! unit.ready)
   }
