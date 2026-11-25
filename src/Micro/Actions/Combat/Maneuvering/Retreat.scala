@@ -145,15 +145,17 @@ object Retreat extends Action {
       case MicroPathing.WaypointPath   => "Path"
       case MicroPathing.WaypointForces => "Force"
     }
-    // Large land units wedge between mineral fields and die there, so their
-    // flee spots stay over a tile clear of minerals (one shared rule, not
-    // a second predicate next to FleeMineralClearance).
-    def clearOfMinerals(pixel: Pixel): Boolean =
-      FleeMineralClearance.clearOfMinerals(pixel.tile.adjacent9.exists(_.units.exists(_.unitClass.isMinerals)))
+    // Large land units wedge between fields and die there, so their flee
+    // spots stay 1.2 tiles clear of minerals and geysers (one shared
+    // rule, not a second predicate next to FleeMineralClearance).
+    def resourcesNear(pixel: Pixel): Seq[Pixel] =
+      pixel.tile.adjacent9.view.flatMap(_.units).filter(u => u.unitClass.isMinerals || u.unitClass.isGas).map(_.pixel).toSeq
+    def clearOfResources(pixel: Pixel): Boolean =
+      FleeMineralClearance.clearOfResources(pixel, resourcesNear(pixel))
     val largeFleer = FleeMineralClearance.applies(unit.unitClass.size == ProxyBwapi.Size.Large, unit.flying)
     val waypoint = ?(largeFleer,
       MicroPathing.bestWaypoints(unit, force, ?(goalOrigin, Some(unit.agent.safety), None), goalSafety && safetyIsSafe, tilePath, adjustPath = true)
-        .find(w => clearOfMinerals(w._1)).map { case (p, leg) => (p, legName(leg)) }.getOrElse(waypointOrigin),
+        .find(w => clearOfResources(w._1)).map { case (p, leg) => (p, legName(leg)) }.getOrElse(waypointOrigin),
       MicroPathing.bestWaypoints(unit, force, ?(goalOrigin, Some(unit.agent.safety), None), goalSafety && safetyIsSafe, tilePath, adjustPath = true)
         .headOption.map { case (p, leg) => (p, legName(leg)) }.getOrElse(waypointOrigin))
     RetreatPlan(unit, waypoint._1, waypoint._2)

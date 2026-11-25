@@ -11,13 +11,21 @@ Details live in `details/` - the queue keeps one line per item.
   instead of edging to zero, hold-to-shoot/volley/plant gated the same
   way, firing solution expires past aim range, tight kite reissue.
   StarEngine: flee-first outlives kiting both seats. Live: 68f deaths
-  to 200-700f fighting retreats, no flap. NOT passing yet: needs
+  to 200-860f fighting retreats, no flap. NOT passing yet: needs
   winning volley cadence or corner awareness. Next: re-run the map.
   2026-11-25 reps: VICTORY 895f + DEFEAT 676f (1-1 variance, not a
   regression). Death came fleeing (Close/KiteAway straight from f546)
   with Guard/Move alternating the last 14f - the ledger does not count
   Guard, so its all-clear hid the death flap. Gap stuck 126px/final 0
   at the end: push/pathing anomaly, not a plant.
+- Large-fleer resource clearance (owner order 2026-11-25: fleeing
+  large hulls keep 1.2 tiles off minerals and geysers): shared kernel
+  `FleeMineralClearance` (1.2 ring, push onto the away-ray, settles),
+  wired into the duel `kiteAway` flee spot and the `Retreat` waypoint
+  veto (was: minerals-only adjacency). Live: clean volley cadence
+  kept, deaths moved to map edge (0,50) / same pocket (12,48) -
+  cornering, not wedging: corner awareness still open, no new code
+  until the owner scopes it (pocket exit needs pathing, not a push).
 - PvP anti-DT cannon placement (owner order: first cannon at the main
   choke, closest powered slot wins): choke pylon first (unlocks
   near-choke slots), then the choke cannon by proximity to the

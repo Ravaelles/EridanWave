@@ -1,8 +1,10 @@
 package Micro.Actions.Combat.Decisioning
 
 import Lifecycle.{PerGame, With}
+import Mathematics.Points.Pixel
 import Mathematics.{Maff, WoundMargin}
 import Micro.Actions.Combat.Decisioning.Kiting.{ClusterSafety, FacingAway, HoldToShoot, KiteAway, KiteHold, KiteYield, MeleeKiteAway}
+import Micro.Actions.Combat.Maneuvering.FleeMineralClearance
 import Micro.Agency.{Commander, OrderContinue}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
@@ -480,7 +482,7 @@ object KiteAwayBehavior extends PerGame {
         if ( ! gunsNear && (hasMeleeNearby || fleeFirst) && ! nearDeadFar) steadyHeadings(unit.id) = (freshHeading, With.frame)
         committed
     }
-    unit.agent.decision.set(steadied)
+    unit.agent.decision.set(clearFleeSpot(unit, steadied))
     // Contact kites interrupt the firing solution explicitly: a standing
     // attack order on a live in-range target vetoes every move, so the
     // gate-proven yield (cooling hull, blades on top) would pose forever
@@ -491,6 +493,26 @@ object KiteAwayBehavior extends PerGame {
     // closes the gap for free - kiting re-aims every step.
     if (meleeContact) Commander.moveOverriding(unit)
     else combat.maneuvers.move(32.0)
+  }
+
+  /**
+   * Resource-clear flee spot (owner order): large hulls wedge between
+   * fields and die there, so a flee point inside 1.2 tiles of a mineral
+   * or geyser slides onto the ring along the away-ray - the duel's
+   * direction survives, only the distance grows. Deterministic per
+   * frame (a settled spot projects onto itself), so the dedup holds
+   * the order instead of flapping.
+   */
+  private def clearFleeSpot(unit: FriendlyUnitInfo, spot: Pixel): Pixel = {
+    if ( ! FleeMineralClearance.applies(unit.unitClass.size == ProxyBwapi.Size.Large, unit.flying)) return spot
+
+    val resources = spot.tile.adjacent9.view.flatMap(_.units)
+      .filter(u => u.unitClass.isMinerals || u.unitClass.isGas).map(_.pixel).toSeq
+    if (FleeMineralClearance.clearOfResources(spot, resources)) return spot
+
+    Maff.minBy(resources)(_.pixelDistance(spot))
+      .map(near => FleeMineralClearance.pushClear(spot, near).walkablePixel)
+      .getOrElse(spot)
   }
 
   /**
