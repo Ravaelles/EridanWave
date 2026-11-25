@@ -239,6 +239,11 @@ object KiteAwayBehavior extends PerGame {
 
   private def kitable(unit: FriendlyUnitInfo): Boolean = {
     if (unit.unitClass.melee && ! unit.isAny(Protoss.Zealot, Protoss.Archon)) return false
+    // Healthy blades never kite like ranged (owner order, 4+3 grind):
+    // a blade with hit points to trade stands and brawls; only
+    // bleeding blades yield. A swing nearly over also holds - kiting
+    // away from a loaded swing donates it for nothing.
+    if (unit.unitClass.melee && KiteAway.holdsMeleeGround(unit.totalHealth, unit.cooldownLeft)) return false
     // Blades need no formation to yield (MeleeKiteAway.requiresFormation):
     // melee never holds dress slots, so the gate would only strand blades
     // on formation-less maps. Ranged hulls keep it - their kite is a

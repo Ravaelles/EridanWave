@@ -495,7 +495,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // three legs holds the duel out.
     Debugging.Probe.note("Duel", unit.id, s"claimed=$claimed engage=${shouldEngage && advance} ready=${unit.ready} tech=$technique")
     if ( ! claimed && shouldEngage && advance) engagement.engage()
-    else CommanderCore.resolveBids(unit, shadow = true)
+    else CommanderCore.resolveBids(unit, shadow = false)
   }
 
   private[Decisioning] def techniqueIs(candidates: Technique*): Boolean = candidates.contains(technique)

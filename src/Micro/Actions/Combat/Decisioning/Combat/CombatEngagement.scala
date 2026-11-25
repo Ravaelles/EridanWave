@@ -369,7 +369,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
       i += 1
     }
     if (claimed) {
-      CommanderCore.resolveBids(unit, shadow = true)
+      CommanderCore.resolveBids(unit, shadow = false)
 
       return true
     }
@@ -394,7 +394,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
         unit.agent.perch.clear()
       }
       dispatchEngage(advance)
-      CommanderCore.resolveBids(unit, shadow = true)
+      CommanderCore.resolveBids(unit, shadow = false)
       // L1 rivalry tripwire: the duel legs issued while the march holds
       // Withdraw - the technique fights a walk-home. Release noise never
       // reaches the ledger threshold; sustained streaks report at game end.
@@ -424,7 +424,7 @@ class CombatEngagement(combat: Combat, unit: FriendlyUnitInfo) {
     } else {
       // Unready on entry: no bids were posted (the seam drops slept
       // frames), the resolve only clears the window for the next unit.
-      CommanderCore.resolveBids(unit, shadow = true)
+      CommanderCore.resolveBids(unit, shadow = false)
       // Tripwire for starved duels: the dispatch voted for the duel but
       // the legs never ran - a sleeping march or a legacy brain issuing
       // orders ahead of the technique does exactly this. Counted, not

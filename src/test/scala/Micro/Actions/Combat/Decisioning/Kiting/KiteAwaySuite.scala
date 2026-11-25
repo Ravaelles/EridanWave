@@ -184,6 +184,15 @@ class KiteAwaySuite extends AnyFunSuite {
     assert( ! KiteAway.mustFleeContact(isDragoon = false, cooldownLeft = 15, meleeContact = true, totalHealth = 40))
   }
 
+  test("healthy blades and loaded swings hold instead of kiting") {
+    assert(KiteAway.holdsMeleeGround(totalHealth = 61, cooldownLeft = 30))
+    assert(KiteAway.holdsMeleeGround(totalHealth = 100, cooldownLeft = 30))
+    assert(KiteAway.holdsMeleeGround(totalHealth = 40, cooldownLeft = 14))
+    assert(KiteAway.holdsMeleeGround(totalHealth = 40, cooldownLeft = 0))
+    assert( ! KiteAway.holdsMeleeGround(totalHealth = 60, cooldownLeft = 15))
+    assert( ! KiteAway.holdsMeleeGround(totalHealth = 40, cooldownLeft = 30))
+  }
+
   test("a held heading survives jitter but releases on turns and lapses") {
     assert( ! KiteAway.shouldRefreshHeading(lastFrame = 10, frame = 12))
     assert(KiteAway.shouldRefreshHeading(lastFrame = 10, frame = 18))

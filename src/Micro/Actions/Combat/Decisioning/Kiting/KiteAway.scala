@@ -78,6 +78,24 @@ object KiteAway {
   var contactKiteCooldown: Int = 15
 
   /**
+   * Melee hold bars (owner order, 4+3 grind): healthy blades never kite
+   * like ranged - above this many hit points a blade stands and brawls,
+   * and a swing this close to ready is held, not yielded. Only bleeding
+   * blades with a cold gun yield ground.
+   */
+  var meleeHoldHp: Int = 60
+
+  var meleeHoldCooldown: Int = 14
+
+  /**
+   * Melee hold (pure flags for the suite): a healthy blade stands and
+   * brawls instead of kiting like ranged, and a swing nearly over is
+   * held, not yielded. Only bleeding blades with a cold gun yield.
+   */
+  def holdsMeleeGround(totalHealth: Int, cooldownLeft: Int): Boolean =
+    totalHealth > meleeHoldHp || cooldownLeft <= meleeHoldCooldown
+
+  /**
    * Absolute contact hull cap, in HP (owner order): healthy hulls stand
    * and trade blades in contact instead of kiting like melee - at or
    * above this many hit points the trade beats the yield, so only
