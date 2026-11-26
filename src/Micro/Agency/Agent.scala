@@ -74,12 +74,12 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   var stickyFrame : Int         = -1
 
   /**
-   * Unit-intention bids (phase 1): posted by the engage pipeline while
-   * capturingBids runs, resolved once by CommanderCore.resolveBids.
-   * bidReason carries the entering stage's reason (set by the shared
-   * BehaviorStage template, never by behaviors). Direct issuers never
-   * touch this queue - it exists only to arbitrate true same-frame
-   * overlaps by reason rank instead of sleep order.
+   * Unit-intention bids (phase 1): posted while capturingBids runs, resolved
+   * once by CommanderCore.resolveBids. bidReason carries the entering
+   * stage's reason (set by the shared BehaviorStage template, never by
+   * behaviors). Direct issuers never touch this queue - it exists only
+   * to arbitrate true same-frame overlaps by reason rank instead of
+   * sleep order.
    */
   val bids            : ArrayBuffer[UnitIntention] = new ArrayBuffer[UnitIntention]()
   var capturingBids   : Boolean = false

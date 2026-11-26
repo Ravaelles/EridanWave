@@ -86,4 +86,15 @@ object RetreatExtraPenalties {
       With.tactics.attackSquad.centroidGround
         .groundPixels(With.geography.ourMain.heart.center) * Maff.inv32)
   }
+
+  /**
+   * Penalized score for one arm (no game beyond the two reads above):
+   * reads the expedition and applies the discount in one call, so
+   * every arm votes on the same vintage instead of re-deriving it.
+   */
+  def expeditionScore(unitsScore: Double): Double = {
+    val (warriors, distTiles) = expeditionReads()
+
+    penalizedScore(unitsScore, warriors, distTiles)
+  }
 }

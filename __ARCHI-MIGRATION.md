@@ -122,3 +122,13 @@ ledger after Steps 0-3) kept what measures and cut what does not:
   evidence that does not exist yet.
 Live: 1Drag + Wounded VICTORY 1/0 (waste in band), 4+3 in band,
 zero tripwires, suite green.
+- Post-pass cleanup (no behavior change, verified green + UMS):
+  dead shadow path deleted outright (resolveShadow, divergeKey and
+  its suite row), single-bid local windows reverted to direct
+  Commander calls (Travel/Attack/tryDodge proved vacuous), shared
+  FocusPack trace plus one-call expeditionScore extracted so the
+  two focus seams and the three retreat arms cannot drift apart,
+  UnitIntentionReason imports shortened beside the stages they
+  document, claimOrder simplified to Unit (nobody read the flag),
+  FocusMemory writes fenced behind tracePack, PostureHoldSuite
+  fixed to the moved RetreatExtraPenalties home.

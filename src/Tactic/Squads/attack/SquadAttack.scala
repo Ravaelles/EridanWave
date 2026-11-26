@@ -359,8 +359,7 @@ class SquadAttack extends Squad {
       With.battles.globalAttack.enemy.skimStrengthUnits)
     // Weak far expedition (owner order): same penalized score as the
     // technique and march arms, or the trio drifts apart.
-    val (expeditionWarriors, expeditionDist) = RetreatExtraPenalties.expeditionReads()
-    val expeditionAdvantage = RetreatExtraPenalties.penalizedScore(unitsAdvantage, expeditionWarriors, expeditionDist)
+    val expeditionAdvantage = RetreatExtraPenalties.expeditionScore(unitsAdvantage)
     val nearestArmed = Maff.minBy(With.units.enemy.view.filter(e =>
       e.alive && e.likelyStillThere && e.unitClass.attacksGround))(_.pixelDistanceCenter(centroidGround))
       .map(e => e.pixelDistanceCenter(centroidGround) * Maff.inv32).getOrElse(Double.PositiveInfinity)

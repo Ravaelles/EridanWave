@@ -22,15 +22,59 @@ object FocusMemory extends PerGame {
 
   def read(squad: Squad): Option[Int] = held.get(squad)
 
-  def write(squad: Squad, targetId: Int): Unit = held(squad) = targetId
+  private def write(squad: Squad, targetId: Int): Unit = held(squad) = targetId
 
-  def clear(squad: Squad): Unit = held.remove(squad)
+  private def clear(squad: Squad): Unit = held.remove(squad)
 
   /** Once per squad per frame: shared decisions note once, not per hull. */
-  def noteOnce(squad: Squad, frame: Int)(note: => Unit): Unit = {
+  private def noteOnce(squad: Squad, frame: Int)(note: => Unit): Unit = {
     if ( ! countedAt.get(squad).contains(frame)) {
       countedAt(squad) = frame
       note
+    }
+  }
+
+  /**
+   * The pack's shared pick, end to end: hold the committed target while
+   * anyone can still hit it, otherwise elect a fresh one. One home for
+   * the whole decision - both focus seams call it with their bids and
+   * a fresh-pick fallback, so the hold-then-elect order, the once-per-
+   * squad note and the memory write cannot drift apart between callers.
+   * Returns the committed target id, if any. Holding past a strictly
+   * cheaper grind counts once (Low): a rising count means the hold
+   * band wants review, not that the hold misfired.
+   */
+  def tracePack(
+    squad: Squad,
+    attackerId: Int,
+    className: String,
+    bids: Seq[SharedFocus.Bid],
+    fresh: => Option[Int]): Option[Int] = {
+    val held = SharedFocus.hold(read(squad).flatMap(id => bids.find(_.id == id)), bids)
+    val chosen = held.map(_.id).orElse(fresh)
+    // Single noteOnce for probe and ledger: a second call in the same
+    // frame would see the first one's mark and stay silent.
+    noteOnce(squad, Lifecycle.With.frame) {
+      val mem = read(squad)
+      val why = if (chosen.isEmpty) "none"
+        else if (mem.isEmpty) "fresh"
+        else if ( ! bids.exists(_.id == mem.get)) "dead"
+        else if (bids.find(_.id == mem.get).exists(_.reach == 0)) "unreached"
+        else if (chosen.contains(mem.get)) "kept"
+        else "freekill"
+      Debugging.Probe.note("FocusPack", attackerId, f"pack ${mem.getOrElse(-1)} chose ${chosen.getOrElse(-1)} why $why")
+      held.foreach(h => {
+        if (bids.exists(b => b.id != h.id && b.costToKill < h.costToKill)) {
+          Debugging.ErrorLedger.note(
+            "focusHeldPastBetter.at." + className,
+            Debugging.ErrorLedger.Priority.Low,
+            f"pack holds ${h.id} over a cheaper grind, frame ${Lifecycle.With.frame}")
+        }
+      })
+    }
+    chosen match {
+      case Some(id) => write(squad, id); Some(id)
+      case None     => clear(squad); None
     }
   }
 

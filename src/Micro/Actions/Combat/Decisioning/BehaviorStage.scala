@@ -1,6 +1,7 @@
 package Micro.Actions.Combat.Decisioning
 
 import Micro.Actions.UnitControl
+import Micro.Agency.UnitIntentionReason
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.DispatchBand
 
@@ -25,7 +26,7 @@ import Utilities.DispatchBand
  * BWAPI bid the stage posts below carries its reason into the resolve -
  * the Commander owns the rank table, behaviors never pass numbers.
  */
-abstract class BehaviorStage(val name: String, val band: DispatchBand, val reason: Micro.Agency.UnitIntentionReason.Reason) {
+abstract class BehaviorStage(val name: String, val band: DispatchBand, val reason: UnitIntentionReason.Reason) {
 
   /**
    * Unit context gate (no game beyond the unit itself): race and class,

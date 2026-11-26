@@ -3,6 +3,7 @@ package Micro.Actions.Combat.Decisioning
 import Micro.Actions.Combat.Decisioning.StaticStandoffBehavior
 import Micro.Actions.Combat.Maneuvering.ArtilleryKeepOff
 import Micro.Actions.UnitControl
+import Micro.Agency.UnitIntentionReason
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
 import Utilities.DispatchBand
@@ -27,7 +28,7 @@ object HandleEnemyCombatBuildings {
    * Shells first: leave now. Any mobile grounded hull except Reavers -
    * the cloak, the verdict and the guns gate below.
    */
-  object ShellsClaim extends BehaviorStage("shells", DispatchBand.High, Micro.Agency.UnitIntentionReason.Dodge) {
+  object ShellsClaim extends BehaviorStage("shells", DispatchBand.High, UnitIntentionReason.Dodge) {
     override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       ! unit.flying && unit.canMove && ! Protoss.Reaver(unit)
@@ -40,7 +41,7 @@ object HandleEnemyCombatBuildings {
    * Anti-air reach second: scouts hold outside it instead of diving in.
    * Scouts only; the umbrella math gates below.
    */
-  object KeepOffClaim extends BehaviorStage("keep-off", DispatchBand.High, Micro.Agency.UnitIntentionReason.Dodge) {
+  object KeepOffClaim extends BehaviorStage("keep-off", DispatchBand.High, UnitIntentionReason.Dodge) {
     override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = Protoss.Scout(unit)
 
@@ -54,7 +55,7 @@ object HandleEnemyCombatBuildings {
    * ground warriors, never Reavers; the cluster heat and the duel own
    * the rest.
    */
-  object StandClaim extends BehaviorStage("stand", DispatchBand.High, Micro.Agency.UnitIntentionReason.Duel) {
+  object StandClaim extends BehaviorStage("stand", DispatchBand.High, UnitIntentionReason.Duel) {
     override def unitSubset: Micro.Actions.UnitSubset = Micro.Actions.UnitSubsets.AllUnits
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean =
       unit.canMove && ! unit.flying && ! unit.unitClass.melee && unit.unitClass.isWarrior && ! Protoss.Reaver(unit)

@@ -107,46 +107,10 @@ object FocusFire {
 
     val candidates = targets.map(t => (t, candidate(squad.centroidKey, t, shooters))).toSeq
     val bids = candidates.map { case (t, c) => SharedFocus.Bid(c.id, c.reach, c.shotsToKill) }
-    val held = SharedFocus.hold(FocusMemory.read(squad).flatMap(id => bids.find(_.id == id)), bids)
-    val chosen = held.flatMap(h => candidates.find(_._2.id == h.id).map(_._2))
-      .orElse(choose(candidates.map(_._2)).filter(c => enoughReach(c.reach)))
-    // Pack-level trace (one note per squad per frame): the latched id
-    // stays put while hulls walk in and out of its reach - when hull
-    // picks flip under a steady pack id, the splitter is the per-hull
-    // reach filter in Target, not the vote. The why tag names the
-    // release: fresh/dead/unreached/kept/freekill/none.
-    FocusMemory.noteOnce(squad, Lifecycle.With.frame) {
-      val mem = FocusMemory.read(squad)
-      val why = if (chosen.isEmpty) "none"
-        else if (mem.isEmpty) "fresh"
-        else if ( ! bids.exists(_.id == mem.get)) "dead"
-        else if (bids.find(_.id == mem.get).exists(_.reach == 0)) "unreached"
-        else if (chosen.exists(_.id == mem.get)) "kept"
-        else "freekill"
-      Debugging.Probe.note("FocusPack", attacker.id, f"pack ${mem.getOrElse(-1)} chose ${chosen.map(_.id).getOrElse(-1)} why $why")
-    }
-    chosen match {
-      case Some(c) =>
-        FocusMemory.write(squad, c.id)
-        held.foreach(h => {
-          // Tuning signal, not an error: holding past a strictly cheaper
-          // grind. Counts once per squad per frame; a rising count means
-          // the hold band wants review, not that the hold misfires.
-          if (bids.exists(b => b.id != h.id && b.costToKill < h.costToKill)) {
-            FocusMemory.noteOnce(squad, Lifecycle.With.frame) {
-              Debugging.ErrorLedger.note(
-                "focusHeldPastBetter.at." + attacker.unitClass.toString,
-                Debugging.ErrorLedger.Priority.Low,
-                f"pack holds ${h.id} over a cheaper grind, frame ${Lifecycle.With.frame}")
-            }
-          }
-        })
-
-        candidates.find(_._2.id == c.id).map(_._1)
-      case None =>
-        FocusMemory.clear(squad)
-        None
-    }
+    val chosen = FocusMemory.tracePack(
+      squad, attacker.id, attacker.unitClass.toString, bids,
+      fresh = choose(candidates.map(_._2)).filter(c => enoughReach(c.reach)).map(_.id))
+    chosen.flatMap(id => candidates.find(_._2.id == id).map(_._1))
   }
 
   private def candidate(

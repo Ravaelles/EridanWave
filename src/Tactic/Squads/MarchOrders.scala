@@ -196,8 +196,7 @@ object MarchOrders {
     // Weak far expedition (owner order): a thin force deep out counts
     // three quarters of its skim, so it walks home instead of trading.
     // Same penalized score on all three arms, or the trio drifts apart.
-    val (expeditionWarriors, expeditionDist) = RetreatExtraPenalties.expeditionReads()
-    val expeditionScore = RetreatExtraPenalties.penalizedScore(facts.armyUnitsScore, expeditionWarriors, expeditionDist)
+    val expeditionScore = RetreatExtraPenalties.expeditionScore(facts.armyUnitsScore)
     RetreatVerdict.update(
       unit.id,
       (RetreatVerdict.shouldHold(

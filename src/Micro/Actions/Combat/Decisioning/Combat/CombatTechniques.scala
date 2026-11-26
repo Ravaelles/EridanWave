@@ -63,8 +63,7 @@ class CombatTechniques(combat: Combat, unit: FriendlyUnitInfo) {
     // three quarters of its skim, so it walks home instead of trading.
     // Same penalized score on all three arms, or the trio drifts apart.
     // NaturalChoke keeps the raw score - it owns its own weak thresholds.
-    val (expeditionWarriors, expeditionDist) = Tactic.Squads.Decisions.RetreatExtraPenalties.expeditionReads()
-    val expeditionScore = Tactic.Squads.Decisions.RetreatExtraPenalties.penalizedScore(unitsScore, expeditionWarriors, expeditionDist)
+    val expeditionScore = Tactic.Squads.Decisions.RetreatExtraPenalties.expeditionScore(unitsScore)
     val nearestArmedTiles = Maff.minBy(With.units.enemy.view.filter(e => e.alive && e.likelyStillThere && e.unitClass.canAttack(unit)))(_.pixelDistanceCenter(unit.pixel))
       .map(e => unit.pixelDistanceCenter(e.pixel) * Maff.inv32).getOrElse(Double.PositiveInfinity)
     val proxyRush = With.enemies.exists(_.isTerran) && With.fingerprints.proxyRax()

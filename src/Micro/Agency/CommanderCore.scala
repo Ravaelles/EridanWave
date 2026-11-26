@@ -59,12 +59,13 @@ object CommanderCore {
    * Per-frame issued-order fuse (Stardust DUPLICATE ORDER, phase 0,
    * log-only): records every BWAPI issuance on the unit and counts a
    * second issuance in the same frame in the error ledger instead of
-   * failing silently. Log-only on purpose: the callers still issue, the
-   * ledger only names who doubled - the blocking flip waits for one UMS
-   * series proving the legal internal delegations are whitelisted.
-   * Returns whether this issuance is a duplicate (second or later).
+   * failing silently. Log-only on purpose, and it stays that way:
+   * blocking a duplicate drops intent no dedup owns (unload-then-move
+   * has no sleep between them, sites are shared across actions), so a
+   * flip needs per-pair evidence that does not exist yet. Callers
+   * still issue; the ledger only names who doubled.
    */
-  private[Micro] def claimOrder(unit: FriendlyUnitInfo, issuer: OrderIssuer.Issuer): Boolean = {
+  private[Micro] def claimOrder(unit: FriendlyUnitInfo, issuer: OrderIssuer.Issuer): Unit = {
     val (stored, duplicate) = IssuedOrderFuse.tryClaim(unit.orderClaim, With.frame, issuer)
     unit.orderClaim = stored
     if (duplicate) {
@@ -74,8 +75,6 @@ object CommanderCore {
         ErrorLedger.Priority.Medium,
         f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} first $first second $issuer")
     }
-
-    duplicate
   }
 
   /**

@@ -51,29 +51,9 @@ object MeleeFocus {
       (t, hitters.size, Candidate(swingsToKill(t.totalHealth, damage), t.pixelDistanceCenter(squad.centroidGround) * Maff.inv32, t.id))
     }).filter(_._2 >= 1).toSeq
     val bids = candidates.map { case (t, hitters, c) => SharedFocus.Bid(c.id, hitters, c.swingsToKill) }
-    val held = SharedFocus.hold(
-      FocusMemory.read(squad).flatMap(id => bids.find(_.id == id)),
-      bids)
-    val chosen = held.flatMap(h => candidates.find(_._3.id == h.id).map(_._3))
-      .orElse(choose(candidates.map(_._3)))
-    FocusMemory.noteOnce(squad, Lifecycle.With.frame) {
-      val mem = FocusMemory.read(squad)
-      val why = if (chosen.isEmpty) "none"
-        else if (mem.isEmpty) "fresh"
-        else if ( ! bids.exists(_.id == mem.get)) "dead"
-        else if (bids.find(_.id == mem.get).exists(_.reach == 0)) "unreached"
-        else if (chosen.exists(_.id == mem.get)) "kept"
-        else "freekill"
-      Debugging.Probe.note("FocusPack", attacker.id, f"pack ${mem.getOrElse(-1)} chose ${chosen.map(_.id).getOrElse(-1)} why $why")
-    }
-    chosen match {
-      case Some(c) =>
-        FocusMemory.write(squad, c.id)
-
-        candidates.find(_._3.id == c.id).map(_._1)
-      case None =>
-        FocusMemory.clear(squad)
-        None
-    }
+    val chosen = FocusMemory.tracePack(
+      squad, attacker.id, attacker.unitClass.toString, bids,
+      fresh = choose(candidates.map(_._3)).map(_.id))
+    chosen.flatMap(id => candidates.find(_._3.id == id).map(_._1))
   }
 }
