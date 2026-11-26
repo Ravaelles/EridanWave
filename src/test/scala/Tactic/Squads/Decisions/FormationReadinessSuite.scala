@@ -49,4 +49,12 @@ class FormationReadinessSuite extends AnyFunSuite {
     assert(backStepTiles(myGapTiles = 4.0, rearGapTiles = 10.0) == 4.5)
     assert(backStepTiles(myGapTiles = 0.5, rearGapTiles = 10.0) == 0.0)
   }
+
+  test("the forced drill holds Forming for fifteen frames, then stands formed") {
+    assert(enforceMinForm(Forming, Formed, framesInForming = 0) == Forming)
+    assert(enforceMinForm(Forming, Formed, framesInForming = 14) == Forming)
+    assert(enforceMinForm(Forming, Formed, framesInForming = 15) == Formed)
+    assert(enforceMinForm(Forming, Forming, framesInForming = 0) == Forming)
+    assert(enforceMinForm(Chaotic, Formed, framesInForming = 0) == Formed)
+  }
 }

@@ -217,13 +217,18 @@ object MarchOrders {
     if (myCoord > rearCoord + FormationReadiness.rearBandTiles) return (false, unit.pixel)
 
     val step = FormationReadiness.backStepTiles(myCoord, rearCoord)
-    if (step <= 0) return (true, unit.pixel)
+    if (step <= 0) {
+      unit.agent.act("Forming")
+
+      return (true, unit.pixel)
+    }
 
     Maff.minBy(unit.matchups.threats.view.filter(t =>
       t.likelyStillThere && t.visible && t.unitClass.isWarrior))(
       unit.pixelDistanceEdge(_)) match {
       case None      => (true, unit.pixel)
       case Some(foe) =>
+        unit.agent.act("Forming")
         val away = foe.pixel.radiansTo(unit.pixel)
         (true, unit.pixel.radiateRadians(away, step * 32.0).walkablePixel)
     }

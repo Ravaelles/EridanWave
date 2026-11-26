@@ -208,7 +208,16 @@ private[Decisioning] object EngagePipeline {
         hasContact = unit.matchups.threatsInRange.nonEmpty,
         hasHittable = unit.matchups.targetsInRange.nonEmpty,
         seenNear = ApproachEnemyFormation.seenNearFoe(unit))
-      val outer = combat.distances.readyToApproachTarget || noVolley || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || KiteAway.loneBladeDuel(gunsNear, meleeChase, unit.unitClass.melee)
+      // Blades never charge on sight alone (owner order, 4+3Zeal): the
+      // whole outer gate bows to the pack arrival - own duel, pack
+      // fight or a real chase. Sight-only approaches march through the
+      // forming line instead of trickling in over it.
+      val bladeArrival = ! unit.unitClass.melee || CombatDistances.meleeArrivesWithPack(
+        hasHittable      = unit.matchups.targetsInRange.nonEmpty,
+        hasContact       = unit.matchups.threatsInRange.nonEmpty,
+        squadEngagedUpon = combat.squadEngagedUpon,
+        squadEngagingOn  = combat.squadEngagingOn) || combat.shouldChase
+      val outer = (combat.distances.readyToApproachTarget || noVolley || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || KiteAway.loneBladeDuel(gunsNear, meleeChase, unit.unitClass.melee)) && bladeArrival
       if ( ! outer) UnitControl.Declined
       else {
         // Tanks are never closed: the hold stands off siege and unsieged

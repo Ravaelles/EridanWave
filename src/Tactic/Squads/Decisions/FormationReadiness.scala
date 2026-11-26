@@ -48,6 +48,21 @@ object FormationReadiness extends PerGame {
   /** Rear rank band, in tiles: hulls this close to the rearmost hold the anchor. */
   val rearBandTiles: Double = 1.5
 
+  /** Forced drill, in frames (owner order): once the line starts forming
+    * it drills at least this long before it may stand formed - the pack
+    * meets the enemy shoulder-to-shoulder, never on the first stepped
+    * frame. Contact freezes, retreat dissolves; the force binds the
+    * Forming-to-Formed handover only. */
+  val formForceFrames: Int = 15
+
+  /**
+   * Forced handover (pure numbers for the suite): a drill younger than
+   * the forced window stays Forming even when the depth already reads
+   * formed - the line proves itself over frames, not on one step.
+   */
+  def enforceMinForm(current: FormState, grown: FormState, framesInForming: Int): FormState =
+    if (current == Forming && grown == Formed && framesInForming < formForceFrames) Forming else grown
+
   /** Fallback chase cap, in tiles: farther ahead than this the hull holds
     * and waits instead of moonwalking across the map to a lost rear. */
   val chaseTiles: Double = 6.0
@@ -89,7 +104,7 @@ object FormationReadiness extends PerGame {
     ahead - rearBandTiles
   }
 
-  private val memory = new mutable.HashMap[Squad, (Int, FormState)]()
+  private val memory = new mutable.HashMap[Squad, (Int, FormState, Int)]()
 
   def state(squad: Squad): FormState =
     memory.get(squad).map(_._2).getOrElse(Chaotic)
@@ -115,9 +130,12 @@ object FormationReadiness extends PerGame {
         .map(o.pixelDistanceEdge(_) * Maff.inv32)).reduceOption(_ min _).getOrElse(Double.PositiveInfinity)
     val retreating = RetreatVerdict.heldArmy(frame)
     val grown = next(state(squad), minGap, spread, contactAny, retreating)
-    memory(squad) = (frame, grown)
+    val ( _, prev, formStart) = memory.getOrElse(squad, (frame, Chaotic, frame))
+    val started = if (prev != Forming && grown == Forming) frame else formStart
+    val forced = enforceMinForm(prev, grown, frame - started)
+    memory(squad) = (frame, forced, started)
 
-    grown
+    forced
   }
 
   override def reset(): Unit = {
