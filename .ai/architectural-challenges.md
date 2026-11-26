@@ -13,19 +13,28 @@ hysteresis home (rules 10-11).
   engagement, shooter/target quorum plus per-hull reach). The
   SharedFocus latch (pack-level memory, hold while reach>=1,
   release on death/zero-reach, free-kill preempt) now holds through
-  churn - 14v16 why-tags: 140 kept / 23 dead / 11 freekill /
-  3 fresh / 4 none, kills up 7 to 11/6/10 across three reps.
-  Dead releases are finished kills, freekills taken - correct
-  behavior, no staleness (focusHeldPastBetter silent). Ladders
-  stopped random-walking too (StickyAnchor: last pick that WON).
-  What remains is per-hull reach: kiting hulls leave the shared
-  target's reach and fall back to the ladder. Open owner calls:
-  (a) kite vs focus doctrine (stand in reach vs quorum-free
-  focus); (b) score-term rebalancing (range vs kill-ease) - weight
-  8.0 tested, early convergence but no outcome gain, kept at 4.0;
-  (c) 40/12 melee no-kite tested, no kill gain (1/7,1/7,2/7),
-  kept at 60/14. Evidence: FocusPack pack/chose/why notes (one
-  row per squad per frame). Ladder games validate (rule 21).
+  churn - single 14v16 why-tags: 140 kept / 23 dead / 11 freekill.
+  14v16 batch of five (owner order: judge batches, not games):
+  9/14, 6/14, 12/14, 10/14, 14/5-on-a-timeout-loss. Dead releases
+  are finished kills, freekills taken - correct behavior, and the
+  fixed staleness ledger now actually counts (held-past-better
+  11-47x in grinds, 0 in the cleanest win - direction still open,
+  needs more batches, not one game). Two loss shapes, different fixes: (a) fast wipe
+  (~38s, we lose the ball 6-12 to 14) - the grind race we lose on
+  spread damage vs regenerating shields, needs (c)/(d) below;
+  (b) grind + mop-up timeout (200s, 14 kills, then Walk<->Hunt
+  flips every ~7 frames past f925 and a 100-227x flap-ledger
+  explosion) - the endgame never commits, same disease as the
+  queued 4Drag_v_Zeal timeouts (latch the hunt target / hunt over
+  Walk while the memory stays huntable - proposal only, owner
+  calls it). Per-hull reach still splits movers (StickyAnchor
+  stopped the ladder random-walk, but kiting out of reach still
+  falls back per hull). Open owner calls: (c) kite vs focus
+  doctrine (stand in reach vs quorum-free focus); (d) score-term
+  rebalancing (range vs kill-ease) - weight 8.0 tested, early
+  convergence but no outcome gain, kept at 4.0. Evidence:
+  FocusPack pack/chose/why notes (one row per squad per frame).
+  Ladder games validate (rule 21).
 
 - 1DragWounded corner pocket (owner-verified (12,4x) hug): the veto
   net now covers the widest ring (tilesInRadius, never adjacent9 -
