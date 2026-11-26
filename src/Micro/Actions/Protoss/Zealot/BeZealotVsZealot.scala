@@ -28,8 +28,10 @@ object BeZealotVsZealot extends Action {
     val target = obviousTarget.orElse(unit.matchups.targetNearest)
 
     DuelDecision.decide(DuelDecision.DuelFacts(
-      outnumbered = unit.matchups.threatsInPixels(24).filter(Protoss.Zealot).count(_.presumptiveTarget.contains(unit)) > 1,
-      dying       = unit.totalHealth < 14 && unit.matchups.threatsInPixels(64).exists(t => t.totalHealth > 14 || t.cooldownLeft < unit.cooldownLeft),
+      outnumbered = DuelDecision.outnumberedBy(
+        unit.matchups.threatsInPixels(24).filter(Protoss.Zealot).count(_.presumptiveTarget.contains(unit)),
+        With.umsMode),
+      dying       = unit.totalHealth < DuelDecision.dyingBelowHp(With.umsMode) && unit.matchups.threatsInPixels(64).exists(t => t.totalHealth > 14 || t.cooldownLeft < unit.cooldownLeft),
       duelling    = target.exists(t => unit.matchups.threatsInPixels(unit.pixelsToGetInRange(t) + 32).forall(t==) && unit.totalHealth * (1 + unit.confidence11) > t.totalHealth),
       outnumbering = ! unit.matchups.threatsInPixels(64).exists(_.presumptiveTarget.contains(unit))
         && target.exists(enemy =>

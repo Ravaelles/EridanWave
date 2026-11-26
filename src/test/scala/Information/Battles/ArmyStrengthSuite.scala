@@ -40,4 +40,9 @@ class ArmyStrengthSuite extends AnyFunSuite {
     assert(ArmyStrength.units(70.0, 50.0) == 140.0)
     assert(ArmyStrength.retreatBelowUnits == 140.0)
   }
+
+  test("UMS doubles the fight margin: the unit floor halves, retreats fire at half the odds") {
+    assert(ArmyStrength.retreatBelowUnitsFor(umsMode = false) == 140.0)
+    assert(ArmyStrength.retreatBelowUnitsFor(umsMode = true) == 70.0)
+  }
 }

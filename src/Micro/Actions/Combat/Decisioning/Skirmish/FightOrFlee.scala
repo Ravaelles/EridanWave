@@ -66,7 +66,8 @@ object FightOrFlee extends Action {
         With.units.ours.count(o => o.alive && Protoss.Dragoon(o)),
         With.units.enemy.exists(e => e.alive && Protoss.Dragoon(e)),
         global.us.units.count(_.unitClass.isWarrior).toDouble,
-        global.enemy.units.count(_.unitClass.isWarrior).toDouble)
+        global.enemy.units.count(_.unitClass.isWarrior).toDouble,
+        With.umsMode)
     },
     tankHunt    = Protoss.Carrier(u) && CarrierTankHuntSeam.huntFor(u),
     carrierBrawl = Protoss.Carrier(u) && CarrierTankHuntSeam.brawlingFor(u),

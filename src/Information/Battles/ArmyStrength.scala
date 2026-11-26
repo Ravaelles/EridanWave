@@ -1,5 +1,7 @@
 package Information.Battles
 
+import Utilities.?
+
 /**
  * Pure global army strength (no game access): 100 means even, higher
  * means stronger. No scouted enemy counts as even. Displayed on the
@@ -28,6 +30,14 @@ object ArmyStrength {
    * mirrors (upgrades unresearched, hulls identical), but hulls do not.
    */
   val retreatBelowUnits: Double = 140.0
+
+  /** UMS double fight margin (owner order): micro maps tolerate twice
+    * the disadvantage, so the unit floor halves - retreats still fire
+    * when truly outmatched, at half the odds. Ladder keeps 140. */
+  val retreatBelowUnitsUms: Double = 70.0
+
+  def retreatBelowUnitsFor(umsMode: Boolean): Double =
+    ?(umsMode, retreatBelowUnitsUms, retreatBelowUnits)
 
   /** Unit-count parity (pure numbers): the same ratio as score, but on
    * raw hulls instead of skim strength. */

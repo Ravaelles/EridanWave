@@ -21,7 +21,8 @@ object DragoonPvpRetreat {
     oursDragoons: Int,
     enemyHasDragoons: Boolean,
     usUnits: Double,
-    foeUnits: Double): Boolean =
+    foeUnits: Double,
+    umsMode: Boolean = false): Boolean =
     isDragoon &&
       enemyIsProtoss &&
       oursDragoons < maxDragoons &&
@@ -29,5 +30,5 @@ object DragoonPvpRetreat {
       foeUnits > 0 &&
       ArmyStrength.units(
         ApplyEarlyGamePressurePenalty.adjust(usUnits, usUnits.toInt, enemyIsProtoss, enemyHasDragoons),
-        foeUnits) < ArmyStrength.retreatBelowUnits
+        foeUnits) < ArmyStrength.retreatBelowUnitsFor(umsMode)
 }

@@ -29,4 +29,14 @@ class DuelDecisionSuite extends AnyFunSuite {
     assert(decide(facts(dying = true, duelling = true, outnumbering = true)) == Dying)
     assert(decide(facts(duelling = true, outnumbering = true)) == Duelling)
   }
+
+  test("UMS doubles the fight margin: four blades to rout, half the hp to die") {
+    assert(DuelDecision.outnumberedLimit(umsMode = false) == 1)
+    assert(DuelDecision.outnumberedLimit(umsMode = true) == 3)
+    assert( ! DuelDecision.outnumberedBy(2, umsMode = true))
+    assert(DuelDecision.outnumberedBy(4, umsMode = true))
+    assert(DuelDecision.outnumberedBy(2, umsMode = false))
+    assert(DuelDecision.dyingBelowHp(umsMode = false) == 14)
+    assert(DuelDecision.dyingBelowHp(umsMode = true) == 7)
+  }
 }
