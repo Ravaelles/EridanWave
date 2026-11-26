@@ -22,10 +22,6 @@ object MeleeFocus {
   def swingsToKill(healthTotal: Double, packDamage: Double): Int =
     if (packDamage <= 0) Int.MaxValue else Math.max(1, Math.ceil(healthTotal / packDamage).toInt)
 
-  /** Fewest swings first, then nearest to the pack, stable by id. */
-  def choose(candidates: Iterable[Candidate]): Option[Candidate] =
-    Maff.minBy(candidates)(c => (c.swingsToKill, c.distTiles, c.id))
-
   /**
    * The pack's shared chew for this blade, if the pack is on: weakest
    * enemy the pack can hit now that a pack mate can also reach.
@@ -34,7 +30,7 @@ object MeleeFocus {
    * lines cross, while one squad-wide set gives every blade the same
    * answer by construction, so the pack converges instead of
    * fanning out. The committed chew rides FocusMemory through the
-   * same churn the guns hold through (SharedFocus.hold).
+   * same churn the guns hold through (SharedFocus.orderPack).
    */
   def sharedTarget(attacker: FriendlyUnitInfo): Option[UnitInfo] = {
     val squad = attacker.squad.getOrElse(return None)
@@ -51,9 +47,9 @@ object MeleeFocus {
       (t, hitters.size, Candidate(swingsToKill(t.totalHealth, damage), t.pixelDistanceCenter(squad.centroidGround) * Maff.inv32, t.id))
     }).filter(_._2 >= 1).toSeq
     val bids = candidates.map { case (t, hitters, c) => SharedFocus.Bid(c.id, hitters, c.swingsToKill) }
-    val chosen = FocusMemory.tracePack(
-      squad, attacker.id, attacker.unitClass.toString, bids,
-      fresh = choose(candidates.map(_._3)).map(_.id))
-    chosen.flatMap(id => candidates.find(_._3.id == id).map(_._1))
+    val byId = candidates.map { case (t, _, c) => (c.id, t) }.toMap
+    val ordered = FocusMemory.packOrder(squad, attacker.id, attacker.unitClass.toString, bids)
+    ordered.flatMap(byId.get).find(t => attacker.inRangeToAttack(t))
+      .orElse(ordered.headOption.flatMap(byId.get).filter(t => attacker.canAttack(t)))
   }
 }

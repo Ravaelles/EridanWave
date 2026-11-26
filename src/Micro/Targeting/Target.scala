@@ -264,22 +264,28 @@ object Target {
 
   // Mass fights fire as one: the squad's weakest reachable target outranks
   // each unit's own nearest pick, so damage concentrates instead of
-  // spreading over the enemy line. Shooters that cannot reach it yet keep the
-  // normal ladder (and the formation march) instead of chasing across the
-  // line. Outside a mass fight this is None and the ladder decides.
+  // spreading over the enemy line. Every hull takes the pack pick when
+  // it can hit the victim at all - hulls out of reach walk it down
+  // through the existing close-in instead of dueling their own nearest
+  // (owner order: reach is per-hull and never unanimous, so gating on
+  // it dissolves every pack into solo duels). Outside a mass fight
+  // this is None and the ladder decides.
   private def focusedTarget(attacker: FriendlyUnitInfo, allFilters: IndexedSeq[TargetFilter]): Option[UnitInfo] =
     FocusFire
       .sharedTarget(attacker)
-      .filter(target => attacker.inRangeToAttack(target) && legalByFilters(attacker, target, allFilters))
+      .filter(target => attacker.canAttack(target) && legalByFilters(attacker, target, allFilters))
 
   // Melee shared chew: the pack's weakest reachable target outranks each
   // blade's own pick, so damage concentrates instead of spreading over
-  // the enemy pack. Same family as the ranged focus above; the kernel
-  // owns the who, the ladder owns the legality.
+  // the enemy pack. Blades that can hit the victim take the chew and
+  // close through the charge; out-of-reach blades converge on it
+  // instead of dueling alone (same owner order as the ranged focus:
+  // reach is per-hull and never unanimous). The kernel owns the who,
+  // the ladder owns the legality.
   private def meleeSharedTarget(attacker: FriendlyUnitInfo, allFilters: IndexedSeq[TargetFilter]): Option[UnitInfo] =
     MeleeFocus
       .sharedTarget(attacker)
-      .filter(target => attacker.inRangeToAttack(target) && legalByFilters(attacker, target, allFilters))
+      .filter(target => attacker.canAttack(target) && legalByFilters(attacker, target, allFilters))
 
   private def repairerSnipe(attacker: FriendlyUnitInfo, allFilters: IndexedSeq[TargetFilter]): Option[UnitInfo] = {
     if (attacker.totalHealth < RepairerSnipe.healthyHp) return None

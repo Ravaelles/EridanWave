@@ -42,13 +42,6 @@ object FocusFire {
   /** Melee cannot reach a shared target from its own slot; 3 tiles of range. */
   val minRangePixels: Int = 96
 
-  /** At least this many shooters can hit the shared target, or there is no
-    * concentration to win: a lone hitter is just its own pick. */
-  val minReach: Int = 2
-
-  def enoughReach(reach: Int): Boolean =
-    reach >= minReach
-
   /** One candidate target, reduced to the numbers the choice reads. */
   final case class Candidate(shotsToKill: Int, reach: Int, packDistanceTiles: Double, id: Int)
 
@@ -78,17 +71,12 @@ object FocusFire {
   def effectiveVolleys(healthWithShields: Double, committedDamage: Double, avgDamage: Double): Int =
     shotsToKill(healthWithShields, committedDamage + avgDamage)
 
-  /** Widest shared reach first, then fewest volleys, then centroid distance
-    * and id for stability. */
-  def choose(candidates: Iterable[Candidate]): Option[Candidate] =
-    Maff.minBy(candidates)(candidate => (-candidate.reach, candidate.shotsToKill, candidate.packDistanceTiles, candidate.id))
-
   /**
    * The squad's shared target for this attacker, if a mass fight is on and
    * the attacker could join in. None means "target normally". The committed
-   * pick rides FocusMemory through reach churn (SharedFocus.hold): the pack
-   * finishes instead of re-voting every frame. Entry keeps its quorum gates
-   * untouched; only the hold is latched.
+   * queue rides FocusMemory through reach churn (SharedFocus.orderPack):
+   * the pack finishes instead of re-voting every frame. Entry keeps its
+   * quorum gates untouched; only the hold is latched.
    */
   def sharedTarget(attacker: FriendlyUnitInfo): Option[UnitInfo] = {
     val squad = attacker.squad.getOrElse(return None)
@@ -107,10 +95,13 @@ object FocusFire {
 
     val candidates = targets.map(t => (t, candidate(squad.centroidKey, t, shooters))).toSeq
     val bids = candidates.map { case (t, c) => SharedFocus.Bid(c.id, c.reach, c.shotsToKill) }
-    val chosen = FocusMemory.tracePack(
-      squad, attacker.id, attacker.unitClass.toString, bids,
-      fresh = choose(candidates.map(_._2)).filter(c => enoughReach(c.reach)).map(_.id))
-    chosen.flatMap(id => candidates.find(_._2.id == id).map(_._1))
+    // First pack target this hull can hit; the head even when out of
+    // reach (strive toward it through closeIn instead of dueling
+    // alone - a hull that can hit nothing holds no pick at all).
+    val ordered = FocusMemory.packOrder(squad, attacker.id, attacker.unitClass.toString, bids)
+    val byId = candidates.map { case (t, c) => (c.id, t) }.toMap
+    ordered.flatMap(byId.get).find(t => attacker.inRangeToAttack(t))
+      .orElse(ordered.headOption.flatMap(byId.get).filter(t => attacker.canAttack(t)))
   }
 
   private def candidate(

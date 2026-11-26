@@ -6,8 +6,8 @@ import Tactic.Squads.Squad
 import scala.collection.mutable
 
 /**
- * Pack-level focus memory (the shared pick's home): the squad's
- * committed shared target id, keyed by the squad instance itself.
+ * Pack-level focus memory (the shared queue's home): the squad's
+ * committed kill order, keyed by the squad instance itself.
  * Squad objects persist across frames (re-commissioned, never
  * rebuilt), so the latch rides the pack; a re-formed pack starts
  * with no memory and re-votes, exactly like today. Swept per game
@@ -17,12 +17,12 @@ import scala.collection.mutable
  */
 object FocusMemory extends PerGame {
 
-  private val held = new mutable.HashMap[Squad, Int]()
+  private val held = new mutable.HashMap[Squad, Vector[Int]]()
   private val countedAt = new mutable.HashMap[Squad, Int]()
 
-  def read(squad: Squad): Option[Int] = held.get(squad)
+  def read(squad: Squad): Vector[Int] = held.getOrElse(squad, Vector.empty)
 
-  private def write(squad: Squad, targetId: Int): Unit = held(squad) = targetId
+  private def write(squad: Squad, targetIds: Vector[Int]): Unit = held(squad) = targetIds
 
   private def clear(squad: Squad): Unit = held.remove(squad)
 
@@ -35,47 +35,39 @@ object FocusMemory extends PerGame {
   }
 
   /**
-   * The pack's shared pick, end to end: hold the committed target while
-   * anyone can still hit it, otherwise elect a fresh one. One home for
-   * the whole decision - both focus seams call it with their bids and
-   * a fresh-pick fallback, so the hold-then-elect order, the once-per-
-   * squad note and the memory write cannot drift apart between callers.
-   * Returns the committed target id, if any. Holding past a strictly
-   * cheaper grind counts once (Low): a rising count means the hold
-   * band wants review, not that the hold misfired.
+   * The pack's kill queue, end to end: hold the committed order while
+   * its members stay huntable, drop the dead, jump free kills to the
+   * front, append newcomers behind. One home for the whole decision -
+   * both focus seams call it with their bids, so order, note and
+   * memory cannot drift apart between callers. Returns the queue.
+   * Holding past a strictly cheaper grind counts once (Low): a rising
+   * count means the hold band wants review, not that the hold misfired.
    */
-  def tracePack(
-    squad: Squad,
-    attackerId: Int,
-    className: String,
-    bids: Seq[SharedFocus.Bid],
-    fresh: => Option[Int]): Option[Int] = {
-    val held = SharedFocus.hold(read(squad).flatMap(id => bids.find(_.id == id)), bids)
-    val chosen = held.map(_.id).orElse(fresh)
+  def packOrder(squad: Squad, attackerId: Int, className: String, bids: Seq[SharedFocus.Bid]): Vector[Int] = {
+    val ordered = SharedFocus.orderPack(read(squad), bids, SharedFocus.packTargets)
     // Single noteOnce for probe and ledger: a second call in the same
     // frame would see the first one's mark and stay silent.
     noteOnce(squad, Lifecycle.With.frame) {
       val mem = read(squad)
-      val why = if (chosen.isEmpty) "none"
+      val why = if (ordered.isEmpty) "none"
         else if (mem.isEmpty) "fresh"
-        else if ( ! bids.exists(_.id == mem.get)) "dead"
-        else if (bids.find(_.id == mem.get).exists(_.reach == 0)) "unreached"
-        else if (chosen.contains(mem.get)) "kept"
-        else "freekill"
-      Debugging.Probe.note("FocusPack", attackerId, f"pack ${mem.getOrElse(-1)} chose ${chosen.getOrElse(-1)} why $why")
-      held.foreach(h => {
-        if (bids.exists(b => b.id != h.id && b.costToKill < h.costToKill)) {
+        else if (ordered.head != mem.head) {
+          if (mem.forall(m => ! ordered.contains(m))) "dead" else "freekill"
+        }
+        else "kept"
+      Debugging.Probe.note("FocusPack", attackerId, f"pack ${mem.headOption.getOrElse(-1)} chose ${ordered.headOption.getOrElse(-1)} why $why")
+      ordered.headOption.foreach(h => {
+        if (bids.exists(b => b.id != h && b.costToKill < bids.find(_.id == h).map(_.costToKill).getOrElse(Int.MaxValue))) {
           Debugging.ErrorLedger.note(
             "focusHeldPastBetter.at." + className,
             Debugging.ErrorLedger.Priority.Low,
-            f"pack holds ${h.id} over a cheaper grind, frame ${Lifecycle.With.frame}")
+            f"pack holds $h over a cheaper grind, frame ${Lifecycle.With.frame}")
         }
       })
     }
-    chosen match {
-      case Some(id) => write(squad, id); Some(id)
-      case None     => clear(squad); None
-    }
+    if (ordered.isEmpty) clear(squad) else write(squad, ordered)
+
+    ordered
   }
 
   override def reset(): Unit = {

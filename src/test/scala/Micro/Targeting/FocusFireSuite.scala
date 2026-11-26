@@ -14,36 +14,6 @@ class FocusFireSuite extends AnyFunSuite {
     assert(FocusFire.shotsToKill(100.0, 0.0) == Int.MaxValue)
   }
 
-  test("an empty candidate set has no focus target") {
-    assert(FocusFire.choose(Seq.empty).isEmpty)
-  }
-
-  test("the target the most shooters can hit wins") {
-    val chosen = FocusFire.choose(Seq(
-      FocusFire.Candidate(shotsToKill = 1, reach = 3, packDistanceTiles = 1.0, id = 1),
-      FocusFire.Candidate(shotsToKill = 5, reach = 9, packDistanceTiles = 9.0, id = 2),
-      FocusFire.Candidate(shotsToKill = 2, reach = 5, packDistanceTiles = 2.0, id = 3)))
-
-    assert(chosen.map(_.id).contains(2))
-  }
-
-  test("equal reach resolves by volleys, then pack distance, then id") {
-    val byVolleys = FocusFire.choose(Seq(
-      FocusFire.Candidate(shotsToKill = 3, reach = 4, packDistanceTiles = 1.0, id = 1),
-      FocusFire.Candidate(shotsToKill = 1, reach = 4, packDistanceTiles = 9.0, id = 2)))
-    assert(byVolleys.map(_.id).contains(2))
-
-    val byDistance = FocusFire.choose(Seq(
-      FocusFire.Candidate(shotsToKill = 2, reach = 4, packDistanceTiles = 4.5, id = 1),
-      FocusFire.Candidate(shotsToKill = 2, reach = 4, packDistanceTiles = 2.5, id = 2)))
-    assert(byDistance.map(_.id).contains(2))
-
-    val byId = FocusFire.choose(Seq(
-      FocusFire.Candidate(shotsToKill = 2, reach = 4, packDistanceTiles = 3.0, id = 9),
-      FocusFire.Candidate(shotsToKill = 2, reach = 4, packDistanceTiles = 3.0, id = 4)))
-    assert(byId.map(_.id).contains(4))
-  }
-
   test("volleys are priced for the squad, not the shooter") {
     // Same total damage from different hulls: the same number of volleys.
     assert(FocusFire.volleysToKill(120.0, Seq(20, 20)) == 3)
@@ -71,12 +41,6 @@ class FocusFireSuite extends AnyFunSuite {
     assert( ! FocusFire.enoughShooters(1))
     assert(FocusFire.enoughShooters(2))
     assert(FocusFire.enoughShooters(14))
-  }
-
-  test("two hitters make a shared target, one is just its own pick") {
-    assert( ! FocusFire.enoughReach(1))
-    assert(FocusFire.enoughReach(2))
-    assert(FocusFire.enoughReach(4))
   }
 
   test("two targets left still share one pick, one is trivially shared") {

@@ -8,14 +8,14 @@ import scala.collection.mutable
 
 /**
  * Focus hold, step by step: a dragoon line meets dragoon packs and the
- * pack's committed pick rides through reach churn. The pilot calls the
- * shipped kernels exactly like production does (FocusFire.choose for
- * entry with the quorum gates, SharedFocus.hold for the hold) and
- * chases the committed pick. The tests pin the temporal guarantees
- * no single-frame row can: a committed pick survives max-reach
- * re-votes while anyone can still hit it, a kill hands the pack to
- * one new pick together, and a one-volley straggler preempts the
- * grind instead of waiting behind it.
+ * pack's committed queue rides through reach churn. The pilot calls the
+ * shipped kernels exactly like production does (SharedFocus.orderPack
+ * for the queue, first-in-reach assignment per hull, strive toward the
+ * head otherwise) and every hull chases through the same queue instead
+ * of dueling alone. The tests pin the temporal guarantees no
+ * single-frame row can: a committed queue survives max-reach churn,
+ * dead picks drop together, and a one-volley straggler preempts the
+ * front and hands back.
  */
 class FocusHoldScenarioSuite extends AnyFunSuite with StarEngineSuite {
 
@@ -23,16 +23,12 @@ class FocusHoldScenarioSuite extends AnyFunSuite with StarEngineSuite {
     super.tags.map { case (n, s) => n -> (s + StarEngineTags.Targeting.name + StarEngineTags.Dragoon.name + StarEngineTags.Zealot.name + StarEngineTags.PvP.name) }
 
   /** Pack brain (one object for the whole line, like a squad): the shipped kernels decide, legs chase. */
-  private class PackBrain(ours: Seq[Body], foes: Seq[Body]) {
+  private class PackBrain(val ours: Seq[Body], foes: Seq[Body]) {
 
-    var committed: Option[Int] = None
+    var committed: Vector[Int] = Vector.empty
     val history = new mutable.ArrayBuffer[Int]()
+    val assignedByFrame = new mutable.HashMap[Int, mutable.Set[Int]]()
     private var lastFrame = -1
-
-    private def centroid(): (Double, Double) = {
-      val live = ours.filter(_.alive)
-      (live.map(_.x).sum / live.size, live.map(_.y).sum / live.size)
-    }
 
     private def bids(): Seq[SharedFocus.Bid] =
       foes.zipWithIndex.collect { case (f, i) if f.alive =>
@@ -43,36 +39,32 @@ class FocusHoldScenarioSuite extends AnyFunSuite with StarEngineSuite {
         SharedFocus.Bid(i, reach, cost)
       }.toSeq
 
-    /** One pick per frame, recorded once no matter how many hulls ask. */
-    def pick(world: World): Option[Int] = {
+    /** One ordered queue per frame, recorded once no matter how many hulls ask. */
+    def queue(world: World): Vector[Int] = {
       val shooters = ours.count(_.alive)
       val liveTargets = foes.count(_.alive)
-      val chosen: Option[Int] =
-        if (shooters < FocusFire.minShooters || liveTargets < FocusFire.minTargets) None
-        else {
-          val bs = bids()
-          val held = SharedFocus.hold(committed.flatMap(id => bs.find(_.id == id)), bs)
-          held.map(_.id).orElse {
-            val (cx, cy) = centroid()
-            val cands = bs.map(b =>
-              FocusFire.Candidate(b.costToKill, b.reach, Math.sqrt((foes(b.id).x - cx) * (foes(b.id).x - cx) + (foes(b.id).y - cy) * (foes(b.id).y - cy)) / 32.0, b.id))
-            FocusFire.choose(cands).filter(c => FocusFire.enoughReach(c.reach)).map(_.id)
-          }
-        }
-      chosen.foreach(id => committed = Some(id))
-      if (chosen.isEmpty) committed = None
+      if (shooters < FocusFire.minShooters || liveTargets < FocusFire.minTargets) committed = Vector.empty
+      else committed = SharedFocus.orderPack(committed, bids(), SharedFocus.packTargets)
       if (world.frame != lastFrame) {
         lastFrame = world.frame
-        history += chosen.getOrElse(-1)
+        history += committed.headOption.getOrElse(-1)
       }
 
-      chosen
+      committed
     }
   }
 
   private class FocusPilot(brain: PackBrain, foes: Seq[Body]) extends Pilot {
-    override def direct(me: Body, world: World): Directive =
-      brain.pick(world).flatMap(foes.lift).filter(_.alive).map(Chase).getOrElse {
+    override def direct(me: Body, world: World): Directive = {
+      // First pack target this hull can hit; the head even when out of
+      // reach (strive toward it instead of dueling alone).
+      val ordered = brain.queue(world)
+      val byId = foes.zipWithIndex.map { case (f, i) => (i, f) }.toMap
+      val assigned = ordered.flatMap(byId.get).find(f => f.alive && me.dist(f) <= me.rangeAgainst(f))
+        .orElse(ordered.headOption.flatMap(byId.get).filter(_.alive))
+      assigned.foreach(a => brain.assignedByFrame.getOrElseUpdate(world.frame, mutable.Set.empty[Int]) += foes.indexOf(a))
+
+      assigned.map(Chase).getOrElse {
         // No quorum yet: the pack marches at one foe together (nearest
         // to the pack centroid), never nearest-per-hull - per-hull
         // chase splits the line before contact and no target ever
@@ -83,6 +75,7 @@ class FocusHoldScenarioSuite extends AnyFunSuite with StarEngineSuite {
         foes.filter(_.alive).sortBy(f => (f.x - cx) * (f.x - cx) + (f.y - cy) * (f.y - cy))
           .headOption.map(Chase).getOrElse(Hold)
       }
+    }
   }
 
   private def segments(picks: Seq[Int]): Int = {
@@ -131,17 +124,17 @@ class FocusHoldScenarioSuite extends AnyFunSuite with StarEngineSuite {
         Seq(grindA -> new Pilots.Hold, grindB -> new Pilots.Hold, straggler -> new LateStragglerPilot)).toMap, Seq.empty)
     while (world.frame < 6000 && straggler.alive && ours.exists(_.alive)) world.step()
     val stragglerDeath = if (straggler.alive) -1 else world.frame
-    // Let the release settle: the pick must return to the grind.
+    // Let the release settle: the assignment must return to the grind.
     var f = 0
     while (f < 100 && ours.exists(_.alive)) { world.step(); f += 1 }
-    val firstStragglerPick = brain.history.indexWhere(_ == 2)
-    val firstLivePick = brain.history.indexWhere(_ >= 0)
-    val postKill = if (stragglerDeath < 0) Seq.empty else brain.history.dropWhile(_ != 2).drop(1).takeWhile(_ != 2)
-    println(s"DIAG preempt stragglerDeath=$stragglerDeath firstPick=$firstStragglerPick postKill=$postKill")
+    val frames = brain.assignedByFrame.keys.toSeq.sorted
+    val firstGrindAssigned = frames.find(fr => brain.assignedByFrame(fr).exists(id => id == 0 || id == 1))
+    val firstStragglerAssigned = frames.find(fr => brain.assignedByFrame(fr).contains(2))
+    val postKill = if (stragglerDeath < 0) Seq.empty else frames.dropWhile(_ <= stragglerDeath).flatMap(fr => brain.assignedByFrame.getOrElse(fr, Set.empty[Int]).toSeq)
+    println(s"DIAG preempt stragglerDeath=$stragglerDeath grindFirst=$firstGrindAssigned stragglerFirst=$firstStragglerAssigned postKill=${postKill.distinct}")
     assert(! straggler.alive, "the free kill must die")
-    assert(firstLivePick >= 0 && brain.history(firstLivePick) != 2, "the grind must own the opening")
-    assert(firstStragglerPick > firstLivePick, "the grind must own the early frames, the preempt the later ones")
-    assert(brain.history.take(firstStragglerPick).exists(id => id == 0 || id == 1), "the grind must be committed before the preempt")
-    assert(postKill.forall(id => id < 0 || id == 0 || id == 1), "after the free kill the pack returns to the grind")
+    assert(firstGrindAssigned.isDefined, "the grind must be assigned before any preempt")
+    assert(firstStragglerAssigned.exists(s => firstGrindAssigned.exists(g => s > g)), "the preempt must follow the grind, not lead it")
+    assert(postKill.exists(id => id == 0 || id == 1), "after the free kill the pack returns to the grind")
   }
 }
