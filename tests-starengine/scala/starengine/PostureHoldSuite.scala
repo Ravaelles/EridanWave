@@ -1,7 +1,7 @@
 package starengine
 
 import ProxyBwapi.Races.Protoss
-import Tactic.Squads.Decisions.{ClusterPosture, RetreatDiscipline}
+import Tactic.Squads.Decisions.{ClusterPosture, RetreatExtraPenalties}
 import org.scalatest.funsuite.AnyFunSuite
 
 /**
@@ -30,7 +30,7 @@ class PostureHoldSuite extends AnyFunSuite with StarEngineSuite {
 
     override def direct(me: Body, world: World): Directive = {
       val raw = advantage
-      val penalized = raw * RetreatDiscipline.advantageMultiplier(world.frame - withdrawStart)
+      val penalized = raw * RetreatExtraPenalties.advantageMultiplier(world.frame - withdrawStart)
       val next = ClusterPosture.next(posture, fighting, 1.0, penalized, inContact = true, world.frame - withdrawStart)
       if (next == ClusterPosture.Withdraw && posture != ClusterPosture.Withdraw) withdrawStart = world.frame
       if (next == ClusterPosture.Withdraw) withdrawals += 1
