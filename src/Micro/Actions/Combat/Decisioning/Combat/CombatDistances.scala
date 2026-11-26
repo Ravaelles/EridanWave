@@ -8,11 +8,39 @@ import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.?
 import Utilities.SomeIf
 
+object CombatDistances {
+
+  /**
+   * Melee arrival (pure booleans for the suite): a blade charges with
+   * its own duel (hittable, contact) or with the pack fight (a mate
+   * under fire or dealing it) - never at sight alone. Sight-only
+   * approaches belong to the march (slots, UmsHold strides), so the
+   * line arrives shoulder-to-shoulder instead of trickling in.
+   */
+  def meleeArrivesWithPack(
+    hasHittable: Boolean,
+    hasContact: Boolean,
+    squadEngagedUpon: Boolean,
+    squadEngagingOn: Boolean): Boolean =
+    hasHittable || hasContact || squadEngagedUpon || squadEngagingOn
+}
+
 class CombatDistances(combat: Combat, unit: FriendlyUnitInfo) {
 
   private[Decisioning] def readyToApproachTarget: Boolean = {
     if (combat.target.isEmpty) return false
-    if (unit.unitClass.melee) return true
+
+    // Blades arrive with the pack fight, never at sight (owner order,
+    // 4+3Zeal mirror): a seen target ten tiles out is a slot-walk and
+    // receive through the march, never a lone charge - the line forms
+    // shoulder-to-shoulder first, then brawls as one.
+    val meleeArrival = CombatDistances.meleeArrivesWithPack(
+      hasHittable      = unit.matchups.targetsInRange.nonEmpty,
+      hasContact       = unit.matchups.threatsInRange.nonEmpty,
+      squadEngagedUpon = combat.squadEngagedUpon,
+      squadEngagingOn  = combat.squadEngagingOn)
+    if (unit.unitClass.melee) return meleeArrival
+
     // Sieged tanks outrange us: walk at them during the cooldown instead of
     // waiting it out at a range we cannot shoot from (Atlantis Soyuz).
     // Cooldown state itself lives in cooldownLeft/framesToBeReadyForAttackOrder.
