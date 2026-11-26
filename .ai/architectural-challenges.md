@@ -24,10 +24,15 @@ hysteresis home (rules 10-11).
   spread damage vs regenerating shields, needs (c)/(d) below;
   (b) grind + mop-up timeout (200s, 14 kills, then Walk<->Hunt
   flips every ~7 frames past f925 and a 100-227x flap-ledger
-  explosion) - the endgame never commits, same disease as the
-  queued 4Drag_v_Zeal timeouts (latch the hunt target / hunt over
-  Walk while the memory stays huntable - proposal only, owner
-  calls it). Per-hull reach still splits movers (StickyAnchor
+  explosion) - HUNT LATCH SHIPPED (owner vote): HuntBehavior.latchedTarget
+  holds the committed memory (StickyAnchor kernel, releases on
+  death/disappearance/staleness-unseen-72f/buildings-exempt),
+  WalkStage declines while HuntBehavior.huntLatched holds, so the
+  first Hunt win sticks instead of alternating home. Live 4Drag_v_Zeal:
+  no Walk/Hunt alternation above noise (was dozens), 6/2 with the
+  remaining loss now a scouting/coverage question (enemies unfound,
+  not unchased - see report). The queued 4Drag_v_Zeal item is answered
+  by this mechanism; ladder games validate (rule 21). Per-hull reach still splits movers (StickyAnchor
   stopped the ladder random-walk, but kiting out of reach still
   falls back per hull). Open owner calls: (c) kite vs focus
   doctrine (stand in reach vs quorum-free focus); (d) score-term
