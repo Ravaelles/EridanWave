@@ -20,7 +20,6 @@ import Tactic.Squads.Decisions.ClusterPosture
 import Tactic.Squads.Decisions.MotionVerdict
 import Tactic.Squads.Decisions.RetreatVerdict
 import Tactic.Squads.Decisions.SuicideMission
-import Tactic.Squads.MarchOrders
 import Utilities.DispatchBand
 import Utilities.Latch
 import Utilities.?
@@ -212,16 +211,14 @@ private[Decisioning] object EngagePipeline {
       // Blades never charge on sight alone (owner order, 4+3Zeal): the
       // whole outer gate bows to the pack arrival - own duel, pack
       // fight or a real chase. Sight-only approaches march through the
-      // forming line instead of trickling in over it. While this hull
-      // drills (no contact of its own) even a pack fight elsewhere
-      // never releases it - the line finishes first, then brawls as
-      // one; a bitten hull fights, drill or not.
-      val drilling = MarchOrders.assemblyHolding(unit)
+      // forming line instead of trickling in over it. Once anyone bites,
+      // the pack joins together (a forming line that watches one hull
+      // die alone donates the ball in detail instead).
       val bladeArrival = ! unit.unitClass.melee || CombatDistances.meleeArrivesWithPack(
         hasHittable      = unit.matchups.targetsInRange.nonEmpty,
         hasContact       = unit.matchups.threatsInRange.nonEmpty,
-        squadEngagedUpon = combat.squadEngagedUpon && ! drilling,
-        squadEngagingOn  = combat.squadEngagingOn && ! drilling) || combat.shouldChase
+        squadEngagedUpon = combat.squadEngagedUpon,
+        squadEngagingOn  = combat.squadEngagingOn) || combat.shouldChase
       val outer = (combat.distances.readyToApproachTarget || noVolley || KiteAway.exemptFromVolley(unit.totalHealth) || combat.shouldChase || KiteAway.loneBladeDuel(gunsNear, meleeChase, unit.unitClass.melee)) && bladeArrival
       if ( ! outer) UnitControl.Declined
       else {
