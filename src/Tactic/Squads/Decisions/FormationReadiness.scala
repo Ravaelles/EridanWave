@@ -53,15 +53,38 @@ object FormationReadiness extends PerGame {
     * meets the enemy shoulder-to-shoulder, never on the first stepped
     * frame. Contact freezes, retreat dissolves; the force binds the
     * Forming-to-Formed handover only. */
-  val formForceFrames: Int = 15
+  val formForceFrames: Int = 60
+
+  /** Safe drill, in frames (owner order): while no enemy can attack us
+    * inside the safety margin the drill holds longer - there is no
+    * reason to rush a safe line. */
+  val formForceFramesSafe: Int = 100
+
+  /** Safety margin, in tiles: past contact reach plus this no enemy can
+    * attack us, so the drill takes the long window. */
+  val safeMarginTiles: Double = 2.0
+
+  /** Required drill length for this gap (pure numbers for the suite):
+    * the long window while safe, the short one when the enemy closes. */
+  def requiredFormFrames(minGapTiles: Double): Int =
+    ?(minGapTiles > contactGapTiles + safeMarginTiles, formForceFramesSafe, formForceFrames)
 
   /**
    * Forced handover (pure numbers for the suite): a drill younger than
-   * the forced window stays Forming even when the depth already reads
+   * the required window stays Forming even when the depth already reads
    * formed - the line proves itself over frames, not on one step.
    */
-  def enforceMinForm(current: FormState, grown: FormState, framesInForming: Int): FormState =
-    if (current == Forming && grown == Formed && framesInForming < formForceFrames) Forming else grown
+  def enforceMinForm(current: FormState, grown: FormState, framesInForming: Int, requiredFrames: Int): FormState =
+    if (current == Forming && grown == Formed && framesInForming < requiredFrames) Forming else grown
+
+  /**
+   * Commander's permission (pure flags for the suite): while the squad
+   * drills pre-contact nobody votes to fight - the squad says when the
+   * duel may start, never the soldier. Contact (or its imminence) hands
+   * the frame back: a bitten hull fights, drill or not.
+   */
+  def mayFightState(current: FormState, contactAny: Boolean, minGapTiles: Double): Boolean =
+    current != Forming || contactAny || minGapTiles <= contactGapTiles
 
   /** Fallback chase cap, in tiles: farther ahead than this the hull holds
     * and waits instead of moonwalking across the map to a lost rear. */
@@ -104,10 +127,23 @@ object FormationReadiness extends PerGame {
     ahead - rearBandTiles
   }
 
-  private val memory = new mutable.HashMap[Squad, (Int, FormState, Int)]()
+  private val memory = new mutable.HashMap[Squad, (Int, FormState, Int, Boolean, Double)]()
 
   def state(squad: Squad): FormState =
     memory.get(squad).map(_._2).getOrElse(Chaotic)
+
+  /**
+   * Commander's permission (thin game seam over the pure flag): while
+   * this squad drills pre-contact its soldiers cast no fight votes -
+   * duel brains stand down, so no Outnumbering charge overrides the
+   * forming line. Squadless hulls decide for themselves, like today.
+   */
+  def mayFight(squad: Squad, frame: Int): Boolean = {
+    val grown = update(squad, frame)
+    val (_, _, _, contactAny, minGap) = memory(squad)
+
+    mayFightState(grown, contactAny, minGap)
+  }
 
   /**
    * Per-squad tick (thin game seam over the pure table): one scan per
@@ -130,10 +166,10 @@ object FormationReadiness extends PerGame {
         .map(o.pixelDistanceEdge(_) * Maff.inv32)).reduceOption(_ min _).getOrElse(Double.PositiveInfinity)
     val retreating = RetreatVerdict.heldArmy(frame)
     val grown = next(state(squad), minGap, spread, contactAny, retreating)
-    val ( _, prev, formStart) = memory.getOrElse(squad, (frame, Chaotic, frame))
+    val (_, prev, formStart, _, _) = memory.getOrElse(squad, (frame, Chaotic, frame, false, Double.PositiveInfinity))
     val started = if (prev != Forming && grown == Forming) frame else formStart
-    val forced = enforceMinForm(prev, grown, frame - started)
-    memory(squad) = (frame, forced, started)
+    val forced = enforceMinForm(prev, grown, frame - started, requiredFormFrames(minGap))
+    memory(squad) = (frame, forced, started, contactAny, minGap)
 
     forced
   }

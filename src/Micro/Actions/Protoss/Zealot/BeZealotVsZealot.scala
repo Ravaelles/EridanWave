@@ -6,6 +6,7 @@ import Mathematics.Maff
 import Micro.Actions.Action
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
+import Tactic.Squads.Decisions.FormationReadiness
 import Utilities.Time.Minutes
 
 import scala.language.postfixOps
@@ -23,6 +24,11 @@ object BeZealotVsZealot extends Action {
       && unit.matchups.threatsInPixels(128).forall(_.isAny(Protoss.Zealot, Protoss.Probe)))
 
   override def perform(unit: FriendlyUnitInfo): UnitControl = {
+    // Commander's permission (owner order): while the squad drills
+    // pre-contact its soldiers cast no fight votes - no Outnumbering
+    // charge overrides the forming line. Squadless hulls decide alone.
+    if ( ! unit.squad.map(s => FormationReadiness.mayFight(s, With.frame)).getOrElse(true)) return UnitControl.Declined
+
     val obviousTarget = Maff.minBy(unit.matchups.targetsInPixels(16))(t => t.totalHealth / (1.0 + t.matchups.threatsInRange.count(unit!=)))
     unit.agent.toAttack = obviousTarget
     val target = obviousTarget.orElse(unit.matchups.targetNearest)

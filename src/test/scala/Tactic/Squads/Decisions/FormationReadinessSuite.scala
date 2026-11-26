@@ -50,11 +50,27 @@ class FormationReadinessSuite extends AnyFunSuite {
     assert(backStepTiles(myGapTiles = 0.5, rearGapTiles = 10.0) == 0.0)
   }
 
-  test("the forced drill holds Forming for fifteen frames, then stands formed") {
-    assert(enforceMinForm(Forming, Formed, framesInForming = 0) == Forming)
-    assert(enforceMinForm(Forming, Formed, framesInForming = 14) == Forming)
-    assert(enforceMinForm(Forming, Formed, framesInForming = 15) == Formed)
-    assert(enforceMinForm(Forming, Forming, framesInForming = 0) == Forming)
-    assert(enforceMinForm(Chaotic, Formed, framesInForming = 0) == Formed)
+  test("the forced drill holds Forming for sixty frames, a hundred while safe") {
+    assert(requiredFormFrames(minGapTiles = 3.0) == 60)
+    assert(requiredFormFrames(minGapTiles = 4.0) == 60)
+    assert(requiredFormFrames(minGapTiles = 4.01) == 100)
+    assert(requiredFormFrames(minGapTiles = 30.0) == 100)
+    assert(enforceMinForm(Forming, Formed, framesInForming = 0, requiredFrames = 60) == Forming)
+    assert(enforceMinForm(Forming, Formed, framesInForming = 59, requiredFrames = 60) == Forming)
+    assert(enforceMinForm(Forming, Formed, framesInForming = 60, requiredFrames = 60) == Formed)
+    assert(enforceMinForm(Forming, Formed, framesInForming = 99, requiredFrames = 100) == Forming)
+    assert(enforceMinForm(Forming, Formed, framesInForming = 100, requiredFrames = 100) == Formed)
+    assert(enforceMinForm(Forming, Forming, framesInForming = 0, requiredFrames = 60) == Forming)
+    assert(enforceMinForm(Chaotic, Formed, framesInForming = 0, requiredFrames = 60) == Formed)
+  }
+
+  test("the commander owns the fight vote: no fighting while drilling pre-contact") {
+    assert( ! mayFightState(Forming, contactAny = false, minGapTiles = 8.0))
+    assert(mayFightState(Forming, contactAny = true, minGapTiles = 8.0))
+    assert(mayFightState(Forming, contactAny = false, minGapTiles = 2.0))
+    assert(mayFightState(Forming, contactAny = false, minGapTiles = 1.0))
+    assert(mayFightState(Forming, contactAny = true, minGapTiles = 1.0))
+    assert(mayFightState(Formed, contactAny = false, minGapTiles = 8.0))
+    assert(mayFightState(Chaotic, contactAny = false, minGapTiles = 8.0))
   }
 }

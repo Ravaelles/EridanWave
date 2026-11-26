@@ -58,7 +58,8 @@ object FightOrFlee extends Action {
     committed   = u.agent.commit,
     hallTargeted = u.agent.toAttack.exists(_.unitClass.isTownHall),
     loneScout = Protoss.Scout(u) && Enemy.protoss() && ! TargetFilterScout.hasWingmate(u),
-    outmatchedGoon = Protoss.Dragoon(u) && Enemy.protoss() && {
+    outmatchedGoon = Protoss.Dragoon(u) && Enemy.protoss() && u.squad.map(s =>
+      Tactic.Squads.Decisions.FormationReadiness.mayFight(s, With.frame)).getOrElse(true) && {
       val global = With.battles.globalAttack
       DragoonPvpRetreat.shouldRetreat(
         true,
