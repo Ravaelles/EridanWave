@@ -1,0 +1,126 @@
+package Tactic.Squads.Decisions
+
+import Lifecycle.PerGame
+import Lifecycle.With
+import Mathematics.Maff
+import Tactic.Squads.Squad
+import Utilities.?
+
+import scala.collection.mutable
+
+/**
+ * Squad formation state (one source of truth for the line drill):
+ * Chaotic (no line - stragglers, post-retreat) becomes Forming once a
+ * seen enemy stands inside formation reach, Forming becomes Formed once
+ * the front-back depth closes to shoulder-to-shoulder, and Formed holds
+ * through small breathing. Contact freezes the state (the duel owns
+ * the frame, never the drill), retreat dissolves it back to Chaotic.
+ * Pure transition table below, pinned in FormationReadinessSuite; the
+ * thin per-squad memory beside it ticks once per frame. March and
+ * technique read the state instead of re-deriving forming from their
+ * own gates, so the line drills as one.
+ */
+object FormationReadiness extends PerGame {
+
+  sealed trait FormState
+
+  case object Chaotic extends FormState
+
+  case object Forming extends FormState
+
+  case object Formed extends FormState
+
+  /** Front-back depth that (re)opens the drill, in tiles: past three the line walks in detail. */
+  val spreadEnterTiles: Double = 3.0
+
+  /** Front-back depth that closes the drill, in tiles: shoulder-to-shoulder. */
+  val spreadExitTiles: Double = 1.5
+
+  /** Seen enemy inside this, in tiles, means time to form (twelve, like the dress range). */
+  val foeNearTiles: Double = 12.0
+
+  /** Sight flicker past the edge never flaps the line: release a tile and a half out. */
+  val foeFarTiles: Double = 13.5
+
+  /** Gap at or inside this, in tiles, belongs to the duel: the drill freezes, never re-votes. */
+  val contactGapTiles: Double = 2.0
+
+  /** Rear rank band, in tiles: hulls this close to the rearmost hold the anchor. */
+  val rearBandTiles: Double = 1.5
+
+  /** Fallback chase cap, in tiles: farther ahead than this the hull holds
+    * and waits instead of moonwalking across the map to a lost rear. */
+  val chaseTiles: Double = 6.0
+
+  def next(
+    current: FormState,
+    minGapTiles: Double,
+    spreadTiles: Double,
+    contactAny: Boolean,
+    retreating: Boolean): FormState = {
+    if (retreating) return Chaotic
+
+    if (contactAny || minGapTiles <= contactGapTiles) return current
+
+    if (minGapTiles > foeFarTiles) return Chaotic
+
+    current match {
+      case Formed  => ?(spreadTiles > spreadEnterTiles, Forming, Formed)
+      case Forming => ?(spreadTiles <= spreadExitTiles, Formed, Forming)
+      case Chaotic =>
+        if (minGapTiles > foeNearTiles) Chaotic
+        else if (spreadTiles > spreadExitTiles) Forming
+        else Formed
+    }
+  }
+
+  /**
+   * Back-step toward the rear rank, in tiles: how far this hull walks
+   * away from the foe to meet the rearmost. The rear holds the anchor,
+   * the middle falls back to it, the lost (past the chase cap) hold
+   * and wait instead of donating the map. Zero means hold.
+   */
+  def backStepTiles(myGapTiles: Double, rearGapTiles: Double): Double = {
+    val ahead = rearGapTiles - myGapTiles
+    if (ahead <= rearBandTiles) return 0.0
+
+    if (ahead > chaseTiles) return 0.0
+
+    ahead - rearBandTiles
+  }
+
+  private val memory = new mutable.HashMap[Squad, (Int, FormState)]()
+
+  def state(squad: Squad): FormState =
+    memory.get(squad).map(_._2).getOrElse(Chaotic)
+
+  /**
+   * Per-squad tick (thin game seam over the pure table): one scan per
+   * squad per frame no matter how many hulls ask - front-back depth on
+   * the goal axis (cheap tile distances, never per-foe scans), contact
+   * off the precomputed matchups, nearest seen foe off the precomputed
+   * threats. Warriors only: eyes and casters never own the line.
+   */
+  def update(squad: Squad, frame: Int): FormState = {
+    memory.get(squad).filter(_._1 == frame).map(_._2).foreach(found => return found)
+
+    val warriors = squad.units.filter(o => o.alive && o.unitClass.isWarrior)
+    val coords = warriors.map(_.tileDistanceCenter(squad.vicinity))
+    val spread = if (coords.size < 2) 0.0 else coords.max - coords.min
+    val contactAny = warriors.exists(o => o.matchups.targetsInRange.nonEmpty || o.matchups.threatsInRange.nonEmpty)
+    val minGap = warriors.flatMap(o =>
+      Maff.minBy(o.matchups.threats.view.filter(t =>
+        t.likelyStillThere && t.visible && t.unitClass.isWarrior))(
+        o.pixelDistanceEdge(_))
+        .map(o.pixelDistanceEdge(_) * Maff.inv32)).reduceOption(_ min _).getOrElse(Double.PositiveInfinity)
+    val retreating = RetreatVerdict.heldArmy(frame)
+    val grown = next(state(squad), minGap, spread, contactAny, retreating)
+    memory(squad) = (frame, grown)
+
+    grown
+  }
+
+  override def reset(): Unit = {
+    memory.clear()
+  }
+}

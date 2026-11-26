@@ -479,6 +479,7 @@ final class Combat(unit: FriendlyUnitInfo) extends Action with CombatSituation {
     // the next ticks, never on the old line.
     val advance = ((posture.forall(ClusterPosture.advances) && (! RetreatVerdict.heldArmy(With.frame) || overruled)) ||
       umsDuelistAdvances) && ! MarchOrders.farWaitHolding(unit) &&
+      ! MarchOrders.assemblyHolding(unit) &&
       MotionVerdict.held(unit.id, With.frame) != MotionVerdict.Dress
 
     var i = 0

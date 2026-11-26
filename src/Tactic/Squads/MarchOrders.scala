@@ -10,7 +10,7 @@ import Micro.Agency.Commander
 import Micro.Formation.{FormationStyleDisengage, FormationStyleGuard}
 import ProxyBwapi.Races.{Protoss, Terran}
 import ProxyBwapi.UnitInfo.FriendlyUnitInfo
-import Tactic.Squads.Decisions.{AttackModes, CatchUpMarch, ClusterPosture, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatExtraPenalties, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, UmsHold, WithdrawAnchor}
+import Tactic.Squads.Decisions.{AttackModes, CatchUpMarch, ClusterPosture, FormationReadiness, MarchDress, MarchFacts, MarchGates, MarchLabel, MarchUnit, MotionVerdict, RetreatExtraPenalties, RetreatVerdict, SlotDiscipline, SquadRally, SuicideMission, ToothlessMarch, UmsHold, WithdrawAnchor}
 import Utilities.?
 
 /**
@@ -181,6 +181,53 @@ object MarchOrders {
         .map(foe => unit.pixel.project(foe.pixel, MarchDress.creepTiles * 32.0).walkablePixel)
         .getOrElse(unit.pixel)
     else unit.pixel
+
+  /**
+   * Assembly read, shared by the march, the motion verdict and the
+   * technique: while the squad drills (Forming) every hull ahead of the
+   * rear rank falls back to it and the rear holds the anchor, so the
+   * line meets the enemy shoulder-to-shoulder instead of trickling in.
+   * Stragglers behind the rear keep their rally, contact hulls keep
+   * their duel, sacred ground and flanks never assemble. True while
+   * this hull drills (movement or hold), false when another leg owns it.
+   */
+  def assemblyHolding(unit: FriendlyUnitInfo): Boolean =
+    unit.squad.exists(squad => assembleFor(squad, unit)._1)
+
+  private def assembleFor(squad: Squad, unit: FriendlyUnitInfo): (Boolean, Pixel) = {
+    if ( ! unit.unitClass.isWarrior || ! unit.canMove || unit.agent.isScout || unit.flying) return (false, unit.pixel)
+
+    if (Protoss.DarkTemplar(unit)) return (false, unit.pixel)
+
+    if (Micro.Actions.Combat.Decisioning.Skirmish.NoRetreat.holdsAny(unit)) return (false, unit.pixel)
+
+    if (SuicideMission.assign(unit)) return (false, unit.pixel)
+
+    if (unit.formationEngage.exists(_.flanking)) return (false, unit.pixel)
+
+    if (FormationReadiness.update(squad, With.frame) != FormationReadiness.Forming) return (false, unit.pixel)
+
+    if (unit.matchups.targetsInRange.nonEmpty || unit.matchups.threatsInRange.nonEmpty) return (false, unit.pixel)
+
+    val mates = squad.units.filter(o => o.alive && o.unitClass.isWarrior && ! o.flying)
+    if (mates.size < 2) return (false, unit.pixel)
+
+    val rearCoord = mates.map(_.tileDistanceCenter(squad.vicinity)).max
+    val myCoord = unit.tileDistanceCenter(squad.vicinity)
+    if (myCoord > rearCoord + FormationReadiness.rearBandTiles) return (false, unit.pixel)
+
+    val step = FormationReadiness.backStepTiles(myCoord, rearCoord)
+    if (step <= 0) return (true, unit.pixel)
+
+    Maff.minBy(unit.matchups.threats.view.filter(t =>
+      t.likelyStillThere && t.visible && t.unitClass.isWarrior))(
+      unit.pixelDistanceEdge(_)) match {
+      case None      => (true, unit.pixel)
+      case Some(foe) =>
+        val away = foe.pixel.radiansTo(unit.pixel)
+        (true, unit.pixel.radiateRadians(away, step * 32.0).walkablePixel)
+    }
+  }
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): (Pixel, MarchLabel) = {
     val suicide = SuicideMission.assign(unit)
     // The verdict postdates the read (it needs the armed scan below),
@@ -261,7 +308,7 @@ object MarchOrders {
     val catchUpFullSpeed = marchUnit.shouldFight && ! verdictRetreat && ! marchUnit.hasContact &&
       marchUnit.nearestStaticTiles.forall(_ > MarchDress.staticDressTiles) &&
       CatchUpMarch.catchUp(marchUnit.unitId, marchUnit.behindAlphaTiles)
-    val wanted = MotionVerdict.desired(verdictRetreat, marchUnit.hasDuel && ! catchUpFullSpeed, farWaitHolding(unit))
+    val wanted = MotionVerdict.desired(verdictRetreat, marchUnit.hasDuel && ! catchUpFullSpeed, farWaitHolding(unit) || assemblyHolding(unit))
     MotionVerdict.update(unit.id, wanted, With.frame)
     val verdictDuel = MotionVerdict.held(unit.id, With.frame) == MotionVerdict.Duel
     val latched = marchUnit.copy(verdictRetreat = verdictRetreat, verdictDuel = verdictDuel)
@@ -344,6 +391,7 @@ object MarchOrders {
     val joinPixel              = joinLeg(squad, unit, suicide, slotOpen)
     val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, dressOpen)
     val (umsHolding, umsPixel) = umsHoldLeg(squad, unit, facts)
+    val (assembling, assemblePixel) = assembleFor(squad, unit)
     // Far dress-and-wait (UMS mirrors, no reavers): arriving at five
     // tiles outside gun reach the line dresses and waits for the enemy
     // ball instead of trickling into it, creeping a step every couple
@@ -353,8 +401,8 @@ object MarchOrders {
     val farWait = ! verdictRetreat && farWaitHolding(unit)
     val farCreep = farCreepPixel(unit)
     val pack                   = ?(unit.flying, squad.centroidAir, squad.centroidGround)
-    val terminus = ?(umsHolding, umsPixel, ?(farWait, farCreep, ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch)))))
-    val label    = ?(umsHolding, MarchLabel.UmsHold, ?(farWait || holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot)))
+    val terminus = ?(assembling, assemblePixel, ?(umsHolding, umsPixel, ?(farWait, farCreep, ?(holding, unit.pixel, joinPixel.getOrElse(?(homing, pack, finalMarch))))))
+    val label    = ?(assembling, MarchLabel.WaitingForPack, ?(umsHolding, MarchLabel.UmsHold, ?(farWait || holding, MarchLabel.WaitingForPack, ?(rallying || homing, MarchLabel.RallyingToPack, MarchLabel.MarchingToSlot))))
     (terminus, label)
   }
 
