@@ -12,9 +12,10 @@ import scala.collection.mutable
  * Squad formation state (one source of truth for the line drill):
  * Chaotic (no line - stragglers, post-retreat) becomes Forming once a
  * seen enemy stands inside formation reach, Forming becomes Formed once
- * the front-back depth closes to shoulder-to-shoulder, and Formed holds
- * through small breathing. Contact freezes the state (the duel owns
- * the frame, never the drill), retreat dissolves it back to Chaotic.
+ * the front-back depth closes to shoulder-to-shoulder, and any contact
+ * (or its imminence) hands the squad to Engaged - the pack joins the
+ * bite instead of posing through the grind. A lull re-reads the line
+ * (back to Forming or Formed); retreat dissolves everything to Chaotic.
  * Pure transition table below, pinned in FormationReadinessSuite; the
  * thin per-squad memory beside it ticks once per frame. March and
  * technique read the state instead of re-deriving forming from their
@@ -29,6 +30,8 @@ object FormationReadiness extends PerGame {
   case object Forming extends FormState
 
   case object Formed extends FormState
+
+  case object Engaged extends FormState
 
   /** Front-back depth that (re)opens the drill, in tiles: past three the line walks in detail. */
   val spreadEnterTiles: Double = 3.0
@@ -98,11 +101,15 @@ object FormationReadiness extends PerGame {
     retreating: Boolean): FormState = {
     if (retreating) return Chaotic
 
-    if (contactAny || minGapTiles <= contactGapTiles) return current
+    // Contact is the handover, not a freeze: anyone bitten fights, and
+    // the pack joins instead of posing through the grind. Imminence
+    // counts the same - at two tiles the duel owns the next frames.
+    if (contactAny || minGapTiles <= contactGapTiles) return Engaged
 
     if (minGapTiles > foeFarTiles) return Chaotic
 
     current match {
+      case Engaged => ?(spreadTiles > spreadEnterTiles, Forming, Formed)
       case Formed  => ?(spreadTiles > spreadEnterTiles, Forming, Formed)
       case Forming => ?(spreadTiles <= spreadExitTiles, Formed, Forming)
       case Chaotic =>

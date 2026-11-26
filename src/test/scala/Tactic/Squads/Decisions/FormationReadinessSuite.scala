@@ -32,9 +32,17 @@ class FormationReadinessSuite extends AnyFunSuite {
     assert(next(Forming, minGapTiles = 13.51, spreadTiles = 9.0, contactAny = false, retreating = false) == Chaotic)
   }
 
-  test("contact freezes the state: the duel owns the frame, never the drill") {
-    assert(next(Forming, minGapTiles = 1.0, spreadTiles = 9.0, contactAny = true, retreating = false) == Forming)
-    assert(next(Chaotic, minGapTiles = 1.0, spreadTiles = 9.0, contactAny = true, retreating = false) == Chaotic)
+  test("contact is the handover: anyone bitten fights, the pack joins") {
+    assert(next(Forming, minGapTiles = 1.0, spreadTiles = 9.0, contactAny = true, retreating = false) == Engaged)
+    assert(next(Chaotic, minGapTiles = 1.0, spreadTiles = 9.0, contactAny = true, retreating = false) == Engaged)
+    assert(next(Forming, minGapTiles = 8.0, spreadTiles = 9.0, contactAny = true, retreating = false) == Engaged)
+    assert(next(Formed, minGapTiles = 2.0, spreadTiles = 1.0, contactAny = false, retreating = false) == Engaged)
+  }
+
+  test("the lull re-forms: Engaged without contact reads the line again") {
+    assert(next(Engaged, minGapTiles = 8.0, spreadTiles = 9.0, contactAny = false, retreating = false) == Forming)
+    assert(next(Engaged, minGapTiles = 8.0, spreadTiles = 1.0, contactAny = false, retreating = false) == Formed)
+    assert(next(Engaged, minGapTiles = 8.0, spreadTiles = 9.0, contactAny = false, retreating = true) == Chaotic)
   }
 
   test("retreat dissolves the line back to chaos") {
@@ -70,6 +78,8 @@ class FormationReadinessSuite extends AnyFunSuite {
     assert(mayFightState(Forming, contactAny = false, minGapTiles = 2.0))
     assert(mayFightState(Forming, contactAny = false, minGapTiles = 1.0))
     assert(mayFightState(Forming, contactAny = true, minGapTiles = 1.0))
+    assert(mayFightState(Engaged, contactAny = true, minGapTiles = 8.0))
+    assert(mayFightState(Engaged, contactAny = false, minGapTiles = 8.0))
     assert(mayFightState(Formed, contactAny = false, minGapTiles = 8.0))
     assert(mayFightState(Chaotic, contactAny = false, minGapTiles = 8.0))
   }
