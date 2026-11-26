@@ -4,6 +4,7 @@ import Lifecycle.With
 import Mathematics.Maff
 import Micro.Actions.Combat.Decisioning.Formation.FormationHold
 import Micro.Agency.Commander
+import Micro.Targeting.StickyAnchor
 import ProxyBwapi.Races.Protoss
 import ProxyBwapi.UnitInfo.{FriendlyUnitInfo, UnitInfo}
 import Utilities.Time.Minutes
@@ -54,7 +55,7 @@ object HuntBehavior {
       verdictDuel         = Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame) == Tactic.Squads.Decisions.MotionVerdict.Duel,
       dressHeld           = Tactic.Squads.Decisions.MotionVerdict.held(unit.id, With.frame) == Tactic.Squads.Decisions.MotionVerdict.Dress)) return false
 
-    val foe = Maff.minBy(huntables(unit))(unit.pixelDistanceCenter(_))
+    val foe = latchedTarget(unit)
     if (foe.isEmpty) return false
 
     unit.agent.act("Hunt")
@@ -80,6 +81,54 @@ object HuntBehavior {
         || (e.unitClass.isBuilding && e.lastSeen > 0))).toSeq
 
   /**
+   * Latched mop-up pick (owner order, endgame Walk<->Hunt timeouts):
+   * while the committed memory stays huntable AND fresh the hunt owns
+   * its frame over the Walk gait - the two voted separately every few
+   * frames and neither committed, so the clock ran out on won games.
+   * Releases: target dead or forgotten, nothing huntable left, the
+   * memory gone stale (unseen ghosts never die, so death alone cannot
+   * release - staleness is the release), or a visible contact (the
+   * duel owns live contacts outright - the run below assigns the pick
+   * and yields, exactly like an unlatched frame). UMS duels only,
+   * like the hunt itself: macro columns must never chase remembered
+   * contacts.
+   */
+  def latchedTarget(unit: FriendlyUnitInfo): Option[UnitInfo] = {
+    val cands = huntables(unit)
+    val mem = unit.agent.huntTarget
+    val alive = mem.flatMap(id => With.units.getId(id)).exists(_.alive)
+    val legal = mem.exists(id => cands.exists(_.id == id))
+    val challenger = Maff.minBy(cands.filter(t => isFresh(With.framesSince(t.lastSeen), t.unitClass.isBuilding)))(unit.pixelDistanceCenter(_)).map(_.id)
+    val held = challenger match {
+      case Some(pid) => Micro.Targeting.StickyAnchor.next(mem, alive && freshMem(unit, mem), legal, pid)
+      case None      => None
+    }
+    held.foreach(id => { unit.agent.huntTarget = Some(id); unit.agent.huntFrame = With.frame })
+    if (held.isEmpty) unit.agent.huntTarget = None
+
+    held.flatMap(id => cands.find(_.id == id))
+  }
+
+  /** The incumbent memory is still fresh enough to hold (or a building). */
+  private def freshMem(unit: FriendlyUnitInfo, mem: Option[Int]): Boolean =
+    mem.flatMap(id => With.units.getId(id)).exists(t => isFresh(With.framesSince(t.lastSeen), t.unitClass.isBuilding))
+
+  /**
+   * Mop-up hold gate (read-only): a latched huntable memory owns the
+   * march gait for the frame - but only while it is fresh. A stale
+   * latch releases inside latchedTarget, so the gate must not hold
+   * the march for a ghost the hunt itself already dropped, or Walk
+   * stands down for nothing while Reposition owns every frame.
+   * No side effects: WalkStage calls this before deciding, the write
+   * happens in latchedTarget beside the pick, never in a gate.
+   */
+  def huntLatched(unit: FriendlyUnitInfo): Boolean =
+    With.umsMode && unit.agent.huntTarget.exists(id =>
+      With.units.getId(id).exists(t =>
+        isFresh(With.framesSince(t.lastSeen), t.unitClass.isBuilding) &&
+        huntables(unit).exists(_.id == id)))
+
+  /**
    * Memory horizon (pure frames for the suite): mobiles go stale three
    * minutes after contact (squad HuntContact parity) - they walk away.
    * Buildings never move, so a seen-once hall stays huntable until it
@@ -87,6 +136,23 @@ object HuntBehavior {
    */
   def remembersMobile(framesSinceSeen: Int): Boolean =
     framesSinceSeen < Minutes(3)()
+
+  /**
+   * Hold freshness, in frames: a committed pick stays held only while
+   * it was seen this recently (buildings excepted - they never move,
+   * so a seen-once hall is always fresh enough to walk down). Without
+   * this the latch hugs ghosts: a stale memory never dies, so the
+   * death-release never fires and the line chases a phantom while
+   * real guns kill it (4Drag_v_Zeal: 329f move-waste, spread-out
+   * deaths, 1 kill). Sight flicker at the edge is frames, not
+   * seconds, so a seconds-scale bar never flaps on it - and staleness
+   * is monotonic (unseen stays unseen), so the edge is crossed once.
+   */
+  val holdFreshFrames: Int = 72
+
+  /** Fresh enough to hold (pure frames for the suite): seen recently, or a building. */
+  def isFresh(framesSinceSeen: Int, isBuilding: Boolean): Boolean =
+    isBuilding || framesSinceSeen <= holdFreshFrames
 
   /**
    * Hunt gate (pure booleans for the suite): blind walkers with no

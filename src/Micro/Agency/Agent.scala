@@ -62,7 +62,6 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
   var fightReason : String           = ""
   var lastAction  : Option[String]   = None
   val actions     : ArrayBuffer[String] = new ArrayBuffer[String]()
-
   /**
    * Sticky pick anchor (bug-hunt fix): the last target that WON the
    * ladder, never the last one forced by a frame of illegality (see
@@ -72,6 +71,15 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
    */
   var stickyTarget: Option[Int] = None
   var stickyFrame : Int         = -1
+
+  /**
+   * Mop-up pick latch (owner order, endgame timeouts): the remembered
+   * enemy the line walks down, held across frames so Walk<->Hunt
+   * alternation cannot strand the mop-up. Same frame-stamp guard as
+   * the sticky pick: ids restart every game.
+   */
+  var huntTarget: Option[Int] = None
+  var huntFrame : Int         = -1
 
   /**
    * Unit-intention bids (phase 1): posted while capturingBids runs, resolved
@@ -132,6 +140,7 @@ class Agent(val unit: FriendlyUnitInfo) extends DestinationStack with AgencySort
     capturingBids = false
     bidReason = None
     if (stickyFrame > With.frame) stickyTarget = None
+    if (huntFrame > With.frame) huntTarget = None
     unit.orderTarget.foreach(_.removeDamage(unit))
 
     ridesharing.reconcileBoarding()

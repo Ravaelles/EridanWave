@@ -104,7 +104,11 @@ private[Decisioning] object TechniquePipeline {
     def appliesToUnit(unit: FriendlyUnitInfo): Boolean = unit.canMove
 
     protected def execute(unit: FriendlyUnitInfo, combat: Combat, advance: Boolean): UnitControl =
-      UnitControl.claimedIf(combat.technique == Walk && combat.maneuvers.walk())
+      // A latched mop-up owns the march gait: while the committed memory
+      // stays huntable the line walks it down instead of marching home
+      // and back every few frames (endgame Walk<->Hunt timeouts). Checked
+      // before walk() runs - it issues, so the gate must stand ahead of it.
+      UnitControl.claimedIf(combat.technique == Walk && ! HuntBehavior.huntLatched(unit) && combat.maneuvers.walk())
   }
 
   object AimStage extends BehaviorStage("Aim", DispatchBand.Medium, UnitIntentionReason.Duel) {

@@ -36,6 +36,14 @@ class HuntBehaviorSuite extends AnyFunSuite {
     assert(hunt())
   }
 
+  test("a fresh memory holds, a stale one releases (buildings excepted)") {
+    assert(HuntBehavior.isFresh(framesSinceSeen = 0, isBuilding = false))
+    assert(HuntBehavior.isFresh(framesSinceSeen = 72, isBuilding = false))
+    assert( ! HuntBehavior.isFresh(framesSinceSeen = 73, isBuilding = false))
+    assert(HuntBehavior.isFresh(framesSinceSeen = 10000, isBuilding = true))
+    assert( ! HuntBehavior.isFresh(framesSinceSeen = 10000, isBuilding = false))
+  }
+
   test("any visible enemy warrior owns the frame: no ghost hunt beside it") {
     assert( ! hunt(hasVisibleEnemies = true))
     assert( ! hunt(hasVisibleEnemies = true, hasTarget = true, targetBeyondPursuit = true))
