@@ -194,43 +194,43 @@ object MarchOrders {
   def assemblyHolding(unit: FriendlyUnitInfo): Boolean =
     unit.squad.exists(squad => assembleFor(squad, unit)._1)
 
-  private def assembleFor(squad: Squad, unit: FriendlyUnitInfo): (Boolean, Pixel) = {
-    if ( ! unit.unitClass.isWarrior || ! unit.canMove || unit.agent.isScout || unit.flying) return (false, unit.pixel)
+  private def assembleFor(squad: Squad, unit: FriendlyUnitInfo): (Boolean, Pixel, Boolean) = {
+    if ( ! unit.unitClass.isWarrior || ! unit.canMove || unit.agent.isScout || unit.flying) return (false, unit.pixel, false)
 
-    if (Protoss.DarkTemplar(unit)) return (false, unit.pixel)
+    if (Protoss.DarkTemplar(unit)) return (false, unit.pixel, false)
 
-    if (Micro.Actions.Combat.Decisioning.Skirmish.NoRetreat.holdsAny(unit)) return (false, unit.pixel)
+    if (Micro.Actions.Combat.Decisioning.Skirmish.NoRetreat.holdsAny(unit)) return (false, unit.pixel, false)
 
-    if (SuicideMission.assign(unit)) return (false, unit.pixel)
+    if (SuicideMission.assign(unit)) return (false, unit.pixel, false)
 
-    if (unit.formationEngage.exists(_.flanking)) return (false, unit.pixel)
+    if (unit.formationEngage.exists(_.flanking)) return (false, unit.pixel, false)
 
-    if (FormationReadiness.update(squad, With.frame) != FormationReadiness.Forming) return (false, unit.pixel)
+    if (FormationReadiness.update(squad, With.frame) != FormationReadiness.Forming) return (false, unit.pixel, false)
 
-    if (unit.matchups.targetsInRange.nonEmpty || unit.matchups.threatsInRange.nonEmpty) return (false, unit.pixel)
+    if (unit.matchups.targetsInRange.nonEmpty || unit.matchups.threatsInRange.nonEmpty) return (false, unit.pixel, false)
 
     val mates = squad.units.filter(o => o.alive && o.unitClass.isWarrior && ! o.flying)
-    if (mates.size < 2) return (false, unit.pixel)
+    if (mates.size < 2) return (false, unit.pixel, false)
 
     val rearCoord = mates.map(_.tileDistanceCenter(squad.vicinity)).max
     val myCoord = unit.tileDistanceCenter(squad.vicinity)
-    if (myCoord > rearCoord + FormationReadiness.rearBandTiles) return (false, unit.pixel)
+    if (myCoord > rearCoord + FormationReadiness.rearBandTiles) return (false, unit.pixel, false)
 
     val step = FormationReadiness.backStepTiles(myCoord, rearCoord)
     if (step <= 0) {
       unit.agent.act("Forming")
 
-      return (true, unit.pixel)
+      return (true, unit.pixel, false)
     }
 
     Maff.minBy(unit.matchups.threats.view.filter(t =>
       t.likelyStillThere && t.visible && t.unitClass.isWarrior))(
       unit.pixelDistanceEdge(_)) match {
-      case None      => (true, unit.pixel)
+      case None      => (true, unit.pixel, false)
       case Some(foe) =>
         unit.agent.act("Forming")
         val away = foe.pixel.radiansTo(unit.pixel)
-        (true, unit.pixel.radiateRadians(away, step * 32.0).walkablePixel)
+        (true, unit.pixel.radiateRadians(away, step * 32.0).walkablePixel, true)
     }
   }
   private def marchTerminus(squad: Squad, unit: FriendlyUnitInfo, meanDistToGoalTiles: Double, defaultReturn: Option[Pixel], facts: MarchFacts): (Pixel, MarchLabel) = {
@@ -396,7 +396,15 @@ object MarchOrders {
     val joinPixel              = joinLeg(squad, unit, suicide, slotOpen)
     val (holding, homing)      = dressLeg(squad, unit, meanDistToGoalTiles, suicide, dressOpen)
     val (umsHolding, umsPixel) = umsHoldLeg(squad, unit, facts)
-    val (assembling, assemblePixel) = assembleFor(squad, unit)
+    val (assembling, assemblePixel, assembleStepped) = assembleFor(squad, unit)
+    // Extraordinary enforcement (owner order): a drilling hull holds a
+    // formation order every frame - the anchor plants HoldPosition
+    // outright (no arrived-sleep keeps a stale spawn attack-move alive),
+    // the fallback owns an explicit back-step the march below executes.
+    if (assembling) {
+      if (assembleStepped) unit.agent.decision.set(assemblePixel)
+      else Commander.hold(unit)
+    }
     // Far dress-and-wait (UMS mirrors, no reavers): arriving at five
     // tiles outside gun reach the line dresses and waits for the enemy
     // ball instead of trickling into it, creeping a step every couple

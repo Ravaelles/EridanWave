@@ -87,10 +87,32 @@ object CommanderCore {
    * resolve. Unready units post nothing - a slept frame owns no orders,
    * and the starvation tripwire beside the resolve counts it instead.
    */
+  /**
+   * Drill guard (owner order, extraordinary formation): while this hull
+   * drills pre-contact it holds a formation order - attack issuances
+   * never leave this door. Blocked attempts land in the ledger (Low:
+   * the drill working as designed, not an error), so every override
+   * stays countable instead of silent.
+   */
+  private def drillBlocks(unit: FriendlyUnitInfo, issuer: OrderIssuer.Issuer): Boolean = {
+    if (issuer != OrderIssuer.MoveAttackMove && issuer != OrderIssuer.EngageAttack) return false
+
+    if ( ! Tactic.Squads.MarchOrders.assemblyHolding(unit)) return false
+
+    ErrorLedger.note(
+      "drillBlocksAttack.at." + unit.unitClass.toString,
+      ErrorLedger.Priority.Low,
+      f"unit ${unit.id} frame ${With.frame} door ${issuer.key}")
+
+    true
+  }
+
   private[Micro] def issueOrder(unit: FriendlyUnitInfo, issuer: OrderIssuer.Issuer)(order: => Unit): Unit = {
     // No readiness gate here on purpose: direct mode keeps Step-0
     // semantics exactly (the formation bypass issues while unready, and
     // the fuse names it if it doubles). Only capture drops slept frames.
+    if (drillBlocks(unit, issuer)) return
+
     if (unit.agent.capturingBids) {
       if (unit.unready) return
 
@@ -124,6 +146,20 @@ object CommanderCore {
     unit.agent.bidReason = None
     if (bids.isEmpty) return
 
+    // The drill guard binds the capture window too: attack bids posted
+    // while this hull drills never run - the line finishes first.
+    val live = bids.filterNot(b =>
+      (b.issuer == OrderIssuer.MoveAttackMove || b.issuer == OrderIssuer.EngageAttack) &&
+      Tactic.Squads.MarchOrders.assemblyHolding(unit))
+    if (live.isEmpty) {
+      ErrorLedger.note(
+        "drillBlocksAttack.at." + unit.unitClass.toString,
+        ErrorLedger.Priority.Low,
+        f"unit ${unit.id} frame ${With.frame} bids ${bids.size} stood down")
+
+      return
+    }
+
     unit.orderClaim.filter(_.frame == With.frame) match {
       case Some(claim) =>
         ErrorLedger.note(
@@ -131,14 +167,14 @@ object CommanderCore {
           ErrorLedger.Priority.Low,
           f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} direct ${claim.issuer} stood down ${bids.size}")
       case None =>
-        val winner = UnitIntentionRank.winnerIndex(bids)
-        bids.zipWithIndex.foreach { case (bid, i) =>
+        val winner = UnitIntentionRank.winnerIndex(live)
+        live.zipWithIndex.foreach { case (bid, i) =>
           if (i == winner) bid.order()
           else {
             ErrorLedger.note(
-              UnitIntentionRank.outrankedKey(bid.reason, bids(winner).reason, unit.unitClass.toString),
+              UnitIntentionRank.outrankedKey(bid.reason, live(winner).reason, unit.unitClass.toString),
               ErrorLedger.Priority.Low,
-              f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} loser ${bid.issuer} winner ${bids(winner).issuer}")
+              f"unit ${unit.id} ${unit.unitClass} frame ${With.frame} loser ${bid.issuer} winner ${live(winner).issuer}")
           }
         }
     }
